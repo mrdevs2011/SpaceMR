@@ -417,7 +417,7 @@ svg { color: inherit; }
 /* ═══════════════════════════════════════════ PRINT STYLES ═══════════════════════════════════════════ */
 @media print {
   .bot-nav, .app-hdr, .nav-btn, .upload-float-bar, #toast, .overlay, .reel-vol-top { display: none !important; }
-  body { background: var(--pal-white); color: var(--pal-black); }
+  body { background: var(--pal-white) !important; color: var(--pal-black) !important; }
   .post { break-inside: avoid; page-break-inside: avoid; }
 }
 /* Desktop: upload float bar sidebar hisobga olinadi */
