@@ -1542,26 +1542,26 @@
 .incoming-call-inner { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; height: 100dvh; padding: calc(env(safe-area-inset-top, 0px) + 28px) 24px calc(env(safe-area-inset-bottom, 0px) + 36px); }
 /* Yuqori qism — kichik sarlavha (holat satridan pastroqda) */
 .incoming-call-top { flex-shrink: 0; width: 100%; text-align: center; }
-.incoming-call-subtitle { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #7a8a84; text-transform: uppercase; }
+.incoming-call-subtitle { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; color: #8b8f97; text-transform: uppercase; }
 /* O'rta qism — avatar + ism + tur, ekranning yuqori-yarmida markazlashgan */
 .incoming-call-center { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding-bottom: 8vh; }
 /* Pastki qism — Accept/Decline har doim ekran tagida */
-.incoming-call-btns { flex-shrink: 0; width: 100%; max-width: 360px; display: flex; align-items: flex-start; justify-content: space-between; padding: 0 8px; }
+.incoming-call-btns { flex-shrink: 0; width: 100%; max-width: 300px; display: flex; align-items: flex-start; justify-content: space-between; padding: 0 8px; }
 /* Ring animation (3 pulsing rings) */
 .incoming-call-ring-anim { position: absolute; width: 150px; height: 150px; pointer-events: none; }
 .incoming-call-ring-anim span { position: absolute; inset: 0; border-radius: 50%; }
-.incoming-call-avi { width: 128px; height: 128px; border-radius: 50%; overflow: hidden; background: var(--bg4); flex-shrink: 0; position: relative; z-index: 1; }
+.incoming-call-avi { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; background: var(--bg4); flex-shrink: 0; position: relative; z-index: 1; }
 .incoming-call-avi img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 /* Halqa animatsiyasi ism/matn ustidan o'tmasin */
 .incoming-call-name, .incoming-call-type { position: relative; z-index: 2; }
-.incoming-call-name { font-size: 26px; font-weight: 700; color: var(--pal-white); text-align: center; }
-.incoming-call-type { font-size: 15px; color: var(--pal-legacy-b5b5b7); }
+.incoming-call-name { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; color: var(--pal-white); text-align: center; }
+.incoming-call-type { font-size: 16px; color: #9a9ea6; }
 .inc-call-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.inc-call-btn { width: 66px; height: 66px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.inc-call-btn { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .inc-call-btn.reject { color: var(--pal-white); }
 .inc-call-btn.accept { color: var(--pal-white); }
 .inc-call-btn:hover { box-shadow: 0 4px 20px var(--pal-black); }
-.inc-call-label { font-size: 13px; font-weight: 500; color: #D6D6D8; }
+.inc-call-label { font-size: 13px; font-weight: 500; color: #b4b7bd; }
 /* ════════════════════════════════════════════════════════════════════ ACTIVE CALL MODAL ════════════════════... */
 #callActiveModal { position: fixed; inset: 0; z-index: 999999; display: none; flex-direction: column; align-items: center; justify-content: space-between; padding: 60px 24px 48px; transition: none; }
 #callActiveModal.show { display: flex; }
@@ -1577,7 +1577,7 @@
 /* Doira qirqimi child (yashil harf) da yo'qolib, KVADRAT bo'lib qolmasin */
 .call-voice-avi { flex-shrink: 0; isolation: isolate; border-radius: 50% !important; }
 .call-avi-initial { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 700; color: var(--pal-white); background: var(--pal-green); border-radius: 50%; }
-.incoming-call-avi .call-avi-initial { font-size: 52px; }
+.incoming-call-avi .call-avi-initial { font-size: 56px; font-weight: 500; background: linear-gradient(160deg, #4a4e57 0%, #2b2d33 100%); }
 .call-voice-name { font-size: 24px; font-weight: 700; color: var(--pal-white); }
 /* Video mode */
 .call-video-wrap { background: var(--pal-black); border-radius: inherit; overflow: hidden; }
@@ -1724,16 +1724,16 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .cpb-pct { font-size: 11px; font-weight: 700; color: #C1C1C3; text-align: right; font-variant-numeric: tabular-nums; }
 /* ═══════════════════════════════════════════════════════════════════════ CALL MODALS — SOLID UI ════════════... */
 /* Incoming call — true edge-to-edge fullscreen (Telegram-style), no card box */
-#incomingCallModal { background: radial-gradient(circle at 50% 0%, var(--pal-gray-800) 0%, var(--pal-black) 55%), var(--pal-black) !important; }
+#incomingCallModal { background: linear-gradient(180deg, #1c1e22 0%, #0e0f11 58%, #000 100%) !important; }
 /* .incoming-call-inner intentionally left un-boxed — it already spans 100% width/height via the base rule abo... */
 /* Ring animation — green glass rings */
-.incoming-call-ring-anim span { box-shadow: 0 0 12px var(--pal-gray-900) !important; }
+.incoming-call-ring-anim { display: none !important; }
 /* Avatar glass border */
-.incoming-call-avi { border: 2.5px solid #1A8C46 !important; box-shadow: inset 0 1px 0 var(--pal-legacy-3a3a3f), 0 0 0 4px var(--pal-gray-900), 0 0 32px var(--pal-gray-800), 0 8px 24px var(--pal-black) !important; }
+.incoming-call-avi { border: 0 !important; box-shadow: 0 0 0 9px rgba(255,255,255,0.05), 0 0 0 20px rgba(255,255,255,0.025), 0 18px 44px rgba(0,0,0,0.65) !important; }
 /* Buttons — glass */
-.inc-call-btn { border: 0.5px solid var(--pal-legacy-3f3f44) !important; box-shadow: inset 0 1px 0 var(--pal-legacy-4d4d52), 0 6px 24px var(--pal-black) !important; transition: none !important; }
-.inc-call-btn.reject { background: #CC3B3C !important; box-shadow: inset 0 1px 0 var(--pal-legacy-3f3f44), 0 6px 24px #652024 !important; }
-.inc-call-btn.accept { background: #1EA852 !important; box-shadow: inset 0 1px 0 var(--pal-legacy-3f3f44), 0 6px 24px #13542F !important; }
+.inc-call-btn { border: 0 !important; box-shadow: 0 8px 22px rgba(0,0,0,0.5) !important; transition: none !important; }
+.inc-call-btn.reject { background: #ff3b30 !important; }
+.inc-call-btn.accept { background: #34c759 !important; }
 /* Active call modal — deep space glass */
 #callActiveModal { background: var(--pal-black) !important; }
 #callActiveModal::before { content: ''; position: fixed; inset: 0; background: var(--pal-gray-900), var(--pal-black); pointer-events: none; z-index: 0; }
