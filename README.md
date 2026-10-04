@@ -41,3 +41,10 @@ Hali ishga tushirilmagan patchlar `supabase/unfulfilled/` da — faqat 1 hafta k
 ## Qarorlar
 - `media` bucket **public**. Havolalar tasodifiy UUID yo'lli, lekin bu haqiqiy maxfiylik emas (havolani olgan ochadi). Signed URL kerak bo'lsa — keyinroq (Q7).
 - Like/comment counter triggerlari qoladi (Q8).
+
+## Production
+
+- Deploy: Vercel (`vercel.json` — build: bump-sw + build-env + build-css).
+- SQL migratsiyalar: `supabase/migrations/` (repo da saqlanadi; CDN ga `.vercelignore` orqali chiqarilmaydi).
+- Bir martalik patch/fix skriptlar: `docs/archive/oneoff/`.
+- CSS manba: `CSS/*.css` → `app.css` (`npm run build` / `node scripts/build-css.mjs`).

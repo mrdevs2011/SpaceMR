@@ -1,8 +1,16 @@
-(empty)
-supabase/.temp/
-.vercel
+# maxfiy
 .env*
+!.env.example
 
-# yuk sinovi (kalit/parol/hisobot)
+# local
+node_modules/
+.vercel/
+supabase/.temp/
+
+# yuk sinovi
 tests/.load-state.json
 tests/load-report-*.json
+
+# OS / editor
+.DS_Store
+*.log
