@@ -13518,3 +13518,29 @@ body::-webkit-scrollbar,
     padding-top: 52px !important;
   }
 }
+
+
+/* Explore va Actions: mobil header yopilmasin, kontent uning tagida */
+@media (max-width: 1099px) {
+  body:has(.search-overlay.open) header.app-hdr,
+  body:has(.search-overlay.open) #appHdr.app-hdr,
+  body:has(.search-overlay.open) .app-hdr,
+  body:has(#actionsView.on) header.app-hdr,
+  body:has(#actionsView.on) #appHdr.app-hdr,
+  body:has(#actionsView.on) .app-hdr {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: 52px !important;
+    z-index: 900 !important;
+    pointer-events: auto !important;
+  }
+  .search-overlay,
+  .search-overlay.open {
+    top: 52px !important;
+    z-index: 70 !important;
+  }
+  #actionsView.on {
+    padding-top: 52px !important;
+  }
+}
