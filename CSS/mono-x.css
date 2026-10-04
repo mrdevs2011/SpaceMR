@@ -3642,3 +3642,20 @@ textarea:not(:focus) {
 
 #chatThreadModal .chat-msg.mine .cvm-eq-bar { background: rgba(255,255,255,0.95) !important; }
 #chatThreadModal .chat-msg.theirs .cvm-eq-bar { background: var(--x-blue) !important; }
+
+/* Record pulse: faqat ko'k ring, qizil shadow YO'Q */
+.cv-pulse,
+.cv-pulse-1,
+.cv-pulse-2,
+.cv-pulse-3 {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.cv-pulse-1 { border-color: rgba(29, 155, 240, 0.9) !important; }
+.cv-pulse-2 { border-color: rgba(29, 155, 240, 0.5) !important; }
+.cv-pulse-3 { border-color: rgba(29, 155, 240, 0.32) !important; }
+.chat-voice-btn.recording,
+#chatThreadModal .chat-voice-btn.recording {
+  background: #1d9bf0 !important;
+  box-shadow: 0 4px 18px rgba(29, 155, 240, 0.4) !important;
+}

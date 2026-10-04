@@ -1617,23 +1617,23 @@ background: var(--pal-gray-800);
 .cv-pulse-1 {
   width: 48px;
   height: 48px;
-  background: transparent;
-  border: 2px solid rgba(29, 155, 240, 0.85);
-  box-shadow: 0 0 12px rgba(29, 155, 240, 0.35);
+  background: transparent !important;
+  border: 2px solid rgba(29, 155, 240, 0.9);
+  box-shadow: none !important; /* qizil/issiq glow yo'q */
 }
 .cv-pulse-2 {
   width: 72px;
   height: 72px;
-  background: transparent;
-  border: 1.5px solid rgba(29, 155, 240, 0.45);
-  box-shadow: 0 0 16px rgba(29, 155, 240, 0.2);
+  background: transparent !important;
+  border: 1.5px solid rgba(29, 155, 240, 0.5);
+  box-shadow: none !important;
 }
 .cv-pulse-3 {
   width: 100px;
   height: 100px;
-  background: transparent;
-  border: 1px solid rgba(29, 155, 240, 0.28);
-  box-shadow: 0 0 20px rgba(29, 155, 240, 0.12);
+  background: transparent !important;
+  border: 1px solid rgba(29, 155, 240, 0.32);
+  box-shadow: none !important;
 }
 /* Chapga surganda pulse rang o'zgarmaydi (ko'k qoladi) */
 .chat-voice-wrap.cancelling .cv-pulse-1,
@@ -2204,11 +2204,11 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   word-br═e═════════════════════════ */
 #chatThreadModal .chat-voice-btn.recording,
 .chat-voice-btn.recording {
-  /* --voice-rec-bg / --voice-rec-shadow JS orqali silliq morph qilinadi */
-  background: var(--voice-rec-bg, linear-gradient(135deg, #2AABEE 0%, #229ED9 100%)) !important;
+  background: #1d9bf0 !important;
   color: #ffffff !important;
   transform: scale(1.18);
-  box-shadow: var(--voice-rec-shadow, 0 4px 20px rgba(42, 171, 238, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.2));
+  /* faqat toza ko'k — qizil shadow yo'q */
+  box-shadow: 0 4px 18px rgba(29, 155, 240, 0.4) !important;
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -9082,3 +9082,20 @@ textarea:not(:focus) {
 
 #chatThreadModal .chat-msg.mine .cvm-eq-bar { background: rgba(255,255,255,0.95) !important; }
 #chatThreadModal .chat-msg.theirs .cvm-eq-bar { background: var(--x-blue) !important; }
+
+/* Record pulse: faqat ko'k ring, qizil shadow YO'Q */
+.cv-pulse,
+.cv-pulse-1,
+.cv-pulse-2,
+.cv-pulse-3 {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.cv-pulse-1 { border-color: rgba(29, 155, 240, 0.9) !important; }
+.cv-pulse-2 { border-color: rgba(29, 155, 240, 0.5) !important; }
+.cv-pulse-3 { border-color: rgba(29, 155, 240, 0.32) !important; }
+.chat-voice-btn.recording,
+#chatThreadModal .chat-voice-btn.recording {
+  background: #1d9bf0 !important;
+  box-shadow: 0 4px 18px rgba(29, 155, 240, 0.4) !important;
+}
