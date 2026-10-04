@@ -13395,3 +13395,39 @@ header.app-hdr.force-hide,
 #settingsOverlay #deleteAccountBtn:hover {
   background: #16181c !important;
 }
+
+
+/* Ajratuvchi chiziqlar: hr ham, div bilan yasalgan ham */
+hr,
+.divider,
+.ctx-divider,
+.up-divider {
+  display: none !important;
+  height: 0 !important;
+  border: none !important;
+  background: none !important;
+}
+.post,
+.app-hdr,
+.saved-head,
+.home-tabs,
+.exp-head,
+.exp-sec,
+.bot-nav,
+nav.bot-nav,
+.chat-row,
+.cmt-row,
+.post-cmt-panel,
+.rr-cmt-panel .rr-cmt-input-row,
+.post-cmt-panel .post-cmt-input-row,
+#settingsOverlay .settings-hdr,
+.profile-hdr,
+.chat-thread-hdr,
+.chat-thread-input-row,
+.chat-reply-bar,
+.chat-search-wrap,
+.ep-top,
+.ep-search {
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
