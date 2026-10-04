@@ -3295,3 +3295,70 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .hdr-avi-btn:active .hdr-avi { transform: scale(0.94); }
 .hdr-icon-btn svg { width: 20px; height: 20px; }
+
+/* === HEADER LAYOUT FIX === */
+.app-hdr {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 0 12px !important;
+  box-sizing: border-box;
+  overflow: visible;
+  width: 100%;
+  max-width: 100vw;
+}
+.app-hdr .hdr-logo { flex: 0 1 auto; min-width: 0; }
+.app-hdr .hdr-right {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0 !important;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-right: 2px;
+}
+.app-hdr .hdr-icon-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.app-hdr .hdr-icon-btn:hover {
+  background: rgba(255,255,255,0.06) !important;
+  border: none !important;
+}
+.app-hdr .hdr-icon-btn img.icon,
+.app-hdr .hdr-icon-btn .icon {
+  width: 20px !important;
+  height: 20px !important;
+  filter: none !important;
+  opacity: 0.95;
+}
+.app-hdr .hdr-avi-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  margin: 0 0 0 2px !important;
+  padding: 0 !important;
+}
+.app-hdr .hdr-avi {
+  width: 28px !important;
+  height: 28px !important;
+}
+.app-hdr .hdr-search-wrap {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+@media (max-width: 1099px) {
+  .app-hdr { padding: 0 8px 0 10px !important; }
+}

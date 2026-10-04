@@ -308,7 +308,8 @@ svg { color: inherit; }
 }
 /* ═══════════════════════════════════════════ MOBILE OPTIMIZATIONS ═══════════════════════════════════════════ */
 @media (max-width: 1099px) {
-  .act-btn, .nav-btn, .hdr-icon-btn, .theme-btn { min-height: 44px; min-width: 44px; }
+  .act-btn, .nav-btn, .theme-btn { min-height: 44px; min-width: 44px; }
+.hdr-icon-btn { min-height: 36px; min-width: 36px; }
   .post-caption, .reel-cap, .cmt-text { font-size: 14px; line-height: 1.6; }
   .bot-nav { padding-bottom: max(env(safe-area-inset-bottom), 8px); }
   .sheet { padding-bottom: max(env(safe-area-inset-bottom), 28px); }
