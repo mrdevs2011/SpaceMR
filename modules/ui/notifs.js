@@ -34,11 +34,11 @@ async function names(ids) {
   return new Map((data || []).map(r => [r.id, mapProfile(r)]));
 }
 
-export async function loadNotifs() {
+export async function loadNotifs({ silent = false } = {}) {
   const box = $('notifsList');
   const me = state.me?.uid;
   if (!box || !me) return;
-  box.innerHTML = '<div class="spin-wrap pt-40px"><div class="spinner"></div></div>';
+  if (!silent || !box.children.length) box.innerHTML = '<div class="spin-wrap pt-40px"><div class="spinner"></div></div>';
   const items = [];
   try {
     const { data: msgs } = await sb.from('messages')

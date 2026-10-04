@@ -98,6 +98,7 @@ function closeRailCmt() {
     state.cmtPostId = null;
     _mode = null;
   }
+  _routeKick();
 }
 
 async function fillMyAvi(targetId) {
@@ -105,10 +106,20 @@ async function fillMyAvi(targetId) {
   if (!el || !state.me) return;
   try {
     const { data } = await sb.from('profiles').select('full_name,avatar').eq('id', state.me.uid).maybeSingle();
+    if (data?.full_name) _myName = data.full_name;
     const av = data?.avatar || defAvi(data?.full_name || 'U');
     el.innerHTML = `<img class="w-full h-full object-cover brr-50pct" src="${esc(av)}" onerror="this.classList.add('d-none')">`;
   } catch (_) {}
 }
+
+/** Shu postning izohlari hozir ochiqmi (inline panel yoki o'ng rail) */
+export function isCmtOpen(postId) {
+  if (document.querySelector(`.post[data-id="${postId}"] .post-cmt-panel`)) return true;
+  const rp = $('rrCmtPanel');
+  return state.cmtPostId === postId && _mode === 'rail' && !!rp && !rp.hidden;
+}
+/* URL (/p/<id>/comments) izohlar ochilishi/yopilishiga moslashsin */
+const _routeKick = () => { try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {} };
 
 /* ── Open: routes mobile → inline, desktop → right rail ───────────────── */
 export async function openCmtModal(postId) {
@@ -136,6 +147,7 @@ async function openInlineCmt(postId) {
       state.cmtPostId = null;
       _mode = null;
     }
+    _routeKick();
     return;
   }
 
@@ -186,6 +198,7 @@ async function openInlineCmt(postId) {
 
   // Focus input
   setTimeout(() => $('inlineCmtInput')?.focus(), 50);
+  _routeKick();
 
   await loadComments(postId, 'inlineCmtList');
 }
@@ -223,6 +236,7 @@ async function openRailCmt(postId) {
 
   fillMyAvi('rrCmtMyAvi');
   setTimeout(() => inp?.focus(), 50);
+  _routeKick();
 
   await loadComments(postId, 'rrCmtList');
 }
@@ -256,6 +270,12 @@ function _cmtLive(postId, listId) {
     })
     .subscribe();
 }
+
+/* Uyg'onish / internet qaytishi: ochiq izohlar qayta yuklanadi */
+window.addEventListener('spacemr:resync', () => {
+  const l = _cmtLiveList && document.getElementById(_cmtLiveList);
+  if (_cmtLivePost && l && l.isConnected && l.getClientRects().length) loadComments(_cmtLivePost, _cmtLiveList);
+});
 
 /* ── Izohlar ro'yxatini chizish (keshdan — tarmoqsiz) ───────────────────── */
 let _cmtCache = null;   // { postId, listId, cmts, aMap } — ochiq ro'yxatning joriy holati
@@ -317,7 +337,7 @@ function _paintCmts(postId, listId, cmts, aMap) {
     }));
 
     list.querySelectorAll('.user-avi-btn').forEach(b => b.addEventListener('click', async () => {
-      if (b.dataset.uid !== state.me?.uid) {
+      if (b.dataset.uid) {
         if (_mode === 'inline') closeAllInline();
         if (_mode === 'rail') closeRailCmt();
         const { openUserProfileModal } = await import('../profile/profile.js');
@@ -344,6 +364,10 @@ async function loadComments(postId, listId) {
     const cmts = (_cRows || []).map(r => ({
       id: r.id, userId: r.user_id, userName: r.user_name, text: r.text, createdAt: r.created_at,
     }));
+
+    for (const pc of _pendingCmts.values()) {
+      if (pc.postId === postId && !cmts.some(x => String(x.id) === String(pc.row.id))) cmts.push(pc.row);
+    }
 
     const ccSpanFeed = document.getElementById(`cc-${postId}`);
     if (ccSpanFeed) ccSpanFeed.textContent = fmtCount(cmts.length);
@@ -400,6 +424,27 @@ export async function sendCmtModal() {
   return sendComment(_mode || 'modal');
 }
 
+/* Yuborilmoqda turgan izohlar (server tasdiqlamaguncha ro'yxatda ko'rinib turadi) */
+const _pendingCmts = new Map(); // id -> { postId, row }
+
+function _uuid4() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+function _dropPending(id, postId, listId) {
+  _pendingCmts.delete(id);
+  const c = _cmtCache;
+  if (c && c.postId === postId) {
+    c.cmts = c.cmts.filter(x => String(x.id) !== String(id));
+    if ($(listId)) _paintCmts(postId, c.listId, c.cmts, c.aMap);
+    _cmtCount(postId, c.cmts.length);
+  }
+}
+
 async function sendComment(mode) {
   let inp, sendBtn, listId, charId;
   if (mode === 'inline') {
@@ -423,55 +468,50 @@ async function sendComment(mode) {
   if (!text || !state.cmtPostId || !state.me) return;
   if (!rateOk('cmt', 10, 60000)) return;
 
+  const postId = state.cmtPostId;
+  const uid = state.me.uid;
+  const name = _myName || state.me.displayName || 'Foydalanuvchi';
+  const id = _uuid4();                      // id mijozda yaratiladi — server qaytargan qator bilan bir xil
+  const mine = { id, userId: uid, userName: name, text, createdAt: new Date().toISOString() };
+  _pendingCmts.set(id, { postId, row: mine });
+
+  /* 1) UI — shu zahoti (tarmoq kutilmaydi): input tozalanadi, izoh ro'yxatga tushadi, muvaffaqiyat xabari */
+  if (inp) { inp.value = ''; inp.style.height = ''; }
+  const cnt = $(charId);
+  if (cnt) { cnt.textContent = '300'; cnt.className = 'cmt-char-count'; }
   if (sendBtn) sendBtn.disabled = true;
 
-  try {
-    if (!_myName) {
-      const { data: ud } = await sb.from('profiles').select('full_name').eq('id', state.me.uid).maybeSingle();
-      _myName = ud?.full_name || state.me.displayName || 'Foydalanuvchi';
-    }
-    const postId = state.cmtPostId;
-
-    const { data: row, error: insErr } = await sb.from('comments').insert({
-      post_id:   postId,
-      user_id:   state.me.uid,
-      user_name: _myName,
-      text,
-    }).select('*').maybeSingle();
-    if (insErr) throw insErr;
-
-    if (inp) { inp.value = ''; inp.style.height = ''; }
-    const cnt = $(charId);
-    if (cnt) {
-      cnt.textContent = '300';
-      cnt.className = 'cmt-char-count';
-    }
-
-    // Ro'yxatga shu zahoti qo'shamiz (qayta yuklamasdan) va hammaga yuboramiz
-    const mine = { id: row?.id ?? ('tmp-' + Date.now()), userId: state.me.uid, userName: _myName, text, createdAt: row?.created_at || new Date().toISOString() };
-    if (!(_cmtCache && _cmtCache.postId === postId)) {
-      // Ro'yxat hali yuklanmagan — to'liq yuklaymiz (eski yo'l)
-      busEmit('cmt', { op: 'add', postId, n: (state.allPosts.find(p => p.id === postId)?.commentCount || 0) + 1, row: mine });
-      toast('Izoh qo\'shildi', 'success');
-      await loadComments(postId, listId);
-      return;
-    }
-    const base = _cmtCache;
-    const av = state._userCache?.[state.me.uid]?.avatar || base.aMap[state.me.uid] || defAvi(_myName);
-    const cmts = base.cmts.some(x => String(x.id) === String(mine.id)) ? base.cmts : [...base.cmts, mine];
-    _cmtCache = { postId, listId, cmts, aMap: { ...base.aMap, [state.me.uid]: av } };
+  let av = state._userCache?.[uid]?.avatar || defAvi(name);
+  const base = (_cmtCache && _cmtCache.postId === postId) ? _cmtCache : null;
+  if (base) {
+    av = state._userCache?.[uid]?.avatar || base.aMap[uid] || av;
+    const cmts = [...base.cmts, mine];
+    _cmtCache = { postId, listId, cmts, aMap: { ...base.aMap, [uid]: av } };
     _paintCmts(postId, listId, cmts, _cmtCache.aMap);
     _cmtCount(postId, cmts.length);
-    busEmit('cmt', { op: 'add', postId, n: cmts.length, avatar: av, row: mine });
-
-    toast('Izoh qo\'shildi', 'success');
-
-  } catch (e) {
-    console.error('Comment send failed:', e);
-    toast('Izohni yuborib bo\'lmadi', 'error');
-  } finally {
-    if (sendBtn) sendBtn.disabled = !inp?.value?.trim();
+  } else {
+    _cmtCount(postId, (state.allPosts.find(p => p.id === postId)?.commentCount || 0) + 1);
   }
+  toast('Izoh qo\'shildi', 'success');
+
+  /* 2) Orqa fonda yuboriladi; muvaffaqiyatda boshqalarga ham tarqatiladi, xato bo'lsa qaytariladi */
+  (async () => {
+    try {
+      const { error } = await sb.from('comments').insert({ id, post_id: postId, user_id: uid, user_name: name, text });
+      if (error) throw error;
+      _pendingCmts.delete(id);
+      const n = (_cmtCache && _cmtCache.postId === postId) ? _cmtCache.cmts.length
+        : (state.allPosts.find(p => p.id === postId)?.commentCount || 0);
+      busEmit('cmt', { op: 'add', postId, n, avatar: av, row: mine });
+      if (!base && $(listId)) loadComments(postId, listId);
+    } catch (e) {
+      console.error('Comment send failed:', e);
+      _dropPending(id, postId, listId);
+      const again = $(listId === 'inlineCmtList' ? 'inlineCmtInput' : listId === 'rrCmtList' ? 'rrCmtInput' : 'cmtModalInput');
+      if (again && !again.value) { again.value = text; syncSend(again, sendBtn); }
+      toast('Izohni yuborib bo\'lmadi — matn qaytarildi', 'error');
+    }
+  })();
 }
 
 /* ── Izoh textarea: matn bo'yicha balandligi o'sadi ───────────────────── */

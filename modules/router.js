@@ -67,6 +67,7 @@ export function navigateTo(routeName, pushState = true) {
   }
 
   // URL ni url-router.js boshqaradi (holat -> URL sinxronlash, 'spacemr:route' hodisasi orqali)
+  state.focusPostId = null; state.focusCmtId = null;   // /p/<id> fokusi tab almashganda tozalanadi
 
   // Navigatsiya vaqtida barcha ochiq modal/overlay/panel larni yopamiz
   const modalsToClose = [

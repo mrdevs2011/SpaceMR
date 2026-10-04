@@ -239,6 +239,7 @@ document.addEventListener('presenceChanged', () => {
 });
 
 /* Kimdir ismi/avatarini o'zgartirganda onlayn ro'yxatni yangilash */
+window.addEventListener('spacemr:resync', () => scheduleRefresh(0));
 document.addEventListener('profileChanged', () => {
   if (document.visibilityState === 'visible') loadOnline();
 });

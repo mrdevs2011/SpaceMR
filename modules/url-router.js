@@ -17,6 +17,13 @@
  *   /newpost               yangi post oynasi
  *   /actions               admin boshqaruvi (faqat admin)
  *   /saved                 saqlangan postlar
+ *   /p/<id>                post (bosh sahifada shu postga o'tadi); /p/<id>#c-<izoh> — izoh ochilib yoritiladi
+ *   /s/<username>          foydalanuvchi hikoyalari ko'rgichi
+ *   /u/<user>/<tab>        profil tabi: photos | text | music  (/profile/<tab> — o'z profilim)
+ *   /chats/g/<ref>/info    guruh ma'lumoti paneli
+ *   /chats/(u|g)/<ref>#m-<id>  xabarga havola
+ *   /explore?q=<so'z>      qidiruv natijasi
+ *   /actions               admin panel — ichki URL YO'Q (faqat shu)
  *
  * Qoidalar:
  *  - Kirmagan foydalanuvchi har qanday manzilda DARHOL /login ga qaytariladi (index.html dagi
@@ -36,6 +43,7 @@ const $ = id => document.getElementById(id);
 
 const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications' };
 const NEXT_KEY = 'spacemr_next_path';
+const PROFILE_TABS = ['photos', 'text', 'music'];   // 'all' = sukut (URL da yo'q)
 const LAST_KEY = 'spacemr_last_path'; // kirgan foydalanuvchining oxirgi joyi (/login yozsa shu yerga qaytadi)
 const HEX64_RE = /^[0-9a-f]{64}$/i;
 const LEGACY_QS_RE = /[?&](g|u|join|join_group)=/i; // eski query havolalar — endi 404
@@ -80,6 +88,16 @@ export function parsePath(rawPath) {
     if (a === 'settings') return { kind: 'redirect', to: '/profile/settings' };
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };
+  }
+  if (a === 'p' && seg.length === 3 && UUID_RE.test(seg[1]) && (seg[2] || '').toLowerCase() === 'comments') return { kind: 'post', ref: seg[1].toLowerCase(), comments: true };
+  if (a === 'p' && seg.length === 2 && UUID_RE.test(seg[1])) return { kind: 'post', ref: seg[1].toLowerCase() };
+  if (a === 's' && seg.length === 2 && seg[1]) return { kind: 'story', ref: seg[1] };
+  if (a === 'profile' && seg.length === 2 && PROFILE_TABS.includes(b)) return { kind: 'view', view: 'profile', tab: b };
+  if (a === 'u' && seg.length === 3 && seg[1] && PROFILE_TABS.includes((seg[2] || '').toLowerCase())) {
+    return { kind: 'userprofile', ref: seg[1], tab: seg[2].toLowerCase() };
+  }
+  if (a === 'chats' && b === 'g' && seg.length === 4 && seg[2] && (seg[3] || '').toLowerCase() === 'info') {
+    return { kind: 'thread', thread: 'group', ref: seg[2], base: 'chats', info: true };
   }
   if (a === 'profile' && b === 'settings' && (seg.length === 2 || seg.length === 3)) {
     const sec = (seg[2] || '').toLowerCase();
@@ -199,9 +217,18 @@ function computeUrl() {
   const gc = $('grpCreateFormOverlay');
   if (gc?.classList.contains('show') && !gc.dataset.addMode) return '/chats/groupcreate';
 
+  const sv = $('storyViewer');
+  if (sv && !sv.hidden && state.storyUid) {
+    const t = dmToken(state.storyUid);
+    return t ? `/s/${encodeURIComponent(t)}` : null;
+  }
+
+  if (hasShow('detailModal') && state.detailPostId) return `/p/${state.detailPostId}`;
+
   if (userProfileOpen()) {
     const t = dmToken(state.currentViewingUserId);
-    return t ? `/u/${encodeURIComponent(t)}` : null;
+    const tab = document.querySelector('#upGridTabs .active[data-up-tab]')?.dataset.upTab;
+    return t ? `/u/${encodeURIComponent(t)}${tab && tab !== 'all' ? '/' + tab : ''}` : null;
   }
 
   if (hasShow('settingsOverlay')) {
@@ -212,7 +239,7 @@ function computeUrl() {
   }
 
   if (hasShow('uploadOverlay')) return '/newpost';
-  if (hasShow('searchOverlay', 'open')) return '/explore';
+  if (hasShow('searchOverlay', 'open')) return '/explore' + (state.exploreQuery ? '?q=' + encodeURIComponent(state.exploreQuery) : '');
 
   if (threadOpen()) {
     const modal = $('chatThreadModal');
@@ -222,20 +249,39 @@ function computeUrl() {
     }
     if (modal?.dataset?.gid) {
       const t = groupToken(modal.dataset.gid);
-      return t ? `/chats/g/${encodeURIComponent(t)}` : null;
+      return t ? `/chats/g/${encodeURIComponent(t)}${hasShow('grpInfoOverlay') ? '/info' : ''}` : null;
     }
     return null;
+  }
+
+  if (state.focusPostId && getCurrentRoute() === 'home') {
+    const fid = state.focusPostId;
+    const rp = $('rrCmtPanel');
+    const cmtOpen = !!document.querySelector(`.post[data-id="${fid}"] .post-cmt-panel`)
+      || (state.cmtPostId === fid && !!rp && !rp.hidden);
+    return `/p/${fid}${cmtOpen ? '/comments' : ''}${state.focusCmtId ? '#c-' + state.focusCmtId : ''}`;
+  }
+  if (getCurrentRoute() === 'profile') {
+    const tab = document.querySelector('#profileGridTabs .active[data-pg-tab]')?.dataset.pgTab;
+    if (tab && tab !== 'all') return '/profile/' + tab;
   }
 
   return VIEW_PATH[getCurrentRoute()] || '/home';
 }
 
+/* Bir "oila" ichidagi o'zgarish (tab almashtirish, qidiruv so'zi, izoh havolasi) tarixga yangi yozuv qo'shmaydi */
+const famOf = p => p.replace(/^(\/u\/[^/]+|\/profile)\/(photos|text|music)$/, '$1').replace(/^(\/p\/[^/]+)\/comments$/i, '$1');
+
 function setUrl(target, { replace = false } = {}) {
   const cur = location.pathname;
-  if (target === cur) return;
+  const hasExtra = /[?#]/.test(target);
+  const tpath = target.split(/[?#]/)[0];
+  if (hasExtra ? target === cur + location.search + location.hash : tpath === cur) return;
   const st = history.state || {};
-  const tail = location.search + location.hash;
-  if (!replace && st.prev === target) {
+  const keepTail = !hasExtra && !cur.startsWith('/p/') && cur !== '/explore' && !/^#[cm]-/.test(location.hash);
+  const tail = hasExtra ? '' : (keepTail ? location.search + location.hash : '');
+  if (!replace && famOf(tpath) === famOf(cur) && (hasExtra || tpath !== cur)) replace = true;
+  if (!replace && st.prev === tpath) {
     // Overlay yopildi — oldingi sahifaga qaytamiz (tarixga takror yozmaymiz)
     _internalPop = true;
     _suppressUntil = Date.now() + 250;
@@ -247,6 +293,15 @@ function setUrl(target, { replace = false } = {}) {
   } else {
     history.pushState({ i: (st.i || 0) + 1, prev: cur }, '', target + tail);
   }
+}
+
+/** Esc / orqaga: bitta oldingi URL ga (oldingi yozuv bo'lmasa — joriy tab ning o'ziga) */
+export function goBack() {
+  const st = history.state || {};
+  if (st.prev) { history.back(); return; }
+  state.focusPostId = null; state.focusCmtId = null;
+  _replaceNext = true;
+  schedule();
 }
 
 function schedule() {
@@ -280,7 +335,7 @@ const TITLES = {
   '/chats/groupcreate': 'Yangi guruh',
 };
 function updateTitle(path) {
-  const t = TITLES[path] || (path.startsWith('/chats/') ? 'Suhbatlar' : (path.startsWith('/u/') ? 'Profil' : null));
+  const t = TITLES[path] || (path.startsWith('/chats/') ? 'Suhbatlar' : (path.startsWith('/u/') ? 'Profil' : (path.startsWith('/p/') ? 'Post' : (path.startsWith('/s/') ? 'Hikoya' : (path.startsWith('/profile/') ? 'Profil' : null)))));
   if (t) document.title = `${t} - SpaceMR`;
 }
 
@@ -293,6 +348,9 @@ function hasAnyOverlay() {
 }
 
 function closeEverythingExcept(keep) {
+  if (hasShow('detailModal')) $('detailModal').classList.remove('show');
+  const sv = $('storyViewer');
+  if (keep !== 'story' && sv && !sv.hidden) import('./feed/stories.js').then(m => m.closeStoryViewer?.()).catch(() => {});
   if (keep !== 'userprofile' && hasShow('userProfileModal')) $('upBack')?.click();
   if (keep !== 'groupcreate' && hasShow('grpCreateFormOverlay')) $('grpFormCancelBtn')?.click();
   if (keep !== 'newpost' && hasShow('uploadOverlay')) $('cancelUpload')?.click();
@@ -357,6 +415,43 @@ async function openOverlay(name, section) {
   }
 }
 
+/** Profil/foydalanuvchi profilidagi tabni (photos|text|music|all) bosib tanlaydi — tugma chizilguncha kutadi. */
+function pickTab(selector, key, tab) {
+  let n = 0;
+  const tick = () => {
+    const btn = [...document.querySelectorAll(selector)].find(b => b.dataset[key] === tab);
+    if (btn) { if (!btn.classList.contains('active')) btn.click(); return; }
+    if (n++ < 20) setTimeout(tick, 150);
+  };
+  tick();
+}
+
+/** Xabarga havola (#m-<id>): xabargacha scroll + qisqa yoritish */
+function scrollToMsg(id) {
+  const q = CSS.escape(String(id));
+  let n = 0;
+  const tick = () => {
+    const el = document.querySelector(`.chat-msg[data-msg-id="${q}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('msg-link-highlight');
+      setTimeout(() => el.classList.remove('msg-link-highlight'), 3000);
+      return;
+    }
+    if (n++ < 20) setTimeout(tick, 250);
+  };
+  setTimeout(tick, 300);
+}
+
+async function postExists(id) {
+  _lookupFailed = false;
+  try {
+    const { data, error } = await sb.from('posts').select('id').eq('id', id).maybeSingle();
+    if (error) { _lookupFailed = true; return false; }
+    return !!data;
+  } catch (_) { _lookupFailed = true; return false; }
+}
+
 /** URL ga qarab ilova holatini o'rnatadi. */
 export async function applyPath(rawPath, { initial = false } = {}) {
   document.documentElement.removeAttribute('data-nf');
@@ -413,6 +508,43 @@ export async function applyPath(rawPath, { initial = false } = {}) {
     /* Huquq tekshiruvi */
     if (route.admin && !isAdminUser()) return notFound();
 
+    /* /p/<id> dan boshqa joyga o'tilsa — post fokusi tozalanadi */
+    if (route.kind !== 'post') { state.focusPostId = null; state.focusCmtId = null; }
+
+    /* Post: /p/<id>[#c-<izoh>] — bosh sahifada shu postga o'tadi, izoh bo'lsa izohni ochib yoritadi */
+    if (route.kind === 'post') {
+      if (!(await postExists(route.ref))) return missing();
+      const cmt = (location.hash.match(/^#c-(.+)$/) || [])[1] || null;
+      /* Shu post allaqachon ochiq (/p/<id> <-> /p/<id>/comments): lentani qayta chizmay, faqat izohlarni moslaymiz */
+      if (state.focusPostId === route.ref && !cmt && getCurrentRoute() === 'home') {
+        const cm = await import('./feed/comments.js');
+        if (!!route.comments !== cm.isCmtOpen(route.ref)) await cm.openCmtModal(route.ref);
+        updateTitle('/p/x');
+        return;
+      }
+      closeEverythingExcept(null);
+      await closeThreadIfOpen();
+      const m = await import('./feed/feed.js');
+      await m.openPostLink(route.ref, cmt, { comments: !!route.comments });
+      updateTitle('/p/x');
+      return;
+    }
+
+    /* Hikoya: /s/<username> */
+    if (route.kind === 'story') {
+      const uid = await uidByUsername(route.ref);
+      if (!uid) return missing();
+      closeEverythingExcept('story');
+      await closeThreadIfOpen();
+      if (getCurrentRoute() !== 'home') navigateTo('home', false);
+      const m = await import('./feed/stories.js');
+      const ok = await m.openStoriesOf(uid);
+      if (!ok) return deny();   // hikoya yo'q (24 soatdan oshgan) -> bosh sahifa
+      _replaceNext = true;
+      updateTitle('/s/x');
+      return;
+    }
+
     /* Redirect (masalan /settings → /profile/settings) */
     if (route.kind === 'redirect' && route.to) {
       history.replaceState({ i: (history.state?.i || 0), prev: null }, '', route.to + tail);
@@ -426,6 +558,7 @@ export async function applyPath(rawPath, { initial = false } = {}) {
       }
       closeEverythingExcept(null);
       await closeThreadIfOpen();
+      if (route.view === 'profile') pickTab('#profileGridTabs [data-pg-tab]', 'pgTab', route.tab || 'all');
       updateTitle(cleanPath(rawPath));
       return;
     }
@@ -439,6 +572,10 @@ export async function applyPath(rawPath, { initial = false } = {}) {
       if (getCurrentRoute() !== baseView) navigateTo(baseView, false);
       closeEverythingExcept(route.overlay);
       await openOverlay(route.overlay, route.section);
+      if (route.overlay === 'explore') {
+        const q = new URLSearchParams(location.search).get('q') || '';
+        setTimeout(() => window.dispatchEvent(new CustomEvent('explore:commit', { detail: q })), 60);
+      }
       updateTitle(cleanPath(rawPath));
       return;
     }
@@ -462,6 +599,7 @@ export async function applyPath(rawPath, { initial = false } = {}) {
         await m.openUserProfileModal(uid);
       }
       if (!userProfileOpen()) return deny();
+      pickTab('#upGridTabs [data-up-tab]', 'upTab', route.tab || 'all');
       _replaceNext = true;
       updateTitle('/u/x');
       return;
@@ -501,6 +639,17 @@ export async function applyPath(rawPath, { initial = false } = {}) {
         ok = threadOpen() && $('chatThreadModal')?.dataset?.gid === gid;
       }
       if (!ok) return deny();
+      if (route.thread === 'group' && route.info) {
+        const gid = $('chatThreadModal')?.dataset?.gid;
+        if (gid && !hasShow('grpInfoOverlay')) {
+          const gm = await import('./chat/groups.js');
+          gm.openGroupInfo(gid);
+        }
+      } else if (hasShow('grpInfoOverlay')) {
+        $('grpInfoCloseBtn')?.click();
+      }
+      const mid = (location.hash.match(/^#m-(.+)$/) || [])[1];
+      if (mid) scrollToMsg(mid);
       // URL ni haqiqiy username/id bilan to'g'rilab qo'yamiz
       _replaceNext = true;
       return;
@@ -580,7 +729,7 @@ export function initUrlRouter() {
   window.addEventListener('spacemr:route', schedule);
 
   const mo = new MutationObserver(() => { detectAuth(); schedule(); });
-  mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class', 'data-gid'] });
+  mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class', 'data-gid', 'hidden'] });
 
   detectAuth();
 }

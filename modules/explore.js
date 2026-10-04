@@ -165,6 +165,14 @@ function reset() {
   if (input) input.value = '';
   $('searchSuggestions')?.classList.remove('show');
   overlay.scrollTop = 0;
+  syncQuery();
+}
+
+/** URL (/explore?q=...) uchun joriy qidiruv so'zini holatga yozamiz */
+function syncQuery() {
+  if (state.exploreQuery === query) return;
+  state.exploreQuery = query;
+  window.dispatchEvent(new Event('spacemr:route'));
 }
 
 function commit(val) {
@@ -176,6 +184,7 @@ function commit(val) {
   overlay.scrollTop = 0;
   render();
   remoteSearch(q);
+  syncQuery();
 }
 
 function closeOverlay() { $('searchOverlayClose')?.click(); }
@@ -197,6 +206,7 @@ if (overlay && input && body) {
     query = v;
     render();
     remoteSearch(v);
+    syncQuery();
   });
 
   window.addEventListener('explore:commit', e => commit(e.detail));

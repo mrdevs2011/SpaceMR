@@ -212,6 +212,7 @@ export async function openDetail(id) {
     <div class="w-full aspect-1 bg-bg3"></div>
     <div class="h-60px"></div>`;
   $('detailModal').classList.add('show');
+  state.detailPostId = id;   // URL: /p/<id>
 
   const [lR, cR, uR] = await Promise.all([
     sb.from('post_likes').select('post_id', { count: 'exact', head: true }).eq('post_id', id).eq('user_id', state.me.uid),
@@ -236,9 +237,9 @@ export async function openDetail(id) {
   $('detailContent').innerHTML = `
     <div class="dm-handle"></div>
     <div class="dm-head">
-      <div class="dm-avi${isOwn?'':' dm-avi-link'}" ${isOwn?'':('data-uid="'+p.userId+'"')}><img src="${esc(av)}" onerror="this.style.display='none'"></div>
+      <div class="dm-avi dm-avi-link" data-uid="${p.userId}"><img src="${esc(av)}" onerror="this.style.display='none'"></div>
       <div class="dm-meta">
-        <div class="dm-name${isOwn?'':' dm-name-link'}" ${isOwn?'':('data-uid="'+p.userId+'"')}>${esc(ud.fullName||'Noma\'lum')}</div>
+        <div class="dm-name dm-name-link" data-uid="${p.userId}">${esc(ud.fullName||'Noma\'lum')}</div>
         <div class="dm-time">${fmt(p.createdAt)}</div>
       </div>
       <button class="dm-close" id="dmClose"><img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14"></button>
@@ -303,20 +304,9 @@ export async function openDetail(id) {
 }
 
 export async function doLikeGen(id, btn) {
-  if (!state.me) return;
-  const wasLiked = state.myLikedPosts.has(id);
-  const svg      = btn.querySelector('svg');
-  if (wasLiked) {
-    state.myLikedPosts.delete(id);
-    const { error } = await sb.from('post_likes').delete().eq('post_id', id).eq('user_id', state.me.uid);
-    if (error) { state.myLikedPosts.add(id); return; }
-    btn.classList.remove('liked'); svg.setAttribute('fill','none'); svg.setAttribute('stroke','currentColor');
-  } else {
-    state.myLikedPosts.add(id);
-    const { error } = await sb.from('post_likes').insert({ post_id: id, user_id: state.me.uid });
-    if (error && error.code !== '23505') { state.myLikedPosts.delete(id); return; }
-    btn.classList.add('liked'); svg.setAttribute('fill','#f91880'); svg.setAttribute('stroke','#f91880');
-  }
+  // Lenta bilan bir xil: UI shu zahoti, saqlash orqa fonda (feed/like-sync.js)
+  const { doLike } = await import('../feed/feed.js');
+  doLike(id, btn);
 }
 
 /* ── Other user's profile modal ──────────────────────────────────────── */
@@ -369,7 +359,13 @@ async function _paintUpGrid(uid) {
 }
 
 export async function openUserProfileModal(uid) {
-  if (!uid || uid === state.me?.uid) return;
+  if (!uid) return;
+  // O'zimning avatarim/ismim — o'z profilim sahifasiga (/profile)
+  if (uid === state.me?.uid) {
+    const { navigateTo } = await import('../router.js');
+    navigateTo('profile');
+    return;
+  }
   state.currentViewingUserId = uid;
   _upTab = 'all';
   $('userProfileModal').classList.add('show');

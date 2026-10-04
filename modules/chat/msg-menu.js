@@ -91,6 +91,7 @@ function menuHtml(m) {
   const isPostShare = m.text && m.text.includes('"__postShare"');
   if (hasText) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
   if (mine && m.type === 'text' && !isPostShare) h += it('edit', IC.edit, 'Tahrirlash');
+  h += it('link', IC.copy, 'Xabar havolasi');
   h += it('fwd', IC.fwd, 'Uzatish');
   if (mine) h += it('del', IC.del, 'O‘chirish', 'danger');
   h += it('sel', IC.sel, 'Tanlash');
@@ -145,7 +146,7 @@ function run(act, id) {
       try {
         const ps = JSON.parse(m.text);
         if (ps?.post?.id) {
-          const url = `${window.location.origin}/#post-${ps.post.id}`;
+          const url = `${window.location.origin}/p/${ps.post.id}`;
           copyToClipboard(url);
           toast('Nusxalandi');
           return;
@@ -154,6 +155,11 @@ function run(act, id) {
     }
     copyToClipboard((m.text || '').trim());
     toast('Nusxalandi');
+    return;
+  }
+  if (act === 'link') {
+    copyToClipboard(`${window.location.origin}${window.location.pathname}#m-${id}`);
+    toast('Havola nusxalandi');
     return;
   }
   if (act === 'edit') return startEdit(m);

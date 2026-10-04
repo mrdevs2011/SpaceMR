@@ -636,6 +636,17 @@ function openStoryAdd() {
   import('./upload.js').then(m => m.openStoryComposer()).catch(e => console.error(e));
 }
 
+/** Foydalanuvchining hikoyalarini ochadi (URL: /s/<username>). Hikoya bo'lmasa false. */
+export async function openStoriesOf(uid) {
+  if (!_groups.some(g => g.uid === uid)) { try { await loadStories(); } catch (_) {} }
+  const idx = _groups.findIndex(g => g.uid === uid);
+  if (idx < 0 || !_groups[idx].items.length) return false;
+  const first = _groups[idx].items.findIndex(it => !it.seen);
+  openViewer(idx, first < 0 ? 0 : first);
+  return true;
+}
+export function closeStoryViewer() { closeViewer(); }
+
 function openViewer(groupIdx, itemIdx) {
   if (!_groups[groupIdx]?.items?.length) return;
   _viewerIdx = groupIdx;
@@ -644,6 +655,8 @@ function openViewer(groupIdx, itemIdx) {
   if (!v) return;
   v.hidden = false;
   document.body.style.overflow = 'hidden';
+  state.storyUid = _groups[groupIdx]?.uid || null;   // URL: /s/<username>
+  window.dispatchEvent(new Event('spacemr:route'));
   showCurrent();
 }
 
@@ -671,6 +684,7 @@ function closeViewer() {
   cancelAnimationFrame(_progressRaf);
   const v = $('storyViewer');
   if (v) v.hidden = true;
+  state.storyUid = null;
   document.body.style.overflow = '';
   const media = $('svMedia');
   if (media) {

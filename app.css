@@ -3782,6 +3782,11 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   filter: none !important;
   opacity: 0.9 !important;
 }
+
+
+/* Xabarga havola (#m-<id>) — qisqa yoritish */
+.chat-msg.msg-link-highlight { animation: msgLinkHl 3s ease-out; }
+@keyframes msgLinkHl { 0%, 60% { background: rgba(29, 155, 240, .25); } 100% { background: transparent; } }
 /* Qatlam / legacy overrides — yangi chat stillari yozilmasin */
 /* CSS/layers.css — theme, ui-improvements, local-utility, dark-theme-fix, borderless, chat-dark-redesign, 00-components.core, post-composer, card-sheets, sidebar-x, no-animations (F4.4), style (global reset). Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── theme ─── */

@@ -72,7 +72,12 @@ document.addEventListener('keydown', e => {
   if (e.isComposing) return;
 
   if (e.key === 'Escape') {
-    if (closeTopmost()) e.preventDefault();
+    if (closeTopmost()) { e.preventDefault(); return; }
+    // Hech narsa ochiq emas, lekin /p/<id> fokusida — bitta oldingi URL ga
+    if (state.focusPostId && !isTyping(e.target)) {
+      e.preventDefault();
+      import('../url-router.js').then(m => m.goBack());
+    }
     return;
   }
 

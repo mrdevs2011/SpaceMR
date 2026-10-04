@@ -6,6 +6,7 @@ import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
 import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
+import { syncLike } from './like-sync.js';
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -197,7 +198,7 @@ export async function renderFeedTo(feedEl, posts) {
           <span class="post-name">${esc(u.fullName||'Noma\'lum')}</span>
           ${u.username ? `<span class="post-user">@${esc(u.username)}</span>` : ''}
           <span class="post-dot">·</span>
-          <span class="post-time">${fmt(p.createdAt)}</span>
+          <span class="post-time" style="cursor:pointer" title="Postni ochish">${fmt(p.createdAt)}</span>
         </div>
         <button class="post-more-btn" data-id="${p.id}" data-uid="${p.userId}" data-can-del="${canDel ? '1' : ''}" title="Yana" aria-label="Yana" aria-haspopup="menu">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
@@ -303,13 +304,13 @@ try {
 
 export async function copyPostLink(postId) {
   if (!postId) return;
-  return copyUrl(`${window.location.origin}/#post-${postId}`);
+  return copyUrl(`${window.location.origin}/p/${postId}`);
 }
 
 /** Izoh havolasi: ochilganda o'sha postga o'tadi, izohlarni ochadi va izohni yoritadi. */
 export async function copyCommentLink(postId, cmtId) {
   if (!postId || !cmtId) return;
-  return copyUrl(`${window.location.origin}/#post-${postId}~c-${cmtId}`);
+  return copyUrl(`${window.location.origin}/p/${postId}#c-${cmtId}`);
 }
 
 async function copyUrl(postUrl) {
@@ -446,6 +447,10 @@ export function scrollToPostFromHash() {
         _hlId = targetId;
         _hlStart = Date.now();
         applyPostHighlight(el);
+        if (state.focusOpenCmts) {
+          state.focusOpenCmts = false;
+          import('./comments.js').then(m => { if (!m.isCmtOpen(targetId)) m.openCmtModal(targetId); }).catch(() => {});
+        }
       }
       try {
         if (window.location.hash.startsWith('#post-')) {
@@ -484,14 +489,19 @@ export function scrollToPostFromHash() {
 
 /* Ilova ichidan post linkini ochish — "Havolani nusxalash" qilingan
    `${origin}/#post-<id>` ni brauzerga kiritganday: lenta, shu postga scroll + yonish. */
-export async function openPostLink(postId) {
+export async function openPostLink(postId, cmtId = null, opts = {}) {
   if (!postId) return;
   _scrolledTargetId = null;     // oldin shu post ochilgan bo'lsa ham qayta ishlasin
   _hashPostHandled = false;     // visibleN ni shu postgacha kengaytirsin
   sessionStorage.setItem('target_post_id', postId);
-  window.location.hash = '#post-' + postId;
+  if (cmtId) sessionStorage.setItem('target_cmt_id', cmtId);
+  else sessionStorage.removeItem('target_cmt_id');
   const { navigateTo } = await import('../router.js');
-  navigateTo('home');
+  navigateTo('home');           // fokusni tozalaydi
+  state.focusPostId = postId;   // URL: /p/<id>[#c-<izoh>]
+  state.focusCmtId = cmtId || null;
+  state.focusOpenCmts = !!opts.comments;   // /p/<id>/comments: post ochilgach izohlar ham ochiladi
+  window.dispatchEvent(new Event('spacemr:route'));
   await renderFeed();           // targetId bor -> scrollToPostFromHash o'zi chaqiriladi
 }
 
@@ -519,12 +529,17 @@ function bindFeedEvents(feedEl) {
       openCmtModal(cmt.dataset.id);
       return;
     }
+    const tm = t.closest('.post-time');
+    if (tm) {
+      const pe = tm.closest('.post');
+      if (pe?.dataset.id) { e.stopPropagation(); openPostLink(pe.dataset.id); return; }
+    }
     const link = t.closest('.link-btn');
     if (link) { e.stopPropagation(); copyPostLink(link.dataset.id); return; }
     const share = t.closest('.share-btn');
     if (share) { e.stopPropagation(); sharePostToChat(share.dataset.id); return; }
     const avi = t.closest('.user-avi-btn');
-    if (avi && avi.dataset.uid && avi.dataset.uid !== state.me?.uid) {
+    if (avi && avi.dataset.uid) {
       e.stopPropagation();
       const { openUserProfileModal } = await import('../profile/profile.js');
       openUserProfileModal(avi.dataset.uid);
@@ -621,55 +636,45 @@ export async function doSave(postId) {
 }
 
 /* ── Like ────────────────────────────────────────────────────────────── */
-const _likeLocks = new Set();
-export async function doLike(postId, btn) {
+/* Barcha ko'rinishlarda (lenta, detal, rail) like holati va sonini bir zumda chizadi */
+function paintLike(postId, on, n, btn, pop) {
+  if (on) { state.myLikedPosts.add(postId); state._knownUnliked.delete(postId); }
+  else    { state.myLikedPosts.delete(postId); state._knownUnliked.add(postId); }
+  const post = state.allPosts.find(p => p.id === postId);
+  if (post) post.likes = n;
+  const btns = new Set(document.querySelectorAll(`.like-btn[data-id="${postId}"]`));
+  if (btn) btns.add(btn);
+  btns.forEach(b => {
+    b.classList.toggle('liked', on);
+    const svg = b.querySelector('svg');
+    svg?.setAttribute('fill', on ? '#f91880' : 'none');
+    svg?.setAttribute('stroke', on ? '#f91880' : 'currentColor');
+    if (on && pop) { b.classList.add('like-pop'); setTimeout(() => b.classList.remove('like-pop'), 400); }
+  });
+  const lc = document.getElementById(`lc-${postId}`);
+  if (lc) lc.textContent = fmtCount(n);
+}
+
+export function doLike(postId, btn) {
   if (!state.me) return;
-  if (_likeLocks.has(postId)) return;
-  _likeLocks.add(postId);
-  
   const wasLiked = state.myLikedPosts.has(postId);
   const post     = state.allPosts.find(p => p.id === postId);
-  const svg      = btn.querySelector('svg');
   const lc       = document.getElementById(`lc-${postId}`);
   const cur      = post?.likes ?? (parseInt(lc?.textContent, 10) || 0); // Saqlanganlar kabi allPosts'da yo'q postlar uchun DOM'dan
+  const want     = !wasLiked;
+  const n        = Math.max(0, cur + (want ? 1 : -1));
 
-  if (wasLiked) {
-    state.myLikedPosts.delete(postId);
-    state._knownUnliked.add(postId);
-    btn.classList.remove('liked');
-    svg?.setAttribute('fill','none'); svg?.setAttribute('stroke','currentColor');
-    if (lc) lc.textContent = fmtCount(Math.max(0,cur-1));
-    if (post) post.likes = Math.max(0, cur-1);
-  } else {
-    state.myLikedPosts.add(postId);
-    state._knownUnliked.delete(postId);
-    btn.classList.add('liked');
-    svg?.setAttribute('fill','#f91880'); svg?.setAttribute('stroke','#f91880');
-    if (lc) lc.textContent = fmtCount(cur+1);
-    if (post) post.likes = cur + 1;
-    btn.classList.add('like-pop');
-    setTimeout(() => btn.classList.remove('like-pop'), 400);
-  }
+  // 1) UI — shu zahoti (0ms), tarmoq kutilmaydi; boshqalarga ham shu zahoti
+  paintLike(postId, want, n, btn, true);
+  busEmit('like', { postId, n, on: want });
 
-  // Boshqalarga shu zahoti (DB trigger/postgres_changes kutilmaydi)
-  busEmit('like', { postId, n: post?.likes ?? (wasLiked ? Math.max(0, cur-1) : cur+1), on: !wasLiked });
-
-  // Like sonini DB trigger yangilaydi (post_likes → posts.likes_count)
-  try {
-    if (wasLiked) {
-      const { error } = await sb.from('post_likes').delete()
-        .eq('post_id', postId).eq('user_id', state.me.uid);
-      if (error) throw error;
-    } else {
-      const { error } = await sb.from('post_likes')
-        .insert({ post_id: postId, user_id: state.me.uid });
-      if (error && error.code !== '23505') throw error; // 23505 = allaqachon like
-    }
-  } catch (err) {
-    console.warn('[Feed] Like saqlanmadi:', err?.message);
-  } finally {
-    _likeLocks.delete(postId);
-  }
+  // 2) Orqa fonda saqlanadi (DB trigger post_likes → posts.likes_count ni yangilaydi); xato bo'lsa qaytariladi
+  syncLike(postId, state.me.uid, wasLiked, want, (serverOn, meta) => {
+    const cnt = Math.max(0, meta.baseCount + (serverOn ? 1 : 0) - (meta.baseLiked ? 1 : 0));
+    paintLike(postId, serverOn, cnt, null, false);
+    busEmit('like', { postId, n: cnt, on: serverOn });
+    toast('Like saqlanmadi', 'error');
+  }, { baseLiked: wasLiked, baseCount: cur });
 }
 
 /* ── Delete ──────────────────────────────────────────────────────────── */

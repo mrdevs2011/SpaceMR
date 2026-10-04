@@ -1439,7 +1439,18 @@ export function listenPosts() {
     }),
   ];
 
-  _postsUnsub = () => { if (_renderRaf) cancelAnimationFrame(_renderRaf); _offBus.forEach(f => f()); sb.removeChannel(ch); };
+  // Uyg'onish / internet qaytishi / socket qayta ulanishi: lentani qayta yuklaymiz (core/live.js)
+  const _onResync = () => { load(); };
+  window.addEventListener('spacemr:resync', _onResync);
+  import('../core/live.js').then(m => m.initLive()).catch(() => {});
+
+  _postsUnsub = () => {
+    if (_renderRaf) cancelAnimationFrame(_renderRaf);
+    _offBus.forEach(f => f());
+    window.removeEventListener('spacemr:resync', _onResync);
+    import('../core/live.js').then(m => m.stopLive()).catch(() => {});
+    sb.removeChannel(ch);
+  };
 }
 
 /* ── Profil edit / logout — to'liq implementatsiya ─────────────────── */

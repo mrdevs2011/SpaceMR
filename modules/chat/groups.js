@@ -170,6 +170,8 @@ export function startGroupsWatcher() {
 
 let _groupsTimer = null;
 const _groupsSched = () => { clearTimeout(_groupsTimer); _groupsTimer = setTimeout(_loadGroups, 0); };
+/* Uyg'onish / internet qaytishi: guruhlar ro'yxati qayta yuklanadi */
+window.addEventListener('spacemr:resync', () => { if (_groupsUnsub) _groupsSched(); });
 
 /** Guruh o'zgarishlarini berilgan (hali subscribe qilinmagan) kanalga ulaydi. */
 export function bindGroupsRealtime(ch) {
@@ -472,11 +474,13 @@ export async function openGroupThread(groupId) {
     }
     paintGroupMessages(_gMsgs, _currentGroupData || groupData);
   };
+  window.addEventListener('spacemr:resync', sched);   // ochiq guruh chati ham uyg'onganda yangilanadi
   const gch = sb.channel('gthread-' + groupId)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, applyGroupPayload)
     .subscribe(st => { if (st === 'SUBSCRIBED') sched(); });
   _groupThreadUnsub = () => {
     _gDead = true; clearTimeout(_gTimer); sb.removeChannel(gch);
+    window.removeEventListener('spacemr:resync', sched);
     if (_gRt) { _gRt.close(); _gRt = null; }
     if (_reloadGroupThread === loadMsgs) _reloadGroupThread = null;
   };

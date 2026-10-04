@@ -82,6 +82,14 @@
       "continue": false
     },
     {
+      "src": "^/(index\\.html)?$",
+      "dest": "/api/shell?p=/"
+    },
+    {
+      "src": "^/login/?$",
+      "dest": "/index.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
@@ -94,7 +102,12 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/api/shell?p=/$1"
     }
-  ]
+  ],
+  "functions": {
+    "api/shell.js": {
+      "includeFiles": "index.html"
+    }
+  }
 }

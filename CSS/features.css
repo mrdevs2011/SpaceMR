@@ -3414,3 +3414,8 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   filter: none !important;
   opacity: 0.9 !important;
 }
+
+
+/* Xabarga havola (#m-<id>) — qisqa yoritish */
+.chat-msg.msg-link-highlight { animation: msgLinkHl 3s ease-out; }
+@keyframes msgLinkHl { 0%, 60% { background: rgba(29, 155, 240, .25); } 100% { background: transparent; } }

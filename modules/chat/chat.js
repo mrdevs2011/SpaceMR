@@ -992,8 +992,16 @@ export function startChatsWatcher() {
         schedChats();
       });
     // guruh o'zgarishlari ham shu kanalda (5.3: 'groups-watcher' kanali yo'q)
-    const chCh = bindGroupsRealtime(chBase).subscribe();
-    chatState._chatsUnsub = () => { _chDead = true; clearTimeout(_chTimer); sb.removeChannel(chCh); };
+    let _chSubbed = false;
+    const chCh = bindGroupsRealtime(chBase).subscribe(st => {
+      if (st !== 'SUBSCRIBED') return;
+      if (_chSubbed) schedChats();     // uzilib qayta ulandi — o'tkazib yuborilganlarni to'ldiramiz
+      _chSubbed = true;
+    });
+    // Uyg'onish / internet qaytishi: suhbatlar ro'yxati va ochiq thread qayta yuklanadi
+    const _onResync = () => { schedChats(); try { if (chatState._threadUnsub) chatState._reloadThread?.(); } catch (_) {} };
+    window.addEventListener('spacemr:resync', _onResync);
+    chatState._chatsUnsub = () => { _chDead = true; clearTimeout(_chTimer); window.removeEventListener('spacemr:resync', _onResync); sb.removeChannel(chCh); };
     loadChats();
 
     // Onlayn nuqtalar vaqt o'tishi bilan (masalan user oflayn bo'lib qolganda)
@@ -1987,7 +1995,7 @@ export function paintMessages(msgs, grp = null) {
     if (btn._bound) return; btn._bound = true;
     btn.addEventListener('click', async () => {
       const uid = btn.dataset.uid;
-      if (!uid || uid === state.me?.uid) return;
+      if (!uid) return;
       const { openUserProfileModal } = await import('../profile/profile.js');
       openUserProfileModal(uid);
     });

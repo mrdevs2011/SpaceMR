@@ -35,6 +35,23 @@ export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   realtime: { params: { eventsPerSecond: 60 } },
 });
 
+/* Server darvozasi: api/shell.js shu cookie'dagi access_token bilan kirganingni tekshiradi.
+   Cookie faqat sessiya bor paytda turadi; chiqishda yoki muddat tugaganda o'chadi. */
+(function syncGateCookie() {
+  const put = s => {
+    try {
+      const sec = location.protocol === 'https:' ? '; Secure' : '';
+      if (s?.access_token) {
+        const age = Math.max(60, (s.expires_at || 0) - Math.floor(Date.now() / 1000));
+        document.cookie = `sp_at=${s.access_token}; Path=/; Max-Age=${age}; SameSite=Lax${sec}`;
+      } else {
+        document.cookie = `sp_at=; Path=/; Max-Age=0; SameSite=Lax${sec}`;
+      }
+    } catch (_) {}
+  };
+  sb.auth.onAuthStateChange((ev, s) => put(ev === 'SIGNED_OUT' ? null : s));
+})();
+
 /* ── Vaqt: hamma joyda oddiy epoch-millisekund (number) ─────────────── */
 /** ISO string | ms | Date → ms (yoki null) */
 export function ts(v) {
