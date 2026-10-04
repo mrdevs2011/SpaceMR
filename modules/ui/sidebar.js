@@ -102,11 +102,11 @@ export function openProfileSettings() {
   const open = () => {
     const ov = document.getElementById('settingsOverlay');
     if (!ov) return;
+    openBasicAccordion();
     if (!ov.classList.contains('show')) {
       import('../auth/auth.js').then(m => { try { m.populateProfileForm?.(); } catch(_){} }).catch(()=>{});
       ov.classList.add('show');
     }
-    openBasicAccordion();
     if (window.matchMedia('(min-width: 1200px)').matches) {
       document.body.classList.add('desktop-settings-pinned');
     } else {

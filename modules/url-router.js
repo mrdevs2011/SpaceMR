@@ -75,8 +75,10 @@ export function parsePath(rawPath) {
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };
   }
-  if (a === 'profile' && seg.length === 2 && b === 'settings') {
-    return { kind: 'overlay', overlay: 'settings', base: 'profile' };
+  if (a === 'profile' && b === 'settings' && (seg.length === 2 || seg.length === 3)) {
+    const sec = (seg[2] || '').toLowerCase();
+    if (seg.length === 3 && !['general', 'email', 'password'].includes(sec)) return { kind: 'notfound' };
+    return { kind: 'overlay', overlay: 'settings', base: 'profile', section: sec || null };
   }
   if (a === 'u' && seg.length === 2 && seg[1]) {
     return { kind: 'userprofile', ref: seg[1] };
@@ -171,7 +173,12 @@ function computeUrl() {
     return t ? `/u/${encodeURIComponent(t)}` : null;
   }
 
-  if (hasShow('settingsOverlay') && (!settingsPinned() || location.pathname === '/settings' || location.pathname === '/profile/settings')) return '/profile/settings';
+  if (hasShow('settingsOverlay')) {
+    const open = document.querySelector('#settingsOverlay .pe-accordion.open');
+    const key = open && open.getAttribute('data-pe-acc');
+    const sec = { basic: 'general', email: 'email', password: 'password' }[key];
+    return sec ? '/profile/settings/' + sec : '/profile/settings';
+  }
 
   if (hasShow('uploadOverlay')) return '/newpost';
   if (hasShow('searchOverlay', 'open')) return '/explore';
@@ -235,7 +242,7 @@ function sync() {
 
 const TITLES = {
   '/login': 'Kirish', '/home': 'Bosh sahifa', '/chats': 'Suhbatlar', '/profile': 'Profil',
-  '/settings': 'Sozlamalar', '/profile/settings': 'Sozlamalar', '/explore': 'Kashf', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
+  '/settings': 'Sozlamalar', '/profile/settings': 'Sozlamalar', '/profile/settings/general': 'Sozlamalar', '/profile/settings/email': 'Sozlamalar', '/profile/settings/password': 'Sozlamalar', '/explore': 'Kashf', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
   '/chats/groupcreate': 'Yangi guruh',
 };
 function updateTitle(path) {
@@ -281,9 +288,20 @@ function deny() {
   return applyPath('/');
 }
 
-async function openOverlay(name) {
+function openSettingsSection(section) {
+  const map = { general: 'basic', email: 'email', password: 'password' };
+  const key = map[section];
+  document.querySelectorAll('#settingsOverlay .pe-accordion').forEach((acc) => {
+    const on = !!key && acc.getAttribute('data-pe-acc') === key;
+    acc.classList.toggle('open', on);
+    acc.querySelector('.pe-acc-toggle')?.setAttribute('aria-expanded', on ? 'true' : 'false');
+  });
+}
+
+async function openOverlay(name, section) {
   if (name === 'settings') {
     if (!hasShow('settingsOverlay')) $('settingsBtn')?.click();
+    if (section) openSettingsSection(section);
     return;
   }
   if (name === 'explore') {
@@ -386,7 +404,7 @@ export async function applyPath(rawPath, { initial = false } = {}) {
       if (route.overlay === 'settings' && window.matchMedia('(min-width: 1200px)').matches) baseView = 'profile';
       if (getCurrentRoute() !== baseView) navigateTo(baseView, false);
       closeEverythingExcept(route.overlay);
-      await openOverlay(route.overlay);
+      await openOverlay(route.overlay, route.section);
       updateTitle(cleanPath(rawPath));
       return;
     }
