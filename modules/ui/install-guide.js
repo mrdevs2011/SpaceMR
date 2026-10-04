@@ -95,8 +95,8 @@ function ensureOverlay() {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGuide(); });
   document.body.appendChild(overlay);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isGuideOpen()) closeGuide();
-  });
+    if (e.key === 'Escape' && isGuideOpen()) { e.stopPropagation(); e.preventDefault(); closeGuide(); }
+  }, true); // capture: umumiy Esc ostidagi oynani ham yopib yubormasin
   return overlay;
 }
 

@@ -447,9 +447,15 @@ function _bindZoomOnce() {
   im.addEventListener('pointerup', endMouse);
   im.addEventListener('pointercancel', endMouse);
 
+  // Capture + stopPropagation: Esc faqat rasmni yopadi. Aks holda umumiy Esc (shortcuts.js)
+  // ham ishlab, rasm ostidagi oyna/profil/chatni ham yopib, bosh sahifagacha qaytarib yuborardi.
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && zm.classList.contains('show')) _zClose();
-  });
+    if (e.key === 'Escape' && zm.classList.contains('show')) {
+      e.stopPropagation();
+      e.preventDefault();
+      _zClose();
+    }
+  }, true);
 }
 
 // DOM tayyor bo'lganda bir marta bog'lash

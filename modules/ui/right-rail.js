@@ -196,8 +196,8 @@ function onClick(e) {
     return;
   }
   if (pid) {
-    const el = document.getElementById('post-' + pid) || document.querySelector(`.post[data-id="${pid}"]`) || document.querySelector(`[data-post-id="${pid}"]`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Post havolasi: bosh sahifaga o'tib, aynan shu postga scroll + yoritish (qaysi sahifadan bosilmasin)
+    import('../feed/feed.js').then(m => m.openPostLink(pid)).catch(() => {});
     return;
   }
   if (uid) {
