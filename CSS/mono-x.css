@@ -1115,7 +1115,8 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #chatThreadMessages.msg-selecting .chat-msg.mine[data-msg-id]::before { margin-right: auto; }
 #chatThreadMessages.msg-selecting .chat-msg.theirs[data-msg-id]::before { margin-right: 10px; }
 #chatThreadMessages.msg-selecting .chat-msg.mc-selected::before { border-color: var(--blue); background: var(--blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 12px no-repeat; }
-#chatThreadMessages.msg-selecting .chat-msg.mc-selected .chat-bubble { box-shadow: 0 0 0 2px var(--blue); }
+/* Tanlangan xabar: chegara (outline) yo'q — pufak to'liq X ko'k rangga kiradi (rasm-faqat pufagida pufak yo'q, u features.css'dagi qoplama bilan) */
+#chatThreadMessages.msg-selecting .chat-msg.mc-selected .chat-bubble:not(.bubble-media-only) { background: var(--x-blue) !important; box-shadow: none !important; }
 
 /* Tanlash paneli: kiritish qatori o'rnida */
 #msgSelBar { display: none; flex-shrink: 0; align-items: center; gap: 6px; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--pal-gray-700); }
