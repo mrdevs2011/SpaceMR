@@ -155,7 +155,7 @@ export const fmtSz  = b  => b > 1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024
  * olinadi. Agar oxirgi yangilanishdan beri ONLINE_THRESHOLD_MS dan kam
  * vaqt o'tgan bo'lsa — foydalanuvchi "onlayn" hisoblanadi.
  */
-export const ONLINE_THRESHOLD_MS = 100 * 1000; // heartbeat ~25s (fon tabda ~60s gacha sekinlashadi), bufer 100s
+export const ONLINE_THRESHOLD_MS = 60 * 1000; // faqat shina (presence) uzilganda zaxira: heartbeat 25s, 2 ta o'tkazib yuborishga bufer
 
 export function isOnline(lastSeenAt) {
   if (!lastSeenAt) return false;
@@ -165,7 +165,7 @@ export function isOnline(lastSeenAt) {
 
 export function formatLastSeen(lastSeenAt) {
   if (!lastSeenAt) return "faollik ma'lumoti yo'q";
-  if (isOnline(lastSeenAt)) return 'onlayn';
+  // 'onlayn' bu yerda qaytarilmaydi: onlayn/oflayn qarorini rt-bus (presence) beradi.
 
   const d = new Date(lastSeenAt);
   // Soat daqiqalari bo'yicha: hozir 12:45 bo'lsa, 12:44 (yoki 12:45) — "hozirgina"; 12:43 va undan oldin — aniq vaqt

@@ -1,5 +1,5 @@
 import { askPassword } from '../ui/password-confirm.js';
-import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, verifyPassword } from '../core/config.js';
+import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, verifyPassword, SUPABASE_URL, SUPABASE_ANON_KEY } from '../core/config.js';
 import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
@@ -1174,14 +1174,34 @@ async function _preloadForSplash(uid) {
 const HEARTBEAT_MS = 25 * 1000;
 let _heartbeatTimer = null;
 
-async function _pingPresence() {
+let _accessTok = null;
+
+async function _pingPresence(force = false) {
   const uid = state.me?.uid;
   if (!uid) return;
-  // Faqat faol tab — boshqa tabda offline qolishi kerak
-  if (document.visibilityState !== 'visible') return;
+  // Odatda faqat faol tab; force=true — tab yashirilayotganda "oxirgi faollik"ni aniq yozish uchun
+  if (!force && document.visibilityState !== 'visible') return;
   try {
     await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', uid);
+    const { data } = await sb.auth.getSession();
+    _accessTok = data?.session?.access_token || _accessTok;
   } catch (_) { /* tarmoq yo'q — keyingi tikda qayta urinadi */ }
+}
+
+/** Sahifa yopilayotganda: keepalive so'rov brauzer yopilgandan keyin ham yetib boradi */
+function _flushLastSeenKeepalive() {
+  const uid = state.me?.uid;
+  if (!uid || !_accessTok) return;
+  try {
+    fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(uid)}`, {
+      method: 'PATCH', keepalive: true,
+      headers: {
+        apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${_accessTok}`,
+        'Content-Type': 'application/json', Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ last_seen: new Date().toISOString() }),
+    }).catch(() => {});
+  } catch (_) {}
 }
 
 function startPresenceHeartbeat() {
@@ -1201,6 +1221,7 @@ function stopPresenceHeartbeat() {
 
 function _onPageHidePresence() {
   untrackPresence();
+  _flushLastSeenKeepalive();
   if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
 }
 
@@ -1212,8 +1233,10 @@ function _onVisibilityChangeForPresence() {
       _heartbeatTimer = setInterval(_pingPresence, HEARTBEAT_MS);
     }
   } else {
-    // Boshqa tab / minimallashtirish — darhol offline
+    // Boshqa tab / minimallashtirish — darhol offline, "oxirgi faollik" aniq yoziladi
     untrackPresence();
+    _pingPresence(true);
+    _flushLastSeenKeepalive();
     if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
   }
 }
