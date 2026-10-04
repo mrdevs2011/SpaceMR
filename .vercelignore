@@ -1,18 +1,12 @@
-# Upload qilinmasin (build ham, deploy ham)
 node_modules
 .env*
 .vercel
 .git
 
-# Frontend buildga kerak emas — repo da qoladi
+# Repo da qoladi, deployga yuklanmaydi (buildga ham kerak emas)
 supabase
 tests
 docs
 STATUS.md
 README.md
-*.md
-!vercel.json
-
-# Arxiv (agar rootga qaytsa)
 scratch
-docs/archive
