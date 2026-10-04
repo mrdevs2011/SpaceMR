@@ -1,9 +1,8 @@
 /**
  * install-guide.js — "Ilovani o'rnating + bildirishnomani yoqing" yo'riqnomasi.
- *  • Sozlamalarda "Yo'riqnoma" tugmasi (#guideOpenBtn) → pastdan chiqadigan oyna
- *  • Kirgandan keyin mobil qurilmada BIR MARTALIK yopiladigan karta
- * Platformaga qarab matn o'zgaradi: iPhone / Android / kompyuter.
- * iPhone'da bildirishnoma faqat bosh ekrandan ochilgan ilovada ishlaydi (iOS 16.4+).
+ *  • Login: #loginGuideBtn / #loginInstallBtn → auth-card ICHIDA (float emas)
+ *  • Sozlamalar: #guideOpenBtn → pastdan chiqadigan overlay
+ *  • Kirgandan keyin mobil: bir martalik karta
  */
 import { $ } from '../core/utils.js';
 import { toast } from './toast.js';
@@ -24,7 +23,7 @@ window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); _def
 window.addEventListener('appinstalled', () => { _deferredInstall = null; closeGuide(); });
 
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private rejim */ } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private */ } };
 
 const I = {
   share: '<img src="./svg/extra/icon-9157214ed9c4.svg" alt="" class="icon" width="20" height="20">',
@@ -65,7 +64,9 @@ function buildSteps() {
   ];
 }
 
+/* ── Overlay (faqat sozlamalar / app ichida) ── */
 let overlay = null;
+let _mode = 'overlay'; // 'overlay' | 'auth'
 
 function ensureOverlay() {
   if (overlay) return overlay;
@@ -75,12 +76,19 @@ function ensureOverlay() {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGuide(); });
   document.body.appendChild(overlay);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay?.classList.contains('show')) closeGuide();
+    if (e.key === 'Escape' && isGuideOpen()) closeGuide();
   });
   return overlay;
 }
 
-function renderGuide() {
+function isGuideOpen() {
+  if (_mode === 'auth') {
+    return !!document.getElementById('authGuideInline');
+  }
+  return !!overlay?.classList.contains('show');
+}
+
+function guideBodyHtml() {
   const standalone = isStandalone();
   const steps = buildSteps();
   const denied = 'Notification' in window && Notification.permission === 'denied';
@@ -88,7 +96,7 @@ function renderGuide() {
 
   const title = standalone ? 'Bildirishnomani yoqing' : "Ilovani o'rnating";
   const sub = standalone
-    ? 'Yangi xabar, izoh va qo\'ng\'iroqlar haqida darhol xabar olasiz.'
+    ? "Yangi xabar, izoh va qo'ng'iroqlar haqida darhol xabar olasiz."
     : "Bosh ekranga qo'shsangiz SpaceMR ilova kabi ochiladi va bildirishnomalar keladi.";
 
   const stepsHtml = steps.map((s, i) => `
@@ -103,30 +111,91 @@ function renderGuide() {
   const warn = denied
     ? `<div class="ig-note ig-warn">Bildirishnoma bloklangan. Brauzer yoki telefon sozlamalaridan SpaceMR uchun ruxsat bering.</div>` : '';
 
-  overlay.innerHTML = `
-    <div class="ig-sheet" role="dialog" aria-modal="true" aria-label="${title}">
-      <div class="ig-bell">${standalone ? I.bell : I.install}</div>
-      <h2 class="ig-title">${title}</h2>
-      <p class="ig-sub">${sub}</p>
-      <ol class="ig-steps">${stepsHtml}</ol>
-      ${note}${warn}
-      ${_deferredInstall && !standalone ? '<button type="button" class="pw-btn" id="igInstallBtn">Ilovani o\'rnatish</button>' : ''}
-      ${canEnableHere ? `<button type="button" class="${_deferredInstall && !standalone ? 'pw-ghost' : 'pw-btn'}" id="igNotifBtn">Bildirishnomani yoqish</button>` : ''}
-      <button type="button" class="${(_deferredInstall && !standalone) || canEnableHere ? 'pw-link' : 'pw-btn'}" id="igCloseBtn">Tushundim</button>
-    </div>`;
+  return `
+    <div class="ig-bell">${standalone ? I.bell : I.install}</div>
+    <h2 class="ig-title">${title}</h2>
+    <p class="ig-sub">${sub}</p>
+    <ol class="ig-steps">${stepsHtml}</ol>
+    ${note}${warn}
+    ${_deferredInstall && !standalone ? '<button type="button" class="pw-btn" id="igInstallBtn">Ilovani o\'rnatish</button>' : ''}
+    ${canEnableHere ? `<button type="button" class="${_deferredInstall && !standalone ? 'pw-ghost' : 'pw-btn'}" id="igNotifBtn">Bildirishnomani yoqish</button>` : ''}
+    <button type="button" class="${(_deferredInstall && !standalone) || canEnableHere ? 'pw-link' : 'pw-btn'}" id="igCloseBtn">Tushundim</button>`;
+}
 
-  $('igCloseBtn').onclick = closeGuide;
-  const inst = $('igInstallBtn');
+function bindGuideButtons() {
+  const closeBtn = document.getElementById('igCloseBtn');
+  if (closeBtn) closeBtn.onclick = closeGuide;
+  const inst = document.getElementById('igInstallBtn');
   if (inst) inst.onclick = async () => {
     try {
       _deferredInstall.prompt();
       await _deferredInstall.userChoice;
-    } catch { /* foydalanuvchi bekor qildi */ }
+    } catch { /* bekor */ }
     _deferredInstall = null;
     closeGuide();
   };
-  const nb = $('igNotifBtn');
+  const nb = document.getElementById('igNotifBtn');
   if (nb) nb.onclick = () => enableNotifs(nb);
+}
+
+/* ── Auth-card ichida (login) ── */
+const AUTH_HIDE_SEL = [
+  '#nameRow', '#aUsername', '#aPassword', '#confirmRow',
+  '#forgotPasswordWrap', '#authErr', '#authBtn',
+  '.auth-switch', '.auth-install', '#authTitle',
+].join(',');
+
+function openGuideInAuth() {
+  const card = document.querySelector('#authWrap .auth-card');
+  if (!card) { openGuideOverlay(); return; }
+
+  // Allaqachon ochiq bo'lsa qayta ochma
+  if (document.getElementById('authGuideInline')) return;
+
+  _mode = 'auth';
+  dismissCard();
+
+  // Login formani yashirish
+  card.querySelectorAll(AUTH_HIDE_SEL).forEach((el) => {
+    el.dataset.igPrevDisplay = el.style.display || '';
+    el.style.display = 'none';
+  });
+
+  const panel = document.createElement('div');
+  panel.id = 'authGuideInline';
+  panel.className = 'ig-sheet ig-sheet--inline';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-label', "Yo'riqnoma");
+  panel.innerHTML = guideBodyHtml();
+  card.appendChild(panel);
+  bindGuideButtons();
+}
+
+function closeGuideInAuth() {
+  const panel = document.getElementById('authGuideInline');
+  panel?.remove();
+  const card = document.querySelector('#authWrap .auth-card');
+  if (card) {
+    card.querySelectorAll(AUTH_HIDE_SEL).forEach((el) => {
+      if (el.dataset.igPrevDisplay !== undefined) {
+        el.style.display = el.dataset.igPrevDisplay;
+        delete el.dataset.igPrevDisplay;
+      } else {
+        el.style.display = '';
+      }
+    });
+  }
+  _mode = 'overlay';
+}
+
+/* ── Overlay (sozlamalar) ── */
+function openGuideOverlay() {
+  _mode = 'overlay';
+  ensureOverlay();
+  dismissCard();
+  overlay.innerHTML = `<div class="ig-sheet" role="dialog" aria-modal="true">${guideBodyHtml()}</div>`;
+  bindGuideButtons();
+  overlay.classList.add('show');
 }
 
 async function enableNotifs(btn) {
@@ -142,15 +211,23 @@ async function enableNotifs(btn) {
   }
 }
 
-export function openGuide() {
-  ensureOverlay();
-  dismissCard();
-  renderGuide();
-  overlay.classList.add('show');
+export function openGuide(opts = {}) {
+  const inAuth = opts.inAuth === true ||
+    (document.getElementById('authWrap') &&
+      document.getElementById('authWrap').style.display !== 'none' &&
+      opts.fromLogin);
+  if (inAuth || opts.fromLogin) openGuideInAuth();
+  else openGuideOverlay();
 }
-export function closeGuide() { overlay?.classList.remove('show'); }
 
-/* ── Bir martalik karta (faqat telefonda) ── */
+export function closeGuide() {
+  if (_mode === 'auth' || document.getElementById('authGuideInline')) {
+    closeGuideInAuth();
+  }
+  overlay?.classList.remove('show');
+}
+
+/* ── Bir martalik karta (faqat telefonda, app ichida) ── */
 let card = null;
 function dismissCard() { card?.remove(); card = null; }
 
@@ -163,7 +240,9 @@ export function maybeShowGuideCard() {
   if (!kind) return;
 
   setTimeout(() => {
-    if (card || overlay?.classList.contains('show')) return;
+    if (card || isGuideOpen()) return;
+    // Auth ekranida ko'rsatma
+    if (document.getElementById('authWrap')?.style.display !== 'none') return;
     card = document.createElement('div');
     card.className = 'ig-card';
     const isInstall = kind === 'install';
@@ -180,25 +259,32 @@ export function maybeShowGuideCard() {
     card.querySelector('.ig-card-x').onclick = () => { mark(); dismissCard(); };
     card.querySelector('.ig-card-go').onclick = async () => {
       mark();
-      if (isInstall) { openGuide(); return; }
+      if (isInstall) { openGuideOverlay(); return; }
       dismissCard();
       await enableNotifs(null);
     };
   }, 8000);
 }
 
-/* ── Sozlamalardagi "Yo'riqnoma" tugmasi ── */
+/* ── Init ── */
 let _igInited = false;
 export function initInstallGuide() {
   if (_igInited) return;
   _igInited = true;
-  // Event delegation — sozlamalar qayta chizilsa ham ishlaydi
   document.addEventListener('click', (e) => {
-    const t = e.target.closest?.('#guideOpenBtn, #loginInstallBtn, #loginGuideBtn');
-    if (!t) return;
-    e.preventDefault();
-    e.stopPropagation();
-    openGuide();
+    const loginBtn = e.target.closest?.('#loginInstallBtn, #loginGuideBtn');
+    if (loginBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      openGuide({ fromLogin: true });
+      return;
+    }
+    const t = e.target.closest?.('#guideOpenBtn');
+    if (t) {
+      e.preventDefault();
+      e.stopPropagation();
+      openGuideOverlay();
+    }
   });
 }
 initInstallGuide();

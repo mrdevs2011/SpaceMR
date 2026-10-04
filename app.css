@@ -3297,6 +3297,40 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .ig-sheet .pw-link:hover { color: #fff; }
 
+/* Login box ichida yo'riqnoma (float emas) */
+.ig-sheet--inline {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 8px 0 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+  color: #fff;
+}
+.ig-sheet--inline .ig-bell {
+  width: 44px; height: 44px;
+  margin: 0 auto 10px;
+}
+.ig-sheet--inline .ig-title { font-size: 17px; }
+.ig-sheet--inline .ig-sub { font-size: 12.5px; margin-bottom: 12px; }
+.ig-sheet--inline .ig-step {
+  padding: 8px 10px;
+  gap: 8px;
+}
+.ig-sheet--inline .ig-txt { font-size: 12.5px; }
+.ig-sheet--inline .pw-btn,
+.ig-sheet--inline .pw-ghost,
+.ig-sheet--inline .pw-link {
+  margin-top: 6px;
+  padding: 11px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+
 /* Bir martalik pastki karta */
 .ig-card {
   position: fixed;
