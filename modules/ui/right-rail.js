@@ -45,6 +45,11 @@ function fit() {
   if (isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement !== railEl) {
     railEl.appendChild(settingsOverlay);
   }
+  // Mobil/planshet: overlay yashirin (hidden) right-rail ichida qolib ketmasin — body ga qaytaramiz
+  if (!isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement === railEl) {
+    document.body.appendChild(settingsOverlay);
+    document.body.classList.remove('desktop-settings-pinned');
+  }
   if (settingsOverlay && state.me?.uid) {
     // Kashf ochiq bo'lsa o'ng ustunda oddiy kartalar ko'rinadi (sozlamalar emas)
     if (isDesktop && view === 'profile' && !exploreOpen) {
@@ -230,5 +235,10 @@ document.addEventListener('profilesPreloaded', () => { if (state.me?.uid) fit();
 
 /* Presence o'zgarganda onlayn ro'yxatni yangilash */
 document.addEventListener('presenceChanged', () => {
+  if (document.visibilityState === 'visible') loadOnline();
+});
+
+/* Kimdir ismi/avatarini o'zgartirganda onlayn ro'yxatni yangilash */
+document.addEventListener('profileChanged', () => {
   if (document.visibilityState === 'visible') loadOnline();
 });

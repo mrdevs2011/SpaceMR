@@ -104,8 +104,14 @@ export function openProfileSettings() {
     if (!ov) return;
     openBasicAccordion();
     if (!ov.classList.contains('show')) {
-      import('../auth/auth.js').then(m => { try { m.populateProfileForm?.(); } catch(_){} }).catch(()=>{});
-      ov.classList.add('show');
+      // Mobil: asosiy yo'l — profil sahifasidagi gear tugmasi bilan bir xil (populate + scroll lock)
+      const gear = document.getElementById('settingsBtn');
+      if (gear && !window.matchMedia('(min-width: 1200px)').matches) {
+        gear.click();
+      } else {
+        import('../auth/auth.js').then(m => { try { m.populateProfileForm?.(); } catch(_){} }).catch(()=>{});
+        ov.classList.add('show');
+      }
     }
     if (window.matchMedia('(min-width: 1200px)').matches) {
       document.body.classList.add('desktop-settings-pinned');

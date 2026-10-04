@@ -841,7 +841,42 @@ export async function invalidateChatsUsersCache() {
   if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
 }
 
+/** Boshqa foydalanuvchi ismi/username/avatarini o'zgartirsa — realtime yangilash
+ * (suhbatlar ro'yxati, ochiq thread sarlavhasi, onlayn rail, localStorage keshi). */
+let _profLiveTimer = null;
+function _onProfileLive(row) {
+  const u = mapProfile(row);
+  if (!u || !u.uid) return;
+  const diff = (o) => !!o && (o.fullName !== u.fullName || o.username !== u.username || (o.avatar || '') !== (u.avatar || ''));
+  const cu = (chatState._usersCache || []).find(x => x.uid === u.uid);
+  const gc = state._userCache?.[u.uid];
+  if (!diff(cu) && !diff(gc)) return;   // last_seen heartbeat va h.k. — e'tiborsiz
+  for (const o of [cu, gc]) {
+    if (!o) continue;
+    o.fullName = u.fullName; o.username = u.username; o.avatar = u.avatar;
+  }
+  clearTimeout(_profLiveTimer);
+  _profLiveTimer = setTimeout(() => {
+    try { if (state.me?.uid && chatState._usersCache) cacheChatsList(state.me.uid, chatState._usersCache, chatState._latestChatMap); } catch (_) {}
+    if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+    // Ochiq DM thread shu odamniki bo'lsa — sarlavha
+    if (chatState._otherUserUid === u.uid) {
+      const nm = $('chatThreadName'); if (nm) nm.textContent = u.fullName || 'Foydalanuvchi';
+      const av = u.avatar || defAvi(u.fullName || 'U');
+      chatState._otherUserAvi = av;
+      const ae = $('chatThreadAvi'); if (ae) ae.innerHTML = `<img src="${esc(av)}" onerror="this.style.display='none'">`;
+    }
+    document.dispatchEvent(new CustomEvent('profileChanged', { detail: { uid: u.uid } }));
+  }, 150);
+}
+
 export function startChatsWatcher() {
+  // Boshqalarning profil o'zgarishlari (ism/avatar) — BIR MARTA ulanamiz
+  if (!chatState._profileLiveCh) {
+    chatState._profileLiveCh = sb.channel('profiles-live-names')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, p => _onProfileLive(p.new))
+      .subscribe();
+  }
   // Also start groups watcher
   startGroupsWatcher();
   // Listen for group updates to repaint list — faqat BIR MARTA qo'shamiz

@@ -110,10 +110,9 @@ function _applyVoiceCancelProgress(p) {
   // Matn o'zgarmaydi — chapga surganda silliq oqadi (Telegram)
   if (cancelText) {
     cancelText.textContent = 'Bekor qilish uchun chapga suring';
-    // p=0 → joyida, p=1 → chapga ~28px + biroz fade
-    const dx = -Math.round(p * 28);
+    // Siljish faqat ota-konteynerda (chevron + matn birga) — matnni alohida surma, chevron ustiga chiqib ketadi
     const op = 1 - p * 0.25;
-    cancelText.style.transform = `translateX(${dx}px)`;
+    cancelText.style.transform = '';
     cancelText.style.opacity = String(Math.max(0.55, op));
   }
   const cancelWrap = $('chatRecordCancel');

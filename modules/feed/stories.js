@@ -8,6 +8,11 @@ import { onEsc } from '../ui/esc-stack.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
 
+/** O'z ismim (story strip + viewer uchun) */
+function myName(meP) {
+  return (meP && (meP.fullName || meP.username)) || state.me?.displayName || state.me?.username || 'Men';
+}
+
 /** @type {{ uid: string, name: string, avatar: string, items: any[], hasUnseen: boolean }[]} */
 let _groups = [];
 let _viewerIdx = 0;   // guruh indeksi
@@ -144,6 +149,7 @@ function ensureStoriesCss() {
   overflow: hidden; flex-shrink: 0;
   background: #202327; border: 1.5px solid rgba(231, 233, 234, 0.2);
 }
+.sv-user { cursor: pointer; }
 .sv-avi img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
@@ -280,6 +286,23 @@ function ensureDom() {
       closeViewer();
     });
 
+    // Avatar / ism bosilsa — egasining profiliga o'tish (o'z storym bo'lsa — mening profilim)
+    $('svAvi')?.parentElement?.addEventListener('click', async e => {
+      e.stopPropagation();
+      const g = _groups[_viewerIdx];
+      if (!g?.uid) return;
+      closeViewer();
+      try {
+        if (g.uid === state.me?.uid) {
+          const { navigateTo } = await import('../router.js');
+          navigateTo('profile');
+        } else {
+          const { openUserProfileModal } = await import('../profile/profile.js');
+          openUserProfileModal(g.uid);
+        }
+      } catch (err) { console.warn('[stories] profilga o\'tish:', err?.message || err); }
+    });
+
     // Kontekst menyu (Copy image, Copy link va h.k.) ni butunlay bloklash
     v?.addEventListener('contextmenu', e => {
       e.preventDefault();
@@ -381,7 +404,7 @@ export function injectLocalStory(item) {
     const meP = state._userCache?.[me] || {};
     g = {
       uid: me,
-      name: 'Sizning story',
+      name: myName(meP),
       avatar: meP.avatar || defAvi(meP.fullName || 'U'),
       items: [],
       hasUnseen: true,
@@ -476,7 +499,7 @@ export async function loadStories() {
     const meP = pMap[me] || {};
     groups.push({
       uid: me,
-      name: 'Sizning story',
+      name: myName(meP),
       avatar: meP.avatar || defAvi(meP.fullName || 'U'),
       items: myItems,
       hasUnseen: myItems.some(i => !i.seen),
@@ -507,7 +530,7 @@ export async function loadStories() {
     const meP = state._userCache?.[state.me.uid] || {};
     _groups = [{
       uid: state.me.uid,
-      name: 'Sizning story',
+      name: myName(meP),
       avatar: meP.avatar || defAvi(meP.fullName || 'U'),
       items: [],
       hasUnseen: false,
@@ -534,7 +557,7 @@ function renderBar() {
         <img src="${esc(g.avatar)}" alt="" onerror="this.style.display='none'">
         ${plus}
       </div>
-      <span class="story-label">${esc(g.isMe ? (g.items.length ? 'Sizning story' : 'Story qo\'shish') : g.name.split(' ')[0])}</span>
+      <span class="story-label">${esc(g.isMe && !g.items.length ? 'Story qo\'shish' : (g.name || '').split(' ')[0])}</span>
     </button>`;
   }).join('');
 
