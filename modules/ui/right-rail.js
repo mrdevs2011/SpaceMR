@@ -41,6 +41,10 @@ function fit() {
   if (sw) sw.hidden = true; // tugma kerak emas — panel o'zi ochiq
 
   const settingsOverlay = document.getElementById('settingsOverlay');
+  const railEl = rail();
+  if (isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement !== railEl) {
+    railEl.appendChild(settingsOverlay);
+  }
   if (settingsOverlay && state.me?.uid) {
     if (isDesktop && view === 'profile') {
       if (!settingsOverlay.classList.contains('show')) {
