@@ -272,6 +272,10 @@ function _paintCmts(postId, listId, cmts, aMap) {
   const list = $(listId);
   if (!list) return;
   if (!cmts.length) { list.innerHTML = emptyHtml(); return; }
+  // Qayta chizishdan oldin: foydalanuvchi pastdami yoki yuqorida o'qiyaptimi
+  const _hadRows = !!list.querySelector('.cmt-row');
+  const _prevTop = list.scrollTop;
+  const _wasBottom = !_hadRows || (list.scrollHeight - list.scrollTop - list.clientHeight < 60);
   list.innerHTML = cmts.map(c => `<div class="cmt-row" data-cmt-id="${c.id}">
       <div class="cmt-avi user-avi-btn" data-uid="${c.userId}">
         <img src="${esc(aMap[c.userId])}" onerror="this.style.display='none'">
@@ -316,7 +320,8 @@ function _paintCmts(postId, listId, cmts, aMap) {
       }
     }));
 
-    list.scrollTop = list.scrollHeight;
+    // Pastda bo'lsa — pastda qoladi (yangi izoh); yuqorida o'qiyotgan bo'lsa — joyi sakramaydi
+    list.scrollTop = _wasBottom ? list.scrollHeight : _prevTop;
 }
 
 async function loadComments(postId, listId) {

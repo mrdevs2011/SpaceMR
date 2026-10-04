@@ -1,4 +1,25 @@
 import { esc } from '../../core/utils.js';
+
+/* Rasm nisbatini eslab qolish: qayta chizilganda (innerHTML) rasm yuklanmasdan oldin ham
+   joyi band bo'lsin — chat sakramasin. Birinchi marta ko'rilganda nisbat noma'lum. */
+const _DIMS_KEY = 'chatImgRatios';
+const _ratios = new Map();
+try { for (const [k, v] of JSON.parse(sessionStorage.getItem(_DIMS_KEY) || '[]')) _ratios.set(k, v); } catch (_) {}
+export function imgRatioAttr(url) {
+  const r = _ratios.get(url);
+  return r ? ` style="aspect-ratio:${r}"` : '';
+}
+export function rememberImgRatio(img) {
+  const url = img.getAttribute('src');
+  if (!url || !img.naturalWidth || !img.naturalHeight) return;
+  const r = `${img.naturalWidth}/${img.naturalHeight}`;
+  if (_ratios.get(url) === r) return;
+  _ratios.set(url, r);
+  try {
+    const arr = [..._ratios.entries()].slice(-300);
+    sessionStorage.setItem(_DIMS_KEY, JSON.stringify(arr));
+  } catch (_) {}
+}
 export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, idx, state }) {
   return `<div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
     <button class="cvm-play" onclick="window._chatPlayVoice(this)">
@@ -20,7 +41,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       metaOutside = false;
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone">
         <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link">
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy" onload="this.classList.add('loaded')">
+          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
         </a>
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
@@ -31,7 +52,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       bubbleClassExtra = ' bubble-media-caption';
       bubbleContent = `<div class="cfm-media-wrap">
         <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link">
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy" onload="this.classList.add('loaded')">
+          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
         </a>
         ${captionHtml}
       </div>`;

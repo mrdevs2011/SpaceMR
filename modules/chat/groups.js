@@ -21,7 +21,7 @@
  */
 
 import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts } from '../core/config.js';
-import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser } from '../core/utils.js';
+import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
 import { emojiOnlyClass, wrapEmojiNoSelect }             from '../ui/emoji-only.js';
@@ -796,26 +796,28 @@ export async function openGroupInfo(groupId) {
   panel.querySelector('#grpInfoEditBtn').style.display       = canManage ? '' : 'none';
 
   /* ── Button handlers ── */
-  panel.querySelector('#grpInfoLeaveBtn').onclick = async () => {
-    if (!confirm(`${typeLabel}dan chiqmoqchimisiz?`)) return;
-    try {
-      await _removeMember(groupId, state.me.uid);
-      panel.classList.remove('show');
-      closeGroupThread();
-      $('chatThreadModal').classList.remove('show');
-      toast(`${typeLabel}dan chiqdingiz`, 'info');
-    } catch(e) { toast('Xato yuz berdi', 'error'); }
+  panel.querySelector('#grpInfoLeaveBtn').onclick = () => {
+    showConfirm(`${typeLabel}dan chiqmoqchimisiz?`, async () => {
+      try {
+        await _removeMember(groupId, state.me.uid);
+        panel.classList.remove('show');
+        closeGroupThread();
+        $('chatThreadModal').classList.remove('show');
+        toast(`${typeLabel}dan chiqdingiz`, 'info');
+      } catch(e) { toast('Xato yuz berdi', 'error'); }
+    }, 'Chiqish', 'Chiqish');
   };
 
-  panel.querySelector('#grpInfoDeleteBtn').onclick = async () => {
-    if (!confirm(`${typeLabel}ni o'chirasizmi? Bu amalni qaytarib bo'lmaydi!`)) return;
-    try {
-      await _deleteGroup(groupId);
-      panel.classList.remove('show');
-      closeGroupThread();
-      $('chatThreadModal').classList.remove('show');
-      toast(`${typeLabel} o'chirildi`, 'success');
-    } catch(e) { toast('Xato yuz berdi', 'error'); }
+  panel.querySelector('#grpInfoDeleteBtn').onclick = () => {
+    showConfirm(`${typeLabel}ni o'chirasizmi? Bu amalni qaytarib bo'lmaydi!`, async () => {
+      try {
+        await _deleteGroup(groupId);
+        panel.classList.remove('show');
+        closeGroupThread();
+        $('chatThreadModal').classList.remove('show');
+        toast(`${typeLabel} o'chirildi`, 'success');
+      } catch(e) { toast('Xato yuz berdi', 'error'); }
+    }, "O'chirish", "O'chirish");
   };
 
   panel.querySelector('#grpInfoAddMemberBtn').onclick = () => {
@@ -858,14 +860,15 @@ export async function openGroupInfo(groupId) {
           }).join('');
           membersEl.innerHTML = html || '<div class="gi-empty">A\'zolar topilmadi</div>';
           membersEl.querySelectorAll('.grp-member-kick').forEach(btn => {
-            btn.onclick = async () => {
+            btn.onclick = () => {
               const uid = btn.dataset.uid;
-              if (!confirm('Bu foydalanuvchini chiqarasizmi?')) return;
-              try {
-                await _removeMember(groupId, uid);
-                toast("A'zo chiqarildi", 'success');
-                openGroupInfo(groupId);
-              } catch(e) { toast('Xato yuz berdi', 'error'); }
+              showConfirm('Bu foydalanuvchini chiqarasizmi?', async () => {
+                try {
+                  await _removeMember(groupId, uid);
+                  toast("A'zo chiqarildi", 'success');
+                  openGroupInfo(groupId);
+                } catch(e) { toast('Xato yuz berdi', 'error'); }
+              }, 'Chiqarish', 'Chiqarish');
             };
           });
         }).catch(() => { if (membersEl) membersEl.innerHTML = ''; });

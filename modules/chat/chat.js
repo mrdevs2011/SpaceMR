@@ -620,7 +620,7 @@ import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
 import { emojiOnlyClass, wrapEmojiNoSelect } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
-import { generateVoiceBubble, generateFileBubble, generateTextBubble } from './components/message-bubble.js';
+import { generateVoiceBubble, generateFileBubble, generateTextBubble, rememberImgRatio } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
 import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
@@ -1644,6 +1644,38 @@ function _isFreshMsg(m) {
 
 /* Sana yordamchilari: chat-shared.js */
 
+/** Foydalanuvchi chat pastida "yopishib" turganini kuzatadi (rasm kech yuklansa ham pastda qolsin) */
+function _bindPinTracking(box) {
+  if (box._pinBound) return;
+  box._pinBound = true;
+  box.addEventListener('scroll', () => {
+    chatState._pinned = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  }, { passive: true });
+}
+window._chatImgLoaded = function (img) {
+  try { rememberImgRatio(img); } catch (_) {}
+  const box = document.getElementById('chatThreadMessages');
+  if (box && chatState._pinned && box.contains(img)) box.scrollTop = box.scrollHeight;
+};
+
+/** Ko'rinadigan birinchi xabarni (id + viewport tepasidan masofa) eslab qoladi */
+function _captureMsgAnchor(box) {
+  const top = box.getBoundingClientRect().top;
+  for (const el of box.querySelectorAll('.chat-msg[data-msg-id]')) {
+    const r = el.getBoundingClientRect();
+    if (r.bottom > top + 1) return { id: el.dataset.msgId, off: r.top - top };
+  }
+  return null;
+}
+function _restoreMsgAnchor(box, a) {
+  if (!a || !a.id) return;
+  const el = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(a.id)}"]`);
+  if (!el) return;
+  const off = el.getBoundingClientRect().top - box.getBoundingClientRect().top;
+  const d = off - a.off;
+  if (Math.abs(d) > 0.5) box.scrollTop += d;
+}
+
 export function paintMessages(msgs, grp = null) {
   const box = $('chatThreadMessages');
   if (!box) return;
@@ -1667,10 +1699,14 @@ export function paintMessages(msgs, grp = null) {
   // threshold: pastdan 120px uzoqda bo'lsa "pastda" hisoblanadi
   const isAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
   const isInitialLoad = prevCount === 0;
+  _bindPinTracking(box);
   const _baseline = !chatState._seenBaselineDone;   // shu chatning birinchi chizilishi — animatsiyasiz
   chatState._seenBaselineDone = true;
 
   const _dsStarted = _dissolvePrepare(box, new Set(msgs.map(m => String(m.id))), !_baseline);
+  // Yuqorida turgan bo'lsak: ko'rinib turgan birinchi xabarni "langar" qilib eslab qolamiz,
+  // qayta chizilgach shu xabarni oldingi joyiga qaytaramiz (sakrash bo'lmasin)
+  const _anchor = (!isAtBottom && !isInitialLoad) ? _captureMsgAnchor(box) : null;
   box.innerHTML = msgs.map((m, idx) => {
     const mine = m.senderId === state.me?.uid;
     const time = fmtTime(m.createdAt);
@@ -1761,10 +1797,12 @@ export function paintMessages(msgs, grp = null) {
   }).join('');
 
   _dissolveRestore(box, _dsStarted);
+  _restoreMsgAnchor(box, _anchor);
 
   // Faqat pastda turgan bo'lsak yoki chat yangi ochilgan bo'lsa scroll qilamiz
   const hasMyNew = msgs.some(m => _isFreshMsg(m) && m.senderId === state.me?.uid);
   if (isAtBottom || isInitialLoad || hasMyNew) {
+    chatState._pinned = true;
     setTimeout(() => { box.scrollTop = box.scrollHeight; }, SCROLL_SETTLE_MS);
   }
 
@@ -1991,6 +2029,7 @@ export function checkSharedPostExistence(msgs) {
 function _updatePostCardsInDOM() {
   const _box = document.getElementById('chatThreadMessages');
   const _wasBottom = _box && (_box.scrollHeight - _box.scrollTop - _box.clientHeight < 120);
+  const _anch = (_box && !_wasBottom) ? _captureMsgAnchor(_box) : null;
   const cards = document.querySelectorAll('.chat-post-card[data-post-id]');
   cards.forEach(card => {
     const pid = card.dataset.postId;
@@ -2011,7 +2050,7 @@ function _updatePostCardsInDOM() {
         caption.innerHTML = `<span class="cpc-deleted-text">Bu post o'chirilgan</span>`;
       }
       const media = card.querySelector('.cpc-media');
-      if (media) media.style.display = 'none';
+      if (media) { media.classList.add('is-deleted'); const _im = media.querySelector('img'); if (_im) _im.style.visibility = 'hidden'; }
 
       const btn = card.querySelector('.cpc-open-btn');
       if (btn) {
@@ -2046,6 +2085,7 @@ function _updatePostCardsInDOM() {
     }
   });
   if (_wasBottom && _box) _box.scrollTop = _box.scrollHeight;
+  else if (_anch && _box) _restoreMsgAnchor(_box, _anch);
 }
 
 export function renderChatPostCard(ps) {

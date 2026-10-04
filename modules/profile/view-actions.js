@@ -6,6 +6,7 @@
 
 import { sb, state, isAdmin } from '../core/config.js';
 import { toast } from '../ui/toast.js';
+import { showConfirm } from '../core/utils.js';
 
 let _initialized = false;
 let _noticeUnsub    = null;
@@ -263,15 +264,16 @@ function _initBroadcast() {
   });
 
   // O'chirish
-  delBtn.addEventListener('click', async () => {
-    if (!confirm('E\'lonni o\'chirasizmi?')) return;
-    try {
-      const { error: delErr } = await sb.from('admin_notice').delete().eq('id', 'global');
-      if (delErr) throw delErr;
-      toast('E\'lon o\'chirildi', 'success');
-    } catch (err) {
-      toast('O\'chirishda xatolik: ' + err.message, 'error');
-    }
+  delBtn.addEventListener('click', () => {
+    showConfirm("E'lonni o'chirasizmi?", async () => {
+      try {
+        const { error: delErr } = await sb.from('admin_notice').delete().eq('id', 'global');
+        if (delErr) throw delErr;
+        toast('E\'lon o\'chirildi', 'success');
+      } catch (err) {
+        toast('O\'chirishda xatolik: ' + err.message, 'error');
+      }
+    }, "O'chirish", "O'chirish");
   });
 
 }

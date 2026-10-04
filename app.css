@@ -7101,6 +7101,10 @@ body #toast {
   object-fit: cover;
   display: block;
 }
+.cpc-media.is-deleted {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px dashed rgba(255, 255, 255, 0.55);
+}
 .cpc-open-row {
   margin-top: 2px;
 }
@@ -7351,6 +7355,22 @@ button:focus-visible,
 }
 .admin-notice-icon { color: var(--x-blue); flex-shrink: 0; margin-top: 1px; }
 .admin-notice-text { flex: 1; word-break: break-word; }
+
+/* Ulashilgan post kartasi: pufak ko'k/kulrang bo'lgani uchun badge va tugma OQ (ko'k ustida ko'k o'qilmasdi) */
+#chatThreadModal .chat-post-card .cpc-badge { color: #fff; }
+#chatThreadModal .chat-post-card .cpc-open-btn {
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+#chatThreadModal .chat-post-card .cpc-open-btn:hover {
+  background: rgba(255, 255, 255, 0.34);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #fff;
+}
+#chatThreadModal .chat-post-card .cpc-open-btn svg { stroke: #fff; }
 
 /* ── Deleted post and deleted user states in shared post cards ───────
    Bubble rangi O'ZGARMAYDI (mening xabarim — ko'k, boshqaniki — kulrang).
