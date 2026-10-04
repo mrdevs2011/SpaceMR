@@ -3362,3 +3362,45 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 @media (max-width: 1099px) {
   .app-hdr { padding: 0 8px 0 10px !important; }
 }
+
+/* === WHITE-ON-WHITE FIX: light icons on inverted (white) buttons === */
+.btn-primary img.icon,
+.btn-primary .icon,
+.pe-btn-save img.icon,
+.pe-btn-save .icon,
+.avi-edit-badge img.icon,
+.avi-edit-badge .icon,
+.pe-avi-edit-badge img.icon,
+.pe-avi-edit-badge .icon,
+nav.bot-nav #createBtn.nav-center-btn img.icon,
+#uploadOverlay .composer-post-btn img.icon,
+.ig-sheet .pw-btn img.icon {
+  filter: brightness(0) !important;
+  opacity: 1 !important;
+}
+
+/* Saqlash: soft shadow, not glowing white blob */
+.pe-btn-save {
+  background: #e7e9ea !important;
+  color: #0f1419 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+}
+.pe-btn-save:hover {
+  background: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+.pe-btn-save img.icon {
+  filter: brightness(0) !important;
+}
+
+/* Avatar edit badge: white circle + dark icon */
+.pe-avi-edit-badge,
+.avi-edit-badge {
+  background: #e7e9ea !important;
+  color: #0f1419 !important;
+}
+.pe-avi-edit-badge img.icon,
+.avi-edit-badge img.icon {
+  filter: brightness(0) !important;
+  opacity: 0.9 !important;
+}
