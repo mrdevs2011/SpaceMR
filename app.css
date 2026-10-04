@@ -131,7 +131,8 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 .auth-card { width: 100%; max-width: 380px; background: var(--bg2); border: 1px solid var(--glass-border); border-radius: 24px; padding: 36px 30px; position: relative; overflow: hidden; box-shadow: 0 20px 50px var(--pal-black); }
 /* Flat X-style — no top highlight line, no gradient blob */
 .auth-logo { display: flex; align-items: center; margin-bottom: 30px; }
-.auth-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: none; border: none; }
+.auth-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: none; border: none; }
+.auth-logo-glass img { width: 40px; height: 40px; object-fit: contain; }
 .auth-logo-glass img { position: relative; z-index: 1; }
 .auth-logo .auth-brand { margin-left: 10px; }
 .auth-brand { font-size: 18px; font-weight: 700; margin-left: 8px; letter-spacing: -0.3px; background: var(--blue2); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -13179,4 +13180,61 @@ header.app-hdr,
   top: 6px !important;
   right: 6px !important;
   z-index: 2 !important;
+}
+
+
+/* ═══ AUTH install btn + logos ═══ */
+#authWrap .auth-install {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  width: 100%;
+  box-sizing: border-box;
+}
+#authWrap .auth-install-btn,
+#authWrap button.auth-install-btn {
+  display: flex !important;
+  width: calc(100% - 8px) !important;
+  max-width: 100% !important;
+  margin-left: 4px !important;
+  margin-right: 4px !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+}
+#authWrap .auth-install-link {
+  display: none !important;
+}
+
+/* Auth logo — larger */
+#authWrap .auth-logo-glass {
+  width: 48px !important;
+  height: 48px !important;
+}
+#authWrap .auth-logo-glass img {
+  width: 40px !important;
+  height: 40px !important;
+  display: block !important;
+}
+#authWrap .auth-brand {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+}
+
+/* Header logo — larger */
+#appHdr .hdr-logo-glass {
+  width: 34px !important;
+  height: 34px !important;
+}
+#appHdr .hdr-logo-glass img {
+  width: 28px !important;
+  height: 28px !important;
+}
+#appHdr .hdr-brand {
+  font-size: 17px !important;
+}
+
+/* Sidebar logo */
+nav.bot-nav .sb-logo-img {
+  width: 34px !important;
+  height: 34px !important;
 }

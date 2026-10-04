@@ -7473,3 +7473,60 @@ header.app-hdr,
   right: 6px !important;
   z-index: 2 !important;
 }
+
+
+/* ═══ AUTH install btn + logos ═══ */
+#authWrap .auth-install {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  width: 100%;
+  box-sizing: border-box;
+}
+#authWrap .auth-install-btn,
+#authWrap button.auth-install-btn {
+  display: flex !important;
+  width: calc(100% - 8px) !important;
+  max-width: 100% !important;
+  margin-left: 4px !important;
+  margin-right: 4px !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+}
+#authWrap .auth-install-link {
+  display: none !important;
+}
+
+/* Auth logo — larger */
+#authWrap .auth-logo-glass {
+  width: 48px !important;
+  height: 48px !important;
+}
+#authWrap .auth-logo-glass img {
+  width: 40px !important;
+  height: 40px !important;
+  display: block !important;
+}
+#authWrap .auth-brand {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+}
+
+/* Header logo — larger */
+#appHdr .hdr-logo-glass {
+  width: 34px !important;
+  height: 34px !important;
+}
+#appHdr .hdr-logo-glass img {
+  width: 28px !important;
+  height: 28px !important;
+}
+#appHdr .hdr-brand {
+  font-size: 17px !important;
+}
+
+/* Sidebar logo */
+nav.bot-nav .sb-logo-img {
+  width: 34px !important;
+  height: 34px !important;
+}
