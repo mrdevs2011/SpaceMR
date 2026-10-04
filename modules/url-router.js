@@ -31,7 +31,7 @@ import { navigateTo, getCurrentRoute } from './router.js';
 
 const $ = id => document.getElementById(id);
 
-const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved' };
+const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications' };
 const NEXT_KEY = 'spacemr_next_path';
 const LAST_KEY = 'spacemr_last_path'; // kirgan foydalanuvchining oxirgi joyi (/login yozsa shu yerga qaytadi)
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -71,6 +71,7 @@ export function parsePath(rawPath) {
     if (a === 'profile')  return { kind: 'view', view: 'profile' };
     if (a === 'actions')  return { kind: 'view', view: 'actions', admin: true };
     if (a === 'saved')    return { kind: 'view', view: 'saved' };
+    if (a === 'notifications') return { kind: 'view', view: 'notifs' };
     if (a === 'settings') return { kind: 'redirect', to: '/profile/settings' };
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };

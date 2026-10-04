@@ -57,7 +57,7 @@ html{color-scheme:dark;}
       var s = p.split('/').filter(Boolean).map(function(x){ try { return decodeURIComponent(x); } catch (e) { return x; } });
       var a = (s[0] || '').toLowerCase(), b = (s[1] || '').toLowerCase(), n = s.length, ok = false;
       if (!n) ok = true;
-      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost)$/.test(a);
+      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications)$/.test(a);
       else if (n === 2) ok = (a === 'profile' && b === 'settings');
       else if (n === 3) ok = (a === 'profile' && b === 'settings' && /^(general|email|password)$/.test((s[2] || '').toLowerCase()));
       else if (a === 'u' && n === 2) ok = true;
@@ -315,6 +315,13 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="feed" id="feed"><div class="spin-wrap"><div class="spinner"></div></div></div>
   </div>
 
+  <div class="view" id="notifsView">
+    <div class="saved-head">
+      <h2 class="saved-title">Bildirishnomalar</h2>
+    </div>
+    <div class="nf-list" id="notifsList"></div>
+  </div>
+
   <div class="view" id="savedView">
     <div class="saved-head">
       <button type="button" class="saved-back" id="savedBack" aria-label="Orqaga" title="Orqaga">
@@ -435,6 +442,11 @@ html[data-nf],html[data-nf] body{background:#000}
     <button class="nav-center-btn" id="createBtn" data-tip="Yaratish" aria-label="Yangi post yaratish">
       <img src="./svg/action/edit-square.svg" alt="" class="icon" width="22" height="22">
       <span class="sb-create-label">Post</span>
+    </button>
+    <button class="nav-btn" data-v="notifs" data-tip="Bildirishnomalar" aria-label="Bildirishnomalar" id="sbNotifBtn">
+      <img src="./svg/ui/bell.svg" alt="" class="icon" width="26" height="26">
+      <span class="nav-label">Bildirishnomalar</span>
+      <span class="nav-badge d-none" id="sbNotifBadge"></span>
     </button>
     <button class="nav-btn" data-v="chats" data-tip="Suhbatlar" aria-label="Suhbatlar">
       <img src="./svg/social/chat.svg" alt="" class="icon" width="26" height="26">

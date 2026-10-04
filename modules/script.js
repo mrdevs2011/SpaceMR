@@ -62,6 +62,7 @@ initNavigation();
 import('./feed/upload.js');
 import('./ui/shortcuts.js');
 import('./ui/sidebar.js');
+import('./ui/notifs.js');
 import('./ui/right-rail.js');
 import('./chat/chats-x.js');
 

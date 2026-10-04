@@ -330,7 +330,7 @@ if (sbSearchInput) sbSearchInput.oninput = e => handleSearchInput(e.target.value
   if (notif) {
     notif.addEventListener('click', async () => {
       const { navigateTo } = await import('../router.js');
-      navigateTo('chats');
+      navigateTo('notifs');
     });
   }
   const aviBtn = document.getElementById('hdrAviBtn');

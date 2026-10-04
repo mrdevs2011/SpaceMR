@@ -37,11 +37,15 @@ const routes = {
   'saved': {
     view: 'savedView',
     title: 'Saqlanganlar'
+  },
+  'notifs': {
+    view: 'notifsView',
+    title: 'Bildirishnomalar'
   }
 };
 
 // Allowed route names for security
-const ALLOWED_ROUTES = ['home', 'profile', 'chats', 'login', 'actions', 'saved'];
+const ALLOWED_ROUTES = ['home', 'profile', 'chats', 'login', 'actions', 'saved', 'notifs'];
 
 /* ═══════════════════════════════════════════════════════════════════════
    CURRENT STATE
