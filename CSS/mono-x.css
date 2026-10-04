@@ -7311,3 +7311,165 @@ a.cfm-name--link:hover {
   .home-brand-saved { display: none !important; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER — FINAL OVERRIDE (cascade oxiri, barcha buzilishlarni yopadi)
+   ═══════════════════════════════════════════════════════════════ */
+header.app-hdr,
+#appHdr.app-hdr {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: var(--hdr, 52px) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 0 12px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  background: #000 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  z-index: 80 !important;
+  overflow: hidden !important;
+}
+@media (min-width: 1100px) {
+  header.app-hdr,
+  #appHdr.app-hdr {
+    left: var(--sidebar, 260px) !important;
+    width: auto !important;
+  }
+}
+#appHdr .hdr-logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+  max-width: 50% !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+#appHdr .hdr-logo-glass {
+  width: 28px !important;
+  height: 28px !important;
+  flex-shrink: 0 !important;
+}
+#appHdr .hdr-logo-glass img {
+  width: 22px !important;
+  height: 22px !important;
+  display: block !important;
+}
+#appHdr .hdr-brand {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#appHdr .hdr-right {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 2px !important;
+  flex: 0 0 auto !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  height: 100% !important;
+}
+#appHdr .hdr-search-wrap {
+  display: flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+#appHdr .hdr-icon-btn {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+#appHdr .hdr-icon-btn:hover {
+  background: rgba(255,255,255,0.08) !important;
+  border: none !important;
+}
+#appHdr .hdr-icon-btn img,
+#appHdr .hdr-icon-btn img.icon {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  display: block !important;
+  object-fit: contain !important;
+  /* force light icons on black header */
+  filter: brightness(0) invert(1) !important;
+  opacity: 1 !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+#appHdr .hdr-avi-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+#appHdr .hdr-avi {
+  display: block !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  background: #202327 !important;
+  border: 1.5px solid #2f3336 !important;
+  flex-shrink: 0 !important;
+}
+#appHdr .hdr-avi img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  filter: none !important;
+  display: block !important;
+}
+#appHdr .hdr-new-post-btn[hidden],
+#appHdr .hdr-new-post-btn {
+  display: none !important;
+}
+#appHdr .hdr-badge {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  z-index: 2 !important;
+}
