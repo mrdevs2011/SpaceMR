@@ -119,8 +119,11 @@ if (settingsOverlay) {
     const acc = btn.closest('.pe-accordion');
     if (!acc) return;
     const open = !acc.classList.contains('open');
-    acc.classList.toggle('open', open);
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    root.querySelectorAll('.pe-accordion').forEach((el) => {
+      const on = open && el === acc;
+      el.classList.toggle('open', on);
+      el.querySelector('.pe-acc-toggle')?.setAttribute('aria-expanded', on ? 'true' : 'false');
+    });
   });
 })();
 
