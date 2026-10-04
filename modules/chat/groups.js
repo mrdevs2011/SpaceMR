@@ -793,7 +793,7 @@ export async function openGroupInfo(groupId) {
       linkRow.style.cursor = 'pointer';
       linkTxt.textContent = '@' + g.username;
       linkRow.onclick = () => {
-        const url = `${window.location.origin}/?g=${g.username}`;
+        const url = `${window.location.origin}/chats/g/${g.username}`;
         navigator.clipboard?.writeText(url);
         toast(`Havola nusxalandi: @${g.username}`, 'success');
       };
@@ -802,7 +802,7 @@ export async function openGroupInfo(groupId) {
       linkRow.style.cursor = 'pointer';
       linkTxt.textContent = `Maxfiy havola: ${g.inviteCode.slice(0, 14)}...`;
       linkRow.onclick = () => {
-        const url = `${window.location.origin}/?join_group=${g.inviteCode}`;
+        const url = `${window.location.origin}/chats/g/${g.inviteCode}`;
         navigator.clipboard?.writeText(url);
         toast('Maxfiy taklif havolasi nusxalandi', 'success');
       };
@@ -974,24 +974,15 @@ export async function checkGroupUsernameAvailable(rawUsername, currentGroupId = 
   if (clean.length < 2) return { ok: false, error: "Username kamida 2 ta belgi bo'lishi kerak (a-z, 0-9, _)" };
   if (clean.length > 40) return { ok: false, error: "Username 40 ta belgidan oshmasligi kerak" };
 
+  /* Guruh username lari foydalanuvchi username lari bilan ALOHIDA fazo: faqat boshqa guruhlar bilan solishtiriladi. */
   try {
-    const { data: free, error } = await sb.rpc('username_available', { p_username: clean });
-    if (!error && free === false) {
-      if (currentGroupId) {
-        const { data: cur } = await sb.from('groups').select('id').eq('id', currentGroupId).ilike('username', clean).maybeSingle();
-        if (cur) return { ok: true, username: clean };
-      }
-      return { ok: false, error: 'Bu nom allaqachon band' };
+    const { data: free, error } = await sb.rpc('group_username_available', { p_username: clean, p_exclude: currentGroupId });
+    if (!error && typeof free === 'boolean') {
+      return free ? { ok: true, username: clean } : { ok: false, error: 'Bu nom allaqachon band' };
     }
   } catch (_) {}
 
-  // Double check profiles
-  try {
-    const { data: prof } = await sb.from('profiles').select('id').ilike('username', clean).limit(1);
-    if (prof && prof.length > 0) return { ok: false, error: 'Bu nom allaqachon band' };
-  } catch (_) {}
-
-  // Double check groups
+  // RPC yo'q bo'lsa: to'g'ridan-to'g'ri groups jadvali (profiles tekshirilmaydi)
   try {
     let q = sb.from('groups').select('id').ilike('username', clean);
     if (currentGroupId) q = q.neq('id', currentGroupId);
@@ -1041,7 +1032,7 @@ export function openGroupEdit(groupId, g) {
       pubBtn?.classList.remove('active');
       if (pubSec) pubSec.style.display = 'none';
       if (privSec) privSec.style.display = '';
-      if (tokenEl) tokenEl.textContent = `${window.location.origin}/?join_group=${_editPendingInviteCode}`;
+      if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_editPendingInviteCode}`;
     }
   };
   updateEditPrivacyUI();
@@ -1052,7 +1043,7 @@ export function openGroupEdit(groupId, g) {
   const copyBtn = panel.querySelector('#grpEditCopyInviteBtn');
   if (copyBtn) {
     copyBtn.onclick = () => {
-      const link = `${window.location.origin}/?join_group=${_editPendingInviteCode}`;
+      const link = `${window.location.origin}/chats/g/${_editPendingInviteCode}`;
       navigator.clipboard?.writeText(link);
       toast('Taklif havolasi nusxalandi', 'success');
     };
@@ -1062,7 +1053,7 @@ export function openGroupEdit(groupId, g) {
   if (regenBtn) {
     regenBtn.onclick = () => {
       _editPendingInviteCode = generate64HexToken();
-      if (tokenEl) tokenEl.textContent = `${window.location.origin}/?join_group=${_editPendingInviteCode}`;
+      if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_editPendingInviteCode}`;
       toast('Yangi 64-xonali taklif havolasi yaratildi', 'info');
     };
   }
@@ -1184,7 +1175,7 @@ export function openCreateForm(type) {
       pubBtn?.classList.remove('active');
       if (pubSec) pubSec.style.display = 'none';
       if (privSec) privSec.style.display = '';
-      if (tokenEl) tokenEl.textContent = `${window.location.origin}/?join_group=${_pendingInviteCode}`;
+      if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_pendingInviteCode}`;
     }
   };
   updateCreatePrivacyUI();
@@ -1775,48 +1766,6 @@ export function getGroupRows() {
 export function getCurrentGroupId() { return _currentGroupId; }
 export function getCurrentGroupData() { return _currentGroupData; }
 
-let _deepLinkHandled = false;
-try {
-  const p = new URLSearchParams(window.location.search);
-  const t = p.get('join_group') || p.get('join') || p.get('g');
-  if (t) sessionStorage.setItem('spacemr_pending_group', t);
-} catch (_) {}
-
-export async function handleGroupDeepLinks() {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('join_group') || params.get('join') || params.get('g') || sessionStorage.getItem('spacemr_pending_group');
-  if (!token) return;
-  if (!state.me?.uid) {
-    sessionStorage.setItem('spacemr_pending_group', token);
-    return;
-  }
-  if (_deepLinkHandled) return;
-  _deepLinkHandled = true;
-
-  try {
-    let targetGid = null;
-    const { data: rpcRes, error: rpcErr } = await sb.rpc('join_group_by_token', { p_token: token });
-    if (!rpcErr && rpcRes && rpcRes.success) {
-      targetGid = rpcRes.group_id;
-    } else {
-      const { data: rows } = await sb.from('groups')
-        .select('id, name, is_private, invite_code, username')
-        .or(`invite_code.eq.${token},username.ilike.${token}`)
-        .limit(1);
-      if (rows && rows.length > 0) {
-        targetGid = rows[0].id;
-        await joinGroup(targetGid);
-      }
-    }
-
-    if (targetGid) {
-      sessionStorage.removeItem('spacemr_pending_group');
-      toast("Guruhga muvaffaqiyatli qo'shildingiz!", "success");
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-      setTimeout(() => openGroupThread(targetGid), OPEN_GROUP_DELAY_MS);
-    }
-  } catch (e) {
-    console.warn('[Groups] deep link error:', e);
-  }
-}
+/* Eski ?g= / ?join= / ?join_group= havolalari olib tashlandi (404). Havolalar: /chats/g/<username|invite-kod>, url-router.js. */
+try { sessionStorage.removeItem('spacemr_pending_group'); } catch (_) {}
+export async function handleGroupDeepLinks() { /* no-op: eski API moslik uchun */ }

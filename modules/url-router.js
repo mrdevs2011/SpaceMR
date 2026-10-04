@@ -5,7 +5,10 @@
  *   /home                  bosh sahifa (sayt ochilganda doim shu)
  *   /chats                 suhbatlar
  *   /chats/u/<username>    shaxsiy chat
- *   /chats/g/<groupId>     guruh chati (group_username ham qabul qilinadi; a'zo bo'lmagan ochiq guruhga avtomatik qo'shiladi)
+ *   /chats/g/<ref>         guruh chati: ref = group username | id | 64-xonali maxfiy taklif kodi
+ *                          (a'zo bo'lmagan ochiq guruhga / taklif kodi bilan avtomatik qo'shiladi)
+ *   Eski ?g= ?u= ?join= ?join_group= havolalari ishlamaydi -> 404.
+ *   Foydalanuvchi username lari va guruh username lari alohida nomlar fazosi (user 'mr' va guruh 'mr' birga yashaydi).
  *   /chats/groupcreate     "Yangi guruh" formasi
  *   /u/<username>          boshqa foydalanuvchi profili (hamma uchun ochiladi; o'zi ochsa /profile)
  *   /profile               profil
@@ -34,6 +37,8 @@ const $ = id => document.getElementById(id);
 const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications' };
 const NEXT_KEY = 'spacemr_next_path';
 const LAST_KEY = 'spacemr_last_path'; // kirgan foydalanuvchining oxirgi joyi (/login yozsa shu yerga qaytadi)
+const HEX64_RE = /^[0-9a-f]{64}$/i;
+const LEGACY_QS_RE = /[?&](g|u|join|join_group)=/i; // eski query havolalar — endi 404
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 let _auth = 'unknown';        // 'unknown' | 'in' | 'out'
@@ -140,10 +145,24 @@ async function groupIdByRef(ref) {
       if (error) { _lookupFailed = true; return null; }
       return data?.id || null;
     }
-    const { data, error } = await sb.from('groups').select('id').ilike('group_username', ref).maybeSingle();
+    const { data, error } = await sb.from('groups').select('id').ilike('username', ref).maybeSingle();
     if (error) { _lookupFailed = true; return null; }
     return data?.id || null;
   } catch (_) { _lookupFailed = true; return null; }
+}
+
+/** 64-xonali maxfiy taklif kodi bilan guruhga qo'shiladi -> group id. */
+async function gidByInvite(token) {
+  _lookupFailed = false;
+  try {
+    const { data, error } = await sb.rpc('join_group_by_token', { p_token: token });
+    if (error) { _lookupFailed = true; return null; }
+    if (data && data.success && data.group_id) {
+      import('./ui/toast.js').then(t => t.toast("Guruhga qo'shildingiz", 'success')).catch(() => {});
+      return data.group_id;
+    }
+  } catch (_) { _lookupFailed = true; }
+  return null;
 }
 
 /** Qidiruv natijasi bo'sh: haqiqatan yo'q -> 404; tarmoq xatosi -> bosh sahifa (avvalgidek). */
@@ -155,6 +174,17 @@ function dmToken(uid) {
   if (cached) return cached;
   sb.from('profiles').select('username').eq('id', uid).maybeSingle().then(({ data }) => {
     if (data?.username) { _unameCache.set(uid, data.username); schedule(); }
+  }).catch(() => {});
+  return null;
+}
+
+const _gnameCache = new Map(); // gid -> group username (ommaviy) yoki null (maxfiy -> id ishlatiladi)
+/** Guruh URL tokeni: ommaviy guruh = username, aks holda id. Hali noma'lum bo'lsa null va fonda yuklaydi. */
+function groupToken(gid) {
+  if (_gnameCache.has(gid)) return _gnameCache.get(gid) || gid;
+  sb.from('groups').select('username, is_private').eq('id', gid).maybeSingle().then(({ data }) => {
+    _gnameCache.set(gid, data && !data.is_private && data.username ? data.username : null);
+    schedule();
   }).catch(() => {});
   return null;
 }
@@ -190,7 +220,10 @@ function computeUrl() {
       const t = dmToken(state.currentChatUid);
       return t ? `/chats/u/${encodeURIComponent(t)}` : null;
     }
-    if (modal?.dataset?.gid) return `/chats/g/${encodeURIComponent(modal.dataset.gid)}`;
+    if (modal?.dataset?.gid) {
+      const t = groupToken(modal.dataset.gid);
+      return t ? `/chats/g/${encodeURIComponent(t)}` : null;
+    }
     return null;
   }
 
@@ -345,7 +378,7 @@ export async function applyPath(rawPath, { initial = false } = {}) {
     }
 
     /* Kirgan: mavjud bo'lmagan manzil -> 404 sahifa */
-    if (route.kind === 'notfound') return notFound();
+    if (route.kind === 'notfound' || LEGACY_QS_RE.test(location.search)) return notFound();
 
     /* Kirgan: /login va "/" -> saqlangan manzil yoki /home */
     if (route.kind === 'login' || route.kind === 'root') {
@@ -454,9 +487,10 @@ export async function applyPath(rawPath, { initial = false } = {}) {
         }
         ok = threadOpen();
       } else {
-        const gid = await groupIdByRef(route.ref);
+        const isInvite = HEX64_RE.test(route.ref);
+        const gid = isInvite ? await gidByInvite(route.ref) : await groupIdByRef(route.ref);
         if (!gid) return missing();
-        if (!(await ensureGroupMember(gid))) return deny();
+        if (!isInvite && !(await ensureGroupMember(gid))) return deny();
         if (getCurrentRoute() !== 'chats') navigateTo('chats', false);
         closeEverythingExcept(null);
         if (!(threadOpen() && $('chatThreadModal')?.dataset?.gid === gid)) {
@@ -542,6 +576,7 @@ export function initUrlRouter() {
     applyPath(location.pathname);
   });
 
+  document.addEventListener('groupsUpdated', () => _gnameCache.clear());
   window.addEventListener('spacemr:route', schedule);
 
   const mo = new MutationObserver(() => { detectAuth(); schedule(); });

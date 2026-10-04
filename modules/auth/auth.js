@@ -316,13 +316,7 @@ if (authBtn) {
 
       const { data: free, error: freeErr } = await sb.rpc('username_available', { p_username: cleaned });
       if (freeErr) throw freeErr;
-      let isFree = free;
-      if (isFree) {
-        try {
-          const { data: grpRows } = await sb.from('groups').select('id').ilike('username', cleaned).limit(1);
-          if (grpRows && grpRows.length) isFree = false;
-        } catch (_) {}
-      }
+      const isFree = free; /* faqat foydalanuvchi username lari: guruh nomlari alohida fazo */
       if (!isFree) {
         authBtn.disabled = false;
         authBtn.textContent = "Ro'yxatdan o'tish";

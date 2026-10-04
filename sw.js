@@ -169,9 +169,8 @@ const PRECACHE_URLS = [
   '/modules/vendor/vendor-supabase.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  '/svg/SpaceMR.png',
+  '/svg/logo.png',
   '/svg/favicon.png',
-  '/svg/splash.png',
 ];
 
 // Qaysi so'rovlarga tegmaymiz: jonli backend (Supabase), tashqi CDN va /api/ —

@@ -29,3 +29,4 @@ Bazada ISHGA TUSHIRILGAN SQL fayllar, tartib raqami bilan. Yangi bazada `000_sch
 - 056 (2026-10-03): siyosat o'zgardi (054/055 ni almashtiradi): faqat VIDEO taqiqlangan; rasm formatlari, hujjat/arxiv, audio ruxsat; story/avatar/guruh avatari faqat rasm.
 - 057 (2026-10-03): chat/guruhga FAYL sifatida (chat-files, group-files, type='file') video (mp4...) ruxsat; post/story/avatar uchun video taqiqligicha.
 - 058 (2026-10-04): `saved_posts` jadvali (user_id, post_id, created_at) — saqlangan postlar. RLS: faqat o'ziniki (select/insert/delete), insert uchun is_approved() va post_is_visible(). Bazada yurgizilgan.
+- 060 (2026-10-04): foydalanuvchi va guruh username lari ALOHIDA nomlar fazosi: username_available faqat profiles, yangi group_username_available(text, uuid) faqat groups, change_my_username guruhlar bilan solishtirmaydi. Ishga tushirish shart (Supabase SQL editor).

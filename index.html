@@ -63,6 +63,7 @@ html{color-scheme:dark;}
       else if (a === 'u' && n === 2) ok = true;
       else if (a === 'chats' && n === 2) ok = b === 'groupcreate';
       else if (a === 'chats' && n === 3) ok = (b === 'u' || b === 'g') && !!s[2];
+      if (/[?&](g|u|join|join_group)=/i.test(location.search)) ok = false; /* eski ?g= ?u= havolalar -> 404 */
       if (!ok) { document.documentElement.setAttribute('data-nf', '1'); document.title = '404 - SpaceMR'; }
     } catch (_) {}
   })();
@@ -110,7 +111,7 @@ html[data-nf],html[data-nf] body{background:#000000}
   <div class="splash-inner">
     <div class="splash-logo-wrap">
       <div class="splash-logo-glass">
-        <img class="splash-svg" src="./svg/splash.png" alt="Logo" width="128" height="128">
+        <img class="splash-svg" src="./svg/logo.png" alt="Logo" width="128" height="128">
       </div>
     </div>
     <div class="splash-wordmark">SpaceMR</div>
@@ -124,7 +125,7 @@ html[data-nf],html[data-nf] body{background:#000000}
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-glass">
-        <img src="./svg/SpaceMR.png" alt="SpaceMR" width="40" height="40">
+        <img src="./svg/logo.png" alt="SpaceMR" width="40" height="40">
       </div>
       <span class="auth-brand">SpaceMR</span>
     </div>
@@ -256,7 +257,7 @@ html[data-nf],html[data-nf] body{background:#000000}
   <header class="app-hdr" id="appHdr">
     <button class="hdr-logo" id="hdrLogoBtn" aria-label="Bosh sahifa">
       <div class="hdr-logo-glass">
-        <img src="./svg/SpaceMR.png" alt="SpaceMR" width="28" height="28">
+        <img src="./svg/logo.png" alt="SpaceMR" width="28" height="28">
       </div>
       <span class="hdr-brand">SpaceMR</span>
     </button>
@@ -286,7 +287,7 @@ html[data-nf],html[data-nf] body{background:#000000}
   <!-- VIEWS -->
   <div class="view on" id="homeView">
     <div class="home-brand" id="homeBrand">
-      <img src="./svg/SpaceMR.png" alt="" width="28" height="28">
+      <img src="./svg/logo.png" alt="" width="28" height="28">
       <span>SpaceMR</span>
       <button type="button" class="home-brand-saved" id="hdrSavedBtn" aria-label="Saqlanganlar" title="Saqlanganlar"><img src="./svg/social/bookmark.svg" alt="" class="icon" width="26" height="26"></button>
     </div>
@@ -417,7 +418,7 @@ html[data-nf],html[data-nf] body{background:#000000}
     <div class="sb-top">
       <button class="sb-logo-row" id="sbLogoBtn" aria-label="Bosh sahifa" data-tip="SpaceMR">
         <div class="sb-logo-glass">
-          <img src="./svg/SpaceMR.png" alt="SpaceMR" class="sb-logo-img" width="26" height="26">
+          <img src="./svg/logo.png" alt="SpaceMR" class="sb-logo-img" width="26" height="26">
         </div>
         <span class="sb-brand-text">SpaceMR</span>
       </button>
@@ -738,7 +739,7 @@ html[data-nf],html[data-nf] body{background:#000000}
         <span class="btn-lbl">Chiqish</span>
       </button>
 
-      <button class="settings-help-btn" id="helpBtn" type="button" title="Yordam" aria-label="Yordam" data-href="https://spacemr.vercel.app/?g=spacemr">
+      <button class="settings-help-btn" id="helpBtn" type="button" title="Yordam" aria-label="Yordam" data-href="https://spacemr.vercel.app/chats/g/spacemr">
         <img src="./svg/ui/help.svg" alt="" class="icon" width="18" height="18">
       </button>
 
