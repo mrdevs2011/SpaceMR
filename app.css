@@ -8239,3 +8239,17 @@ textarea.cmt-input {
 }
 textarea.cmt-input::-webkit-scrollbar { display: none; }
 .cmt-input-row { align-items: flex-end; }
+
+/* ── Saqlanganlar: sticky header ustida hech narsa ko'rinmasin (post/rasm/tugma header ostiga kirmaydi) ── */
+.saved-head {
+  z-index: 30;
+  background: #000;
+  box-shadow: 0 -12px 0 0 #000; /* header tepasidagi tirqishdan post ko'rinib qolmasin */
+}
+#savedFeed { position: relative; z-index: 0; isolation: isolate; }
+
+/* Saqlanganlar: header chizig'i ostida 12px qora oraliq — post header'ga yopishmay, pastroqda kesiladi */
+.saved-head::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 100%;
+  height: 12px; background: #000; pointer-events: none;
+}
