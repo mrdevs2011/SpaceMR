@@ -58,6 +58,7 @@ html{color-scheme:dark;}
       var a = (s[0] || '').toLowerCase(), b = (s[1] || '').toLowerCase(), n = s.length, ok = false;
       if (!n) ok = true;
       else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost)$/.test(a);
+      else if (n === 2) ok = (a === 'profile' && b === 'settings');
       else if (a === 'u' && n === 2) ok = true;
       else if (a === 'chats' && n === 2) ok = b === 'groupcreate';
       else if (a === 'chats' && n === 3) ok = (b === 'u' || b === 'g') && !!s[2];
@@ -282,7 +283,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="home-brand" id="homeBrand">
       <img src="./svg/SpaceMR.png" alt="" width="28" height="28">
       <span>SpaceMR</span>
-      <button type="button" class="home-brand-saved" id="hdrSavedBtn" aria-label="Saqlanganlar" title="Saqlanganlar"><img src="./svg/social/bookmark.svg" alt="" class="icon"></button>
+      <button type="button" class="home-brand-saved" id="hdrSavedBtn" aria-label="Saqlanganlar" title="Saqlanganlar"><img src="./svg/social/bookmark.svg" alt="" class="icon" width="26" height="26"></button>
     </div>
     <div class="home-composer" id="homeComposer" aria-label="Yangi post">
       <div class="home-composer-avi" id="homeComposerAvi"></div>
@@ -411,34 +412,34 @@ html[data-nf],html[data-nf] body{background:#000}
     </div>
 
     <button class="nav-btn on" data-v="home" data-tip="Bosh sahifa" aria-label="Bosh sahifa">
-      <img src="./svg/nav/home.svg" alt="" class="icon">
+      <img src="./svg/nav/home.svg" alt="" class="icon" width="26" height="26">
       <span class="nav-label">Bosh sahifa</span>
     </button>
     <button class="nav-btn sb-search-toggle" id="sbSearchToggle" data-tip="Kashf" aria-label="Kashf">
-      <img src="./svg/action/search-alt.svg" alt="" class="icon">
+      <img src="./svg/action/search-alt.svg" alt="" class="icon" width="26" height="26">
       <span class="nav-label">Kashf</span>
     </button>
     <button class="nav-center-btn" id="createBtn" data-tip="Yaratish" aria-label="Yangi post yaratish">
-      <img src="./svg/action/edit-square.svg" alt="" class="icon">
+      <img src="./svg/action/edit-square.svg" alt="" class="icon" width="22" height="22">
       <span class="sb-create-label">Post</span>
     </button>
     <button class="nav-btn" data-v="chats" data-tip="Suhbatlar" aria-label="Suhbatlar">
-      <img src="./svg/social/chat.svg" alt="" class="icon">
+      <img src="./svg/social/chat.svg" alt="" class="icon" width="26" height="26">
       <span class="nav-label">Suhbatlar</span>
       <span class="nav-badge d-none" id="chatBadge"></span>
     </button>
     <button class="nav-btn nav-saved" data-v="saved" data-tip="Saqlanganlar" aria-label="Saqlanganlar">
-      <img src="./svg/social/bookmark.svg" alt="" class="icon">
+      <img src="./svg/social/bookmark.svg" alt="" class="icon" width="26" height="26">
       <span class="nav-label">Saqlanganlar</span>
     </button>
     <button class="nav-btn" data-v="profile" data-tip="Profil" aria-label="Profil">
-      <img src="./svg/social/user.svg" alt="" class="icon">
+      <img src="./svg/social/user.svg" alt="" class="icon" width="26" height="26">
       <span class="nav-label">Profil</span>
     </button>
 
     <!-- Admin: Actions tab (statistika + users birlashtirilgan, faqat admin uchun) -->
     <button class="nav-btn admin-only-btn d-none" data-v="actions" data-tip="Boshqaruv" aria-label="Boshqaruv" id="adminActionsNavBtn">
-      <img src="./svg/admin/grid.svg" alt="" class="icon" width="7" height="7">
+      <img src="./svg/admin/grid.svg" alt="" class="icon" width="26" height="26">
       <span class="nav-label">Boshqaruv</span>
       <span class="nav-badge d-none" id="adminActionsBadge"></span>
     </button>

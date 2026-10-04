@@ -58,6 +58,7 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 .empty-search-hint { font-family: var(--mono); }
 
 
+
 /* ─── Icons (extracted from inline SVG) ─── */
 .icon {
   display: inline-block;
@@ -66,8 +67,38 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
   object-fit: contain;
 }
 img.icon {
-  /* stroke/currentColor in external SVG resolves to black by default when used as <img>;
-     color is controlled by parent via filter or by using mask if needed */
+  max-width: 100%;
+  height: auto;
+}
+/* Nav icons — critical: former CSS targeted only svg */
+nav.bot-nav .nav-btn img.icon,
+nav.bot-nav .sb-search-toggle img.icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex-shrink: 0;
+}
+@media (min-width: 1100px) {
+  nav.bot-nav .nav-btn img.icon,
+  nav.bot-nav .sb-search-toggle img.icon {
+    width: 26px;
+    height: 26px;
+  }
+  nav.bot-nav #createBtn.nav-center-btn img.icon {
+    display: none; /* desktop: text "Post" only */
+  }
+}
+@media (max-width: 1099px) {
+  nav.bot-nav #createBtn.nav-center-btn img.icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+.act-btn img.icon {
+  width: 18.75px;
+  height: 18.75px;
+  padding: 7px;
+  box-sizing: content-box;
 }
 
 /* ─── Forgot password link ─── */
