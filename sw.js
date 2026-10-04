@@ -86,7 +86,7 @@ self.addEventListener('notificationclick', (event) => {
 /* ── Cache versiyasi ── */
 // Statik fayllarga o'zgartirish kiritsangiz, PWA o'zi eskisini yangilashi uchun
 // bu raqamni oshiring (v1 -> v2 -> v3 ...).
-const CACHE_VERSION  = 't-1791016245609'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1791102200'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 
@@ -231,7 +231,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS / CSS / Rasm / Font — Cache-First (juda tez!)
+  // JS / CSS — Network-First: refresh har doim oxirgi versiya. Offline da kesh.
+  if (req.destination === 'script' || req.destination === 'style') {
+    event.respondWith(
+      fetch(req).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(STATIC_CACHE).then(c => c.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Rasm / font — cache-first
   if (_isStaticAsset(req)) {
     event.respondWith(
       caches.match(req).then(cached => {
