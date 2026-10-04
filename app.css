@@ -350,12 +350,15 @@ button > svg {
 .act-btn:hover svg,
 .act-btn:hover img.icon,
 nav.bot-nav .nav-btn:hover img.icon,
-nav.bot-nav .nav-btn:hover svg,
-button:hover > img.icon,
-button:hover > svg {
+nav.bot-nav .nav-btn:hover svg {
   background: none !important;
   opacity: 0.82;
   filter: brightness(1.3);
+}
+/* header iconlari o'z filterini saqlaydi — global hover tegmaydi */
+button.hdr-icon-btn:hover > img.icon,
+button.hdr-icon-btn:hover > svg {
+  background: none !important;
 }
 .act-btn:active img.icon,
 .act-btn:active svg,
@@ -3552,7 +3555,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   background: var(--bg4, #1c1f24);
 }
 
-.hdr-right { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.hdr-right { display: flex; align-items: center; gap: 0; flex-shrink: 0; min-width: 0; }
 
 .hdr-icon-btn {
   position: relative;
@@ -3572,10 +3575,29 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 
 .hdr-icon-btn:active { background: var(--bg4, rgba(255,255,255,0.1)); transform: scale(0.94); }
-.hdr-icon-btn .icon {
-  width: 20px;
-  height: 20px;
+.hdr-icon-btn .icon,
+.hdr-icon-btn img.icon {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px;
+  max-height: 20px;
   opacity: 0.92;
+  filter: brightness(0) invert(1);
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.hdr-icon-btn:hover .icon,
+.hdr-icon-btn:hover img.icon {
+  opacity: 1;
+  filter: brightness(0) invert(1);
+}
+.hdr-icon-btn:active .icon,
+.hdr-icon-btn:active img.icon {
+  opacity: 0.75;
   filter: brightness(0) invert(1);
 }
 .hdr-badge {

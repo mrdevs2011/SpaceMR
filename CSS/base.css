@@ -243,12 +243,15 @@ button > svg {
 .act-btn:hover svg,
 .act-btn:hover img.icon,
 nav.bot-nav .nav-btn:hover img.icon,
-nav.bot-nav .nav-btn:hover svg,
-button:hover > img.icon,
-button:hover > svg {
+nav.bot-nav .nav-btn:hover svg {
   background: none !important;
   opacity: 0.82;
   filter: brightness(1.3);
+}
+/* header iconlari o'z filterini saqlaydi — global hover tegmaydi */
+button.hdr-icon-btn:hover > img.icon,
+button.hdr-icon-btn:hover > svg {
+  background: none !important;
 }
 .act-btn:active img.icon,
 .act-btn:active svg,
