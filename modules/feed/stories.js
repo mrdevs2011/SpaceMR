@@ -102,6 +102,16 @@ function ensureStoriesCss() {
   font-size: 11px; max-width: 72px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; color: var(--text2);
 }
+/* Skeleton: haqiqiy story-item bilan BIR XIL o'lcham/layout — yuklanganda faqat ichi almashadi, siljish yo'q */
+.story-item--skel { cursor: default; pointer-events: none; }
+.story-ring--skel, .story-skel-bar {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--line2, #2f3336) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: storySkel 1.3s ease-in-out infinite;
+}
+.story-skel-bar { display: inline-block; width: 44px; border-radius: 6px; }
+@keyframes storySkel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .story-ring--skel, .story-skel-bar { animation: none; } }
 .story-viewer {
   position: fixed; inset: 0; z-index: 10000;
   background: #000000;
@@ -435,10 +445,10 @@ export async function loadStories() {
   const track = $('storiesTrack');
   if (!track || !state.me?.uid) return;
 
-  // Strip balandligini saqlab qolamiz — feed scroll tepaga sakramasin
-  const _prevH = track.offsetHeight;
-  if (_prevH > 0) track.style.minHeight = _prevH + 'px';
-  track.innerHTML = '<div class="story-loading"><div class="spinner"></div></div>';
+  /* Birinchi yuklashda: oxirgi ma'lum soniga teng skeleton (haqiqiy story-item bilan bir xil layout).
+     Qayta yuklashda mavjud story lar turadi — ularni skeletonga almashtirmaymiz (miltillamasin). */
+  const _hasReal = () => !!track.querySelector('.story-item:not(.story-item--skel)');
+  if (!_hasReal()) renderSkeleton(_cachedStoryCount());
 
   try {
     const nowIso = new Date().toISOString();
@@ -455,6 +465,9 @@ export async function loadStories() {
     const stories = rows || [];
     const uids = [...new Set(stories.map(s => s.user_id))];
     if (state.me?.uid && !uids.includes(state.me.uid)) uids.push(state.me.uid);
+    /* Bugungi story egalari soni ma'lum bo'ldi (men + boshqalar) — skeleton sonini aniqlaymiz, profil/ko'rilganlar hali yuklanmoqda */
+    _saveStoryCount(uids.length);
+    if (!_hasReal()) renderSkeleton(uids.length);
 
     let profiles = [];
     if (uids.length) {
@@ -540,10 +553,38 @@ export async function loadStories() {
   }
 }
 
+const _storyCntKey = () => 'spacemr_story_cnt:' + (state.me?.uid || '');
+function _cachedStoryCount() {
+  try {
+    const n = parseInt(localStorage.getItem(_storyCntKey()) || '1', 10);
+    return Math.min(Math.max(n || 1, 1), 30);
+  } catch (_) { return 1; }
+}
+function _saveStoryCount(n) {
+  try { localStorage.setItem(_storyCntKey(), String(n)); } catch (_) {}
+}
+
+/** n ta skeleton: .story-item / .story-ring / .story-label bilan aynan bir xil o'lcham */
+function renderSkeleton(n) {
+  const track = $('storiesTrack');
+  if (!track) return;
+  const count = Math.min(Math.max(n || 1, 1), 30);
+  const cur = track.querySelectorAll('.story-item--skel').length;
+  if (cur === count && cur === track.children.length) return; // o'zgarmagan — animatsiya uzilmasin
+  track.setAttribute('aria-busy', 'true');
+  track.innerHTML = Array.from({ length: count }, () =>
+    `<div class="story-item story-item--skel" aria-hidden="true">
+      <div class="story-ring story-ring--skel"></div>
+      <span class="story-label"><i class="story-skel-bar">&nbsp;</i></span>
+    </div>`).join('');
+}
+
 function renderBar() {
   const track = $('storiesTrack');
   if (!track) return;
   track.style.minHeight = '';
+  track.removeAttribute('aria-busy');
+  _saveStoryCount(_groups.length);
 
   track.innerHTML = _groups.map((g, i) => {
     const ring = g.isMe && !g.items.length
