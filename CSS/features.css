@@ -927,33 +927,47 @@
   color: var(--text2);
   padding: 13px 8px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-family: var(--font);
-  
-}
-.dm-act:last-child { border-right: none; }
-.dm-act:hover { background: var(--glass); color: var(--text); }
-.dm-act.liked { color: var(--red); }
-.dm-act .dm-act-count { font-size: 13px; font-weight: 500; }
+  align-items: cente.chat-row {
+display: flex;
+align-items: center;
+gap: 12px;
+padding: 10px 16px;
+cursor: pointer;
+background: transparent;
+border-radius: 0;
+border: none;
+box-shadow: none;
+margin: 0;
+position: relative;
+}act-count { font-size: 13px; font-weight: 500; }
 /* Divider */
 .divider { height: 0.5px; background: var(--glass-border); margin: 4px 0; }
 /* ═══════════════════════════════════════════════ DESKTOP SIDEBAR — Solid ═══════════════════════════════════... */
 .sb-top, .sb-search-row, .sb-bottom, .sb-create-label { display: none; }
 .sb-search-toggle { display: none; }.sb-panel-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
-.sb-panel-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--glass); border: 0.5px solid var(--glass-border); border-radius: 14px; padding: 9px 12px;  box-shadow: var(--specular-top); }
-.sb-panel-input-wrap:focus-within { border-color: var(--pal-legacy-464646); background: var(--glass-mid); box-shadow: var(--specular-top), 0 0 0 3px var(--pal-gray-900); }
-.sb-panel-input-wrap svg { flex-shrink: 0; color: var(--text3); }
-.sb-panel-input { background: none; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 14px; width: 100%; }
-.sb-panel-input::placeholder { color: var(--text3); }
-@media (min-width: 1100px) {
-  :root { --sidebar: 68px; --content-left: var(--sidebar); }
-  .app-hdr { display: none; }
-  .sb-search-toggle { display: flex; }
-  #sbSearchToggle.search-active { background: var(--pal-gray-800); box-shadow: var(--specular-top); }
+.sb-panel-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--glass); border: .chat-row-preview {
+font-size: 12.5px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+margin-top: 2px;
+} { border-color: var(--pal-legacy-464646); background: var(--glass-mid); box-shadow: var(--specular-top), 0 0 0 3px var(--pal-gray-900); }
+.sb-panel-input-wrap svg { flex-shrink: 0; color.chat-row-time {
+font-size: 11px;
+flex-shrink: 0;
+white-space: nowrap;
+}(-.chat-row-badge {
+min-width: 22px;
+height: 22px;
+padding: 0 6px;
+border-radius: 11px;
+font-size: 11.5px;
+font-weight: 700;
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: 0 2px 8px #652024;
+}Toggle.search-active { background: var(--pal-gray-800); box-shadow: var(--specular-top); }
   #sbSearchToggle.search-active svg { stroke: var(--blue); }
   #sbSearchToggle { position: relative; }
   #sbSearchToggle::after {
@@ -1035,24 +1049,26 @@
   .feed { margin: 0 auto; padding: 0 16px; }
   .post { border: 0.5px solid var(--glass-border); background: var(--glass); margin-bottom: 16px; padding: 14px; box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
   .post-media { margin: 10px -14px; border-radius: 0; }
-  #detailContent { margin-bottom: 20px; }
-  #detailModal { padding-left: var(--sidebar); }
-  #userProfileModal { left: var(--sidebar); }
-  #grpInfoOverlay { left: var(--sidebar); }
-  .up-back { left: calc(var(--sidebar) + 14px); }
-  .bot-nav { display: flex; position: fixed; }
-}
-/* ═══════════════════════════════════════════ DESKTOP SEARCH PANEL — Solid ══════════════════════════════════... */
-#sbSearchPanel {
-  position: fixed;
-  top: calc(var(--hdr) + 8px);
-  left: calc(var(--sidebar) + 16px);
-  width: 320px;
-  background: var(--glass-mid);
-  border: 0.5px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 16px;
-  z-index: 500;
+  #detailContent.chat-emoji-quickpick {
+display: flex;
+flex-direction: column;
+position: absolute;
+left: 0;
+bottom: calc(100% + 8px);
+visibility: hidden;
+pointer-events: none;
+transform: translateY(100%);
+clip-path: inset(0 0 100% 0);
+will-change: transform, clip-path;
+transition: transform .24s cubic-bezier(.4, 0, .6, 1), clip-path .24s cubic-bezier(.4, 0, .6, 1), visibility 0s linear .24s;
+width: min(344px, calc(100vw - 24px));
+height: min(380px, 60vh);
+background: var(--bg);
+border-radius: 16px;
+box-shadow: 0 6px 24px var(--pal-black);
+overflow: hidden;
+z-index: 50;
+}0;
   display: none;
   box-shadow: var(--specular-top), var(--liquid-shadow-lg);
 }
@@ -1145,10 +1161,19 @@
   position: relative;
 }
 .chat-thread-back { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg4); border: none; cursor: pointer; color: var(--text); flex-shrink: 0; }
-.chat-thread-back:hover { background: var(--bg5); }
-.chat-thread-avi { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: var(--bg4); }
-.chat-thread-avi img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
-.chat-thread-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-thread-bac.chat-voice-btn {
+position: relative;
+z-index: 2;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+flex-shrink: 0;
+touch-action: none;
+user-select: none;
+-webkit-user-select: none;
+}-thread-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-thread-messages { flex: 1; overflow-y: auto; overscroll-behavior-y: contain; padding: 12px 12px 8px; display: flex; flex-direction: column; }
 /* Sana ajratuvchi — Telegram uslubidagi suzuvchi pill ("Bugun"/"Kecha") */
 .chat-date-sep { margin: 10px 0 8px; }
@@ -1176,13 +1201,17 @@
 .chat-msg.mine .chat-msg-time { color: #C1C1C3; }
 .chat-msg.theirs .chat-msg-time { color: var(--text3); }
 /* Read-receipt ticks */
-.msg-ticks { flex-shrink: 0; display: inline-block; vertical-align: middle; color: var(--pal-legacy-909093); }
-.msg-ticks.sending {
-  opacity: 0.95;
-  /* status=sending bo'lgandagina ko'rinadi; DB insert muvaffaqiyatli bo'lgach 'sent' ga o'tadi */
-}
-/* Soat millari markaz atrofida aylanadi (CSS only — SMIL yo'q) */
-.msg-ticks.sending .msg-tick-hands {
+.msg-ticks { flex-shrink: 0; display: inline-block; vertical-align: middle; color: var(--pal-legacy-909093).crb-line {
+width: 3px;
+min-height: 32px;
+border-radius: 2px;
+flex-shrink: 0;
+}qiyatli bo'lgach 'sent' ga o'tadi */
+}.crb-name {
+font-size: 12px;
+font-weight: 700;
+margin-bottom: 1px;
+}msg-tick-hands {
   transform-origin: 12px 12px;
   transform-box: view-box;
   animation: msgClockSpin 1.1s linear infinite;
@@ -1226,12 +1255,12 @@
   transform: translateY(100%); clip-path: inset(0 0 100% 0);
   will-change: transform, clip-path;
   transition: transform .24s cubic-bezier(.4, 0, .6, 1), clip-path .24s cubic-bezier(.4, 0, .6, 1), visibility 0s linear .24s;
-  width: min(344px, calc(100vw - 24px));
-  height: min(380px, 60vh);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: 0 6px 24px var(--pal-black);
+  width: min(344px, calc(100vw - 24.chat-thread-typing {
+font-size: 11.5px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}w: 0 6px 24px var(--pal-black);
   overflow: hidden;
   z-index: 50;
 }
@@ -1240,12 +1269,13 @@
   transition: transform .3s cubic-bezier(.22, .8, .25, 1), clip-path .3s cubic-bezier(.22, .8, .25, 1), visibility 0s;
 }
 @media (prefers-reduced-motion: reduce) { .chat-emoji-quickpick, .chat-emoji-quickpick.show { transition: none; } }
-.chat-emoji-quickpick [hidden] { display: none !important; }
-.chat-emoji-quickpick .ep-loading, .chat-emoji-quickpick .ep-empty { padding: 28px 12px; text-align: center; color: var(--text3); font-size: 13px; }
+.chat-emoji-quickpick [hidden] { display.chat-search-btn.active {
+background: var(--pal-gray-800);
+}p-empty { padding: 28px 12px; text-align: center; color: var(--text3); font-size: 13px; }
 .ep-top, .ep-search { display: flex; align-items: center; gap: 4px; padding: 8px 8px 6px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 .ep-tabs { display: flex; flex: 1; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .ep-tabs::-webkit-scrollbar { display: none; }
-.ep-tab { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: 50%; color: var(--text3); cursor: pointer; padding: 0; }
+.ep-tab { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-contius: 50%; color: var(--text3); cursor: pointer; padding: 0; }
 .ep-tab:hover { background: var(--bg4); color: var(--text2); }
 .ep-tab.on { background: var(--bg4); color: var(--text); }
 .ep-search { padding: 8px; }
@@ -1635,13 +1665,12 @@
   font-size: 15px; font-weight: 500;
   color: rgba(255,255,255,0.7);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  text-align: center;
-  margin: 0 0 20px;
-  order: 2;
-}
-#callActiveModal.video-mode .call-status,
-#callActiveModal.video-mode .call-timer {
+.cpb-progress-fill {
+height: 100%;
+width: 0%;
+border-radius: 4px;
+box-shadow: 0 0 8px #848487;
+}llActiveModal.video-mode .call-timer {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + 16px);
   left: 50%; transform: translateX(-50%);
@@ -1734,8 +1763,12 @@
 /* Bubble ichidagi kod bloki/kod — .md-codeblock/.md-code odatda var(--glass) = --bg3 fonini ishlatadi, bu esa... */
 .chat-bubble .md-codeblock, .chat-bubble .md-code { background: rgba(0, 0, 0, .22); border-color: var(--pal-white-14); }
 .chat-msg.mine .chat-bubble .md-codeblock, .chat-msg.mine .chat-bubble .md-code { background: rgba(0, 0, 0, .28); border-color: rgba(255, 255, 255, .18); }
-/* .chat-thread-input-row / .chat-thread-input / .chat-attach-btn skins * now live only in the "CLEAN CHAT RED... */
-/* Voice button — hover/press feedback */
+/* .chat-thread-input-row / .chat-thre.chat-voice-btn {
+border: none;
+box-shadow: none;
+width: 36px;
+height: 36px;
+} feedback */
 /* .chat-voice-btn base look + .recording pulse now live only in the * "VOICE BTN — amplitude-based smooth pul... */
 /* Audio message bubble */
 .chats-hdr { position: relative; }
@@ -1880,13 +1913,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .cfm-caption {
   font-size: 14.5px;
   line-height: 1.4;
-  word-break: break-word;
-  padding: 4px 6px 2px;
-}
-.cfm-caption p { margin: 0; }
-/* ═══════════════════════════════════════════════════════════════════════
-   VOICE BTN — Telegram-style push-to-talk & live recording
-   ═══════════════════════════════════════════════════════════════════════ */
+  word-br═e═════════════════════════ */
 #chatThreadModal .chat-voice-btn.recording,
 .chat-voice-btn.recording {
   /* --voice-rec-bg / --voice-rec-shadow JS orqali silliq morph qilinadi */
@@ -1900,8 +1927,14 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 #chatThreadModal .chat-voice-btn.recording.cancelling,
 .chat-voice-btn.recording.cancelling {
   /* Chapga surganda tugma ko'k qoladi — qizarmaydi */
-  background: var(--voice-rec-bg, linear-gradient(135deg, #2AABEE 0%, #229ED9 100%)) !important;
-  box-shadow: var(--voice-rec-shadow, 0 4px 20px rgba(42, 171, 238, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.2));
+  backgr.grp-form-avi-hint {
+font-size: 12.5px;
+font-weight: 500;
+}m.grp-form-desc-hint {
+font-size: 12px;
+margin: -6px 0 14px;
+line-height: 1.4;
+}55, 255, 255, 0.2));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1936,14 +1969,16 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ef4444;
+  background: #ef4444 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7) !important;
   flex-shrink: 0;
+  opacity: 1;
   animation: crbBlink 1s infinite alternate;
 }
 
 @keyframes crbBlink {
-  0% { opacity: 0.4; transform: scale(0.85); }
-  100% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px rgba(239, 68, 68, 0.85); }
+  0% { opacity: 0.75; transform: scale(0.9); box-shadow: 0 0 6px rgba(239, 68, 68, 0.55); }
+  100% { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px rgba(239, 68, 68, 0.95); }
 }
 
 .crb-timer {
@@ -1984,12 +2019,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  font-size: 13px;
-  color: var(--text3);
-  margin: 0 auto;
-  padding-right: 24px;
-  text-align: center;
+  lign: center;
   will-change: transform;
   transition: transform 0.05s linear, opacity 0.05s linear, color 0.15s ease;
   animation: crbSlidePrompt 1.8s infinite ease-in-out;
@@ -2016,24 +2046,27 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .chat-record-bar.cancelling .crb-dot {
   background: #ef4444 !important;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.9) !important;
-  opacity: 1 !important;
-  animation: none;
+  box-shado.grp-member-role {
+font-size: 11.5px;
+font-weight: 500;
+}mation: none;
 }
-/* ═══════════════════════════════════════════════════════════════════════ PENDING UPLOAD BUBBLE ═════════════... */
-.cpb-wrap { margin-bottom: 4px; }
-.cpb-bubble { min-width: 200px; max-width: 280px; padding: 12px 14px 10px; }
-.cpb-voice, .cpb-file { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.cpb-mic-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+/* ════════════.grp-member-kick {
+width: 28px;
+height: 28px;
+border-radius: 50%;
+border: none;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+}1ius: 50%;
   background: var(--pal-legacy-35353b);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--pal-white);
-  flex-shrink: 0;
+  display.grp-sender-name {
+font-size: 11.5px;
+font-weight: 600;
+margin-bottom: 2px;
+}k: 0;
   border: 0.5px solid var(--pal-legacy-4d4d52);
 }
 .cpb-file-icon svg { width: 36px; height: 36px; }
@@ -2800,8 +2833,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   height: 0;
 }
 
-
-
 /* ═══════════════════════════════════════════ INSTALL GUIDE (yo'riqnoma) ═══════════════════════════════════ */
 .ig-open-btn {
   flex-shrink: 0;
@@ -2977,7 +3008,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .ig-card-x:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
-
 /* ═══ SCROLL STABLE: content-visibility O'CHIRILDI (sakrash sababi) ═══ */
 .chat-msg, .post, .chat-row {
   /* faqat layout isolation — height taxmin YO'Q */
@@ -3004,7 +3034,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .crb-wave-bar {
   backface-visibility: hidden;
 }
-
 
 /* ═══ SCROLL STABLE UI (sakrashsiz) ═══ */
 #feed, #feedList, .feed-scroll {
@@ -3041,7 +3070,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   backface-visibility: hidden;
 }
 .spin-wrap { min-height: 48px; }
-
 
 /* ═══ Play button circular EQ (classic realistic) ═══ */
 .chat-voice-msg { overflow: visible; }
@@ -3082,7 +3110,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .chat-msg.mine .cvm-eq-bar { background: rgba(255, 255, 255, 0.92); box-shadow: 0 0 6px rgba(255,255,255,0.25); }
 .chat-msg.theirs .cvm-eq-bar { background: var(--blue, #1d9bf0); box-shadow: 0 0 6px rgba(29,155,240,0.35); }
-
 
 /* ── Login: classic app install ── */
 .auth-install {

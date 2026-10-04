@@ -123,20 +123,8 @@ function _applyVoiceCancelProgress(p) {
     cancelWrap.classList.toggle('is-sliding', p > 0.02);
   }
 
-  // Chap pastki (record bar) nuqta — cancel progressida qizil
-  if (dot) {
-    if (p > 0.05) {
-      const intensity = Math.min(1, p * 1.15);
-      // REC nuqta — qizil
-      dot.style.background = '#ef4444';
-      dot.style.boxShadow = `0 0 ${6 + intensity * 10}px rgba(239,68,68,${0.4 + intensity * 0.5})`;
-      dot.style.opacity = String(0.7 + intensity * 0.3);
-    } else {
-      dot.style.background = '';
-      dot.style.boxShadow = '';
-      dot.style.opacity = '';
-    }
-  }
+  // REC nuqta doimo qizil (CSS) — slide da rang o'zgarmaydi
+  // (dot style'ga tegilmaydi)
 
   // Binary class faqat to'liq cancel zonasida (release qarori uchun)
   const full = p >= 0.92;
@@ -163,14 +151,7 @@ function _clearVoiceCancelVisuals() {
     cancelEl.style.opacity = '';
     cancelEl.style.fontWeight = '';
   }
-  // Record bar chap nuqtani tiklash
-  const bar = $('chatRecordBar');
-  const dot = bar ? bar.querySelector('.crb-dot') : null;
-  if (dot) {
-    dot.style.background = '';
-    dot.style.boxShadow = '';
-    dot.style.opacity = '';
-  }
+  // REC nuqta CSS da doimo qizil — inline tozalash shart emas
   const cancelText = $('crbCancelText');
   if (cancelText) {
     cancelText.style.transform = '';
@@ -195,12 +176,7 @@ function _ensureMicPermUi() {
       <div class="sheet-title" id="micPermTitle">Mikrofon ruxsati</div>
       <div class="mic-perm-body">
         <div class="mic-perm-icon" aria-hidden="true">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" y1="19" x2="12" y2="23"/>
-            <line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
+          <img src="./svg/extra/icon-dae7be10a164.svg" alt="" class="icon" width="40" height="40">
         </div>
         <p id="micPermMsg" class="mic-perm-msg">Ovozli xabar yuborish uchun mikrofonga ruxsat bering.</p>
         <p id="micPermHint" class="mic-perm-hint" hidden></p>
