@@ -2,3 +2,7 @@
 supabase/.temp/
 .vercel
 .env*
+
+# yuk sinovi (kalit/parol/hisobot)
+tests/.load-state.json
+tests/load-report-*.json
