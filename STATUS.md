@@ -21,6 +21,14 @@
 ---
 
 ---
+### 2026-10-04 12:48
+- **Konsolidatsiya roadmap 100% yopildi** (`docs/CONSOLIDATE-ROADMAP.md`).
+- CSS SSOT: chat→mono-x; call/feed→features; inventar+bannerlar.
+- JS SSOT: message-bubble, file-icons, paintMessages.
+- Keyingi: smoke + commit/push.
+
+
+---
 ### 2026-10-04 12:45
 - **C2:** groups bubble dublikat yo'q (paintGroupThread).
 - **layers** chat top-level → mono SSOT (xavfsiz move).

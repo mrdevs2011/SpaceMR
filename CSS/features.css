@@ -1,3 +1,4 @@
+/* SSOT: feed, call, group-form, profile layout — chat thread YO'Q (mono-x) */
 /* CSS/features.css — feed, profile, nav, chat, groups. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── feed ─── */
 /* ═══════════════════════ APP SHELL ═══════════════════════ */
@@ -306,7 +307,7 @@
 }
 /* ═══════════════════════════════════════════ THEME AWARE ENHANCEMENTS ══════════════════════════════════════... */
 /* Dark mode: stronger borders and shadows */
-[data-theme="dark"] .post:hover { box-shadow: none; }
+
 /* Light mode: softer shadows */
 /* box-shadow o'chirildi — borderless.css:43 (.post guruhida) bir xil specificity bilan keyinroq yuklanadi, bo... */
 /* Video controls - theme aware */
@@ -317,7 +318,7 @@
 /* Search overlay - theme aware */
 /* [data-theme="dark"] .search-overlay-box → CSS/dark-theme-fix.css'da qayta belgilangan (keyinroq yuklanadi,... */
 /* Empty states - theme aware */
-[data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { background: var(--blue-glow2); }
+
 /* Like button pop animation */
 /* ═══════════════════════════════════════════ ENHANCED POST CARD STYLES ═════════════════════════════════════... */
 /* Gradient border hover + zoom o'chirildi (flat X.com uslubi, 2026) */
@@ -326,7 +327,7 @@
 
 /* Post badge animation */
 /* Action button ripple effect */
-.act-btn { position: relative; }
+
 /* Avatar shimmer effect */
 /* ─── profile ─── */
 /* ═══════════════════════ PROFILE VIEW ═══════════════════════ */
@@ -409,7 +410,6 @@
 /* .grid-cell, .grid-cell img/video, .grid-cell:hover img/video → to'liq ui-improvements.css:610-635 tomonidan... */
 .grid-cell-overlay { align-items: center; border-radius: 6px; }
 /* .grid-cell:hover .grid-cell-overlay { opacity:1 } → ui-improvements.css:651 bilan bir xil qiymat, o'lik, o'... */
-.grid-cell-txt { height: 100%; background: var(--bg2); }
 
 /* ═══════════════════════ USER PROFILE MODAL ═══════════════════════ */
 #userProfileModal { position: fixed; inset: 0; background: var(--bg); display: none; overflow-y: auto; scrollbar-width: none; }
@@ -451,7 +451,7 @@
 .up-grid-cell-overlay { align-items: center; border-radius: 4px; }
 /* .up-grid-cell:hover .up-grid-cell-overlay { opacity:1 } → ui-improvements.css:651 bilan bir xil qiymat, o'l... */
 /* .up-grid-cell img/video → to'liq ui-improvements.css:620 tomonidan yopiladi, o'lik, o'chirildi */
-.up-grid-cell-txt { height: 100%; background: var(--bg2); }
+
 /* ═══════════════════════════════════════════ PROFILE — THEME AWARE ENHANCEMENTS ════════════════════════════... */
 /* Dark mode profile */
 /* [data-theme="dark"] .profile-hdr/.profile-avi/.profile-avi:hover → to'liq CSS/dark-theme-fix.css'da qayta b... */
@@ -607,7 +607,7 @@
 /* ═══════════════════════════════════════════ SpaceMR — Nav, Modals, Sheets SpaceMR — Komponent Stillari ════... */
 /* Fields — Input ── * background/border-radius/color/transition (bazaviy) va border-color/ * background/box-s... */
 .field { width: 100%; padding: 13px 16px; font-family: var(--font); outline: none; margin-bottom: 10px; }
-.field::placeholder { color: var(--text3); }
+
 /* .btn-primary / .btn-ghost / .btn-danger → CSS/00-components.core.css'ga ko'chirildi */
 .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text2); }
 /* Auth error */
@@ -2802,8 +2802,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   height: 0;
 }
 
-
-
 /* ═══════════════════════════════════════════ INSTALL GUIDE (yo'riqnoma) ═══════════════════════════════════ */
 .ig-open-btn {
   flex-shrink: 0;
@@ -2979,7 +2977,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .ig-card-x:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
-
 /* ═══ PERF: scroll list containment (SpaceMR tezlik) ═══ */
 .chat-msg {
   content-visibility: auto;
@@ -3008,7 +3005,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .crb-wave-bar {
   backface-visibility: hidden;
 }
-
 
 /* ═══ ULTRA-SMOOTH UI (SpaceMR max perf) ═══ */
 #feed, #feedList, .feed-scroll {
@@ -3045,7 +3041,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 /* Infinite scroll spinner — kam joy */
 .spin-wrap { contain: strict; min-height: 48px; }
-
 
 /* ═══ Play button circular EQ (classic realistic) ═══ */
 .chat-voice-msg { overflow: visible; }
@@ -3086,7 +3081,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .chat-msg.mine .cvm-eq-bar { background: rgba(255, 255, 255, 0.92); box-shadow: 0 0 6px rgba(255,255,255,0.25); }
 .chat-msg.theirs .cvm-eq-bar { background: var(--blue, #1d9bf0); box-shadow: 0 0 6px rgba(29,155,240,0.35); }
-
 
 /* ── Login: classic app install ── */
 .auth-install {
@@ -3172,7 +3166,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease;
 }
-.hdr-icon-btn:hover { background: var(--bg3, rgba(255,255,255,0.06)); }
+
 .hdr-icon-btn:active { background: var(--bg4, rgba(255,255,255,0.1)); transform: scale(0.94); }
 .hdr-icon-btn .icon {
   width: 20px;
