@@ -1740,6 +1740,7 @@ export function paintMessages(msgs, grp = null) {
   // Yuqorida turgan bo'lsak: ko'rinib turgan birinchi xabarni "langar" qilib eslab qolamiz,
   // qayta chizilgach shu xabarni oldingi joyiga qaytaramiz (sakrash bo'lmasin)
   const _anchor = (!isAtBottom && !isInitialLoad) ? _captureMsgAnchor(box) : null;
+  let _myNewMsg = false;   // shu chizishda MENING yangi (ilgari chizilmagan) xabarim paydo bo'ldimi
   const _parts = msgs.map((m, idx) => {
     const mine = m.senderId === state.me?.uid;
     const time = fmtTime(m.createdAt);
@@ -1789,7 +1790,7 @@ export function paintMessages(msgs, grp = null) {
       if (!chatState._seenMsgIds.has(m.id)) {
         chatState._seenMsgIds.add(m.id);
         // yangi xabar (kelgan ham, o'zimniki ham; id bir xil bo'lgani uchun optimistik->server almashinuvda qayta o'ynamaydi)
-        if (!_baseline && _isFreshMsg(m)) { chatState._msgAnimStart.set(m.id, _nowT); isNew = true; }
+        if (!_baseline && _isFreshMsg(m)) { chatState._msgAnimStart.set(m.id, _nowT); isNew = true; if (mine) _myNewMsg = true; }
       } else {
         // animatsiya payti repaint bo'lsa (status/tick) — to'xtab qolmasin, qolgan joyidan davom etsin
         const _t0 = chatState._msgAnimStart.get(m.id);
@@ -1836,7 +1837,8 @@ export function paintMessages(msgs, grp = null) {
   _restoreMsgAnchor(box, _anchor);
 
   // Faqat pastda turgan bo'lsak yoki chat yangi ochilgan bo'lsa scroll qilamiz
-  const hasMyNew = msgs.some(m => _isFreshMsg(m) && m.senderId === state.me?.uid);
+  // Faqat haqiqatan yangi yuborilgan xabarimda (status/tick/reaksiya repaint'ida emas) — tepada o'qib turganda pastga otib yubormasin
+  const hasMyNew = _myNewMsg;
   if (isAtBottom || isInitialLoad || hasMyNew) {
     chatState._pinned = true;
     box.scrollTop = box.scrollHeight;
@@ -2383,7 +2385,7 @@ function initKeyboardAdaptation() {
       const offset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
       if (offset > 20) {
         modal.style.bottom = `${offset}px`;
-        if (msgs) msgs.scrollTop = msgs.scrollHeight;
+        if (msgs && chatState._pinned) msgs.scrollTop = msgs.scrollHeight;
       } else {
         modal.style.bottom = '0px';
       }
