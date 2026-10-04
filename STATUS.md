@@ -19,6 +19,24 @@
 - 0% kesh talabi: service worker va runtime cache hech qachon sahifani keshlamaydi.
 
 ---
+### 2026-10-04 12:05
+- Qilindi: **ULTRA tez / lag-free UI + realtime lenta**
+  1) Feed event delegation — har renderda N listener o'rniga 1 ta (xotira + CPU)
+  2) Infinite scroll: 300ms sun'iy kechikish olib tashlandi; passive + rAF scroll
+  3) Like/izoh realtime: DOM da bor post uchun faqat patchCounts (to'liq re-render yo'q)
+  4) Posts render schedule: setTimeout(0) → requestAnimationFrame (bir frame batch)
+  5) Rasm: decoding=async; CSS content-visibility + GPU layer (translateZ) postlarda
+  6) Touch: act-btn touch-action manipulation, like press scale feedback
+- Fayllar: modules/feed/feed.js, modules/auth/auth.js, CSS/features.css, app.css
+- Keyingi: 2 qurilmada lenta like/izoh/scroll/yangi post sinovi
+
+---
+---
+### 2026-10-04 11:40
+- Qilindi: Chat media (ovoz/fayl) ham tezkor yo'lga ulandi — upload+insert dan keyin WebRTC DataChannel / broadcast orqali peer darhol ko'radi (faqat postgres_changes kutmaydi). DM va guruh.
+- Fayllar: modules/chat/rt-chat.js (send payload kengaytirildi), chat-actions.js, chat.js (_rtIncoming), groups.js (_gIncoming, sendGroupFile/Voice).
+- Keyingi: 2 qurilmada ovoz/fayl sinovi; keyin feed/stories boshqa joylarni ham bir xil darajaga olib kelish.
+
 ### 2026-09-29 22:45
 - Qilindi: F1-F4 draft fixlari kodda tuzatildi va commit qilindi (1480a7d, branch fix/draft-f1-f4, push qilinmagan). MR ko'zi bilan 2 qurilmada tasdiqlashi kerak
 - Keyingi qadam: MR tasdiqlasa main ga merge/push; rasm preview qora muammosi va qo'ng'iroq taymeri qayta sinash

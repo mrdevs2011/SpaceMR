@@ -244,12 +244,48 @@ export async function dlFile(url, name) {
 }
 
 /* ── Zoom modal ───────────────────────────────────────────────────────── */
+/* ── Zoom lightbox: qorong'u fon, pinch / trackpad zoom, tashqariga bosib yopish ── */
+let _z = { scale: 1, x: 0, y: 0, base: 1, px: 0, py: 0, pinching: false, panning: false, lastTap: 0 };
+
+function _zApply() {
+  const im = $('zoomImg');
+  if (!im) return;
+  im.style.transform = `translate(${_z.x}px, ${_z.y}px) scale(${_z.scale})`;
+}
+
+function _zReset() {
+  _z.scale = 1; _z.x = 0; _z.y = 0; _z.base = 1; _z.px = 0; _z.py = 0;
+  _z.pinching = false; _z.panning = false;
+  _zApply();
+}
+
+function _zClose() {
+  const zm = $('zoomModal');
+  if (!zm) return;
+  zm.classList.remove('show');
+  _zReset();
+  const im = $('zoomImg');
+  if (im) { im.src = ''; im.style.display = 'none'; }
+}
+
+function _zDist(t) {
+  const a = t[0], b = t[1];
+  return Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+}
+function _zMid(t) {
+  return { x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 };
+}
+
 export function openZoom(url, type) {
   const im = $('zoomImg'), zm = $('zoomModal');
-  if (!im || !zm) { window.open(url,'_blank'); return; }
-  zm.classList.toggle('zoom-avatar', type === 'avatar');
-  if (type === 'avatar') {
-    im.style.display = 'block'; im.src = url;
+  if (!im || !zm) { window.open(url, '_blank'); return; }
+  _zReset();
+  const isAvi = type === 'avatar';
+  zm.classList.toggle('zoom-avatar', isAvi);
+  zm.classList.toggle('zoom-image', !isAvi && type === 'image');
+  im.style.display = 'block';
+  im.src = url;
+  if (isAvi) {
     im.style.borderRadius = '50%';
     im.style.width = 'min(72vw, 340px)';
     im.style.height = 'min(72vw, 340px)';
@@ -257,31 +293,115 @@ export function openZoom(url, type) {
     im.style.maxWidth = 'none';
     im.style.maxHeight = 'none';
   } else if (type === 'image') {
-    im.style.display = 'block'; im.src = url;
-    im.style.borderRadius = '12px';
+    im.style.borderRadius = '0';
     im.style.width = '';
     im.style.height = '';
     im.style.objectFit = 'contain';
-    im.style.maxWidth = '96%';
+    im.style.maxWidth = '96vw';
     im.style.maxHeight = '96dvh';
-  } else { window.open(url,'_blank'); return; }
+  } else {
+    window.open(url, '_blank');
+    return;
+  }
+  im.style.transform = 'translate(0,0) scale(1)';
+  im.style.transformOrigin = 'center center';
+  im.style.transition = 'none';
   zm.classList.add('show');
 }
 
-// Only attach if elements exist (not on login page)
-const zoomClose = $('zoomClose');
-const zoomModal = $('zoomModal');
-if (zoomClose) {
-  zoomClose.onclick = () => { zoomModal?.classList.remove('show'); };
-}
-if (zoomModal) {
-  zoomModal.onclick = e => {
-    // avatar zoomda X yo'q: istalgan joyga bosilsa yopiladi
-    if (e.target === zoomModal || zoomModal.classList.contains('zoom-avatar')) { zoomModal.classList.remove('show'); }
-  };
+function _bindZoomOnce() {
+  const zm = $('zoomModal');
+  const im = $('zoomImg');
+  if (!zm || !im || zm._zoomBound) return;
+  zm._zoomBound = true;
+
+  // X tugmasi — faqat avatar (agar bor bo'lsa); rasm rejimida CSS yashiradi
+  const zoomClose = $('zoomClose');
+  if (zoomClose) zoomClose.onclick = (e) => { e.stopPropagation(); _zClose(); };
+
+  // Tashqariga bosish → yopish (rasm ustiga emas)
+  zm.addEventListener('click', e => {
+    if (e.target === zm) _zClose();
+  });
+
+  // Double-tap → 2x / 1x
+  im.addEventListener('click', e => {
+    e.stopPropagation();
+    const now = Date.now();
+    if (now - _z.lastTap < 280) {
+      if (_z.scale > 1.05) { _z.scale = 1; _z.x = 0; _z.y = 0; }
+      else { _z.scale = 2.5; }
+      _zApply();
+    }
+    _z.lastTap = now;
+  });
+
+  // Trackpad / mouse wheel pinch (ctrl+wheel)
+  zm.addEventListener('wheel', e => {
+    if (!zm.classList.contains('show')) return;
+    e.preventDefault();
+    const delta = -e.deltaY * 0.004;
+    const next = Math.min(5, Math.max(1, _z.scale * (1 + delta)));
+    if (next === 1) { _z.x = 0; _z.y = 0; }
+    _z.scale = next;
+    _zApply();
+  }, { passive: false });
+
+  // Touch: pinch + pan
+  let startDist = 0, startScale = 1, startX = 0, startY = 0, mid0 = null;
+  zm.addEventListener('touchstart', e => {
+    if (!zm.classList.contains('show')) return;
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      _z.pinching = true;
+      _z.panning = false;
+      startDist = _zDist(e.touches);
+      startScale = _z.scale;
+      mid0 = _zMid(e.touches);
+    } else if (e.touches.length === 1 && _z.scale > 1.05) {
+      _z.panning = true;
+      startX = e.touches[0].clientX - _z.x;
+      startY = e.touches[0].clientY - _z.y;
+    }
+  }, { passive: false });
+
+  zm.addEventListener('touchmove', e => {
+    if (!zm.classList.contains('show')) return;
+    if (_z.pinching && e.touches.length === 2) {
+      e.preventDefault();
+      const d = _zDist(e.touches);
+      if (startDist > 0) {
+        _z.scale = Math.min(5, Math.max(1, startScale * (d / startDist)));
+        if (_z.scale <= 1.02) { _z.scale = 1; _z.x = 0; _z.y = 0; }
+        _zApply();
+      }
+    } else if (_z.panning && e.touches.length === 1) {
+      e.preventDefault();
+      _z.x = e.touches[0].clientX - startX;
+      _z.y = e.touches[0].clientY - startY;
+      _zApply();
+    }
+  }, { passive: false });
+
+  zm.addEventListener('touchend', e => {
+    if (e.touches.length < 2) _z.pinching = false;
+    if (e.touches.length === 0) {
+      _z.panning = false;
+      if (_z.scale < 1.05) { _z.scale = 1; _z.x = 0; _z.y = 0; _zApply(); }
+    }
+  });
+
+  // Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && zm.classList.contains('show')) _zClose();
+  });
 }
 
-document
+// DOM tayyor bo'lganda bir marta bog'lash
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindZoomOnce);
+  else _bindZoomOnce();
+}
 
 // Offline/online notifications o'chirildi
 /* ═══════════════════════════════════════════════════════════════════════

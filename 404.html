@@ -121,12 +121,19 @@ p {
   height: 44px;
   padding: 0 28px;
   border-radius: 999px;
-  background: var(--text);
-  color: #0f1419;
+  background: #fff;
+  color: #000 !important;
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
   transition: opacity .15s ease, transform .15s ease;
+}
+.btn:link,
+.btn:visited,
+.btn:hover,
+.btn:active {
+  color: #000 !important;
+  text-decoration: none;
 }
 .btn:hover { opacity: .88; }
 .btn:active { transform: scale(.97); }

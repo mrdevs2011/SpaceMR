@@ -25,7 +25,7 @@ import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlock
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
 import { emojiOnlyClass, wrapEmojiNoSelect }             from '../ui/emoji-only.js';
-import { registerLocalVoiceUrl }                 from './chat-voice-player.js';
+import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
 import { openRtGroup }                              from './rt-chat.js';
 import { busOn, groupJoin, groupInboxSend, isUidOnline } from '../core/rt-bus.js';
 import {
@@ -199,7 +199,18 @@ function _gIncoming(groupId, m) {
   if (m.from === state.me?.uid) return;
   if (!(_currentGroupData?.members || []).includes(m.from)) return;
   const now = Date.now();
-  const msg = mapMessage({ id: m.id, group_id: groupId, sender_id: m.from, type: 'text', text: m.text, created_at: new Date(now).toISOString() });
+  const type = m.type || 'text';
+  const row = {
+    id: m.id, group_id: groupId, sender_id: m.from, type,
+    text: m.text || null,
+    media_path: m.mediaPath || null,
+    media_type: m.mediaType || null,
+    file_name: m.fileName || null,
+    file_size: m.fileSize ?? null,
+    duration: m.duration ?? null,
+    created_at: new Date(now).toISOString(),
+  };
+  const msg = mapMessage(row);
   msg._at = now;
   _gPending.set(m.id, msg);
   _gMsgs = [..._gMsgs, msg];
@@ -621,11 +632,14 @@ export async function sendGroupMessage() {
     const { error } = await sb.from('group_messages')
       .insert({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'text', text: finalMsgText });
     if (error) throw error;
-    // DB tasdiqladi — clock → 1 chek
+    // DB tasdiqladi — clock → 1 chek (tez: faqat tick)
     const conf = _gPending.get(mid);
     if (conf) { conf.status = 'sent'; _gPending.set(mid, conf); }
     _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'sent' } : m);
-    if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
+    if (_currentGroupId === groupId) {
+      if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(mid, 'sent');
+      else paintGroupMessages(_gMsgs, groupData);
+    }
   } catch (err) {
     console.error('[Groups] send failed:', err);
     toast('Xabar yuborilmadi', 'error');
@@ -644,21 +658,26 @@ export async function sendGroupFile(file, caption = '') {
   if (!_currentGroupId || !state.me || !file) return;
   const groupId = _currentGroupId;
   const captionText = (typeof caption === 'string' ? caption : '').trim();
-  // DM bilan bir xil: yuklanish progressli pufak
-  const pendingId = 'pending_file_' + Date.now();
+  const id = _gUuid();
+  const pendingId = id;
   _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
   try {
     const result = await uploadViaControllerProgress(file, 'group-files', pct => _updatePendingProgress(pendingId, pct));
     _removePendingBubble(pendingId);
     const { error } = await sb.from('group_messages').insert({
-      group_id: groupId, sender_id: state.me.uid, type: 'file',
+      id, group_id: groupId, sender_id: state.me.uid, type: 'file',
       media_path: result.path, media_type: file.type || null,
       file_name: file.name, file_size: file.size,
       text: captionText || null,
     });
     if (error) throw error;
     const previewText = captionText ? ('📎 ' + captionText) : ('📎 ' + (file.name || 'Fayl'));
-    groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: pendingId, text: previewText.slice(0, 120), ts: Date.now() });
+    _gRt?.send({
+      id, type: 'file', text: captionText || null,
+      mediaPath: result.path, mediaType: file.type || null,
+      fileName: file.name, fileSize: file.size,
+    });
+    groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id, text: previewText.slice(0, 120), ts: Date.now() });
     _reloadGroupThread && _reloadGroupThread();
   } catch (err) {
     console.error('[Groups] file send failed:', err);
@@ -678,7 +697,7 @@ export async function sendGroupVoice(blob, duration) {
   const mid = _gUuid();
   const nowMs = Date.now();
   const localUrl = URL.createObjectURL(blob);
-  registerLocalVoiceUrl(mid, localUrl);
+  registerLocalVoiceUrl(mid, localUrl, voiceBarCount(duration));
   // Oddiy xabar kabi: darhol ro'yxatda (id bilan), repaint'da yo'qolmaydi, server xabari kelganda jimgina almashadi
   const localMsg = mapMessage({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'voice',
     media_type: blob.type || null, duration: Math.round(duration || 0), created_at: new Date(nowMs).toISOString() });
@@ -699,8 +718,19 @@ export async function sendGroupVoice(blob, duration) {
     });
     if (error) throw error;
     const conf = _gPending.get(mid);
-    if (conf) { conf.status = 'sent'; conf._at = Date.now(); _gPending.set(mid, conf); }
-    _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'sent' } : m);
+    if (conf) {
+      conf.status = 'sent';
+      conf.mediaPath = result.path;
+      conf.mediaUrl = result.url || conf.mediaUrl;
+      conf._at = Date.now();
+      _gPending.set(mid, conf);
+    }
+    _gRt?.send({
+      id: mid, type: 'voice', mediaPath: result.path,
+      mediaType: blob.type || null, duration: Math.round(duration || 0),
+    });
+    groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: mid, text: '🎤 Ovozli xabar', ts: Date.now() });
+    _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || m.mediaUrl } : m);
     if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
     _reloadGroupThread && _reloadGroupThread();
   } catch (err) {

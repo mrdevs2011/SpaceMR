@@ -20,12 +20,13 @@ export function rememberImgRatio(img) {
     sessionStorage.setItem(_DIMS_KEY, JSON.stringify(arr));
   } catch (_) {}
 }
-export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, idx, state }) {
+export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state }) {
+  const readyCls = typeof waveReadyClass === 'function' ? waveReadyClass(voiceMedia.url, barCount) : '';
   return `<div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
     <button class="cvm-play" onclick="window._chatPlayVoice(this)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
     </button>
-    <div class="cvm-waveform" >${renderVoiceWave(idx, barCount, voiceMedia.url)}</div>
+    <div class="cvm-waveform${readyCls}">${renderVoiceWave(idx, barCount, voiceMedia.url)}</div>
     <span class="cvm-dur">${dur}</span>
   </div>`;
 }

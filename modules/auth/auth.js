@@ -3,7 +3,7 @@ import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from 
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
 import { startChatsWatcher, stopChatsWatcher, repaintNoticeBanner } from '../chat/chat.js';
-import { startBus, stopBus, busOn } from '../core/rt-bus.js';
+import { startBus, stopBus, busOn, trackPresence, untrackPresence } from '../core/rt-bus.js';
 import { startCallWatcher, stopCallWatcher } from '../call/call.js';
 import { clearAllCache, cachePosts, getCachedPosts, clearRuntimeCache, getCachedProfile } from '../core/local-cache.js';
 import { openAviCrop } from '../ui/avi-crop.js';
@@ -1180,7 +1180,9 @@ let _heartbeatTimer = null;
 
 async function _pingPresence() {
   const uid = state.me?.uid;
-  if (!uid) return; // fon/yopiq oyna ham "onlayn" hisoblanadi (brauzer taymerni 1/min gacha sekinlatadi)
+  if (!uid) return;
+  // Faqat faol tab — boshqa tabda offline qolishi kerak
+  if (document.visibilityState !== 'visible') return;
   try {
     await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', uid);
   } catch (_) { /* tarmoq yo'q — keyingi tikda qayta urinadi */ }
@@ -1191,15 +1193,33 @@ function startPresenceHeartbeat() {
   _pingPresence(); // darhol bitta marta
   _heartbeatTimer = setInterval(_pingPresence, HEARTBEAT_MS);
   document.addEventListener('visibilitychange', _onVisibilityChangeForPresence);
+  window.addEventListener('pagehide', _onPageHidePresence);
 }
 
 function stopPresenceHeartbeat() {
   if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
   document.removeEventListener('visibilitychange', _onVisibilityChangeForPresence);
+  window.removeEventListener('pagehide', _onPageHidePresence);
+  untrackPresence();
+}
+
+function _onPageHidePresence() {
+  untrackPresence();
+  if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
 }
 
 function _onVisibilityChangeForPresence() {
-  if (document.visibilityState === 'visible') _pingPresence();
+  if (document.visibilityState === 'visible') {
+    _pingPresence();
+    trackPresence();
+    if (!_heartbeatTimer) {
+      _heartbeatTimer = setInterval(_pingPresence, HEARTBEAT_MS);
+    }
+  } else {
+    // Boshqa tab / minimallashtirish — darhol offline
+    untrackPresence();
+    if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
+  }
 }
 
 /* ── Live posts listener ─────────────────────────────────────────────────
@@ -1216,11 +1236,11 @@ export function listenPosts() {
   const myUid = state.me.uid;
   const byId = new Map();
 
-  // Bir necha hodisa ketma-ket kelsa — bitta render'ga birlashtiramiz
-  let _renderDebounceTimer = null;
+  // Bir necha hodisa ketma-ket kelsa — bitta rAF frame ichida birlashtiramiz (0 lag)
+  let _renderRaf = 0;
   function _scheduleRender() {
-    clearTimeout(_renderDebounceTimer);
-    _renderDebounceTimer = setTimeout(() => { render(); }, 0);
+    if (_renderRaf) return;
+    _renderRaf = requestAnimationFrame(() => { _renderRaf = 0; render(); });
   }
 
   // ── KESH-BIRINCHI: oldingi safar saqlangan postlarni darhol ko'rsatamiz ──
@@ -1358,22 +1378,55 @@ export function listenPosts() {
   // Tezkor shina: yozuvchidan to'g'ridan-to'g'ri keladi (postgres_changes kutilmaydi); keyin DB hodisasi to'g'rilaydi
   const _offBus = [
     busOn('post', o => {
-      if (o.op === 'new' && o.row?.id) byId.set(o.row.id, mapPost(o.row));
-      else if (o.op === 'del' && o.id) byId.delete(o.id);
+      // Optimistic: o'zimga 0ms da ko'rsatish (server hali yuklamayotgan)
+      if (o.op === 'opt' && o.post?.id) {
+        byId.set(o.post.id, o.post);
+      } else if (o.op === 'new' && o.row?.id) {
+        if (o.replaceId) byId.delete(o.replaceId);
+        byId.set(o.row.id, mapPost(o.row));
+      } else if (o.op === 'del' && o.id) byId.delete(o.id);
       else return;
       _scheduleRender();
     }),
     busOn('like', o => {
       const p = byId.get(o.postId);
-      if (p && Number.isFinite(o.n)) { byId.set(o.postId, { ...p, likes: o.n }); _scheduleRender(); }
+      if (p && Number.isFinite(o.n)) {
+        const updated = { ...p, likes: o.n };
+        byId.set(o.postId, updated);
+        // DOM da bor bo'lsa — faqat raqamni yangilash (to'liq re-render yo'q)
+        const inDom = document.getElementById('lc-' + o.postId);
+        if (inDom) {
+          state.allPosts = [...byId.values()].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+          _cb.patchCounts?.([updated]);
+        } else {
+          _scheduleRender();
+        }
+      }
     }),
     busOn('cmt', o => {
       const p = byId.get(o.postId);
-      if (p && Number.isFinite(o.n)) { byId.set(o.postId, { ...p, commentCount: o.n }); _scheduleRender(); }
+      if (p && Number.isFinite(o.n)) {
+        const updated = { ...p, commentCount: o.n };
+        byId.set(o.postId, updated);
+        const inDom = document.getElementById('cc-' + o.postId);
+        if (inDom) {
+          state.allPosts = [...byId.values()].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+          _cb.patchCounts?.([updated]);
+        } else {
+          _scheduleRender();
+        }
+      }
+    }),
+    busOn('story', o => {
+      if (o?.op === 'opt' && o.item) {
+        import('../feed/stories.js').then(m => m.injectLocalStory?.(o.item)).catch(() => {});
+        return;
+      }
+      import('../feed/stories.js').then(m => m.loadStories()).catch(() => {});
     }),
   ];
 
-  _postsUnsub = () => { clearTimeout(_renderDebounceTimer); _offBus.forEach(f => f()); sb.removeChannel(ch); };
+  _postsUnsub = () => { if (_renderRaf) cancelAnimationFrame(_renderRaf); _offBus.forEach(f => f()); sb.removeChannel(ch); };
 }
 
 /* ── Profil edit / logout — to'liq implementatsiya ─────────────────── */

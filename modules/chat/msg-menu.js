@@ -18,6 +18,7 @@ const IC = {
   fwd: SVG('<polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h11"/>'),
   del: SVG('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>'),
   sel: SVG('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>'),
+  resend: SVG('<path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>'),
   x: SVG('<path d="M6 6l12 12M18 6L6 18"/>'),
   seen: '<svg width="18" height="11" viewBox="0 0 18 11" fill="none" aria-hidden="true"><path d="M1 5.5L4.5 9L10 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 5.5L9.5 9L16 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   sent: '<svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true"><path d="M1 5.2L4.5 8.5L11 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -81,8 +82,12 @@ function ensureMenu() {
 
 function menuHtml(m) {
   const mine = isMine(m);
-  const hasText = !!(m.text || '').trim();
   const it = (k, ico, label, cls = '') => `<button type="button" class="mc-item ${cls}" data-mc="${k}">${ico}<span>${label}</span></button>`;
+  // Yuborilayotgan xabar — faqat "Qayta yuborish"
+  if (mine && m.status === 'sending') {
+    return it('resend', IC.resend, 'Qayta yuborish');
+  }
+  const hasText = !!(m.text || '').trim();
   let h = '';
   const isPostShare = m.text && m.text.includes('"__postShare"');
   if (hasText) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
@@ -156,6 +161,58 @@ function run(act, id) {
   if (act === 'fwd') return forward([id]);
   if (act === 'del') return remove([id]);
   if (act === 'sel') return enterSelect(id);
+  if (act === 'resend') return resendMsg(id);
+}
+
+
+async function resendMsg(id) {
+  const m = msgOf(id);
+  if (!m || !isMine(m)) return;
+  // Media hali yuklanayotgan bo'lsa — kutish
+  if ((m.type === 'voice' || m.type === 'file') && !m.mediaPath) {
+    toast('Hali yuklanmoqda…', 'info');
+    return;
+  }
+  const dm = isDM();
+  const threadId = m.chatId || state.currentChatId
+    || document.getElementById('chatThreadModal')?.dataset?.gid || null;
+  if (!threadId) {
+    toast('Suhbat topilmadi', 'error');
+    return;
+  }
+  const base = {
+    id: m.id,
+    sender_id: state.me.uid,
+    type: m.type || 'text',
+    text: m.text || null,
+    media_path: m.mediaPath || null,
+    media_type: m.mediaType || null,
+    file_name: m.fileName || null,
+    file_size: m.fileSize ?? null,
+    duration: m.duration ?? null,
+  };
+  const row = dm
+    ? { ...base, chat_id: threadId }
+    : { ...base, group_id: threadId };
+  try {
+    const { error } = await sb.from(tbl()).insert(row);
+    if (error) {
+      // Allaqachon bor (duplicate) — muvaffaqiyat deb hisoblaymiz
+      if (error.code === '23505') {
+        if (typeof api.markSent === 'function') api.markSent(id);
+        else api.reload?.();
+        return;
+      }
+      console.warn('[MsgMenu] resend:', error.message);
+      toast('Qayta yuborilmadi', 'error');
+      return;
+    }
+    if (typeof api.markSent === 'function') api.markSent(id);
+    else api.reload?.();
+  } catch (e) {
+    console.warn('[MsgMenu] resend:', e?.message || e);
+    toast('Qayta yuborilmadi', 'error');
+  }
 }
 
 function remove(ids) {
@@ -434,6 +491,12 @@ export function initMsgMenu(opts) {
       navigator.vibrate?.(12);
       lpOpened = true;
       closeMenu();
+      // Yuborilayotgan xabar — tanlash emas, "Qayta yuborish" menyusi
+      const mm = msgOf(r.dataset.msgId);
+      if (mm && mm.status === 'sending' && isMine(mm)) {
+        openMenu(r, null, null);
+        return;
+      }
       beginDrag(r, y0);
     }, LONG_MS);
   }, { passive: true });
@@ -461,6 +524,11 @@ export function initMsgMenu(opts) {
       const r = ms?.row, y0 = ms?.y;
       if (!r || !r.isConnected) return;
       lpOpened = false;
+      const mm = msgOf(r.dataset.msgId);
+      if (mm && mm.status === 'sending' && isMine(mm)) {
+        openMenu(r, null, null);
+        return;
+      }
       beginDrag(r, y0);
     }, LONG_MS);
   });

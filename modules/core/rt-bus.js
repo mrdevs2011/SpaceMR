@@ -85,7 +85,19 @@ export function busEmit(ev, payload) {
   pub.send(msg);
 }
 
-const PUB_EVENTS = ['like', 'cmt', 'post'];
+const PUB_EVENTS = ['like', 'cmt', 'post', 'story'];
+
+/** Tab ko'rinsa onlayn, yashirilsa darhol offline */
+export async function trackPresence() {
+  if (!pub || !pubReady || !me) return;
+  if (document.visibilityState !== 'visible') return;
+  try { await pub.track({ at: Date.now() }); } catch (_) {}
+}
+
+export async function untrackPresence() {
+  if (!pub || !pubReady) return;
+  try { await pub.untrack(); } catch (_) {}
+}
 
 export function startBus() {
   const uid = state.me?.uid;
@@ -95,10 +107,23 @@ export function startBus() {
   PUB_EVENTS.forEach(ev => pub.on('broadcast', { event: ev }, ({ payload }) => {
     if (payload && payload.from !== me) fire(ev, payload);
   }));
+  // sync + join/leave — offline/online darhol
   pub.on('presence', { event: 'sync' }, presenceSync);
+  pub.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+    if (!key) return;
+    onlineUids.add(key);
+    _left.delete(key);
+    document.dispatchEvent(new CustomEvent('presenceChanged'));
+  });
+  pub.on('presence', { event: 'leave' }, ({ key }) => {
+    if (!key) return;
+    onlineUids.delete(key);
+    _left.add(key);
+    document.dispatchEvent(new CustomEvent('presenceChanged'));
+  });
   pub.subscribe(async st => {
     pubReady = st === 'SUBSCRIBED';
-    if (pubReady) { try { await pub.track({ at: Date.now() }); } catch (_) {} }
+    if (pubReady) await trackPresence();
   });
   // Shaxsiy kirish qutisi
   chan('u-' + uid, 'inbox');

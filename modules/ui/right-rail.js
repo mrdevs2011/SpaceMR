@@ -4,6 +4,7 @@
  * Yangilanish: postsUpdated / groupsUpdated hodisalari + 15s zaxira tick (o'z realtime kanali yo'q — roadmap 5.3).
  */
 import { sb, state, mapProfile } from '../core/config.js';
+import { isUidOnline, onlineUids } from '../core/rt-bus.js';
 import { $, esc, defAvi, isOnline } from '../core/utils.js';
 import { groupListItems } from '../chat/groups.js';
 
@@ -98,8 +99,10 @@ async function loadOnline() {
     const me = state.me.uid;
     const online = (data || [])
       .map(mapProfile)
-      .filter(u => u && u.uid !== me && isOnline(u.lastSeenAt))
+      .filter(u => u && u.uid !== me && (isUidOnline(u.uid, isOnline(u.lastSeenAt))))
       .slice(0, MAX_ONLINE);
+    // Presence bo'yicha ham qo'shimcha (ro'yxatda yo'q lekin onlayn)
+    // (limit ichida qolamiz)
     if (!online.length) {
       box.innerHTML = '<div class="rr-empty">Hozircha hech kim onlayn emas</div>';
       return;
@@ -218,3 +221,9 @@ export function stopRightRail() {
 startRightRail();
 // fit() allaqachon onRouteChange/resize da chaqiriladi — 2s polling kerak emas
 document.addEventListener('profilesPreloaded', () => { if (state.me?.uid) fit(); });
+
+
+/* Presence o'zgarganda onlayn ro'yxatni yangilash */
+document.addEventListener('presenceChanged', () => {
+  if (document.visibilityState === 'visible') loadOnline();
+});

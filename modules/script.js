@@ -67,6 +67,8 @@ import('./chat/chats-x.js');
 
 /* ── iOS 27 Haptic — global touch feedback ── */
 import { haptic, addHapticTouch } from './core/utils.js';
+import { scheduleIdle } from './core/perf.js';
+import './ui/install-guide.js'; // yo'riqnoma (sozlamalar)
 
 (function initGlobalHaptics() {
   // Nav buttons — select haptic
@@ -103,3 +105,10 @@ import { haptic, addHapticTouch } from './core/utils.js';
     authBtn.addEventListener('click', () => haptic.medium());
   }
 })();
+
+
+/* Past prioritet: birinchi interactiondan keyin og'ir modul preload */
+scheduleIdle(() => {
+  import('./chat/chat.js').catch(() => {});
+  import('./call/call.js').catch(() => {});
+}, 2500);

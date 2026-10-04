@@ -8,7 +8,7 @@ import { inboxSend } from '../core/rt-bus.js';
 import { sendGroupMessage, sendGroupVoice, sendGroupFile } from './groups.js';
 import { commitEdit, isEditing } from './msg-menu.js';
 import { rateOk } from '../core/rate-limit.js';
-import { registerLocalVoiceUrl } from './chat-voice-player.js';
+import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
 
 export async function sendChatMessage() {
   // Route to group/channel send if in that mode
@@ -75,11 +75,12 @@ export async function sendChatMessage() {
     const { error } = await sb.from('messages')
       .insert({ id, chat_id: chatId, sender_id: state.me.uid, type: 'text', text: finalMsgText });
     if (error) throw error;
-    // DB tasdiqladi — clock → 1 chek
+    // DB tasdiqladi — clock → 1 chek (faqat tick, to'liq paint YO'Q)
     const conf = chatState._rtLocal.get(id);
-    if (conf) { conf.status = 'sent'; chatState._rtLocal.set(id, conf); }
+    if (conf) { conf.status = 'sent'; conf._at = Date.now(); chatState._rtLocal.set(id, conf); }
     if (state.currentChatId === chatId) {
-      chatUI.paintMessages(chatState._curMsgs.map(m => m.id === id ? { ...m, status: 'sent' } : m));
+      if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(id, 'sent');
+      else chatUI.paintMessages(chatState._curMsgs.map(m => m.id === id ? { ...m, status: 'sent' } : m));
     }
     chatState._reloadThread && chatState._reloadThread();
     // Push bildirishnoma push.js bosqichida ulanadi (Edge Function / DB webhook)
@@ -107,7 +108,7 @@ export async function sendVoiceMessage(blob, duration) {
   const id = _uuid();
   const nowMs = Date.now();
   const localUrl = URL.createObjectURL(blob);
-  registerLocalVoiceUrl(id, localUrl);
+  registerLocalVoiceUrl(id, localUrl, voiceBarCount(duration));
   const localMsg = {
     id, chatId, senderId: state.me.uid, type: 'voice', text: null,
     mediaPath: null, mediaUrl: localUrl, mediaType: blob.type || null, fileName: null, fileSize: null,
@@ -129,14 +130,31 @@ export async function sendVoiceMessage(blob, duration) {
     });
     if (error) throw error;
     const conf = chatState._rtLocal.get(id);
-    if (conf) { conf.status = 'sent'; conf._at = Date.now(); chatState._rtLocal.set(id, conf); }
+    if (conf) {
+      conf.status = 'sent';
+      conf.mediaPath = result.path;
+      conf.mediaUrl = result.url || conf.mediaUrl;
+      conf._at = Date.now();
+      chatState._rtLocal.set(id, conf);
+    }
+    // Tezkor yo'l: peer darhol ko'rsin (upload tugagach)
+    if (chatState._rt && chatState._rtChatId === chatId) {
+      chatState._rt.send({
+        id, type: 'voice', mediaPath: result.path,
+        mediaType: blob.type || null, duration: Math.round(duration || 0),
+      });
+    }
+    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: '🎤 Ovozli xabar', ts: Date.now() });
     if (chatState._latestChatMap[otherUid]) {
       chatState._latestChatMap[otherUid].lastMessage = '🎤 Ovozli xabar';
       chatState._latestChatMap[otherUid].lastMessageAt = Date.now();
       chatState._latestChatMap[otherUid].lastSenderId = state.me.uid;
     }
     if (state.currentChatId === chatId) {
-      chatUI.paintMessages(chatState._curMsgs.map(m => m.id === id ? { ...m, status: 'sent' } : m));
+      // media path/url kerak — engil map + tick (to'liq HTML rebuild emas, lekin path yangilansin)
+      chatState._curMsgs = chatState._curMsgs.map(m => m.id === id ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || m.mediaUrl } : m);
+      if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(id, 'sent');
+      else chatUI.paintMessages(chatState._curMsgs);
     }
     chatState._reloadThread && chatState._reloadThread();
   } catch (err) {
@@ -169,7 +187,9 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
 
   chatUI.clearChatFile();
 
-  const pendingId = 'pending_file_' + Date.now();
+  const id = _uuid();
+  const nowMs = Date.now();
+  const pendingId = id; // dedup uchun haqiqiy id
   _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
 
   try {
@@ -180,19 +200,27 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
     _removePendingBubble(pendingId);
 
     const { error } = await sb.from('messages').insert({
-      chat_id: chatId, sender_id: state.me.uid, type: 'file',
+      id, chat_id: chatId, sender_id: state.me.uid, type: 'file',
       media_path: result.path, media_type: file.type || null,
       file_name: file.name, file_size: file.size,
       text: caption || null,
     });
     if (error) throw error;
     const previewText = caption ? ('📎 ' + caption) : ('📎 ' + (file.name || 'Fayl'));
+    // Tezkor yo'l: peer darhol ko'rsin
+    if (chatState._rt && chatState._rtChatId === chatId) {
+      chatState._rt.send({
+        id, type: 'file', text: caption || null,
+        mediaPath: result.path, mediaType: file.type || null,
+        fileName: file.name, fileSize: file.size,
+      });
+    }
     if (chatState._latestChatMap[otherUid]) {
       chatState._latestChatMap[otherUid].lastMessage = previewText.slice(0, 120);
       chatState._latestChatMap[otherUid].lastMessageAt = Date.now();
       chatState._latestChatMap[otherUid].lastSenderId = state.me.uid;
     }
-    inboxSend(otherUid, { chatId, from: state.me.uid, id: pendingId, text: previewText.slice(0, 120), ts: Date.now() });
+    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: previewText.slice(0, 120), ts: Date.now() });
     chatState._reloadThread && chatState._reloadThread();
 
   } catch (err) {

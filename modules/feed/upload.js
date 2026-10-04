@@ -1,5 +1,5 @@
 import { busEmit } from '../core/rt-bus.js';
-import { sb, state, MAX_FILE, uploadViaController } from '../core/config.js';
+import { sb, state, MAX_FILE, uploadViaController, mapPost } from '../core/config.js';
 import { compressImage } from './compress.js';
 import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
@@ -361,13 +361,22 @@ async function _prepareUploadFile(file, label) {
   return file;
 }
 
-function floatBarShow(name) {
+function floatBarShow(kind) {
   const bar = $('uploadFloatBar');
   if (!bar) return;
-  $('ufbName').textContent = name || 'Yuklanmoqda...';
-  $('ufbFill').style.width = '0%';
-  $('ufbFill').classList.remove('indeterminate');
-  $('ufbPct').textContent  = '0%';
+  const label = kind === 'story' ? 'Story yuklanmoqda'
+    : kind === 'post' ? 'Post yuklanmoqda'
+    : 'Yuklanmoqda';
+  $('ufbName').textContent = label;
+  const fill = $('ufbFill');
+  if (fill) { fill.style.width = '0%'; fill.classList.remove('indeterminate'); }
+  $('ufbPct').textContent = '0%';
+  const icon = bar.querySelector('.ufb-icon');
+  if (icon) {
+    icon.classList.remove('done', 'fail');
+    icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+  }
+  bar.classList.remove('d-none');
   bar.style.display = 'flex';
 }
 
@@ -376,13 +385,12 @@ function floatBarUpdate(pct) {
   const pctEl = $('ufbPct');
   if (!fill) return;
   if (pct >= 95) {
-    /* 90%+ da qotib qolmasin — indeterminate animatsiya */
     fill.classList.add('indeterminate');
-    pctEl.textContent = 'Tugatilmoqda...';
+    if (pctEl) pctEl.textContent = '…';
   } else {
     fill.classList.remove('indeterminate');
     fill.style.width = pct + '%';
-    pctEl.textContent = Math.round(pct) + '%';
+    if (pctEl) pctEl.textContent = Math.round(pct) + '%';
   }
 }
 
@@ -393,18 +401,22 @@ function floatBarDone(success) {
   if (!bar) return;
   fill?.classList.remove('indeterminate');
   if (fill) fill.style.width = '100%';
-  $('ufbPct').textContent = '100%';
-  $('ufbName').textContent = success ? 'Yuklandi!' : 'Yuklash amalga oshmadi';
+  $('ufbPct').textContent = success ? '✓' : '!';
+  $('ufbName').textContent = success ? 'Tayyor' : 'Xato';
   if (icon) {
-    icon.classList.add('done');
+    icon.classList.remove('done', 'fail');
+    icon.classList.add(success ? 'done' : 'fail');
     icon.innerHTML = success
       ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
       : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
   }
   setTimeout(() => {
-    if (bar) bar.style.display = 'none';
-    if (icon) { icon.classList.remove('done'); icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>'; }
-  }, 2500);
+    if (bar) { bar.style.display = 'none'; bar.classList.add('d-none'); }
+    if (icon) {
+      icon.classList.remove('done', 'fail');
+      icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+    }
+  }, 1800);
 }
 
 /* ── Yuklash / Post ───────────────────────────────────────────────────── */
@@ -421,25 +433,44 @@ async function submitStory() {
     return;
   }
 
+  // 0ms: o'zimga darhol ko'rsatish (local blob)
+  const tempId = (crypto.randomUUID && crypto.randomUUID()) || ('tmp_' + Date.now());
+  const localBlob = state._objUrl || null;
+  busEmit('story', {
+    op: 'opt',
+    item: {
+      id: tempId,
+      mediaUrl: localBlob,
+      mediaType: 'image',
+      caption: caption || '',
+      createdAt: new Date().toISOString(),
+    },
+  });
+
   $('uploadBtn').disabled    = true;
   $('uploadBtn').textContent = 'Yuklanmoqda…';
   $('uploadOverlay').classList.remove('show');
   unlockScroll();
-  floatBarShow(file.name.length > 28 ? file.name.slice(0, 26) + '…' : file.name);
+  floatBarShow('story');
+  // Composer tozalanadi, lekin blob URL revoke qilinmaydi (optimistic ko'rinish uchun)
+  const fileRef = file;
+  const blobKeep = localBlob;
+  state.selFile = null;
+  state._objUrl = null; // revoke qilmaymiz
+  state._selMediaW = null;
+  state._selMediaH = null;
+  _setComposerMode('post');
+  try {
+    const fi = $('fileInput'); if (fi) fi.value = '';
+    const prev = $('filePreview'); if (prev) prev.innerHTML = '';
+    const cap = $('captionInput'); if (cap) cap.value = '';
+  } catch (_) {}
 
   let simInterval;
   try {
     let simPct = 0;
-    simInterval = setInterval(() => {
-      const step = Math.max(0.3, (3 - (file.size / (10 * 1024 * 1024))) * Math.random());
-      simPct = Math.min(simPct + step, 88);
-      floatBarUpdate(simPct);
-    }, 200);
-
-    clearInterval(simInterval);
-    file = await _prepareUploadFile(file, file.name.length > 28 ? file.name.slice(0, 26) + '…' : file.name);
+    file = await _prepareUploadFile(fileRef, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name);
     floatBarUpdate(0);
-    simPct = 0;
     simInterval = setInterval(() => {
       const step = Math.max(0.3, (3 - (file.size / (10 * 1024 * 1024))) * Math.random());
       simPct = Math.min(simPct + step, 88);
@@ -458,7 +489,6 @@ async function submitStory() {
     if (caption) row.caption = caption;
     let { error } = await sb.from('stories').insert(row);
     let captionLost = false;
-    // stories.caption ustuni hali yo'q bo'lsa (patch qo'llanmagan) — izohsiz saqlaymiz
     if (error && caption && /caption/i.test(error.message || '')) {
       delete row.caption;
       captionLost = true;
@@ -466,24 +496,30 @@ async function submitStory() {
     }
     if (error) throw error;
 
-    revokeObjUrl();
     floatBarDone(true);
     toast(captionLost ? 'Story qo\'shildi, lekin izoh saqlanmadi (DB da caption ustuni yo\'q)' : 'Story qo\'shildi',
           captionLost ? 'info' : 'success');
+    // Serverdagi haqiqiy story — boshqalarga + o'zimni yangilash
+    busEmit('story', { op: 'new' });
     import('./stories.js').then(m => m.loadStories()).catch(() => {});
+    // blob endi kerak emas
+    if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
   } catch (err) {
     clearInterval(simInterval);
     floatBarDone(false);
     toast('Story yuklanmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
+    if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
+    import('./stories.js').then(m => m.loadStories()).catch(() => {});
   } finally {
-    resetUpload();
+    $('uploadBtn').disabled = false;
+    $('uploadBtn').textContent = 'Yuklash';
   }
 }
 
 export async function submitPost() {
   if (_composerMode === 'story') return submitStory();
   const caption      = $('captionInput').value.trim();
-  const isPublic     = true; // yopiq tarmoq: yangi postlar hamma tasdiqlangan a'zoga ko'rinadi
+  const isPublic     = true;
   if (!state.me) return;
   if (!caption && !state.selFile) return;
 
@@ -494,113 +530,125 @@ export async function submitPost() {
     return;
   }
 
+  const hasFile = !!state.selFile;
+  const fileRef = state.selFile;
+  const localBlob = state._objUrl || null;
+  const mediaW = state._selMediaW || null;
+  const mediaH = state._selMediaH || null;
+  const tempId = (crypto.randomUUID && crypto.randomUUID()) || ('tmp_' + Date.now());
+  const displayName = state.me.displayName || state._userCache?.[state.me.uid]?.fullName || 'Foydalanuvchi';
+
+  // ── 0ms: o'zimga darhol feedda ko'rsatish ───────────────────────────
+  const optimistic = {
+    id: tempId,
+    userId: state.me.uid,
+    userFullName: displayName,
+    text: caption || null,
+    mediaPath: null,
+    mediaUrl: localBlob,
+    mediaType: fileRef?.type || null,
+    mediaWidth: mediaW,
+    mediaHeight: mediaH,
+    fileName: fileRef?.name || null,
+    fileSize: fileRef?.size || null,
+    isPublic: true,
+    isMaxPrivate: false,
+    likes: 0,
+    commentCount: 0,
+    createdAt: Date.now(),
+    _optimistic: true,
+  };
+  busEmit('post', { op: 'opt', post: optimistic });
+
   $('uploadBtn').disabled    = true;
   $('uploadBtn').textContent = 'Yuklanmoqda…';
-
-  /* Fayl bo'lsa overlay ni darhol yopamiz — foydalanuvchi reels ko'ra olsin */
-  const hasFile = !!state.selFile;
-  if (hasFile) {
-    $('uploadOverlay').classList.remove('show');
-    unlockScroll();
-    const shortName = state.selFile.name.length > 28
-      ? state.selFile.name.slice(0, 26) + '…'
-      : state.selFile.name;
-    floatBarShow(shortName);
-  }
+  $('uploadOverlay').classList.remove('show');
+  unlockScroll();
+  if (hasFile) floatBarShow('post');
+  _clearHomeComposerUi();
+  // Composer tozalash — blob revoke YO'Q (optimistic media uchun)
+  state.selFile = null;
+  state._objUrl = null;
+  state._selMediaW = null;
+  state._selMediaH = null;
+  _setComposerMode('post');
+  try {
+    const fi = $('fileInput'); if (fi) fi.value = '';
+    const prev = $('filePreview'); if (prev) prev.innerHTML = '';
+    const cap = $('captionInput'); if (cap) cap.value = '';
+  } catch (_) {}
 
   try {
     const { data: ud } = await sb.from('profiles').select('full_name').eq('id', state.me.uid).maybeSingle();
     let mediaPath = null;
-    let mediaUrl  = null;
     let mediaType = null;
     let fileName  = null;
     let fileSize  = null;
 
-    /* ── Private / Public uchun Firestore ── */
-    if (hasFile) {
-      let file = state.selFile;
-      file = await _prepareUploadFile(file, state.selFile.name.length > 28 ? state.selFile.name.slice(0, 26) + '…' : state.selFile.name);
+    if (hasFile && fileRef) {
+      let file = fileRef;
+      file = await _prepareUploadFile(file, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name);
       floatBarUpdate(0);
 
       let simPct = 0;
-      let lastTick = Date.now();
       const simInterval = setInterval(() => {
-        lastTick = Date.now();
         const step = Math.max(0.3, (3 - (file.size / (10 * 1024 * 1024))) * Math.random());
         simPct = Math.min(simPct + step, 88);
         floatBarUpdate(simPct);
       }, 200);
 
       const result = await uploadViaController(file, 'posts');
-
       clearInterval(simInterval);
       floatBarUpdate(100);
 
-      mediaPath    = result.path;
-      mediaUrl     = result.url;
-      mediaType    = file.type;
-      fileName     = file.name;
-      fileSize     = file.size;
+      mediaPath = result.path;
+      mediaType = file.type;
+      fileName  = file.name;
+      fileSize  = file.size;
     }
 
     const { data: _newPost, error: postErr } = await sb.from('posts').insert({
       user_id:        state.me.uid,
-      user_full_name: ud?.full_name || state.me.displayName || 'Foydalanuvchi',
+      user_full_name: ud?.full_name || displayName,
       text:           caption || null,
       media_path:     mediaPath,
       media_type:     mediaType,
-      media_width:    hasFile ? (state._selMediaW || null) : null,
-      media_height:   hasFile ? (state._selMediaH || null) : null,
+      media_width:    hasFile ? mediaW : null,
+      media_height:   hasFile ? mediaH : null,
       file_name:      fileName,
       file_size:      fileSize,
       is_public:      !!isPublic,
     }).select('*').maybeSingle();
     if (postErr) {
-      // Post yozilmadi — yuklangan faylni yetim qoldirmaymiz
       if (mediaPath) sb.storage.from('media').remove([mediaPath]).catch(() => {});
       throw postErr;
     }
 
-    // Ochiq post bo'lsa — hammaga shu zahoti (shaxsiy post faqat DB/RLS orqali)
-    if (_newPost && _newPost.is_public) busEmit('post', { op: 'new', row: _newPost });
+    // Haqiqiy post → temp o'rniga; boshqalarga ham
+    if (_newPost) busEmit('post', { op: 'new', row: _newPost, replaceId: tempId });
 
-    revokeObjUrl();
+    if (hasFile) floatBarDone(true);
+    else toast('Yuklandi!', 'success');
 
-    if (hasFile) {
-      floatBarDone(true);
-    } else {
-      toast('Yuklandi!', 'success');
-      $('uploadOverlay').classList.remove('show');
-      unlockScroll();
-    }
-    resetUpload();
-    _clearHomeComposerUi();
-
+    // blob endi server URL bilan almashtirilgan — biroz kutib revoke
+    if (localBlob) setTimeout(() => { try { URL.revokeObjectURL(localBlob); } catch (_) {} }, 8000);
   } catch (err) {
+    // Optimistic postni olib tashlash
+    busEmit('post', { op: 'del', id: tempId });
     if (hasFile) {
       floatBarDone(false);
       toast('Yuklash amalga oshmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
     } else {
       toast('Xatolik: ' + (err.message || 'Noma\'lum xatolik'), 'error');
-      $('uploadOverlay').classList.remove('show');
-      unlockScroll();
     }
-    resetUpload();
-    _clearHomeComposerUi();
+    if (localBlob) try { URL.revokeObjectURL(localBlob); } catch (_) {}
+  } finally {
+    $('uploadBtn').disabled = false;
+    $('uploadBtn').textContent = 'Yuklash';
   }
 }
-$('uploadBtn').onclick = () => { submitPost(); };
 
-/* ── Composer avatar (joriy foydalanuvchi) ─────────────────────────────── */
-function loadComposerAvi() {
-  const box = $('composerAvi');
-  if (!box || !state.me) return;
-  Promise.resolve(sb.from('profiles').select('full_name,avatar').eq('id', state.me.uid).maybeSingle())
-    .then(({ data }) => {
-      const av = data?.avatar || defAvi(data?.full_name || 'U');
-      box.innerHTML = `<img src="${esc(av)}" onerror="this.style.display='none'">`;
-    }).catch(() => {});
-}
+$('uploadBtn').onclick = () => { submitPost(); };
 
 /* ── Overlay open/close ──────────────────────────────────────────────── */
 export function openComposer() {

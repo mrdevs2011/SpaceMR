@@ -650,6 +650,7 @@ import {
   initVoicePlayer,
   fmtVoiceDur,
   renderVoiceWave,
+  waveReadyClass,
   voiceBarCount as _voiceBarCount,
   hydrateVoiceWaveforms as _hydrateVoiceWaveforms,
   reattachActiveVoiceUI as _reattachActiveVoiceUI,
@@ -740,9 +741,17 @@ function _rtIncoming(m) {
   if (!m?.id || state.currentChatId !== chatState._rtChatId) return;
   if (chatState._rtLocal.has(m.id) || chatState._curMsgs.some(x => x.id === m.id)) return;
   const now = Date.now();
+  const type = m.type || 'text';
+  const mediaPath = m.mediaPath || null;
   const msg = {
-    id: m.id, chatId: chatState._rtChatId, senderId: state.currentChatUid, type: 'text', text: m.text,
-    mediaPath: null, mediaUrl: '', mediaType: null, fileName: null, fileSize: null, duration: null,
+    id: m.id, chatId: chatState._rtChatId, senderId: state.currentChatUid, type,
+    text: m.text || null,
+    mediaPath,
+    mediaUrl: mediaPath ? (mediaPublicUrl(mediaPath) || '') : '',
+    mediaType: m.mediaType || null,
+    fileName: m.fileName || null,
+    fileSize: m.fileSize ?? null,
+    duration: m.duration ?? null,
     status: 'sent', readAt: null, editedAt: null, createdAt: now, _at: now,
   };
   chatState._rtLocal.set(m.id, msg);
@@ -1548,24 +1557,54 @@ function _observeMessagesForRead() {
 }
 
 function renderTicks(status) {
-  // 'sending' = clock (hali yuborilmoqda), 'read' = 2 ko'k chek, boshqa = 1 oq chek
+  // 'sending' = soat (faqat status==='sending' — DB/insert tasdiqlanmaguncha),
+  // 'read' = 2 ko'k chek, boshqa (sent/null) = 1 chek. Fake timeout yo'q.
   if (status === 'sending') {
-    return `<svg class="msg-ticks sending" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="Yuborilmoqda">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" opacity="0.85"/>
-      <path d="M12 7v5.2l3.2 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    return `<svg class="msg-ticks sending" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Yuborilmoqda" title="Yuborilmoqda">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" opacity="0.9"/>
+      <g class="msg-tick-hands">
+        <line x1="12" y1="12" x2="12" y2="7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        <line x1="12" y1="12" x2="15.4" y2="14.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </g>
     </svg>`;
   }
   if (status === 'read') {
-    return `<svg class="msg-ticks read" width="18" height="11" viewBox="0 0 18 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+    return `<svg class="msg-ticks read" width="18" height="11" viewBox="0 0 18 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="O'qildi">
       <path d="M1 5.5L4.5 9L10 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M6 5.5L9.5 9L16 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>`;
   }
-  // sent
-  return `<svg class="msg-ticks" width="12" height="10" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+  // sent (yoki null/undefined — bazadan kelgan)
+  return `<svg class="msg-ticks" width="12" height="10" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Yuborildi">
     <path d="M1 5.2L4.5 8.5L11 1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
+
+/** Faqat status/tick yangilash — to'liq paintMessages YO'Q (tezlik). */
+export function updateMsgTicks(id, status) {
+  if (!id) return;
+  const box = $('chatThreadMessages');
+  if (!box) return;
+  const el = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(String(id))}"]`);
+  if (!el) return;
+  const meta = el.querySelector('.chat-msg-meta');
+  if (!meta) return;
+  let tick = meta.querySelector('.msg-ticks');
+  const html = renderTicks(status);
+  if (tick) {
+    const tmp = document.createElement('template');
+    tmp.innerHTML = html.trim();
+    const neu = tmp.content.firstChild;
+    if (neu) tick.replaceWith(neu);
+  } else {
+    meta.insertAdjacentHTML('beforeend', html);
+  }
+  // local state sync
+  const conf = chatState._rtLocal.get(id);
+  if (conf) { conf.status = status; conf._at = Date.now(); }
+  chatState._curMsgs = chatState._curMsgs.map(m => m.id === id ? { ...m, status } : m);
+}
+
 
 function _dissolvePrepare(box, newIds, canStart) {
   const started = [];
@@ -1708,6 +1747,60 @@ function _restoreMsgAnchor(box, a) {
   if (Math.abs(d) > 0.5) box.scrollTop += d;
 }
 
+/* ── Chat ochilganda oxirgi media ni oldindan yuklash ───────────────────
+ * Eng yangi 5 ta ovoz + 5 ta rasm (yoki undan kam bo'lsa boricha).
+ * Brauzer HTTP keshiga tushadi — keyin bosilganda darhol ochiladi.
+ */
+const _preloadedMediaUrls = new Set();
+const PRELOAD_VOICE_N = 5;
+const PRELOAD_IMAGE_N = 5;
+
+function _isChatImageMsg(m) {
+  if (!m || m.type !== 'file') return false;
+  const mime = (m.mediaType || '').toLowerCase();
+  if (mime.startsWith('image/')) return true;
+  const ext = (m.fileName || '').toLowerCase().split('.').pop() || '';
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'heic', 'heif'].includes(ext);
+}
+
+function preloadRecentChatMedia(msgs) {
+  if (!Array.isArray(msgs) || !msgs.length) return;
+  const voices = [];
+  const images = [];
+  // msgs odatda eski → yangi; oxiridan boshlab eng yangilarini olamiz
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const m = msgs[i];
+    const url = (m.mediaUrl || '').trim();
+    if (!url || url.startsWith('blob:') || url.startsWith('data:')) continue;
+    if (m.type === 'voice' && voices.length < PRELOAD_VOICE_N) {
+      if (!voices.includes(url)) voices.push(url);
+    } else if (_isChatImageMsg(m) && images.length < PRELOAD_IMAGE_N) {
+      if (!images.includes(url)) images.push(url);
+    }
+    if (voices.length >= PRELOAD_VOICE_N && images.length >= PRELOAD_IMAGE_N) break;
+  }
+  // Kesh o'sib ketmasin
+  if (_preloadedMediaUrls.size > 80) _preloadedMediaUrls.clear();
+
+  for (const url of voices) {
+    if (_preloadedMediaUrls.has(url)) continue;
+    _preloadedMediaUrls.add(url);
+    // fetch → HTTP cache (Audio ham shu keshdan oladi)
+    fetch(url, { mode: 'cors', credentials: 'omit', cache: 'force-cache' }).catch(() => {
+      // CORS yoki tarmoq xatosi — jim o'tkazamiz
+      fetch(url, { mode: 'no-cors', cache: 'force-cache' }).catch(() => {});
+    });
+  }
+  for (const url of images) {
+    if (_preloadedMediaUrls.has(url)) continue;
+    _preloadedMediaUrls.add(url);
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.src = url;
+  }
+}
+
 export function paintMessages(msgs, grp = null) {
   const box = $('chatThreadMessages');
   if (!box) return;
@@ -1756,7 +1849,7 @@ export function paintMessages(msgs, grp = null) {
       const barCount = _voiceBarCount(voiceMedia.duration);
       const safeUrl = (voiceMedia.url || '').replace(/"/g, '&quot;');
       const _mpName = (mine ? 'Siz' : (grp ? (grp.names?.[m.senderId]?.fullName || 'Ovozli xabar') : ($('chatThreadName')?.textContent || 'Ovozli xabar'))).replace(/"/g, '&quot;');
-      bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, idx, state });
+      bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state });
     } else if (m.type === 'file') {
       /* ── File message ── */
       const fname = esc(m.fileName || 'file');
@@ -1881,6 +1974,8 @@ export function paintMessages(msgs, grp = null) {
   // Faqat viewportdagi (ko'rinadigan) xabarlar o'qilgan bo'ladi
   _observeMessagesForRead();
   checkSharedPostExistence(msgs);
+  // Oxirgi 5 ovoz + 5 rasmni fonda yuklab qo'yamiz (boricha)
+  preloadRecentChatMedia(msgs);
 }
 
 /** Guruh thread'i shu yagona painter bilan chiziladi (DM bilan bir xil UI/mantiq) */
@@ -2315,6 +2410,11 @@ initMsgMenu({
   box: $('chatThreadMessages'),
   getMsgs: () => chatState._curMsgs,
   reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) chatState._reloadThread(); },
+  markSent: (id) => {
+    const conf = chatState._rtLocal.get(id);
+    if (conf) { conf.status = 'sent'; conf._at = Date.now(); chatState._rtLocal.set(id, conf); }
+    paintMessages(chatState._curMsgs.map(m => m.id === id ? { ...m, status: 'sent' } : m));
+  },
   // Optimistic delete: UI dan darhol olib tashlash (dissolve ishlashi uchun markDissolve oldindan chaqirilgan)
   applyLocalDelete: (ids) => {
     const set = new Set((ids || []).map(String));
@@ -2488,4 +2588,4 @@ export function destroyChatsView() {
   if (nameEl) nameEl.addEventListener('click', openCurrentProfile);
 })();
 
-Object.assign(chatUI, { paintMessages, updateVoiceSendBtn, clearPendingPostShare, setPendingPostShare, clearChatFile, _showOptimisticVoiceBubble, _setTyping, paintGroupThread, resetSeenMsgs, initChatHeaderMenu, getPendingPostShare, updatePostAttachBar });
+Object.assign(chatUI, { paintMessages, updateMsgTicks, updateVoiceSendBtn, clearPendingPostShare, setPendingPostShare, clearChatFile, _showOptimisticVoiceBubble, _setTyping, paintGroupThread, resetSeenMsgs, initChatHeaderMenu, getPendingPostShare, updatePostAttachBar });

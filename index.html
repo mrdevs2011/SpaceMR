@@ -829,6 +829,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="chat-record-bar" id="chatRecordBar">
       <span class="crb-dot"></span>
       <span class="crb-timer" id="chatRecordTimer">0:00</span>
+      <div class="crb-wave" id="crbWave" aria-hidden="true"></div>
       <span class="crb-cancel" id="chatRecordCancel">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         <span class="crb-cancel-text" id="crbCancelText">Bekor qilish uchun suring</span>
@@ -858,10 +859,12 @@ html[data-nf],html[data-nf] body{background:#000}
     </div>
 
     <div class="incoming-call-center">
-      <div class="incoming-call-ring-anim">
-        <span></span><span></span><span></span>
+      <div class="incoming-call-avi-wrap">
+        <div class="incoming-call-ring-anim" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="incoming-call-avi" id="incomingCallAvi"></div>
       </div>
-      <div class="incoming-call-avi" id="incomingCallAvi"></div>
       <div class="incoming-call-name" id="incomingCallName">Kimdir</div>
       <div class="incoming-call-type" id="incomingCallType">Ovozli qo'ng'iroq</div>
     </div>
@@ -869,7 +872,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="incoming-call-btns">
       <div class="inc-call-col">
         <button class="inc-call-btn reject" id="incomingCallReject" title="Rad etish">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4a2 2 0 0 1 1.995-2.18H6.6a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.97a16 16 0 0 0 6.13 6.13l1.26-.89a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         </button>
         <span class="inc-call-label">Rad etish</span>
       </div>

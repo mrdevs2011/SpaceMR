@@ -88,8 +88,19 @@ function createMesh(chName, peerUids, h = {}, groupMode = false) {
     if (!o || !P.has(o.from)) return;
     if (Array.isArray(o.skip) && o.skip.includes(me)) return;   // bu nusxa bizga DC orqali ham yetgan
     if (o.t === 'm') {
-      if (typeof o.id === 'string' && typeof o.text === 'string' && o.id.length <= 64) {
-        h.onMsg?.({ id: o.id, text: o.text.slice(0, MAX_TEXT), from: o.from });
+      if (typeof o.id === 'string' && o.id.length <= 64) {
+        const type = (typeof o.type === 'string' && o.type) ? o.type : 'text';
+        const msg = { id: o.id, from: o.from, type };
+        if (typeof o.text === 'string') msg.text = o.text.slice(0, MAX_TEXT);
+        if (typeof o.mediaPath === 'string') msg.mediaPath = o.mediaPath.slice(0, 500);
+        if (typeof o.mediaType === 'string') msg.mediaType = o.mediaType.slice(0, 120);
+        if (typeof o.fileName === 'string') msg.fileName = o.fileName.slice(0, 240);
+        if (typeof o.fileSize === 'number') msg.fileSize = o.fileSize;
+        if (typeof o.duration === 'number') msg.duration = o.duration;
+        // Matnli xabar uchun text majburiy; media uchun mediaPath yetarli
+        if (type === 'text' && typeof msg.text !== 'string') return;
+        if (type !== 'text' && !msg.mediaPath && typeof msg.text !== 'string') return;
+        h.onMsg?.(msg);
       }
     } else if (o.t === 'r') {
       if (Array.isArray(o.ids)) h.onRead?.(o.ids.filter(x => typeof x === 'string').slice(0, 100), o.from);
@@ -234,7 +245,24 @@ function createMesh(chName, peerUids, h = {}, groupMode = false) {
   if (p2pOk) ensureIce();   // TURN'ni oldindan isitib qo'yamiz
 
   return {
-    send: (id, text) => sendRaw({ t: 'm', id, text }),
+    /** Matn: send(id, text) yoki to'liq media: send({ id, type, text?, mediaPath?, ... }) */
+    send: (idOrObj, text) => {
+      if (idOrObj && typeof idOrObj === 'object') {
+        const o = idOrObj;
+        if (typeof o.id !== 'string') return null;
+        return sendRaw({
+          t: 'm', id: o.id,
+          type: o.type || 'text',
+          text: typeof o.text === 'string' ? o.text : undefined,
+          mediaPath: typeof o.mediaPath === 'string' ? o.mediaPath : undefined,
+          mediaType: typeof o.mediaType === 'string' ? o.mediaType : undefined,
+          fileName: typeof o.fileName === 'string' ? o.fileName : undefined,
+          fileSize: typeof o.fileSize === 'number' ? o.fileSize : undefined,
+          duration: typeof o.duration === 'number' ? o.duration : undefined,
+        });
+      }
+      return sendRaw({ t: 'm', id: idOrObj, type: 'text', text });
+    },
     sendRead: (ids) => { if (ids?.length) sendRaw({ t: 'r', ids }); },
     retract: (id) => sendRaw({ t: 'x', id }),
     sendTyping: (v) => sendRaw({ t: 'y', v: !!v }),

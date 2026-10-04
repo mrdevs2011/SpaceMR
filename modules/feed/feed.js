@@ -4,6 +4,7 @@ import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          showConfirm,
          dlFile, openZoom, showHeartBurst, fmtCount } from '../core/utils.js';
 import { toast }                            from '../ui/toast.js';
+import { schedulePaint }                   from '../core/perf.js';
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
@@ -82,7 +83,7 @@ export function buildMedia(p) {
     ? ` style="aspect-ratio:${p.mediaWidth}/${p.mediaHeight}"`
     : '';
   if (p.mediaType?.startsWith('image'))
-    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio}><img src="${esc(p.mediaUrl)}" loading="lazy" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
+    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio}><img src="${esc(p.mediaUrl)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}">
     <div class="file-card-icon">${getFileIcon(p.fileName||'', p.mediaType||'')}</div>
     <div class="file-info"><div class="file-name">${esc(p.fileName||'File')}</div><div class="file-size">${p.fileSize ? fmtSz(p.fileSize) : ''}</div></div>
@@ -241,7 +242,7 @@ export async function renderFeedTo(feedEl, posts) {
         <div class="post-actions">
           <div class="post-actions-left">
             <button class="act-btn like-btn left-one${liked?' liked':''}" data-id="${p.id}" aria-label="Yoqtirish">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="${liked?'#fff':'none'}" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="${liked?'#f91880':'none'}" stroke="${liked?'#f91880':'#fff'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
               <span id="lc-${p.id}">${fmtCount(p.likes || 0)}</span>
@@ -272,7 +273,7 @@ export async function renderFeedTo(feedEl, posts) {
               </svg>
             </button>
             <button class="act-btn save-btn right-two${saved?' saved':''}" data-id="${p.id}" title="${saved?'Saqlanganlardan olib tashlash':'Saqlash'}" aria-label="Saqlash" aria-pressed="${saved?'true':'false'}">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="${saved?'#fff':'none'}" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="20 21 12 13.44 4 21 4 3 20 3 20 21"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="${saved?'#fff':'none'}" stroke="${saved?'none':'#fff'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="20 21 12 13.44 4 21 4 3 20 3 20 21"/></svg>
             </button>
           </div>
         </div>
@@ -447,55 +448,58 @@ export async function openPostLink(postId) {
   await renderFeed();           // targetId bor -> scrollToPostFromHash o'zi chaqiriladi
 }
 
+/* Event delegation — har renderda N ta listener o'rniga bitta (0 lag, 0 memory leak) */
+let _feedDelegated = false;
 function bindFeedEvents(feedEl) {
-  feedEl.querySelectorAll('.like-btn').forEach(b => b.addEventListener('click', () => doLike(b.dataset.id, b)));
-
-  feedEl.querySelectorAll('.save-btn').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); doSave(b.dataset.id); }));
-
-  feedEl.querySelectorAll('.cmt-open-btn').forEach(b => b.addEventListener('click', async () => {
-    const { openCmtModal } = await import('./comments.js');
-    openCmtModal(b.dataset.id);
-  }));
-  feedEl.querySelectorAll('.link-btn').forEach(b => b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    copyPostLink(b.dataset.id);
-  }));
-  feedEl.querySelectorAll('.share-btn').forEach(b => b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    sharePostToChat(b.dataset.id);
-  }));
-  feedEl.querySelectorAll('.user-avi-btn').forEach(b => b.addEventListener('click', async () => {
-    if (b.dataset.uid !== state.me?.uid) {
-      const { openUserProfileModal } = await import('../profile/profile.js');
-      openUserProfileModal(b.dataset.uid);
+  if (!feedEl || _feedDelegated) return;
+  _feedDelegated = true;
+  feedEl.addEventListener('click', async (e) => {
+    const t = e.target;
+    // Post rasm → lightbox (pinch zoom)
+    const media = t.closest('.post-media');
+    if (media && media.dataset.type === 'image') {
+      const url = media.dataset.url || media.querySelector('img')?.src;
+      if (url) { e.stopPropagation(); openZoom(url, 'image'); return; }
     }
-  }));
-  feedEl.querySelectorAll('.file-dl').forEach(b => b.addEventListener('click', e => {
-    e.stopPropagation();
-    dlFile(b.dataset.url, b.dataset.name);
-  }));
-  // Fayl post (rasm bo'lmagan, lekin fayl biriktirilgan post) ustiga
-  // bosilganda — faylning havolasini (Supabase url) yangi tabda ochamiz.
-  // Matnli (fayl yuklanmagan) postlarda .file-card umuman render qilinmaydi,
-  // shu sababli bu shart avtomatik ravishda faqat fayl yuklangan postlarga tegishli.
-  feedEl.querySelectorAll('.file-card').forEach(card => card.addEventListener('click', e => {
-    if (e.target.closest('.file-dl')) return; // "Yuklab olish" tugmasi o'z vazifasini bajaradi
-    const url = card.dataset.url;
-    if (url) window.open(url, '_blank', 'noopener');
-  }));
-  feedEl.querySelectorAll('.cap-more').forEach(btn => {
-    btn.addEventListener('click', e => {
+    const like = t.closest('.like-btn');
+    if (like) { e.stopPropagation(); doLike(like.dataset.id, like); return; }
+    const save = t.closest('.save-btn');
+    if (save) { e.stopPropagation(); doSave(save.dataset.id); return; }
+    const cmt = t.closest('.cmt-open-btn');
+    if (cmt) {
       e.stopPropagation();
-      const cap = btn.closest('.post-caption');
-      cap.classList.toggle('cap-collapsed');
-      cap.classList.toggle('cap-expanded');
-    });
-  });
-  feedEl.querySelectorAll('.post-del-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
+      const { openCmtModal } = await import('./comments.js');
+      openCmtModal(cmt.dataset.id);
+      return;
+    }
+    const link = t.closest('.link-btn');
+    if (link) { e.stopPropagation(); copyPostLink(link.dataset.id); return; }
+    const share = t.closest('.share-btn');
+    if (share) { e.stopPropagation(); sharePostToChat(share.dataset.id); return; }
+    const avi = t.closest('.user-avi-btn');
+    if (avi && avi.dataset.uid && avi.dataset.uid !== state.me?.uid) {
       e.stopPropagation();
-      await doDelete(btn.dataset.id);
-    });
+      const { openUserProfileModal } = await import('../profile/profile.js');
+      openUserProfileModal(avi.dataset.uid);
+      return;
+    }
+    const dl = t.closest('.file-dl');
+    if (dl) { e.stopPropagation(); dlFile(dl.dataset.url, dl.dataset.name); return; }
+    const card = t.closest('.file-card');
+    if (card && !t.closest('.file-dl')) {
+      const url = card.dataset.url;
+      if (url) window.open(url, '_blank', 'noopener');
+      return;
+    }
+    const more = t.closest('.cap-more');
+    if (more) {
+      e.stopPropagation();
+      const cap = more.closest('.post-caption');
+      if (cap) { cap.classList.toggle('cap-collapsed'); cap.classList.toggle('cap-expanded'); }
+      return;
+    }
+    const del = t.closest('.post-del-btn');
+    if (del) { e.stopPropagation(); await doDelete(del.dataset.id); return; }
   });
 }
 
@@ -526,7 +530,12 @@ function paintSaveBtn(btn, on) {
   btn.classList.toggle('saved', on);
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   btn.title = on ? 'Saqlanganlardan olib tashlash' : 'Saqlash';
-  btn.querySelector('svg')?.setAttribute('fill', on ? 'currentColor' : 'none');
+  const svg = btn.querySelector('svg');
+  if (svg) {
+    svg.setAttribute('fill', on ? 'currentColor' : 'none');
+    if (on) svg.setAttribute('stroke', 'none');
+    else svg.setAttribute('stroke', 'currentColor');
+  }
 }
 
 const _saveLocks = new Set();
@@ -578,14 +587,14 @@ export async function doLike(postId, btn) {
     state.myLikedPosts.delete(postId);
     state._knownUnliked.add(postId);
     btn.classList.remove('liked');
-    svg?.setAttribute('fill','none'); svg?.setAttribute('stroke','#fff');
+    svg?.setAttribute('fill','none'); svg?.setAttribute('stroke','currentColor');
     if (lc) lc.textContent = fmtCount(Math.max(0,cur-1));
     if (post) post.likes = Math.max(0, cur-1);
   } else {
     state.myLikedPosts.add(postId);
     state._knownUnliked.delete(postId);
     btn.classList.add('liked');
-    svg?.setAttribute('fill','#fff'); svg?.setAttribute('stroke','#fff');
+    svg?.setAttribute('fill','#f91880'); svg?.setAttribute('stroke','#f91880');
     if (lc) lc.textContent = fmtCount(cur+1);
     if (post) post.likes = cur + 1;
     btn.classList.add('like-pop');
@@ -660,27 +669,38 @@ let _hashPostHandled = false; // link orqali kelingan postni faqat bir marta mos
 /* ── Scroll joyini saqlash: feed qayta chizilganda (yangi post, realtime, keyingi postlar
    yuklanishi) foydalanuvchi eng tepaga sakramasin — ko'rinib turgan post o'z joyida qoladi ── */
 function captureScrollAnchor(feedEl) {
-  if (!feedEl || window.scrollY < 80) return null; // tepada bo'lsa — yangi post tabiiy chiqadi
-  // Ko'rinib turgan postlardan bir nechtasini eslaymiz: biri o'chib ketsa (masalan, kimdir postini
-  // o'chirsa) keyingisiga tayanamiz — shunda ko'rayotgan postlarim joyidan siljimaydi
+  // scrollY + ko'rinadigan postlar — qayta chizishda tepaga sakramaslik uchun
+  const y = window.scrollY || document.documentElement.scrollTop || 0;
   const list = [];
-  for (const el of feedEl.querySelectorAll('.post')) {
-    const r = el.getBoundingClientRect();
-    if (r.bottom <= 0) continue;
-    list.push({ id: el.dataset.id, top: r.top });
-    if (list.length >= 8 || r.top > window.innerHeight) break;
+  if (feedEl) {
+    for (const el of feedEl.querySelectorAll('.post')) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom <= 0) continue;
+      list.push({ id: el.dataset.id, top: r.top });
+      if (list.length >= 12 || r.top > window.innerHeight) break;
+    }
   }
-  return list.length ? list : null;
+  return { y, anchors: list.length ? list : null, h: feedEl ? feedEl.offsetHeight : 0 };
 }
-function restoreScrollAnchor(feedEl, anchors) {
-  if (!anchors || !feedEl) return;
-  const posts = Array.from(feedEl.querySelectorAll('.post'));
-  for (const a of anchors) {
-    const el = posts.find(x => x.dataset.id === a.id);
-    if (!el) continue; // o'chirilgan — keyingisiga o'tamiz
-    const delta = el.getBoundingClientRect().top - a.top;
-    if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: 'instant' });
-    return;
+function restoreScrollAnchor(feedEl, snap) {
+  if (!snap) return;
+  // 1) Post ID bo'yicha nozik tiklash
+  if (snap.anchors && feedEl) {
+    const posts = Array.from(feedEl.querySelectorAll('.post'));
+    for (const a of snap.anchors) {
+      const el = posts.find(x => x.dataset.id === a.id);
+      if (!el) continue;
+      const delta = el.getBoundingClientRect().top - a.top;
+      if (Math.abs(delta) > 1) {
+        window.scrollBy(0, delta);
+      }
+      return;
+    }
+  }
+  // 2) ID topilmasa (optimistic id almashtirilgan) — oddiy scrollY
+  const y = snap.y || 0;
+  if (y > 0 && Math.abs((window.scrollY || 0) - y) > 2) {
+    window.scrollTo(0, y);
   }
 }
 
@@ -707,7 +727,9 @@ export async function renderFeed() {
 
   const posts  = filtered().slice(0, state.visibleN);
 
-  const _anchor = (!targetId && state.view === 'home') ? captureScrollAnchor(feedEl) : null;
+  // Scroll joyini saqlab qolamiz — realtime/optimistic qayta chizishda tepaga sakramasin
+  const _snap = (!targetId && state.view === 'home') ? captureScrollAnchor(feedEl) : null;
+  if (_snap?.h > 0 && feedEl) feedEl.style.minHeight = _snap.h + 'px';
 
   // Birinchi renderda spinner
   if (_feedFirstRender && !feedEl.querySelector('.post')) {
@@ -716,7 +738,9 @@ export async function renderFeed() {
   _feedFirstRender = false;
 
   await renderFeedTo(feedEl, posts);
-  restoreScrollAnchor(feedEl, _anchor);
+  restoreScrollAnchor(feedEl, _snap);
+  // minHeight ni keyingi kadrda olib tashlash (layout barqarorlashgach)
+  if (feedEl) requestAnimationFrame(() => { feedEl.style.minHeight = ''; });
   reapplyPostHighlight();
 
 
@@ -729,46 +753,53 @@ export async function renderFeed() {
   setupScroll();
 }
 
-function setupScroll() {
-  window.onscroll = async () => {
-    if (state.loadingMore) return;
-    const maxN = filtered().length;
-    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 400) {
-      if (state.visibleN >= maxN) {
-        if (window.__fetchMorePosts && state.view === 'home' && !state.search) {
-          state.loadingMore = true;
-          const hasMore = await window.__fetchMorePosts();
-          state.loadingMore = false;
-          if (!hasMore) {
-            $('feed')?.querySelector('.spin-wrap')?.remove();
-          }
-        }
-        return;
-      }
+let _scrollBound = false;
+let _scrollTicking = false;
+async function _onFeedScroll() {
+  if (state.loadingMore || state.view !== 'home') return;
+  const maxN = filtered().length;
+  if (window.scrollY + window.innerHeight < document.body.scrollHeight - 500) return;
 
+  if (state.visibleN >= maxN) {
+    if (window.__fetchMorePosts && !state.search) {
       state.loadingMore = true;
-      setTimeout(async () => {
-        const prevN = state.visibleN;
-        state.visibleN = Math.min(prevN + 10, filtered().length);
+      try {
+        const hasMore = await window.__fetchMorePosts();
+        if (!hasMore) $('feed')?.querySelector('.spin-wrap')?.remove();
+      } finally {
         state.loadingMore = false;
-        if (state.view !== 'home') return;
-
-        const feedEl = $('feed');
-        if (!feedEl) return;
-
-        feedEl.querySelector('.spin-wrap')?.remove();
-
-        const newPosts = filtered().slice(prevN, state.visibleN);
-        if (newPosts.length > 0) {
-          await appendPostsToFeed(feedEl, newPosts);
-        }
-
-        if (state.visibleN < filtered().length || (window.__fetchMorePosts && !state.search)) {
-          feedEl.insertAdjacentHTML('beforeend', '<div class="spin-wrap"><div class="spinner"></div></div>');
-        }
-      }, 300);
+      }
     }
-  };
+    return;
+  }
+
+  state.loadingMore = true;
+  try {
+    const prevN = state.visibleN;
+    state.visibleN = Math.min(prevN + 10, filtered().length);
+    const feedEl = $('feed');
+    if (!feedEl) return;
+    feedEl.querySelector('.spin-wrap')?.remove();
+    const newPosts = filtered().slice(prevN, state.visibleN);
+    if (newPosts.length > 0) await appendPostsToFeed(feedEl, newPosts);
+    if (state.visibleN < filtered().length || (window.__fetchMorePosts && !state.search)) {
+      feedEl.insertAdjacentHTML('beforeend', '<div class="spin-wrap"><div class="spinner"></div></div>');
+    }
+  } finally {
+    state.loadingMore = false;
+  }
+}
+function setupScroll() {
+  if (_scrollBound) return;
+  _scrollBound = true;
+  window.addEventListener('scroll', () => {
+    if (_scrollTicking) return;
+    _scrollTicking = true;
+    requestAnimationFrame(() => {
+      _scrollTicking = false;
+      _onFeedScroll();
+    });
+  }, { passive: true });
 }
 /* ── FIX: setupPullToRefresh ─────────────────── */
 export function setupPullToRefresh() {

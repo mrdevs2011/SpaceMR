@@ -370,11 +370,50 @@ function fmtAgo(iso) {
   return Math.floor(sec / 86400) + ' kun';
 }
 
+/** Optimistic: o'z storyni darhol stripga qo'shish (server hali yuklamayotgan) */
+export function injectLocalStory(item) {
+  if (!state.me?.uid || !item) return;
+  ensureDom();
+  const me = state.me.uid;
+  let g = _groups.find(x => x.uid === me);
+  if (!g) {
+    const meP = state._userCache?.[me] || {};
+    g = {
+      uid: me,
+      name: 'Sizning story',
+      avatar: meP.avatar || defAvi(meP.fullName || 'U'),
+      items: [],
+      hasUnseen: true,
+      isMe: true,
+    };
+    _groups = [g, ..._groups.filter(x => x.uid !== me)];
+  }
+  // temp id bilan dublikat bo'lmasin
+  g.items = g.items.filter(i => i.id !== item.id);
+  g.items.push({
+    id: item.id,
+    mediaPath: item.mediaPath || null,
+    mediaType: item.mediaType || 'image',
+    mediaUrl: item.mediaUrl,
+    caption: item.caption || '',
+    createdAt: item.createdAt || new Date().toISOString(),
+    seen: true,
+    _optimistic: true,
+  });
+  g.hasUnseen = true;
+  // Meni birinchi qatorga
+  _groups = [g, ..._groups.filter(x => x.uid !== me)];
+  renderBar();
+}
+
 export async function loadStories() {
   ensureDom();
   const track = $('storiesTrack');
   if (!track || !state.me?.uid) return;
 
+  // Strip balandligini saqlab qolamiz — feed scroll tepaga sakramasin
+  const _prevH = track.offsetHeight;
+  if (_prevH > 0) track.style.minHeight = _prevH + 'px';
   track.innerHTML = '<div class="story-loading"><div class="spinner"></div></div>';
 
   try {
@@ -480,6 +519,7 @@ export async function loadStories() {
 function renderBar() {
   const track = $('storiesTrack');
   if (!track) return;
+  track.style.minHeight = '';
 
   track.innerHTML = _groups.map((g, i) => {
     const ring = g.isMe && !g.items.length

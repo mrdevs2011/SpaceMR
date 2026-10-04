@@ -322,7 +322,7 @@ svg { color: inherit; }
 .cmt-body:hover { border-color: var(--line2); }
 /* .up-follow-btn { position/overflow } → yuqorida (510-qator) aynan nusxa, o'chirildi */
 /* ═══════════════════════════════════════════ FLOAT UPLOAD BAR — Enhanced ═══════════════════════════════════... */
-.upload-float-bar, .ufb-fill.indeterminate { background: var(--blue3); background-size: 200% 100%;  }
+/* upload float bar: features.css — pitch black, sodda */
 /* ═══════════════════════════════════════════ REDUCED MOTION SUPPORT ═══════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {    scroll-behavior: auto; }
@@ -351,9 +351,13 @@ svg { color: inherit; }
   body { background: var(--pal-white); color: var(--pal-black); }
   .post { break-inside: avoid; page-break-inside: avoid; }
 }
-/* Desktop: upload float bar sidebar hisobga olinadi */
+/* Upload float bar: har qanday device — faqat viewport bottom-center (sidebar offset yo'q) */
 @media (min-width: 1100px) {
-  .upload-float-bar { left: calc(50% + var(--sidebar, 0px) / 2); }
+  .upload-float-bar {
+    left: 50%;
+    margin-left: 0;
+    transform: translateX(-50%);
+  }
 }
 /* ═══════════════════════════════════════════════════════════════════════ YAKUNIY POLISH — flat (X.com uslubi... */
 /* .app-hdr glow/shimmer bloki o'chirildi — CSS/00-components.core.css allaqachon flat .app-hdr'ni belgilaydi.... */
@@ -560,7 +564,7 @@ svg { color: inherit; }
 [data-theme="dark"] .theme-btn { color: var(--text2); }
 [data-theme="dark"] .theme-btn:hover { background: var(--pal-gray-900); color: var(--text); }
 /* ══════════════════════════════════════════ 27. FLOATING UPLOAD BAR — Pill ═════════════════════════════════... */
-[data-theme="dark"] .upload-float-bar { background: var(--pal-gray-900); border: 0.5px solid var(--pal-gray-900); box-shadow: inset 0 1px 0 var(--pal-gray-800), 0 8px 36px var(--pal-black); }
+[data-theme="dark"] .upload-float-bar { background: #000; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
 [data-theme="dark"] .upload-drop { background: var(--pal-black); border: 1px dashed var(--pal-gray-900); }
 [data-theme="dark"] .upload-drop:hover { border-color: var(--pal-white); background: var(--pal-black); }
 [data-theme="dark"] .upload-drop.drag-over { border-color: var(--blue); background: var(--pal-gray-900); box-shadow: 0 0 0 3px var(--pal-gray-900), inset 0 1px 0 var(--pal-gray-900); }
@@ -656,7 +660,7 @@ svg { color: inherit; }
 .search-overlay-box, [data-theme="dark"] .search-overlay-box { border: none; box-shadow: none; }
 .search-overlay-close, [data-theme="dark"] .search-overlay-close { border: none; box-shadow: none; }
 /* Upload float bar */
-.upload-float-bar, [data-theme="dark"] .upload-float-bar { border: none; box-shadow: none; }
+.upload-float-bar, [data-theme="dark"] .upload-float-bar { border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
 /* Upload drop zone — border/hover feedback owned by nav.css, no override here */
 /* Empty state icons */
 .feed-empty-icon, .empty-icon, .empty-search-icon, [data-theme="dark"] .feed-empty-icon, [data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { border: none; box-shadow: none; }

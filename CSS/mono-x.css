@@ -314,10 +314,9 @@ a { color: var(--link); }
 .act-btn span:empty { display: none; }
 .act-btn:hover { background: none; color: var(--x-blue, var(--pal-white)); }
 .act-btn:hover svg { background: rgba(255, 255, 255, 0.1); color: var(--x-blue, var(--pal-white)); }
-.like-btn:hover, .act-btn.liked { color: var(--x-like, #ffffff); }
-.like-btn:hover svg, .act-btn.liked svg { color: var(--x-like, #ffffff); }
-.like-btn:hover svg { background: rgba(255, 255, 255, 0.1); }
-.act-btn.liked { color: var(--x-like, #ffffff); }
+.like-btn:hover { color: #f91880; }
+.like-btn:hover svg { color: #f91880; background: rgba(249, 24, 128, 0.1); }
+.act-btn.liked, .act-btn.liked svg { color: #f91880; }
 
 /* Sticky home tabs — X "For you / Following" */
 .home-tabs {
@@ -2813,10 +2812,43 @@ button:focus-visible,
 }
 
 /* ═══ OVOZLI XABAR: spinner, silliq waveform, emoji select yo'q ═══ */
-.cvm-spin { display: block; animation: cvmSpin 1s linear infinite; transform-origin: center; transform-box: fill-box; }
-@keyframes cvmSpin { to { transform: rotate(360deg); } }
-.cvm-play.cvm-play--loading { cursor: progress; }
-.cvm-bar { transition: height .35s cubic-bezier(.2, .8, .2, 1), background-color .12s linear, opacity .12s linear; }
+/* Perfect circle spinner — SVG emas, border ring (hech qachon oval bo'lmaydi) */
+.cvm-spin {
+  display: block;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  max-width: 14px;
+  max-height: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: currentColor;
+  animation: cvmSpin 0.75s linear infinite;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+@keyframes cvmSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.cvm-play.cvm-play--loading {
+  cursor: progress;
+  /* tugma ichida spinner markazda, scale deformatsiyasiz */
+}
+.cvm-play.cvm-play--loading .cvm-spin {
+  margin: 0 auto;
+}
+.cvm-bar { transition: height .28s cubic-bezier(0.22, 1, 0.36, 1), background-color .12s linear, opacity .12s linear; }
+/* Birinchi hydrate: height o'sish animatsiyasi YO'Q */
+.cvm-wave-snap .cvm-bar { transition: none !important; }
+/* Hali decode qilinmagan: tekis 1px o'sib ketmasin — neytral past chiziq */
+.cvm-waveform:not(.cvm-wave-ready) .cvm-bar {
+  height: 5px !important;
+  opacity: 0.35;
+}
+.cvm-waveform.cvm-wave-ready .cvm-bar { opacity: 1; }
 .cvm-waveform { contain: layout paint; }
 .cvm-play { -webkit-tap-highlight-color: transparent; }
 
@@ -2856,10 +2888,13 @@ button:focus-visible,
 /* 1. Blue-background elements → white text/icons */
 .cpb-progress-fill,
 .vmp-progress-fill,
-.ufb-fill,
 #cmContent .cm-row.playing .cm-ico {
   background: var(--x-blue) !important;
   color: var(--pal-white) !important;
+}
+.ufb-fill {
+  background: #fff !important;
+  color: #fff !important;
 }
 
 /* vmp-play: blue circle, white icon */
@@ -2872,14 +2907,16 @@ button:focus-visible,
   stroke: var(--pal-white) !important;
 }
 
-/* upload float bar icon */
+/* upload float bar icon — pitch black theme */
 .ufb-icon {
-  background: var(--x-blue) !important;
-  color: var(--pal-white) !important;
+  background: rgba(255,255,255,0.08) !important;
+  color: #fff !important;
 }
+.ufb-icon.done { background: #16a34a !important; }
+.ufb-icon.fail { background: #dc2626 !important; }
 .ufb-icon svg {
-  fill: var(--pal-white) !important;
-  stroke: var(--pal-white) !important;
+  fill: none !important;
+  stroke: #fff !important;
 }
 
 #cmContent .cm-row.playing .cm-ico svg {
@@ -3139,8 +3176,9 @@ button:focus-visible,
   background: var(--red) !important;
   box-shadow: 0 4px 20px rgba(239, 68, 68, 0.55), 0 0 0 2px rgba(255,255,255,0.2) !important;
 }
+/* Chapga surganda voice tugma qizarmaydi — faqat matn + crb-dot */
 .chat-voice-btn.recording.cancelling {
-  background: rgba(239, 68, 68, 0.5) !important;
+  /* no red override */
 }
 
 /* ── confirmOkBtn (danger confirm): red ───────────────────────────── */
@@ -3157,7 +3195,20 @@ button:focus-visible,
 .act-btn.liked svg,
 .like-btn.liked,
 .dm-act.liked {
-  color: var(--red) !important;
+  color: #f91880 !important;
+}
+.act-btn.liked svg,
+.like-btn.liked svg {
+  fill: #f91880 !important;
+  stroke: #f91880 !important;
+  color: #f91880 !important;
+}
+.act-btn.like-btn.liked:hover,
+.act-btn.like-btn.liked:hover svg {
+  color: #f91880 !important;
+  fill: #f91880 !important;
+  stroke: #f91880 !important;
+  background: none !important;
 }
 
 /* ── Error/delete context items ──────────────────────────────────── */
@@ -3544,7 +3595,26 @@ textarea:not(:focus) {
 }
 
 /* ── Saqlash (bookmark) tugmasi + Saqlanganlar sahifasi ── */
-.act-btn.save-btn.saved, .act-btn.save-btn.saved svg { color: var(--pal-white, #fff); }
+.act-btn.save-btn,
+.act-btn.save-btn svg {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+.act-btn.save-btn:hover svg {
+  background: none !important;
+  box-shadow: none !important;
+}
+.act-btn.save-btn.saved,
+.act-btn.save-btn.saved svg {
+  color: var(--pal-white, #fff) !important;
+  fill: var(--pal-white, #fff) !important;
+  stroke: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
 .home-brand-saved {
   margin-left: auto; width: 40px; height: 40px; padding: 0; border: none; background: none;
   display: flex; align-items: center; justify-content: center; border-radius: 50%;
@@ -3571,3 +3641,15 @@ textarea:not(:focus) {
   .saved-back { display: none; }
   .saved-head { padding: 16px 16px 12px; }
 }
+
+/* Smooth playhead partial bar */
+#chatThreadModal .chat-msg.mine .cvm-bar.cvm-bar-partial {
+  background: rgba(255, 255, 255, calc(0.42 + var(--cvm-partial, 0) * 0.53)) !important;
+}
+#chatThreadModal .chat-msg.theirs .cvm-bar.cvm-bar-partial {
+  background: color-mix(in srgb, var(--x-blue) calc(var(--cvm-partial, 0) * 100%), var(--text3, #888)) !important;
+  opacity: calc(0.55 + var(--cvm-partial, 0) * 0.45) !important;
+}
+
+#chatThreadModal .chat-msg.mine .cvm-eq-bar { background: rgba(255,255,255,0.95) !important; }
+#chatThreadModal .chat-msg.theirs .cvm-eq-bar { background: var(--x-blue) !important; }

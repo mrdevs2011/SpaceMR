@@ -188,8 +188,17 @@ export function maybeShowGuideCard() {
 }
 
 /* ── Sozlamalardagi "Yo'riqnoma" tugmasi ── */
+let _igInited = false;
 export function initInstallGuide() {
-  const btn = $('guideOpenBtn');
-  if (btn) btn.onclick = openGuide;
+  if (_igInited) return;
+  _igInited = true;
+  // Event delegation — sozlamalar qayta chizilsa ham ishlaydi
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest?.('#guideOpenBtn');
+    if (!t) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openGuide();
+  });
 }
 initInstallGuide();

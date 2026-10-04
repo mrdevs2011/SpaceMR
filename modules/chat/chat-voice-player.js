@@ -4,6 +4,7 @@
  */
 import { state } from '../core/config.js';
 import { $ } from '../core/utils.js';
+import { toast } from '../ui/toast.js';
 
 let _openChatCb = null;
 
@@ -13,11 +14,11 @@ let _openChatCb = null;
  * HAQIQIY ovoz amplitudasiga (RMS) qarab balandligini oladi —
  * `_hydrateVoiceWaveforms()` orqali. Shu tufayli baland ovoz — baland
  * bar, past/jim joy — past bar bo'ladi (sun'iy sinus emas). */
-const CVM_MIN_BARS  = 50;  // eng qisqa xabar uchun bar soni
-const CVM_MAX_BARS  = 80;  // eng uzun xabar uchun bar soni
+const CVM_MIN_BARS  = 48;  // eng qisqa xabar uchun bar soni
+const CVM_MAX_BARS  = 72;  // eng uzun xabar uchun bar soni
 const CVM_BAR_COUNT = CVM_MIN_BARS; // fallback (davomiylik noma'lum bo'lganda)
-const CVM_MIN_H = 3;   // tekis bazaviy balandlik (px)
-const CVM_MAX_H = 24;  // eng baland pik (px) — ingichka, zich barlar bilan muvozanatli
+const CVM_MIN_H = 2.5; // jim / past joy
+const CVM_MAX_H = 28;  // eng baland pik — aniq kontrast
 
 /* Telegram — bar sonini xabar davomiyligiga qarab dinamik hisoblaydi:
  * qisqa ovozli xabar ~50 ta ingichka bar, uzunrog'i (≈20s+) esa ~80
@@ -38,8 +39,18 @@ const _wfKey = (url, count) => `${String(url || '').split('?')[0]}::${count}`;
 /* O'z yuborgan ovozimizning local blob URL'i (id -> blob:). Server xabari kelganda
  * ham shu URL ishlatiladi — tarmoqdan qayta yuklanmaydi, waveform o'zgarmaydi. */
 const _localVoiceUrls = new Map();
-function registerLocalVoiceUrl(id, url) { if (id && url) _localVoiceUrls.set(String(id), url); }
+function registerLocalVoiceUrl(id, url, barCount) {
+  if (!id || !url) return;
+  _localVoiceUrls.set(String(id), url);
+  // Lokal blob — darhol decode (tarmoq kutmasdan), keyin miltillash yo'q
+  const cnt = barCount || CVM_BAR_COUNT;
+  _getWaveformData(url, cnt).catch(() => {});
+}
 function getLocalVoiceUrl(id) { return id ? (_localVoiceUrls.get(String(id)) || '') : ''; }
+
+function waveReadyClass(url = '', count = CVM_BAR_COUNT) {
+  return (url && _waveResolved.has(_wfKey(url, count))) ? ' cvm-wave-ready' : '';
+}
 
 function renderVoiceWave(seed = 0, count = CVM_BAR_COUNT, url = '') {
   const data = url ? _waveResolved.get(_wfKey(url, count)) : null;
@@ -52,12 +63,21 @@ function renderVoiceWave(seed = 0, count = CVM_BAR_COUNT, url = '') {
 }
 
 function _applyWave(waveEl, data) {
+  if (!waveEl || !data) return;
   const bars = waveEl.querySelectorAll('.cvm-bar');
+  // Birinchi chizishda transition O'CHIRILADI — tekis→baland "o'sish" ko'rinmasin
+  waveEl.classList.add('cvm-wave-snap');
   bars.forEach((b, i) => {
     const v = data[i] ?? 0;
-    b.style.height = `${(CVM_MIN_H + v * (CVM_MAX_H - CVM_MIN_H)).toFixed(1)}px`;
+    const vv = v < 0.04 ? 0.04 : v;
+    b.style.height = `${(CVM_MIN_H + vv * (CVM_MAX_H - CVM_MIN_H)).toFixed(1)}px`;
   });
   waveEl.dataset.hydrated = '1';
+  waveEl.classList.add('cvm-wave-ready');
+  // keyingi frame'da transition qayta yoqiladi (playback progress uchun)
+  requestAnimationFrame(() => {
+    waveEl.classList.remove('cvm-wave-snap');
+  });
 }
 
 /* url → Promise<number[] | null> (har bir qiymat 0..1, normalizatsiya
@@ -87,18 +107,38 @@ function _getWaveformData(url, count = CVM_BAR_COUNT) {
       const audioBuf = await ctx.decodeAudioData(arrBuf.slice(0));
       const raw = audioBuf.getChannelData(0); // 1-kanal yetarli
       const blockSize = Math.max(1, Math.floor(raw.length / count));
-      const peaks = [];
+      // Har blokda: peak (max |sample|) + RMS aralashmasi — Telegram uslubidagi
+      // aniq baland/past kontrast. Faqat RMS bo'lsa hamma "o'rtacha" ko'rinadi.
+      const peaks = new Array(count);
       for (let i = 0; i < count; i++) {
         const start = i * blockSize;
         const end = Math.min(raw.length, start + blockSize);
-        let sumSq = 0, n = 0;
-        for (let j = start; j < end; j++) { sumSq += raw[j] * raw[j]; n++; }
-        // RMS — segmentning haqiqiy energiya/chastota darajasi
-        peaks.push(n ? Math.sqrt(sumSq / n) : 0);
+        let sumSq = 0, peak = 0, n = 0;
+        // step: uzun bloklarda har n-sample (tezlik)
+        const step = Math.max(1, Math.floor((end - start) / 64));
+        for (let j = start; j < end; j += step) {
+          const a = Math.abs(raw[j]);
+          if (a > peak) peak = a;
+          sumSq += a * a;
+          n++;
+        }
+        const rms = n ? Math.sqrt(sumSq / n) : 0;
+        // 65% peak + 35% RMS — gapirish piklar aniq, jimlik past
+        peaks[i] = peak * 0.65 + rms * 0.35;
       }
       try { ctx.close(); } catch (_) {}
-      const max = Math.max(...peaks, 0.0001);
-      const norm = peaks.map(v => Math.min(1, v / max));
+
+      // Soft floor: eng past 8% ni deyarli 0 ga yaqinlashtirish (shovqin kesish)
+      const sorted = peaks.slice().sort((a, b) => a - b);
+      const floor = sorted[Math.floor(sorted.length * 0.08)] || 0;
+      const ceiling = sorted[Math.floor(sorted.length * 0.98)] || Math.max(...peaks, 0.0001);
+      const range = Math.max(ceiling - floor, 0.0001);
+
+      // Gamma 0.72 — o'rta qiymatlarni biroz ko'taradi, lekin past/baland farq saqlanadi
+      const norm = peaks.map(v => {
+        const t = Math.max(0, (v - floor) / range);
+        return Math.min(1, Math.pow(t, 0.72));
+      });
       _waveResolved.set(cacheKey, norm);
       return norm;
     } catch (e) {
@@ -129,7 +169,7 @@ function _getWaveformData(url, count = CVM_BAR_COUNT) {
  * <audio> elementining o'zi ham yuklanishida muammo tug'dirishi mumkin
  * (masalan "no supported source" xatosi). Shu sabab — navbat orqali
  * bir vaqtda faqat 2 tasi dekod qilinadi, qolganlari navbatda kutadi. */
-const CVM_MAX_CONCURRENT = 2;
+const CVM_MAX_CONCURRENT = 4;
 let _cvmActiveDecodes = 0;
 const _cvmQueue = [];
 
@@ -169,23 +209,15 @@ function _cvmGetObserver() {
 function _cvmStartHydrate(waveEl) {
   const wrap = waveEl.closest('.chat-voice-msg');
   const url = wrap?.dataset.url;
-  // Bar soni renderVoiceWave() chizganidagi son bilan bir xil bo'lishi kerak
-  // (aks holda haqiqiy amplituda qiymatlari bar'lar bilan mos kelmay qoladi).
   const count = parseInt(wrap?.dataset.barCount, 10) || CVM_BAR_COUNT;
   if (!url || waveEl.dataset.hydrated === '1' || waveEl.dataset.hydrated === 'pending') return;
   const known = _waveResolved.get(_wfKey(url, count));
-  if (known) { waveEl.dataset.hydrated = "1"; return; }
+  if (known) { _applyWave(waveEl, known); return; }
   waveEl.dataset.hydrated = 'pending';
   _cvmEnqueue(() => _getWaveformData(url, count).then(data => {
     if (!waveEl.isConnected) return;
     if (!data) { waveEl.dataset.hydrated = ''; return; }
-    waveEl.dataset.hydrated = '1';
-    const bars = waveEl.querySelectorAll('.cvm-bar');
-    bars.forEach((b, i) => {
-      const v = data[i] ?? 0;
-      const h = CVM_MIN_H + v * (CVM_MAX_H - CVM_MIN_H);
-      b.style.height = `${h.toFixed(1)}px`;
-    });
+    _applyWave(waveEl, data);
   }));
 }
 
@@ -201,7 +233,7 @@ function _hydrateVoiceWaveforms(container) {
     if (!waveEl || waveEl.dataset.hydrated === '1' || waveEl.dataset.hydrated === 'pending') return;
     const cnt = parseInt(wrap.dataset.barCount, 10) || CVM_BAR_COUNT;
     const known = _waveResolved.get(_wfKey(wrap.dataset.url, cnt));
-    if (known) { waveEl.dataset.hydrated = "1"; return; }   // sinxron — miltillamaydi
+    if (known) { _applyWave(waveEl, known); return; } // sinxron — to'g'ri balandlik darhol
     observer.observe(waveEl);
   });
 }
@@ -288,14 +320,32 @@ function _paintProgress(force) {
   const dur = _curDur() || 1;
   const cur = _activeAudio.currentTime || 0;
   const pct = Math.max(0, Math.min(1, cur / dur));
-  const n = _activeBars.length;
-  const filled = Math.floor(pct * n);
-  if (force || filled !== _lastFilled) {
-    const from = force ? 0 : Math.min(filled, _lastFilled);
-    const to   = force ? n : Math.max(filled, _lastFilled);
-    for (let i = from; i < to; i++) _activeBars[i].classList.toggle('played', i < filled);
-    _lastFilled = filled;
+  const n = _activeBars.length || 1;
+  // Uzluksiz playhead: butun + fractional bar (Telegram-smooth)
+  const exact = pct * n;
+  const filled = Math.min(n, Math.floor(exact));
+  const frac = exact - filled; // 0..1 joriy barda
+
+  // Har frame: class + fractional opacity — sakrash yo'q
+  for (let i = 0; i < n; i++) {
+    const b = _activeBars[i];
+    if (i < filled) {
+      b.classList.add('played');
+      b.classList.remove('cvm-bar-partial');
+      b.style.removeProperty('--cvm-partial');
+      b.style.opacity = '';
+    } else if (i === filled && frac > 0.001) {
+      b.classList.add('played', 'cvm-bar-partial');
+      b.style.setProperty('--cvm-partial', frac.toFixed(3));
+      // partial: played rangga qarab aralashadi (CSS)
+    } else {
+      b.classList.remove('played', 'cvm-bar-partial');
+      b.style.removeProperty('--cvm-partial');
+      b.style.opacity = '';
+    }
   }
+  _lastFilled = filled;
+
   const durEl = wrap.querySelector('.cvm-dur');
   if (durEl) { const t = fmtVoiceDur(cur); if (durEl.dataset.cur !== t) { durEl.textContent = t; durEl.dataset.cur = t; } }
   _updateMiniPlayerProgress(pct);
@@ -318,7 +368,11 @@ function _resetActiveVisual() {
     _activeBtn.innerHTML = PLAY_ICON;
     const wrap = _activeBtn.closest('.chat-voice-msg');
     if (wrap) {
-      wrap.querySelectorAll('.cvm-bar.played').forEach(b => b.classList.remove('played'));
+      wrap.querySelectorAll('.cvm-bar').forEach(b => {
+        b.classList.remove('played', 'cvm-bar-partial');
+        b.style.removeProperty('--cvm-partial');
+        b.style.opacity = '';
+      });
       wrap.querySelector('.cvm-waveform')?.classList.remove('playing');
       const durEl = wrap.querySelector('.cvm-dur');
       if (durEl) durEl.textContent = fmtVoiceDur(_activeTotal || 0);
@@ -328,6 +382,7 @@ function _resetActiveVisual() {
 }
 
 function _stopActive() {
+  _stopPlayEq();
   if (_activeAudio) {
     const a = _activeAudio;
     a.onwaiting = a.onplaying = a.onpause = a.onended = a.onerror = null;
@@ -355,6 +410,123 @@ function _reattachActiveVoiceUI(box) {
   if (!_activeAudio.paused) _startProgressLoop();
 }
 
+
+/* ── Play button circular EQ (classic realistic ring) ─────────────────
+ * Ijro paytida tugma atrofida 16 ta radial bar — haqiqiy audio amplituda. */
+const _EQ_BARS = 16;
+let _eqCtx = null;
+let _eqAnalyser = null;
+let _eqData = null;
+let _eqRaf = null;
+let _eqBtn = null;
+let _eqSmooth = 0;
+
+function _ensureEqRing(btn) {
+  if (!btn) return null;
+  let ring = btn.querySelector('.cvm-eq');
+  if (ring) return ring;
+  ring = document.createElement('span');
+  ring.className = 'cvm-eq';
+  ring.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < _EQ_BARS; i++) {
+    const b = document.createElement('span');
+    b.className = 'cvm-eq-bar';
+    b.style.setProperty('--i', String(i));
+    b.style.setProperty('--n', String(_EQ_BARS));
+    ring.appendChild(b);
+  }
+  btn.appendChild(ring);
+  return ring;
+}
+
+function _stopPlayEq() {
+  if (_eqRaf) { cancelAnimationFrame(_eqRaf); _eqRaf = null; }
+  if (_eqBtn) {
+    _eqBtn.classList.remove('cvm-play--eq');
+    const ring = _eqBtn.querySelector('.cvm-eq');
+    if (ring) {
+      ring.querySelectorAll('.cvm-eq-bar').forEach(b => {
+        b.style.setProperty('--h', '0');
+        b.style.opacity = '0';
+      });
+    }
+  }
+  _eqBtn = null;
+  _eqSmooth = 0;
+}
+
+function _startPlayEq(audio, btn) {
+  if (!audio || !btn) return;
+  _stopPlayEq();
+  const ring = _ensureEqRing(btn);
+  if (!ring) return;
+  btn.classList.add('cvm-play--eq');
+  _eqBtn = btn;
+
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!_eqCtx) _eqCtx = new AC();
+    if (_eqCtx.state === 'suspended') _eqCtx.resume().catch(() => {});
+
+    // Har audio element uchun MediaElementSource bir marta
+    if (!audio.__cvmEqNode) {
+      const src = _eqCtx.createMediaElementSource(audio);
+      const analyser = _eqCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.65;
+      src.connect(analyser);
+      analyser.connect(_eqCtx.destination); // ovoz chiqishi uchun majburiy
+      audio.__cvmEqNode = { src, analyser };
+    }
+    _eqAnalyser = audio.__cvmEqNode.analyser;
+    _eqData = new Uint8Array(_eqAnalyser.frequencyBinCount);
+
+    const bars = ring.querySelectorAll('.cvm-eq-bar');
+    const tick = () => {
+      _eqRaf = null;
+      if (!_eqAnalyser || !_eqBtn || !_activeAudio || _activeAudio.paused) {
+        if (_eqBtn && (!_activeAudio || _activeAudio.paused)) {
+          // pause: silliq so'nish
+          _eqSmooth *= 0.85;
+          bars.forEach((b, i) => {
+            const h = _eqSmooth * (0.3 + 0.7 * Math.abs(Math.sin(i * 0.7)));
+            b.style.setProperty('--h', h.toFixed(3));
+            b.style.opacity = String(Math.min(1, h * 1.2));
+          });
+          if (_eqSmooth > 0.02) _eqRaf = requestAnimationFrame(tick);
+          else _stopPlayEq();
+        }
+        return;
+      }
+      _eqAnalyser.getByteFrequencyData(_eqData);
+      const n = _eqData.length;
+      // Umumiy energiya (bass+mid)
+      let sum = 0;
+      const use = Math.min(48, n);
+      for (let i = 1; i < use; i++) sum += _eqData[i];
+      const avg = sum / (use - 1) / 255;
+      const target = Math.min(1, Math.max(0, (avg - 0.04) * 2.8));
+      _eqSmooth += (target - _eqSmooth) * (target > _eqSmooth ? 0.45 : 0.18);
+
+      // Har bar o'z frekvensiya bo'lagidan + biroz global
+      const per = Math.max(1, Math.floor(use / _EQ_BARS));
+      for (let i = 0; i < bars.length; i++) {
+        let s = 0;
+        const a0 = 1 + i * per;
+        for (let j = 0; j < per && a0 + j < use; j++) s += _eqData[a0 + j];
+        const local = s / per / 255;
+        const h = Math.min(1, Math.max(0.06, local * 1.6 * 0.55 + _eqSmooth * 0.45));
+        bars[i].style.setProperty('--h', h.toFixed(3));
+        bars[i].style.opacity = String(0.35 + h * 0.65);
+      }
+      _eqRaf = requestAnimationFrame(tick);
+    };
+    _eqRaf = requestAnimationFrame(tick);
+  } catch (e) {
+    console.warn('Play EQ ishlamadi:', e?.message || e);
+  }
+}
+
 window._chatPlayVoice = function(btn) {
   const wrap = btn.closest('.chat-voice-msg');
   const url  = wrap?.dataset?.url;
@@ -369,6 +541,7 @@ window._chatPlayVoice = function(btn) {
     if (_activeAudio.paused) {
       _activeAudio.play().catch(e => { if (e?.name === 'AbortError') return; console.error('Resume xatosi:', e); toast('Ijro etilmadi', 'error'); });
       _startProgressLoop();
+      _startPlayEq(_activeAudio, _activeBtn);
     } else {
       _activeAudio.pause();
     }
@@ -398,6 +571,7 @@ window._chatPlayVoice = function(btn) {
   audio.onplaying = () => {
     if (_activeAudio !== audio) return;
     _activeLoading = false; _setBtnState(); _syncMiniPlayer(); _startProgressLoop();
+    _startPlayEq(audio, _activeBtn);
   };
   audio.onpause = () => {
     if (_activeAudio !== audio || audio.ended) return;
@@ -479,7 +653,7 @@ const PLAY_ICON  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="curren
 const PAUSE_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
 // Fayl hali yuklanayotganda (buferlanmoqda) ko'rsatiladigan aylanuvchi spinner —
 // CSS animatsiyasi uchun .cvm-play--loading klassi (CSS/chat.css) bilan birga ishlaydi.
-const LOADING_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" class="cvm-spin"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="42 14"/></svg>`;
+const LOADING_ICON = `<span class="cvm-spin" aria-hidden="true"></span>`;
 
 
 export function initVoicePlayer(opts = {}) {
@@ -489,6 +663,7 @@ export function initVoicePlayer(opts = {}) {
 export {
   fmtVoiceDur,
   renderVoiceWave,
+  waveReadyClass,
   _voiceBarCount as voiceBarCount,
   _hydrateVoiceWaveforms as hydrateVoiceWaveforms,
   _reattachActiveVoiceUI as reattachActiveVoiceUI,
