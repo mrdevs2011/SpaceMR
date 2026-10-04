@@ -15,15 +15,23 @@ const ua = navigator.userAgent || '';
 const IS_IOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const IS_ANDROID = /Android/i.test(ua);
 const IS_MOBILE = IS_IOS || IS_ANDROID;
+const IS_CHROMIUM = /Chrome|Chromium|Edg|OPR|SamsungBrowser/i.test(ua) && !/Firefox/i.test(ua);
 const isStandalone = () =>
-  window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  window.matchMedia?.('(display-mode: standalone)').matches
+  || window.matchMedia?.('(display-mode: window-controls-overlay)').matches
+  || window.matchMedia?.('(display-mode: minimal-ui)').matches
+  || window.navigator.standalone === true;
 
 let _deferredInstall = null;
 let _installedNow = false;
+let _promptSeen = false;
+let _chromiumSettled = false;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   _deferredInstall = e;
+  _promptSeen = true;
   _installedNow = false;
+  _chromiumSettled = true;
   applyInstallUi(false);
 });
 window.addEventListener('appinstalled', () => {
@@ -280,13 +288,15 @@ export function maybeShowGuideCard() {
 /* ── O'rnatilganmi: login tugma yashirin, sozlamalar tugmasi kulrang ── */
 async function detectInstalled() {
   if (isStandalone() || _installedNow) return true;
-  if (_deferredInstall) return false;
+  if (_deferredInstall || _promptSeen) return false;
   if (typeof navigator.getInstalledRelatedApps === 'function') {
     try {
       const apps = await navigator.getInstalledRelatedApps();
       if (Array.isArray(apps) && apps.length > 0) return true;
     } catch { /* qo'llab-quvvatlanmaydi */ }
   }
+  // Chrome/Edge o'rnatilgan PWA da beforeinstallprompt bermaydi
+  if (IS_CHROMIUM && _chromiumSettled && !_promptSeen) return true;
   return false;
 }
 
@@ -310,11 +320,20 @@ async function syncInstallUi() {
 }
 
 async function installDirect() {
+  if (IS_CHROMIUM && !_deferredInstall && !_chromiumSettled) {
+    await new Promise((r) => setTimeout(r, 500));
+  }
   if (await detectInstalled()) {
     applyInstallUi(true);
     return;
   }
   if (!_deferredInstall) {
+    // Oyna chiqmadi: Chrome/Edge da bu odatda allaqachon o'rnatilgan degani
+    if (IS_CHROMIUM || isStandalone()) {
+      _installedNow = true;
+      applyInstallUi(true);
+      return;
+    }
     toast("Bu brauzer o'rnatish oynasini chiqarmadi. Chrome yoki Edge orqali qayta urinib ko'ring.", 'error');
     return;
   }
@@ -353,6 +372,10 @@ export function initInstallGuide() {
     }
   });
   syncInstallUi();
+  setTimeout(() => {
+    _chromiumSettled = true;
+    syncInstallUi();
+  }, 1200);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') syncInstallUi();
   });
