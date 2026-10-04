@@ -9,6 +9,7 @@ import { clearAllCache, cachePosts, getCachedPosts, clearRuntimeCache, getCached
 import { openAviCrop } from '../ui/avi-crop.js';
 import { initAuthSettings, paintSettingsRecoveryRow } from './auth-settings.js';
 import { bindEye, bindMeter, shake } from './pwd-ui.js';
+import { maybeShowGuideCard } from '../ui/install-guide.js';
 import { showForgotPasswordBtn, hideForgotPasswordBtn, openRecoveryModal } from './auth-recovery.js';
 import { initRegRecovery, openRegRecoveryModal } from './auth-reg-recovery.js';
 import { initAuthPending, showPendingScreen, hidePendingScreen } from './auth-pending.js';
@@ -1048,6 +1049,7 @@ async function _enterApp(user) {
     startBus();          // tezkor shina: like/izoh/post/presence/kirish qutisi
     startChatsWatcher(); // ichida startGroupsWatcher ham
     startCallWatcher();
+    maybeShowGuideCard(); // telefonda bir martalik "ilovani o'rnating" kartasi
 
     // "Oxirgi faollik" — admin panelida ko'rsatish uchun
     try {

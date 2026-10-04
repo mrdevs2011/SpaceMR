@@ -111,6 +111,7 @@ const PRECACHE_URLS = [
   '/modules/auth/auth-pending.js',
   '/modules/auth/auth-recovery.js',
   '/modules/auth/pwd-ui.js',
+  '/modules/ui/install-guide.js',
   '/modules/auth/auth-reg-recovery.js',
   '/modules/auth/auth-settings.js',
   '/modules/auth/auth.js',
