@@ -7590,3 +7590,11 @@ header.app-hdr.force-hide,
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
+
+
+/* Headerda SpaceMR bor — bosh sahifadagi ikkinchi logo/yozuv kerak emas */
+.home-brand,
+#homeView .home-brand,
+#homeBrand {
+  display: none !important;
+}
