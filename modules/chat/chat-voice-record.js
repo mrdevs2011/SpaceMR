@@ -400,54 +400,13 @@ function cancelRecording() {
   _stopPulse();
 }
 
-/* ── Telegram 1:1 hold-to-talk: pulse rings + live waveform bars ─────────
- * Tugma atrofida 3 qavatli pulse (Telegram physics).
- * Record bar o'rtasida — haqiqiy audio waveform (scrollable bars, Telegram kabi).
- */
-const _WAVE_BAR_COUNT = 28;          // Telegram uslubidagi bar soni
-const _WAVE_SAMPLE_EVERY_MS = 45;    // yangi ustun qo'shish oralig'i (~22 fps)
-let _waveBars = null;                // HTMLElement[]
-let _waveHistory = null;             // number[] smoothed levels 0..1
-let _waveLastSample = 0;
-
-function _ensureWaveBars() {
-  const host = $('crbWave');
-  if (!host) return null;
-  if (host.children.length !== _WAVE_BAR_COUNT) {
-    host.innerHTML = '';
-    for (let i = 0; i < _WAVE_BAR_COUNT; i++) {
-      const b = document.createElement('span');
-      b.className = 'crb-wave-bar';
-      b.style.height = '3px';
-      host.appendChild(b);
-    }
-  }
-  _waveBars = Array.from(host.children);
-  if (!_waveHistory || _waveHistory.length !== _WAVE_BAR_COUNT) {
-    _waveHistory = new Array(_WAVE_BAR_COUNT).fill(0.08);
-  }
-  return _waveBars;
-}
-
-function _paintWaveBars() {
-  if (!_waveBars || !_waveHistory) return;
-  const maxH = 26; // px
-  const minH = 3;
-  for (let i = 0; i < _waveBars.length; i++) {
-    const v = _waveHistory[i];
-    const h = minH + v * (maxH - minH);
-    _waveBars[i].style.height = h.toFixed(1) + 'px';
-    _waveBars[i].style.opacity = String(0.45 + v * 0.55);
-  }
-}
+/* ── Hold-to-talk: faqat mic pulse (chiziqli waveform olib tashlandi) ── */
 
 function _startPulse(stream) {
   const r1 = $('cvPulse1');
   const r2 = $('cvPulse2');
   const r3 = $('cvPulse3');
   const vBtn = $('chatVoiceBtn');
-  _ensureWaveBars();
-  _waveLastSample = 0;
 
   try {
     _pulseCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -520,14 +479,12 @@ function _startPulse(stream) {
         r3.style.opacity = (0.15 + _pulseLevel * 0.4).toFixed(3);
       }
 
-      // Chiziqli waveform o'chirildi — faqat mic atrofidagi circular pulse
-
-      _pulseRaf = requestAnimationFrame(tick);
+          _pulseRaf = requestAnimationFrame(tick);
     };
 
     _pulseRaf = requestAnimationFrame(tick);
   } catch (e) {
-    console.warn('Pulse/waveform ishga tushmadi:', e?.message || e);
+    console.warn('Pulse ishga tushmadi:', e?.message || e);
   }
 }
 
@@ -546,12 +503,6 @@ function _stopPulse() {
       el.style.opacity = '0';
     }
   });
-  // waveform ni tiklash
-  if (_waveHistory) _waveHistory.fill(0.08);
-  _paintWaveBars();
-  const host = $('crbWave');
-  if (host) host.innerHTML = '';
-  _waveBars = null;
 }
 
 

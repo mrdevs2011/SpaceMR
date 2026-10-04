@@ -1989,30 +1989,7 @@ line-height: 1.4;
   min-width: 36px;
 }
 
-/* Chiziqli waveform o'chirildi — faqat mic atrofidagi pulse */
-.crb-wave {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  margin: 0 !important;
-  overflow: hidden;
-  pointer-events: none;
-}
-.crb-wave-bar {
-  width: 2.5px;
-  height: 3px;
-  min-height: 3px;
-  border-radius: 1.25px;
-  background: #2AABEE;
-  flex-shrink: 0;
-  transform-origin: center center;
-  will-change: height, opacity;
-}
-.chat-record-bar.cancelling .crb-wave-bar {
-  background: #1d9bf0; /* qizil emas — ko'k */
-}
+/* chiziqli record waveform butunlay olib tashlandi */
 
 .crb-cancel {
   flex: 1;
@@ -3030,8 +3007,7 @@ margin-bottom: 2px;
 }
 .chat-msg.anim-in,
 .msg-ticks.sending .msg-tick-hands,
-.cv-pulse,
-.crb-wave-bar {
+.cv-pulse {
   backface-visibility: hidden;
 }
 
