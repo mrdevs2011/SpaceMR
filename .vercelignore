@@ -1,28 +1,18 @@
-# Production deploy — faqat runtime kerakli narsalar (repo to'liq saqlanadi)
+# Upload qilinmasin (build ham, deploy ham)
 node_modules
 .env*
 .vercel
 .git
 
-# Arxiv / bir martalik skriptlar
-docs/archive
-scratch
-
-# Testlar va hisobotlar (repo da qoladi)
+# Frontend buildga kerak emas — repo da qoladi
+supabase
 tests
-
-# AI / ichki hujjatlar (brauzerga kerak emas)
+docs
 STATUS.md
-docs/FIX-DRAFT.md
-docs/MR-QOLGAN.md
-docs/css-baseline.md
+README.md
+*.md
+!vercel.json
 
-# SQL repo da saqlanadi, lekin static CDN ga chiqarilmasin
-supabase/migrations
-supabase/unfulfilled
-supabase/queries
-supabase/.temp
-supabase/functions
-
-# Dev skriptlar (build Vercel buildCommand da ishlaydi — kerakli scripts saqlanadi)
-# scripts/ build-css, bump-sw, build-env kerak — ignore qilmaymiz
+# Arxiv (agar rootga qaytsa)
+scratch
+docs/archive

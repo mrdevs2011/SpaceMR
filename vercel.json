@@ -30,10 +30,33 @@
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, immutable" }
       ]
+    },
+    {
+      "source": "/svg/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, immutable" }
+      ]
     }
   ],
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    {
+      "src": "/(supabase|docs|scripts|CSS|tests|scratch)(/.*)?$",
+      "status": 404,
+      "continue": false
+    },
+    {
+      "src": "/(STATUS\\.md|README\\.md|package\\.json|package-lock\\.json|vercel\\.json|\.gitignore|\.vercelignore)$",
+      "status": 404,
+      "continue": false
+    },
+    {
+      "src": "/.*\\.(sql|md|mjs|cjs|sh|py|txt|map)$",
+      "status": 404,
+      "continue": false
+    },
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/404", "dest": "/404.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

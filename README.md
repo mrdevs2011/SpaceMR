@@ -48,3 +48,9 @@ Hali ishga tushirilmagan patchlar `supabase/unfulfilled/` da — faqat 1 hafta k
 - SQL migratsiyalar: `supabase/migrations/` (repo da saqlanadi; CDN ga `.vercelignore` orqali chiqarilmaydi).
 - Bir martalik patch/fix skriptlar: `docs/archive/oneoff/`.
 - CSS manba: `CSS/*.css` → `app.css` (`npm run build` / `node scripts/build-css.mjs`).
+
+### URL himoya
+
+- `.vercelignore` — SQL, docs, tests deployga umuman yuklanmaydi.
+- `vercel.json` routes — `/supabase`, `/docs`, `/CSS`, `/scripts`, `*.sql`, `*.md` → **404**.
+- Runtime ochiq: `index.html`, `app.css`, `modules/`, `svg/`, `icons/`, `api/`, `sw.js`.
