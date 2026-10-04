@@ -55,6 +55,7 @@
   --blue3: var(--pal-blue);
   --link: var(--pal-blue);
   --x-blue: var(--pal-blue);
+  --bubble-mine: #294e72;   /* mening xabarlarim pufagi (barcha turdagi: matn, ovoz, fayl, post karta) */
   --x-blue-hover: #e7e9ea;
   --x-like: #ffffff;
   --x-inv-bg: #eff3f4;
@@ -5127,7 +5128,7 @@ nav.bot-nav #createBtn.nav-center-btn:hover { background: var(--x-blue-hover); }
 #chatThreadModal .chat-thread-input { background: var(--bg3); border-radius: 22px; padding: 9px 16px; }
 #chatThreadModal .chat-thread-input:focus { background: var(--bg3); }
 #chatThreadModal .chat-bubble { font-size: 15px; line-height: 1.33; }
-#chatThreadModal .chat-msg.mine .chat-bubble { background: var(--x-blue); color: var(--pal-white); border-radius: 22px 22px 4px 22px; }
+#chatThreadModal .chat-msg.mine .chat-bubble { background: var(--bubble-mine); color: var(--pal-white); border-radius: 22px 22px 4px 22px; }
 #chatThreadModal .chat-msg.theirs .chat-bubble { background: var(--line); color: var(--text); border-radius: 22px 22px 22px 4px; }
 #chatThreadModal .chat-msg.mine .chat-bubble a { color: var(--pal-white); text-decoration: underline; }
 #chatThreadModal .chat-msg.mine .cvm-play { background: var(--pal-white-25); }
@@ -7379,7 +7380,7 @@ button:focus-visible,
    Bubble rangi O'ZGARMAYDI (mening xabarim — ko'k, boshqaniki — kulrang).
    O'chirilganlik faqat karta ichida: qizil belgi + punktir ramka. */
 #chatThreadModal .chat-msg.mine .chat-bubble.bubble-post-card {
-  background: var(--x-blue) !important;
+  background: var(--bubble-mine) !important;
 }
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-post-card {
   background: var(--pal-gray-800) !important;
@@ -7639,7 +7640,7 @@ button:focus-visible,
 
 /* 2. Chat — MINE bubble: blue bg, white text */
 #chatThreadModal .chat-msg.mine .chat-bubble {
-  background: var(--x-blue) !important;
+  background: var(--bubble-mine) !important;
   color: var(--pal-white) !important;
 }
 #chatThreadModal .chat-msg.mine .chat-bubble a {
