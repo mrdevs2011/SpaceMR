@@ -127,6 +127,7 @@ const PRECACHE_URLS = [
   '/modules/chat/msg-menu.js',
   '/modules/chat/rt-chat.js',
   '/modules/core/config.js',
+  '/modules/core/file-icons.js',
   '/modules/core/env.js',
   '/modules/core/error-log.js',
   '/modules/core/local-cache.js',
