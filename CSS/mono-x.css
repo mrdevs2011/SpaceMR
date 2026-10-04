@@ -2920,8 +2920,10 @@ button:focus-visible,
 }
 
 /* Yuborish holati (matn bor): doirasiz, to'ldirilgan ko'k "qog'oz samolyot" (Telegram uslubi) */
-.chat-voice-btn.is-send,
-#chatThreadModal .chat-voice-btn.is-send { background: transparent !important; box-shadow: none !important; }
+/* Fon yo'q: yozib olish paytidan (.recording) tashqari barcha holatda tugma shaffof; mikrofon ham ko'k kontur */
+.chat-voice-btn:not(.recording),
+#chatThreadModal .chat-voice-btn:not(.recording) { background: transparent !important; box-shadow: none !important; }
+.chat-voice-btn:not(.recording) svg.icon-mic { stroke: var(--x-blue) !important; }
 .chat-voice-btn.is-send svg.icon-send { fill: none !important; stroke: none !important; }
 .chat-voice-btn.is-send svg.icon-send .ps-wing { fill: var(--x-blue) !important; stroke: var(--x-blue) !important; stroke-width: 1; stroke-linejoin: round; }
 .chat-voice-btn.is-send svg.icon-send .ps-fold { fill: none !important; stroke: var(--bg) !important; stroke-width: 1.2; stroke-linecap: round; }
