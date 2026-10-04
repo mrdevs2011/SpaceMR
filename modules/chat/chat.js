@@ -1989,6 +1989,8 @@ export function checkSharedPostExistence(msgs) {
 }
 
 function _updatePostCardsInDOM() {
+  const _box = document.getElementById('chatThreadMessages');
+  const _wasBottom = _box && (_box.scrollHeight - _box.scrollTop - _box.clientHeight < 120);
   const cards = document.querySelectorAll('.chat-post-card[data-post-id]');
   cards.forEach(card => {
     const pid = card.dataset.postId;
@@ -2043,6 +2045,7 @@ function _updatePostCardsInDOM() {
       if (authorHandle) authorHandle.classList.add('is-deleted');
     }
   });
+  if (_wasBottom && _box) _box.scrollTop = _box.scrollHeight;
 }
 
 export function renderChatPostCard(ps) {
