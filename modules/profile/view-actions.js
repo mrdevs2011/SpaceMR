@@ -139,7 +139,7 @@ function _initBroadcast() {
           <option value="pending">Faqat kutayotganlarga (ularning ekranida)</option>
         </select>
         <button class="bc-send-btn" id="bcSendBtn">
-          <img src="./svg/action/send.svg" alt="" class="icon" width="1.8">
+          <img src="./svg/action/send.svg" alt="" class="icon" width="15" height="15">
           E'lon qilish
         </button>
       </div>
@@ -254,7 +254,7 @@ function _initBroadcast() {
     } finally {
       sendBtn.disabled = false;
       sendBtn.innerHTML = `
-        <img src="./svg/action/send.svg" alt="" class="icon" width="1.8" style="width:15px;height:15px">
+        <img src="./svg/action/send.svg" alt="" class="icon" width="15" height="15">
         E'lon qilish`;
     }
   });

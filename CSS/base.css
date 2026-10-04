@@ -264,3 +264,11 @@ button:active > img.icon {
   filter: none;
   opacity: 1;
 }
+
+/* HDR_NO_INVERT */
+.hdr-icon-btn img.icon, .hdr-icon-btn .icon {
+  filter: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  opacity: 0.95;
+}
