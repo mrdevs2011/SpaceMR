@@ -85,7 +85,7 @@ export function parsePath(rawPath) {
     if (a === 'actions')  return { kind: 'view', view: 'actions', admin: true };
     if (a === 'saved')    return { kind: 'view', view: 'saved' };
     if (a === 'notifications') return { kind: 'view', view: 'notifs' };
-    if (a === 'settings') return { kind: 'redirect', to: '/profile/settings' };
+    if (a === 'settings') return { kind: 'redirect', to: isWideDesktop() ? '/profile' : '/profile/settings' };
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };
   }
@@ -102,6 +102,8 @@ export function parsePath(rawPath) {
   if (a === 'profile' && b === 'settings' && (seg.length === 2 || seg.length === 3)) {
     const sec = (seg[2] || '').toLowerCase();
     if (seg.length === 3 && !['general', 'email', 'password'].includes(sec)) return { kind: 'notfound' };
+    // Desktop: sozlamalar o'ng panelda doim ochiq — alohida manzil kerak emas
+    if (isWideDesktop()) return { kind: 'redirect', to: '/profile' };
     return { kind: 'overlay', overlay: 'settings', base: 'profile', section: sec || null };
   }
   if (a === 'u' && seg.length === 2 && seg[1]) {
@@ -140,6 +142,7 @@ async function ensureGroupMember(gid) {
   } catch (_) { return false; }
 }
 
+const isWideDesktop = () => window.matchMedia('(min-width: 1200px)').matches;
 function settingsPinned() { return document.body.classList.contains('desktop-settings-pinned'); }
 
 // true = so'nggi qidiruv tarmoq/server xatosi bilan tugadi (bu "topilmadi" EMAS — 404 ko'rsatilmaydi)
@@ -231,7 +234,8 @@ function computeUrl() {
     return t ? `/u/${encodeURIComponent(t)}${tab && tab !== 'all' ? '/' + tab : ''}` : null;
   }
 
-  if (hasShow('settingsOverlay')) {
+  // Desktop (>=1200px) da sozlamalar o'ng panelga mahkamlangan — URL /profile bo'lib qoladi
+  if (hasShow('settingsOverlay') && !settingsPinned() && !isWideDesktop()) {
     const open = document.querySelector('#settingsOverlay .pe-accordion.open');
     const key = open && open.getAttribute('data-pe-acc');
     const sec = { basic: 'general', email: 'email', password: 'password' }[key];
