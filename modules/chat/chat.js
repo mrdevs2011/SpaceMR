@@ -353,7 +353,6 @@ function _openChatContextMenu(row) {
   overlay.className = 'chat-ctx-overlay';
   overlay.innerHTML = `
     <div class="chat-ctx-menu">
-      <div class="chat-ctx-title">${esc(title)}</div>
       <button type="button" class="chat-ctx-item" id="chatCtxPin">
         ${isPinned
           ? '<img src="./svg/action/pin-filled.svg" alt="" class="icon" width="16" height="16">'
