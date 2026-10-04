@@ -5,6 +5,7 @@
 import { sb } from '../core/config.js';
 import { $, esc } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
+import { bindEye, bindMeter, shake } from './pwd-ui.js';
 
 const cleanUsername = u => String(u || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
@@ -112,8 +113,12 @@ if (forgotPasswordBtn) {
   };
 }
 
-/* ── Parolni tiklash oynasi (Yagona sodda karta) ──────────────────── */
+/* ── Parolni tiklash oynasi (3 qadam: email → kod → yangi parol) ───── */
 const recoveryModal = $('recoveryModal');
+const rcCard = $('rcCard');
+const rcTitle = $('rcTitle');
+const rcDots = $('rcDots');
+const rcStepBack = $('rcStepBack');
 const recoveryTargetEmail = $('recoveryTargetEmail');
 const recoveryModalSubtitle = $('recoveryModalSubtitle');
 const recoverySendBtn = $('recoverySendBtn');
@@ -124,150 +129,230 @@ const recoveryCodeInp = $('recoveryCodeInp');
 const recoveryNewPwdInp = $('recoveryNewPwdInp');
 const recoveryConfirmPwdInp = $('recoveryConfirmPwdInp');
 const recoveryErr = $('recoveryErr');
+const rcOtp = $('rcOtp');
+const rcResendBtn = $('rcResendBtn');
+const rcToStep3 = $('rcToStep3');
+const cells = [...(rcOtp?.querySelectorAll('.rc-cell') || [])];
+
+bindEye(recoveryModal);
+bindMeter({
+  input: recoveryNewPwdInp, confirm: recoveryConfirmPwdInp,
+  meter: $('rcMeter'), text: $('rcMeterText'), match: $('rcMatch'),
+});
 
 let _activeRecoveryUsername = '';
 let _activeMaskedEmail = '';
-let _sendCooldownTimer = null;
+let _resendTimer = null;
+let _step = 1;
+
+function showErr(msg) {
+  if (recoveryErr) { recoveryErr.textContent = msg; recoveryErr.style.display = 'block'; }
+  shake(rcCard);
+}
+function clearErr() {
+  if (recoveryErr) { recoveryErr.textContent = ''; recoveryErr.style.display = 'none'; }
+}
+
+function showStep(n) {
+  _step = n;
+  clearErr();
+  recoveryModal?.querySelectorAll('.rc-step').forEach(s => {
+    s.classList.toggle('on', Number(s.dataset.step) === n);
+  });
+  rcDots?.querySelectorAll('i').forEach((d, i) => {
+    d.classList.toggle('on', i === n - 1);
+    d.classList.toggle('done', i < n - 1);
+  });
+  if (rcStepBack) rcStepBack.hidden = n === 1;
+  const masked = _activeMaskedEmail || 'zaxira emailingiz';
+  const texts = {
+    1: ['Parolni tiklash', 'Zaxira emailingizga tasdiqlash kodi yuboramiz.'],
+    2: ['Kodni kiriting', `${masked} manziliga yuborilgan 8 belgili kodni kiriting.`],
+    3: ['Yangi parol', 'Hisobingiz uchun yangi parol belgilang.'],
+  }[n];
+  if (rcTitle) rcTitle.textContent = texts[0];
+  if (recoveryModalSubtitle) recoveryModalSubtitle.textContent = texts[1];
+  setTimeout(() => {
+    if (n === 2) (cells.find(c => !c.value) || cells[0])?.focus();
+    if (n === 3) recoveryNewPwdInp?.focus();
+  }, 120);
+}
+
+/* ── 8 katakli kod ── */
+function syncCode() {
+  const code = cells.map(c => c.value).join('');
+  if (recoveryCodeInp) recoveryCodeInp.value = code;
+  cells.forEach(c => c.classList.toggle('filled', !!c.value));
+  if (rcToStep3) rcToStep3.disabled = code.length < cells.length;
+}
+function fillCells(str, start = 0) {
+  let i = start;
+  for (const ch of String(str).replace(/\s+/g, '')) {
+    if (i >= cells.length) break;
+    cells[i++].value = ch;
+  }
+  syncCode();
+  cells[Math.min(i, cells.length - 1)]?.focus();
+}
+cells.forEach((cell, idx) => {
+  cell.addEventListener('focus', () => cell.select());
+  cell.addEventListener('input', () => {
+    const v = cell.value.replace(/\s+/g, '');
+    clearErr();
+    if (v.length > 1) { cell.value = ''; fillCells(v, idx); return; }   // paste / avto-to'ldirish
+    cell.value = v;
+    syncCode();
+    if (v && idx < cells.length - 1) cells[idx + 1].focus();
+  });
+  cell.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !cell.value && idx > 0) {
+      e.preventDefault();
+      cells[idx - 1].value = '';
+      syncCode();
+      cells[idx - 1].focus();
+    } else if (e.key === 'ArrowLeft' && idx > 0) {
+      e.preventDefault(); cells[idx - 1].focus();
+    } else if (e.key === 'ArrowRight' && idx < cells.length - 1) {
+      e.preventDefault(); cells[idx + 1].focus();
+    } else if (e.key === 'Enter' && rcToStep3 && !rcToStep3.disabled) {
+      e.preventDefault(); rcToStep3.click();
+    }
+  });
+  cell.addEventListener('paste', e => {
+    e.preventDefault();
+    fillCells(e.clipboardData?.getData('text') || '', idx);
+  });
+});
+
+function startResendTimer(sec = 45) {
+  if (_resendTimer) clearInterval(_resendTimer);
+  if (!rcResendBtn) return;
+  rcResendBtn.disabled = true;
+  rcResendBtn.textContent = `Qayta yuborish (${sec}s)`;
+  _resendTimer = setInterval(() => {
+    sec--;
+    if (sec <= 0) {
+      clearInterval(_resendTimer); _resendTimer = null;
+      rcResendBtn.disabled = false;
+      rcResendBtn.textContent = 'Qayta yuborish';
+    } else {
+      rcResendBtn.textContent = `Qayta yuborish (${sec}s)`;
+    }
+  }, 1000);
+}
 
 export function openRecoveryModal(username, maskedEmail, prefilledCode = '') {
   _activeRecoveryUsername = username;
   _activeMaskedEmail = maskedEmail || _activeMaskedEmail || '';
   if (!recoveryModal) return;
 
-  if (recoveryTargetEmail) {
-    recoveryTargetEmail.textContent = _activeMaskedEmail || 'Zaxira emailingiz';
-  }
+  if (recoveryTargetEmail) recoveryTargetEmail.textContent = _activeMaskedEmail || 'Zaxira emailingiz';
+  if (recoverySendStatus) recoverySendStatus.style.display = 'none';
+  if (recoverySendBtn) { recoverySendBtn.disabled = false; recoverySendBtn.textContent = 'Emailga kod yuborish'; }
+  if (_resendTimer) { clearInterval(_resendTimer); _resendTimer = null; }
+  if (rcResendBtn) { rcResendBtn.disabled = true; rcResendBtn.textContent = 'Qayta yuborish'; }
 
-  if (recoveryModalSubtitle) {
-    recoveryModalSubtitle.textContent = '';
-    const emailStrong = document.createElement('strong');
-    emailStrong.style.color = 'var(--tg-primary-blue,#1d9bf0)';
-    emailStrong.textContent = _activeMaskedEmail || 'zaxira email';
-    recoveryModalSubtitle.append('Emailingiz: ', emailStrong);
-    if (prefilledCode) {
-      const sep = document.createElement('br');
-      const ok = document.createElement('span');
-      ok.style.color = '#22c55e';
-      ok.textContent = 'Kod qabul qilindi. Yangi parolni belgilang:';
-      recoveryModalSubtitle.append(sep, ok);
-    }
-  }
-
-  if (recoveryCodeInp) recoveryCodeInp.value = prefilledCode || '';
-  if (recoveryNewPwdInp) recoveryNewPwdInp.value = '';
-  if (recoveryConfirmPwdInp) recoveryConfirmPwdInp.value = '';
-  if (recoveryErr) {
-    recoveryErr.style.display = 'none';
-    recoveryErr.textContent = '';
-  }
+  cells.forEach(c => { c.value = ''; });
+  syncCode();
+  [recoveryNewPwdInp, recoveryConfirmPwdInp].forEach(inp => {
+    if (!inp) return;
+    inp.value = '';
+    if (inp.type === 'text') recoveryModal.querySelector(`.pw-eye[data-target="${inp.id}"]`)?.click();
+  });
+  recoveryNewPwdInp?.dispatchEvent(new Event('input'));
 
   recoveryModal.style.display = 'flex';
-  setTimeout(() => {
-    if (prefilledCode && recoveryNewPwdInp) {
-      recoveryNewPwdInp.focus();
-    } else {
-      recoveryCodeInp?.focus();
-    }
-  }, 100);
+
+  if (prefilledCode) {
+    // parol maydoniga yozilgan kod allaqachon tasdiqlangan — to'g'ridan-to'g'ri 3-qadam
+    fillCells(prefilledCode);
+    if (recoveryCodeInp) recoveryCodeInp.value = prefilledCode.trim();
+    showStep(3);
+    if (recoveryModalSubtitle) recoveryModalSubtitle.textContent = 'Kod qabul qilindi. Yangi parolni belgilang.';
+  } else {
+    showStep(1);
+  }
 }
 
 function closeRecoveryModal() {
   if (recoveryModal) recoveryModal.style.display = 'none';
-  if (recoveryErr) {
-    recoveryErr.style.display = 'none';
-    recoveryErr.textContent = '';
+  if (_resendTimer) { clearInterval(_resendTimer); _resendTimer = null; }
+  clearErr();
+}
+
+/* ── Kod yuborish (1-qadam tugmasi va "Qayta yuborish") ── */
+async function sendCode(triggerBtn) {
+  const u = _activeRecoveryUsername || $('aUsername')?.value.trim().toLowerCase();
+  if (!u) { toast('Foydalanuvchi nomini kiriting', 'error'); return; }
+
+  [recoverySendBtn, rcResendBtn].forEach(b => { if (b) b.disabled = true; });
+  triggerBtn.textContent = 'Yuborilmoqda...';
+  clearErr();
+
+  try {
+    // Har safar yangi kod yaratiladi — bazada eski barcha kodlar avtomatik eskiradi
+    const tempPassword = gen8CharTempPassword();
+    const resp = await sb.functions.invoke('send-recovery-email', {
+      body: { username: u, temp_password: tempPassword }
+    });
+    const data = resp.data;
+    if (resp.error || !data?.ok) {
+      throw new Error(data?.error || resp.error?.message || "Server bilan bog'lanishda xatolik");
+    }
+    if (!data.email_sent) {
+      throw new Error(data.error_detail || 'Email yuborishda xatolik yuz berdi');
+    }
+
+    const masked = data.masked_email || _activeMaskedEmail || '';
+    if (masked) {
+      _activeMaskedEmail = masked;
+      if (recoveryTargetEmail) recoveryTargetEmail.textContent = masked;
+    }
+    toast(`Yangi kod ${masked || 'emailingiz'} ga yuborildi. Eski kodlar bekor qilindi`, 'success', 5000);
+
+    cells.forEach(c => { c.value = ''; });
+    syncCode();
+    showStep(2);
+    startResendTimer(45);
+  } catch (err) {
+    console.error('[recovery send] error:', err);
+    showErr(err.message || 'Email yuborishda xatolik yuz berdi');
+    if (rcResendBtn) rcResendBtn.disabled = false;
+  } finally {
+    if (recoverySendBtn) { recoverySendBtn.disabled = false; recoverySendBtn.textContent = 'Emailga kod yuborish'; }
+    // "Qayta yuborish" matnini taymer o'zi boshqaradi; xato bo'lsa (taymer yo'q) tiklaymiz
+    if (rcResendBtn && !_resendTimer) { rcResendBtn.disabled = false; rcResendBtn.textContent = 'Qayta yuborish'; }
   }
 }
 
-// "Emailga kod yuborish" tugmasi (kartaning ichida)
-if (recoverySendBtn) {
-  recoverySendBtn.onclick = async () => {
+if (recoverySendBtn) recoverySendBtn.onclick = () => sendCode(recoverySendBtn);
+if (rcResendBtn) rcResendBtn.onclick = () => sendCode(rcResendBtn);
+
+/* ── 2-qadam: kodni tekshirib, 3-qadamga o'tish ── */
+if (rcToStep3) {
+  rcToStep3.onclick = async () => {
     const u = _activeRecoveryUsername || $('aUsername')?.value.trim().toLowerCase();
-    if (!u) {
-      toast('Foydalanuvchi nomini kiriting', 'error');
-      return;
-    }
+    const code = recoveryCodeInp?.value.trim() || '';
+    if (code.length < cells.length) return showErr("8 xonali kodni to'liq kiriting");
 
-    const showErr = (msg) => {
-      if (recoveryErr) {
-        recoveryErr.textContent = msg;
-        recoveryErr.style.display = 'block';
-      }
-      toast(msg, 'error');
-    };
-
-    recoverySendBtn.disabled = true;
-    recoverySendBtn.textContent = 'Yuborilmoqda...';
-    if (recoveryErr) recoveryErr.style.display = 'none';
-
+    const idle = rcToStep3.textContent;
+    rcToStep3.disabled = true;
+    rcToStep3.textContent = 'Tekshirilmoqda...';
+    let ok = true;
     try {
-      // Har safar yangi kod yaratiladi — bazada eski barcha kodlar avtomatik eskiradi!
-      const tempPassword = gen8CharTempPassword();
-      const resp = await sb.functions.invoke('send-recovery-email', {
-        body: { username: u, temp_password: tempPassword }
-      });
+      const { data } = await sb.rpc('verify_recovery_code', { p_username: u, p_code: code });
+      if (data && data.valid === false) ok = false;
+    } catch (_) { /* server tekshiruvi oxirgi qadamda ham bor */ }
+    rcToStep3.textContent = idle;
+    rcToStep3.disabled = false;
 
-      const data = resp.data;
-      const fnErr = resp.error;
-
-      if (fnErr || !data?.ok) {
-        const msg = data?.error || fnErr?.message || "Server bilan bog'lanishda xatolik";
-        throw new Error(msg);
-      }
-
-      if (!data.email_sent) {
-        const detail = data.error_detail || "Email yuborishda xatolik yuz berdi";
-        throw new Error(detail);
-      }
-
-      const masked = data.masked_email || _activeMaskedEmail || '';
-      if (masked && recoveryTargetEmail) recoveryTargetEmail.textContent = masked;
-
-      toast(`Yangi kod ${masked || 'emailingiz'} ga yuborildi. Eski kodlar bekor qilindi!`, 'success', 6000);
-
-      if (recoverySendStatus) {
-        recoverySendStatus.style.display = 'block';
-        recoverySendStatus.textContent = '';
-        const ok = Object.assign(document.createElement('span'), {
-          textContent: '✓ Yangi kod yuborildi!',
-        });
-        ok.style.color = '#22c55e';
-        recoverySendStatus.append(ok, ' (Eski kodlar bekor qilindi)');
-      }
-
-      if (recoveryCodeInp) {
-        recoveryCodeInp.value = '';
-        recoveryCodeInp.placeholder = 'Eng oxirgi kelgan kod';
-        recoveryCodeInp.focus();
-      }
-
-      // 60 soniyali qayta yuborish taymeri
-      let sec = 60;
-      if (_sendCooldownTimer) clearInterval(_sendCooldownTimer);
-      recoverySendBtn.disabled = true;
-      recoverySendBtn.textContent = `Qayta yuborish (${sec}s)`;
-      _sendCooldownTimer = setInterval(() => {
-        sec--;
-        if (sec <= 0) {
-          clearInterval(_sendCooldownTimer);
-          _sendCooldownTimer = null;
-          recoverySendBtn.disabled = false;
-          recoverySendBtn.textContent = 'Qayta kod yuborish';
-        } else {
-          recoverySendBtn.textContent = `Qayta yuborish (${sec}s)`;
-        }
-      }, 1000);
-
-    } catch (err) {
-      console.error('[recoverySendBtn] error:', err);
-      showErr(err.message || 'Email yuborishda xatolik yuz berdi');
-      recoverySendBtn.disabled = false;
-      recoverySendBtn.textContent = 'Emailga kod yuborish';
-    }
+    if (!ok) return showErr("Kod noto'g'ri yoki muddati o'tgan");
+    showStep(3);
   };
 }
 
-// "Ortga (Eski parolim esimda)" tugmasi
+/* ── Orqaga ── */
+if (rcStepBack) rcStepBack.onclick = () => showStep(Math.max(1, _step - 1));
 if (recoveryBackBtn) {
   recoveryBackBtn.onclick = () => {
     closeRecoveryModal();
@@ -275,6 +360,7 @@ if (recoveryBackBtn) {
   };
 }
 
+/* ── 3-qadam: yangi parolni saqlash ── */
 if (recoverySubmitBtn) {
   recoverySubmitBtn.onclick = async () => {
     const u = _activeRecoveryUsername || $('aUsername')?.value.trim().toLowerCase();
@@ -282,21 +368,22 @@ if (recoverySubmitBtn) {
     const newPwd = recoveryNewPwdInp?.value || '';
     const confirmPwd = recoveryConfirmPwdInp?.value || '';
 
-    const showErr = (msg) => {
-      if (recoveryErr) {
-        recoveryErr.textContent = msg;
-        recoveryErr.style.display = 'block';
-      }
-      toast(msg, 'error');
-    };
+    recoveryNewPwdInp?.classList.remove('input-error');
+    recoveryConfirmPwdInp?.classList.remove('input-error');
 
-    if (!code) return showErr('8 xonali tasdiqlash kodini kiriting');
-    if (!newPwd || newPwd.length < 6) return showErr('Yangi parol kamida 6 ta belgidan iborat bo\'lishi kerak');
-    if (newPwd !== confirmPwd) return showErr('Yangi parollar bir-biriga mos kelmadi');
+    if (!code) { showStep(2); return showErr('8 xonali tasdiqlash kodini kiriting'); }
+    if (newPwd.length < 6) {
+      recoveryNewPwdInp?.classList.add('input-error');
+      return showErr("Yangi parol kamida 6 ta belgidan iborat bo'lishi kerak");
+    }
+    if (newPwd !== confirmPwd) {
+      recoveryConfirmPwdInp?.classList.add('input-error');
+      return showErr('Yangi parollar bir-biriga mos kelmadi');
+    }
 
     recoverySubmitBtn.disabled = true;
     recoverySubmitBtn.textContent = 'Tekshirilmoqda...';
-    if (recoveryErr) recoveryErr.style.display = 'none';
+    clearErr();
 
     try {
       const { data, error } = await sb.rpc('reset_password_with_code', {
@@ -304,7 +391,6 @@ if (recoverySubmitBtn) {
         p_code: code,
         p_new_password: newPwd,
       });
-
       if (error) throw error;
       if (!data?.ok) throw new Error(data?.message || 'Parolni yangilashda xatolik');
 
@@ -317,7 +403,6 @@ if (recoverySubmitBtn) {
         email: actualEmail,
         password: newPwd,
       });
-
       if (signErr) {
         $('aUsername').value = u;
         $('aPassword').value = newPwd;
@@ -325,11 +410,12 @@ if (recoverySubmitBtn) {
       }
     } catch (err) {
       console.error('[reset_password_with_code] error:', err);
-      showErr(err.message || 'Tasdiqlash kodi noto\'g\'ri');
+      const msg = err.message || "Tasdiqlash kodi noto'g'ri";
+      if (/kod|code/i.test(msg)) showStep(2);
+      showErr(msg);
     } finally {
       recoverySubmitBtn.disabled = false;
       recoverySubmitBtn.textContent = 'Parolni yangilash va kirish';
     }
   };
 }
-

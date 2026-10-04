@@ -8,6 +8,7 @@ import { startCallWatcher, stopCallWatcher } from '../call/call.js';
 import { clearAllCache, cachePosts, getCachedPosts, clearRuntimeCache, getCachedProfile } from '../core/local-cache.js';
 import { openAviCrop } from '../ui/avi-crop.js';
 import { initAuthSettings, paintSettingsRecoveryRow } from './auth-settings.js';
+import { bindEye, bindMeter, shake } from './pwd-ui.js';
 import { showForgotPasswordBtn, hideForgotPasswordBtn, openRecoveryModal } from './auth-recovery.js';
 import { initRegRecovery, openRegRecoveryModal } from './auth-reg-recovery.js';
 import { initAuthPending, showPendingScreen, hidePendingScreen } from './auth-pending.js';
@@ -624,19 +625,13 @@ function _showMandatoryPasswordResetModal(me) {
   if (newInp) { newInp.value = ''; newInp.classList.remove('input-error'); }
   if (confInp) { confInp.value = ''; confInp.classList.remove('input-error'); }
 
-  overlay.querySelectorAll('.pwd-eye-btn').forEach(btn => {
-    btn.onclick = (e) => {
-      e.preventDefault();
-      const targetId = btn.dataset.target;
-      const inp = $(targetId);
-      if (!inp) return;
-      const isPwd = inp.type === 'password';
-      inp.type = isPwd ? 'text' : 'password';
-      btn.innerHTML = isPwd
-        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
-        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-    };
+  bindEye(overlay);
+  bindMeter({ input: newInp, confirm: confInp, meter: $('mMeter'), text: $('mMeterText'), match: $('mMatch') });
+  [newInp, confInp].forEach(inp => {
+    if (inp && inp.type === 'text') overlay.querySelector(`.pw-eye[data-target="${inp.id}"]`)?.click();
   });
+  newInp?.dispatchEvent(new Event('input'));
+  const _card = overlay.querySelector('.pw-card');
 
   if (outBtn) {
     outBtn.onclick = async () => {
@@ -661,12 +656,14 @@ function _showMandatoryPasswordResetModal(me) {
         if (errEl) errEl.textContent = `Yangi parol kamida 6 ta belgi bo'lishi kerak`;
         newInp?.classList.add('input-error');
         newInp?.focus();
+        shake(_card);
         return;
       }
       if (p1 !== p2) {
         if (errEl) errEl.textContent = 'Parollar bir-biriga mos kelmadi';
         confInp?.classList.add('input-error');
         confInp?.focus();
+        shake(_card);
         return;
       }
 
@@ -696,6 +693,7 @@ function _showMandatoryPasswordResetModal(me) {
       } catch (err) {
         console.error('[MandatoryPwdReset]', err);
         if (errEl) errEl.textContent = err.message || 'Xatolik yuz berdi';
+        shake(_card);
         saveBtn.disabled = false;
         saveBtn.textContent = 'Parolni saqlash va kirish';
       }

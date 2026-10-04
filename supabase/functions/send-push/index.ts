@@ -15,11 +15,41 @@ webpush.setVapidDetails(
 
 const ok = (b = "ok") => new Response(b, { status: 200 });
 
+/** bo'sh joylarni yig'ib, uzun matnni "…" bilan qisqartiradi */
+function clip(s: string, n = 110): string {
+  const t = s.replace(/\s+/g, " ").trim();
+  return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
+}
+
+/** Chatdagi ulashilgan post xabari ({"__postShare":true,...}) bo'lsa — obyektni qaytaradi */
+function parseShare(raw: unknown): any | null {
+  const t = String(raw ?? "").trim();
+  if (!t.startsWith("{") || !t.includes('"__postShare"')) return null;
+  try {
+    const p = JSON.parse(t);
+    return p && (p.__postShare === true || p.__postShare === "true") ? p : null;
+  } catch { return null; }
+}
+
+/** Bildirishnoma matni: xom JSON hech qachon ko'rinmaydi */
 function preview(r: any): string {
-  if (r.type === "voice") return "Ovozli xabar";
-  if (r.type === "file") return (r.file_name || "Fayl");
-  const t = String(r.text ?? "").trim();
-  return t.length > 120 ? t.slice(0, 117) + "..." : t;
+  if (r.type === "voice") return "🎤 Ovozli xabar";
+  if (r.type === "file") return `📎 ${clip(String(r.file_name || "Fayl"), 60)}`;
+  const share = parseShare(r.text);
+  if (share) {
+    const c = String(share.comment ?? "").trim();
+    return c ? `📌 ${clip(c)}` : `📌 Post: ${share.post?.authorName || "ulashilgan post"}`;
+  }
+  const t = String(r.text ?? "");
+  // Kutilmagan xom JSON (boshqa maxsus xabar) — chiroyli umumiy matn
+  if (t.trim().startsWith('{"__')) return "💬 Yangi xabar";
+  return clip(t);
+}
+
+/** Ulashilgan postda rasm bo'lsa — bildirishnomada ko'rsatiladi (faqat https) */
+function shareImage(r: any): string | undefined {
+  const u = parseShare(r.text)?.post?.mediaUrl;
+  return typeof u === "string" && u.startsWith("https://") ? u : undefined;
 }
 
 Deno.serve(async (req) => {
@@ -45,7 +75,7 @@ Deno.serve(async (req) => {
     const { data } = await sb.from("chat_members").select("user_id")
       .eq("chat_id", r.chat_id).neq("user_id", r.sender_id);
     recipients = (data ?? []).map((m) => m.user_id);
-    payload = { type: "message", title: senderName, body: preview(r), chatId: r.chat_id, fromUid: r.sender_id };
+    payload = { type: "message", title: senderName, body: preview(r), image: shareImage(r), chatId: r.chat_id, fromUid: r.sender_id };
   } else if (table === "group_messages") {
     const { data: g } = await sb.from("groups").select("name, type").eq("id", r.group_id).maybeSingle();
     const { data } = await sb.from("group_members").select("user_id")
@@ -56,13 +86,14 @@ Deno.serve(async (req) => {
       type: "group",
       title: g?.name || "Guruh",
       body: isChannel ? preview(r) : `${senderName}: ${preview(r)}`,
+      image: shareImage(r),
       groupId: r.group_id,
       fromUid: r.sender_id,
     };
   } else if (table === "calls") {
     if (r.status !== "ringing") return ok("skip");
     recipients = [r.callee_id];
-    payload = { type: "call", title: senderName, body: "Qo'ng'iroq qilmoqda...", fromUid: r.caller_id, callId: r.id };
+    payload = { type: "call", title: senderName, body: "📞 Qo'ng'iroq qilmoqda...", fromUid: r.caller_id, callId: r.id };
     ttl = 30; urgency = "high";
   } else {
     return ok("skip");

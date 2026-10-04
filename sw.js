@@ -5,6 +5,16 @@
  * Android: sayt yopiq bo'lsa ham ishlaydi. Desktop: brauzer ochiq bo'lsa.
  */
 
+/** Bildirishnoma matnini chiroyli qiladi: xom JSON ({"__postShare":...}) hech qachon ko'rinmasin.
+ *  Edge Function eski bo'lsa ham ishlaydi (ikki qavatli himoya). */
+function friendlyBody(data) {
+  let b = String(data.body || '').replace(/\s+/g, ' ').trim();
+  b = b.replace(/\{\s*"__postShare"[\s\S]*$/, '📌 Post ulashdi');
+  if (b.startsWith('{"__')) b = '💬 Yangi xabar';
+  if (data.type === 'call' && b && !b.startsWith('📞')) b = '📞 ' + b;
+  return b;
+}
+
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; }
@@ -21,9 +31,12 @@ self.addEventListener('push', (event) => {
     }
 
     await self.registration.showNotification(data.title || 'SpaceMR', {
-      body:  data.body || '',
+      body:  friendlyBody(data),
       icon:  '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
+      image: data.image || undefined,   // ulashilgan postning rasmi (bo'lsa)
+      lang:  'uz',
+      timestamp: Date.now(),
       tag:   isCall ? 'spacemr-call' : (data.chatId || data.groupId || data.fromUid || 'spacemr'),
       renotify: !isCall,
       data:  { url: '/', ...data },
@@ -97,6 +110,7 @@ const PRECACHE_URLS = [
   '/modules/admin/admin-storage.js',
   '/modules/auth/auth-pending.js',
   '/modules/auth/auth-recovery.js',
+  '/modules/auth/pwd-ui.js',
   '/modules/auth/auth-reg-recovery.js',
   '/modules/auth/auth-settings.js',
   '/modules/auth/auth.js',
