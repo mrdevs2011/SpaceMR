@@ -319,11 +319,11 @@ if (sbSearchInput) sbSearchInput.oninput = e => handleSearchInput(e.target.value
       navigateTo('actions');
     });
   }
-  const saved = document.getElementById('hdrSavedBtn2');
-  if (saved) {
-    saved.addEventListener('click', async () => {
-      const { navigateTo } = await import('../router.js');
-      navigateTo('saved');
+  const explore = document.getElementById('hdrExploreBtn');
+  if (explore) {
+    explore.addEventListener('click', () => {
+      document.getElementById('hdrSearchBtn')?.click()
+        || document.getElementById('sbSearchToggle')?.click();
     });
   }
   const notif = document.getElementById('hdrNotifBtn');

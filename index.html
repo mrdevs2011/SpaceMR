@@ -98,7 +98,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <!-- Bitta yig'ilgan CSS: manba CSS/*.css (6 fayl) → scripts/build-css.mjs -->
-<link rel="stylesheet" href="./app.css?v=1791105000">
+<link rel="stylesheet" href="./app.css?v=1791105400">
 </head>
 <body>
 <div id="nf404" role="main" aria-label="404">
@@ -269,18 +269,14 @@ html[data-nf],html[data-nf] body{background:#000}
         <img src="./svg/admin/grid.svg" alt="" class="icon" width="20" height="20">
         <span class="hdr-badge d-none" id="hdrAdminBadge" aria-hidden="true"></span>
       </button>
-      <button type="button" class="hdr-icon-btn" id="hdrSavedBtn2" aria-label="Saqlanganlar" title="Saqlanganlar">
-        <img src="./svg/social/bookmark.svg" alt="" class="icon" width="20" height="20">
+      <button type="button" class="hdr-icon-btn" id="hdrExploreBtn" aria-label="Kashf" title="Kashf">
+        <img src="./svg/action/search.svg" alt="" class="icon" width="19" height="19">
       </button>
       <button type="button" class="hdr-icon-btn hdr-notif-btn" id="hdrNotifBtn" aria-label="Bildirishnomalar" title="Bildirishnomalar">
         <img src="./svg/ui/bell.svg" alt="" class="icon" width="20" height="20">
         <span class="hdr-badge d-none" id="hdrNotifBadge" aria-hidden="true"></span>
       </button>
-      <div class="hdr-search-wrap" id="hdrSearchWrap">
-        <button type="button" class="hdr-icon-btn" id="hdrSearchBtn" aria-label="Kashf" title="Kashf">
-          <img src="./svg/action/search.svg" alt="" class="icon" width="19" height="19">
-        </button>
-      </div>
+      <div class="hdr-search-wrap" id="hdrSearchWrap" hidden></div>
       <button type="button" class="hdr-avi-btn" id="hdrAviBtn" aria-label="Profil" title="Profil">
         <span class="hdr-avi" id="hdrAvi"></span>
       </button>

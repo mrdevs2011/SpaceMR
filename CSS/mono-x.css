@@ -7884,3 +7884,11 @@ body::-webkit-scrollbar,
 @media (max-width: 1099px) {
   #sbNotifBtn { display: none !important; }
 }
+
+
+/* Mobil pastki menyu: Kashf yo'q (u headerda). Saqlanganlar pastda. */
+@media (max-width: 1099px) {
+  nav.bot-nav #sbSearchToggle { display: none !important; }
+  nav.bot-nav .nav-saved { display: flex !important; }
+  #hdrExploreBtn { display: inline-flex !important; }
+}
