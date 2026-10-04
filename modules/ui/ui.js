@@ -329,8 +329,8 @@ if (sbSearchInput) sbSearchInput.oninput = e => handleSearchInput(e.target.value
   const aviBtn = document.getElementById('hdrAviBtn');
   if (aviBtn) {
     aviBtn.addEventListener('click', async () => {
-      const { navigateTo } = await import('../router.js');
-      navigateTo('profile');
+      const { openProfileSettings } = await import('./sidebar.js');
+      openProfileSettings();
     });
   }
 })();

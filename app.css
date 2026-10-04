@@ -13306,3 +13306,9 @@ header.app-hdr.force-hide,
 #homeBrand {
   display: none !important;
 }
+
+
+/* Mobil: Saqlanganlar faqat headerda. Pastki nav dagi nusxa yashirin. */
+@media (max-width: 1099px) {
+  nav.bot-nav .nav-saved { display: none !important; }
+}

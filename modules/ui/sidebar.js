@@ -89,10 +89,16 @@ function openMenu() {
 // Username card (avatar + ism) bosilsa — profil + sozlamalar panelini ochish
 // 3 nuqta bosilsa — Sozlamalar/Chiqish menyusi
 // Mobil (dots yashirin) da butun blok menyuni ochadi
-function openProfileSettings() {
+function openBasicAccordion() {
+  const acc = document.querySelector('#settingsOverlay [data-pe-acc="basic"]');
+  if (!acc) return;
+  acc.classList.add('open');
+  acc.querySelector('.pe-acc-toggle')?.setAttribute('aria-expanded', 'true');
+}
+
+export function openProfileSettings() {
   closeMenu();
   navigateTo('profile');
-  // Settings panelini ochish (default yopiq — majburiy ochamiz)
   const open = () => {
     const ov = document.getElementById('settingsOverlay');
     if (!ov) return;
@@ -100,14 +106,13 @@ function openProfileSettings() {
       import('../auth/auth.js').then(m => { try { m.populateProfileForm?.(); } catch(_){} }).catch(()=>{});
       ov.classList.add('show');
     }
+    openBasicAccordion();
     if (window.matchMedia('(min-width: 1200px)').matches) {
       document.body.classList.add('desktop-settings-pinned');
     } else {
-      // mobil: scroll lock
       document.body.style.overflow = 'hidden';
     }
   };
-  // navigateTo async view switch qiladi — biroz kutamiz
   requestAnimationFrame(() => requestAnimationFrame(open));
   setTimeout(open, 80);
 }
@@ -127,8 +132,8 @@ $('sbAccount')?.addEventListener('click', e => {
     return;
   }
 
-  // Mobil / planshet: butun blok → menyu
-  if (_menu) closeMenu(); else openMenu();
+  // Mobil / planshet: account → profil/sozlamalar + Asosiy ma'lumotlar
+  openProfileSettings();
 });
 
 document.addEventListener('click', e => {
