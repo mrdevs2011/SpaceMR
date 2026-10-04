@@ -13626,3 +13626,24 @@ body::-webkit-scrollbar,
   .search-overlay,
   .search-overlay.open { top: 60px !important; }
 }
+
+
+/* Desktop: Bildirishnomalar — saved kabi markaz ustunda (leftbar ustiga chiqmaydi) + rightbar */
+@media (min-width: 1100px) {
+  #notifsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
+  #notifsView.on { padding-top: 0 !important; }
+}
+@media (min-width: 1200px) {
+  #notifsView.on {
+    margin-left: var(--content-left, var(--sidebar, 260px));
+    margin-right: 0;
+    width: var(--center-w);
+    max-width: var(--center-w);
+    box-sizing: border-box;
+  }
+}
+
+/* Desktop: Explore qidiruv inputi tepadan leftbar/rightbar kabi biroz pastda */
+@media (min-width: 1100px) {
+  [data-theme] .search-overlay .exp-head { padding-top: 10px; }
+}
