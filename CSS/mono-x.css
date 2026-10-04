@@ -1209,6 +1209,118 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.95) !important;
 }
 
+/* ── Auth: forgot + install (UA default oq tugmalarni yopish) ── */
+#authWrap #forgotPasswordWrap {
+  display: none;
+  margin: -4px 0 10px;
+  text-align: right;
+}
+#authWrap #forgotPasswordBtn,
+#authWrap button#forgotPasswordBtn {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1d9bf0 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  cursor: pointer;
+  padding: 4px 0 !important;
+  margin: 0 !important;
+  line-height: 1.3;
+}
+#authWrap #forgotPasswordBtn:hover {
+  text-decoration: underline;
+  color: #1a8cd8 !important;
+}
+
+#authWrap .auth-switch {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: #71767b;
+  line-height: 1.4;
+}
+#authWrap .auth-link {
+  color: #1d9bf0 !important;
+  cursor: pointer;
+  font-weight: 600;
+}
+#authWrap .auth-link:hover {
+  text-decoration: underline;
+}
+
+#authWrap .auth-install {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+#authWrap .auth-install-btn,
+#authWrap button.auth-install-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  background: #16181c !important;
+  background-color: #16181c !important;
+  color: #e7e9ea !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+}
+#authWrap .auth-install-btn:hover {
+  background: #1c1f24 !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+#authWrap .auth-install-btn .icon,
+#authWrap .auth-install-btn img {
+  width: 16px;
+  height: 16px;
+  opacity: 0.9;
+  filter: none;
+}
+#authWrap .auth-install-link,
+#authWrap button.auth-install-link {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #71767b !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  cursor: pointer;
+  padding: 6px 8px !important;
+  margin: 0 auto !important;
+  text-align: center;
+}
+#authWrap .auth-install-link:hover {
+  color: #e7e9ea !important;
+  text-decoration: underline;
+}
+
+
 /* Auth card maydonlari: professional dark fon */
 #authWrap .field,
 #authWrap input.field,
@@ -3658,4 +3770,21 @@ textarea:not(:focus) {
 #chatThreadModal .chat-voice-btn.recording {
   background: #1d9bf0 !important;
   box-shadow: 0 4px 18px rgba(29, 155, 240, 0.4) !important;
+}
+
+/* PRODUCTION: hech qachon oq fon (FOUC / light flash yo'q) */
+html, body, #app, .app, #homeView, #followingView, #feed, #feedList {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #e7e9ea !important;
+}
+html { color-scheme: dark !important; }
+/* Native file input hech qachon ko'rinmasin */
+input[type="file"] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
 }

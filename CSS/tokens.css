@@ -9,7 +9,7 @@
   --pal-gray-500: #71767b;
   --pal-gray-100: #e7e9ea;
   --pal-ink: #0f1419;
-  --pal-red: #ffffff;
+  --pal-red: #ef4444;
   --pal-green: #ffffff;
   --pal-blue: #1d9bf0;
   --pal-white-06: rgba(255,255,255,.06);
@@ -56,7 +56,7 @@
   --x-blue: var(--pal-blue);
   --bubble-mine: #64a7de;   /* mening xabarlarim pufagi (barcha turdagi: matn, ovoz, fayl, post karta) */
   --x-blue-hover: #e7e9ea;
-  --x-like: #ffffff;
+  --x-like: #ef4444;
   --x-inv-bg: #eff3f4;
   --x-inv-bg-hover: #d7dbdc;
   --x-inv-fg: var(--pal-ink);
@@ -66,7 +66,7 @@
   --blue-glow2: rgba(255, 255, 255, .10);
   --glass-border: var(--pal-gray-700);
   --glass-border-top: var(--pal-gray-700);
-  --red: #ffffff;
+  --red: #ef4444;
   --green: #ffffff;
   --tg-blue: var(--pal-blue);
   --tg-text-muted: var(--pal-gray-500);

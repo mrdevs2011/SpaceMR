@@ -10,7 +10,7 @@
   --pal-gray-500: #71767b;
   --pal-gray-100: #e7e9ea;
   --pal-ink: #0f1419;
-  --pal-red: #ffffff;
+  --pal-red: #ef4444;
   --pal-green: #ffffff;
   --pal-blue: #1d9bf0;
   --pal-white-06: rgba(255,255,255,.06);
@@ -57,7 +57,7 @@
   --x-blue: var(--pal-blue);
   --bubble-mine: #64a7de;   /* mening xabarlarim pufagi (barcha turdagi: matn, ovoz, fayl, post karta) */
   --x-blue-hover: #e7e9ea;
-  --x-like: #ffffff;
+  --x-like: #ef4444;
   --x-inv-bg: #eff3f4;
   --x-inv-bg-hover: #d7dbdc;
   --x-inv-fg: var(--pal-ink);
@@ -67,7 +67,7 @@
   --blue-glow2: rgba(255, 255, 255, .10);
   --glass-border: var(--pal-gray-700);
   --glass-border-top: var(--pal-gray-700);
-  --red: #ffffff;
+  --red: #ef4444;
   --green: #ffffff;
   --tg-blue: var(--pal-blue);
   --tg-text-muted: var(--pal-gray-500);
@@ -290,40 +290,23 @@ img.icon {
 }
 
 .rc-title-center { text-align: center; margin-bottom: 6px; }
-/.app-hdr {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--hdr);
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  gap: 8px;
-  z-index: 80;
-}space-between;
-  padding: 0 12px;
-  gap: 8px;
-  z-index: 80;
-}p { display: none; }
+/* CSS/features.css — feed, profile, nav, chat, groups. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
+/* ─── feed ─── */
+/* ═══════════════════════ APP SHELL ═══════════════════════ */
+#app { display: none; }
 #app.show { display: block; }
 /* Header */
 .app-hdr { position: fixed; top: 0; left: 0; right: 0; height: var(--hdr); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; gap: 8px; z-index: 80; }
 /* .app-hdr::after gradient chizig'i o'chirildi — flat dizayn, chiziq kerak emas */
 .hdr-logo { display: flex; align-items: center; gap: 6px; flex-shrink: 0; background: none; border: none; padding: 6px 8px 6px 0; cursor: pointer; border-radius: 10px;  -webkit-tap-highlight-color: transparent; }
 .hdr-logo:active { opacity: 1; }
-.hdr-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: none; border: none.hdr-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
- .search-overlay {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  padding-top: 16px;
-  opacity: 0;
-  pointer-events: none;
-}text2); cursor: pointer; flex-shrink: 0; }
+.hdr-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: none; border: none; box-shadow: none; }
+.hdr-logo-glass img { position: relative; z-index: 1; }
+.hdr-brand { font-weight: 700; font-size: 15px; letter-spacing: -0.2px; background: var(--blue2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* Header right group */
+.hdr-right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+/* Icon button (search, theme) in header */
+.hdr-icon-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: none; border: none; color: var(--text2); cursor: pointer; flex-shrink: 0; }
 .hdr-icon-btn svg { width: 17px; height: 17px; }
 /* Search Overlay (replaces old hdr-search-expand) */
 .search-overlay {
@@ -393,15 +376,19 @@ img.icon {
 .hdr-new-post-btn svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; }
 .hdr-new-post-btn:hover { background: var(--bg3); color: var(--text); }
 .hdr-new-post-btn:active { opacity: 0.7; }
-/* Desktop: hide header new post button (sibtn { display: none; }
+/* Desktop: hide header new post button (sidebar used instead) */
+@media (min-width: 1100px) {
+  .hdr-new-post-btn { display: none; }
 }
 /* hdr-theme-btn → now uses .hdr-icon-btn.theme-btn */
 /* ═══════════════════════ VIEWS ═══════════════════════ */
 /* ══════════════════════════════════════════════ VIEW SYSTEM — 1 vaqtda faqat 1 ta view Har bir view to'liq e... */
 /* Yashirin view — hech qanday joy olmaydi */
-.view { display: none !important; visibility: hidden; position: absolute; pointer-events: none; height: 0; overflow: hidd.post-time {
-  margin-top: 2px;
-}ible;
+.view { display: none !important; visibility: hidden; position: absolute; pointer-events: none; height: 0; overflow: hidden; }
+/* Aktiv view — to'liq erkin */
+.view.on {
+  display: block !important;
+  visibility: visible;
   position: static;
   pointer-events: auto;
   height: auto;
@@ -410,11 +397,11 @@ img.icon {
   padding-bottom: calc(var(--nav) + env(safe-area-inset-bottom, 0px) + 16px);
   min-height: calc(100dvh - var(--hdr));
   -webkit-overflow-scrolling: touch;
-  box.post-media {
-  cursor: default;
-}x.post-media img {
-  filter: blur(0);
-}*/
+  box-sizing: border-box;
+}
+/* Desktop: content offset — nav.css dagi margin-left boshqaradi */
+.feed { max-width: 500px; margin: 0 auto; padding: 0 10px; }
+/* ═══════════════════════ POST CARD — Solid UI ═══════════════════════ */
 .post { margin-bottom: 16px; overflow: hidden; isolation: isolate; }
 /* .post:hover cosmetics → CSS/00-components.core.css'da (flat, glow yo'q) */
 .avi {
@@ -448,15 +435,17 @@ img.icon {
   content: '';
   position: absolute;
   inset: 0;
-  margin: auto;.post-stats {
-  padding: 8px 14px;
-  display: flex;
-  gap: 16px;
-  font-size: 11px;
-  border-top: 0.5px solid var(--glass-border);
-  border-bottom: 0.5px solid var(--glass-border);
-  font-family: var(--mono);
-}════════════════ VIDEO 2X SPEED / REWIND BADGE ═══════════════════════ */
+  margin: auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2.5px solid var(--pal-white-25);
+  border-top-color: rgba(255,255,255,0.85);
+  animation: spin .8s linear infinite;
+  pointer-events: none;
+}
+
+/* ═══════════════════════ VIDEO 2X SPEED / REWIND BADGE ═══════════════════════ */
 
 /* Caption */
 .cap-more { color: var(--text3); font-size: 12px; cursor: pointer; font-weight: 500; margin-left: 2px;  }
@@ -525,33 +514,34 @@ img.icon {
   }
   80% {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85), 0 8px 25px rgba(255, 255, 255, 0.4);
-    border-color.ufb-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}8arm: scale(1); }
+    border-color: rgba(255, 255, 255, 0.85);
+  }
+  100% {
+    box-shadow: none;
+    border-color: var(--line, rgba(255, 255, 255, 0.08));
+  }
+}
+
+@keyframes postUnderglow {
+  0% { opacity: 0; transform: scale(0.85); }
+  15% { opacity: 1; transform: scale(1.05); }
+  80% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.9); }
 }
 /* Reel Caption Sheet */
 #reelCapSheet .sheet { background: var(--pal-gray-900); }
 .rcap-user-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
-.rcap-text { font-size: 14px; line-height: 1.7; color.ufb-fill {
-  height: 100%;
-  border-radius: 99px;
-  width: 0%;
-  transition: width .2s ease;
-}═══════ */
+.rcap-text { font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+/* ═══════════════════════ HEART BURST ANIMATION ═══════════════════════ */
 .heart-burst { position: absolute; width: 52px; height: 52px; pointer-events: none; z-index: 10; transform: translate(-50%, -50%); }
 .heart-burst svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 8px var(--pal-black-35)); }
 /* ═══════════════════════ LIKE POP ANIMATION ═══════════════════════ */
 /* Hide header completely in reels on mobile */
 .app-hdr.force-hide { display: none; }
 /* Mobile: reels da to'liq ekran (sidebar yo'q paytda) */
-/* Header button visibility control */* Hide search btn when not on home/following */
+/* Header button visibility control */
+.hdr-hidden { display: none; }
+/* Hide search btn when not on home/following */
 .hdr-search-wrap.search-hidden { display: none; }
 /* Video player mute btn: mobile faqat */
 
@@ -598,62 +588,45 @@ img.icon {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   letter-spacing: -0.01em;
 }
-.ufb-track { height: 3px; background: rgba(255,.stat-lbl {
-  font-size: 10px;
-  margin-top: 3px;
-  font-family: var(--mono);
-  letter-spacing: 0.3px;
-}px; width: 0%; transition: width .2s ease; }
+.ufb-track { height: 3px; background: rgba(255,255,255,0.12); border-radius: 99px; overflow: hidden; }
+.ufb-fill { height: 100%; background: #fff; border-radius: 99px; width: 0%; transition: width .2s ease; }
 .ufb-fill.indeterminate { width: 40%; animation: ufb-ind 1s ease-in-out infinite alternate; }
 @keyframes ufb-ind { from { transform: translateX(0); } to { transform: translateX(150%); } }
 .ufb-pct {
   font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.7);
-  flex-shrin.settings-section-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  margin: 6px 0 10px;
-}═... */
+  flex-shrink: 0; min-width: 36px; text-align: right;
+}
+/* ═══════════════════════════════════════════ THEME AWARE ENHANCEMENTS ══════════════════════════════════════... */
 /* Dark mode: stronger borders and shadows */
 [data-theme="dark"] .post:hover { box-shadow: none; }
 /* Light mode: softer shadows */
-/* box-shadow o'chirildi — borderless.css:43 (.post guruhida) bir xil specificity bilan keyinroq.settings-row-hint {
-  font-size: 11px;
-  margin-top: 3px;
-  line-height: 1.4;
-} [data-theme="dark"] .file-card:hover → CSS/dark-theme-fix.css'da qayta belgilangan (keyinroq yuklanadi, g'o... */
+/* box-shadow o'chirildi — borderless.css:43 (.post guruhida) bir xil specificity bilan keyinroq yuklanadi, bo... */
+/* Video controls - theme aware */
+
+/* File card hover - theme aware */
+/* [data-theme="dark"] .file-card:hover → CSS/dark-theme-fix.css'da qayta belgilangan (keyinroq yuklanadi, g'o... */
 /* Badge styles - theme aware */
 /* Search overlay - theme aware */
 /* [data-theme="dark"] .search-overlay-box → CSS/dark-theme-fix.css'da qayta belgilangan (keyinroq yuklanadi,... */
 /* Empty states - theme aware */
-[data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search.switch-toggle.on {
-  border-color: transparent;
-}/* ═══════════════════════════════════════════ ENHANCED POST CARD STYLES ═════════════════════════════════════... */
+[data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { background: var(--blue-glow2); }
+/* Like button pop animation */
+/* ═══════════════════════════════════════════ ENHANCED POST CARD STYLES ═════════════════════════════════════... */
 /* Gradient border hover + zoom o'chirildi (flat X.com uslubi, 2026) */
 .post-media { overflow: hidden; }
-/* Video.settings-more-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}═══════════════════ */
-/* Profile view layout fix (desktop: sidebar ostida emas, mar.settings-more-menu {
-  position: absolute;
-  right: 0;
-  min-width: 220px;
-  padding: 4px;
-  background: var(--pal-gray-900);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0,0.45);
-  display: none;
-  z-index: 5;
-} - var(--content-left, var(--sidebar, 68px))); max-width: 680px; padding-top: 0; }
+/* Video post indicator */
+
+/* Post badge animation */
+/* Action button ripple effect */
+.act-btn { position: relative; }
+/* Avatar shimmer effect */
+/* ─── profile ─── */
+/* ═══════════════════════ PROFILE VIEW ═══════════════════════ */
+/* Profile view layout fix (desktop: sidebar ostida emas, markazda) */
+#profileView { position: relative; z-index: 1; box-sizing: border-box; overflow-x: hidden; min-height: 100%; }
+#profileView.on { display: block; }
+@media (min-width: 1100px) {
+  #profileView.on { margin-left: var(--content-left, var(--sidebar, 68px)); width: calc(100% - var(--content-left, var(--sidebar, 68px))); max-width: 680px; padding-top: 0; }
   #profileView .profile-hdr { padding-top: 20px; padding-left: 16px; padding-right: 16px; }
   #profileView .profile-avi-row { margin-top: 0; }
 }
@@ -682,11 +655,8 @@ img.icon {
 .profile-actions-row .edit-btn { flex: 1; margin-top: 0; }
 .settings-section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin: 6px 0 10px; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 2px 14px; }
-.up-stat-lbl {
-  font-size: 10px;
-  margin-top: 2px;
-  font-family: var(--mono);
-}or: var(--text); }
+.settings-row-text { min-width: 0; }
+.settings-row-title { font-size: 13px; font-weight: 500; color: var(--text); }
 .settings-row-hint { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.4; }
 .switch-toggle { flex-shrink: 0; width: 44px; height: 26px; padding: 0; border-radius: 14px; background: var(--pal-legacy-2e2e2e); border: 1px solid var(--line2); position: relative; cursor: pointer;  }
 .switch-toggle .switch-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--pal-white); box-shadow: 0 1px 3px var(--pal-black-35);  }
@@ -753,36 +723,20 @@ img.icon {
   
   color: var(--pal-white);
 }
-.up-back:hover { background: var(-.profile-username {
-  font-size: 13px;
-  margin-top: 2px;
-  font-weight: 500;
-}enter; padding-top: 64px; }
+.up-back:hover { background: var(--pal-black); }
+.up-body { padding-bottom: 60px; }
+.up-head { display: flex; justify-content: center; padding-top: 64px; }
 .up-avi-wrap { position: relative; z-index: 2; }
-.up-avi { width: 90px; height:.pe-avi-img {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: var(--bg3);
-  cursor: pointer;
-}flex; align-items: center; justify-content: center; }
+.up-avi { width: 90px; height: 90px; border-radius: 50%; background: var(--bg4); overflow: hidden; border: 3.5px solid var(--bg); box-shadow: 0 4px 20px var(--pal-black); display: flex; align-items: center; justify-content: center; }
 .up-avi img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .up-info { padding: 14px 20px 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .up-name { font-size: 19px; font-weight: 700; letter-spacing: -0.4px; }
-.up-bio { font-size: 13px; color: var(--text2); line-height: 1.5; margin-top: 5px; max-width: 260px; .pe-field-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  margin: 10px 0 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}vs.pe-prefix {
-  position: absolute;
-  left: 14px;
-  font-size: 15px;
-  font-weight: 500;
-  pointer-events: none;
-}lbp: 2px; font-family: var(--mono); }
+.up-bio { font-size: 13px; color: var(--text2); line-height: 1.5; margin-top: 5px; max-width: 260px; }
+.up-stats { display: flex; gap: 0; margin: 18px 0 16px; width: 100%; border: 1px solid var(--line); border-radius: 16px; background: var(--bg2); overflow: hidden; }
+.up-stat { flex: 1; text-align: center; padding: 13px 0; }
+.up-stat:last-child { border-right: none; }
+.up-stat-val { font-size: 17px; font-weight: 700; letter-spacing: -0.5px; }
+.up-stat-lbl { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
 .up-divider { display: none; }
 .up-posts-tab { display: flex; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 16px -20px 0; width: calc(100% + 40px); background: var(--bg); }
 .up-grid { margin: 0 -20px; width: calc(100% + 40px); padding-bottom: 8px; }
@@ -805,19 +759,16 @@ img.icon {
 /* Grid cell overlay — engil qorayish, to'liq qora emas */
 [data-theme="dark"] .grid-cell-overlay, [data-theme="dark"] .up-grid-cell-overlay { background: linear-gradient(to top, var(--pal-black-55) 0%, var(--pal-black-25) 45%, rgba(0,0,0,.12) 100%); }
 /* ═══════════════════════════════════════════ PROFILE STATS — Animated Numbers ══════════════════════════════... */
-/* Stat value ani.settings-profile-username {
-  font-size: 13px;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}═.settings-profile-chevron {
-  flex-shrink: 0;
-}isplay: inline-block; }
+/* Stat value animation on page load */
+.stat-val { display: inline-block; }
+/* ═══════════════════════════════════════════ USER PROFILE MODAL ═══════════════════════════════════════════ */
+/* User stats animation */
+.up-stat-val { display: inline-block; }
 /* ═══════════════════════════════════════════════════════════════════════ PROFILE PAGE — SOLID UI ═══════════... */
 /* Profile variables */
 /* Profile header — flat (2026-08-30 tozalandi, halo/glow olib tashlandi) */
-.profile-hdr { background: var(--pg-hdr-bg); border-bottom: none; position:  flat dizaynda header ustida gradient ha... */
+.profile-hdr { background: var(--pg-hdr-bg); border-bottom: none; position: relative; }
+/* .profile-hdr::before blue-halo pseudo-element butunlay o'chirildi — flat dizaynda header ustida gradient ha... */
 .profile-hdr::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 0.5px; background: var(--pg-border-top); pointer-events: none; }
 /* Avatar — flat ring, glow olib tashlandi */
 .profile-avi { background: var(--pg-glass-mid); }
@@ -830,36 +781,32 @@ img.icon {
 .edit-btn:hover { background: var(--pg-glass-strong); border-color: var(--pg-border-top); }
 .profile-grid-item:hover { z-index: 2; }
 /* Avi edit badge — flat */
-.avi-edit-badge { background: var(gacy-525257); }
+.avi-edit-badge { background: var(--pal-white); border: 1px solid var(--pal-legacy-525257); }
 /* Avatar Zoom Modal ichidagi Tahrirlash tugmasi */
 .avi-zoom-edit-btn {
-  posit.err-msg {
-  min-height: 18px;
-  font-size: 12px;
-  margin: -4px 0 8px;
-  padding: 0 4px;
-  line-height: 1.4;
-  font-family: var(--mono);
-  letter-spacing: 0.1px;
-}p.field.input-error {
-  background: var(--pal-gray-900);
-  box-shadow: var(--specular-top), 0 0 0 3px var(--pal-gray-900);
-}ght: 600;
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 100px;
+  background: var(--pal-legacy-26262c);
+  border: 1px solid var(--pal-legacy-3f3f44);
+  color: var(--pal-white);
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
   z-index: 10;
   
   white-space: nowrap;
-  box-shadow: 0 4px 24px#authErr {
-  font-size: 12.5px;
-  font-weight: 500;
-  min-height: 18px;
-  margin-top: -4px;
-  margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}-btn:active { transform: translateX(-50%) scale(0.97); }
+  box-shadow: 0 4px 24px var(--pal-black);
+}
+.avi-zoom-edit-btn:hover { background: var(--pal-gray-700); border-color: var(--pal-white); transform: translateX(-50%) scale(1.04); }
+.avi-zoom-edit-btn:active { transform: translateX(-50%) scale(0.97); }
 #upAviImg:hover { box-shadow: 0 0 0 4px var(--pal-gray-700), 0 6px 24px var(--pal-black); }
 /* ═══════════════════════════════════════════════════════════════════════ PROFILE EDIT — avi, fields (qo'shil... */
 /* Avatar row */
@@ -870,7 +817,12 @@ img.icon {
 .pe-avi-wrap { position: relative; width: 68px; height: 68px; margin: 8px 0 12px 16px; flex-shrink: 0; }
 .pe-avi-img { width: 68px; height: 68px; border-radius: 50%; overflow: hidden; border: 3px solid var(--bg); background: var(--bg3); cursor: pointer; }
 .pe-avi-img img { width: 100%; height: 100%; object-fit: cover; }
-.pe-avi-ex;
+.pe-avi-edit-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--accent);
   display: flex;
@@ -888,35 +840,29 @@ img.icon {
 .pe-prefix-field { padding-left: 28px !important; }
 /* Group edit avatar */
 .grp-edit-avi-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 16px; }
-.grp-edit-avi { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: var(--bg3); border: 3px solid var(.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: none;
-  align-items: flex-end;
-}absolute;
+.grp-edit-avi { width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: var(--bg3); border: 3px solid var(--glass-border); }
+.grp-edit-avi img { width: 100%; height: 100%; object-fit: cover; }
+.grp-edit-avi-badge {
+  position: absolute;
   bottom: 0;
   right: 0;
-.sheet {
-  width: 100%;
-  max-width: 540px;
-  margin: 0 auto;
-  border-bottom: none;
-  padding: 8px 20px max(28px, env(safe-area-inset-bottom));
-  max-height: 90dvh;
-  overflow-y: auto;
-  position: relative;
-}ne); flex-shrink: 0; }
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}.settings-hdr { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 .settings-back { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg4); border: none; cursor: pointer; color: var(--text); flex-shrink: 0;  }
 .settings-back:hover { background: var(--bg5); }
 .settings-hdr-title { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; flex: 1; }
 .settings-hdr-spacer { width: 34px; flex-shrink: 0; }
 .settings-body { flex: 1; overflow-y: auto; padding: 16px 20px max(28px, env(safe-area-inset-bottom)); }
 /* Profil kartasi — Sozlamalar sahifasi tepasida, bosilganda Profilni tahrirlash varag'i ochiladi (Telegram'da... */
-.settings-profile-card { width: 100%; display: flex; align-items: center; g.upload-drop:hover {
-  background: #151515;
-  box-shadow: var(--specular-top);
-} var(--font);  border-radius: 12px; }
+.settings-profile-card { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 4px; background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font);  border-radius: 12px; }
 .settings-profile-card:hover { background: var(--pal-gray-900); }
 .settings-profile-avi { width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; background: var(--bg4); overflow: hidden; }
 .settings-profile-avi img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -954,11 +900,8 @@ img.icon {
 /* Fields — Input ── * background/border-radius/color/transition (bazaviy) va border-color/ * background/box-s... */
 .field { width: 100%; padding: 13px 16px; font-family: var(--font); outline: none; margin-bottom: 10px; }
 .field::placeholder { color: var(--text3); }
-/* .btn-primar.ta:focus {
-  border-color: var(--pal-legacy-464646);
-  background: var(--glass-mid);
-  border-radius: 14px;
-}
+/* .btn-primary / .btn-ghost / .btn-danger → CSS/00-components.core.css'ga ko'chirildi */
+.auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text2); }
 /* Auth error */
 .err-msg { min-height: 18px; font-size: 12px; color: var(--red); margin: -4px 0 8px; padding: 0 4px; line-height: 1.4; font-family: var(--mono); letter-spacing: 0.1px; }
 .field.input-error { border-color: var(--red); background: var(--pal-gray-900); box-shadow: var(--specular-top), 0 0 0 3px var(--pal-gray-900); }
@@ -977,11 +920,8 @@ img.icon {
 /* .bot-nav → CSS/00-components.core.css'ga ko'chirildi (.bot-nav::before shimmer chizig'i ataylab olib tashla... */
 /* Nav buttons */
 .nav-btn { position: relative; background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 0; cursor: pointer; padding: 8px 16px; border-radius: 14px; -webkit-tap-highlight-color: transparent; }
-/* .nav-btn:hover { background.cmt-name {
-  font-size: 11px;
-  font-weight: 600;
-  font-family: var(--mono);
-}: 1.8; fill: none;  }
+/* .nav-btn:hover { background: var(--glass); }
+.nav-btn svg { width: 22px; height: 22px; stroke: var(--text3); stroke-width: 1.8; fill: none;  }
 .nav-btn span:not(.nav-badge) { display: none; }
 /* Active nav button — solid pill */
 .nav-btn.on { background: var(--glass-mid); border: 0.5px solid var(--glass-border); }
@@ -1007,25 +947,22 @@ img.icon {
 }
 @media (max-width: 1099px) {
   .nav-center-btn { display: none; }
-  .bot-nav { justify-content: space-around; padding-bot
-
+  .bot-nav { justify-content: space-around; padding-bottom: max(env(safe-area-inset-bottom), 8px); }
+}
+/* Specular highlight on create button */
 .nav-center-btn::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%; background: var(--pal-legacy-3f3f44); border-radius: 50% 50% 0 0; pointer-events: none; }
 .nav-center-btn:hover { box-shadow: inset 0 1px 0 var(--pal-legacy-525257); }
-.cmt-input:focus {
-  border-color: var(--pal-legacy-464646);
+.nav-center-btn svg { width: 22px; height: 22px; stroke: var(--pal-white); stroke-width: 2.5; fill: none; position: relative; z-index: 1; }
+/* ═══════════════════════ OVERLAY — Frosted ═══════════════════════ */
+.overlay { position: fixed; inset: 0; background: var(--pal-black); z-index: 200; display: none; align-items: flex-end; }
+.overlay.show { display: flex; }
+/* ═══════════════════════ SHEET — Solid UI ═══════════════════════ */
+.sheet {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
   background: var(--glass-mid);
-}════════════ OVERLAY — Frosted ═══════════════════.cmt-send {
-  border: none;
-  border-radius: 32px;
-  padding: 0 18px;
-  font-weight: 600;
-  font-family: var(--font);
-  font-size: 13px;
-  cursor: pointer;
-  flex-shrink: 0;
-  min-height: 44px;
-  box-shadow: 0 4px 14px var(--blue-glow), inset 0 1px 0 var(--pal-legacy-46464b);
-}der: 0.5px solid var(--glass-border);
+  border: 0.5px solid var(--glass-border);
   border-bottom: none;
   border-radius: 28px 28px 0 0;
   padding: 8px 20px max(28px, env(safe-area-inset-bottom));
@@ -1041,7 +978,7 @@ img.icon {
 #uploadOverlay { align-items: center; justify-content: center; padding: 20px; }
 #uploadOverlay .sheet { margin: 0; max-width: 500px; border-radius: 28px; }
 /* Upload Drop Zone */
-.upldius: 20px; padding: 30px 20px; text-align: center; cursor: pointer; margin-bottom: 14px;  background: var(--glass); }
+.upload-drop { border: 1px dashed var(--glass-border); border-radius: 20px; padding: 30px 20px; text-align: center; cursor: pointer; margin-bottom: 14px;  background: var(--glass); }
 .upload-drop:hover { border-color: var(--pal-white); background: #151515; box-shadow: var(--specular-top); }
 .upload-drop.drag-over { border-color: var(--blue); background: var(--pal-gray-900); transform: scale(1.02); box-shadow: 0 0 0 3px var(--blue-glow2), var(--specular-top); }
 /* Upload progress bar */
@@ -1053,7 +990,8 @@ img.icon {
 .file-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--glass); border-radius: 16px; margin: 10px 0 2px; cursor: pointer; text-decoration: none; }
 .file-card:hover { border-color: var(--glass-border-top); box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
 .file-card-icon { width: 44px; height: 44px; flex-shrink: 0; }
-.file-card-icon svg { width: 44px; height: 44px; display: bl 44px; height: 44px; display: block; }
+.file-card-icon svg { width: 44px; height: 44px; display: block; }
+.preview-file-icon svg { width: 44px; height: 44px; display: block; }
 .preview-wrap { margin-bottom: 14px; text-align: center; position: relative; }
 .preview-wrap img { max-width: 100%; max-height: 180px; border-radius: 16px; display: block; margin: 0 auto; }
 .preview-file { background: var(--glass); border: 0.5px solid var(--glass-border); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
@@ -1281,47 +1219,33 @@ img.icon {
   color: var(--text2);
   padding: 13px 8px;
   display: flex;
-  align-items: cente.chat-row {
-display: flex;
-align-items: center;
-gap: 12px;
-padding: 10px 16px;
-cursor: pointer;
-background: transparent;
-border-radius: 0;
-border: none;
-box-shadow: none;
-margin: 0;
-position: relative;
-}act-count { font-size: 13px; font-weight: 500; }
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  
+}
+.dm-act:last-child { border-right: none; }
+.dm-act:hover { background: var(--glass); color: var(--text); }
+.dm-act.liked { color: var(--red); }
+.dm-act .dm-act-count { font-size: 13px; font-weight: 500; }
 /* Divider */
 .divider { height: 0.5px; background: var(--glass-border); margin: 4px 0; }
 /* ═══════════════════════════════════════════════ DESKTOP SIDEBAR — Solid ═══════════════════════════════════... */
 .sb-top, .sb-search-row, .sb-bottom, .sb-create-label { display: none; }
 .sb-search-toggle { display: none; }.sb-panel-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
-.sb-panel-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--glass); border: .chat-row-preview {
-font-size: 12.5px;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
-margin-top: 2px;
-} { border-color: var(--pal-legacy-464646); background: var(--glass-mid); box-shadow: var(--specular-top), 0 0 0 3px var(--pal-gray-900); }
-.sb-panel-input-wrap svg { flex-shrink: 0; color.chat-row-time {
-font-size: 11px;
-flex-shrink: 0;
-white-space: nowrap;
-}(-.chat-row-badge {
-min-width: 22px;
-height: 22px;
-padding: 0 6px;
-border-radius: 11px;
-font-size: 11.5px;
-font-weight: 700;
-display: flex;
-align-items: center;
-justify-content: center;
-box-shadow: 0 2px 8px #652024;
-}Toggle.search-active { background: var(--pal-gray-800); box-shadow: var(--specular-top); }
+.sb-panel-input-wrap { display: flex; align-items: center; gap: 8px; background: var(--glass); border: 0.5px solid var(--glass-border); border-radius: 14px; padding: 9px 12px;  box-shadow: var(--specular-top); }
+.sb-panel-input-wrap:focus-within { border-color: var(--pal-legacy-464646); background: var(--glass-mid); box-shadow: var(--specular-top), 0 0 0 3px var(--pal-gray-900); }
+.sb-panel-input-wrap svg { flex-shrink: 0; color: var(--text3); }
+.sb-panel-input { background: none; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 14px; width: 100%; }
+.sb-panel-input::placeholder { color: var(--text3); }
+@media (min-width: 1100px) {
+  :root { --sidebar: 68px; --content-left: var(--sidebar); }
+  .app-hdr { display: none; }
+  .sb-search-toggle { display: flex; }
+  #sbSearchToggle.search-active { background: var(--pal-gray-800); box-shadow: var(--specular-top); }
   #sbSearchToggle.search-active svg { stroke: var(--blue); }
   #sbSearchToggle { position: relative; }
   #sbSearchToggle::after {
@@ -1403,26 +1327,24 @@ box-shadow: 0 2px 8px #652024;
   .feed { margin: 0 auto; padding: 0 16px; }
   .post { border: 0.5px solid var(--glass-border); background: var(--glass); margin-bottom: 16px; padding: 14px; box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
   .post-media { margin: 10px -14px; border-radius: 0; }
-  #detailContent.chat-emoji-quickpick {
-display: flex;
-flex-direction: column;
-position: absolute;
-left: 0;
-bottom: calc(100% + 8px);
-visibility: hidden;
-pointer-events: none;
-transform: translateY(100%);
-clip-path: inset(0 0 100% 0);
-will-change: transform, clip-path;
-transition: transform .24s cubic-bezier(.4, 0, .6, 1), clip-path .24s cubic-bezier(.4, 0, .6, 1), visibility 0s linear .24s;
-width: min(344px, calc(100vw - 24px));
-height: min(380px, 60vh);
-background: var(--bg);
-border-radius: 16px;
-box-shadow: 0 6px 24px var(--pal-black);
-overflow: hidden;
-z-index: 50;
-}0;
+  #detailContent { margin-bottom: 20px; }
+  #detailModal { padding-left: var(--sidebar); }
+  #userProfileModal { left: var(--sidebar); }
+  #grpInfoOverlay { left: var(--sidebar); }
+  .up-back { left: calc(var(--sidebar) + 14px); }
+  .bot-nav { display: flex; position: fixed; }
+}
+/* ═══════════════════════════════════════════ DESKTOP SEARCH PANEL — Solid ══════════════════════════════════... */
+#sbSearchPanel {
+  position: fixed;
+  top: calc(var(--hdr) + 8px);
+  left: calc(var(--sidebar) + 16px);
+  width: 320px;
+  background: var(--glass-mid);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 16px;
+  z-index: 500;
   display: none;
   box-shadow: var(--specular-top), var(--liquid-shadow-lg);
 }
@@ -1515,19 +1437,10 @@ z-index: 50;
   position: relative;
 }
 .chat-thread-back { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg4); border: none; cursor: pointer; color: var(--text); flex-shrink: 0; }
-.chat-thread-bac.chat-voice-btn {
-position: relative;
-z-index: 2;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-flex-shrink: 0;
-touch-action: none;
-user-select: none;
--webkit-user-select: none;
-}-thread-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-thread-back:hover { background: var(--bg5); }
+.chat-thread-avi { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: var(--bg4); }
+.chat-thread-avi img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.chat-thread-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-thread-messages { flex: 1; overflow-y: auto; overscroll-behavior-y: contain; padding: 12px 12px 8px; display: flex; flex-direction: column; }
 /* Sana ajratuvchi — Telegram uslubidagi suzuvchi pill ("Bugun"/"Kecha") */
 .chat-date-sep { margin: 10px 0 8px; }
@@ -1555,17 +1468,13 @@ user-select: none;
 .chat-msg.mine .chat-msg-time { color: #C1C1C3; }
 .chat-msg.theirs .chat-msg-time { color: var(--text3); }
 /* Read-receipt ticks */
-.msg-ticks { flex-shrink: 0; display: inline-block; vertical-align: middle; color: var(--pal-legacy-909093).crb-line {
-width: 3px;
-min-height: 32px;
-border-radius: 2px;
-flex-shrink: 0;
-}qiyatli bo'lgach 'sent' ga o'tadi */
-}.crb-name {
-font-size: 12px;
-font-weight: 700;
-margin-bottom: 1px;
-}msg-tick-hands {
+.msg-ticks { flex-shrink: 0; display: inline-block; vertical-align: middle; color: var(--pal-legacy-909093); }
+.msg-ticks.sending {
+  opacity: 0.95;
+  /* status=sending bo'lgandagina ko'rinadi; DB insert muvaffaqiyatli bo'lgach 'sent' ga o'tadi */
+}
+/* Soat millari markaz atrofida aylanadi (CSS only — SMIL yo'q) */
+.msg-ticks.sending .msg-tick-hands {
   transform-origin: 12px 12px;
   transform-box: view-box;
   animation: msgClockSpin 1.1s linear infinite;
@@ -1609,12 +1518,12 @@ margin-bottom: 1px;
   transform: translateY(100%); clip-path: inset(0 0 100% 0);
   will-change: transform, clip-path;
   transition: transform .24s cubic-bezier(.4, 0, .6, 1), clip-path .24s cubic-bezier(.4, 0, .6, 1), visibility 0s linear .24s;
-  width: min(344px, calc(100vw - 24.chat-thread-typing {
-font-size: 11.5px;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
-}w: 0 6px 24px var(--pal-black);
+  width: min(344px, calc(100vw - 24px));
+  height: min(380px, 60vh);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px var(--pal-black);
   overflow: hidden;
   z-index: 50;
 }
@@ -1623,13 +1532,12 @@ text-overflow: ellipsis;
   transition: transform .3s cubic-bezier(.22, .8, .25, 1), clip-path .3s cubic-bezier(.22, .8, .25, 1), visibility 0s;
 }
 @media (prefers-reduced-motion: reduce) { .chat-emoji-quickpick, .chat-emoji-quickpick.show { transition: none; } }
-.chat-emoji-quickpick [hidden] { display.chat-search-btn.active {
-background: var(--pal-gray-800);
-}p-empty { padding: 28px 12px; text-align: center; color: var(--text3); font-size: 13px; }
+.chat-emoji-quickpick [hidden] { display: none !important; }
+.chat-emoji-quickpick .ep-loading, .chat-emoji-quickpick .ep-empty { padding: 28px 12px; text-align: center; color: var(--text3); font-size: 13px; }
 .ep-top, .ep-search { display: flex; align-items: center; gap: 4px; padding: 8px 8px 6px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 .ep-tabs { display: flex; flex: 1; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .ep-tabs::-webkit-scrollbar { display: none; }
-.ep-tab { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-contius: 50%; color: var(--text3); cursor: pointer; padding: 0; }
+.ep-tab { width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: 50%; color: var(--text3); cursor: pointer; padding: 0; }
 .ep-tab:hover { background: var(--bg4); color: var(--text2); }
 .ep-tab.on { background: var(--bg4); color: var(--text); }
 .ep-search { padding: 8px; }
@@ -1683,23 +1591,23 @@ background: var(--pal-gray-800);
 .cv-pulse-1 {
   width: 48px;
   height: 48px;
-  background: transparent !important;
-  border: 2px solid rgba(29, 155, 240, 0.9);
-  box-shadow: none !important; /* qizil/issiq glow yo'q */
+  background: transparent;
+  border: 2px solid rgba(29, 155, 240, 0.85);
+  box-shadow: 0 0 12px rgba(29, 155, 240, 0.35);
 }
 .cv-pulse-2 {
   width: 72px;
   height: 72px;
-  background: transparent !important;
-  border: 1.5px solid rgba(29, 155, 240, 0.5);
-  box-shadow: none !important;
+  background: transparent;
+  border: 1.5px solid rgba(29, 155, 240, 0.45);
+  box-shadow: 0 0 16px rgba(29, 155, 240, 0.2);
 }
 .cv-pulse-3 {
   width: 100px;
   height: 100px;
-  background: transparent !important;
-  border: 1px solid rgba(29, 155, 240, 0.32);
-  box-shadow: none !important;
+  background: transparent;
+  border: 1px solid rgba(29, 155, 240, 0.28);
+  box-shadow: 0 0 20px rgba(29, 155, 240, 0.12);
 }
 /* Chapga surganda pulse rang o'zgarmaydi (ko'k qoladi) */
 .chat-voice-wrap.cancelling .cv-pulse-1,
@@ -2019,12 +1927,13 @@ background: var(--pal-gray-800);
   font-size: 15px; font-weight: 500;
   color: rgba(255,255,255,0.7);
   font-variant-numeric: tabular-nums;
-.cpb-progress-fill {
-height: 100%;
-width: 0%;
-border-radius: 4px;
-box-shadow: 0 0 8px #848487;
-}llActiveModal.video-mode .call-timer {
+  letter-spacing: 0.04em;
+  text-align: center;
+  margin: 0 0 20px;
+  order: 2;
+}
+#callActiveModal.video-mode .call-status,
+#callActiveModal.video-mode .call-timer {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + 16px);
   left: 50%; transform: translateX(-50%);
@@ -2117,12 +2026,8 @@ box-shadow: 0 0 8px #848487;
 /* Bubble ichidagi kod bloki/kod — .md-codeblock/.md-code odatda var(--glass) = --bg3 fonini ishlatadi, bu esa... */
 .chat-bubble .md-codeblock, .chat-bubble .md-code { background: rgba(0, 0, 0, .22); border-color: var(--pal-white-14); }
 .chat-msg.mine .chat-bubble .md-codeblock, .chat-msg.mine .chat-bubble .md-code { background: rgba(0, 0, 0, .28); border-color: rgba(255, 255, 255, .18); }
-/* .chat-thread-input-row / .chat-thre.chat-voice-btn {
-border: none;
-box-shadow: none;
-width: 36px;
-height: 36px;
-} feedback */
+/* .chat-thread-input-row / .chat-thread-input / .chat-attach-btn skins * now live only in the "CLEAN CHAT RED... */
+/* Voice button — hover/press feedback */
 /* .chat-voice-btn base look + .recording pulse now live only in the * "VOICE BTN — amplitude-based smooth pul... */
 /* Audio message bubble */
 .chats-hdr { position: relative; }
@@ -2267,28 +2172,28 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .cfm-caption {
   font-size: 14.5px;
   line-height: 1.4;
-  word-br═e═════════════════════════ */
+  word-break: break-word;
+  padding: 4px 6px 2px;
+}
+.cfm-caption p { margin: 0; }
+/* ═══════════════════════════════════════════════════════════════════════
+   VOICE BTN — Telegram-style push-to-talk & live recording
+   ═══════════════════════════════════════════════════════════════════════ */
 #chatThreadModal .chat-voice-btn.recording,
 .chat-voice-btn.recording {
-  background: #1d9bf0 !important;
+  /* --voice-rec-bg / --voice-rec-shadow JS orqali silliq morph qilinadi */
+  background: var(--voice-rec-bg, linear-gradient(135deg, #2AABEE 0%, #229ED9 100%)) !important;
   color: #ffffff !important;
   transform: scale(1.18);
-  /* faqat toza ko'k — qizil shadow yo'q */
-  box-shadow: 0 4px 18px rgba(29, 155, 240, 0.4) !important;
+  box-shadow: var(--voice-rec-shadow, 0 4px 20px rgba(42, 171, 238, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.2));
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 #chatThreadModal .chat-voice-btn.recording.cancelling,
 .chat-voice-btn.recording.cancelling {
   /* Chapga surganda tugma ko'k qoladi — qizarmaydi */
-  backgr.grp-form-avi-hint {
-font-size: 12.5px;
-font-weight: 500;
-}m.grp-form-desc-hint {
-font-size: 12px;
-margin: -6px 0 14px;
-line-height: 1.4;
-}55, 255, 255, 0.2));
+  background: var(--voice-rec-bg, linear-gradient(135deg, #2AABEE 0%, #229ED9 100%)) !important;
+  box-shadow: var(--voice-rec-shadow, 0 4px 20px rgba(42, 171, 238, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.2));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -2323,16 +2228,14 @@ line-height: 1.4;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ef4444 !important;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7) !important;
+  background: #ef4444;
   flex-shrink: 0;
-  opacity: 1;
   animation: crbBlink 1s infinite alternate;
 }
 
 @keyframes crbBlink {
-  0% { opacity: 0.75; transform: scale(0.9); box-shadow: 0 0 6px rgba(239, 68, 68, 0.55); }
-  100% { opacity: 1; transform: scale(1.12); box-shadow: 0 0 12px rgba(239, 68, 68, 0.95); }
+  0% { opacity: 0.4; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px rgba(239, 68, 68, 0.85); }
 }
 
 .crb-timer {
@@ -2343,14 +2246,42 @@ line-height: 1.4;
   min-width: 36px;
 }
 
-/* chiziqli record waveform butunlay olib tashlandi */
+/* Chiziqli waveform o'chirildi — faqat mic atrofidagi pulse */
+.crb-wave {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  overflow: hidden;
+  pointer-events: none;
+}
+.crb-wave-bar {
+  width: 2.5px;
+  height: 3px;
+  min-height: 3px;
+  border-radius: 1.25px;
+  background: #2AABEE;
+  flex-shrink: 0;
+  transform-origin: center center;
+  will-change: height, opacity;
+}
+.chat-record-bar.cancelling .crb-wave-bar {
+  background: #1d9bf0; /* qizil emas — ko'k */
+}
 
 .crb-cancel {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  lign: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text3);
+  margin: 0 auto;
+  padding-right: 24px;
+  text-align: center;
   will-change: transform;
   transition: transform 0.05s linear, opacity 0.05s linear, color 0.15s ease;
   animation: crbSlidePrompt 1.8s infinite ease-in-out;
@@ -2377,27 +2308,24 @@ line-height: 1.4;
 }
 .chat-record-bar.cancelling .crb-dot {
   background: #ef4444 !important;
-  box-shado.grp-member-role {
-font-size: 11.5px;
-font-weight: 500;
-}mation: none;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.9) !important;
+  opacity: 1 !important;
+  animation: none;
 }
-/* ════════════.grp-member-kick {
-width: 28px;
-height: 28px;
-border-radius: 50%;
-border: none;
-display: flex;
-align-items: center;
-justify-content: center;
-cursor: pointer;
-}1ius: 50%;
+/* ═══════════════════════════════════════════════════════════════════════ PENDING UPLOAD BUBBLE ═════════════... */
+.cpb-wrap { margin-bottom: 4px; }
+.cpb-bubble { min-width: 200px; max-width: 280px; padding: 12px 14px 10px; }
+.cpb-voice, .cpb-file { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cpb-mic-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   background: var(--pal-legacy-35353b);
-  display.grp-sender-name {
-font-size: 11.5px;
-font-weight: 600;
-margin-bottom: 2px;
-}k: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pal-white);
+  flex-shrink: 0;
   border: 0.5px solid var(--pal-legacy-4d4d52);
 }
 .cpb-file-icon svg { width: 36px; height: 36px; }
@@ -3164,6 +3092,8 @@ margin-bottom: 2px;
   height: 0;
 }
 
+
+
 /* ═══════════════════════════════════════════ INSTALL GUIDE (yo'riqnoma) ═══════════════════════════════════ */
 .ig-open-btn {
   flex-shrink: 0;
@@ -3339,51 +3269,55 @@ margin-bottom: 2px;
 }
 .ig-card-x:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
-/* ═══ SCROLL STABLE: content-visibility O'CHIRILDI (sakrash sababi) ═══ */
-.chat-msg, .post, .chat-row {
-  /* faqat layout isolation — height taxmin YO'Q */
+
+/* ═══ PERF: scroll list containment (SpaceMR tezlik) ═══ */
+.chat-msg {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 64px;
   contain: layout style;
-  overflow-anchor: auto;
+}
+.post {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+  contain: layout style;
+}
+.chat-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 72px;
 }
 .chat-thread-messages,
 .feed-scroll,
-#feedList,
-#feed {
-  overflow-anchor: none; /* brauzer o'zi "tuzatib" sakratmasin */
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+#feedList {
+  /* scroll parent: layout/paint contain — overflow scroll ishlashi uchun strict emas */
+  contain: layout paint;
 }
-/* Media joy band qilsin — yuklanishda sakrash yo'q */
-.post-media, .post-media img, .cfm-img-preview {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
+/* Animatsiyalar GPU da */
 .chat-msg.anim-in,
 .msg-ticks.sending .msg-tick-hands,
-.cv-pulse {
+.cv-pulse,
+.crb-wave-bar {
   backface-visibility: hidden;
 }
 
-/* ═══ SCROLL STABLE UI (sakrashsiz) ═══ */
+
+/* ═══ ULTRA-SMOOTH UI (SpaceMR max perf) ═══ */
 #feed, #feedList, .feed-scroll {
+  content-visibility: auto;
+  contain: layout paint style;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  overflow-anchor: none;
 }
 .post {
-  contain: layout style;
-  /* translateZ/will-change doimiy emas — layer thrash scrollni buzadi */
-}
-.post-media {
-  background: var(--bg3, #16181c);
-  min-height: 1px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+  contain: layout style paint;
+  transform: translateZ(0); /* GPU layer — scroll jank yo'q */
 }
 .post-media img {
-  display: block;
-  width: 100%;
-  height: auto;
+  content-visibility: auto;
+  transform: translateZ(0);
 }
+/* Like/save tugmalar — instant feedback */
 .act-btn, .like-btn, .save-btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -3394,12 +3328,14 @@ margin-bottom: 2px;
 .like-btn:active svg {
   transform: scale(0.88);
 }
-/* will-change faqat ochiq holatda — doimiy emas */
-.sheet.show, .ua-modal.show, .composer-sheet.show,
-#cmtPanel.show, #chatThreadModal.show {
+/* Modal/sheet ochilish — GPU */
+.sheet, .ua-modal, .composer-sheet, #cmtPanel, #chatThreadModal {
+  will-change: transform, opacity;
   backface-visibility: hidden;
 }
-.spin-wrap { min-height: 48px; }
+/* Infinite scroll spinner — kam joy */
+.spin-wrap { contain: strict; min-height: 48px; }
+
 
 /* ═══ Play button circular EQ (classic realistic) ═══ */
 .chat-voice-msg { overflow: visible; }
@@ -3440,6 +3376,7 @@ margin-bottom: 2px;
 }
 .chat-msg.mine .cvm-eq-bar { background: rgba(255, 255, 255, 0.92); box-shadow: 0 0 6px rgba(255,255,255,0.25); }
 .chat-msg.theirs .cvm-eq-bar { background: var(--blue, #1d9bf0); box-shadow: 0 0 6px rgba(29,155,240,0.35); }
+
 
 /* ── Login: classic app install ── */
 .auth-install {
@@ -9278,4 +9215,21 @@ textarea:not(:focus) {
 #chatThreadModal .chat-voice-btn.recording {
   background: #1d9bf0 !important;
   box-shadow: 0 4px 18px rgba(29, 155, 240, 0.4) !important;
+}
+
+/* PRODUCTION: hech qachon oq fon (FOUC / light flash yo'q) */
+html, body, #app, .app, #homeView, #followingView, #feed, #feedList {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #e7e9ea !important;
+}
+html { color-scheme: dark !important; }
+/* Native file input hech qachon ko'rinmasin */
+input[type="file"] {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
 }

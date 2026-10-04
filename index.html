@@ -9,6 +9,11 @@
 <meta http-equiv="Expires" content="0">
 <meta name="theme-color" content="#0e1012" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#0e1012">
+<style id="critical-dark">/* critical-dark */
+html,body{background:#000!important;color:#e7e9ea!important;}
+html{color-scheme:dark;}
+</style>
+
 <meta name="description" content="SpaceMR — yopiq ijtimoiy tarmoq. Lenta, chat, guruhlar va qo'ng'iroq.">
 <meta name="application-name" content="SpaceMR">
 <meta name="format-detection" content="telephone=no">
@@ -30,6 +35,8 @@
   (function(){
     localStorage.setItem('spacemr_theme', 'dark');
     document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.style.colorScheme = 'dark';
+    document.documentElement.style.background = '#000';
   })();
   /* Kirmagan foydalanuvchi: har qanday manzil darhol /login ga (ilova yuklanishini kutmasdan).
      Asl manzil kirgandan keyin ochilishi uchun eslab qolinadi. */
@@ -89,7 +96,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <!-- Bitta yig'ilgan CSS: manba CSS/*.css (6 fayl) → scripts/build-css.mjs -->
-<link rel="stylesheet" href="./app.css?v=1791098099">
+<link rel="stylesheet" href="./app.css?v=1791099298">
 </head>
 <body>
 <div id="nf404" role="main" aria-label="404">
