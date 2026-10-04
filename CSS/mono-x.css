@@ -2919,6 +2919,13 @@ button:focus-visible,
   stroke: var(--pal-white) !important;
 }
 
+/* Yuborish holati (matn bor): doirasiz, to'ldirilgan ko'k "qog'oz samolyot" (Telegram uslubi) */
+.chat-voice-btn.is-send,
+#chatThreadModal .chat-voice-btn.is-send { background: transparent !important; box-shadow: none !important; }
+.chat-voice-btn.is-send svg.icon-send { fill: none !important; stroke: none !important; }
+.chat-voice-btn.is-send svg.icon-send .ps-wing { fill: var(--x-blue) !important; stroke: var(--x-blue) !important; stroke-width: 1; stroke-linejoin: round; }
+.chat-voice-btn.is-send svg.icon-send .ps-fold { fill: none !important; stroke: var(--bg) !important; stroke-width: 1.2; stroke-linecap: round; }
+
 /* ua-approve: blue */
 .ua-approve-btn {
   background: var(--x-blue) !important;

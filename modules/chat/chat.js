@@ -2264,6 +2264,7 @@ export function updateVoiceSendBtn() {
   const send = $('chatVoiceBtn').querySelector('.icon-send');
   if (mic)  mic.style.display  = showSend ? 'none'  : '';
   if (send) send.style.display = showSend ? ''      : 'none';
+  $('chatVoiceBtn').classList.toggle('is-send', showSend);   // yuborish holati: doirasiz, ko'k samolyot
 }
 
 
