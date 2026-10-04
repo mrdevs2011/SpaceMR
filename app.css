@@ -13337,3 +13337,21 @@ header.app-hdr.force-hide,
     padding-top: 0 !important;
   }
 }
+
+
+/* Sozlamalar: ortiqcha ajratuvchi chiziqlar yo'q */
+#settingsOverlay .divider,
+#settingsOverlay hr { display: none !important; }
+#settingsOverlay .settings-hdr,
+#settingsOverlay.show .settings-hdr {
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+#settingsOverlay .pe-card-group,
+#settingsOverlay .pe-card-group:hover {
+  border: none !important;
+  box-shadow: none !important;
+}
+#settingsOverlay.show {
+  border: none !important;
+}
