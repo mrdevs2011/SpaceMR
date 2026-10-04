@@ -609,7 +609,7 @@ function _isVoiceOwnerChatOpen() {
   return !!(threadOpen && state.currentChatId && state.currentChatId === _activeChatId);
 }
 
-function _syncMiniPlayer() {
+export function _syncMiniPlayer() {
   const bar = $('voiceMiniPlayer');
   if (!bar) return;
   const shouldShow = !!_activeAudio && !_isVoiceOwnerChatOpen();

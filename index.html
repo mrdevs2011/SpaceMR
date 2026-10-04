@@ -7,10 +7,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="theme-color" content="#0e1012" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#0e1012">
+<meta name="theme-color" content="#16181c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#16181c">
 <style id="critical-dark">/* critical-dark */
-html,body{background:#000!important;color:#e7e9ea!important;}
+html,body{background:#000000!important;color:#e7e9ea!important;}
 html{color-scheme:dark;}
 </style>
 
@@ -36,7 +36,7 @@ html{color-scheme:dark;}
     localStorage.setItem('spacemr_theme', 'dark');
     document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.style.colorScheme = 'dark';
-    document.documentElement.style.background = '#000';
+    document.documentElement.style.background = '#000000';
   })();
   /* Kirmagan foydalanuvchi: har qanday manzil darhol /login ga (ilova yuklanishini kutmasdan).
      Asl manzil kirgandan keyin ochilishi uchun eslab qolinadi. */
@@ -69,18 +69,18 @@ html{color-scheme:dark;}
 </script>
 <style>
 /* 404 — index.html ichida (redirectsiz). data-nf bo'lsa ilova yashiriladi, #nf404 ko'rinadi */
-#nf404{display:none;position:fixed;inset:0;z-index:2147483000;background:#000;color:#e7e9ea;align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+#nf404{display:none;position:fixed;inset:0;z-index:2147483000;background:#000000;color:#e7e9ea;align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 html[data-nf] #nf404{display:flex}
 html[data-nf] body>:not(#nf404){display:none!important}
-html[data-nf],html[data-nf] body{background:#000}
+html[data-nf],html[data-nf] body{background:#000000}
 #nf404 .nf-code{position:relative;display:grid;place-items:center;width:220px;height:220px;margin-bottom:8px}
 #nf404 .nf-code::before{content:"";position:absolute;inset:0;border:1px solid #2f3336;border-radius:50%}
 #nf404 .nf-orbit{position:absolute;inset:0;animation:nfspin 14s linear infinite}
-#nf404 .nf-orbit::after{content:"";position:absolute;top:-4px;left:calc(50% - 4px);width:8px;height:8px;border-radius:50%;background:#1d9bf0;box-shadow:0 0 14px 2px rgba(29,155,240,.6)}
+#nf404 .nf-orbit::after{content:"";position:absolute;top:-4px;left:calc(50% - 4px);width:8px;height:8px;border-radius:50%;background:#1d9bf0;box-shadow:0 0 14px 2px rgba(29, 155, 240, 0.5)}
 #nf404 .nf-num{font-size:64px;font-weight:800;letter-spacing:-2px;line-height:1;user-select:none}
 #nf404 h1{font-size:22px;font-weight:700;margin-top:12px}
 #nf404 p{font-size:15px;line-height:1.5;color:#71767b;margin-top:8px;max-width:360px}
-#nf404 .nf-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:28px;height:44px;padding:0 28px;border-radius:999px;background:#e7e9ea;color:#0f1419;font-size:15px;font-weight:700;text-decoration:none}
+#nf404 .nf-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:28px;height:44px;padding:0 28px;border-radius:999px;background:#e7e9ea;color:#000000;font-size:15px;font-weight:700;text-decoration:none}
 #nf404 .nf-btn:active{transform:scale(.97)}
 #nf404 .nf-brand{position:absolute;bottom:max(20px,env(safe-area-inset-bottom,0px));left:0;right:0;font-size:12px;letter-spacing:.02em;color:#71767b;opacity:.6}
 @keyframes nfspin{to{transform:rotate(360deg)}}
@@ -93,10 +93,6 @@ html[data-nf],html[data-nf] body{background:#000}
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <!-- Bitta yig'ilgan CSS: manba CSS/*.css (6 fayl) → scripts/build-css.mjs -->
 <link rel="stylesheet" href="./app.css?v=1791105600">
 </head>
@@ -149,43 +145,43 @@ html[data-nf],html[data-nf] body{background:#000}
       <span class="auth-link" id="authSwitchBtn">Ro'yxatdan o'tish</span>
     </div>
 
+    <!-- RO'YXATDAN O'TISH: ZAXIRA EMAIL — alohida modal emas, shu login kartaning ichida -->
+    <div id="regRecoveryModal" class="rc-inline">
+      <!-- 1-BOSQICH: MASLAHAT -->
+      <div id="regRecoveryStepTip" class="rc-step">
+        <div class="rc-icon-circle">
+          <img src="./svg/auth/shield.svg" alt="" class="icon" width="24" height="24">
+        </div>
+        <div class="rc-title">Zaxira email maslahati</div>
+        <p class="rc-desc">
+          Parolingizni unutib qo'ysangiz uni tiklab olish uchun zaxiraviy email manzilini kiriting!
+        </p>
+        <div class="rc-actions">
+          <button type="button" class="btn rc-btn-secondary" id="regRecoverySkipBtn">O'tkazib yuborish</button>
+          <button type="button" class="btn btn-primary rc-btn-primary-flex" id="regRecoveryAddBtn">Kiritish</button>
+        </div>
+      </div>
+
+      <!-- 2-BOSQICH: EMAIL KIRITISH -->
+      <div id="regRecoveryStepInput" class="rc-step">
+        <div class="rc-title rc-title-center">Zaxira emailni kiriting</div>
+        <p class="rc-desc-sm">
+          Parol esdan chiqqanda ushbu emailga vaqtinchalik parol boradi.
+        </p>
+        <input class="field" type="email" id="regRecoveryEmailInput" placeholder="Haqiqiy email (masalan: user@gmail.com)" autocomplete="email">
+        <div class="err-msg" id="regRecoveryEmailErr"></div>
+        <div class="rc-actions">
+          <button type="button" class="btn rc-btn-secondary" id="regRecoveryBackBtn">Ortga</button>
+          <button type="button" class="btn btn-primary rc-btn-primary-wide" id="regRecoverySubmitBtn">Kirish</button>
+        </div>
+      </div>
+    </div>
+
     <div class="auth-install" hidden>
       <button type="button" class="auth-install-btn" id="loginInstallBtn">
         <img src="./svg/action/download.svg" alt="" class="icon" width="16" height="16" aria-hidden="true">
         Ilovani o'rnatish
       </button>
-    </div>
-  </div>
-</div>
-
-<!-- REGISTRATION RECOVERY EMAIL TIP / INPUT MODAL -->
-<div id="regRecoveryModal" class="overlay">
-  <!-- 1-BOSQICH: MASLAHAT (2 ta tugma, hech qanday inputsiz) -->
-  <div id="regRecoveryStepTip" class="auth-card">
-    <div class="rc-icon-circle">
-      <img src="./svg/auth/shield.svg" alt="" class="icon" width="24" height="24">
-    </div>
-    <div class="rc-title">Zaxira email maslahati</div>
-    <p class="rc-desc">
-      Parolingizni unutib qo'ysangiz uni tiklab olish uchun zaxiraviy email manzilini kiriting!
-    </p>
-    <div class="rc-actions">
-      <button type="button" class="btn rc-btn-secondary" id="regRecoverySkipBtn">O'tkazib yuborish</button>
-      <button type="button" class="btn btn-primary rc-btn-primary-flex" id="regRecoveryAddBtn">Kiritish</button>
-    </div>
-  </div>
-
-  <!-- 2-BOSQICH: EMAIL KIRITISH (Input, Ortga va Kirish) -->
-  <div id="regRecoveryStepInput" class="auth-card">
-    <div class="rc-title rc-title-center">Zaxira emailni kiriting</div>
-    <p class="rc-desc-sm">
-      Parol esdan chiqqanda ushbu emailga vaqtinchalik parol boradi.
-    </p>
-    <input class="field" type="email" id="regRecoveryEmailInput" placeholder="Haqiqiy email (ixtiyoriy, masalan: user@gmail.com)" autocomplete="email">
-    <div class="err-msg" id="regRecoveryEmailErr"></div>
-    <div class="rc-actions">
-      <button type="button" class="btn rc-btn-secondary" id="regRecoveryBackBtn">Ortga</button>
-      <button type="button" class="btn btn-primary rc-btn-primary-wide" id="regRecoverySubmitBtn">Kirish</button>
     </div>
   </div>
 </div>
@@ -356,9 +352,9 @@ html[data-nf],html[data-nf] body{background:#000}
     </div>
     <div class="profile-grid-hdr" id="profileGridTabs" role="tablist">
       <button type="button" class="profile-grid-tab active" data-pg-tab="all" role="tab" aria-selected="true">Barchasi</button>
-      <button type="button" class="profile-grid-tab" data-pg-tab="photos" role="tab" aria-selected="false">Photos</button>
-      <button type="button" class="profile-grid-tab" data-pg-tab="text" role="tab" aria-selected="false">Text posts</button>
-      <button type="button" class="profile-grid-tab" data-pg-tab="music" role="tab" aria-selected="false">Musics</button>
+      <button type="button" class="profile-grid-tab" data-pg-tab="photos" role="tab" aria-selected="false">Rasmlar</button>
+      <button type="button" class="profile-grid-tab" data-pg-tab="text" role="tab" aria-selected="false">Matnlar</button>
+      <button type="button" class="profile-grid-tab" data-pg-tab="music" role="tab" aria-selected="false">Musiqa</button>
     </div>
     <div class="profile-grid" id="profileGrid"></div>
   </div>

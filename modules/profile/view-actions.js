@@ -6,7 +6,7 @@
 
 import { sb, state, isAdmin } from '../core/config.js';
 import { toast } from '../ui/toast.js';
-import { showConfirm } from '../core/utils.js';
+import { showConfirm, esc } from '../core/utils.js';
 
 let _initialized = false;
 let _noticeUnsub    = null;
@@ -73,7 +73,7 @@ function _injectCSS() {
 .bc-send-btn {
   display: flex; align-items: center; gap: 6px;
   background: var(--blue);
-  color: #fff;
+  color: #e7e9ea;
   border: none;
   border-radius: 8px;
   font-family: var(--font);
@@ -113,10 +113,25 @@ export async function initView() {
   if (!isAdmin()) return;
   _injectCSS();
 
+  // Har kirishda admin login + parol (server tekshiradi). Bekor qilinsa — bosh sahifa.
+  const view = document.getElementById('actionsView');
+  view?.classList.remove('adm-unlocked');
+  const { askAdmin } = await import('../admin/admin-gate.js');
+  const ok = await askAdmin();
+  if (state.view !== 'actions') return;
+  if (!ok) { (await import('../router.js')).navigateTo('home'); return; }
+  view?.classList.add('adm-unlocked');
+
   _initBroadcast();
   await _initUsers();
-  import('../admin/admin-storage.js').then(m => m.renderStorageUsage(document.getElementById('actionsBroadcastSection'))).catch(() => {});
-  import('../admin/admin-keys.js').then(m => m.renderKeysCheck(document.getElementById('actionsBroadcastSection'))).catch(() => {});
+  const anchor = document.getElementById('actionsBroadcastSection');
+  const st = await import('../admin/admin-storage.js').catch(() => null);
+  st?.renderStorageUsage(anchor);
+  import('../admin/admin-wipe.js').then(m => m.renderWipePanel(document.getElementById('actionsStorageInfo') || anchor, () => {
+    st?.removeStorageUsage();
+    st?.renderStorageUsage(anchor);
+  })).catch(() => {});
+  import('../admin/admin-keys.js').then(m => m.renderKeysCheck(anchor)).catch(() => {});
 
   _initialized = true;
 }
@@ -175,9 +190,9 @@ function _initBroadcast() {
 .bc-del-btn {
   display: flex; align-items: center; gap: 6px;
   align-self: flex-start;
-  background: color-mix(in srgb, var(--red,#ef4444) 15%, transparent);
-  color: var(--red,#ef4444);
-  border: 1px solid color-mix(in srgb, var(--red,#ef4444) 35%, transparent);
+  background: color-mix(in srgb, var(--red,#f4212e) 15%, transparent);
+  color: var(--red,#f4212e);
+  border: 1px solid color-mix(in srgb, var(--red,#f4212e) 35%, transparent);
   border-radius: 8px;
   font-family: var(--font); font-size: 12px; font-weight: 600;
   padding: 6px 12px; cursor: pointer;
@@ -209,8 +224,8 @@ function _initBroadcast() {
     if (d) {
       currentWrap.style.display = 'flex';
       currentCard.innerHTML = `
-        <div>${(d.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
-        <div class="bc-current-target"><img src="./svg/extra/icon-c9b87fab5705.svg" alt="" class="icon" width="16" height="16"> ${TARGET_LABELS[d.target] || d.target}</div>
+        <div>${esc(d.text || '').replace(/\n/g,'<br>')}</div>
+        <div class="bc-current-target"><img src="./svg/extra/icon-c9b87fab5705.svg" alt="" class="icon" width="16" height="16"> ${esc(TARGET_LABELS[d.target] || d.target)}</div>
       `;
     } else {
       currentWrap.style.display = 'none';
@@ -290,4 +305,7 @@ export function destroyView() {
   if (section) delete section.dataset.ready;
   if (_noticeUnsub) { _noticeUnsub(); _noticeUnsub = null; }
   document.getElementById('actionsStorageInfo')?.remove();
+  document.getElementById('actionsWipe')?.remove();
+  document.getElementById('actionsView')?.classList.remove('adm-unlocked');
+  import('../admin/admin-gate.js').then(m => m.closeAdminGate()).catch(() => {});
 }

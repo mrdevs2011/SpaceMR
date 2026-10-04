@@ -648,7 +648,7 @@ export async function sendGroupMessage() {
     _gMsgs = _gMsgs.filter(x => x.id !== mid);
     if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
     inp.value = userText;
-    if (postShare && setPendingPostShare) chatUI.setPendingPostShare(postShare);
+    if (postShare) chatUI.setPendingPostShare?.(postShare);
     chatUI.updateVoiceSendBtn();
     return;
   }
@@ -1486,7 +1486,7 @@ export function injectGroupsDOM() {
         <div class="sheet-handle"></div>
         <div class="sheet-title">Foydalanuvchi qo'shish</div>
         <input class="field mb-12px" id="grpAddUserInput" placeholder="@username" maxlength="32" autocomplete="off">
-        <div class="grp-form-desc-hint" id="grpAddUserErr" style="display:none;color:var(--red,#ef4444)"></div>
+        <div class="grp-form-desc-hint" id="grpAddUserErr" style="display:none;color:var(--red,#f4212e)"></div>
         <div class="grp-form-actions">
           <button class="btn-ghost" id="grpAddUserCancelBtn">Bekor qilish</button>
           <button class="btn-primary" id="grpAddUserSubmitBtn">Qo'shish</button>

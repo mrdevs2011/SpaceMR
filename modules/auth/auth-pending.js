@@ -40,7 +40,7 @@ function _updatePendingNotice(noticeData) {
   const svg = document.createElementNS(svgNS, 'svg');
   svg.setAttribute('width', '16'); svg.setAttribute('height', '16');
   svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'var(--tg-primary-blue,#ffffff)');
+  svg.setAttribute('stroke', 'var(--tg-primary-blue,#e7e9ea)');
   svg.setAttribute('stroke-width', '1.8');
   svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
   svg.style.cssText = 'flex-shrink:0;margin-top:2px';
@@ -150,7 +150,7 @@ export function showPendingScreen(reason = 'pending', blockedUntilMs = null) {
       p.textContent = '';
       if (blockedUntilMs && blockedUntilMs > _serverNow()) {
         const s1 = document.createElement('strong');
-        s1.style.color = 'var(--red,#ef4444)';
+        s1.style.color = 'var(--red,#f4212e)';
         s1.textContent = 'bloklangansiz.';
         p.append('Siz admin tomonidan vaqtinchalik ', s1, document.createElement('br'), 'Muddat tugagach avtomatik ochilasiz.');
         _startBlockedCountdown(blockedUntilMs, async () => {
@@ -159,7 +159,7 @@ export function showPendingScreen(reason = 'pending', blockedUntilMs = null) {
         });
       } else {
         const s2 = document.createElement('strong');
-        s2.style.color = 'var(--text,#fff)';
+        s2.style.color = 'var(--text,#e7e9ea)';
         s2.textContent = 'bloklangansiz.';
         p.append('Siz admin tomonidan ', s2, document.createElement('br'), "Qo'shimcha ma'lumot uchun administratorga murojaat qiling.");
         if (countdownWrap) countdownWrap.style.display = 'none';
@@ -170,7 +170,7 @@ export function showPendingScreen(reason = 'pending', blockedUntilMs = null) {
     if (p) {
       p.textContent = '';
       const s = document.createElement('strong');
-      s.style.color = 'var(--red,#ef4444)';
+      s.style.color = 'var(--red,#f4212e)';
       s.textContent = 'rad etdi.';
       p.append('Afsuski, admin sizning arizangizni ', s, document.createElement('br'), "Qo'shimcha ma'lumot uchun administratorga murojaat qiling.");
     }
@@ -191,7 +191,7 @@ export function showPendingScreen(reason = 'pending', blockedUntilMs = null) {
     if (p) {
       p.textContent = '';
       const s = document.createElement('strong');
-      s.style.color = 'var(--text,#fff)';
+      s.style.color = 'var(--text,#e7e9ea)';
       s.textContent = 'Administrator ruxsatini kuting.';
       p.append(
         "Hisobingiz muvaffaqiyatli yaratildi.", document.createElement('br'),

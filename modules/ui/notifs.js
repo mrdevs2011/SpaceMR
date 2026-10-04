@@ -140,8 +140,5 @@ export function initNotifs() {
     if (!row) return;
     openItem(row.dataset.kind, row.dataset.ref, row.dataset.mid);
   });
-  window.addEventListener('spacemr:route', () => {
-    if (state.view === 'notifs') loadNotifs();
-  });
 }
 initNotifs();

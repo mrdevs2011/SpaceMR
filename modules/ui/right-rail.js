@@ -46,7 +46,8 @@ function fit() {
     railEl.appendChild(settingsOverlay);
   }
   if (settingsOverlay && state.me?.uid) {
-    if (isDesktop && view === 'profile') {
+    // Kashf ochiq bo'lsa o'ng ustunda oddiy kartalar ko'rinadi (sozlamalar emas)
+    if (isDesktop && view === 'profile' && !exploreOpen) {
       if (!settingsOverlay.classList.contains('show')) {
         // Forma ma'lumotlarini to'ldirish (lazy)
         import('../auth/auth.js').then(m => {

@@ -2,7 +2,7 @@
  * auth-reg-recovery.js — ro'yxatdan o'tganda zaxira email maslahati
  */
 import { sb } from '../core/config.js';
-import { $, defAvi, uToEmail, lockScroll, unlockScroll } from '../core/utils.js';
+import { $, defAvi, uToEmail } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { validateStrictEmail } from './auth.js';
 
@@ -30,11 +30,11 @@ export function openRegRecoveryModal(regData) {
   }
   if (errEl) errEl.textContent = '';
 
+  // Alohida modal emas — login kartaning o'zida (forma yashiriladi, zaxira email bosqichi ko'rinadi)
   const modal = $('regRecoveryModal');
   if (modal) {
     modal.classList.add('show');
-    modal.style.display = 'flex';
-    lockScroll();
+    modal.closest('.auth-card')?.classList.add('rc-mode');
   }
 }
 
@@ -42,8 +42,7 @@ export function hideRegRecoveryModal() {
   const modal = $('regRecoveryModal');
   if (modal) {
     modal.classList.remove('show');
-    modal.style.display = 'none';
-    unlockScroll();
+    modal.closest('.auth-card')?.classList.remove('rc-mode');
   }
 }
 

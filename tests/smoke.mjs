@@ -70,10 +70,10 @@ if (process.env.TEST_EMAIL && process.env.TEST_PASSWORD) {
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   await page.goto(base, { waitUntil: 'load' });
   try {
-    await page.fill('input[type="email"], input[name="email"], input[type="text"]', process.env.TEST_EMAIL);
-    await page.fill('input[type="password"]', process.env.TEST_PASSWORD);
-    await page.keyboard.press('Enter');
-    await page.waitForSelector('#feed, .feed, .bottom-nav, .nav-btn', { timeout: 15000 });
+    await page.fill('#aUsername', process.env.TEST_EMAIL);
+    await page.fill('#aPassword', process.env.TEST_PASSWORD);
+    await page.click('#authBtn');
+    await page.waitForSelector('#app.show #feed', { timeout: 15000 });
     ok('[auth] login ishladi', true);
   } catch (e) { ok('[auth] login ishladi', false, e.message.split('\n')[0]); }
   ok('[auth] login/ilova paytida JS xatosi yo\'q', errs.length === 0, errs.slice(0, 2).join(' | '));

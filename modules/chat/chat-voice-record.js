@@ -493,7 +493,6 @@ function _stopPulse() {
   if (_pulseCtx) { try { _pulseCtx.close(); } catch(_) {} _pulseCtx = null; }
   _pulseAnalyser = null;
   _pulseLevel = 0;
-  _waveLastSample = 0;
   const vBtn = $('chatVoiceBtn');
   if (vBtn) vBtn.style.transform = '';
   ['cvPulse1', 'cvPulse2', 'cvPulse3'].forEach(id => {

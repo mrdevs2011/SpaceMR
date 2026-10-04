@@ -4,7 +4,7 @@
  */
 
 import { sb, state, isAdmin, fetchAllRows, mapProfile, mapPost, ts, purgeUserMedia } from '../core/config.js';
-import { $ } from '../core/utils.js';
+import { $, esc } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { adminResetPassword } from '../admin/admin-reset-password.js';
 
@@ -201,7 +201,7 @@ function _openBlockModal(uid, name, isBlocked) {
       const on = b.dataset.dur === _blockDur;
       b.style.cssText = 'flex:1;min-width:70px;padding:8px 10px;border-radius:8px;cursor:pointer;font:inherit;font-size:13px;'
         + 'border:1px solid ' + (on ? 'var(--blue)' : 'var(--line2)') + ';'
-        + 'background:' + (on ? 'var(--blue)' : 'var(--bg3)') + ';color:' + (on ? '#fff' : 'var(--text2)') + ';';
+        + 'background:' + (on ? 'var(--blue)' : 'var(--bg3)') + ';color:' + (on ? '#e7e9ea' : 'var(--text2)') + ';';
       b.onclick = () => { _blockDur = b.dataset.dur; _paintDur(); };
     });
     _paintDur();
@@ -297,7 +297,7 @@ function _loadUsers() {
       _renderList();
     } catch (err) {
       if (dead) return;
-      wrap.innerHTML = `<p style="padding:24px;color:var(--red)">Xatolik: ${err.message}</p>`;
+      wrap.innerHTML = `<p style="padding:24px;color:var(--red)">Xatolik: ${esc(err?.message || err)}</p>`;
     }
   };
   const schedule = () => { clearTimeout(timer); timer = setTimeout(load, 300); };
@@ -379,7 +379,7 @@ function _ensurePendingMiniCSS() {
   gap: 10px; cursor: pointer;
 }
 .pmini-locked-count { font-size: 13px; font-weight: 700; color: var(--text); }
-.pmini-locked-hint { font-size: 12px; color: var(--blue,#ffffff); font-weight: 600; white-space: nowrap; }
+.pmini-locked-hint { font-size: 12px; color: var(--blue,#e7e9ea); font-weight: 600; white-space: nowrap; }
 .pmini-card {
   background: var(--bg2); border: 1px solid var(--line); border-radius: 12px;
   padding: 12px; display: flex; align-items: center; gap: 10px;
@@ -398,8 +398,8 @@ function _ensurePendingMiniCSS() {
   border: none; border-radius: 8px; font-family: var(--font); font-size: 12px; font-weight: 600;
   padding: 7px 11px; cursor: pointer;  white-space: nowrap;
 }
-.pmini-approve-btn { background: var(--green,#22c55e); color: #fff; }
-.pmini-reject-btn { background: color-mix(in srgb, var(--red,#ef4444) 15%, transparent); color: var(--red,#ef4444); }
+.pmini-approve-btn { background: var(--green,#00ba7c); color: #e7e9ea; }
+.pmini-reject-btn { background: color-mix(in srgb, var(--red,#f4212e) 15%, transparent); color: var(--red,#f4212e); }
 .pmini-approve-btn:disabled, .pmini-reject-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
   document.head.appendChild(s);

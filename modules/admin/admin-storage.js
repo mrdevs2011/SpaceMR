@@ -13,7 +13,7 @@ export async function renderStorageUsage(anchor) {
   if (!anchor || document.getElementById('actionsStorageInfo')) return;
   const box = document.createElement('div');
   box.id = 'actionsStorageInfo';
-  box.style.cssText = 'margin:14px 18px;font-size:12.5px;color:var(--text3,#767676);';
+  box.style.cssText = 'margin:14px 18px;font-size:12.5px;color:var(--text3,#71767b);';
   anchor.insertAdjacentElement('afterend', box);
   try {
     const { data, error } = await sb.rpc('admin_storage_usage');
@@ -23,9 +23,9 @@ export async function renderStorageUsage(anchor) {
     const warn = used / LIMIT_BYTES >= WARN_AT;
     box.innerHTML =
       `<div>Storage: <b>${_fmt(used)}</b> / ${_fmt(LIMIT_BYTES)} (${pct}%)` +
-      (warn ? ' — <span style="color:var(--red,#ef4444)">to\'lib qoldi, Pro\'ga o\'tishni o\'ylang</span>' : '') + '</div>' +
-      `<div style="height:4px;border-radius:4px;margin-top:6px;background:var(--line,rgba(128,128,128,.25));overflow:hidden">` +
-      `<div style="height:100%;width:${pct}%;background:${warn ? 'var(--red,#ef4444)' : 'var(--text3,#767676)'}"></div></div>`;
+      (warn ? ' — <span style="color:var(--red,#f4212e)">to\'lib qoldi, Pro\'ga o\'tishni o\'ylang</span>' : '') + '</div>' +
+      `<div style="height:4px;border-radius:4px;margin-top:6px;background:var(--line,rgba(113, 118, 123, 0.2));overflow:hidden">` +
+      `<div style="height:100%;width:${pct}%;background:${warn ? 'var(--red,#f4212e)' : 'var(--text3,#71767b)'}"></div></div>`;
   } catch (_) {
     box.textContent = 'Storage sarfi hisoblanmadi (DB patch 015 ishga tushirilmagan).';
   }

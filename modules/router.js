@@ -294,8 +294,8 @@ function _toggleProfileSearch() {
     wrap.style.cssText = [
       'display:flex', 'align-items:center', 'gap:8px',
       'margin:8px 16px 4px', 'padding:9px 14px',
-      'background:var(--bg4,rgba(255,255,255,0.06))',
-      'border:1.5px solid var(--line,rgba(255,255,255,0.10))',
+      'background:var(--bg4,rgba(231, 233, 234, 0.05))',
+      'border:1.5px solid var(--line,rgba(231, 233, 234, 0.1))',
       'border-radius:14px',
     ].join(';');
     wrap.innerHTML = `

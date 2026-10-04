@@ -1,5 +1,5 @@
 import { busEmit } from '../core/rt-bus.js';
-import { sb, state, CAP_LIMIT, getMediaUrl, isAdmin, mapProfile, MEDIA_BUCKET } from '../core/config.js';
+import { sb, state, CAP_LIMIT, getMediaUrl, isAdmin, mapProfile, mapPost, MEDIA_BUCKET } from '../core/config.js';
 import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          showConfirm,
          dlFile, openZoom, showHeartBurst, fmtCount } from '../core/utils.js';
@@ -36,7 +36,7 @@ export function buildCaption(text, postId) {
   if (text.length <= CAP_LIMIT) return `<div class="post-caption">${escaped}</div>`;
   const short = renderMarkdown(text.substring(0, CAP_LIMIT));
   return `<div class="post-caption cap-collapsed" data-postid="${postId}">
-    <span class="cap-short">${short}<span class="cap-more">...ko'proq</span></span>
+    <span class="cap-short">${short}…<span class="cap-more">Ko'proq ko'rsatish</span></span>
     <span class="cap-full">${escaped}<span class="cap-more c-blue-theme">kamroq</span></span>
   </div>`;
 }
@@ -126,6 +126,7 @@ export async function renderFeedTo(feedEl, posts) {
     if (state._userCache[uid]) {
       uMap[uid] = {
         fullName: state._userCache[uid].fullName,
+        username: state._userCache[uid].username,
         avatar: state._userCache[uid].avatar || defAvi(state._userCache[uid].fullName)
       };
     }
@@ -144,7 +145,7 @@ export async function renderFeedTo(feedEl, posts) {
         avatar: d.avatar,
         username: d.username
       };
-      uMap[u] = { fullName: d.fullName, avatar: d.avatar || defAvi(d.fullName) };
+      uMap[u] = { fullName: d.fullName, username: d.username, avatar: d.avatar || defAvi(d.fullName) };
     });
   } else {
   }

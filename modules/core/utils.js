@@ -58,7 +58,8 @@ export function renderMarkdown(rawText) {
     return '\u0000TG' + idx + '\u0000';
   });
 
-  s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
+  // \u0000 (placeholder) va qo'shtirnoqlarda to'xtaydi — aks holda tayyor <a> tegi href ichiga tushib, atribut in'ektsiyasi bo'ladi
+  s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, '<a href="$1" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
 
   s = s.replace(/\u0000TG(\d+)\u0000/g, (_m, idx) => htmlTags[parseInt(idx, 10)]);
 
@@ -124,10 +125,19 @@ export function renderMarkdown(rawText) {
 }
 
 
+/* X uslubidagi qisqa vaqt: "hozir", "5 daq", "3 soat", "4-okt", "4-okt, 2025" */
+const UZ_MON = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
 export const fmt  = ts => {
   if (!ts) return '';
   const d = new Date(ts);
-  return new Intl.DateTimeFormat('en', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }).format(d);
+  const t = d.getTime();
+  if (Number.isNaN(t)) return '';
+  const sec = Math.max(0, (Date.now() - t) / 1000);
+  if (sec < 60) return 'hozir';
+  if (sec < 3600) return Math.floor(sec / 60) + ' daq';
+  if (sec < 86400) return Math.floor(sec / 3600) + ' soat';
+  const day = `${d.getDate()}-${UZ_MON[d.getMonth()]}`;
+  return d.getFullYear() === new Date().getFullYear() ? day : `${day}, ${d.getFullYear()}`;
 };
 
 /* Faqat soat:minut (chat xabarlari ostidagi vaqt uchun, masalan "11:55") */
@@ -179,16 +189,16 @@ export function formatLastSeen(lastSeenAt) {
 export const initL  = n  => (n && n[0] ? n[0].toUpperCase() : 'U');
 export const uToEmail = u => `${u.toLowerCase().replace(/[^a-z0-9_]/g,'')}@gmail.com`;
 export const clr    = n  => {
-  const c = ['#2a2a2a','#333333','#3d3d3d','#474747','#525252','#5c5c5c'];
+  const c = ['#202327','#2f3336','#71767b'];
   return c[Math.abs((n||'').length) % c.length];
 };
 export const defAvi = n => {
   const l = initL(n), c = clr(n);
-  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='${encodeURIComponent(c)}' rx='50'/%3E%3Ctext x='50' y='68' text-anchor='middle' fill='white' font-size='44' font-weight='600' font-family='DM Sans,sans-serif'%3E${l}%3C/text%3E%3C/svg%3E`;
+  return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='${encodeURIComponent(c)}' rx='50'/%3E%3Ctext x='50' y='68' text-anchor='middle' fill='%23e7e9ea' font-size='44' font-weight='700' font-family='-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif'%3E${l}%3C/text%3E%3C/svg%3E`;
 };
 
 /* ── Tasdiqlash dialog ───────────────────────────────────────────────────── */
-export function showConfirm(msg, onOk, title = 'Aniqmi?', okLabel = 'Mayli') {
+export function showConfirm(msg, onOk, title = 'Aniqmi?', okLabel = 'Mayli', onCancel = null) {
   const confirmTitle   = $('confirmTitle');
   const confirmMsg     = $('confirmMsg');
   const confirmOverlay = $('confirmOverlay');
@@ -206,7 +216,7 @@ export function showConfirm(msg, onOk, title = 'Aniqmi?', okLabel = 'Mayli') {
   const newOk  = ok.cloneNode(true);
   ok.parentNode.replaceChild(newOk, ok);
   newOk.onclick  = () => { close(); onOk(); };
-  cancel.onclick = close;
+  cancel.onclick = () => { close(); onCancel?.(); };
 }
 
 /* ── Heart burst animation ────────────────────────────────────────────── */

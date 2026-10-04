@@ -10,6 +10,7 @@ import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { assertAllowedUpload } from '../core/upload-policy.js';
+import { getChatFileIcon } from '../core/file-icons.js';
 
 /* ── Sana yordamchilari (Telegram uslubidagi separatorlar) ─────────────── */
 

@@ -655,6 +655,7 @@ import {
   reattachActiveVoiceUI as _reattachActiveVoiceUI,
   registerLocalVoiceUrl,
   getLocalVoiceUrl,
+  _syncMiniPlayer,
 } from './chat-voice-player.js';
 import {
   _toDateSafe,
@@ -1105,7 +1106,7 @@ async function _appendGroupRows(root, term = '') {
       const typeIcon = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="9" height="9">`;
       const badgeClass = 'chat-row-grp-badge--group';
       const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
-      const unameHtml = g.username ? `<span style="font-size:11.5px;color:var(--blue,#4a9eff);font-weight:500;margin-left:6px;">@${esc(g.username)}</span>` : '';
+      const unameHtml = g.username ? `<span style="font-size:11.5px;color:var(--blue,#1d9bf0);font-weight:500;margin-left:6px;">@${esc(g.username)}</span>` : '';
 
       return `<div class="chat-row${unread ? ' unread' : ''}" data-gid="${g.id}">
         <div class="chat-avi">
@@ -2216,8 +2217,9 @@ export function renderChatPostCard(ps) {
   const authorAvi = p.authorAvatar ? esc(p.authorAvatar) : '';
   const postText = (p.text || '').trim();
   const mediaUrl = p.mediaUrl ? esc(p.mediaUrl) : '';
-  const postId = esc(p.id || '');
-  const userId = esc(p.userId || '');
+  // ID'lar inline onclick JS satriga tushadi — faqat UUID/raqam belgilariga ruxsat (esc bu kontekstda yetarli emas)
+  const postId = String(p.id || '').replace(/[^A-Za-z0-9_-]/g, '');
+  const userId = String(p.userId || '').replace(/[^A-Za-z0-9_-]/g, '');
 
   const isPostDeleted = chatState._postExistenceMap.get(p.id) === false;
   const isUserDeleted = chatState._userExistenceMap.get(p.userId) === false;

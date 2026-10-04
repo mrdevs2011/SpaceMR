@@ -162,7 +162,7 @@ export async function purgeUserMedia(uid) {
 // Constants
 // Yuklash limiti: 49.9 MB (Supabase Free storage chegarasi 50 MB dan oshmasin)
 export const MAX_FILE = Math.floor(49.9 * 1024 * 1024);
-export const CAP_LIMIT = 100;
+export const CAP_LIMIT = 280; // X kabi: 280 belgigacha to'liq ko'rinadi
 
 /** Joriy foydalanuvchi admin (profiles.is_admin) */
 export function isAdmin() {

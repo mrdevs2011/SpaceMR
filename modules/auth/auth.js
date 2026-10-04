@@ -5,7 +5,7 @@ import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEna
 import { startChatsWatcher, stopChatsWatcher, repaintNoticeBanner } from '../chat/chat.js';
 import { startBus, stopBus, busOn, trackPresence, untrackPresence } from '../core/rt-bus.js';
 import { startCallWatcher, stopCallWatcher } from '../call/call.js';
-import { clearAllCache, cachePosts, getCachedPosts, clearRuntimeCache, getCachedProfile } from '../core/local-cache.js';
+import { clearAllCache, cachePosts, getCachedPosts, clearRuntimeCache, getCachedProfile, cacheProfile } from '../core/local-cache.js';
 import { openAviCrop } from '../ui/avi-crop.js';
 import { initAuthSettings, paintSettingsRecoveryRow } from './auth-settings.js';
 import { bindEye, bindMeter, shake } from './pwd-ui.js';

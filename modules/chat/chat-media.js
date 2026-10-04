@@ -25,7 +25,7 @@ let _bound = false;
 let _viewer = null;
 let _avatar = '';
 
-const TABS = [['all', 'Barchasi'], ['photos', 'Photos'], ['music', 'Musics'], ['file', 'Files']];
+const TABS = [['all', 'Barchasi'], ['photos', 'Rasmlar'], ['music', 'Musiqa'], ['file', 'Fayllar']];
 
 function _kind(m) {
   const mime = (m.mediaType || '').toLowerCase();

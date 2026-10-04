@@ -220,8 +220,8 @@ export async function openDetail(id) {
     mediaHtml = `<div class="dm-media"><img src="${esc(p.mediaUrl)}" loading="lazy"></div>`;
   }
 
-  const likeColor = isLiked ? '#f04060' : 'currentColor';
-  const likeFill  = isLiked ? '#f04060' : 'none';
+  const likeColor = isLiked ? '#f91880' : 'currentColor';
+  const likeFill  = isLiked ? '#f91880' : 'none';
 
   $('detailContent').innerHTML = `
     <div class="dm-handle"></div>
@@ -305,14 +305,14 @@ export async function doLikeGen(id, btn) {
     state.myLikedPosts.add(id);
     const { error } = await sb.from('post_likes').insert({ post_id: id, user_id: state.me.uid });
     if (error && error.code !== '23505') { state.myLikedPosts.delete(id); return; }
-    btn.classList.add('liked'); svg.setAttribute('fill','#f04060'); svg.setAttribute('stroke','#f04060');
+    btn.classList.add('liked'); svg.setAttribute('fill','#f91880'); svg.setAttribute('stroke','#f91880');
   }
 }
 
 /* ── Other user's profile modal ──────────────────────────────────────── */
 
 /* ── Boshqa foydalanuvchi profili: tablar (Barchasi / Photos / Text / Musics) ── */
-const UP_TABS = [['all','Barchasi'],['photos','Photos'],['text','Text posts'],['music','Musics']];
+const UP_TABS = [['all','Barchasi'],['photos','Rasmlar'],['text','Matnlar'],['music','Musiqa']];
 let _upTab = 'all';
 
 function _upGridHtml(posts, uid, tab) {
@@ -379,16 +379,17 @@ export async function renderUserProfileModal(uid) {
   const gridHTML = _upGridHtml(userPublicPosts, uid, _upTab);
 
   $('upBody').innerHTML = `
-    <div class="up-head"><div class="up-avi-wrap"><div class="up-avi" id="upAviImg" style="cursor:pointer" title="Rasmni ko'rish"><img class="w-full h-full object-cover" src="${esc(av)}" onerror="this.src='${defAvi(ud.fullName || 'U')}'"></div></div></div>
+    <div class="up-hero">
+      <div class="up-avi" id="upAviImg" title="Rasmni ko'rish"><img class="w-full h-full object-cover" src="${esc(av)}" alt="" onerror="this.src='${defAvi(ud.fullName || 'U')}'"></div>
+      <button type="button" id="upChatBtn" class="up-chat-btn">
+        <img src="./svg/extra/icon-ea9c18b62f47.svg" alt="" class="icon" width="18" height="18">
+        Chat yozish
+      </button>
+    </div>
     <div class="up-info">
       <div class="up-name">${esc(ud.fullName||'Noma\'lum')}</div>
+      ${ud.username ? `<div class="up-username">@${esc(ud.username)}</div>` : ''}
       ${ud.bio ? `<div class="up-bio">${esc(ud.bio)}</div>` : ''}
-      <div style="display:flex; justify-content:center; margin-top:12px;">
-        <button id="upChatBtn" style="background:var(--accent, #007bff); color:#fff; border:none; padding:8px 20px; border-radius:24px; font-weight:600; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
-          <img src="./svg/extra/icon-ea9c18b62f47.svg" alt="" class="icon" width="18" height="18">
-          Chat yozish
-        </button>
-      </div>
       <div class="up-stats">
         <div class="up-stat"><div class="up-stat-val">${userPublicPosts.length}</div><div class="up-stat-lbl">postlar</div></div>
         <div class="up-stat"><div class="up-stat-val">${totalLikes}</div><div class="up-stat-lbl">yoqtirishlar</div></div>

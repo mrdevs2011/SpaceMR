@@ -53,7 +53,7 @@ export function paintSettingsRecoveryRow() {
   const rec = state.me.recoveryEmail;
   if (rec) {
     hintEl.textContent = `Faol: ${rec}`;
-    hintEl.style.color = 'var(--green, #22c55e)';
+    hintEl.style.color = 'var(--green, #00ba7c)';
   } else {
     hintEl.textContent = "O'rnatilmagan (parolni tiklash uchun qo'shing)";
     hintEl.style.color = 'var(--tg-primary-blue, #1d9bf0)';

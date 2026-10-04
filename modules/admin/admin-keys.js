@@ -12,7 +12,7 @@ const ICO = {
   key: '<img src="./svg/admin/key.svg" alt="" class="icon" width="14" height="14" style="vertical-align:-2px;margin-right:5px">',
 };
 const _row = (kind, text) => { const s = document.createElement('span'); s.innerHTML = ICO[kind] || ''; s.append(text); return s; };
-const COL = { ok: 'inherit', warn: 'var(--text3,#767676)', fail: 'var(--red,#ef4444)' };
+const COL = { ok: 'inherit', warn: 'var(--text3,#71767b)', fail: 'var(--red,#f4212e)' };
 
 const withTimeout = (p, ms, msg) => Promise.race([
   p, new Promise((_, rej) => setTimeout(() => rej(new Error(msg)), ms)),
@@ -136,7 +136,7 @@ function paint(box, groups) {
   box.appendChild(sum);
   for (const g of groups) {
     const h = document.createElement('div');
-    h.style.cssText = 'margin:10px 0 3px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3,#767676)';
+    h.style.cssText = 'margin:10px 0 3px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3,#71767b)';
     h.textContent = g.title;
     box.appendChild(h);
     for (const r of g.rows) {
@@ -147,7 +147,7 @@ function paint(box, groups) {
     }
   }
   const t = document.createElement('div');
-  t.style.cssText = 'margin-top:8px;font-size:11.5px;color:var(--text3,#767676)';
+  t.style.cssText = 'margin-top:8px;font-size:11.5px;color:var(--text3,#71767b)';
   t.textContent = new Date().toLocaleTimeString() + ' da tekshirildi';
   box.appendChild(t);
 }
@@ -161,7 +161,7 @@ export async function renderKeysCheck(anchor) {
   btn.type = 'button';
   const setBtn = txt => { btn.replaceChildren(_row('key', txt)); };
   setBtn('Kalitlarni tekshirish');
-  btn.style.cssText = 'padding:8px 14px;border-radius:10px;border:1px solid var(--line,rgba(128,128,128,.35));background:transparent;color:inherit;font-size:13px;cursor:pointer';
+  btn.style.cssText = 'padding:8px 14px;border-radius:10px;border:1px solid var(--line,rgba(113, 118, 123, 0.2));background:transparent;color:inherit;font-size:13px;cursor:pointer';
   const box = document.createElement('div');
   wrap.append(btn, box);
   anchor.insertAdjacentElement('afterend', wrap);

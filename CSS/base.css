@@ -48,8 +48,8 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 /* Light mode auth */
 /* Toast theme aware */
 /* [data-theme="dark"] #toast → to'liq CSS/dark-theme-fix.css'da qayta belgilangan (keyinroq yuklanadi) — bu y... */
-[data-theme="dark"] #toast.toast-success { background: var(--pal-gray-900); border-color: #155234; }
-[data-theme="dark"] #toast.toast-error { background: var(--pal-gray-900); border-color: #521529; }
+[data-theme="dark"] #toast.toast-success { background: var(--pal-gray-900); border-color: #2f3336; }
+[data-theme="dark"] #toast.toast-error { background: var(--pal-gray-900); border-color: #202327; }
 [data-theme="dark"] #toast.toast-info { background: var(--pal-gray-700); border-color: var(--pal-gray-700); }
 /* Empty state theme aware */
 [data-theme="dark"] .empty-search-icon { background: var(--pal-gray-900); border: 1px solid var(--pal-gray-800); }
@@ -132,38 +132,24 @@ img.icon:not([width]) {
 #forgotPasswordHint {
   display: none;
   font-size: 11.5px;
-  color: var(--text3, #888);
+  color: var(--text3, #71767b);
   margin-top: 4px;
   text-align: right;
   line-height: 1.4;
 }
 
 /* ─── Recovery modal ─── */
-#regRecoveryModal.overlay {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 99990;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  background: rgba(0,0,0,0.85);
-}
-#regRecoveryStepTip.auth-card,
-#regRecoveryStepInput.auth-card {
-  max-width: 390px;
-  width: 90%;
-  margin: auto;
-  background: #000000;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.95);
-  border: 1px solid rgba(255,255,255,0.14);
-}
-#regRecoveryStepTip.auth-card { text-align: center; }
-#regRecoveryStepInput.auth-card { text-align: left; display: none; }
+/* Zaxira email — login kartaning ichida (alohida modal emas) */
+#regRecoveryModal.rc-inline { display: none; }
+#regRecoveryModal.rc-inline.show { display: block; }
+#authWrap .auth-card.rc-mode > :not(.auth-logo):not(#regRecoveryModal) { display: none !important; }
+#regRecoveryStepTip.rc-step { text-align: center; }
+#regRecoveryStepInput.rc-step { text-align: left; display: none; }
 .rc-icon-circle {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(29,155,240,0.15);
+  background: rgba(29, 155, 240, 0.1);
   color: var(--tg-primary-blue, #1d9bf0);
   display: inline-flex;
   align-items: center;
@@ -173,18 +159,18 @@ img.icon:not([width]) {
 .rc-title {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--text, #fff);
+  color: var(--text, #e7e9ea);
   margin-bottom: 8px;
 }
 .rc-desc {
   font-size: 14px;
-  color: var(--text2, #ccc);
+  color: var(--text2, #e7e9ea);
   line-height: 1.55;
   margin: 0 0 20px 0;
 }
 .rc-desc-sm {
   font-size: 13px;
-  color: var(--text3, #888);
+  color: var(--text3, #71767b);
   margin: 0 0 16px 0;
   text-align: center;
   line-height: 1.45;
@@ -196,9 +182,9 @@ img.icon:not([width]) {
 .rc-btn-secondary {
   flex: 1;
   height: 42px;
-  background: rgba(255,255,255,0.08);
-  color: var(--text2, #ccc);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(231, 233, 234, 0.1);
+  color: var(--text2, #e7e9ea);
+  border: 1px solid rgba(231, 233, 234, 0.1);
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;

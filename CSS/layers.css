@@ -59,8 +59,8 @@ svg { color: inherit; }
   border-radius: 16px;
   padding: 1px;
   background: var(--green);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#e7e9ea 0 0) content-box, linear-gradient(#e7e9ea 0 0);
+  mask: linear-gradient(#e7e9ea 0 0) content-box, linear-gradient(#e7e9ea 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
@@ -106,8 +106,8 @@ svg { color: inherit; }
 /* Danger button glow on hover */
 /* ═══════════════════════════════════════════ EMPTY STATES — Enhanced with CTA ══════════════════════════════... */
 .empty, .empty-search { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 48px 24px 56px; text-align: center; color: var(--text2); font-size: 14px; position: relative; }
-.empty--home { margin: 24px 12px; padding: 56px 28px 48px; border-radius: 20px; border: 1px solid var(--pal-white-06); background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); overflow: hidden; }
-.empty-glow { position: absolute; top: -40%; left: 50%; transform: translateX(-50%); width: 280px; height: 180px; background: radial-gradient(ellipse, rgba(29,155,240,0.12) 0%, transparent 70%); pointer-events: none; }
+.empty--home { margin: 24px 12px; padding: 56px 28px 48px; border-radius: 20px; border: 1px solid var(--pal-white-06); background: linear-gradient(180deg, rgba(231, 233, 234, 0.05) 0%, rgba(231, 233, 234, 0.05) 100%); overflow: hidden; }
+.empty-glow { position: absolute; top: -40%; left: 50%; transform: translateX(-50%); width: 280px; height: 180px; background: radial-gradient(ellipse, rgba(29, 155, 240, 0.1) 0%, transparent 70%); pointer-events: none; }
 .empty-icon, .empty-search-icon {
   width: 64px;
   height: 64px;
@@ -115,7 +115,7 @@ svg { color: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.05);
+  background: rgba(231, 233, 234, 0.05);
   border: 1px solid var(--pal-white-08);
   color: var(--text2);
   position: relative;
@@ -153,7 +153,7 @@ svg { color: inherit; }
 .up-grid-cell-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--pal-black-55) 0%, var(--pal-black-25) 45%, rgba(0,0,0,.12) 100%);
+  background: linear-gradient(to top, var(--pal-black-55) 0%, var(--pal-black-25) 45%, rgba(0, 0, 0, 0.1) 100%);
   display: flex;
   flex-direction: row;
   align-items: flex-end;
@@ -217,7 +217,7 @@ svg { color: inherit; }
 .upload-drop { position: relative; }
 /* ═══════════════════════════════════════════ 9. TOAST NOTIFICATIONS — More Variants ════════════════════════... */
 /* Warning toast */
-#toast.toast-warning { border-color: var(--amber); box-shadow: 0 8px 32px var(--pal-gray-700); background: #131313; }
+#toast.toast-warning { border-color: var(--amber); box-shadow: 0 8px 32px var(--pal-gray-700); background: #16181c; }
 /* Toast with icon */
 .toast-with-icon { display: flex; align-items: center; gap: 10px; }
 .toast-icon { width: 20px; height: 20px; flex-shrink: 0; }
@@ -229,7 +229,7 @@ svg { color: inherit; }
 .toast-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--blue); border-radius: 0 0 50px 50px; transform-origin: left;  }
 /* ═══════════════════════════════════════════ 11. ACCESSIBILITY — Additional Features ═══════════════════════... */
 /* High contrast mode */
-[data-contrast="high"] { --line: var(--pal-legacy-525257); --line2: #848487; --line3: var(--pal-legacy-b5b5b7); --text: var(--pal-white); --text2: #e0e0e0; --text3: #b0b0b0; }
+[data-contrast="high"] { --line: var(--pal-legacy-525257); --line2: #71767b; --line3: var(--pal-legacy-b5b5b7); --text: var(--pal-white); --text2: #e7e9ea; --text3: #e7e9ea; }
 [data-contrast="high"] .post, [data-contrast="high"] .sheet, [data-contrast="high"] .modal-content { border-width: 2px; }
 /* Font size adjustments */
 [data-font-size="large"] { font-size: 18px; }
@@ -411,8 +411,8 @@ svg { color: inherit; }
 .visible { visibility: visible; }
 .opacity-30 { opacity: 1; }
 .opacity-60 { opacity: 1; }
-.shadow { box-shadow: 0 1px 3px rgba(0, 0, 0,0.1), 0 1px 2px rgba(0, 0, 0,0.06); }
-.shadow-lg { box-shadow: 0 10px 15px rgba(0, 0, 0,0.1), 0 4px 6px rgba(0, 0, 0,0.05); }
+.shadow { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05); }
+.shadow-lg { box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05); }
 /* ═══════════════════════════════════════════════════════════════════ MODAL Z-INDEX TARTIB (global override)... */
 /* Chat thread modal */
 
@@ -505,7 +505,7 @@ svg { color: inherit; }
 [data-theme="dark"] .file-card { background: var(--pal-gray-900); border: 0.5px solid var(--pal-gray-800); box-shadow: inset 0 1px 0 var(--pal-gray-900); }
 [data-theme="dark"] .file-card:hover { background: var(--pal-gray-900); border-color: var(--pal-legacy-2d2d33); }
 [data-theme="dark"] .file-dl { background: var(--pal-gray-900); border: 0.5px solid var(--pal-gray-900); color: var(--blue2); box-shadow: inset 0 1px 0 var(--pal-gray-900); }
-[data-theme="dark"] .file-dl:hover { background: var(--pal-gray-900); border-color: #3a3a3a; }
+[data-theme="dark"] .file-dl:hover { background: var(--pal-gray-900); border-color: #2f3336; }
 /* ══════════════════════════════════════════ 13. CHAT — Xabar pufakchalari ══════════════════════════════════... */
 [data-theme="dark"] .chat-row:hover { background: var(--pal-gray-900); }
 [data-theme="dark"] .chat-row:active { background: var(--pal-gray-900); }
@@ -536,7 +536,7 @@ svg { color: inherit; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--pal-gray-900); border-radius: 3px; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--pal-gray-800); }
 /* ══════════════════════════════════════════ 24. SELECTION ══════════════════════════════════════════ */
-[data-theme="dark"] ::selection { background: #3d3d3d; color: var(--pal-white); }
+[data-theme="dark"] ::selection { background: #2f3336; color: var(--pal-white); }
 /* ══════════════════════════════════════════ 25. REEL — Overlays ══════════════════════════════════════════ */
 [data-theme="dark"] .reel { background: var(--pal-black); }
 [data-theme="dark"] .reel-top-btn { background: var(--pal-black); border: 0.5px solid var(--pal-gray-900); }
@@ -544,7 +544,7 @@ svg { color: inherit; }
 [data-theme="dark"] .theme-btn { color: var(--text2); }
 [data-theme="dark"] .theme-btn:hover { background: var(--pal-gray-900); color: var(--text); }
 /* ══════════════════════════════════════════ 27. FLOATING UPLOAD BAR — Pill ═════════════════════════════════... */
-[data-theme="dark"] .upload-float-bar { background: #000; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
+[data-theme="dark"] .upload-float-bar { background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8); }
 [data-theme="dark"] .upload-drop { background: var(--pal-black); border: 1px dashed var(--pal-gray-900); }
 [data-theme="dark"] .upload-drop:hover { border-color: var(--pal-white); background: var(--pal-black); }
 [data-theme="dark"] .upload-drop.drag-over { border-color: var(--blue); background: var(--pal-gray-900); box-shadow: 0 0 0 3px var(--pal-gray-900), inset 0 1px 0 var(--pal-gray-900); }
@@ -568,7 +568,7 @@ svg { color: inherit; }
 .app-hdr, [data-theme="dark"] .app-hdr { box-shadow: none; }
 /* Mobile: frosted glass blur */
 @media (max-width: 1099px) {
-  .app-hdr, [data-theme="dark"] .app-hdr { background: rgba(16, 16, 16, 0.72); }
+  .app-hdr, [data-theme="dark"] .app-hdr { background: rgba(0, 0, 0, 0.8); }
 }
 /* Desktop: shaffof qolsin */
 @media (min-width: 1100px) {
@@ -640,7 +640,7 @@ svg { color: inherit; }
 .search-overlay-box, [data-theme="dark"] .search-overlay-box { border: none; box-shadow: none; }
 .search-overlay-close, [data-theme="dark"] .search-overlay-close { border: none; box-shadow: none; }
 /* Upload float bar */
-.upload-float-bar, [data-theme="dark"] .upload-float-bar { border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
+.upload-float-bar, [data-theme="dark"] .upload-float-bar { border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8); }
 /* Upload drop zone — border/hover feedback owned by nav.css, no override here */
 /* Empty state icons */
 .feed-empty-icon, .empty-icon, .empty-search-icon, [data-theme="dark"] .feed-empty-icon, [data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { border: none; box-shadow: none; }
@@ -766,7 +766,7 @@ svg { color: inherit; }
 /* Context menu — align to same palette (sibling of #chatThreadModal) */
 
 /* Lightbox backdrop */
-#chatLightbox { background: rgba(0, 0, 0,0.92); }
+#chatLightbox { background: #000000; }
 /* ─── 00-components.core ─── */
 /* ═══════════════════════════════════════════════════════════════ SpaceMR — CORE COMPONENTS (single source of... */
 /* 1. Buttons */
@@ -854,7 +854,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 /* ─── post-composer ─── */
 /* ═══════════════════════════════════════════ POST COMPOSER — X.com uslubidagi post yaratish oynasi Faqat #up... */
 /* Orqa fon — to'liq qora emas, 0.8 shaffoflik (sahifa sal ko'rinadi) */
-#uploadOverlay { background: #000; }
+#uploadOverlay { background: #000000; }
 #uploadOverlay .composer-sheet {
   width: 100%;
   max-width: 500px;
@@ -893,7 +893,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
   padding: 6px 0 8px;
   margin: 0;
 }
-#uploadOverlay .composer-input::placeholder { color: #6e6e6e; }
+#uploadOverlay .composer-input::placeholder { color: #71767b; }
 #uploadOverlay #previewArea { margin: 4px 0 8px; }
 #uploadOverlay .preview-wrap { margin-bottom: 0; }
 /* Visibility: bitta matnli toggle (x.com "Everyone can reply" kabi) */
@@ -914,17 +914,17 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
   color: var(--blue3, var(--blue));
   cursor: pointer;
 }
-#uploadOverlay .upload-drop:hover { background: #17384d; box-shadow: none; }
-#uploadOverlay .upload-drop.drag-over { background: #17384d; transform: none; box-shadow: none; }
+#uploadOverlay .upload-drop:hover { background: #2f3336; box-shadow: none; }
+#uploadOverlay .upload-drop.drag-over { background: #2f3336; transform: none; box-shadow: none; }
 @media (max-width: 480px) {
   #uploadOverlay { padding: 0; align-items: flex-end; }
   #uploadOverlay .composer-sheet { max-width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0; border-bottom: none; }
 }
 /* Fayl sahifaga sudralganda — yengil ko'rsatkich */
-body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: 16px; background: rgba(255, 255, 255, .06); pointer-events: none; z-index: 9999; }
+body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: 16px; background: rgba(231, 233, 234, 0.05); pointer-events: none; z-index: 9999; }
 /* ─── card-sheets ─── */
 /* ═══════════════════════════════════════════ CARD SHEETS — guruh/kanal yaratish oynalari post composer bilan... */
-#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: #000; align-items: center; justify-content: center; padding: 20px; }
+#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: #000000; align-items: center; justify-content: center; padding: 20px; }
 :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet {
   width: 100%;
   max-width: 420px;
@@ -943,7 +943,7 @@ body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2p
 /* Umumiy: akkaunt bloki */
 .sb-account[hidden] { display: none; }
 .sb-account { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; background: none; border: none; border-radius: 999px; color: var(--text); font-family: var(--font); text-align: left; cursor: pointer; }
-.sb-acc-avi { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: var(--bg3, #222); }
+.sb-acc-avi { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; overflow: hidden; background: var(--bg3, #202327); }
 .sb-acc-avi img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .sb-acc-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
 .sb-acc-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1024,11 +1024,11 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   border: 0.5px solid var(--glass-border, var(--pal-gray-700));
   border-radius: 16px;
   padding: 6px 0;
-  box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(255, 255, 255, .1);
+  box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(231, 233, 234, 0.1);
 }
 .sb-acc-item { display: block; width: 100%; padding: 12px 18px; background: none; border: none; text-align: left; white-space: nowrap; font-family: var(--font); font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
 .sb-acc-item:hover { background: var(--pal-mid-16); }
-.sb-acc-logout { color: #ffffff; font-weight: 700; }
+.sb-acc-logout { color: #e7e9ea; font-weight: 700; }
 .sb-acc-sep { height: 1px; margin: 4px 12px; background: var(--pal-white-08); }
 /* ═══════════════════════════════════════════════════════════════════════ CHATS — desktop'da X.com uslubi (ch... */
 .chats-filter-btn, .chats-x-pane, .chats-x-empty { display: none; }
@@ -1041,7 +1041,7 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   background: var(--bg, var(--pal-black));
   border: 0.5px solid var(--glass-border, var(--pal-gray-700));
   border-radius: 14px;
-  box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(255, 255, 255, .1);
+  box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(231, 233, 234, 0.1);
 }
 .chats-x-item { display: block; width: 100%; padding: 12px 18px; text-align: left; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: 15px; font-weight: 500; color: var(--text); }
 .chats-x-item.on { font-weight: 700; }
@@ -1175,9 +1175,9 @@ body {
   content: '';
   width: 8px;
   height: 8px;
-  background: #f59e0b;
+  background: #ffd400;
   border-radius: 50%;
-  box-shadow: 0 0 8px #96620D;
+  box-shadow: 0 0 8px #ffd400;
 }
 
 /* ── Cached Badge — liquid glass ── */
@@ -1195,7 +1195,7 @@ body {
   align-items: center;
   gap: 4px;
   z-index: 10;
-  border: 0.5px solid #333333;
+  border: 0.5px solid #2f3336;
   box-shadow: var(--specular-top);
 }
 

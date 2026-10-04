@@ -1,5 +1,5 @@
 <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(245,158,11,0.12)"/>
-        <text x="10" y="30" font-family="monospace" font-weight="700" font-size="18" fill="#f59e0b">{}</text>
-        <text x="10" y="20" font-family="monospace" font-size="9" fill="#f59e0b" opacity=".7">"key":</text>
+        <rect width="48" height="48" rx="10" fill="rgba(255, 212, 0, 0.1)"/>
+        <text x="10" y="30" font-family="monospace" font-weight="700" font-size="18" fill="#ffd400">{}</text>
+        <text x="10" y="20" font-family="monospace" font-size="9" fill="#ffd400" opacity=".7">"key":</text>
       </svg>

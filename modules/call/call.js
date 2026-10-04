@@ -369,8 +369,8 @@ function _startMicPulse(stream) {
 
       // WRAPPER: glow rings
       wrap.style.boxShadow =
-        `0 0 0 ${ring1}px rgba(59,130,246,${a1}),` +
-        `0 0 0 ${ring2}px rgba(59,130,246,${a2}),` +
+        `0 0 0 ${ring1}px rgba(29,155,240,${a1}),` +
+        `0 0 0 ${ring2}px rgba(29,155,240,${a2}),` +
         `0 0 ${ring2 * 2}px rgba(99,179,237,${(a2 * 0.6).toFixed(2)})`;
     }
     _tick();

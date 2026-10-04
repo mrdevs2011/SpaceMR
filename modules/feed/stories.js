@@ -72,9 +72,9 @@ function ensureStoriesCss() {
   background: var(--bg3);
 }
 .story-ring--new {
-  background: linear-gradient(135deg, #f59e0b, #ec4899 55%, #8b5cf6);
+  background: linear-gradient(135deg, #ffd400, #f91880 55%, #1d9bf0);
 }
-.story-ring--seen { background: var(--line2, #333); }
+.story-ring--seen { background: var(--line2, #2f3336); }
 .story-ring--add { background: var(--bg3); border: 1px dashed var(--line2); }
 .story-ring img, .story-ring > img {
   width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
@@ -83,7 +83,7 @@ function ensureStoriesCss() {
 .story-plus {
   position: absolute; right: -2px; bottom: -2px;
   width: 22px; height: 22px; border-radius: 50%;
-  background: var(--blue, #1d9bf0); color: #fff;
+  background: var(--blue, #1d9bf0); color: #e7e9ea;
   font-size: 16px; line-height: 18px; text-align: center;
   border: 2px solid var(--bg);
   z-index: 2;
@@ -98,12 +98,12 @@ function ensureStoriesCss() {
 }
 .story-viewer {
   position: fixed; inset: 0; z-index: 10000;
-  background: #000;
+  background: #000000;
   display: flex; flex-direction: column;
   align-items: stretch;
   justify-content: center;
   font-family: var(--font, system-ui, sans-serif);
-  color: #fff;
+  color: #e7e9ea;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -117,12 +117,12 @@ function ensureStoriesCss() {
 }
 .sv-seg {
   flex: 1; height: 2.5px; border-radius: 2px;
-  background: rgba(255,255,255,0.28);
+  background: rgba(231, 233, 234, 0.2);
   overflow: hidden;
 }
 .sv-seg-fill {
   height: 100%; width: 0%;
-  background: #fff;
+  background: #e7e9ea;
   border-radius: 2px;
 }
 
@@ -131,7 +131,7 @@ function ensureStoriesCss() {
   display: flex; align-items: center; justify-content: space-between;
   padding: max(22px, calc(env(safe-area-inset-top) + 14px)) 12px 12px;
   z-index: 5;
-  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
   pointer-events: none;
 }
 .sv-user {
@@ -141,7 +141,7 @@ function ensureStoriesCss() {
 .sv-avi {
   width: 36px; height: 36px; border-radius: 50%;
   overflow: hidden; flex-shrink: 0;
-  background: #222; border: 1.5px solid rgba(255,255,255,0.35);
+  background: #202327; border: 1.5px solid rgba(231, 233, 234, 0.2);
 }
 .sv-avi img {
   width: 100%; height: 100%; object-fit: cover; display: block;
@@ -153,20 +153,20 @@ function ensureStoriesCss() {
   max-width: 180px;
 }
 .sv-time {
-  font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px;
+  font-size: 12px; color: rgba(231, 233, 234, 0.8); margin-top: 1px;
 }
 .sv-close {
   width: 40px; height: 40px; border: none; border-radius: 50%;
-  background: transparent; color: #fff; cursor: pointer;
+  background: transparent; color: #e7e9ea; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   pointer-events: auto; flex-shrink: 0;
 }
-.sv-close:hover { background: rgba(255,255,255,0.1); }
+.sv-close:hover { background: rgba(231, 233, 234, 0.1); }
 
 .sv-media {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: #000;
+  background: #000000;
   z-index: 1;
   user-select: none; -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -185,8 +185,8 @@ function ensureStoriesCss() {
 .sv-caption {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
   padding: 56px 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
-  color: #fff; font-size: 16px; line-height: 1.4; text-align: center;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  color: #e7e9ea; font-size: 16px; line-height: 1.4; text-align: center;
   white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none;
   user-select: none; -webkit-user-select: none;
 }
@@ -202,7 +202,7 @@ function ensureStoriesCss() {
 .sv-next { right: 0; }
 
 @media (min-width: 700px) {
-  .story-viewer { background: rgba(0,0,0,0.92); }
+  .story-viewer { background: #000000; }
   .sv-media {
     inset: 4% auto;
     left: 50%; transform: translateX(-50%);
@@ -210,7 +210,7 @@ function ensureStoriesCss() {
     height: 92%;
     border-radius: 12px;
     overflow: hidden;
-    background: #0a0a0a;
+    background: #000000;
   }
   .sv-progress {
     left: 50%; transform: translateX(-50%);

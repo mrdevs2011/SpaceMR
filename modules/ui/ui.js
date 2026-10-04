@@ -1,5 +1,4 @@
 import { esc } from '../core/utils.js';
-// test 3: diff uchun izoh
 import { state, sb }                               from '../core/config.js';
 import { $ }                                       from '../core/utils.js';
 
@@ -20,6 +19,7 @@ function openSearchOverlay() {
 function closeSearchOverlay() {
   searchOverlay?.classList.remove('open');
   sbSearchToggle?.classList.remove('search-active');
+  import('./right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   if (searchInput) { searchInput.value = ''; _doSearch(''); }
 }
 
@@ -140,7 +140,7 @@ function showSuggestions(list) {
   suggestionsEl.innerHTML = list.map((item, i) => {
     const avatarHtml = (item.type === 'user' || item.type === 'group')
       ? `<img src="${esc(item.avatar || '')}" class="search-suggestion-avatar" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0">
-         <span class="search-suggestion-avatar-fallback" style="display:none;width:28px;height:28px;border-radius:50%;background:var(--accent,#ffffff);color:#fff;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${escapeHtml(((item.type === 'user' ? item.label[1] : item.label[0]) || '?').toUpperCase())}</span>`
+         <span class="search-suggestion-avatar-fallback" style="display:none;width:28px;height:28px;border-radius:50%;background:var(--accent,#e7e9ea);color:#e7e9ea;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">${escapeHtml(((item.type === 'user' ? item.label[1] : item.label[0]) || '?').toUpperCase())}</span>`
       : `<img src="./svg/${item.type === 'hashtag' ? 'ui/hashtag' : 'action/search'}.svg" alt="" class="icon search-suggestion-icon" width="20" height="20">`;
     return `<div class="search-suggestion-item" data-index="${i}" data-type="${item.type}">
       ${avatarHtml}
