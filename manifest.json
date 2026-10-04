@@ -1,15 +1,19 @@
 {
   "name": "SpaceMR",
   "short_name": "SpaceMR",
-  "description": "SpaceMR — yopiq ijtimoiy tarmoq",
+  "description": "SpaceMR — yopiq ijtimoiy tarmoq. Lenta, chat, guruhlar va qo'ng'iroq.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0e1012",
   "theme_color": "#0e1012",
   "orientation": "portrait-primary",
+  "lang": "uz",
+  "categories": ["social", "communication"],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

@@ -657,7 +657,6 @@
 
 #mandatoryPwdOverlay {
   align-items: center; justify-content: center; z-index: 1050;
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   background: var(--overlay);
 }
 #mandatoryPwdOverlay .auth-card {
@@ -680,7 +679,6 @@
 
 #adminResetPwdOverlay {
   align-items: center; justify-content: center; z-index: 1050;
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   background: var(--overlay);
 }
 .admin-reset-warn {

@@ -37,8 +37,8 @@
 }
 /* ═══════════════════════════════════════════ Global Solid Component Classes ════════════════════════════════... */
 /* Base glass class — use anywhere */
-.glass { background: var(--glass); border: 0.5px solid var(--glass-border); box-shadow: var(--specular-top), var(--liquid-shadow-md); }
-.glass-heavy { background: var(--glass-heavy); border: 0.5px solid var(--glass-border-top); box-shadow: var(--specular-top), var(--liquid-shadow-lg); }
+.glass { background: var(--bg3); border: 1px solid var(--line, var(--pal-gray-800)); box-shadow: none; }
+.glass-heavy { background: var(--bg4); border: 1px solid var(--line, var(--pal-gray-800)); box-shadow: none; }
 /* Input fields */
 input, textarea { background: var(--glass); border: 0.5px solid var(--glass-border); color: var(--text);  }
 input:focus, textarea:focus { border-color: var(--x-blue, var(--blue)); background: var(--glass-mid); box-shadow: none; }
@@ -945,7 +945,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 /* ─── post-composer ─── */
 /* ═══════════════════════════════════════════ POST COMPOSER — X.com uslubidagi post yaratish oynasi Faqat #up... */
 /* Orqa fon — to'liq qora emas, 0.8 shaffoflik (sahifa sal ko'rinadi) */
-#uploadOverlay { background: rgba(0,0,0,.8); }
+#uploadOverlay { background: #000; }
 #uploadOverlay .composer-sheet {
   width: 100%;
   max-width: 500px;
@@ -1015,7 +1015,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: 16px; background: rgba(255, 255, 255, .06); pointer-events: none; z-index: 9999; }
 /* ─── card-sheets ─── */
 /* ═══════════════════════════════════════════ CARD SHEETS — guruh/kanal yaratish oynalari post composer bilan... */
-#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: rgba(0,0,0,.8); align-items: center; justify-content: center; padding: 20px; }
+#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: #000; align-items: center; justify-content: center; padding: 20px; }
 :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet {
   width: 100%;
   max-width: 420px;

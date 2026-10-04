@@ -364,7 +364,7 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
   bottom: -4px;
   height: 16px;
   background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 45%, transparent 75%);
-  filter: blur(6px);
+  filter: none;
   border-radius: 50%;
   pointer-events: none;
   z-index: 5;
@@ -1227,9 +1227,9 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 .md-h2 { font-size: 1.08em; }
 .md-h3 { font-size: 1.02em; opacity: .92; }
 .md-li { padding-left: 2px; margin: 2px 0; line-height: 1.45; }
-.md-code { background: var(--glass, var(--pal-white-08)); border: 0.5px solid var(--glass-border, var(--pal-white-12)); border-radius: 5px; padding: 1px 6px; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 0.92em; }
+.md-code { background: var(--bg3); border: 0.5px solid var(--glass-border, var(--pal-white-12)); border-radius: 5px; padding: 1px 6px; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; font-size: 0.92em; }
 .md-codeblock {
-  background: var(--glass, var(--pal-white-06));
+  background: var(--bg3);
   border: 0.5px solid var(--glass-border, var(--pal-white-12));
   border-radius: 10px;
   padding: 10px 12px;
@@ -1313,7 +1313,7 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 .chat-thread-messages { flex: 1; overflow-y: auto; overscroll-behavior-y: contain; padding: 12px 12px 8px; display: flex; flex-direction: column; }
 /* Sana ajratuvchi — Telegram uslubidagi suzuvchi pill ("Bugun"/"Kecha") */
 .chat-date-sep { margin: 10px 0 8px; }
-.chat-date-sep span { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.chat-date-sep span { }
 /* Message layout */
 .chat-msg { display: flex; position: relative; max-width: 72%; margin: 0; }
 .chat-msg + .chat-msg { margin-top: 2px; }
@@ -1841,9 +1841,7 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
   left: 50%; transform: translateX(-50%);
   gap: 14px;
   padding: 10px 14px;
-  background: rgba(28, 28, 30, 0.72);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #1c1c1e;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
 }
@@ -1952,8 +1950,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   right: 6px;
   bottom: 6px;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   color: #ffffff !important;
   padding: 2px 7px;
   border-radius: 12px;
@@ -3275,8 +3271,8 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 /* ═══════════════════════════════════════════ Global Solid Component Classes ════════════════════════════════... */
 /* Base glass class — use anywhere */
-.glass { background: var(--glass); border: 0.5px solid var(--glass-border); box-shadow: var(--specular-top), var(--liquid-shadow-md); }
-.glass-heavy { background: var(--glass-heavy); border: 0.5px solid var(--glass-border-top); box-shadow: var(--specular-top), var(--liquid-shadow-lg); }
+.glass { background: var(--bg3); border: 1px solid var(--line, var(--pal-gray-800)); box-shadow: none; }
+.glass-heavy { background: var(--bg4); border: 1px solid var(--line, var(--pal-gray-800)); box-shadow: none; }
 /* Input fields */
 input, textarea { background: var(--glass); border: 0.5px solid var(--glass-border); color: var(--text);  }
 input:focus, textarea:focus { border-color: var(--x-blue, var(--blue)); background: var(--glass-mid); box-shadow: none; }
@@ -4183,7 +4179,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 /* ─── post-composer ─── */
 /* ═══════════════════════════════════════════ POST COMPOSER — X.com uslubidagi post yaratish oynasi Faqat #up... */
 /* Orqa fon — to'liq qora emas, 0.8 shaffoflik (sahifa sal ko'rinadi) */
-#uploadOverlay { background: rgba(0,0,0,.8); }
+#uploadOverlay { background: #000; }
 #uploadOverlay .composer-sheet {
   width: 100%;
   max-width: 500px;
@@ -4253,7 +4249,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: 16px; background: rgba(255, 255, 255, .06); pointer-events: none; z-index: 9999; }
 /* ─── card-sheets ─── */
 /* ═══════════════════════════════════════════ CARD SHEETS — guruh/kanal yaratish oynalari post composer bilan... */
-#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: rgba(0,0,0,.8); align-items: center; justify-content: center; padding: 20px; }
+#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: #000; align-items: center; justify-content: center; padding: 20px; }
 :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet {
   width: 100%;
   max-width: 420px;
@@ -5207,7 +5203,6 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 
 #mandatoryPwdOverlay {
   align-items: center; justify-content: center; z-index: 1050;
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   background: var(--overlay);
 }
 #mandatoryPwdOverlay .auth-card {
@@ -5230,7 +5225,6 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 
 #adminResetPwdOverlay {
   align-items: center; justify-content: center; z-index: 1050;
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   background: var(--overlay);
 }
 .admin-reset-warn {
@@ -5564,9 +5558,7 @@ a { color: var(--link); }
   top: 0;
   z-index: 6;
   align-items: stretch;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 .home-tab {
@@ -5780,7 +5772,7 @@ nav.bot-nav #createBtn.nav-center-btn *,
 [data-theme] .search-overlay::-webkit-scrollbar { display: none; }
 [data-theme] .search-overlay .search-overlay-inner { flex: 1 0 auto; min-height: 100%; }
 /* Sarlavha (yopishqoq) */
-.exp-head { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 85%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.exp-head { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
 [data-theme] .search-overlay .search-overlay-box { position: static; display: flex; align-items: center; gap: 12px; height: 53px; padding: 4px 16px; background: transparent; border: none; border-radius: 0; box-shadow: none; }
 [data-theme] .search-overlay .exp-pill { position: relative; flex: 1; min-width: 0; }
 [data-theme] .search-overlay .exp-pill input {
@@ -6151,13 +6143,13 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 
 /* Desktop: chat sarlavhasi — pastki input bilan bir xil yumaloq "suzuvchi" bar */
 @media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: 16px 16px 8px; padding: 8px 12px; border: 1px solid var(--pal-gray-800); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 28px; background: #000; }
+  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: 16px 16px 8px; padding: 8px 12px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: 28px; background: #000; }
   #chatThreadModal .chat-thread-messages { padding-top: 76px; }
 }
 
 /* Mobil: chat sarlavhasi va pastki input ham yumaloq "suzuvchi" bar (desktop bilan bir xil ko'rinish, kichikroq chetlar) */
 @media (max-width: 1099px) {
-  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: max(8px, env(safe-area-inset-top, 0px)) 8px 4px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 26px; background: #000; }
+  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: max(8px, env(safe-area-inset-top, 0px)) 8px 4px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: 26px; background: #000; }
   #chatThreadModal .chat-thread-messages { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
   #chatThreadModal .chat-thread-input-row { margin: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; border: 1px solid var(--pal-gray-800); border-radius: 26px; background: #000; }
   #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
@@ -6390,7 +6382,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 /* Tasdiq oynasi (showConfirm) doim eng ustida: umumiy .overlay z-index=200 < chat oynasi 360, shuning uchun chat ochiq paytda "O'chirilsinmi?" orqada qolardi */
 #confirmOverlay { z-index: 640; }
 /* Tasdiq oynasi — Telegram uslubida: to'liq qora (dark #000000) karta, qizil tasdiq tugmasi, xiralashtirilgan fon */
-#confirmOverlay { align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#confirmOverlay { align-items: center; justify-content: center; padding: 16px; background: #000; }
 #confirmOverlay .sheet {
   display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px;
   width: 100%; max-width: 340px; margin: 0; padding: 24px 20px 16px 24px;
@@ -6476,8 +6468,6 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #adminResetPwdOverlay,
 #recoveryEmailInfoModal,
 #forgotPasswordSentModal {
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
   background: rgba(0, 0, 0, 0.82) !important;
 }
 
@@ -6544,7 +6534,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 .home-composer-preview .hc-clear {
   position: absolute; top: 8px; right: 8px;
   width: 28px; height: 28px; border-radius: 50%;
-  border: 0; background: rgba(0,0,0,.7); color: #fff;
+  border: 0; background: #000; color: #fff;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
 }
@@ -6705,9 +6695,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   position: sticky;
   top: 0;
   z-index: 4;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 0;
@@ -7846,7 +7834,7 @@ button:focus-visible,
 
 .chat-ctx-overlay {
   position: fixed; inset: 0; z-index: 10000;
-  background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+  background: rgba(0,0,0,0.5);
   display: flex; align-items: center; justify-content: center;
   animation: fadeIn .15s ease;
 }
