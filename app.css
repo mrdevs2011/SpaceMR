@@ -13760,8 +13760,10 @@ body::-webkit-scrollbar,
 .adm-wipe { margin: 14px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; }
 .adm-wipe-title { font-size: 17px; font-weight: 800; color: var(--text); }
 .adm-wipe-sub { font-size: 13px; line-height: 18px; color: var(--text3); margin: 12px 0 12px; }
-.adm-wipe-head { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; color: inherit; -webkit-tap-highlight-color: transparent; }
-.adm-wipe-chev { flex-shrink: 0; transition: transform .2s ease; opacity: .8; }
+.adm-wipe { position: relative; }
+.adm-wipe .adm-wipe-head { display: block !important; position: relative; width: 100% !important; padding: 0 28px 0 0 !important; background: transparent !important; background-color: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; cursor: pointer; text-align: left; color: inherit; -webkit-tap-highlight-color: transparent; }
+.adm-wipe .adm-wipe-title { display: block; background: transparent !important; box-shadow: none !important; padding: 0; }
+.adm-wipe-chev { position: absolute; right: 0; top: 50%; margin-top: -9px; transition: transform .2s ease; opacity: .8; background: transparent !important; }
 .adm-wipe.open .adm-wipe-chev { transform: rotate(180deg); }
 .adm-wipe-body[hidden] { display: none; }
 .adm-wipe-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

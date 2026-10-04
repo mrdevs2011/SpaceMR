@@ -47,7 +47,7 @@ function _shouldShowInChatsList(u, chatMap) {
   if (!u || !u.uid) return false;
   if (_isChatDeleted(u.uid)) return false;
   if (_isPinned('dm', u.uid)) return true;
-  if (u.isAdmin || u.username === 'admin' || u.username === 'mrdevs' || u.username === 'mr') return true;
+  if (u.username === 'admin') return true;
   const c = chatMap[u.uid];
   if (c && (c.lastMessage || c.lastMessageAt || c.lastMessageId)) return true;
   return false;
@@ -541,7 +541,7 @@ function _paintUserRows(users, animate = false) {
     const av = u.avatar || defAvi(u.fullName || 'U');
     const isContact = chatState._myContacts.has(u.uid);
     const online = isUidOnline(u.uid, isOnline(u.lastSeenAt));
-    const isAdminUser = u.isAdmin || u.username === 'admin' || u.username === 'mrdevs' || u.username === 'mr';
+    const isAdminUser = u.username === 'admin';
     const rawPreview = c?.lastMessage || '';
     const formattedLastMsg = formatLastMessageText(rawPreview);
     const preview = c
