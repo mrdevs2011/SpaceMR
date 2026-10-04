@@ -75,7 +75,7 @@
   --tg-primary-blue: var(--pal-blue);
   --tg-text-main: var(--pal-gray-100);
   --font: "TwitterChirp", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --hdr: 0px;
+  --hdr: 52px;
   --overlay: rgba(0, 0, 0, .45);
 }
 [data-theme="dark"] {
@@ -13237,4 +13237,51 @@ header.app-hdr,
 nav.bot-nav .sb-logo-img {
   width: 34px !important;
   height: 34px !important;
+}
+
+
+/* HEADER KO'RINSIN — --hdr 0px + overflow:hidden headerni butunlay yashirardi */
+:root,
+[data-theme="dark"] {
+  --hdr: 52px !important;
+}
+header.app-hdr,
+#appHdr.app-hdr {
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: none !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  background: #000 !important;
+  color: #e7e9ea !important;
+  z-index: 200 !important;
+}
+header.app-hdr.force-hide,
+#appHdr.app-hdr.force-hide {
+  display: none !important;
+}
+#appHdr .hdr-brand {
+  color: #e7e9ea !important;
+  -webkit-text-fill-color: #e7e9ea !important;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  opacity: 1 !important;
+}
+#appHdr .hdr-logo,
+#appHdr .hdr-right,
+#appHdr .hdr-icon-btn,
+#appHdr .hdr-avi-btn,
+#appHdr .hdr-search-wrap {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+#homeView.on,
+#followingView.on,
+#savedView.on,
+#chatsView.on,
+#profileView.on {
+  padding-top: 52px !important;
 }
