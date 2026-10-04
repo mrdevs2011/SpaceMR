@@ -7723,3 +7723,12 @@ nav.bot-nav,
   border-top-color: transparent !important;
   border-bottom-color: transparent !important;
 }
+
+
+/* Desktop rightbar sozlamalar paneli chegarasi qoladi */
+@media (min-width: 1200px) {
+  #settingsOverlay.show {
+    border: 1px solid #2f3336 !important;
+    border-radius: 16px !important;
+  }
+}
