@@ -303,7 +303,8 @@ async function detectInstalled() {
 function applyInstallUi(installed) {
   const loginBtn = document.getElementById('loginInstallBtn');
   const loginWrap = loginBtn?.closest('.auth-install') || document.querySelector('#authWrap .auth-install');
-  if (loginWrap) loginWrap.hidden = !!installed;
+  const checked = _promptSeen || !!_deferredInstall || _chromiumSettled || isStandalone() || _installedNow;
+  if (loginWrap) loginWrap.hidden = !checked || !!installed;
   const settingsBtn = document.getElementById('guideOpenBtn');
   if (settingsBtn) {
     settingsBtn.disabled = !!installed;
@@ -375,7 +376,7 @@ export function initInstallGuide() {
   setTimeout(() => {
     _chromiumSettled = true;
     syncInstallUi();
-  }, 1200);
+  }, 700);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') syncInstallUi();
   });
