@@ -238,7 +238,7 @@ export async function renderFeedTo(feedEl, posts) {
             <button class="act-btn like-btn left-one${liked?' liked':''}" data-id="${p.id}" aria-label="Yoqtirish">
               ${liked
                 ? '<img src="./svg/social/heart-filled.svg" alt="" class="icon" width="18" height="18">'
-                : '<img src="./svg/social/heart.svg" alt="" class="icon" width="18" height="18" style="filter:brightness(0) invert(1)">'}
+                : '<img src="./svg/social/heart.svg" alt="" class="icon" width="18" height="18">'}
               <span id="lc-${p.id}">${fmtCount(p.likes || 0)}</span>
             </button>
             <button class="act-btn cmt-open-btn left-two" data-id="${p.id}" aria-label="Izohlar">
@@ -262,7 +262,7 @@ export async function renderFeedTo(feedEl, posts) {
             <button class="act-btn save-btn right-two${saved?' saved':''}" data-id="${p.id}" title="${saved?'Saqlanganlardan olib tashlash':'Saqlash'}" aria-label="Saqlash" aria-pressed="${saved?'true':'false'}">
               ${saved
                   ? '<img src="./svg/social/bookmark-filled.svg" alt="" class="icon" width="18" height="18">'
-                  : '<img src="./svg/social/bookmark-outline.svg" alt="" class="icon" width="18" height="18" style="filter:brightness(0) invert(1)">'}
+                  : '<img src="./svg/social/bookmark-outline.svg" alt="" class="icon" width="18" height="18">'}
             </button>
           </div>
         </div>
