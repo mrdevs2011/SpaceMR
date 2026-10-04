@@ -575,11 +575,16 @@ $('uploadBtn').onclick = () => { submitPost(); };
 function loadComposerAvi() {
   const box = $('composerAvi');
   if (!box || !state.me) return;
+  const name = state.me.displayName || state.me.username || 'U';
+  const fb = defAvi(name);
+  const paint = (src) => {
+    box.innerHTML = `<img src="${esc(src || fb)}" alt="" onerror="this.onerror=null;this.src='${esc(fb)}'">`;
+  };
+  /* darhol: state'dagi rasm yoki default (DB javobini kutmaymiz) */
+  paint(state.me.photoURL);
   Promise.resolve(sb.from('profiles').select('full_name,avatar').eq('id', state.me.uid).maybeSingle())
-    .then(({ data }) => {
-      const av = data?.avatar || defAvi(data?.full_name || 'U');
-      box.innerHTML = `<img src="${esc(av)}" alt="" onerror="this.style.display='none'">`;
-    }).catch(() => {});
+    .then(({ data }) => { if (data?.avatar && data.avatar !== state.me.photoURL) paint(data.avatar); })
+    .catch(() => {});
 }
 
 /* ── Overlay open/close ──────────────────────────────────────────────── */

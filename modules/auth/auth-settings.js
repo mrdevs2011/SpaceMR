@@ -4,6 +4,7 @@ import { esc } from '../core/utils.js';
  * auth.js dan ehtiyotkor ajratilgan.
  */
 import { sb, state, purgeUserMedia } from '../core/config.js';
+import { askPassword } from '../ui/password-confirm.js';
 import { $, defAvi, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { removePushToken, areNotificationsEnabled, setNotificationsEnabled } from '../push.js';
@@ -195,6 +196,7 @@ if (settingsMoreBtn && settingsMoreMenu) {
 
 const _purgeMyMedia = () => purgeUserMedia(state.me?.uid);
 
+
 const deleteAccountBtn = $('deleteAccountBtn');
 if (deleteAccountBtn) {
   deleteAccountBtn.onclick = () => {
@@ -203,6 +205,7 @@ if (deleteAccountBtn) {
     showConfirm(
       "Hisobingiz, barcha postlaringiz, xabarlaringiz va izohlaringiz BUTUNLAY o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi. Davom etasizmi?",
       async () => {
+        if (!(await askPassword({ title: 'Parolni kiriting', sub: "Hisobni o'chirish uchun joriy parolingizni tasdiqlang.", okLabel: "Hisobni o'chirish" }))) return;
         deleteAccountBtn.disabled = true;
         toast("Hisob o'chirilmoqda...", 'info');
         try {

@@ -1,3 +1,4 @@
+import { askPassword } from '../ui/password-confirm.js';
 import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, verifyPassword } from '../core/config.js';
 import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }                       from '../ui/toast.js';
@@ -1564,6 +1565,16 @@ if (saveProfileBtn) {
           toast(emailRes.error, 'error');
           return;
         }
+      }
+
+      /* Recovery email o'zgarsa — hisobni tiklash kanali, shuning uchun parol so'raladi */
+      if (rawRecEmail.toLowerCase() !== String(state.me?.recoveryEmail || '').toLowerCase()) {
+        const okPwd = await askPassword({
+          title: 'Parolni kiriting',
+          sub: "Tiklash emailini o'zgartirish uchun joriy parolingizni tasdiqlang.",
+          okLabel: 'Tasdiqlash',
+        });
+        if (!okPwd) return;
       }
 
       const updates = {
