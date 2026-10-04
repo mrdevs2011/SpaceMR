@@ -104,6 +104,10 @@
   --ag-overlay: var(--pal-black);
 }
 /* CSS/base.css — splash, loading. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
+/* ─── Hech narsa tanlanmasin (matn belgilash/nusxalash/uzoq bosish menyusi yo'q) ───
+   Istisno: yozish maydonlari — aks holda iOS/Safari'da yozib bo'lmaydi. Aniqlik (specificity) 0 — kerak bo'lsa komponent o'zi qayta belgilaydi. */
+*, *::before, *::after { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
 /* ─── splash ─── */
 /* ═══════════════════════ SPLASH SCREEN — Minimal ═══════════════════════ */
 #splash { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999;  background-color: var(--pal-gray-900); }
@@ -2419,7 +2423,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   font-size: 12px;
   color: var(--blue, var(--pal-white));
   word-break: break-all;
-  user-select: all;
 }
 .grp-invite-copy-btn, .grp-invite-regen-btn {
   padding: 6px 12px;
