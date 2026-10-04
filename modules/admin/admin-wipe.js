@@ -63,12 +63,40 @@ export function renderWipePanel(anchor, onDone) {
   box.id = 'actionsWipe';
   box.className = 'adm-wipe';
   box.innerHTML = `
-    <div class="adm-wipe-title">Storage tozalash</div>
-    <div class="adm-wipe-sub">Test ma'lumotlarini o'chirish. Har biri 3 marta tasdiq va admin parolini so'raydi.</div>
-    <div class="adm-wipe-grid">
-      ${Object.entries(SCOPES).map(([k, v]) => `<button type="button" class="adm-wipe-btn${k === 'all' ? ' is-all' : ''}" data-scope="${k}">${v.label}</button>`).join('')}
+    <button type="button" class="adm-wipe-head" id="actionsWipeToggle" aria-expanded="false" aria-controls="actionsWipeBody">
+      <span class="adm-wipe-title">Storage tozalash</span>
+      <img src="./svg/nav/chevron-down.svg" alt="" class="icon adm-wipe-chev" width="18" height="18">
+    </button>
+    <div class="adm-wipe-body" id="actionsWipeBody" hidden>
+      <div class="adm-wipe-sub">Test ma'lumotlarini o'chirish. Har biri 3 marta tasdiq va admin parolini so'raydi.</div>
+      <div class="adm-wipe-grid">
+        ${Object.entries(SCOPES).map(([k, v]) => `<button type="button" class="adm-wipe-btn${k === 'all' ? ' is-all' : ''}" data-scope="${k}">${v.label}</button>`).join('')}
+      </div>
     </div>`;
-  box.addEventListener('click', (e) => {
+  let _asking = false;
+  box.addEventListener('click', async (e) => {
+    const t = e.target.closest('#actionsWipeToggle');
+    if (t) {
+      if (_asking) return;
+      const willOpen = !box.classList.contains('open');
+      // Ochishdan oldin admin parolini so'raymiz (yopish — parolsiz)
+      if (willOpen) {
+        _asking = true;
+        let ok;
+        try {
+          ok = await askAdmin({
+            title: 'Storage tozalash',
+            sub: 'Bo\'limni ochish uchun admin parolini kiriting.',
+            okLabel: 'Ochish',
+          });
+        } finally { _asking = false; }
+        if (!ok) return;
+      }
+      box.classList.toggle('open', willOpen);
+      t.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      box.querySelector('#actionsWipeBody').hidden = !willOpen;
+      return;
+    }
     const b = e.target.closest('[data-scope]');
     if (b) run(b.dataset.scope, onDone);
   });
