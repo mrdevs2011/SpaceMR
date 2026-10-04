@@ -51,7 +51,7 @@ function _showRecordBar() {
   if (!bar) return;
   bar.classList.add('active');
   bar.classList.remove('cancelling');
-  if (cancelText) cancelText.textContent = 'Bekor qilish uchun suring';
+  if (cancelText) { cancelText.textContent = 'Bekor qilish uchun chapga suring'; cancelText.style.transform = ''; }
   if (timer) timer.textContent = '0:00';
   _voiceStartTime = Date.now();
   if (_recTimerInterval) clearInterval(_recTimerInterval);
@@ -88,7 +88,7 @@ function _setRecordBarCancelState(isCancelling) {
   if (bar) bar.classList.toggle('cancelling', isCancelling);
   if (wrap) wrap.classList.toggle('cancelling', isCancelling);
   if (cancelText) {
-    cancelText.textContent = isCancelling ? 'Qo\'yib yuboring — bekor qilish' : 'Bekor qilish uchun suring';
+    cancelText.textContent = 'Bekor qilish uchun chapga suring';
   }
 }
 
@@ -107,22 +107,29 @@ function _applyVoiceCancelProgress(p) {
   const bar = $('chatRecordBar');
   const dot = bar ? bar.querySelector('.crb-dot') : null;
 
-  // Faqat matn o'zgaradi (rang o'zgarmaydi)
+  // Matn o'zgarmaydi — chapga surganda silliq oqadi (Telegram)
   if (cancelText) {
-    if (p > 0.92) {
-      cancelText.textContent = "Qo'yib yuboring — bekor qilish";
-    } else {
-      cancelText.textContent = 'Bekor qilish uchun suring';
-    }
+    cancelText.textContent = 'Bekor qilish uchun chapga suring';
+    // p=0 → joyida, p=1 → chapga ~28px + biroz fade
+    const dx = -Math.round(p * 28);
+    const op = 1 - p * 0.25;
+    cancelText.style.transform = `translateX(${dx}px)`;
+    cancelText.style.opacity = String(Math.max(0.55, op));
+  }
+  const cancelWrap = $('chatRecordCancel');
+  if (cancelWrap) {
+    const dx = -Math.round(p * 28);
+    cancelWrap.style.transform = `translateX(${dx}px)`;
+    cancelWrap.classList.toggle('is-sliding', p > 0.02);
   }
 
   // Chap pastki (record bar) nuqta — cancel progressida qizil
   if (dot) {
     if (p > 0.05) {
       const intensity = Math.min(1, p * 1.15);
-      const r = 239, g = 68, b = 68; // #ef4444
-      dot.style.background = `rgb(${r},${g},${b})`;
-      dot.style.boxShadow = `0 0 ${6 + intensity * 10}px rgba(${r},${g},${b},${0.45 + intensity * 0.45})`;
+      // REC nuqta — qizil
+      dot.style.background = '#ef4444';
+      dot.style.boxShadow = `0 0 ${6 + intensity * 10}px rgba(239,68,68,${0.4 + intensity * 0.5})`;
       dot.style.opacity = String(0.7 + intensity * 0.3);
     } else {
       dot.style.background = '';
@@ -163,6 +170,16 @@ function _clearVoiceCancelVisuals() {
     dot.style.background = '';
     dot.style.boxShadow = '';
     dot.style.opacity = '';
+  }
+  const cancelText = $('crbCancelText');
+  if (cancelText) {
+    cancelText.style.transform = '';
+    cancelText.style.opacity = '';
+  }
+  const cancelWrap = $('chatRecordCancel');
+  if (cancelWrap) {
+    cancelWrap.style.transform = '';
+    cancelWrap.classList.remove('is-sliding');
   }
 }
 
@@ -512,35 +529,22 @@ function _startPulse(stream) {
         vBtn.style.transform = `scale(${btnScale.toFixed(3)})`;
       }
       if (r1) {
-        const s1 = 1.05 + (_pulseLevel * 0.65) + breathe * 0.35;
+        const s1 = 1.0 + (_pulseLevel * 0.85) + breathe * 0.4;
         r1.style.transform = `translate(-50%, -50%) scale(${s1.toFixed(3)})`;
-        r1.style.opacity = (0.55 + _pulseLevel * 0.42).toFixed(3);
+        r1.style.opacity = (0.4 + _pulseLevel * 0.55).toFixed(3);
       }
       if (r2) {
-        const s2 = 1.32 + (_pulseLevel * 1.35) + Math.sin(phase - 0.6) * 0.06;
+        const s2 = 1.25 + (_pulseLevel * 1.55) + Math.sin(phase - 0.6) * 0.08;
         r2.style.transform = `translate(-50%, -50%) scale(${s2.toFixed(3)})`;
-        r2.style.opacity = (0.38 + _pulseLevel * 0.4).toFixed(3);
+        r2.style.opacity = (0.28 + _pulseLevel * 0.45).toFixed(3);
       }
       if (r3) {
-        const s3 = 1.68 + (_pulseLevel * 2.05) + Math.sin(phase - 1.2) * 0.09;
+        const s3 = 1.55 + (_pulseLevel * 2.35) + Math.sin(phase - 1.2) * 0.1;
         r3.style.transform = `translate(-50%, -50%) scale(${s3.toFixed(3)})`;
-        r3.style.opacity = (0.22 + _pulseLevel * 0.32).toFixed(3);
+        r3.style.opacity = (0.15 + _pulseLevel * 0.4).toFixed(3);
       }
 
-      // ── Live waveform (Telegram: o'ngdan chapga scroll, yangi ustun) ──
-      if (_waveHistory && now - _waveLastSample >= _WAVE_SAMPLE_EVERY_MS) {
-        _waveLastSample = now;
-        // biroz random jitter yo'q — faqat haqiqiy signal + engil noise floor
-        const sample = Math.max(0.06, Math.min(1, _pulseLevel));
-        _waveHistory.shift();
-        _waveHistory.push(sample);
-        // eski barlar biroz so'nsin (Telegram fade)
-        for (let i = 0; i < _waveHistory.length - 1; i++) {
-          _waveHistory[i] *= 0.985;
-          if (_waveHistory[i] < 0.06) _waveHistory[i] = 0.06;
-        }
-        _paintWaveBars();
-      }
+      // Chiziqli waveform o'chirildi — faqat mic atrofidagi circular pulse
 
       _pulseRaf = requestAnimationFrame(tick);
     };

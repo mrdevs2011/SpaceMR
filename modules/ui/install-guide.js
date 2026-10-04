@@ -194,7 +194,7 @@ export function initInstallGuide() {
   _igInited = true;
   // Event delegation — sozlamalar qayta chizilsa ham ishlaydi
   document.addEventListener('click', (e) => {
-    const t = e.target.closest?.('#guideOpenBtn');
+    const t = e.target.closest?.('#guideOpenBtn, #loginInstallBtn, #loginGuideBtn');
     if (!t) return;
     e.preventDefault();
     e.stopPropagation();

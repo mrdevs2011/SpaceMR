@@ -1297,19 +1297,25 @@
   transition: opacity 0.15s ease-out;
 }
 .cv-pulse-1 {
-  width: 44px;
-  height: 44px;
-  background: radial-gradient(circle, rgba(42, 171, 238, 0.65) 0%, rgba(42, 171, 238, 0.35) 65%, rgba(42, 171, 238, 0) 100%);
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: 2px solid rgba(29, 155, 240, 0.85);
+  box-shadow: 0 0 12px rgba(29, 155, 240, 0.35);
 }
 .cv-pulse-2 {
-  width: 64px;
-  height: 64px;
-  background: radial-gradient(circle, rgba(42, 171, 238, 0.45) 0%, rgba(42, 171, 238, 0.2) 70%, rgba(42, 171, 238, 0) 100%);
+  width: 72px;
+  height: 72px;
+  background: transparent;
+  border: 1.5px solid rgba(29, 155, 240, 0.45);
+  box-shadow: 0 0 16px rgba(29, 155, 240, 0.2);
 }
 .cv-pulse-3 {
-  width: 88px;
-  height: 88px;
-  background: radial-gradient(circle, rgba(42, 171, 238, 0.3) 0%, rgba(42, 171, 238, 0.08) 75%, rgba(42, 171, 238, 0) 100%);
+  width: 100px;
+  height: 100px;
+  background: transparent;
+  border: 1px solid rgba(29, 155, 240, 0.28);
+  box-shadow: 0 0 20px rgba(29, 155, 240, 0.12);
 }
 /* Chapga surganda pulse rang o'zgarmaydi (ko'k qoladi) */
 .chat-voice-wrap.cancelling .cv-pulse-1,
@@ -1930,14 +1936,14 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ffffff;
+  background: #ef4444;
   flex-shrink: 0;
   animation: crbBlink 1s infinite alternate;
 }
 
 @keyframes crbBlink {
-  0% { opacity: 0.3; transform: scale(0.85); }
-  100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
+  0% { opacity: 0.4; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px rgba(239, 68, 68, 0.85); }
 }
 
 .crb-timer {
@@ -1948,17 +1954,14 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   min-width: 36px;
 }
 
-/* Live voice waveform — Telegram 1:1 hold-to-talk */
+/* Chiziqli waveform o'chirildi — faqat mic atrofidagi pulse */
 .crb-wave {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1.5px;
-  height: 28px;
-  flex: 1;
-  min-width: 48px;
-  max-width: 180px;
-  margin: 0 6px;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
   overflow: hidden;
   pointer-events: none;
 }
@@ -1973,7 +1976,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   will-change: height, opacity;
 }
 .chat-record-bar.cancelling .crb-wave-bar {
-  background: #ef4444;
+  background: #1d9bf0; /* qizil emas — ko'k */
 }
 
 .crb-cancel {
@@ -1987,23 +1990,33 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
   margin: 0 auto;
   padding-right: 24px;
   text-align: center;
-  transition: color 0.15s ease;
-  animation: crbSlidePrompt 1.6s infinite ease-in-out;
+  will-change: transform;
+  transition: transform 0.05s linear, opacity 0.05s linear, color 0.15s ease;
+  animation: crbSlidePrompt 1.8s infinite ease-in-out;
+}
+.crb-cancel-text {
+  will-change: transform, opacity;
+  transition: transform 0.05s linear, opacity 0.05s linear;
+  white-space: nowrap;
+}
+/* Barmoq bilan surayotganda idle animatsiya o'chadi — faqat silliq oqish */
+.crb-cancel.is-sliding {
+  animation: none !important;
 }
 
 @keyframes crbSlidePrompt {
-  0%, 100% { transform: translateX(0); opacity: 0.7; }
-  50% { transform: translateX(-6px); opacity: 1; }
+  0%, 100% { transform: translateX(0); opacity: 0.65; }
+  50% { transform: translateX(-8px); opacity: 1; }
 }
 
 .chat-record-bar.cancelling .crb-cancel {
   color: var(--text);
   animation: none;
-  font-weight: 600;
+  font-weight: 500;
 }
 .chat-record-bar.cancelling .crb-dot {
   background: #ef4444 !important;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.85) !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.9) !important;
   opacity: 1 !important;
   animation: none;
 }
@@ -3071,3 +3084,70 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 .chat-msg.mine .cvm-eq-bar { background: rgba(255, 255, 255, 0.92); box-shadow: 0 0 6px rgba(255,255,255,0.25); }
 .chat-msg.theirs .cvm-eq-bar { background: var(--blue, #1d9bf0); box-shadow: 0 0 6px rgba(29,155,240,0.35); }
+
+
+/* ── Login: classic app install ── */
+.auth-install {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line, rgba(255,255,255,0.08));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.auth-install-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 280px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--line, rgba(255,255,255,0.12));
+  background: var(--bg3, #16181c);
+  color: var(--text, #fff);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.auth-install-btn:hover {
+  background: var(--bg4, #1c1f24);
+  border-color: rgba(255,255,255,0.18);
+}
+.auth-install-btn:active { transform: scale(0.98); }
+.auth-install-btn svg { flex-shrink: 0; opacity: 0.9; }
+.auth-install-link {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3, #71767b);
+  cursor: pointer;
+  text-decoration: none;
+}
+.auth-install-link:hover {
+  color: var(--text, #e7e9ea);
+  text-decoration: underline;
+}
+
+/* Settings install row button */
+.ig-open-btn {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(255,255,255,0.12));
+  background: transparent;
+  color: var(--text, #e7e9ea);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ig-open-btn:hover {
+  background: var(--bg4, #1c1f24);
+}

@@ -128,9 +128,9 @@ html[data-nf],html[data-nf] body{background:#000}
     <input class="field" type="text"     id="aUsername" maxlength="20" placeholder="Foydalanuvchi nomi" autocomplete="username">
     <input class="field" type="password" id="aPassword" placeholder="Parol (kamida 6 ta belgi)"   autocomplete="current-password">
     <div id="confirmRow" class="d-none"><input class="field" type="password" id="aConfirm" placeholder="Parolni tasdiqlang"></div>
-    <div id="forgotPasswordWrap" style="display:none;margin-top:-6px;margin-bottom:12px;text-align:right;">
-      <button type="button" id="forgotPasswordBtn" style="background:none;border:none;color:var(--tg-primary-blue,#1d9bf0);font-size:13px;font-weight:500;cursor:pointer;padding:2px 0;">Parolni unutdingizmi?</button>
-      <div id="forgotPasswordHint" style="display:none;font-size:11.5px;color:var(--text3,#888);margin-top:4px;text-align:right;line-height:1.4;"></div>
+    <div id="forgotPasswordWrap">
+      <button type="button" id="forgotPasswordBtn">Parolni unutdingizmi?</button>
+      <div id="forgotPasswordHint"></div>
     </div>
     <div class="err-msg" id="authErr"></div>
     <button class="btn-primary" id="authBtn">Kirish</button>
@@ -139,39 +139,45 @@ html[data-nf],html[data-nf] body{background:#000}
       <span id="authSwitchText">Hisobingiz yo'qmi? </span>
       <span class="auth-link" id="authSwitchBtn">Ro'yxatdan o'tish</span>
     </div>
+
+    <div class="auth-install">
+      <button type="button" class="auth-install-btn" id="loginInstallBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Ilovani yuklab olish
+      </button>
+      <button type="button" class="auth-install-link" id="loginGuideBtn">Yo'riqnomani ko'rish</button>
+    </div>
   </div>
 </div>
 
 <!-- REGISTRATION RECOVERY EMAIL TIP / INPUT MODAL -->
-<div id="regRecoveryModal" class="overlay" style="display:none;align-items:center;justify-content:center;z-index:99990;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(0,0,0,0.85);">
+<div id="regRecoveryModal" class="overlay">
   <!-- 1-BOSQICH: MASLAHAT (2 ta tugma, hech qanday inputsiz) -->
-  <div id="regRecoveryStepTip" class="auth-card" style="max-width:390px;width:90%;margin:auto;background:#000000;box-shadow:0 24px 64px rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.14);text-align:center;">
-    <div style="width:48px;height:48px;border-radius:50%;background:rgba(29,155,240,0.15);color:var(--tg-primary-blue,#1d9bf0);display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
+  <div id="regRecoveryStepTip" class="auth-card">
+    <div class="rc-icon-circle">
+      <img src="./svg/auth/shield.svg" alt="" class="icon" width="24" height="24">
     </div>
-    <div style="font-size:1.15rem;font-weight:700;color:var(--text,#fff);margin-bottom:8px;">Zaxira email maslahati</div>
-    <p style="font-size:14px;color:var(--text2,#ccc);line-height:1.55;margin:0 0 20px 0;">
+    <div class="rc-title">Zaxira email maslahati</div>
+    <p class="rc-desc">
       Parolingizni unutib qo'ysangiz uni tiklab olish uchun zaxiraviy email manzilini kiriting!
     </p>
-    <div style="display:flex;gap:10px;">
-      <button type="button" class="btn" id="regRecoverySkipBtn" style="flex:1;height:42px;background:rgba(255,255,255,0.08);color:var(--text2,#ccc);border:1px solid rgba(255,255,255,0.12);border-radius:10px;font-weight:600;cursor:pointer;">O'tkazib yuborish</button>
-      <button type="button" class="btn btn-primary" id="regRecoveryAddBtn" style="flex:1;height:42px;font-weight:600;cursor:pointer;">Kiritish</button>
+    <div class="rc-actions">
+      <button type="button" class="btn rc-btn-secondary" id="regRecoverySkipBtn">O'tkazib yuborish</button>
+      <button type="button" class="btn btn-primary rc-btn-primary-flex" id="regRecoveryAddBtn">Kiritish</button>
     </div>
   </div>
 
   <!-- 2-BOSQICH: EMAIL KIRITISH (Input, Ortga va Kirish) -->
-  <div id="regRecoveryStepInput" class="auth-card" style="display:none;max-width:390px;width:90%;margin:auto;background:#000000;box-shadow:0 24px 64px rgba(0,0,0,0.95);border:1px solid rgba(255,255,255,0.14);text-align:left;">
-    <div style="font-size:1.15rem;font-weight:700;color:var(--text,#fff);margin-bottom:6px;text-align:center;">Zaxira emailni kiriting</div>
-    <p style="font-size:13px;color:var(--text3,#888);margin:0 0 16px 0;text-align:center;line-height:1.45;">
+  <div id="regRecoveryStepInput" class="auth-card">
+    <div class="rc-title rc-title-center">Zaxira emailni kiriting</div>
+    <p class="rc-desc-sm">
       Parol esdan chiqqanda ushbu emailga vaqtinchalik parol boradi.
     </p>
-    <input class="field" type="email" id="regRecoveryEmailInput" placeholder="Haqiqiy email (ixtiyoriy, masalan: user@gmail.com)" autocomplete="email" style="margin-bottom:6px;">
-    <div class="err-msg" id="regRecoveryEmailErr" style="min-height:18px;margin-bottom:12px;font-size:12.5px;"></div>
-    <div style="display:flex;gap:10px;">
-      <button type="button" class="btn" id="regRecoveryBackBtn" style="flex:1;height:42px;background:rgba(255,255,255,0.08);color:var(--text2,#ccc);border:1px solid rgba(255,255,255,0.12);border-radius:10px;font-weight:600;cursor:pointer;">Ortga</button>
-      <button type="button" class="btn btn-primary" id="regRecoverySubmitBtn" style="flex:1.2;height:42px;font-weight:600;cursor:pointer;">Kirish</button>
+    <input class="field" type="email" id="regRecoveryEmailInput" placeholder="Haqiqiy email (ixtiyoriy, masalan: user@gmail.com)" autocomplete="email">
+    <div class="err-msg" id="regRecoveryEmailErr"></div>
+    <div class="rc-actions">
+      <button type="button" class="btn rc-btn-secondary" id="regRecoveryBackBtn">Ortga</button>
+      <button type="button" class="btn btn-primary rc-btn-primary-wide" id="regRecoverySubmitBtn">Kirish</button>
     </div>
   </div>
 </div>
@@ -180,17 +186,17 @@ html[data-nf],html[data-nf] body{background:#000}
 <div id="recoveryModal" class="overlay" style="display:none;">
   <div class="auth-card pw-card" id="rcCard">
     <div class="rc-top">
-      <button type="button" class="rc-back" id="rcStepBack" aria-label="Orqaga" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button type="button" class="rc-back" id="rcStepBack" aria-label="Orqaga" hidden><img src="./svg/nav/chevron-left.svg" alt="" class="icon" width="22" height="22"></button>
       <div class="rc-steps" id="rcDots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
     </div>
-    <div class="pw-hero"><div class="pw-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div>
+    <div class="pw-hero"><div class="pw-icon"><img src="./svg/auth/lock.svg" alt="" class="icon" width="26" height="26"></div></div>
     <h2 class="pw-title" id="rcTitle">Parolni tiklash</h2>
     <p class="pw-sub" id="recoveryModalSubtitle">Zaxira emailingizga tasdiqlash kodi yuboramiz.</p>
     <div class="pw-err" id="recoveryErr" role="alert" style="display:none;"></div>
 
     <!-- 1-qadam: email -->
     <section class="rc-step on" data-step="1">
-      <div class="rc-mail"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m2 7 10 7 10-7"/></svg><strong id="recoveryTargetEmail">...</strong></div>
+      <div class="rc-mail"><img src="./svg/auth/mail.svg" alt="" class="icon" width="22" height="22"><strong id="recoveryTargetEmail">...</strong></div>
       <p class="rc-hint">Kod 8 ta belgidan iborat. Har safar yangi kod yuborilganda eskilari bekor bo'ladi.</p>
       <button type="button" class="pw-btn" id="recoverySendBtn">Emailga kod yuborish</button>
       <div id="recoverySendStatus" style="display:none;"></div>
@@ -239,7 +245,7 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="vmp-progress"><div class="vmp-progress-fill" id="vmpFill"></div></div>
     </div>
     <button class="vmp-close" id="vmpClose">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
     </button>
   </div>
   <!-- HEADER -->
@@ -253,12 +259,12 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="hdr-right">
       <!-- New Post Button (Mobile) -->
       <button class="hdr-new-post-btn" id="hdrNewPostBtn" aria-label="Yangi post yaratish">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <img src="./svg/action/plus.svg" alt="" class="icon">
       </button>
       <!-- Qidiruv: hidden input expands on icon click -->
       <div class="hdr-search-wrap" id="hdrSearchWrap">
         <button class="hdr-icon-btn" id="hdrSearchBtn" aria-label="Kashf">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <img src="./svg/action/search.svg" alt="" class="icon" width="17" height="17">
         </button>
       </div>
     </div>
@@ -269,7 +275,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="home-brand" id="homeBrand">
       <img src="./svg/SpaceMR.png" alt="" width="28" height="28">
       <span>SpaceMR</span>
-      <button type="button" class="home-brand-saved" id="hdrSavedBtn" aria-label="Saqlanganlar" title="Saqlanganlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+      <button type="button" class="home-brand-saved" id="hdrSavedBtn" aria-label="Saqlanganlar" title="Saqlanganlar"><img src="./svg/social/bookmark.svg" alt="" class="icon"></button>
     </div>
     <div class="home-composer" id="homeComposer" aria-label="Yangi post">
       <div class="home-composer-avi" id="homeComposerAvi"></div>
@@ -278,7 +284,7 @@ html[data-nf],html[data-nf] body{background:#000}
         <div class="home-composer-preview d-none" id="homeComposerPreview"></div>
         <div class="home-composer-actions">
           <button type="button" class="home-composer-attach" id="homeComposerAttach" aria-label="Fayl biriktirish" title="Fayl biriktirish">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            <img src="./svg/media/paperclip.svg" alt="" class="icon" width="20" height="20">
           </button>
           <button type="button" class="home-composer-post" id="homeComposerBtn" disabled>Post</button>
         </div>
@@ -291,7 +297,7 @@ html[data-nf],html[data-nf] body{background:#000}
   <div class="view" id="savedView">
     <div class="saved-head">
       <button type="button" class="saved-back" id="savedBack" aria-label="Orqaga" title="Orqaga">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <img src="./svg/nav/chevron-left.svg" alt="" class="icon" width="22" height="22">
       </button>
       <h2 class="saved-title">Saqlanganlar</h2>
     </div>
@@ -304,7 +310,7 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="profile-avi-row">
         <div class="profile-avi" id="profileAvi">
           <div class="avi-edit-badge">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <img src="./svg/action/edit.svg" alt="" class="icon" width="11" height="11">
           </div>
         </div>
         <div class="profile-stats">
@@ -317,7 +323,7 @@ html[data-nf],html[data-nf] body{background:#000}
         <div class="profile-name-row">
           <div class="profile-name" id="profileName"></div>
           <button class="edit-btn profile-gear-btn" id="settingsBtn" aria-label="Sozlamalar" title="Sozlamalar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <img src="./svg/action/settings.svg" alt="" class="icon" width="18" height="18">
           </button>
         </div>
         <div class="profile-username" id="profileUsername"></div>
@@ -339,10 +345,10 @@ html[data-nf],html[data-nf] body{background:#000}
       <span>Suhbatlar</span>
       <button class="chats-filter-btn" id="chatsFilterBtn" type="button" aria-haspopup="menu">
         <span id="chatsFilterLabel">Hammasi</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <img src="./svg/nav/chevron-down.svg" alt="" class="icon" width="14" height="14">
       </button>
       <button class="chats-add-btn" id="chatsAddBtn" title="Yangi guruh" aria-label="Yangi guruh">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <img src="./svg/action/plus-alt.svg" alt="" class="icon" width="20" height="20">
       </button>
     </div>
     <div class="chats-list" id="chatsListWrap">
@@ -398,34 +404,34 @@ html[data-nf],html[data-nf] body{background:#000}
     </div>
 
     <button class="nav-btn on" data-v="home" data-tip="Bosh sahifa" aria-label="Bosh sahifa">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.2 12 3l8.5 7.2V19a2 2 0 0 1-2 2H15v-6.2a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1V21H5.5a2 2 0 0 1-2-2z"/></svg>
+      <img src="./svg/nav/home.svg" alt="" class="icon">
       <span class="nav-label">Bosh sahifa</span>
     </button>
     <button class="nav-btn sb-search-toggle" id="sbSearchToggle" data-tip="Kashf" aria-label="Kashf">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="7"/><path d="m20.5 20.5-5-5"/></svg>
+      <img src="./svg/action/search-alt.svg" alt="" class="icon">
       <span class="nav-label">Kashf</span>
     </button>
     <button class="nav-center-btn" id="createBtn" data-tip="Yaratish" aria-label="Yangi post yaratish">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <img src="./svg/action/edit-square.svg" alt="" class="icon">
       <span class="sb-create-label">Post</span>
     </button>
     <button class="nav-btn" data-v="chats" data-tip="Suhbatlar" aria-label="Suhbatlar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5c-4.7 0-8.5 3.2-8.5 7.2 0 2.1 1 4 2.7 5.3L5.5 20.5l3.9-1.9c.8.2 1.7.3 2.6.3 4.7 0 8.5-3.2 8.5-7.2S16.7 3.5 12 3.5z"/></svg>
+      <img src="./svg/social/chat.svg" alt="" class="icon">
       <span class="nav-label">Suhbatlar</span>
       <span class="nav-badge d-none" id="chatBadge"></span>
     </button>
     <button class="nav-btn nav-saved" data-v="saved" data-tip="Saqlanganlar" aria-label="Saqlanganlar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <img src="./svg/social/bookmark.svg" alt="" class="icon">
       <span class="nav-label">Saqlanganlar</span>
     </button>
     <button class="nav-btn" data-v="profile" data-tip="Profil" aria-label="Profil">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c.4-3.5 3.5-5.7 7.5-5.7s7.1 2.2 7.5 5.7z"/></svg>
+      <img src="./svg/social/user.svg" alt="" class="icon">
       <span class="nav-label">Profil</span>
     </button>
 
     <!-- Admin: Actions tab (statistika + users birlashtirilgan, faqat admin uchun) -->
     <button class="nav-btn admin-only-btn d-none" data-v="actions" data-tip="Boshqaruv" aria-label="Boshqaruv" id="adminActionsNavBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <img src="./svg/admin/grid.svg" alt="" class="icon" width="7" height="7">
       <span class="nav-label">Boshqaruv</span>
       <span class="nav-badge d-none" id="adminActionsBadge"></span>
     </button>
@@ -438,7 +444,7 @@ html[data-nf],html[data-nf] body{background:#000}
           <span class="sb-acc-name" id="sbAccName"></span>
           <span class="sb-acc-user" id="sbAccUser"></span>
         </span>
-        <svg class="sb-acc-dots" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+        <img src="./svg/ui/dots-horizontal.svg" alt="" class="icon sb-acc-dots" width="18" height="18">
       </button>
     </div>
   </nav>
@@ -459,7 +465,7 @@ html[data-nf],html[data-nf] body{background:#000}
     </section>
     <div class="rr-settings-wrap" id="rrSettingsWrap" hidden>
       <button type="button" class="rr-settings-btn" id="rrSettingsBtn" aria-label="Sozlamalar" title="Sozlamalar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <img src="./svg/action/settings.svg" alt="" class="icon" width="16" height="16">
         Sozlamalar
       </button>
     </div>
@@ -468,10 +474,7 @@ html[data-nf],html[data-nf] body{background:#000}
 
 
 <div id="pendingApprovalScreen" style="display:none;">
-  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <polyline points="12 6 12 12 16 14"/>
-  </svg>
+  <img src="./svg/ui/clock.svg" alt="" class="icon" width="64" height="64">
   <h2>Ruxsat kutilmoqda</h2>
   <p>
     Hisobingiz muvaffaqiyatli yaratildi.<br>
@@ -490,7 +493,7 @@ html[data-nf],html[data-nf] body{background:#000}
   <div class="composer-sheet" id="uploadSheet">
     <div class="composer-top">
       <button class="composer-close" id="cancelUpload" aria-label="Yopish">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="20" height="20">
       </button>
     </div>
 
@@ -512,7 +515,7 @@ html[data-nf],html[data-nf] body{background:#000}
 
     <div class="composer-toolbar">
       <div class="upload-drop" id="uploadDrop" aria-label="Rasm qo'shish">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+        <img src="./svg/media/paperclip-alt.svg" alt="" class="icon" width="24" height="24">
         <input type="file" id="fileInput" class="d-none">
       </div>
       <button class="btn-primary composer-post-btn" id="uploadBtn" disabled>Post</button>
@@ -527,7 +530,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="cmt-modal-hdr">
       <span class="cmt-modal-title">Izohlar</span>
       <button class="cmt-modal-close" id="cmtModalClose">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
       </button>
     </div>
     <div class="cmt-modal-list" id="cmtModalList"></div>
@@ -536,7 +539,7 @@ html[data-nf],html[data-nf] body{background:#000}
       <textarea class="cmt-input" id="cmtModalInput" rows="1" placeholder="Izoh qoldirish..." maxlength="300"></textarea>
       <span class="cmt-char-count" id="cmtCharCount">300</span>
       <button class="cmt-send" id="cmtModalSend">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <img src="./svg/action/send.svg" alt="" class="icon" width="16" height="16">
       </button>
     </div>
   </div>
@@ -557,7 +560,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <div id="settingsOverlay">
   <div class="settings-hdr">
     <button class="settings-back" id="closeSettingsBtn" aria-label="Orqaga">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+      <img src="./svg/nav/arrow-left.svg" alt="" class="icon" width="18" height="18">
     </button>
     <div class="settings-hdr-title">Sozlamalar</div>
     <div class="settings-hdr-spacer"></div>
@@ -572,12 +575,12 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="pe-avatar-ring" id="peAviRing" title="Suratni o'zgartirish">
         <div class="pe-avi-img" id="peAviImg"></div>
         <div class="pe-avi-edit-badge" id="peAviEditBadge" title="Avatar yuklash">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <img src="./svg/media/camera.svg" alt="" class="icon" width="13" height="13">
         </div>
         <input type="file" id="peAviInput" accept="image/*" style="display:none">
       </div>
       <button class="pe-avatar-btn" id="peAviChangeText" type="button">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <img src="./svg/media/upload.svg" alt="" class="icon" width="13" height="13">
         Suratni o'zgartirish
       </button>
     </div>
@@ -586,10 +589,10 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="pe-card-group pe-accordion" data-pe-acc="basic">
       <button type="button" class="pe-group-title pe-acc-toggle" aria-expanded="false">
         <span class="pe-acc-left">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <img src="./svg/social/user-alt.svg" alt="" class="icon" width="14" height="14">
           Asosiy ma'lumotlar
         </span>
-        <svg class="pe-acc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
       </button>
       <div class="pe-acc-body">
         <div class="pe-field-box">
@@ -615,11 +618,11 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="pe-card-group pe-accordion" data-pe-acc="email">
       <button type="button" class="pe-group-title pe-acc-toggle" aria-expanded="false">
         <span class="pe-acc-left">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <img src="./svg/auth/mail-alt.svg" alt="" class="icon" width="14" height="14">
           Zaxira email
           <span class="pe-tag-optional">ixtiyoriy</span>
         </span>
-        <svg class="pe-acc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
       </button>
       <div class="pe-acc-body">
         <div class="pe-field-box">
@@ -634,11 +637,11 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="pe-card-group pe-security-group pe-accordion" data-pe-acc="password">
       <button type="button" class="pe-group-title pe-acc-toggle" aria-expanded="false">
         <span class="pe-acc-left">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <img src="./svg/auth/lock.svg" alt="" class="icon" width="14" height="14">
           Parolni o'zgartirish
           <span class="pe-tag-optional">ixtiyoriy</span>
         </span>
-        <svg class="pe-acc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
       </button>
       <div class="pe-acc-body">
         <div class="pe-security-desc">Faqat parolni yangilamoqchi bo'lsangiz quyidagi maydonlarni to'ldiring:</div>
@@ -647,8 +650,8 @@ html[data-nf],html[data-nf] body{background:#000}
           <div class="pe-pwd-wrap">
             <input class="field pe-input pe-pwd-input" type="password" id="editOldPassword" placeholder="Joriy parolingiz" autocomplete="current-password">
             <button class="pe-pwd-toggle" type="button" tabindex="-1" data-target="editOldPassword" aria-label="Parolni ko'rsatish" title="Parolni ko'rsatish">
-              <svg class="pe-eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg class="pe-eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <img src="./svg/ui/eye-open.svg" alt="" class="icon pe-eye-open" width="16" height="16">
+              <img src="./svg/ui/eye-closed.svg" alt="" class="icon pe-eye-closed" width="16" height="16" style="display:none">
             </button>
           </div>
         </div>
@@ -657,8 +660,8 @@ html[data-nf],html[data-nf] body{background:#000}
           <div class="pe-pwd-wrap">
             <input class="field pe-input pe-pwd-input" type="password" id="editNewPassword" placeholder="Yangi parol (kamida 6 belgi)" autocomplete="new-password">
             <button class="pe-pwd-toggle" type="button" tabindex="-1" data-target="editNewPassword" aria-label="Parolni ko'rsatish" title="Parolni ko'rsatish">
-              <svg class="pe-eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg class="pe-eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <img src="./svg/ui/eye-open.svg" alt="" class="icon pe-eye-open" width="16" height="16">
+              <img src="./svg/ui/eye-closed.svg" alt="" class="icon pe-eye-closed" width="16" height="16" style="display:none">
             </button>
           </div>
         </div>
@@ -667,8 +670,8 @@ html[data-nf],html[data-nf] body{background:#000}
           <div class="pe-pwd-wrap">
             <input class="field pe-input pe-pwd-input" type="password" id="editNewPassword2" placeholder="Yangi parolni tasdiqlang" autocomplete="new-password">
             <button class="pe-pwd-toggle" type="button" tabindex="-1" data-target="editNewPassword2" aria-label="Parolni ko'rsatish" title="Parolni ko'rsatish">
-              <svg class="pe-eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <svg class="pe-eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <img src="./svg/ui/eye-open.svg" alt="" class="icon pe-eye-open" width="16" height="16">
+              <img src="./svg/ui/eye-closed.svg" alt="" class="icon pe-eye-closed" width="16" height="16" style="display:none">
             </button>
           </div>
         </div>
@@ -678,7 +681,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <!-- Saqlash tugmasi -->
     <div style="display:flex;gap:10px;margin-top:2px;">
       <button class="btn-primary pe-btn-save" id="saveProfileBtn" type="button" style="flex:1;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <img src="./svg/action/save.svg" alt="" class="icon" width="15" height="15">
         Saqlash
       </button>
     </div>
@@ -696,33 +699,34 @@ html[data-nf],html[data-nf] body{background:#000}
       </button>
     </div>
 
-    <div class="settings-row">
+    <div class="settings-section-label">Ilova</div>
+    <div class="settings-row settings-row--install">
       <div class="settings-row-text">
-        <div class="settings-row-title">Yo'riqnoma</div>
-        <div class="settings-row-hint">Bosh ekranga qo'shish va bildirishnomani yoqish</div>
+        <div class="settings-row-title">Ilovani yuklab olish</div>
+        <div class="settings-row-hint">Bosh ekranga o'rnatish — tezroq ochiladi</div>
       </div>
-      <button class="ig-open-btn" id="guideOpenBtn" type="button">Ko'rish</button>
+      <button class="ig-open-btn" id="guideOpenBtn" type="button">Yo'riqnoma</button>
     </div>
 
     <div class="settings-section-label">Xotira</div>
     <div class="settings-actions">
       <button class="btn-danger" id="logoutBtn" title="Chiqish" aria-label="Chiqish">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <img src="./svg/action/logout.svg" alt="" class="icon" width="15" height="15">
         <span class="btn-lbl">Chiqish</span>
       </button>
 
       <button class="settings-help-btn" id="helpBtn" type="button" title="Yordam" aria-label="Yordam" data-href="https://spacemr.vercel.app/?g=spacemr">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <img src="./svg/ui/help.svg" alt="" class="icon" width="18" height="18">
       </button>
 
       <button class="edit-btn" id="clearCacheBtn" type="button" title="Keshni tozalash" aria-label="Keshni tozalash">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <img src="./svg/action/refresh.svg" alt="" class="icon" width="13" height="13">
         <span class="btn-lbl">Keshni tozalash</span>
       </button>
 
       <div class="settings-more-row">
         <button class="settings-more-btn" id="settingsMoreBtn" aria-label="Qo'shimcha" title="Qo'shimcha">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+          <img src="./svg/ui/dots-vertical.svg" alt="" class="icon" width="18" height="18">
         </button>
         <div class="settings-more-menu" id="settingsMoreMenu">
           <button class="settings-more-menu-item" id="deleteAccountBtn">Hisobni butunlay o'chirish</button>
@@ -737,7 +741,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <!-- ZOOM MODAL -->
 <div id="zoomModal">
   <button class="zoom-x" id="zoomClose">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
   </button>
   <img   id="zoomImg"   class="d-none">
 </div>
@@ -750,7 +754,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <!-- USER PROFILE MODAL -->
 <div id="userProfileModal">
   <button class="up-back" id="upBack">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+    <img src="./svg/nav/arrow-left-white.svg" alt="" class="icon" width="18" height="18">
   </button>
   <div class="up-body" id="upBody"></div>
 </div>
@@ -759,7 +763,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <div id="chatThreadModal">
   <div class="chat-thread-hdr">
     <button class="chat-thread-back" id="chatThreadBack">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+      <img src="./svg/nav/arrow-left.svg" alt="" class="icon" width="18" height="18">
     </button>
     <div class="chat-thread-avi" id="chatThreadAvi"></div>
     <div class="chat-thread-info">
@@ -767,10 +771,10 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="chat-thread-typing" id="chatTypingStatus"></div>
     </div>
     <button class="chat-call-btn" id="chatVoiceCallBtn" title="Qo'ng'iroq">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4a2 2 0 0 1 1.995-2.18H6.6a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.97a16 16 0 0 0 6.13 6.13l1.26-.89a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      <img src="./svg/call/phone.svg" alt="" class="icon" width="17" height="17">
     </button>
     <button class="chat-call-btn" id="chatHeaderMenuBtn" title="Menyu" aria-label="Menyu">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+      <img src="./svg/ui/dots-vertical-alt.svg" alt="" class="icon" width="18" height="18">
     </button>
   </div>
 
@@ -789,7 +793,7 @@ html[data-nf],html[data-nf] body{background:#000}
         <div class="cfp-size" id="cfpSize"></div>
       </div>
       <button class="cfp-remove" id="cfpRemove">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
       </button>
     </div>
   </div>
@@ -802,7 +806,7 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="crb-text" id="chatReplyText"></div>
     </div>
     <button class="crb-close" id="chatReplyClose" title="Bekor qilish">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
     </button>
   </div>
 
@@ -812,21 +816,21 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="cpab-thumb" id="cpabThumb" style="display:none;"></div>
     <div class="cpab-body">
       <div class="cpab-title">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <img src="./svg/action/send.svg" alt="" class="icon" width="12" height="12">
         <span>Ulashilayotgan post</span>
       </div>
       <div class="cpab-author" id="cpabAuthor"></div>
       <div class="cpab-text" id="cpabText"></div>
     </div>
     <button class="cpab-close" id="chatPostAttachClose" title="Bekor qilish" type="button" aria-label="Bekor qilish">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
     </button>
   </div>
 
   <div class="chat-thread-input-row" id="chatThreadInputRow">
     <!-- File attach button — eng chapda -->
     <button class="chat-attach-btn" id="chatAttachBtn" title="Fayl yuborish">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      <img src="./svg/media/paperclip.svg" alt="" class="icon" width="18" height="18">
     </button>
     <input type="file" id="chatFileInput" style="display:none">
 
@@ -836,7 +840,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <!-- Emoji tugmasi — input o'ngida, ovoz/yuborish tugmasi oldida -->
     <div class="chat-emoji-wrap">
       <button class="chat-emoji-btn" id="chatEmojiBtn" type="button" title="Emoji">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <img src="./svg/ui/emoji.svg" alt="" class="icon" width="20" height="20">
       </button>
       <div class="chat-emoji-quickpick" id="chatEmojiQuickpick"></div>
     </div>
@@ -847,8 +851,8 @@ html[data-nf],html[data-nf] body{background:#000}
       <span class="crb-timer" id="chatRecordTimer">0:00</span>
       <div class="crb-wave" id="crbWave" aria-hidden="true"></div>
       <span class="crb-cancel" id="chatRecordCancel">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        <span class="crb-cancel-text" id="crbCancelText">Bekor qilish uchun suring</span>
+        <img src="./svg/nav/chevron-left.svg" alt="" class="icon" width="14" height="14">
+        <span class="crb-cancel-text" id="crbCancelText">Bekor qilish uchun chapga suring</span>
       </span>
     </div>
 
@@ -860,8 +864,8 @@ html[data-nf],html[data-nf] body{background:#000}
         <span class="cv-pulse cv-pulse-1" id="cvPulse1"></span>
       </div>
       <button class="chat-voice-btn" id="chatVoiceBtn" title="Ovozli xabar" type="button">
-        <svg class="icon-mic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11.5a7 7 0 0 0 14 0"/><path d="M12 18.5v3"/></svg>
-        <svg class="icon-send" width="24" height="24" viewBox="0 0 24 24" style="display:none" aria-hidden="true"><path class="ps-wing" d="M3 3.5 L21.5 12 L3 20.5 L5.2 12 Z"/><path class="ps-fold" d="M5.2 12 H13.5"/></svg>
+        <img src="./svg/media/mic.svg" alt="" class="icon icon-mic" width="24" height="24">
+        <img src="./svg/action/send-filled.svg" alt="" class="icon icon-send" width="24" height="24" style="display:none">
       </button>
     </div>
   </div>
@@ -888,13 +892,13 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="incoming-call-btns">
       <div class="inc-call-col">
         <button class="inc-call-btn reject" id="incomingCallReject" title="Rad etish">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4a2 2 0 0 1 1.995-2.18H6.6a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.97a16 16 0 0 0 6.13 6.13l1.26-.89a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <img src="./svg/call/phone.svg" alt="" class="icon" width="26" height="26">
         </button>
         <span class="inc-call-label">Rad etish</span>
       </div>
       <div class="inc-call-col">
         <button class="inc-call-btn accept" id="incomingCallAccept" title="Qabul qilish">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4a2 2 0 0 1 1.995-2.18H6.6a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.97a16 16 0 0 0 6.13 6.13l1.26-.89a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <img src="./svg/call/phone.svg" alt="" class="icon" width="26" height="26">
         </button>
         <span class="inc-call-label">Qabul qilish</span>
       </div>
@@ -923,31 +927,31 @@ html[data-nf],html[data-nf] body{background:#000}
   <div class="call-active-btns">
     <div class="call-ctrl-col" id="callSwitchCol">
       <button class="call-ctrl-btn cam-btn" id="callSwitchCamBtn" title="Kamerani almashtirish" style="display:none">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
+        <img src="./svg/action/switch-camera.svg" alt="" class="icon" width="20" height="20">
       </button>
       <span class="call-ctrl-label">Kamera</span>
     </div>
     <div class="call-ctrl-col" id="callCamCol">
       <button class="call-ctrl-btn cam-btn" id="callCamBtn" title="Videoni yoqish">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        <img src="./svg/media/video.svg" alt="" class="icon" width="20" height="20">
       </button>
       <span class="call-ctrl-label" id="callCamLabel">Video</span>
     </div>
     <div class="call-ctrl-col" id="callMicCol">
       <button class="call-ctrl-btn" id="callMicBtn" title="Mikrofonni o'chirish">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        <img src="./svg/media/mic-alt.svg" alt="" class="icon" width="20" height="20">
       </button>
       <span class="call-ctrl-label" id="callMicLabel">Mikrofon</span>
     </div>
     <div class="call-ctrl-col" id="callSpeakerCol">
       <button class="call-ctrl-btn" id="callSpeakerBtn" title="Dinamik (ovoz)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <img src="./svg/media/speaker.svg" alt="" class="icon" width="20" height="20">
       </button>
       <span class="call-ctrl-label" id="callSpeakerLabel">Karnay</span>
     </div>
     <div class="call-ctrl-col" id="callEndCol">
       <button class="call-ctrl-btn end-btn" id="callEndBtn" title="Tugatish">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4a2 2 0 0 1 1.995-2.18H6.6a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.97a16 16 0 0 0 6.13 6.13l1.26-.89a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <img src="./svg/call/phone.svg" alt="" class="icon" width="22" height="22">
       </button>
       <span class="call-ctrl-label">Tugatish</span>
     </div>
@@ -957,24 +961,24 @@ html[data-nf],html[data-nf] body{background:#000}
 <!-- CHAT CONTEXT MENU -->
 <div id="chatContextMenu">
   <button class="ctx-item" id="ctxReply">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+    <img src="./svg/action/reply.svg" alt="" class="icon" width="16" height="16">
     Javob berish
   </button>
   <button class="ctx-item" id="ctxReact">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+    <img src="./svg/ui/emoji-alt.svg" alt="" class="icon" width="16" height="16">
     Reaksiya
   </button>
   <button class="ctx-item" id="ctxCopy">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <img src="./svg/action/copy.svg" alt="" class="icon" width="16" height="16">
     Nusxalash
   </button>
   <button class="ctx-item" id="ctxEdit">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <img src="./svg/action/edit-square-alt.svg" alt="" class="icon" width="16" height="16">
     Tahrirlash
   </button>
   <div class="ctx-divider"></div>
   <button class="ctx-item danger" id="ctxDelete">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+    <img src="./svg/action/trash.svg" alt="" class="icon" width="16" height="16">
     O'chirish
   </button>
 </div>
@@ -999,7 +1003,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <div id="sbSearchPanel">
   <div class="sb-panel-title">Kashf</div>
   <div class="sb-panel-input-wrap">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <img src="./svg/action/search.svg" alt="" class="icon" width="14" height="14">
     <input type="text" class="sb-panel-input" id="sbPanelInput" placeholder="Post yoki odamlarni qidiring...">
   </div>
   <div class="sb-panel-tabs">
@@ -1013,7 +1017,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <!-- MANDATORY PASSWORD RESET MODAL -->
 <div id="mandatoryPwdOverlay" class="overlay" style="display:none;">
   <div class="auth-card pw-card">
-    <div class="pw-hero"><div class="pw-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div>
+    <div class="pw-hero"><div class="pw-icon"><img src="./svg/auth/lock.svg" alt="" class="icon" width="26" height="26"></div></div>
     <h2 class="pw-title">Yangi parol o'rnating</h2>
     <p class="pw-sub">Xavfsizlik talabi: parolingiz administrator tomonidan tiklangan. Davom etish uchun o'zingizga yangi shaxsiy parol belgilang.</p>
     <div id="mandatoryPwdErr" class="pw-err" role="alert"></div>
@@ -1042,24 +1046,17 @@ html[data-nf],html[data-nf] body{background:#000}
     <div id="adminResetPwdStepConfirm">
       <div class="admin-reset-header">
         <div class="admin-reset-icon-wrap">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 2l-2 2m-6.5 6.5l-3 3-2.5-2.5L2 16l5 5 5-5-2.5-2.5 3-3m5.5-5.5l2-2"/>
-            <circle cx="15.5" cy="8.5" r="4.5"/>
-          </svg>
+          <img src="./svg/admin/key.svg" alt="" class="icon" width="26" height="26">
         </div>
         <div class="admin-reset-title">Parolni tiklash kodi (OTP)</div>
         <div class="admin-reset-user-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <img src="./svg/social/user-badge.svg" alt="" class="icon" width="14" height="14">
           <span id="adminResetPwdUserSubtitle" class="admin-reset-user-name">Foydalanuvchi hisobi</span>
         </div>
       </div>
 
       <div class="admin-reset-warn" id="adminResetWarnBox">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d9bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
+        <img src="./svg/ui/info.svg" alt="" class="icon" width="18" height="18">
         <div class="admin-reset-warn-text" id="adminResetWarnText">
           Foydalanuvchining joriy paroli o'chirilmaydi. Xavfsiz bir martalik tiklash kodi (OTP) yaratiladi. Agar zaxira email bo'lsa, xat yuboriladi. Foydalanuvchi ushbu kod orqali tizimga kirib o'ziga yangi parol o'rnatishi mumkin.
         </div>
@@ -1070,7 +1067,7 @@ html[data-nf],html[data-nf] body{background:#000}
         <div class="admin-reset-pwd-field">
           <input class="admin-reset-pwd-input" id="adminResetTempPwdInput" type="text" readonly spellcheck="false">
           <button type="button" class="admin-reset-icon-btn" id="adminResetRegenBtn" title="Boshqa kod yaratish">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            <img src="./svg/action/refresh-alt.svg" alt="" class="icon" width="17" height="17">
           </button>
         </div>
       </div>
@@ -1084,9 +1081,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <!-- Step 2: Result & Copy -->
     <div id="adminResetPwdStepResult" style="display:none;text-align:center;">
       <div class="admin-reset-success-icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+        <img src="./svg/ui/check.svg" alt="" class="icon" width="28" height="28">
       </div>
       <div class="admin-reset-result-title">Tiklash kodi tayyor!</div>
       <p id="adminResetResultSubtitle" class="admin-reset-result-sub">
@@ -1095,7 +1090,7 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="admin-reset-result-box">
         <span id="adminResetResultPwdText" class="admin-reset-result-code"></span>
         <button type="button" class="admin-reset-copy-btn" id="adminResetCopyBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <img src="./svg/action/copy-alt.svg" alt="" class="icon" width="15" height="15">
           Nusxalash
         </button>
       </div>
@@ -1113,7 +1108,7 @@ html[data-nf],html[data-nf] body{background:#000}
 <!-- FLOATING UPLOAD PROGRESS -->
 <div id="uploadFloatBar" class="upload-float-bar d-none">
   <div class="ufb-icon">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    <img src="./svg/action/arrow-up.svg" alt="" class="icon" width="14" height="14">
   </div>
   <div class="ufb-body">
     <div class="ufb-name" id="ufbName">Yuklanmoqda...</div>
@@ -1147,17 +1142,17 @@ html[data-nf],html[data-nf] body{background:#000}
       <div class="exp-head">
         <div class="search-overlay-box">
           <div class="exp-pill">
-            <svg class="search-overlay-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <img src="./svg/action/search-overlay.svg" alt="" class="icon search-overlay-icon" width="18" height="18">
             <input type="text" id="searchInput" placeholder="Qidiruv" autocomplete="off" spellcheck="false">
             <!-- Qidiruv Suggestions -->
             <div class="search-suggestions" id="searchSuggestions"></div>
             <!-- Tozalash (X): faqat inputni bo'shatadi; input bo'sh bo'lsa ko'rinmaydi -->
             <button type="button" class="search-clear-btn" id="searchClearBtn" aria-label="Tozalash">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
             </button>
           </div>
           <button class="search-overlay-close" id="searchOverlayClose" aria-label="Yopish">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <img src="./svg/action/close.svg" alt="" class="icon" width="18" height="18">
           </button>
         </div>
       </div>
@@ -1207,7 +1202,7 @@ html[data-nf],html[data-nf] body{background:#000}
     <div class="avi-crop-hdr">
       <span class="avi-crop-title">Profil rasmini o'zgartirish</span>
       <button type="button" class="avi-crop-x" id="aviCropClose" aria-label="Yopish">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
       </button>
     </div>
     <div class="avi-crop-stage" id="aviCropStage">

@@ -2867,7 +2867,7 @@ button:focus-visible,
   --blue-glow: rgba(29, 155, 240, 0.2);
   --blue-glow2: rgba(29, 155, 240, 0.25);
 
-  /* Red — like, delete, error, danger, reject call, recording */
+  /* Red — like, delete, error, danger, reject call */
   --pal-red: #ef4444;
   --red: #ef4444;
   --red-glow: rgba(239, 68, 68, 0.12);
@@ -3165,14 +3165,14 @@ button:focus-visible,
   background: #00ba7c !important;
 }
 
-/* ── Recording voice btn: RED when recording ──────────────────────── */
+/* Recording voice btn — ko'k (features.css), qizil YO'Q */
 .chat-voice-btn.recording {
-  background: var(--red) !important;
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.55), 0 0 0 2px rgba(255,255,255,0.2) !important;
+  background: #1d9bf0 !important;
+  box-shadow: 0 4px 20px rgba(29, 155, 240, 0.45), 0 0 0 2px rgba(255,255,255,0.15) !important;
 }
-/* Chapga surganda voice tugma qizarmaydi — faqat matn + crb-dot */
 .chat-voice-btn.recording.cancelling {
-  /* no red override */
+  background: #1d9bf0 !important;
+  box-shadow: 0 4px 20px rgba(29, 155, 240, 0.45), 0 0 0 2px rgba(255,255,255,0.15) !important;
 }
 
 /* ── confirmOkBtn (danger confirm): red ───────────────────────────── */
