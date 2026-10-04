@@ -13493,3 +13493,28 @@ body::-webkit-scrollbar,
 @media (max-width: 1099px) {
   nav.bot-nav #adminActionsNavBtn { display: none !important; }
 }
+
+
+/* Mobil/planshet: header hech qaysi tabda yopilmaydi */
+@media (max-width: 1099px) {
+  header.app-hdr,
+  #appHdr.app-hdr,
+  .app-hdr,
+  .app-hdr.force-hide,
+  .app-hdr.search-open {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    pointer-events: auto !important;
+  }
+  #homeView.on,
+  #followingView.on,
+  #savedView.on,
+  #chatsView.on,
+  #profileView.on,
+  #actionsView.on {
+    padding-top: 52px !important;
+  }
+}

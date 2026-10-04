@@ -219,11 +219,9 @@ function updateNavUI(routeName) {
 function updateLayoutForRoute(routeName) {
   const isActions = routeName === 'actions';
 
-  // Header visibility — actions da desktop uchun yashiramiz
+  // Header mobil/planshetda har tabda ochiq. Desktopda CSS yashiradi.
   const appHdr = $('appHdr');
-  if (appHdr) {
-    appHdr.classList.toggle('force-hide', isActions);
-  }
+  if (appHdr) appHdr.classList.remove('force-hide');
 
   const hdrSearchWrap  = $('hdrSearchWrap');
   const hdrSearchBtn   = $('hdrSearchBtn');
