@@ -5,40 +5,11 @@ import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          dlFile, openZoom, showHeartBurst, fmtCount } from '../core/utils.js';
 import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
+import { getFileIcon } from '../core/file-icons.js';
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
 /* File type → SVG icon (mirrors upload.js getFileTypeInfo) */
-function getFileIcon(name, mime) {
-  const ext = (name.split('.').pop() || '').toLowerCase();
-  const m   = (mime || '').toLowerCase();
-  if (m.startsWith('audio') || ['mp3','wav','ogg','aac','flac','m4a','wma','opus','aiff','mid','midi'].includes(ext))
-    return `<img src="./svg/ui/badge-193a24.svg" alt="" class="icon" width="48" height="48">`;
-  if (['html','htm'].includes(ext) || m === 'text/html')
-    return `<img src="./svg/ui/badge-097c5b.svg" alt="" class="icon" width="48" height="48">`;
-  if (['ts','tsx'].includes(ext))
-    return `<img src="./svg/ui/badge-1c4a3b.svg" alt="" class="icon" width="48" height="48">`;
-  if (['js','mjs','cjs','jsx'].includes(ext) || m.includes('javascript'))
-    return `<img src="./svg/ui/badge-${ext==='jsx'?'jsx':'js'}.svg" alt="" class="icon" width="48" height="48">`;
-  if (ext === 'pdf' || m === 'application/pdf')
-    return `<img src="./svg/ui/badge-2646f5.svg" alt="" class="icon" width="48" height="48">`;
-  if (['zip','rar','7z','tar','gz','bz2','xz'].includes(ext))
-    return `<img src="./svg/ui/badge-62683e.svg" alt="" class="icon" width="48" height="48">`;
-  if (['doc','docx'].includes(ext) || m.includes('msword') || m.includes('wordprocessingml'))
-    return `<img src="./svg/ui/badge-770fc7.svg" alt="" class="icon" width="48" height="48">`;
-  if (['xls','xlsx','csv','ods'].includes(ext) || m.includes('spreadsheet') || m.includes('excel') || m === 'text/csv')
-    return `<img src="./svg/ui/badge-3e2c34.svg" alt="" class="icon" width="48" height="48">`;
-  if (ext === 'py')
-    return `<img src="./svg/ui/badge-4f072b.svg" alt="" class="icon" width="48" height="48">`;
-  if (ext === 'json')
-    return `<img src="./svg/ui/badge-fa9f16.svg" alt="" class="icon" width="48" height="48">`;
-  if (['css','scss','sass','less'].includes(ext))
-    return `<img src="./svg/ui/badge-78ac57.svg" alt="" class="icon" width="48" height="48">`;
-  if (['md','mdx'].includes(ext))
-    return `<img src="./svg/ui/badge-6d8513.svg" alt="" class="icon" width="48" height="48">`;
-  // default
-  return `<img src="./svg/ui/badge-b5ca57.svg" alt="" class="icon" width="48" height="48">`;
-}
 
 
 export function filtered() {
@@ -437,11 +408,11 @@ export async function openPostLink(postId) {
   await renderFeed();           // targetId bor -> scrollToPostFromHash o'zi chaqiriladi
 }
 
-/* Event delegation — har renderda N ta listener o'rniga bitta (0 lag, 0 memory leak) */
-let _feedDelegated = false;
+/* Event delegation — har feed konteyner uchun bir marta (#feed, #savedFeed, ...) */
+const _feedBoundEls = new WeakSet();
 function bindFeedEvents(feedEl) {
-  if (!feedEl || _feedDelegated) return;
-  _feedDelegated = true;
+  if (!feedEl || _feedBoundEls.has(feedEl)) return;
+  _feedBoundEls.add(feedEl);
   feedEl.addEventListener('click', async (e) => {
     const t = e.target;
     // Post rasm → lightbox (pinch zoom)
