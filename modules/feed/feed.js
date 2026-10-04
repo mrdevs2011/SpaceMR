@@ -644,6 +644,33 @@ export function patchCounts(posts) {
 let _feedFirstRender = true;
 let _hashPostHandled = false; // link orqali kelingan postni faqat bir marta moslashtiramiz
 
+/* ── Scroll joyini saqlash: feed qayta chizilganda (yangi post, realtime, keyingi postlar
+   yuklanishi) foydalanuvchi eng tepaga sakramasin — ko'rinib turgan post o'z joyida qoladi ── */
+function captureScrollAnchor(feedEl) {
+  if (!feedEl || window.scrollY < 80) return null; // tepada bo'lsa — yangi post tabiiy chiqadi
+  // Ko'rinib turgan postlardan bir nechtasini eslaymiz: biri o'chib ketsa (masalan, kimdir postini
+  // o'chirsa) keyingisiga tayanamiz — shunda ko'rayotgan postlarim joyidan siljimaydi
+  const list = [];
+  for (const el of feedEl.querySelectorAll('.post')) {
+    const r = el.getBoundingClientRect();
+    if (r.bottom <= 0) continue;
+    list.push({ id: el.dataset.id, top: r.top });
+    if (list.length >= 8 || r.top > window.innerHeight) break;
+  }
+  return list.length ? list : null;
+}
+function restoreScrollAnchor(feedEl, anchors) {
+  if (!anchors || !feedEl) return;
+  const posts = Array.from(feedEl.querySelectorAll('.post'));
+  for (const a of anchors) {
+    const el = posts.find(x => x.dataset.id === a.id);
+    if (!el) continue; // o'chirilgan — keyingisiga o'tamiz
+    const delta = el.getBoundingClientRect().top - a.top;
+    if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: 'instant' });
+    return;
+  }
+}
+
 /* ── renderFeed ────────────────────────────────────────────────────── */
 export async function renderFeed() {
   if (!state.me) return;
@@ -667,6 +694,8 @@ export async function renderFeed() {
 
   const posts  = filtered().slice(0, state.visibleN);
 
+  const _anchor = (!targetId && state.view === 'home') ? captureScrollAnchor(feedEl) : null;
+
   // Birinchi renderda spinner
   if (_feedFirstRender && !feedEl.querySelector('.post')) {
     feedEl.innerHTML = '<div class="spin-wrap"><div class="spinner"></div></div>';
@@ -674,6 +703,7 @@ export async function renderFeed() {
   _feedFirstRender = false;
 
   await renderFeedTo(feedEl, posts);
+  restoreScrollAnchor(feedEl, _anchor);
   reapplyPostHighlight();
 
 

@@ -8213,3 +8213,29 @@ textarea:not(:focus) {
 .post-actions .act-btn.saved { color: #fff !important; }
 .post-actions .act-btn svg { stroke: #fff !important; }
 .post-actions .act-btn.link-btn svg { stroke: none !important; }
+
+/* ── Izoh yozish maydoni (textarea): borderssiz, fokusda ham, ramkasiz ── */
+.cmt-input,
+.cmt-input:focus,
+.cmt-input:focus-visible,
+[data-theme] .cmt-input,
+[data-theme] .cmt-input:focus,
+html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) .cmt-input,
+html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) .cmt-input:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+textarea.cmt-input {
+  resize: none;
+  overflow-y: auto;
+  min-height: 24px;
+  max-height: 120px;
+  line-height: 1.4;
+  padding: 8px 0;
+  scrollbar-width: none;
+}
+textarea.cmt-input::-webkit-scrollbar { display: none; }
+.cmt-input-row { align-items: flex-end; }

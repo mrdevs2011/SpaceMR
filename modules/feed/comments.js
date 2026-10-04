@@ -56,7 +56,7 @@ function ensureRailCmt() {
       </div>
       <div class="rr-cmt-input-row cmt-input-row">
         <div class="cmt-my-avi" id="rrCmtMyAvi"></div>
-        <input class="cmt-input" id="rrCmtInput" placeholder="Izoh qoldirish..." maxlength="300">
+        <textarea class="cmt-input" id="rrCmtInput" rows="1" placeholder="Izoh qoldirish..." maxlength="300"></textarea>
         <span class="cmt-char-count" id="rrCmtCharCount">300</span>
         <button class="cmt-send" id="rrCmtSend" type="button" disabled>Yuborish</button>
       </div>
@@ -152,7 +152,7 @@ async function openInlineCmt(postId) {
   panel.innerHTML = `
     <div class="post-cmt-input-row cmt-input-row">
       <div class="cmt-my-avi" id="inlineCmtMyAvi"></div>
-      <input class="cmt-input" id="inlineCmtInput" placeholder="Izoh qoldirish..." maxlength="300">
+      <textarea class="cmt-input" id="inlineCmtInput" rows="1" placeholder="Izoh qoldirish..." maxlength="300"></textarea>
       <span class="cmt-char-count" id="inlineCmtCharCount">300</span>
       <button class="cmt-send" id="inlineCmtSend" type="button" disabled>Yuborish</button>
     </div>
@@ -216,6 +216,7 @@ async function openRailCmt(postId) {
   const inp = $('rrCmtInput');
   if (inp) {
     inp.value = '';
+    inp.style.height = '';
     $('rrCmtCharCount').textContent = '300';
     $('rrCmtCharCount').className = 'cmt-char-count';
   }
@@ -429,7 +430,7 @@ async function sendComment(mode) {
     }).select('*').maybeSingle();
     if (insErr) throw insErr;
 
-    if (inp) inp.value = '';
+    if (inp) { inp.value = ''; inp.style.height = ''; }
     const cnt = $(charId);
     if (cnt) {
       cnt.textContent = '300';
@@ -462,6 +463,14 @@ async function sendComment(mode) {
     if (sendBtn) sendBtn.disabled = !inp?.value?.trim();
   }
 }
+
+/* ── Izoh textarea: matn bo'yicha balandligi o'sadi ───────────────────── */
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (!t || t.tagName !== 'TEXTAREA' || !t.classList.contains('cmt-input')) return;
+  t.style.height = 'auto';
+  t.style.height = Math.min(t.scrollHeight, 120) + 'px';
+});
 
 /* ── Legacy modal listeners (fallback, rarely used) ───────────────────── */
 if ($('cmtModalSend')) $('cmtModalSend').onclick = () => sendComment('modal');
