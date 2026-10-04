@@ -14045,3 +14045,36 @@ select.field option { background: #000000; color: var(--text); }
   border-radius: 50%; pointer-events: none; z-index: 5;
   animation: postUnderglow 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* ═══ Matnni belgilash/nusxalash (user-select) ═══
+   Global `*` da user-select:none (base). Quyida faqat o'qiladigan matnlar qayta ochiladi.
+   Tugma, ikon, nav, story/rasm, ovozli xabar, swipe elementlari yopiq qoladi. */
+.selectable, .selectable *,
+.post-caption, .post-caption *,
+.profile-name, .profile-username, .profile-bio, .profile-bio *,
+.gi-name, .gi-desc,
+.post-time {
+  -webkit-user-select: text; user-select: text;
+  -webkit-touch-callout: default;
+}
+/* Izoh matni: mobilda uzoq bosish = nusxalash (cmt-copy-hint), shuning uchun faqat sichqonchali qurilmada */
+@media (pointer: fine) {
+  .cmt-text, .cmt-text * { -webkit-user-select: text; user-select: text; }
+}
+/* Chat xabari matni: desktopda belgilanadi; mobilda DM'da menyudagi "Nusxalash",
+   guruh xabarlarida (menyusiz) oddiy belgilash. Emoji-only va ko'p tanlash rejimi yopiq. */
+@media (pointer: fine) {
+  #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text,
+  #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text * {
+    -webkit-user-select: text; user-select: text;
+  }
+}
+#chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only):not([data-msg-id]) .chat-bubble-text {
+  -webkit-user-select: text; user-select: text; -webkit-touch-callout: default;
+}
+
+/* Taklif havolasi bloki: ostidagi hint -6px margin bilan blok ustiga chiqib ketardi */
+.grp-invite-preview + .grp-form-desc-hint { margin-top: 8px; }
+.grp-invite-token { -webkit-user-select: text; user-select: text; }
+.grp-invite-regen-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; }
+.grp-invite-regen-btn .icon { display: block; }

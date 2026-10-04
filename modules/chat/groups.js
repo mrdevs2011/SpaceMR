@@ -1707,7 +1707,7 @@ export function injectGroupsDOM() {
             <div class="grp-invite-preview">
               <span class="grp-invite-token" id="grpEditInviteToken"></span>
               <button type="button" class="grp-invite-copy-btn" id="grpEditCopyInviteBtn">Nusxa</button>
-              <button type="button" class="grp-invite-regen-btn" id="grpEditRegenInviteBtn" title="Yangi havola yaratish">&#x21bb;</button>
+              <button type="button" class="grp-invite-regen-btn" id="grpEditRegenInviteBtn" title="Yangi havola yaratish" aria-label="Yangi havola yaratish"><img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14"></button>
             </div>
             <div class="grp-form-desc-hint">Ushbu 64 xonali havola orqali a'zolar qo'shiladi</div>
           </div>
