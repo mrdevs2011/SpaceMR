@@ -7604,3 +7604,28 @@ header.app-hdr.force-hide,
 @media (max-width: 1099px) {
   nav.bot-nav .nav-saved { display: none !important; }
 }
+
+
+/* Header faqat mobil va planshet. Desktopda sidebar yetarli. */
+@media (min-width: 1100px) {
+  :root,
+  [data-theme="dark"] { --hdr: 0px !important; }
+  header.app-hdr,
+  #appHdr.app-hdr,
+  .app-hdr {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+  #homeView.on,
+  #followingView.on,
+  #savedView.on,
+  #chatsView.on,
+  #profileView.on,
+  #actionsView.on {
+    padding-top: 0 !important;
+  }
+}
