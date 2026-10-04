@@ -199,8 +199,8 @@ export async function renderFeedTo(feedEl, posts) {
           <span class="post-dot">·</span>
           <span class="post-time">${fmt(p.createdAt)}</span>
         </div>
-        ${canDel ? `<button class="del-btn post-del-btn" data-id="${p.id}" title="O'chirish" aria-label="O'chirish">
-          <img src="./svg/extra/icon-fb3793816331.svg" alt="" class="icon" width="15" height="15"></button>` : ''}
+        <button class="post-more-btn" data-id="${p.id}" data-uid="${p.userId}" data-can-del="${canDel ? '1' : ''}" title="Yana" aria-label="Yana" aria-haspopup="menu">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
       </div>
       <div class="post-main">
         ${buildCaption(p.text, p.id)}
@@ -249,20 +249,34 @@ export async function renderFeedTo(feedEl, posts) {
 /* ── Init: URL'dan kelgan post id ni saqlab qo'yamiz (login qilmagan bo'lsa ham yo'qolmasligi uchun) ── */
 try {
   const hash = window.location.hash || '';
-  let initPostId = null;
-  if (hash.startsWith('#post-')) initPostId = hash.slice(6);
+  let initPostId = null, initCmtId = null;
+  if (hash.startsWith('#post-')) {
+    const [pid, cid] = hash.slice(6).split('~c-');   // #post-<postId>~c-<izohId>
+    initPostId = pid; initCmtId = cid || null;
+  }
   if (!initPostId) {
     const p = new URLSearchParams(window.location.search).get('post');
     if (p) initPostId = p;
   }
   if (initPostId) {
     sessionStorage.setItem('target_post_id', initPostId);
+    if (initCmtId) sessionStorage.setItem('target_cmt_id', initCmtId);
+    else sessionStorage.removeItem('target_cmt_id');
   }
 } catch (_) {}
 
 export async function copyPostLink(postId) {
   if (!postId) return;
-  const postUrl = `${window.location.origin}/#post-${postId}`;
+  return copyUrl(`${window.location.origin}/#post-${postId}`);
+}
+
+/** Izoh havolasi: ochilganda o'sha postga o'tadi, izohlarni ochadi va izohni yoritadi. */
+export async function copyCommentLink(postId, cmtId) {
+  if (!postId || !cmtId) return;
+  return copyUrl(`${window.location.origin}/#post-${postId}~c-${cmtId}`);
+}
+
+async function copyUrl(postUrl) {
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(postUrl);
@@ -317,13 +331,42 @@ export async function sharePostToChat(postId) {
 
 export function getTargetPostId() {
   const hash = window.location.hash || '';
-  if (hash.startsWith('#post-')) return hash.slice(6);
+  if (hash.startsWith('#post-')) return hash.slice(6).split('~c-')[0];
   try {
     const params = new URLSearchParams(window.location.search);
     const p = params.get('post');
     if (p) return p;
   } catch (_) {}
   return sessionStorage.getItem('target_post_id') || null;
+}
+
+export function getTargetCommentId() {
+  const hash = window.location.hash || '';
+  if (hash.startsWith('#post-')) return hash.slice(6).split('~c-')[1] || null;
+  return sessionStorage.getItem('target_cmt_id') || null;
+}
+
+const _sleep = ms => new Promise(r => setTimeout(r, ms));
+const CMT_HL_MS = 5000;
+
+/* Izoh havolasi bilan kelinganda: izohlarni ochamiz, izohga scroll qilamiz va yoritamiz */
+async function focusCommentFromLink(postId, cmtId) {
+  try {
+    const { openCmtModal } = await import('./comments.js');
+    const open = document.querySelector(`.post[data-id="${postId}"] .post-cmt-panel`) || state.cmtPostId === postId;
+    if (!open) await openCmtModal(postId);
+    for (let i = 0; i < 24; i++) {
+      const row = document.querySelector(`.cmt-row[data-cmt-id="${cmtId}"]`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.add('cmt-link-highlight');
+        setTimeout(() => row.classList.remove('cmt-link-highlight'), CMT_HL_MS);
+        return;
+      }
+      await _sleep(250);
+    }
+    toast("Izoh topilmadi — o'chirilgan bo'lishi mumkin", 'error');
+  } catch (e) { console.warn('[feed] izohga o\'tilmadi:', e?.message || e); }
 }
 
 let _scrolledTargetId = null;
@@ -358,10 +401,16 @@ export function scrollToPostFromHash() {
     if (el) {
       _scrolledTargetId = targetId;
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // 5 sekund tagidan rang yonib turib keyin o'chadi
-      _hlId = targetId;
-      _hlStart = Date.now();
-      applyPostHighlight(el);
+      const cmtId = getTargetCommentId();
+      if (cmtId) {
+        // Izoh havolasi: yoritish izohning o'zida bo'ladi, post emas
+        focusCommentFromLink(targetId, cmtId);
+      } else {
+        // 5 sekund tagidan rang yonib turib keyin o'chadi
+        _hlId = targetId;
+        _hlStart = Date.now();
+        applyPostHighlight(el);
+      }
       try {
         if (window.location.hash.startsWith('#post-')) {
           history.replaceState(null, '', window.location.pathname);
@@ -372,6 +421,7 @@ export function scrollToPostFromHash() {
         document.querySelectorAll('.post.post-link-highlight').forEach(x => x.classList.remove('post-link-highlight'));
         _hlId = null;
         sessionStorage.removeItem('target_post_id');
+        sessionStorage.removeItem('target_cmt_id');
       }, HL_MS);
       return;
     }
@@ -452,15 +502,15 @@ function bindFeedEvents(feedEl) {
       if (url) window.open(url, '_blank', 'noopener');
       return;
     }
-    const more = t.closest('.cap-more');
-    if (more) {
+    const capMore = t.closest('.cap-more');
+    if (capMore) {
       e.stopPropagation();
-      const cap = more.closest('.post-caption');
+      const cap = capMore.closest('.post-caption');
       if (cap) { cap.classList.toggle('cap-collapsed'); cap.classList.toggle('cap-expanded'); }
       return;
     }
-    const del = t.closest('.post-del-btn');
-    if (del) { e.stopPropagation(); await doDelete(del.dataset.id); return; }
+    const more = t.closest('.post-more-btn');
+    if (more) { e.stopPropagation(); openPostMenu(more); return; }
   });
 }
 
@@ -584,6 +634,82 @@ export async function doLike(postId, btn) {
 }
 
 /* ── Delete ──────────────────────────────────────────────────────────── */
+/* ── Post ⋯ menyusi: hamma postda; o'zimniki/admin uchun "O'chirish" ──── */
+let _postMenu = null;
+function _postMenuOutside(e) {
+  if (!_postMenu) return;
+  if (_postMenu.contains(e.target) || _postMenu._for?.contains(e.target)) return; // trigger o'zi toggle qiladi
+  closePostMenu();
+}
+function closePostMenu() {
+  if (!_postMenu) return;
+  _postMenu.remove(); _postMenu = null;
+  document.removeEventListener('click', _postMenuOutside, true);
+  document.removeEventListener('keydown', _postMenuKey, true);
+  window.removeEventListener('scroll', closePostMenu, true);
+  window.removeEventListener('resize', closePostMenu);
+}
+function _postMenuKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closePostMenu(); } }
+
+export async function copyText(text, okMsg = 'Nusxalandi') {
+  try {
+    if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); }
+    else {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    toast(okMsg, 'success');
+  } catch (_) { toast('Nusxalab bo\'lmadi', 'error'); }
+}
+
+function openPostMenu(btn) {
+  const id = btn.dataset.id, uid = btn.dataset.uid;
+  const post = state.allPosts?.find(p => p.id === id);
+  const items = [];
+  if (uid && uid !== state.me?.uid) items.push({ label: 'Profilni ko\'rish', run: async () => {
+    const { openUserProfileModal } = await import('../profile/profile.js'); openUserProfileModal(uid);
+  }});
+  if (post?.text) items.push({ label: 'Matnni nusxalash', run: () => copyText(post.text) });
+  if (btn.dataset.canDel) items.push({ label: 'Postni o\'chirish', danger: true, run: () =>
+    showConfirm('Bu post butunlay o\'chiriladi.', () => doDelete(id), 'Post o\'chirilsinmi?', 'O\'chirish')
+  });
+  showMenu(btn, items);
+}
+
+/** Umumiy ⋯ dropdown: items = [{ label, danger?, run }]. Post va izohlar ishlatadi. */
+export function showMenu(btn, items) {
+  const reopen = _postMenu && _postMenu._for === btn;
+  closePostMenu();
+  if (reopen || !items.length) return; // ikkinchi bosish — yopadi
+
+  const m = document.createElement('div');
+  m.className = 'post-menu'; m.setAttribute('role', 'menu'); m._for = btn;
+  items.forEach(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('role', 'menuitem');
+    b.className = 'post-menu-item' + (it.danger ? ' danger' : '');
+    b.textContent = it.label;
+    b.onclick = (e) => { e.stopPropagation(); closePostMenu(); it.run(); };
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+
+  const r = btn.getBoundingClientRect();
+  const mw = m.offsetWidth, mh = m.offsetHeight;
+  let top = r.bottom + 4;
+  if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 4);
+  m.style.top = top + 'px';
+  m.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px';
+  _postMenu = m;
+  setTimeout(() => {
+    document.addEventListener('click', _postMenuOutside, true);
+    document.addEventListener('keydown', _postMenuKey, true);
+    window.addEventListener('scroll', closePostMenu, true);
+    window.addEventListener('resize', closePostMenu);
+  }, 0);
+}
+
 export async function doDelete(id) {
   // Confirm card yo'q — to'g'ridan-to'g'ri o'chiradi (faqat profil detail dan)
   const post = state.allPosts?.find(p => p.id === id);

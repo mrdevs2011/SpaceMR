@@ -1,9 +1,9 @@
 /**
- * admin-gate.js — admin login/parol oynasi (markazda, klassik modal).
+ * admin-gate.js — admin parol oynasi (markazda, klassik modal).
  * Admin paneliga har kirishda va xavfli amallardan oldin so'raladi.
  * Tekshiruv serverda: RPC admin_verify_password (059 migratsiya).
  */
-import { sb } from '../core/config.js';
+import { sb, state } from '../core/config.js';
 
 let _open = null; // bir vaqtda faqat bitta oyna
 
@@ -19,7 +19,6 @@ function build({ title, sub, okLabel, danger }) {
     <form class="adm-gate-card" novalidate>
       <div class="adm-gate-title"></div>
       <div class="adm-gate-sub"></div>
-      <input class="field" type="text" name="u" placeholder="Admin username" autocomplete="username" autocapitalize="off" spellcheck="false">
       <input class="field" type="password" name="p" placeholder="Admin paroli" autocomplete="current-password">
       <div class="adm-gate-err" aria-live="polite"></div>
       <div class="adm-gate-actions">
@@ -36,15 +35,15 @@ function build({ title, sub, okLabel, danger }) {
 }
 
 /**
- * Admin username + parolni so'raydi va serverda tekshiradi.
+ * Admin parolini so'raydi (username joriy profildan olinadi) va serverda tekshiradi.
  * @returns {Promise<string|null>} to'g'ri parol (keyingi RPC uchun) yoki null (bekor qilindi)
  */
-export function askAdmin({ title = 'Admin paneli', sub = 'Davom etish uchun admin login va parolini kiriting.', okLabel = 'Kirish', danger = false } = {}) {
+export function askAdmin({ title = 'Admin paneli', sub = 'Davom etish uchun admin parolini kiriting.', okLabel = 'Kirish', danger = false } = {}) {
   if (_open) _open.cancel();
   return new Promise(resolve => {
     const el = build({ title, sub, okLabel, danger });
     const form = el.querySelector('form');
-    const u = form.elements.u, p = form.elements.p;
+    const p = form.elements.p;
     const err = el.querySelector('.adm-gate-err');
     const okBtn = el.querySelector('.adm-gate-ok');
 
@@ -61,13 +60,13 @@ export function askAdmin({ title = 'Admin paneli', sub = 'Davom etish uchun admi
     form.onsubmit = async (e) => {
       e.preventDefault();
       err.textContent = '';
-      if (!u.value.trim() || !p.value) { err.textContent = 'Username va parolni kiriting.'; return; }
+      if (!p.value) { err.textContent = 'Parolni kiriting.'; return; }
       okBtn.disabled = true;
       try {
-        const { data, error } = await sb.rpc('admin_verify_password', { p_username: u.value, p_password: p.value });
+        const { data, error } = await sb.rpc('admin_verify_password', { p_username: state.me?.username || '', p_password: p.value });
         if (error) throw error;
         if (data === true) { finish(p.value); return; }
-        err.textContent = 'Username yoki parol noto\'g\'ri.';
+        err.textContent = 'Parol noto\'g\'ri.';
         p.value = ''; p.focus();
       } catch (ex) {
         err.textContent = /admin_verify_password/.test(ex?.message || '')
@@ -80,6 +79,6 @@ export function askAdmin({ title = 'Admin paneli', sub = 'Davom etish uchun admi
 
     document.addEventListener('keydown', onKey, true);
     document.body.appendChild(el);
-    setTimeout(() => u.focus(), 30);
+    setTimeout(() => p.focus(), 30);
   });
 }

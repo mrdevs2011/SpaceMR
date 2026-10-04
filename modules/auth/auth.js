@@ -1293,13 +1293,21 @@ export function listenPosts() {
       );
     });
 
+    // Scroll orqali eski postlar yuklanganda ro'yxat faqat OXIRIGA o'sadi — lentani
+    // butunlay qayta chizish (innerHTML) sahifani tepaga sakratardi; o'rniga scroll
+    // handleri yangi postlarni pastga qo'shadi.
+    const onlyAppended = !!_lastPostIds && currentIds.startsWith(_lastPostIds + ',');
+    const skipRepaint = structural && onlyAppended && state.view === 'home' && !state.search;
+
     state.allPosts = newPosts;
     _lastPostIds = currentIds;
 
     if (structural) cachePosts(myUid, newPosts);
     window.__feedNeedsEmptyRender = false;
 
-    if (structural) {
+    if (skipRepaint) {
+      window.dispatchEvent(new Event('scroll'));
+    } else if (structural) {
       if (state.view === 'home')      _cb.renderFeed?.();
       if (state.view === 'reels')     _cb.renderReels?.();
       if (state.view === 'profile')   _cb.renderProfile?.();
@@ -1352,8 +1360,17 @@ export function listenPosts() {
       .order('created_at', { ascending: false })
       .limit(POST_LIMIT);
     if (error) { console.warn('[Auth] Posts yuklashda xato:', error.message); return; }
-    byId.clear();
-    for (const r of data || []) byId.set(r.id, mapPost(r));
+    const fetched = (data || []).map(mapPost);
+    if (fetched.length < POST_LIMIT) {
+      byId.clear();                       // butun ro'yxat shu — to'liq almashtiramiz
+    } else {
+      // Oxirgi POST_LIMIT ta oynasi ichidagi eskirgan yozuvlarni olib tashlaymiz,
+      // scroll bilan yuklangan eski postlarni esa saqlab qolamiz (lenta qisqarib sakramasin)
+      const oldest = Math.min(...fetched.map(p => p.createdAt || 0));
+      const ids = new Set(fetched.map(p => p.id));
+      for (const [id, p] of byId) if ((p.createdAt || 0) >= oldest && !ids.has(id)) byId.delete(id);
+    }
+    for (const p of fetched) byId.set(p.id, p);
     if (data && data.length < POST_LIMIT) { window.__feedFullyLoaded = true; window.__feedNeedsEmptyRender = true; }
     else window.__feedFullyLoaded = false;
     _scheduleRender();

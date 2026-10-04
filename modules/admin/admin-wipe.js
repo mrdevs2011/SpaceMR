@@ -27,7 +27,7 @@ async function run(scope, onDone) {
   if (!(await confirmStep(`Oxirgi ogohlantirish: ${s.what} butunlay o'chadi.`, 'Oxirgi tasdiq', "O'chirish"))) return;
   const password = await askAdmin({
     title: `${s.label} — tozalash`,
-    sub: 'Tasdiqlash uchun admin login va parolini qayta kiriting.',
+    sub: 'Tasdiqlash uchun admin parolini qayta kiriting.',
     okLabel: "O'chirish",
     danger: true,
   });

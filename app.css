@@ -5902,6 +5902,7 @@ a { color: var(--link); }
   flex-shrink: 0;
 }
 .post-del-btn,
+.post-more-btn,
 .post-head .del-btn {
   margin-left: auto;
   flex-shrink: 0;
@@ -5920,6 +5921,7 @@ a { color: var(--link); }
 .post-head .del-btn:hover {
   color: var(--red, #e7e9ea);
 }
+.post-more-btn:hover { color: var(--x-blue, var(--text)); }
 .post-main {
   width: 100%;
   min-width: 0;
@@ -6550,6 +6552,7 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 [data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-text { margin-top: 1px; font-size: 14px; line-height: 1.35; color: var(--text); overflow-wrap: anywhere; }
 [data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-del { margin: -4px -8px 0 0; padding: 8px; border-radius: 50%; color: var(--text3); }
 [data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-del:hover { background: rgba(231, 233, 234, 0.1); color: var(--x-like); }
+[data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-more:hover { color: var(--x-blue, var(--text)); }
 /* Bo'sh / xato holat va yuklanish */
 [data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-empty { padding: 32px 16px; border-top: 1px solid var(--line); font-size: 15px; color: var(--text3); }
 [data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-empty svg , [data-theme] :is(.post-cmt-list, .rr-cmt-list) .cmt-empty img.icon { display: none; }
@@ -13724,7 +13727,7 @@ body::-webkit-scrollbar,
   position: fixed; inset: 0; z-index: 100000;
   display: flex; align-items: center; justify-content: center;
   padding: 16px; box-sizing: border-box;
-  background: rgba(113, 118, 123, 0.5);
+  background: rgba(0, 0, 0, 0.65);
 }
 .adm-gate-card {
   width: 100%; max-width: 360px; box-sizing: border-box;
@@ -13799,13 +13802,25 @@ body::-webkit-scrollbar,
 :is(#app, #searchOverlay) .post .post-time { display: inline; font-size: 15px; font-weight: 400; color: var(--text3); white-space: nowrap; margin: 0; font-family: var(--font); }
 :is(#app, #searchOverlay) .post .post-user { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 :is(#app, #searchOverlay) .post .post-time, :is(#app, #searchOverlay) .post .post-dot { flex: none; }
-:is(#app, #searchOverlay) .post > .post-head > .post-del-btn {
+:is(#app, #searchOverlay) .post > .post-head > :is(.post-del-btn, .post-more-btn) {
   position: absolute; top: 8px; right: 8px;
   width: 34px; height: 34px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: transparent; opacity: 1;
 }
-:is(#app, #searchOverlay) .post > .post-head > .post-del-btn:hover { background: rgba(29, 155, 240, 0.1); }
+:is(#app, #searchOverlay) .post > .post-head > :is(.post-del-btn, .post-more-btn):hover { background: rgba(29, 155, 240, 0.1); }
+.post-menu {
+  position: fixed; z-index: 20000; min-width: 190px;
+  background: var(--bg2, #16181c); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); padding: 6px;
+}
+.post-menu-item {
+  display: block; width: 100%; padding: 10px 14px; background: none; border: none;
+  border-radius: 8px; font: 500 14px var(--font); color: var(--text); text-align: left; cursor: pointer;
+}
+.post-menu-item:hover { background: rgba(231, 233, 234, 0.08); }
+.post-menu-item.danger { color: var(--red); }
+.post-menu-item.danger:hover { background: rgba(244, 33, 46, 0.1); }
 :is(#app, #searchOverlay) .post > .post-main { grid-column: 2; grid-row: 2; min-width: 0; padding: 0; margin: 0; }
 :is(#app, #searchOverlay) .post .post-caption { font-size: 15px; line-height: 20px; color: var(--text); margin: 2px 0 0; padding: 0; word-wrap: break-word; }
 :is(#app, #searchOverlay) .post .post-media { margin: 12px 0 0; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
@@ -13813,7 +13828,7 @@ body::-webkit-scrollbar,
   display: flex; align-items: center; justify-content: space-between;
   margin: 12px 0 0; padding: 0; height: 20px;
 }
-:is(#app, #searchOverlay) .post .post-actions-left { display: flex; align-items: center; justify-content: space-between; flex: 1; max-width: 72%; gap: 0; }
+:is(#app, #searchOverlay) .post .post-actions-left { display: flex; align-items: center; justify-content: flex-start; gap: 18px; }
 :is(#app, #searchOverlay) .post .post-actions-right { display: flex; align-items: center; gap: 4px; }
 :is(#app, #searchOverlay) .post .act-btn {
   display: inline-flex; align-items: center; gap: 4px;
@@ -13821,17 +13836,17 @@ body::-webkit-scrollbar,
   color: var(--text3); font-size: 13px; font-family: var(--font);
 }
 :is(#app, #searchOverlay) .post .act-btn img.icon { width: 18.75px; height: 18.75px; }
-/* X tartibi: javob (izoh) → ulashish → like */
-:is(#app, #searchOverlay) .post .cmt-open-btn { order: 1; }
-:is(#app, #searchOverlay) .post .share-btn    { order: 2; }
-:is(#app, #searchOverlay) .post .like-btn     { order: 3; }
+/* Instagram tartibi: chapda like → izoh → yuborish; o'ngda havola → saqlash */
+:is(#app, #searchOverlay) .post .like-btn     { order: 1; }
+:is(#app, #searchOverlay) .post .cmt-open-btn { order: 2; }
+:is(#app, #searchOverlay) .post .share-btn    { order: 3; }
 :is(#app, #searchOverlay) .post .cmt-open-btn:hover { color: var(--x-blue); }
 :is(#app, #searchOverlay) .post .share-btn:hover    { color: #00ba7c; }
 :is(#app, #searchOverlay) .post .like-btn:hover,
 :is(#app, #searchOverlay) .post .like-btn.liked     { color: #f91880; }
 :is(#app, #searchOverlay) .post .cap-short .cap-more { display: block; margin-top: 2px; color: var(--x-blue); font-size: 15px; line-height: 20px; cursor: pointer; }
 :is(#app, #searchOverlay) .post .cap-short .cap-more:hover { text-decoration: underline; }
-:is(#app, #searchOverlay) .post .post-actions-right { gap: 12px; }
+:is(#app, #searchOverlay) .post .post-actions-right { gap: 18px; }
 /* Izoh qatori — X javobi kabi: ism oq/qalin 15px, vaqt kulrang, matn 15px */
 .cmt-row .cmt-name,
 :is(.post-cmt-list, .rr-cmt-list) .cmt-name { color: var(--text) !important; font-size: 15px; font-weight: 700; font-family: var(--font); }
@@ -14009,3 +14024,18 @@ select.field option { background: #000000; color: var(--text); }
 /* Bo'sh holat belgilari — asl o'lchamida (36px), kattalashtirilmaydi */
 .empty-icon svg, .empty-icon img.icon { width: 36px !important; height: 36px !important; }
 #settingsOverlay .pe-avatar-ring .pe-avi-edit-badge img.icon { width: 20px !important; height: 20px !important; }
+
+
+/* ── Izoh havolasi bilan kelinganda: post kabi 5 soniya yonadi + pastida chiziq ── */
+.cmt-row.cmt-link-highlight {
+  position: relative;
+  border-radius: 12px;
+  animation: postBlueGlow 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+.cmt-row.cmt-link-highlight::after {
+  content: '';
+  position: absolute; left: 6%; right: 6%; bottom: -4px; height: 12px;
+  background: radial-gradient(ellipse at center, #e7e9ea 0%, rgba(231, 233, 234, 0.5) 45%, transparent 75%);
+  border-radius: 50%; pointer-events: none; z-index: 5;
+  animation: postUnderglow 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

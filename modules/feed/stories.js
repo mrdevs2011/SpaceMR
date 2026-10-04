@@ -22,6 +22,7 @@ let _isHolding = false;
 let _startX = 0;
 let _startY = 0;
 let _bound = false;
+let _showToken = 0;   // eski yuklanish callbacklarini bekor qilish uchun
 
 
 function ensureStoriesCss() {
@@ -666,9 +667,10 @@ async function showCurrent() {
   media.innerHTML = '';
   let duration = STORY_MS;
 
+  const token = ++_showToken;
   const img = document.createElement('img');
-  img.src = item.mediaUrl;
   img.alt = '';
+  img.style.opacity = '0';
   media.appendChild(img);
 
   if (item.caption) {
@@ -681,24 +683,35 @@ async function showCurrent() {
   // Mark viewed
   markViewed(item);
 
-  // Progress animation
-  _startedAt = performance.now();
+  // Progress faqat rasm to'liq yuklangandan KEYIN boshlanadi
   const n = g.items.length;
-  const tick = (now) => {
-    if (_paused) {
+  buildProgress(n, _itemIdx, 0);
+  const startProgress = () => {
+    if (token !== _showToken) return;
+    img.style.opacity = '1';
+    _startedAt = performance.now();
+    const tick = (now) => {
+      if (_paused) {
+        _progressRaf = requestAnimationFrame(tick);
+        return;
+      }
+      const ratio = Math.min(1, (now - _startedAt) / duration);
+      buildProgress(n, _itemIdx, ratio);
+      if (ratio >= 1) {
+        step(1);
+        return;
+      }
       _progressRaf = requestAnimationFrame(tick);
-      return;
-    }
-    const ratio = Math.min(1, (now - _startedAt) / duration);
-    buildProgress(n, _itemIdx, ratio);
-    if (ratio >= 1) {
-      step(1);
-      return;
-    }
+    };
     _progressRaf = requestAnimationFrame(tick);
   };
-  buildProgress(n, _itemIdx, 0);
-  _progressRaf = requestAnimationFrame(tick);
+  img.onload = startProgress;
+  img.onerror = startProgress;
+  img.src = item.mediaUrl;
+
+  // Keyingi story rasmini oldindan yuklab qo'yish
+  const nextItem = g.items[_itemIdx + 1] || _groups[_viewerIdx + 1]?.items?.[0];
+  if (nextItem?.mediaUrl) { const pre = new Image(); pre.src = nextItem.mediaUrl; }
 }
 
 async function markViewed(item) {

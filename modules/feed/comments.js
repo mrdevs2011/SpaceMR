@@ -283,29 +283,37 @@ function _paintCmts(postId, listId, cmts, aMap) {
         <div class="cmt-head"><span class="cmt-name">${esc(c.userName)}</span><span class="cmt-time">· ${fmt(c.createdAt)}</span></div>
         <div class="cmt-text">${renderMarkdown(c.text)}</div>
       </div>
-      ${(state.me?.uid === c.userId || isAdmin())
-        ? `<button class="cmt-del" data-post="${postId}" data-cmt="${c.id}">
-            <img src="./svg/extra/icon-fb3793816331.svg" alt="" class="icon" width="12" height="12"></button>`
-        : ''}
+      <button class="cmt-del cmt-more" data-cmt="${c.id}" data-can-del="${(state.me?.uid === c.userId || isAdmin()) ? '1' : ''}" title="Yana" aria-label="Yana" aria-haspopup="menu">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
     </div>`).join('');
 
-    list.querySelectorAll('.cmt-del').forEach(b => b.addEventListener('click', async () => {
-      if (b.disabled) return;
-      b.disabled = true;
+    const deleteCmt = async (cmtId) => {
       try {
-        const { error: delErr } = await sb.from('comments').delete().eq('id', b.dataset.cmt);
+        const { error: delErr } = await sb.from('comments').delete().eq('id', cmtId);
         if (delErr) throw delErr;
         toast('Izoh o\'chirildi', 'success');
-        const _left = cmts.filter(x => String(x.id) !== String(b.dataset.cmt));
+        const _left = cmts.filter(x => String(x.id) !== String(cmtId));
         _cmtCache = { postId, listId, cmts: _left, aMap };
         _paintCmts(postId, listId, _left, aMap);
         _cmtCount(postId, _left.length);
-        busEmit('cmt', { op: 'del', postId, id: b.dataset.cmt, n: _left.length });
+        busEmit('cmt', { op: 'del', postId, id: cmtId, n: _left.length });
       } catch (e) {
         console.error('Comment delete failed:', e);
         toast('Izohni o\'chirib bo\'lmadi', 'error');
-        b.disabled = false;
       }
+    };
+
+    list.querySelectorAll('.cmt-more').forEach(b => b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const c = cmts.find(x => String(x.id) === b.dataset.cmt);
+      if (!c) return;
+      const { showMenu, copyText, copyCommentLink } = await import('./feed.js');
+      const items = [
+        { label: 'Matnni nusxalash', run: () => copyText(c.text) },
+        { label: 'Izoh havolasini nusxalash', run: () => copyCommentLink(postId, c.id) },
+      ];
+      if (b.dataset.canDel) items.push({ label: 'Izohni o\'chirish', danger: true, run: () => deleteCmt(c.id) });
+      showMenu(b, items);
     }));
 
     list.querySelectorAll('.user-avi-btn').forEach(b => b.addEventListener('click', async () => {
