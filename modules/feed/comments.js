@@ -115,7 +115,8 @@ export async function openCmtModal(postId) {
   // Hide old bottom-sheet modal always
   $('cmtModal')?.classList.remove('show');
 
-  if (isDesktopCmt()) {
+  // Desktop/right-rail mavjud bo'lsa — rail; aks holda mobile kabi inline (parity)
+  if (isDesktopCmt() && document.getElementById('rightRail') && !document.getElementById('rightRail').hidden) {
     await openRailCmt(postId);
   } else {
     await openInlineCmt(postId);
