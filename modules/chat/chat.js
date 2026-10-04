@@ -1658,6 +1658,38 @@ window._chatImgLoaded = function (img) {
   if (box && chatState._pinned && box.contains(img)) box.scrollTop = box.scrollHeight;
 };
 
+/** Xabarlar DOM'ini kalit (xabar id) bo'yicha yamaydi: bir xil HTML — o'sha element qoladi */
+function _patchMessages(box, parts, keys) {
+  const prev = box._parts instanceof Map ? box._parts : new Map();
+  const next = new Map();
+  const finalNodes = [];
+  const tpl = document.createElement('template');
+  parts.forEach((html, i) => {
+    let key = keys[i] || ('i' + i);
+    if (next.has(key)) key += '#' + i;
+    const old = prev.get(key);
+    // animatsiya klassi/kechikishi o'zgarishi elementni qayta yaratishga sabab bo'lmasin
+    const cmp = html.replace(' anim-in', '').replace(/ style="animation-delay:-?\d+ms"/, '');
+    let nodes;
+    if (old && old.html === cmp && old.nodes.every(n => n.parentNode === box)) {
+      nodes = old.nodes;
+    } else {
+      tpl.innerHTML = html;
+      nodes = Array.from(tpl.content.children);
+    }
+    next.set(key, { html: cmp, nodes });
+    for (const n of nodes) finalNodes.push(n);
+  });
+  const keep = new Set(finalNodes);
+  Array.from(box.childNodes).forEach(n => { if (!keep.has(n)) box.removeChild(n); });
+  let cur = box.firstChild;
+  for (const n of finalNodes) {
+    if (n === cur) cur = cur.nextSibling;
+    else box.insertBefore(n, cur);
+  }
+  box._parts = next;
+}
+
 /** Ko'rinadigan birinchi xabarni (id + viewport tepasidan masofa) eslab qoladi */
 function _captureMsgAnchor(box) {
   const top = box.getBoundingClientRect().top;
@@ -1684,6 +1716,7 @@ export function paintMessages(msgs, grp = null) {
   if (!msgs.length) {
     const _dsE = _dissolvePrepare(box, new Set(), chatState._seenBaselineDone);
     chatState._seenBaselineDone = true;
+    box._parts = null;
     box.innerHTML = chatState._dissolving.size ? '' : `<div class="empty pt-30vh tac">
       <div class="fs-14px fw-600 c-text mb-6px">Hozircha xabarlar yo'q</div>
       <div class="fs-13px c-text2">Salom bering</div>
@@ -1707,7 +1740,7 @@ export function paintMessages(msgs, grp = null) {
   // Yuqorida turgan bo'lsak: ko'rinib turgan birinchi xabarni "langar" qilib eslab qolamiz,
   // qayta chizilgach shu xabarni oldingi joyiga qaytaramiz (sakrash bo'lmasin)
   const _anchor = (!isAtBottom && !isInitialLoad) ? _captureMsgAnchor(box) : null;
-  box.innerHTML = msgs.map((m, idx) => {
+  const _parts = msgs.map((m, idx) => {
     const mine = m.senderId === state.me?.uid;
     const time = fmtTime(m.createdAt);
     let bubbleContent = '';
@@ -1794,7 +1827,10 @@ export function paintMessages(msgs, grp = null) {
         </div>
       </div>
     </div>`;
-  }).join('');
+  });
+  // Butun DOM'ni qayta yozmaymiz: o'zgarmagan xabarlar o'sha elementlarida qoladi
+  // (rasm/avatar qayta yuklanmaydi, miltillash va sakrash yo'q). Faqat o'zgarganlari almashadi.
+  _patchMessages(box, _parts, msgs.map(m => String(m.id || '')));
 
   _dissolveRestore(box, _dsStarted);
   _restoreMsgAnchor(box, _anchor);
@@ -1803,11 +1839,13 @@ export function paintMessages(msgs, grp = null) {
   const hasMyNew = msgs.some(m => _isFreshMsg(m) && m.senderId === state.me?.uid);
   if (isAtBottom || isInitialLoad || hasMyNew) {
     chatState._pinned = true;
+    box.scrollTop = box.scrollHeight;
     setTimeout(() => { box.scrollTop = box.scrollHeight; }, SCROLL_SETTLE_MS);
   }
 
   // "theirs" xabarlaridagi avatar bosilganda profil ochamiz
   box.querySelectorAll('.grp-sender-name[data-uid]').forEach(el => {
+    if (el._bound) return; el._bound = true;
     el.style.cursor = 'pointer';
     el.addEventListener('click', async () => {
       const { openUserProfileModal } = await import('../profile/profile.js');
@@ -1815,6 +1853,7 @@ export function paintMessages(msgs, grp = null) {
     });
   });
   box.querySelectorAll('.msg-avi-btn').forEach(btn => {
+    if (btn._bound) return; btn._bound = true;
     btn.addEventListener('click', async () => {
       const uid = btn.dataset.uid;
       if (!uid || uid === state.me?.uid) return;
@@ -2203,8 +2242,12 @@ export function autoGrowChatInput() {
   el.style.height = 'auto';
   const h = el.scrollHeight;
   if (!h) { el.style.height = ''; return; }   // modal yopiq (display:none) — o'lchab bo'lmaydi
+  const _msgBox = $('chatThreadMessages');
+  const _stick = !!(_msgBox && chatState._pinned);
   el.style.height = Math.min(h, _INPUT_MAX_H) + 'px';
   el.style.overflowY = h > _INPUT_MAX_H ? 'auto' : 'hidden';
+  // Yozish maydoni balandligi o'zgarsa xabarlar oynasi ham o'zgaradi — pastda turgan bo'lsak pastda qolamiz
+  if (_stick) _msgBox.scrollTop = _msgBox.scrollHeight;
 }
 window.addEventListener('resize', autoGrowChatInput);
 
