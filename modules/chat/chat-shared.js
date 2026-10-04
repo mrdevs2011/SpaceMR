@@ -160,3 +160,20 @@ export async function uploadViaControllerProgress(file, folder, onProgress) {
 }
 
 export const _uuid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+
+
+/**
+ * Chat/guruh oynasi (#chatThreadModal) faqat Chatlar sahifasi ichida to'g'ri joylashadi
+ * (CSS: body:has(#chatsView.on)). Boshqa sahifadan (bildirishnoma, o'ng panel, profil)
+ * ochilsa u butun ekranni egallab olardi — shuning uchun avval Chatlar sahifasiga o'tamiz.
+ */
+export async function ensureChatsView() {
+  if (state.view !== 'chats') {
+    const { navigateTo } = await import('../router.js');
+    navigateTo('chats', false);
+  }
+  const v = document.getElementById('chatsView');
+  for (let i = 0; i < 20 && v && !v.classList.contains('on'); i++) {
+    await new Promise(r => requestAnimationFrame(r));
+  }
+}

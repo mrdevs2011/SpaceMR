@@ -242,8 +242,44 @@ export async function renderFeedTo(feedEl, posts) {
     </div>`;
   }
 
-  feedEl.innerHTML = html;
+  if (feedEl.id === 'feed') reconcileFeed(feedEl, html, posts);
+  else feedEl.innerHTML = html;
   bindFeedEvents(feedEl);
+}
+
+/* Asosiy lenta: butun innerHTML ni almashtirish o'rniga faqat farqni qo'llaymiz —
+   yangi postni qo'shamiz, o'chganini olib tashlaymiz, qolgan postlar DOM da o'z joyida
+   qoladi (rasm/video qayta yuklanmaydi, sahifa tepaga sakramaydi). */
+function reconcileFeed(feedEl, html, posts) {
+  const existing = new Map();
+  for (const el of Array.from(feedEl.children)) {
+    if (el.classList.contains('post') && el.dataset.id) existing.set(el.dataset.id, el);
+  }
+  if (!existing.size) { feedEl.innerHTML = html; return; }   // birinchi chizish / bo'sh holat
+
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const fresh = new Map();
+  for (const el of Array.from(tpl.content.children)) {
+    if (el.classList.contains('post') && el.dataset.id) fresh.set(el.dataset.id, el);
+  }
+
+  // Spinner / bo'sh holat kabi post bo'lmaganlarni olib tashlaymiz (renderFeed qayta qo'shadi)
+  for (const el of Array.from(feedEl.children)) {
+    if (!el.classList.contains('post')) el.remove();
+  }
+  const wanted = new Set(posts.map(p => String(p.id)));
+  existing.forEach((el, id) => { if (!wanted.has(id)) el.remove(); });
+
+  let prev = null;
+  for (const p of posts) {
+    const id = String(p.id);
+    const el = existing.get(id) || fresh.get(id);
+    if (!el) continue;
+    const at = prev ? prev.nextElementSibling : feedEl.firstElementChild;
+    if (at !== el) feedEl.insertBefore(el, at);
+    prev = el;
+  }
 }
 
 /* ── Init: URL'dan kelgan post id ni saqlab qo'yamiz (login qilmagan bo'lsa ham yo'qolmasligi uchun) ── */
@@ -771,6 +807,7 @@ function captureScrollAnchor(feedEl) {
 }
 function restoreScrollAnchor(feedEl, snap) {
   if (!snap) return;
+  if ((snap.y || 0) <= 5) return; // eng tepada — yangi post tepada ko'rinsin, joyni siljitmaymiz
   // 1) Post ID bo'yicha nozik tiklash
   if (snap.anchors && feedEl) {
     const posts = Array.from(feedEl.querySelectorAll('.post'));

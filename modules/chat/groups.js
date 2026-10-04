@@ -31,7 +31,7 @@ import { busOn, groupJoin, groupInboxSend, isUidOnline } from '../core/rt-bus.js
 import {
   _toDateSafe, _isSameDay, _dateSepLabel,
   _showPendingBubble, _updatePendingProgress, _removePendingBubble,
-  uploadViaControllerProgress,
+  uploadViaControllerProgress, ensureChatsView,
 } from './chat-shared.js';
 import { chatUI } from './chat-state.js';
 import { isEditing, commitEdit }                    from './msg-menu.js';
@@ -344,6 +344,7 @@ export async function openGroupThread(groupId) {
     } catch (_) {}
   }
   if (!groupData || !state.me) return;
+  await ensureChatsView();
 
   _currentGroupId   = groupId;
   _currentGroupData = groupData;

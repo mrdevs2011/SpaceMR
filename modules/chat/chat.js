@@ -667,7 +667,7 @@ import {
   _updatePendingProgress,
   _removePendingBubble,
   uploadViaControllerProgress,
-  _uuid, getChatFileIcon } from './chat-shared.js';
+  _uuid, getChatFileIcon, ensureChatsView } from './chat-shared.js';
 import { isAllowedChatFile as isAllowedUpload, UPLOAD_DENIED_MSG } from '../core/upload-policy.js';
 // Re-export shared helpers so existing importers of chat.js keep working
 export {
@@ -1259,6 +1259,7 @@ const MSG_ANIM_MS = 250;
 
 export async function openChatThread(uid) {
   if (!uid || !state.me || uid === state.me.uid) return;
+  await ensureChatsView();
   msgMenuReset();
 
   state.currentChatKind = 'dm';
