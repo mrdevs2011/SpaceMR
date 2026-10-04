@@ -7892,3 +7892,29 @@ body::-webkit-scrollbar,
   nav.bot-nav .nav-saved { display: flex !important; }
   #hdrExploreBtn { display: inline-flex !important; }
 }
+
+
+/* Mobil header: biroz balandroq, ikonkalar orasi ochiqroq */
+@media (max-width: 1099px) {
+  :root, [data-theme="dark"] { --hdr: 60px !important; }
+  header.app-hdr,
+  #appHdr.app-hdr,
+  .app-hdr {
+    height: 60px !important;
+    min-height: 60px !important;
+  }
+  #appHdr .hdr-right { gap: 8px !important; }
+  #appHdr .hdr-icon-btn,
+  #appHdr .hdr-avi-btn { margin: 0 !important; }
+  #homeView.on,
+  #followingView.on,
+  #savedView.on,
+  #chatsView.on,
+  #profileView.on,
+  #actionsView.on,
+  #notifsView.on {
+    padding-top: 60px !important;
+  }
+  .search-overlay,
+  .search-overlay.open { top: 60px !important; }
+}
