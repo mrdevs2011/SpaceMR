@@ -19,8 +19,19 @@ const isStandalone = () =>
   window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
 let _deferredInstall = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); _deferredInstall = e; });
-window.addEventListener('appinstalled', () => { _deferredInstall = null; closeGuide(); });
+let _installedNow = false;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstall = e;
+  _installedNow = false;
+  applyInstallUi(false);
+});
+window.addEventListener('appinstalled', () => {
+  _deferredInstall = null;
+  _installedNow = true;
+  closeGuide();
+  applyInstallUi(true);
+});
 
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private */ } };
@@ -266,6 +277,60 @@ export function maybeShowGuideCard() {
   }, 8000);
 }
 
+/* ── O'rnatilganmi: login tugma yashirin, sozlamalar tugmasi kulrang ── */
+async function detectInstalled() {
+  if (isStandalone() || _installedNow) return true;
+  if (_deferredInstall) return false;
+  if (typeof navigator.getInstalledRelatedApps === 'function') {
+    try {
+      const apps = await navigator.getInstalledRelatedApps();
+      if (Array.isArray(apps) && apps.length > 0) return true;
+    } catch { /* qo'llab-quvvatlanmaydi */ }
+  }
+  return false;
+}
+
+function applyInstallUi(installed) {
+  const loginBtn = document.getElementById('loginInstallBtn');
+  const loginWrap = loginBtn?.closest('.auth-install') || document.querySelector('#authWrap .auth-install');
+  if (loginWrap) loginWrap.hidden = !!installed;
+  const settingsBtn = document.getElementById('guideOpenBtn');
+  if (settingsBtn) {
+    settingsBtn.disabled = !!installed;
+    settingsBtn.classList.toggle('is-installed', !!installed);
+    settingsBtn.setAttribute('aria-disabled', installed ? 'true' : 'false');
+    if (!settingsBtn.textContent.trim() || settingsBtn.textContent.includes('riqnoma') || settingsBtn.textContent.includes('yuklash')) {
+      settingsBtn.textContent = "Ilovani yuklash";
+    }
+  }
+}
+
+async function syncInstallUi() {
+  applyInstallUi(await detectInstalled());
+}
+
+async function installDirect() {
+  if (await detectInstalled()) {
+    applyInstallUi(true);
+    return;
+  }
+  if (!_deferredInstall) {
+    toast("Bu brauzer o'rnatish oynasini chiqarmadi. Chrome yoki Edge orqali qayta urinib ko'ring.", 'error');
+    return;
+  }
+  try {
+    _deferredInstall.prompt();
+    const choice = await _deferredInstall.userChoice;
+    _deferredInstall = null;
+    if (choice?.outcome === 'accepted') {
+      _installedNow = true;
+      applyInstallUi(true);
+    }
+  } catch {
+    toast("O'rnatish bekor qilindi", 'error');
+  }
+}
+
 /* ── Init ── */
 let _igInited = false;
 export function initInstallGuide() {
@@ -276,15 +341,21 @@ export function initInstallGuide() {
     if (loginBtn) {
       e.preventDefault();
       e.stopPropagation();
-      openGuide({ fromLogin: true });
+      installDirect();
       return;
     }
     const t = e.target.closest?.('#guideOpenBtn');
     if (t) {
       e.preventDefault();
       e.stopPropagation();
-      openGuideOverlay();
+      if (t.disabled || t.classList.contains('is-installed')) return;
+      installDirect();
     }
   });
+  syncInstallUi();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') syncInstallUi();
+  });
+  window.addEventListener('pageshow', () => syncInstallUi());
 }
 initInstallGuide();

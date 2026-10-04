@@ -7577,3 +7577,16 @@ header.app-hdr.force-hide,
 #profileView.on {
   padding-top: 52px !important;
 }
+
+
+/* Install tugmalari: o'rnatilgan bo'lsa login yashirin, sozlamalar kulrang */
+#authWrap .auth-install[hidden] { display: none !important; }
+#guideOpenBtn.is-installed,
+#guideOpenBtn:disabled {
+  opacity: 0.4 !important;
+  color: #8b98a5 !important;
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
