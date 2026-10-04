@@ -3404,3 +3404,13 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   filter: brightness(0) !important;
   opacity: 0.9 !important;
 }
+
+
+/* ig-step icons light on dark sheet */
+.ig-sheet .ig-ico img.icon,
+.ig-sheet .ig-bell img.icon,
+.ig-sheet--inline .ig-ico img.icon,
+.ig-sheet--inline .ig-bell img.icon {
+  filter: none !important;
+  opacity: 0.9 !important;
+}

@@ -3785,6 +3785,16 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   filter: brightness(0) !important;
   opacity: 0.9 !important;
 }
+
+
+/* ig-step icons light on dark sheet */
+.ig-sheet .ig-ico img.icon,
+.ig-sheet .ig-bell img.icon,
+.ig-sheet--inline .ig-ico img.icon,
+.ig-sheet--inline .ig-bell img.icon {
+  filter: none !important;
+  opacity: 0.9 !important;
+}
 /* Qatlam / legacy overrides — yangi chat stillari yozilmasin */
 /* CSS/layers.css — theme, ui-improvements, local-utility, dark-theme-fix, borderless, chat-dark-redesign, 00-components.core, post-composer, card-sheets, sidebar-x, no-animations (F4.4), style (global reset). Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── theme ─── */
