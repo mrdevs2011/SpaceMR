@@ -2150,14 +2150,9 @@ window._openPostFromChat = async function(postId) {
   try {
     closeChatThread();
   } catch (_) {}
-  sessionStorage.setItem('target_post_id', postId);
-  window.location.hash = '#post-' + postId;
-  const { navigateTo } = await import('../router.js');
-  navigateTo('home');
-  const { scrollToPostFromHash } = await import('../feed/feed.js');
-  setTimeout(() => {
-    scrollToPostFromHash();
-  }, 100);
+  // Post linkini ochish bilan bir xil mantiq (feed.js: openPostLink) — boshqa hech narsa emas
+  const { openPostLink } = await import('../feed/feed.js');
+  openPostLink(postId);
 };
 
 /** Xabar maydoni qatorlar soniga qarab balandlashadi (max ~7 qator, undan keyin ichida skroll). */

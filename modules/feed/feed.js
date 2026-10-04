@@ -434,6 +434,19 @@ export function scrollToPostFromHash() {
   setTimeout(tryScroll, 250);
 }
 
+/* Ilova ichidan post linkini ochish — "Havolani nusxalash" qilingan
+   `${origin}/#post-<id>` ni brauzerga kiritganday: lenta, shu postga scroll + yonish. */
+export async function openPostLink(postId) {
+  if (!postId) return;
+  _scrolledTargetId = null;     // oldin shu post ochilgan bo'lsa ham qayta ishlasin
+  _hashPostHandled = false;     // visibleN ni shu postgacha kengaytirsin
+  sessionStorage.setItem('target_post_id', postId);
+  window.location.hash = '#post-' + postId;
+  const { navigateTo } = await import('../router.js');
+  navigateTo('home');
+  await renderFeed();           // targetId bor -> scrollToPostFromHash o'zi chaqiriladi
+}
+
 function bindFeedEvents(feedEl) {
   feedEl.querySelectorAll('.like-btn').forEach(b => b.addEventListener('click', () => doLike(b.dataset.id, b)));
 
