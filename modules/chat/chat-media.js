@@ -11,10 +11,10 @@ const IMG_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
 const AUD_EXT = ['mp3', 'm4a', 'wav', 'ogg', 'oga', 'aac', 'flac', 'opus', 'wma'];
 const LIMIT = 300;
 
-const ICON_PLAY = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
-const ICON_PAUSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
-const ICON_FILE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-const ICON_DL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+const ICON_PLAY = '<img src="./svg/extra/icon-e5c4dc67a486.svg" alt="" class="icon" width="16" height="16">';
+const ICON_PAUSE = '<img src="./svg/extra/icon-61f15d5fa242.svg" alt="" class="icon" width="16" height="16">';
+const ICON_FILE = '<img src="./svg/extra/icon-e3ece82ff84d.svg" alt="" class="icon" width="20" height="20">';
+const ICON_DL = '<img src="./svg/extra/icon-fa9cc44ef90e.svg" alt="" class="icon" width="16" height="16">';
 
 let _audio = null;
 let _tab = 'all';

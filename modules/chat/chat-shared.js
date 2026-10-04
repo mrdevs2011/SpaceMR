@@ -70,13 +70,13 @@ export function formatLastMessageText(raw) {
 
 /* ── Pending upload bubble (umumiy thread DOM) ─────────────────────────── */
 
-function getChatFileIcon(name, mime) {
+export function getChatFileIcon(name, mime) {
   const n = (name || '').toLowerCase();
   const m = (mime || '').toLowerCase();
   if (m.startsWith('image/') || /\.(jpe?g|png|gif|webp|heic)$/i.test(n)) {
-    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+    return '<img src="./svg/extra/icon-2875c154aeb6.svg" alt="" class="icon" width="20" height="20">';
   }
-  return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  return '<img src="./svg/extra/icon-e3ece82ff84d.svg" alt="" class="icon" width="20" height="20">';
 }
 
 export function _showPendingBubble(id, type, size, name = '', mime = '') {
@@ -87,7 +87,7 @@ export function _showPendingBubble(id, type, size, name = '', mime = '') {
   const inner = isVoice
     ? `<div class="cpb-voice">
         <div class="cpb-mic-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" fill="none" stroke-width="2"/></svg>
+          <img src="./svg/extra/icon-527cb9523916.svg" alt="" class="icon" width="16" height="16">
         </div>
         <div class="cpb-info">
           <div class="cpb-label">Ovoz yuborilmoqda...</div>

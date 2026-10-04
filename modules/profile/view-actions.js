@@ -139,9 +139,7 @@ function _initBroadcast() {
           <option value="pending">Faqat kutayotganlarga (ularning ekranida)</option>
         </select>
         <button class="bc-send-btn" id="bcSendBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
+          <img src="./svg/action/send.svg" alt="" class="icon" width="1.8">
           E'lon qilish
         </button>
       </div>
@@ -151,7 +149,7 @@ function _initBroadcast() {
       <div class="bc-current-label">Faol e'lon:</div>
       <div class="bc-current-card" id="bcCurrentCard"></div>
       <button class="bc-del-btn" id="bcDelBtn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        <img src="./svg/extra/icon-43bf503445c5.svg" alt="" class="icon" width="14" height="14">
         E'lonni o'chirish
       </button>
     </div>
@@ -212,7 +210,7 @@ function _initBroadcast() {
       currentWrap.style.display = 'flex';
       currentCard.innerHTML = `
         <div>${(d.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
-        <div class="bc-current-target"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> ${TARGET_LABELS[d.target] || d.target}</div>
+        <div class="bc-current-target"><img src="./svg/extra/icon-c9b87fab5705.svg" alt="" class="icon" width="16" height="16"> ${TARGET_LABELS[d.target] || d.target}</div>
       `;
     } else {
       currentWrap.style.display = 'none';
@@ -256,9 +254,7 @@ function _initBroadcast() {
     } finally {
       sendBtn.disabled = false;
       sendBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
+        <img src="./svg/action/send.svg" alt="" class="icon" width="1.8" style="width:15px;height:15px">
         E'lon qilish`;
     }
   });

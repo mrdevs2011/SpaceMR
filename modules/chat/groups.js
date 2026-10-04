@@ -274,7 +274,7 @@ function _applyGroupComposer(g) {
     bar.className = 'group-join-bar';
     bar.innerHTML = `
       <button type="button" class="group-join-btn" id="groupJoinBtn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        <img src="./svg/extra/icon-886b6ae85bc6.svg" alt="" class="icon" width="18" height="18">
         <span>Guruhga qo'shilish</span>
       </button>`;
     if (row && row.parentNode) row.parentNode.insertBefore(bar, row);
@@ -367,7 +367,7 @@ export async function openGroupThread(groupId) {
   if (existingBadge) existingBadge.remove();
   const badge = document.createElement('div');
   badge.className = 'grp-avi-badge grp-avi-badge--' + groupData.type;
-  badge.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+  badge.innerHTML = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="10" height="10">`;
   $('chatThreadAvi').appendChild(badge);
 
   const memberCount = (groupData.members || []).length;
@@ -884,7 +884,7 @@ export async function openGroupInfo(groupId) {
                 ${role ? `<div class="grp-member-role">${role}</div>` : ''}
               </div>
               ${(canManage && !isSelf && uid !== g.ownerId) ? `<button class="grp-member-kick" data-uid="${uid}" title="Chiqarish">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
               </button>` : ''}
             </div>`;
           }).join('');
@@ -1242,7 +1242,7 @@ function _renderMemberPicker(container, users) {
   }
   container.innerHTML = `
     <div class="grp-picker-search-wrap">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="17" y1="17" x2="22" y2="22"/></svg>
+      <img src="./svg/extra/icon-34d2886eafb1.svg" alt="" class="icon" width="14" height="14">
       <input class="grp-picker-search" id="grpPickerSearch" placeholder="Ism yoki username..." autocomplete="off">
     </div>
     <div class="grp-picker-list" id="grpPickerList"></div>
@@ -1271,7 +1271,7 @@ function _renderPickerRows(users, listEl) {
         ${u.username ? `<div class="grp-picker-user">@${esc(u.username)}</div>` : ''}
       </div>
       <div class="grp-picker-check ${sel ? 'on' : ''}">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <img src="./svg/ui/check.svg" alt="" class="icon" width="11" height="11">
       </div>
     </div>`;
   }).join('');
@@ -1500,7 +1500,7 @@ export function injectGroupsDOM() {
         <div class="sheet-handle"></div>
         <div class="grp-form-head">
           <button type="button" class="grp-form-back" id="grpFormCancelBtn" aria-label="Orqaga" title="Orqaga">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <img src="./svg/nav/chevron-left.svg" alt="" class="icon" width="22" height="22">
           </button>
           <div class="grp-form-title sheet-title">Yangi guruh</div>
         </div>
@@ -1509,7 +1509,7 @@ export function injectGroupsDOM() {
         <div class="grp-form-avi-wrap" id="grpFormAviWrap">
           <div class="grp-form-avi" id="grpFormAvi">
             <div class="grp-form-avi-placeholder">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" opacity="0.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <img src="./svg/media/camera.svg" alt="" class="icon" width="28" height="28">
             </div>
             <img class="grp-form-avi-img" src="" style="display:none;" alt="">
           </div>
@@ -1524,11 +1524,11 @@ export function injectGroupsDOM() {
           <div class="pe-field-label">Guruh turi</div>
           <div class="grp-privacy-toggle">
             <button type="button" class="grp-privacy-btn active" id="grpCreatePublicBtn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <img src="./svg/extra/icon-f57c0d2780e7.svg" alt="" class="icon" width="15" height="15">
               Ommaviy
             </button>
             <button type="button" class="grp-privacy-btn" id="grpCreatePrivateBtn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <img src="./svg/auth/lock.svg" alt="" class="icon" width="15" height="15">
               Maxfiy
             </button>
           </div>
@@ -1578,7 +1578,7 @@ export function injectGroupsDOM() {
     <!-- Group / Channel info (full-screen page, like userProfileModal) -->
     <div id="grpInfoOverlay">
       <button class="gi-back-btn" id="grpInfoCloseBtn" title="Orqaga">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+        <img src="./svg/nav/arrow-left-white.svg" alt="" class="icon" width="18" height="18">
       </button>
 
       <div class="gi-body">
@@ -1595,7 +1595,7 @@ export function injectGroupsDOM() {
             <div class="gi-name" id="grpInfoName"></div>
             <div class="gi-type-badge" id="grpInfoTypeBadge"></div>
             <div class="gi-link-row" id="grpInfoLinkRow" style="display:none">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L12.5 19.5"/></svg>
+              <img src="./svg/extra/icon-9a45b4993686.svg" alt="" class="icon" width="13" height="13">
               <span id="grpInfoLinkText"></span>
             </div>
             <div class="gi-desc" id="grpInfoDesc" style="display:none"></div>
@@ -1616,19 +1616,19 @@ export function injectGroupsDOM() {
           <!-- Action buttons -->
           <div class="gi-actions">
             <button class="gi-action-btn" id="grpInfoEditBtn" style="display:none">
-              <span class="gi-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+              <span class="gi-action-icon"><img src="./svg/action/edit.svg" alt="" class="icon" width="16" height="16"></span>
               <span>Sozlamalar</span>
             </button>
             <button class="gi-action-btn" id="grpInfoAddMemberBtn" style="display:none">
-              <span class="gi-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></span>
+              <span class="gi-action-icon"><img src="./svg/extra/icon-886b6ae85bc6.svg" alt="" class="icon" width="16" height="16"></span>
               <span>A'zo qo'shish</span>
             </button>
             <button class="gi-action-btn gi-action-danger" id="grpInfoLeaveBtn">
-              <span class="gi-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+              <span class="gi-action-icon"><img src="./svg/action/logout.svg" alt="" class="icon" width="16" height="16"></span>
               <span>Chiqish</span>
             </button>
             <button class="gi-action-btn gi-action-delete" id="grpInfoDeleteBtn" style="display:none">
-              <span class="gi-action-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></span>
+              <span class="gi-action-icon"><img src="./svg/extra/icon-43bf503445c5.svg" alt="" class="icon" width="16" height="16"></span>
               <span>O'chirish</span>
             </button>
           </div>
@@ -1636,7 +1636,7 @@ export function injectGroupsDOM() {
           <!-- Media grid -->
           <div class="gi-section" id="grpMediaSection">
             <div class="gi-section-title">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 5 3-5 3V9z"/></svg>
+              <img src="./svg/extra/icon-6e134fdbda1e.svg" alt="" class="icon" width="13" height="13">
               Media fayllar
             </div>
             <div class="gi-media-grid" id="grpInfoMediaGrid">
@@ -1647,7 +1647,7 @@ export function injectGroupsDOM() {
           <!-- Members list (group only, hidden for channel) -->
           <div class="gi-section" id="grpMembersSection">
             <div class="gi-section-title">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="13" height="13">
               A'zolar
             </div>
             <div class="grp-members-list" id="grpMembersList"></div>
@@ -1666,7 +1666,7 @@ export function injectGroupsDOM() {
         <div class="grp-edit-avi-wrap">
           <div class="grp-edit-avi" id="grpEditAviImg"></div>
           <div class="grp-edit-avi-badge" id="grpEditAviBadge" title="Rasm o'zgartirish">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <img src="./svg/action/edit.svg" alt="" class="icon" width="13" height="13">
           </div>
           <input type="file" id="grpEditAviInput" accept="image/*" style="display:none">
         </div>
@@ -1680,11 +1680,11 @@ export function injectGroupsDOM() {
             <div class="pe-field-label">Guruh turi</div>
             <div class="grp-privacy-toggle">
               <button type="button" class="grp-privacy-btn" id="grpEditPublicBtn">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <img src="./svg/extra/icon-f57c0d2780e7.svg" alt="" class="icon" width="15" height="15">
                 Ommaviy
               </button>
               <button type="button" class="grp-privacy-btn" id="grpEditPrivateBtn">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <img src="./svg/auth/lock.svg" alt="" class="icon" width="15" height="15">
                 Maxfiy
               </button>
             </div>
@@ -1725,7 +1725,7 @@ export function injectGroupsDOM() {
         </div>
 
         <button class="btn-primary" id="grpEditSaveBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <img src="./svg/action/save.svg" alt="" class="icon" width="15" height="15">
           Saqlash
         </button>
         <button class="btn-ghost" id="grpEditCancelBtn">Bekor qilish</button>

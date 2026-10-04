@@ -649,8 +649,8 @@ $('voiceMiniPlayer')?.addEventListener('click', () => {
   if (_activeChatUid && typeof _openChatCb === 'function') _openChatCb(_activeChatUid);
 });
 
-const PLAY_ICON  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-const PAUSE_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+const PLAY_ICON  = `<img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">`;
+const PAUSE_ICON = `<img src="./svg/extra/icon-4ed8972aa2b8.svg" alt="" class="icon" width="14" height="14">`;
 // Fayl hali yuklanayotganda (buferlanmoqda) ko'rsatiladigan aylanuvchi spinner —
 // CSS animatsiyasi uchun .cvm-play--loading klassi (CSS/chat.css) bilan birga ishlaydi.
 const LOADING_ICON = `<span class="cvm-spin" aria-hidden="true"></span>`;

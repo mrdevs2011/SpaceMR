@@ -559,17 +559,16 @@ svg { color: inherit; }
 [data-theme="dark"] ::selection { background: #3d3d3d; color: var(--pal-white); }
 /* ══════════════════════════════════════════ 25. REEL — Overlays ══════════════════════════════════════════ */
 [data-theme="dark"] .reel { background: var(--pal-black); }
-[data-theme="dark"] .reel-top-btn { background: var(--pal-black); border: 0.5px solid var(--pal-gray-900); }
+[d var(--pal-gray-900); }
 /* ══════════════════════════════════════════ 26. THEME BUTTON — Panel ══════════════════════════════════════════ */
 [data-theme="dark"] .theme-btn { color: var(--text2); }
 [data-theme="dark"] .theme-btn:hover { background: var(--pal-gray-900); color: var(--text); }
 /* ══════════════════════════════════════════ 27. FLOATING UPLOAD BAR — Pill ═════════════════════════════════... */
 [data-theme="dark"] .upload-float-bar { background: #000; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.7); }
 [data-theme="dark"] .upload-drop { background: var(--pal-black); border: 1px dashed var(--pal-gray-900); }
-[data-theme="dark"] .upload-drop:hover { border-color: var(--pal-white); background: var(--pal-black); }
-[data-theme="dark"] .upload-drop.drag-over { border-color: var(--blue); background: var(--pal-gray-900); box-shadow: 0 0 0 3px var(--pal-gray-900), inset 0 1px 0 var(--pal-gray-900); }
-[data-theme="dark"] .empty { color: var(--text3); }
-[data-theme="dark"] .feed-empty-icon, [data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { background: var(--pal-gray-900); border: 0.5px solid var(--pal-gray-700); box-shadow: inset 0 1px 0 var(--pal-gray-900); }
+[data-theme="dark"] .upload-drop:hover { border-color: var(--pal-white); background: var(--ar(--blue); background: var(--pal-gray-900); box-shadow: 0 0 0 3px var(--pa#chatThreadModal .chat-thread-input-row {
+position: relative;
+}data-theme="dark"] .feed-empty-icon, [data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { background: var(--pal-gray-900); border: 0.5px solid var(--pal-gray-700); box-shadow: inset 0 1px 0 var(--pal-gray-900); }
 /* ══════════════════════════════════════════ 30. COMMENTS MODAL — Panel ═════════════════════════════════════... */
 [data-theme="dark"] .cmt-body { background: var(--pal-gray-900); border: 0.5px solid var(--pal-gray-900); }
 [data-theme="dark"] .cmt-body:hover { background: var(--pal-gray-900); border-color: var(--pal-gray-900); }
@@ -592,10 +591,9 @@ svg { color: inherit; }
 }
 /* Desktop: shaffof qolsin */
 @media (min-width: 1100px) {
-  .app-hdr, [data-theme="dark"] .app-hdr { background: transparent; }
-}
-/* Header gradient line o'chirish */
-.app-hdr::after, [data-theme="dark"] .app-hdr::after { display: none; }
+  .app-hdr, [data-theme="da#chatContextMenu {
+background: var(--c-bg-header, var(--pal-gray-900));
+}dark"] .app-hdr::after { display: none; }
 /* Bottom nav */
 .bot-nav, [data-theme="dark"] .bot-nav { border-top: none; border-right: none; box-shadow: none; }
 /* Mobile: solid dark bar (was semi-transparent frosted glass — looked washed-out over content) */

@@ -10,7 +10,7 @@ let _bound = false;
 let _seq = 0;
 
 const EMPTY = `<div class="empty saved-empty">
-  <div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+  <div class="empty-icon"><img src="./svg/social/bookmark.svg" alt="" class="icon" width="36" height="36"></div>
   <div class="empty-title">Saqlangan postlar yo'q</div>
   <div class="empty-sub">Post ostidagi belgini bossangiz, u shu yerda saqlanadi.</div>
 </div>`;

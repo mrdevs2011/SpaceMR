@@ -5,12 +5,11 @@
 import { sb, MEDIA_BUCKET } from '../core/config.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../core/env.js';
 
-const _svg = d => `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:5px">${d}</svg>`;
 const ICO = {
-  ok:   _svg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9.5"/>'),
-  warn: _svg('<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.4v.1"/>'),
-  fail: _svg('<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>'),
-  key:  _svg('<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/>'),
+  ok: '<img src="./svg/admin/ok.svg" alt="" class="icon" width="14" height="14" style="vertical-align:-2px;margin-right:5px">',
+  warn: '<img src="./svg/admin/warn.svg" alt="" class="icon" width="14" height="14" style="vertical-align:-2px;margin-right:5px">',
+  fail: '<img src="./svg/admin/fail.svg" alt="" class="icon" width="14" height="14" style="vertical-align:-2px;margin-right:5px">',
+  key: '<img src="./svg/admin/key.svg" alt="" class="icon" width="14" height="14" style="vertical-align:-2px;margin-right:5px">',
 };
 const _row = (kind, text) => { const s = document.createElement('span'); s.innerHTML = ICO[kind] || ''; s.append(text); return s; };
 const COL = { ok: 'inherit', warn: 'var(--text3,#767676)', fail: 'var(--red,#ef4444)' };

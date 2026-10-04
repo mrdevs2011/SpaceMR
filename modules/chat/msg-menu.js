@@ -11,17 +11,16 @@ import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
-const SVG = d => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const IC = {
-  copy: SVG('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>'),
-  edit: SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
-  fwd: SVG('<polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h11"/>'),
-  del: SVG('<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>'),
-  sel: SVG('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>'),
-  resend: SVG('<path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>'),
-  x: SVG('<path d="M6 6l12 12M18 6L6 18"/>'),
-  seen: '<svg width="18" height="11" viewBox="0 0 18 11" fill="none" aria-hidden="true"><path d="M1 5.5L4.5 9L10 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 5.5L9.5 9L16 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  sent: '<svg width="12" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true"><path d="M1 5.2L4.5 8.5L11 1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  copy: '<img src="./svg/menu/copy.svg" alt="" class="icon" width="18" height="18">',
+  edit: '<img src="./svg/menu/edit.svg" alt="" class="icon" width="18" height="18">',
+  fwd: '<img src="./svg/menu/fwd.svg" alt="" class="icon" width="18" height="18">',
+  del: '<img src="./svg/menu/del.svg" alt="" class="icon" width="18" height="18">',
+  sel: '<img src="./svg/menu/sel.svg" alt="" class="icon" width="18" height="18">',
+  resend: '<img src="./svg/menu/resend.svg" alt="" class="icon" width="18" height="18">',
+  x: '<img src="./svg/menu/x.svg" alt="" class="icon" width="18" height="18">',
+  seen: '<img src="./svg/extra/icon-041fdea3033a.svg" alt="" class="icon" width="18" height="11">',
+  sent: '<img src="./svg/extra/icon-e20961b31619.svg" alt="" class="icon" width="12" height="10">',
 };
 
 let api = null, box = null, menu = null, selBar = null, fwdEl = null;

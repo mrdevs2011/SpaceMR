@@ -121,7 +121,7 @@ async function _paintProfile(ud) {
         editBtn = document.createElement('button');
         editBtn.id = 'aviEditBtn';
         editBtn.className = 'avi-zoom-edit-btn';
-        editBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Rasmni tahrirlash`;
+        editBtn.innerHTML = `<img src="./svg/action/edit.svg" alt="" class="icon" width="14" height="14"> Rasmni tahrirlash`;
         zm.appendChild(editBtn);
       }
       editBtn.style.display = 'flex';
@@ -175,7 +175,7 @@ export async function renderProfileGrid(posts) {
     return `<div class="grid-cell ${kind}" data-id="${p.id}">${c}
       <div class="grid-cell-overlay">
         <div class="grid-stat">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <img src="./svg/extra/icon-6b67b8783b6a.svg" alt="" class="icon" width="13" height="13">
           ${p.likes||0}
         </div>
       </div>
@@ -231,32 +231,32 @@ export async function openDetail(id) {
         <div class="dm-name${isOwn?'':' dm-name-link'}" ${isOwn?'':('data-uid="'+p.userId+'"')}>${esc(ud.fullName||'Noma\'lum')}</div>
         <div class="dm-time">${fmt(p.createdAt)}</div>
       </div>
-      <button class="dm-close" id="dmClose"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="dm-close" id="dmClose"><img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14"></button>
     </div>
     ${mediaHtml}
     ${p.text ? `<div class="dm-caption">${esc(p.text)}</div>` : ''}
     <div class="dm-stats">
-      <span class="dm-stat-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="${likeFill}" stroke="${likeColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> <span id="dmLikeCount">${p.likes||0}</span></span>
-      <span class="dm-stat-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${cmtCount}</span>
+      <span class="dm-stat-item">${(likeFill && likeFill !== 'none')
+          ? '<img src="./svg/social/heart-filled.svg" alt="" class="icon" width="13" height="13">'
+          : '<img src="./svg/social/heart.svg" alt="" class="icon" width="13" height="13">'} <span id="dmLikeCount">${p.likes||0}</span></span>
+      <span class="dm-stat-item"><img src="./svg/extra/icon-838eb192325a.svg" alt="" class="icon" width="13" height="13"> ${cmtCount}</span>
     </div>
     <div class="dm-actions">
       <button class="dm-act${isLiked?' liked':''}" id="dmLikeBtn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="${likeFill}" stroke="${likeColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        ${(likeFill && likeFill !== 'none')
+          ? '<img src="./svg/social/heart-filled.svg" alt="" class="icon" width="20" height="20">'
+          : '<img src="./svg/social/heart.svg" alt="" class="icon" width="20" height="20">'}
         <span class="dm-act-count" id="dmLikeCount2">${p.likes||0}</span>
       </button>
       <button class="dm-act" id="dmCmtBtn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <img src="./svg/extra/icon-838eb192325a.svg" alt="" class="icon" width="20" height="20">
         <span class="dm-act-count">${cmtCount}</span>
       </button>
       <button class="dm-act" id="dmShareBtn" title="Havolani nusxalash" aria-label="Havolani nusxalash">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M8 7C5.23858 7 3 9.23858 3 12C3 14.7614 5.23858 17 8 17H10C10.5523 17 11 17.4477 11 18C11 18.5523 10.5523 19 10 19H8C4.13401 19 1 15.866 1 12C1 8.13401 4.13401 5 8 5H10C10.5523 5 11 5.44772 11 6C11 6.55228 10.5523 7 10 7H8ZM13 6C13 5.44772 13.4477 5 14 5H16C19.866 5 23 8.13401 23 12C23 15.866 19.866 19 16 19H14C13.4477 19 13 18.5523 13 18C13 17.4477 13.4477 17 14 17H16C18.7614 17 21 14.7614 21 12C21 9.23858 18.7614 7 16 7H14C13.4477 7 13 6.55228 13 6ZM7 12C7 11.4477 7.44772 11 8 11H16C16.5523 11 17 11.4477 17 12C17 12.5523 16.5523 13 16 13H8C7.44772 13 7 12.5523 7 12Z"/>
-        </svg>
+        <img src="./svg/extra/icon-af51112fbda1.svg" alt="" class="icon" width="20" height="20">
       </button>
       ${isOwn ? `<button class="dm-act dm-del" id="dmDelBtn" title="O'chirish">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
-        </svg>
+        <img src="./svg/extra/icon-fb3793816331.svg" alt="" class="icon" width="20" height="20">
       </button>` : ''}
     </div>`;
 
@@ -332,7 +332,7 @@ function _upGridHtml(posts, uid, tab) {
     return `<div class="up-grid-cell ${_um ? 'up-grid-cell--media' : 'up-grid-cell--text'}" data-id="${p.id}" data-uid="${uid}">${c}
       <div class="up-grid-cell-overlay">
         <div class="grid-stat">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <img src="./svg/extra/icon-6b67b8783b6a.svg" alt="" class="icon" width="13" height="13">
           ${p.likes||0}
         </div>
       </div>
@@ -385,7 +385,7 @@ export async function renderUserProfileModal(uid) {
       ${ud.bio ? `<div class="up-bio">${esc(ud.bio)}</div>` : ''}
       <div style="display:flex; justify-content:center; margin-top:12px;">
         <button id="upChatBtn" style="background:var(--accent, #007bff); color:#fff; border:none; padding:8px 20px; border-radius:24px; font-weight:600; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+          <img src="./svg/extra/icon-ea9c18b62f47.svg" alt="" class="icon" width="18" height="18">
           Chat yozish
         </button>
       </div>

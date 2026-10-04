@@ -69,11 +69,7 @@ export function initQuota() {
       b.id = 'quotaBlocker';
       b.style = "position:fixed;inset:0;background:rgba(0,0,0,0.95);color:#fff;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;backdrop-filter:blur(10px);";
       b.innerHTML = `
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f4212e" stroke-width="2" style="margin-bottom:20px;">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
+        <img src="./svg/extra/icon-d269b370c5cf.svg" alt="" class="icon" width="64" height="64" style="margin-bottom:20px;">
         <h2 style="margin:0 0 10px 0;font-size:24px;color:#f4212e;">Trafik limiti oshdi</h2>
         <p style="margin:0;font-size:16px;color:#8899a6;max-width:400px;line-height:1.5;">
           1 daqiqa ichida maksimal 49 MB ma'lumot uzatishga ruxsat etiladi (qabul qilish yoki yuborish).

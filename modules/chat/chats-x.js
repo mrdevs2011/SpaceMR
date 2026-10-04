@@ -17,7 +17,7 @@ if (view && wrap) {
   pane.innerHTML = `
     <div class="chats-x-pane-in">
       <div class="chats-x-pane-ico">
-        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.4-.7L3 21l1.9-5.1A8.4 8.4 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5z"/></svg>
+        <img src="./svg/extra/icon-c0aeb9caa2ca.svg" alt="" class="icon" width="46" height="46">
       </div>
       <div class="chats-x-pane-title">Suhbatni boshlang</div>
       <div class="chats-x-pane-sub">Mavjud suhbatlardan birini tanlang<br>yoki yangisini boshlang.</div>

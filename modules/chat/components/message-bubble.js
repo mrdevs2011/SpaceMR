@@ -1,4 +1,5 @@
 import { esc } from '../../core/utils.js';
+import { getChatFileIcon } from '../chat-shared.js';
 
 /* Rasm nisbatini eslab qolish: qayta chizilganda (innerHTML) rasm yuklanmasdan oldin ham
    joyi band bo'lsin — chat sakramasin. Birinchi marta ko'rilganda nisbat noma'lum. */
@@ -24,7 +25,7 @@ export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpNam
   const readyCls = typeof waveReadyClass === 'function' ? waveReadyClass(voiceMedia.url, barCount) : '';
   return `<div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
     <button class="cvm-play" onclick="window._chatPlayVoice(this)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
     </button>
     <div class="cvm-waveform${readyCls}">${renderVoiceWave(idx, barCount, voiceMedia.url)}</div>
     <span class="cvm-dur">${dur}</span>
@@ -68,7 +69,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
           ${fsz ? `<div class="cfm-size">${fsz}</div>` : ''}
         </div>
         <a class="cfm-dl" href="${safeUrl}" download="${fname}" target="_blank" title="Yuklab olish">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          <img src="./svg/extra/icon-2f7c262fe1e7.svg" alt="" class="icon" width="14" height="14">
         </a>
       </div>
       ${captionHtml}
@@ -92,11 +93,3 @@ export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmoji
   return { bubbleClassExtra, bubbleContent, emoCls };
 }
 
-function getChatFileIcon(name, mime) {
-  const n = (name || '').toLowerCase();
-  const m = (mime || '').toLowerCase();
-  if (m.startsWith('image/') || /\.(jpe?g|png|gif|webp|heic)$/i.test(n)) {
-    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-  }
-  return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-}

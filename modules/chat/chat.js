@@ -82,7 +82,7 @@ function _renderRecentSearches() {
               ${sub ? `<div class="chat-recent-sub">${esc(sub)}</div>` : ''}
             </div>
             <button type="button" class="chat-recent-del" title="O'chirish" data-del="${esc(item.id)}">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
             </button>
           </div>
         `;
@@ -138,13 +138,11 @@ function _renderSearchBox(container) {
   wrap.innerHTML = `
     <div class="ulist-search-wrap">
       <div class="ulist-search-icon" id="chatSearchBtn" title="Qidirish">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"/><line x1="17" y1="17" x2="22" y2="22"/>
-        </svg>
+        <img src="./svg/extra/icon-34d2886eafb1.svg" alt="" class="icon" width="16" height="16">
       </div>
       <input class="ulist-search-input" id="chatSearchInput" placeholder="Qidirish (ism yoki username)..." autocomplete="off" spellcheck="false">
       <button type="button" class="ulist-search-clear d-none" id="chatSearchClear" aria-label="Tozalash">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="15" height="15">
       </button>
     </div>
 
@@ -357,17 +355,19 @@ function _openChatContextMenu(row) {
     <div class="chat-ctx-menu">
       <div class="chat-ctx-title">${esc(title)}</div>
       <button type="button" class="chat-ctx-item" id="chatCtxPin">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="${isPinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+        ${isPinned
+          ? '<img src="./svg/action/pin-filled.svg" alt="" class="icon" width="16" height="16">'
+          : '<img src="./svg/action/pin.svg" alt="" class="icon" width="16" height="16">'}
         <span>${isPinned ? "Qadashni bekor qilish" : (isGroup ? "Guruhni qadash" : "Suhbatni qadash")}</span>
       </button>
       ${isGroup ? `
         <button type="button" class="chat-ctx-item danger" id="chatCtxLeave">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <img src="./svg/action/logout.svg" alt="" class="icon" width="16" height="16">
           <span>Guruhdan chiqish</span>
         </button>
       ` : `
         <button type="button" class="chat-ctx-item danger" id="chatCtxDelete">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          <img src="./svg/extra/icon-938ddddb771c.svg" alt="" class="icon" width="16" height="16">
           <span>Suhbatni o'chirish</span>
         </button>
       `}
@@ -438,14 +438,14 @@ export function initChatHeaderMenu() {
     if (isGroup) {
       drop.innerHTML = `
         <button type="button" class="chat-header-dropdown-item danger" id="chmLeaveGroup">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <img src="./svg/action/logout.svg" alt="" class="icon" width="16" height="16">
           <span>Guruhdan chiqish</span>
         </button>
       `;
     } else {
       drop.innerHTML = `
         <button type="button" class="chat-header-dropdown-item danger" id="chmDeleteChat">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          <img src="./svg/extra/icon-938ddddb771c.svg" alt="" class="icon" width="16" height="16">
           <span>Suhbatdan chiqish</span>
         </button>
       `;
@@ -551,7 +551,7 @@ function _paintUserRows(users, animate = false) {
     const time   = c?.lastMessageAt ? fmt(c.lastMessageAt) : '';
     const unread = c?.unreadCount?.[state.me.uid] || 0;
     const badgeTxt = unread > 99 ? '+99' : '+' + unread;
-    const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg></span>` : '';
+    const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
     const animStyle = '';
     return `<div class="chat-row${unread ? ' unread' : ''}${animate ? ' chat-row-anim' : ''}" data-uid="${u.uid}" ${animStyle}>
       <div class="chat-avi">
@@ -667,8 +667,7 @@ import {
   _updatePendingProgress,
   _removePendingBubble,
   uploadViaControllerProgress,
-  _uuid,
-} from './chat-shared.js';
+  _uuid, getChatFileIcon } from './chat-shared.js';
 import { isAllowedChatFile as isAllowedUpload, UPLOAD_DENIED_MSG } from '../core/upload-policy.js';
 // Re-export shared helpers so existing importers of chat.js keep working
 export {
@@ -1039,7 +1038,7 @@ function _repaintNoticeBanner() {
   _injectNoticeCSS();
   const html = `<div class="admin-notice-banner" id="adminNoticeBanner">
     <div class="admin-notice-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <img src="./svg/extra/icon-6c25873293c0.svg" alt="" class="icon" width="16" height="16">
     </div>
     <div class="admin-notice-text">${esc(chatState._latestNotice.text)}</div>
   </div>`;
@@ -1091,9 +1090,9 @@ async function _appendGroupRows(root, term = '') {
       const formattedLastMsg = formatLastMessageText(rawPreview);
       const preview  = rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh';
       const time     = g.lastMessageAt ? fmt(g.lastMessageAt) : '';
-      const typeIcon = `<svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+      const typeIcon = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="9" height="9">`;
       const badgeClass = 'chat-row-grp-badge--group';
-      const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg></span>` : '';
+      const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
       const unameHtml = g.username ? `<span style="font-size:11.5px;color:var(--blue,#4a9eff);font-weight:500;margin-left:6px;">@${esc(g.username)}</span>` : '';
 
       return `<div class="chat-row${unread ? ' unread' : ''}" data-gid="${g.id}">
@@ -1560,24 +1559,13 @@ function renderTicks(status) {
   // 'sending' = soat (faqat status==='sending' — DB/insert tasdiqlanmaguncha),
   // 'read' = 2 ko'k chek, boshqa (sent/null) = 1 chek. Fake timeout yo'q.
   if (status === 'sending') {
-    return `<svg class="msg-ticks sending" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Yuborilmoqda" title="Yuborilmoqda">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" opacity="0.9"/>
-      <g class="msg-tick-hands">
-        <line x1="12" y1="12" x2="12" y2="7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-        <line x1="12" y1="12" x2="15.4" y2="14.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-      </g>
-    </svg>`;
+    return `<img src="./svg/ui/ticks-b1f42f.svg" alt="" class="icon msg-ticks sending" width="14" height="14" aria-label="Yuborilmoqda">`;
   }
   if (status === 'read') {
-    return `<svg class="msg-ticks read" width="18" height="11" viewBox="0 0 18 11" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="O'qildi">
-      <path d="M1 5.5L4.5 9L10 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M6 5.5L9.5 9L16 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`;
+    return `<img src="./svg/ui/ticks-98b8af.svg" alt="" class="icon msg-ticks read" width="18" height="11" aria-label="O'qildi">`;
   }
   // sent (yoki null/undefined — bazadan kelgan)
-  return `<svg class="msg-ticks" width="12" height="10" viewBox="0 0 12 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Yuborildi">
-    <path d="M1 5.2L4.5 8.5L11 1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>`;
+  return `<img src="./svg/ui/ticks-c46cc2.svg" alt="" class="icon msg-ticks" width="12" height="10" aria-label="Yuborildi">`;
 }
 
 /** Faqat status/tick yangilash — to'liq paintMessages YO'Q (tezlik). */
@@ -2037,21 +2025,6 @@ export function closeChatThread() {
 
 
 /* ── Helpers for new features ───────────────────────────────────────── */
-function getChatFileIcon(name = '', mime = '') {
-  const ext = (name.split('.').pop() || '').toLowerCase();
-  const m   = (mime || '').toLowerCase();
-
-  if (m.startsWith('image') || ['jpg','jpeg','png','gif','webp','svg'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="10" fill="rgba(34,197,94,0.12)"/><rect x="8" y="12" width="32" height="24" rx="4" stroke="#22c55e" stroke-width="2"/><circle cx="17" cy="20" r="3" stroke="#22c55e" stroke-width="1.8"/><path d="M8 30l8-7 7 6 5-4 12 9" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-  if (m.startsWith('audio') || ['mp3','wav','ogg','aac','opus','m4a'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/><path d="M18 34V18l16-4v16" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15" cy="34" r="3" fill="#ffffff"/><circle cx="31" cy="30" r="3" fill="#ffffff"/></svg>`;
-
-  if (ext === 'pdf' || m === 'application/pdf')
-    return `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="10" fill="rgba(239,68,68,0.12)"/><path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ef4444" stroke-width="2"/><path d="M29 8v8h8" stroke="#ef4444" stroke-width="2"/><text x="24" y="34" text-anchor="middle" font-family="monospace" font-weight="700" font-size="9" fill="#ef4444">PDF</text></svg>`;
-
-  return `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="10" fill="rgba(118, 118, 118,0.12)"/><path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#a6a6a6" stroke-width="2"/><path d="M29 8v8h8" stroke="#a6a6a6" stroke-width="2"/><line x1="16" y1="24" x2="32" y2="24" stroke="#a6a6a6" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="30" x2="26" y2="30" stroke="#a6a6a6" stroke-width="2" stroke-linecap="round"/></svg>`;
-}
 
 
 
@@ -2265,7 +2238,7 @@ export function renderChatPostCard(ps) {
        </button>`
     : `<button type="button" class="cpc-open-btn" onclick="event.stopPropagation(); window._openPostFromChat && window._openPostFromChat('${postId}')">
          <span>Postni ko'rish</span>
-         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+         <img src="./svg/extra/icon-938c12a9f405.svg" alt="" class="icon" width="13" height="13">
        </button>`;
 
   const badgeTitle = isPostDeleted ? "O'chirilgan post" : "Ulashilgan post";
@@ -2284,7 +2257,7 @@ export function renderChatPostCard(ps) {
     <div class="${cardClasses}" data-post-id="${postId}" data-user-id="${userId}">
       <div class="cpc-header">
         <div class="cpc-badge${isPostDeleted ? ' is-deleted' : ''}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <img src="./svg/action/send.svg" alt="" class="icon" width="12" height="12">
           <span>${badgeTitle}</span>
         </div>
       </div>
@@ -2387,7 +2360,7 @@ export function _showOptimisticVoiceBubble(id, localUrl, duration) {
     <div class="chat-bubble-wrap">
       <div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${Math.round(duration||0)}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
         <button class="cvm-play" onclick="window._chatPlayVoice(this)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
         </button>
         <div class="cvm-waveform" >${renderVoiceWave(0, barCount)}</div>
         <span class="cvm-dur">${dur}</span>

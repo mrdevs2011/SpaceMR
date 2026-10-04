@@ -13,31 +13,31 @@ function getFileIcon(name, mime) {
   const ext = (name.split('.').pop() || '').toLowerCase();
   const m   = (mime || '').toLowerCase();
   if (m.startsWith('audio') || ['mp3','wav','ogg','aac','flac','m4a','wma','opus','aiff','mid','midi'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/><path d="M18 34V18l16-4v16" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15" cy="34" r="3" fill="#ffffff"/><circle cx="31" cy="30" r="3" fill="#ffffff"/><path d="M20 22l12-3" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/></svg>`;
+    return `<img src="./svg/ui/badge-193a24.svg" alt="" class="icon" width="48" height="48">`;
   if (['html','htm'].includes(ext) || m === 'text/html')
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(249,115,22,0.12)"/><path d="M14 18l-5 6 5 6" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 18l5 6-5 6" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><line x1="28" y1="14" x2="20" y2="34" stroke="#f97316" stroke-width="2" stroke-linecap="round" opacity=".6"/></svg>`;
+    return `<img src="./svg/ui/badge-097c5b.svg" alt="" class="icon" width="48" height="48">`;
   if (['ts','tsx'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/><rect x="10" y="10" width="28" height="28" rx="5" fill="#ffffff"/><text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="14" fill="white">TS</text></svg>`;
+    return `<img src="./svg/ui/badge-1c4a3b.svg" alt="" class="icon" width="48" height="48">`;
   if (['js','mjs','cjs','jsx'].includes(ext) || m.includes('javascript'))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(234,179,8,0.12)"/><rect x="10" y="10" width="28" height="28" rx="5" fill="#eab308"/><text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="14" fill="#111">${ext==='jsx'?'JSX':'JS'}</text></svg>`;
+    return `<img src="./svg/ui/badge-${ext==='jsx'?'jsx':'js'}.svg" alt="" class="icon" width="48" height="48">`;
   if (ext === 'pdf' || m === 'application/pdf')
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(239,68,68,0.12)"/><path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ef4444" stroke-width="2"/><path d="M29 8v8h8" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/><text x="24" y="34" text-anchor="middle" font-family="monospace" font-weight="700" font-size="9" fill="#ef4444">PDF</text></svg>`;
+    return `<img src="./svg/ui/badge-2646f5.svg" alt="" class="icon" width="48" height="48">`;
   if (['zip','rar','7z','tar','gz','bz2','xz'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/><rect x="12" y="16" width="24" height="20" rx="3" stroke="#ffffff" stroke-width="2"/><path d="M12 22h24" stroke="#ffffff" stroke-width="2"/><rect x="20" y="8" width="8" height="8" rx="2" stroke="#ffffff" stroke-width="2"/><line x1="24" y1="8" x2="24" y2="16" stroke="#ffffff" stroke-width="2"/></svg>`;
+    return `<img src="./svg/ui/badge-62683e.svg" alt="" class="icon" width="48" height="48">`;
   if (['doc','docx'].includes(ext) || m.includes('msword') || m.includes('wordprocessingml'))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/><path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ffffff" stroke-width="2"/><line x1="16" y1="26" x2="32" y2="26" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="31" x2="28" y2="31" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".6"/><text x="24" y="23" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="8" fill="#ffffff">W</text></svg>`;
+    return `<img src="./svg/ui/badge-770fc7.svg" alt="" class="icon" width="48" height="48">`;
   if (['xls','xlsx','csv','ods'].includes(ext) || m.includes('spreadsheet') || m.includes('excel') || m === 'text/csv')
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(22,163,74,0.12)"/><rect x="9" y="14" width="30" height="22" rx="3" stroke="#16a34a" stroke-width="2"/><line x1="9" y1="22" x2="39" y2="22" stroke="#16a34a" stroke-width="1.5"/><line x1="9" y1="29" x2="39" y2="29" stroke="#16a34a" stroke-width="1.5" opacity=".6"/><line x1="21" y1="14" x2="21" y2="36" stroke="#16a34a" stroke-width="1.5" opacity=".7"/></svg>`;
+    return `<img src="./svg/ui/badge-3e2c34.svg" alt="" class="icon" width="48" height="48">`;
   if (ext === 'py')
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.10)"/><path d="M18 10h8a4 4 0 0 1 4 4v4H18a4 4 0 0 1-4-4v-2a2 2 0 0 1 2-2z" fill="#ffffff"/><path d="M18 38h8a4 4 0 0 0 4-4v-4H18a4 4 0 0 0-4 4v2a2 2 0 0 0 2 2z" fill="#eab308"/><circle cx="22" cy="16" r="1.5" fill="white"/><circle cx="26" cy="32" r="1.5" fill="white"/></svg>`;
+    return `<img src="./svg/ui/badge-4f072b.svg" alt="" class="icon" width="48" height="48">`;
   if (ext === 'json')
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(245,158,11,0.12)"/><text x="10" y="30" font-family="monospace" font-weight="700" font-size="18" fill="#f59e0b">{}</text><text x="10" y="20" font-family="monospace" font-size="9" fill="#f59e0b" opacity=".7">"key":</text></svg>`;
+    return `<img src="./svg/ui/badge-fa9f16.svg" alt="" class="icon" width="48" height="48">`;
   if (['css','scss','sass','less'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/><rect x="10" y="10" width="28" height="28" rx="5" fill="#ffffff"/><text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="11" fill="white">CSS</text></svg>`;
+    return `<img src="./svg/ui/badge-78ac57.svg" alt="" class="icon" width="48" height="48">`;
   if (['md','mdx'].includes(ext))
-    return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(118, 118, 118,0.12)"/><path d="M8 14h32v20H8z" stroke="#767676" stroke-width="2" rx="3"/><text x="24" y="29" text-anchor="middle" font-family="monospace" font-weight="700" font-size="11" fill="#767676">M↓</text></svg>`;
+    return `<img src="./svg/ui/badge-6d8513.svg" alt="" class="icon" width="48" height="48">`;
   // default
-  return `<svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.10)"/><path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ffffff" stroke-width="2"/><path d="M29 8v8h8" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="24" x2="32" y2="24" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity=".6"/></svg>`;
+  return `<img src="./svg/ui/badge-b5ca57.svg" alt="" class="icon" width="48" height="48">`;
 }
 
 
@@ -123,9 +123,7 @@ export async function renderFeedTo(feedEl, posts) {
     if (state.search) {
       feedEl.innerHTML = `<div class="empty-search">
         <div class="empty-search-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
+          <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="20" height="20">
         </div>
         <div>Natija topilmadi: "<strong>${esc(state.search)}</strong>"</div>
         <div class="empty-search-hint">Boshqa so'z bilan qidirib ko'ring yoki imloni tekshiring</div>
@@ -137,9 +135,7 @@ export async function renderFeedTo(feedEl, posts) {
       feedEl.innerHTML = `<div class="empty empty--home">
         <div class="empty-glow" aria-hidden="true"></div>
         <div class="empty-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 5v14"/><path d="M5 12h14"/>
-          </svg>
+          <img src="./svg/extra/icon-44d5da9e7c91.svg" alt="" class="icon" width="36" height="36">
         </div>
         <div class="empty-title">Lenta hali bo'sh</div>
         <div class="empty-sub">Rasm yoki fikr bo'lishing — do'stlaringiz ko'radi.</div>
@@ -232,9 +228,7 @@ export async function renderFeedTo(feedEl, posts) {
           <span class="post-time">${fmt(p.createdAt)}</span>
         </div>
         ${canDel ? `<button class="del-btn post-del-btn" data-id="${p.id}" title="O'chirish" aria-label="O'chirish">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
-          </svg></button>` : ''}
+          <img src="./svg/extra/icon-fb3793816331.svg" alt="" class="icon" width="15" height="15"></button>` : ''}
       </div>
       <div class="post-main">
         ${buildCaption(p.text, p.id)}
@@ -242,25 +236,20 @@ export async function renderFeedTo(feedEl, posts) {
         <div class="post-actions">
           <div class="post-actions-left">
             <button class="act-btn like-btn left-one${liked?' liked':''}" data-id="${p.id}" aria-label="Yoqtirish">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="${liked?'#f91880':'none'}" stroke="${liked?'#f91880':'#fff'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
+              ${liked
+                ? '<img src="./svg/social/heart-filled.svg" alt="" class="icon" width="18" height="18">'
+                : '<img src="./svg/social/heart.svg" alt="" class="icon" width="18" height="18" style="filter:brightness(0) invert(1)">'}
               <span id="lc-${p.id}">${fmtCount(p.likes || 0)}</span>
             </button>
             <button class="act-btn cmt-open-btn left-two" data-id="${p.id}" aria-label="Izohlar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z"/>
-              </svg>
+              <img src="./svg/extra/icon-c10e4d45ebfa.svg" alt="" class="icon" width="18" height="18">
               <span id="cc-${p.id}">${fmtCount(cMap[p.id] || 0)}</span>
             </button>
             <button class="act-btn share-btn left-three"
               data-id="${p.id}"
               title="Chatga ulashish"
               aria-label="Chatga ulashish">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="22" y1="3" x2="9.218" y2="10.083"/>
-                <polygon points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334"/>
-              </svg>
+              <img src="./svg/extra/icon-22a55ac71fee.svg" alt="" class="icon" width="18" height="18">
             </button>
           </div>
           <div class="post-actions-right">
@@ -268,12 +257,12 @@ export async function renderFeedTo(feedEl, posts) {
               data-id="${p.id}"
               title="Havolani nusxalash"
               aria-label="Havolani nusxalash">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M8 7C5.23858 7 3 9.23858 3 12C3 14.7614 5.23858 17 8 17H10C10.5523 17 11 17.4477 11 18C11 18.5523 10.5523 19 10 19H8C4.13401 19 1 15.866 1 12C1 8.13401 4.13401 5 8 5H10C10.5523 5 11 5.44772 11 6C11 6.55228 10.5523 7 10 7H8ZM13 6C13 5.44772 13.4477 5 14 5H16C19.866 5 23 8.13401 23 12C23 15.866 19.866 19 16 19H14C13.4477 19 13 18.5523 13 18C13 17.4477 13.4477 17 14 17H16C18.7614 17 21 14.7614 21 12C21 9.23858 18.7614 7 16 7H14C13.4477 7 13 6.55228 13 6ZM7 12C7 11.4477 7.44772 11 8 11H16C16.5523 11 17 11.4477 17 12C17 12.5523 16.5523 13 16 13H8C7.44772 13 7 12.5523 7 12Z"/>
-              </svg>
+              <img src="./svg/extra/icon-af51112fbda1.svg" alt="" class="icon" width="18" height="18">
             </button>
             <button class="act-btn save-btn right-two${saved?' saved':''}" data-id="${p.id}" title="${saved?'Saqlanganlardan olib tashlash':'Saqlash'}" aria-label="Saqlash" aria-pressed="${saved?'true':'false'}">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="${saved?'#fff':'none'}" stroke="${saved?'none':'#fff'}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="20 21 12 13.44 4 21 4 3 20 3 20 21"/></svg>
+              ${saved
+                  ? '<img src="./svg/social/bookmark-filled.svg" alt="" class="icon" width="18" height="18">'
+                  : '<img src="./svg/social/bookmark-outline.svg" alt="" class="icon" width="18" height="18" style="filter:brightness(0) invert(1)">'}
             </button>
           </div>
         </div>

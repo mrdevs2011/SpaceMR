@@ -215,9 +215,7 @@ export function showHeartBurst(x, y, container) {
   el.className = 'heart-burst';
   el.style.left = x + 'px';
   el.style.top  = y + 'px';
-  el.innerHTML = `<svg width="80" height="80" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path fill="#f04060" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-  </svg>`;
+  el.innerHTML = `<img src="./svg/extra/icon-9d6229c40a8d.svg" alt="" class="icon" width="80" height="80">`;
   container.appendChild(el);
   setTimeout(() => el.remove(), 900);
 }

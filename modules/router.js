@@ -297,16 +297,12 @@ function _toggleProfileSearch() {
       'border-radius:14px',
     ].join(';');
     wrap.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;opacity:.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
+      <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="14" height="14" style="flex-shrink:0;opacity:.5">
       <input id="profileSearchInput" placeholder="Postlarni qidirish..."
         autocomplete="off" spellcheck="false"
         style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-size:14px">
       <button id="profileSearchClose" style="background:none;border:none;cursor:pointer;color:var(--text3);padding:0;display:flex;align-items:center">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
       </button>`;
 
     // profileGrid tepasiga joylashtir

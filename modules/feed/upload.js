@@ -16,176 +16,97 @@ function getFileTypeInfo(name = '', mime = '') {
   if (m.startsWith('audio') || ['mp3','wav','ogg','aac','flac','m4a','wma','opus','aiff','mid','midi'].includes(ext))
     return {
       label: ext.toUpperCase() || 'AUDIO', color: '#ffffff',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/>
-        <path d="M18 34V18l16-4v16" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="15" cy="34" r="3" fill="#ffffff"/>
-        <circle cx="31" cy="30" r="3" fill="#ffffff"/>
-        <path d="M20 22l12-3" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-b6e69f.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── HTML ── */
   if (['html','htm'].includes(ext) || m === 'text/html')
     return {
       label: 'HTML', color: '#f97316',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(249,115,22,0.12)"/>
-        <text x="24" y="29" text-anchor="middle" font-family="monospace" font-weight="700" font-size="10" fill="#f97316">&lt;/&gt;</text>
-        <path d="M14 18l-5 6 5 6" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M34 18l5 6-5 6" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="28" y1="14" x2="20" y2="34" stroke="#f97316" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-f60274.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── TypeScript ── */
   if (['ts','tsx'].includes(ext))
     return {
       label: 'TS', color: '#ffffff',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/>
-        <rect x="10" y="10" width="28" height="28" rx="5" fill="#ffffff"/>
-        <text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="14" fill="white">TS</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-23b1be.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── JavaScript / JSX ── */
   if (['js','mjs','cjs','jsx'].includes(ext) || m.includes('javascript'))
     return {
       label: ext === 'jsx' ? 'JSX' : 'JS', color: '#eab308',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(234,179,8,0.12)"/>
-        <rect x="10" y="10" width="28" height="28" rx="5" fill="#eab308"/>
-        <text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="${ext==='jsx'?'10':'14'}" fill="currentColor">${ext === 'jsx' ? 'JSX' : 'JS'}</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-${ext==='jsx'?'jsx':'js'}.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── PDF ── */
   if (ext === 'pdf' || m === 'application/pdf')
     return {
       label: 'PDF', color: '#ef4444',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(239,68,68,0.12)"/>
-        <path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ef4444" stroke-width="2"/>
-        <path d="M29 8v8h8" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
-        <text x="24" y="34" text-anchor="middle" font-family="monospace" font-weight="700" font-size="9" fill="#ef4444">PDF</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-24a745.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── ZIP / Archive ── */
   if (['zip','rar','7z','tar','gz','bz2','xz','lz','lzma'].includes(ext))
     return {
       label: ext.toUpperCase(), color: '#ffffff',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/>
-        <rect x="12" y="16" width="24" height="20" rx="3" stroke="#ffffff" stroke-width="2"/>
-        <path d="M12 22h24" stroke="#ffffff" stroke-width="2"/>
-        <path d="M12 28h24" stroke="#ffffff" stroke-width="1.4" opacity=".5"/>
-        <rect x="20" y="8" width="8" height="8" rx="2" stroke="#ffffff" stroke-width="2"/>
-        <line x1="24" y1="8" x2="24" y2="16" stroke="#ffffff" stroke-width="2"/>
-        <line x1="21" y1="11" x2="27" y2="11" stroke="#ffffff" stroke-width="1.5" opacity=".6"/>
-        <line x1="21" y1="13" x2="27" y2="13" stroke="#ffffff" stroke-width="1.5" opacity=".6"/>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-0df66a.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── Word / DOC ── */
   if (['doc','docx'].includes(ext) || m.includes('msword') || m.includes('wordprocessingml'))
     return {
       label: 'DOCX', color: '#ffffff',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/>
-        <path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ffffff" stroke-width="2"/>
-        <path d="M29 8v8h8" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-        <line x1="16" y1="26" x2="32" y2="26" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-        <line x1="16" y1="31" x2="28" y2="31" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-        <text x="24" y="23" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="8" fill="#ffffff">W</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-565e81.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── Excel / CSV / Spreadsheet ── */
   if (['xls','xlsx','csv','ods'].includes(ext) || m.includes('spreadsheet') || m.includes('excel') || m === 'text/csv')
     return {
       label: ext.toUpperCase(), color: '#16a34a',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(22,163,74,0.12)"/>
-        <rect x="9" y="14" width="30" height="22" rx="3" stroke="#16a34a" stroke-width="2"/>
-        <line x1="9" y1="22" x2="39" y2="22" stroke="#16a34a" stroke-width="1.5"/>
-        <line x1="9" y1="29" x2="39" y2="29" stroke="#16a34a" stroke-width="1.5" opacity=".6"/>
-        <line x1="21" y1="14" x2="21" y2="36" stroke="#16a34a" stroke-width="1.5" opacity=".7"/>
-        <line x1="30" y1="14" x2="30" y2="36" stroke="#16a34a" stroke-width="1.5" opacity=".5"/>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-b2c645.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── Python ── */
   if (ext === 'py' || m === 'text/x-python')
     return {
       label: 'PY', color: '#ffffff',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.10)"/>
-        <path d="M18 10h8a4 4 0 0 1 4 4v4H18a4 4 0 0 1-4-4v-2a2 2 0 0 1 2-2z" fill="#ffffff"/>
-        <path d="M18 38h8a4 4 0 0 0 4-4v-4H18a4 4 0 0 0-4 4v2a2 2 0 0 0 2 2z" fill="#eab308"/>
-        <circle cx="22" cy="16" r="1.5" fill="white"/>
-        <circle cx="26" cy="32" r="1.5" fill="white"/>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-1ba5e2.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── JSON ── */
   if (ext === 'json' || m === 'application/json')
     return {
       label: 'JSON', color: '#f59e0b',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(245,158,11,0.12)"/>
-        <text x="10" y="30" font-family="monospace" font-weight="700" font-size="18" fill="#f59e0b">{}</text>
-        <text x="10" y="20" font-family="monospace" font-size="9" fill="#f59e0b" opacity=".7">"key":</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-99c369.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── CSS / SCSS ── */
   if (['css','scss','sass','less'].includes(ext))
     return {
       label: ext.toUpperCase(), color: '#ffffff',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.12)"/>
-        <rect x="10" y="10" width="28" height="28" rx="5" fill="#ffffff"/>
-        <text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="11" fill="white">CSS</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-e167e6.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── Markdown ── */
   if (['md','mdx','markdown'].includes(ext))
     return {
       label: 'MD', color: '#767676',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(118, 118, 118,0.12)"/>
-        <path d="M8 14h32v20H8z" stroke="#767676" stroke-width="2" rx="3"/>
-        <text x="24" y="29" text-anchor="middle" font-family="monospace" font-weight="700" font-size="11" fill="#767676">M↓</text>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-b29dd9.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── Plain Text / TXT / LOG ── */
   if (['txt','log','ini','cfg','conf'].includes(ext) || m === 'text/plain')
     return {
       label: ext.toUpperCase() || 'TXT', color: '#a6a6a6',
-      svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="48" height="48" rx="10" fill="rgba(166, 166, 166,0.10)"/>
-        <path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#a6a6a6" stroke-width="2"/>
-        <path d="M29 8v8h8" stroke="#a6a6a6" stroke-width="2" stroke-linecap="round"/>
-        <line x1="16" y1="22" x2="32" y2="22" stroke="#a6a6a6" stroke-width="1.8" stroke-linecap="round"/>
-        <line x1="16" y1="27" x2="32" y2="27" stroke="#a6a6a6" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>
-        <line x1="16" y1="32" x2="26" y2="32" stroke="#a6a6a6" stroke-width="1.8" stroke-linecap="round" opacity=".5"/>
-      </svg>`
+      svg: `<img src="./svg/ui/badge-3e3dc0.svg" alt="" class="icon" width="48" height="48">`
     };
 
   /* ── Default / unknown ── */
   return {
     label: (ext || 'FILE').toUpperCase(), color: '#ffffff',
-    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="10" fill="rgba(255, 255, 255,0.10)"/>
-      <path d="M13 8h16l8 8v24a2 2 0 0 1-2 2H13a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" stroke="#ffffff" stroke-width="2"/>
-      <path d="M29 8v8h8" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-      <line x1="16" y1="24" x2="32" y2="24" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>
-      <line x1="16" y1="30" x2="28" y2="30" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity=".4"/>
-    </svg>`
+    svg: `<img src="./svg/ui/badge-bca863.svg" alt="" class="icon" width="48" height="48">`
   };
 }
 
@@ -306,7 +227,7 @@ export function pickFile(f) {
 
   if (f.type.startsWith('image')) {
     $('previewArea').innerHTML = `<div class="preview-wrap"><img src="${esc(state._objUrl)}"><button class="preview-clear" data-action="clear-file">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
     </button></div>`;
   } else {
     const info = getFileTypeInfo(f.name, f.type);
@@ -317,7 +238,7 @@ export function pickFile(f) {
         <div class="fs-11px c-text3-theme mt-2px">${info.label} · ${fmtSz(f.size)}</div>
       </div>
       <button class="bg-transparent border-none c-text3-theme cursor-pointer d-flex items-center flex-shrink-0" data-action="clear-file">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
       </button>
     </div>`;
   }
@@ -374,7 +295,7 @@ function floatBarShow(kind) {
   const icon = bar.querySelector('.ufb-icon');
   if (icon) {
     icon.classList.remove('done', 'fail');
-    icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+    icon.innerHTML = '<img src="./svg/action/arrow-up.svg" alt="" class="icon" width="14" height="14">';
   }
   bar.classList.remove('d-none');
   bar.style.display = 'flex';
@@ -407,14 +328,14 @@ function floatBarDone(success) {
     icon.classList.remove('done', 'fail');
     icon.classList.add(success ? 'done' : 'fail');
     icon.innerHTML = success
-      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      ? '<img src="./svg/ui/check.svg" alt="" class="icon" width="14" height="14">'
+      : '<img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">';
   }
   setTimeout(() => {
     if (bar) { bar.style.display = 'none'; bar.classList.add('d-none'); }
     if (icon) {
       icon.classList.remove('done', 'fail');
-      icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+      icon.innerHTML = '<img src="./svg/action/arrow-up.svg" alt="" class="icon" width="14" height="14">';
     }
   }, 1800);
 }
@@ -746,7 +667,7 @@ function _renderHomePreview(f) {
     inner = `<div class="hc-file"><span>📎</span><span>${esc(f.name)} · ${fmtSz(f.size)}</span></div>`;
   }
   prev.innerHTML = inner + `<button type="button" class="hc-clear" data-action="hc-clear" aria-label="O'chirish">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
   </button>`;
   prev.classList.remove('d-none');
 }

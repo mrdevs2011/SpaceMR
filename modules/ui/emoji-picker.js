@@ -6,20 +6,19 @@ import { onEsc } from './esc-stack.js';
 const RECENT_KEY = 'spacemr_emoji_recent';
 const RECENT_MAX = 24;
 
-const svg = d => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const ICONS = {
-  recent:     svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>'),
-  smileys:    svg('<circle cx="12" cy="12" r="9"/><path d="M8.2 14.2c1 1.3 2.3 2 3.8 2s2.8-.7 3.8-2"/><path d="M9 9.6v.2M15 9.6v.2"/>'),
-  people:     svg('<circle cx="12" cy="8" r="3.6"/><path d="M5 20c0-3.9 3-6 7-6s7 2.1 7 6"/>'),
-  animals:    svg('<circle cx="6.5" cy="11" r="1.8"/><circle cx="10" cy="6.5" r="1.8"/><circle cx="14" cy="6.5" r="1.8"/><circle cx="17.5" cy="11" r="1.8"/><path d="M12 12.5c-3 0-5.5 2.5-5.5 4.8 0 1.6 1.4 2.2 3 2.2 1 0 1.6-.4 2.5-.4s1.5.4 2.5.4c1.6 0 3-.6 3-2.2 0-2.3-2.5-4.8-5.5-4.8z"/>'),
-  food:       svg('<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H15.5"/><path d="M8 3.5c-.8 1 .8 1.8 0 2.8M12 3.5c-.8 1 .8 1.8 0 2.8"/>'),
-  activities: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3c2.6 3 2.6 15 0 18M3 12c3 2.6 15 2.6 18 0"/>'),
-  travel:     svg('<path d="M4 15l1.6-5a2 2 0 0 1 1.9-1.4h9a2 2 0 0 1 1.9 1.4L20 15v3.5h-2.6V17H6.6v1.5H4z"/><path d="M7.5 13.2h.01M16.5 13.2h.01"/>'),
-  objects:    svg('<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.2 1.1 2.2h5c0-1 .5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/>'),
-  symbols:    svg('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
-  flags:      svg('<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>'),
-  search:     svg('<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'),
-  close:      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  recent: '<img src="./svg/emoji/recent.svg" alt="" class="icon" width="20" height="20">',
+  smileys: '<img src="./svg/emoji/smileys.svg" alt="" class="icon" width="20" height="20">',
+  people: '<img src="./svg/emoji/people.svg" alt="" class="icon" width="20" height="20">',
+  animals: '<img src="./svg/emoji/animals.svg" alt="" class="icon" width="20" height="20">',
+  food: '<img src="./svg/emoji/food.svg" alt="" class="icon" width="20" height="20">',
+  activities: '<img src="./svg/emoji/activities.svg" alt="" class="icon" width="20" height="20">',
+  travel: '<img src="./svg/emoji/travel.svg" alt="" class="icon" width="20" height="20">',
+  objects: '<img src="./svg/emoji/objects.svg" alt="" class="icon" width="20" height="20">',
+  symbols: '<img src="./svg/emoji/symbols.svg" alt="" class="icon" width="20" height="20">',
+  flags: '<img src="./svg/emoji/flags.svg" alt="" class="icon" width="20" height="20">',
+  search: '<img src="./svg/emoji/search.svg" alt="" class="icon" width="20" height="20">',
+  close:      '<img src="./svg/extra/icon-0c873cf7ce23.svg" alt="" class="icon" width="14" height="14">',
 };
 
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

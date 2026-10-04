@@ -19,6 +19,12 @@
 - 0% kesh talabi: service worker va runtime cache hech qachon sahifani keshlamaydi.
 
 ---
+
+---
+### 2026-10-04 12:27
+- Qilindi: **Konsolidatsiya roadmap**  (SSOT, faza A–E, DoD). CSS chat dedupe; getChatFileIcon → chat-shared.
+- Keyingi: A2 (features∩mono strip), keyin B1 (chat CSS bitta manba).
+
 ### 2026-10-04 12:05
 - Qilindi: **ULTRA tez / lag-free UI + realtime lenta**
   1) Feed event delegation — har renderda N listener o'rniga 1 ta (xotira + CPU)

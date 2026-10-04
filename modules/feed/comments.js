@@ -25,9 +25,7 @@ function loadingHtml() {
 
 function emptyHtml() {
   return `<div class="cmt-empty">
-    <svg class="opacity-30 mb-8px" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-    </svg>
+    <img src="./svg/extra/icon-838eb192325a.svg" alt="" class="icon opacity-30 mb-8px" width="28" height="28">
     Hali izoh yo'q
   </div>`;
 }
@@ -50,7 +48,7 @@ function ensureRailCmt() {
     panel.innerHTML = `
       <div class="rr-cmt-hdr">
         <button type="button" class="rr-cmt-back" id="rrCmtBack" title="Orqaga" aria-label="Orqaga">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <img src="./svg/extra/icon-de6761387092.svg" alt="" class="icon" width="18" height="18">
         </button>
         <span class="rr-cmt-title">Izohlar</span>
       </div>
@@ -286,9 +284,7 @@ function _paintCmts(postId, listId, cmts, aMap) {
       </div>
       ${(state.me?.uid === c.userId || isAdmin())
         ? `<button class="cmt-del" data-post="${postId}" data-cmt="${c.id}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
-            </svg></button>`
+            <img src="./svg/extra/icon-fb3793816331.svg" alt="" class="icon" width="12" height="12"></button>`
         : ''}
     </div>`).join('');
 
