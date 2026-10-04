@@ -150,10 +150,17 @@ async function _deleteGroup(groupId) {
 function _resetGroupUnread(groupId) {
   const me = state.me?.uid;
   if (!me) return;
+  // "O'qildi" faqat ekran ko'rinib turganda (tab yashirin bo'lsa — "kimlar ko'rdi" yolg'on bo'lmasin)
+  if (document.visibilityState !== 'visible') return;
   if (_latestGroupMap[groupId]?.unreadCount) _latestGroupMap[groupId].unreadCount[me] = 0;
   sb.from('group_members').update({ unread_count: 0 })
     .eq('group_id', groupId).eq('user_id', me).then(() => {}, () => {});
 }
+
+// Ochiq guruh chati orqa fondan qaytganda — kelib turgan xabarlar endi o'qilgan hisoblanadi
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && _currentGroupId) _resetGroupUnread(_currentGroupId);
+});
 
 /* ─────────────────────────────────────────────────────────────────────
    WATCHER — real-time listener for groups/channels the user is in

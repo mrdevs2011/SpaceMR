@@ -226,3 +226,10 @@
   4) tests/rt-mesh.mjs yo'llari tuzatildi
   5) README error-log yo'li
 - Testlar: smoke 14/14, rt-mesh 7/7 muvaffaqiyatli
+
+
+---
+### 2026-10-04 22:15
+- Guruh: yuboruvchi avatari seriyaning 1-xabarida (bosilsa /u/<user>); 1v1 chatdan profil -> /chats/u/<user>/profile; o'z xabarimga menyuda "kimlar ko'rdi" (hover/tap ro'yxat, max 5 + scroll).
+- Migration 062_group_read_receipts.sql Supabase SQL editor'da ishga tushirilishi KERAK (aks holda "kimlar ko'rdi" ko'rinmaydi).
+- Smoke 14/14, app.css yig'ilgan. Keyingi: 062 ni run qilish, brauzerda ko'zdan tekshirish, push.

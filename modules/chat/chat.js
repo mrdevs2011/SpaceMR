@@ -1955,6 +1955,18 @@ export function paintMessages(msgs, grp = null) {
       dateSep = `<div class="chat-date-sep"><span>${_dateSepLabel(m.createdAt)}</span></div>`;
     }
 
+    // Guruh: yuboruvchi avatari — shu odamning ketma-ket xabarlari seriyasining BIRINCHI xabarida (qolganlarida bo'sh joy)
+    let gAvi = '';
+    if (grp && !mine) {
+      if (!prevMsg || prevMsg.senderId !== m.senderId || dateSep) {
+        const _pr = grp.names?.[m.senderId] || {};
+        const _nm = _pr.fullName || 'Foydalanuvchi';
+        gAvi = `<button type="button" class="msg-avi-btn grp-avi" data-uid="${esc(m.senderId)}" title="${esc(_nm)}" aria-label="${esc(_nm)}"><img src="${esc(_pr.avatar || defAvi(_nm))}" data-n="${esc(_nm)}" alt="" loading="lazy" draggable="false"></button>`;
+      } else {
+        gAvi = '<span class="grp-avi-gap" aria-hidden="true"></span>';
+      }
+    }
+
     const outerMeta = metaOutside ? `<span class="chat-msg-meta">
       ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
       ${mine ? renderTicks(m.status) : ''}
@@ -1962,7 +1974,7 @@ export function paintMessages(msgs, grp = null) {
 
     const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead });
     return assembleMessageHtml({
-      dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml,
+      dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml, gAvi,
     });
   });
   // Butun DOM'ni qayta yozmaymiz: o'zgarmagan xabarlar o'sha elementlarida qoladi
@@ -1990,6 +2002,11 @@ export function paintMessages(msgs, grp = null) {
       const { openUserProfileModal } = await import('../profile/profile.js');
       openUserProfileModal(el.dataset.uid);
     });
+  });
+  // Guruh avatari yuklanmasa — bosh harfli standart avatar
+  box.querySelectorAll('.grp-avi img').forEach(im => {
+    if (im._eb) return; im._eb = true;
+    im.addEventListener('error', () => { im.onerror = null; im.src = defAvi(im.dataset.n || '?'); }, { once: true });
   });
   box.querySelectorAll('.msg-avi-btn').forEach(btn => {
     if (btn._bound) return; btn._bound = true;

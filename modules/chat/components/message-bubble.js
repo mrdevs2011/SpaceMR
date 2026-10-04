@@ -113,9 +113,10 @@ export function assembleMessageHtml({
   msgId = '',
   animStyle = '',
   bubbleHtml,
+  gAvi = '',
 }) {
   return `${dateSep}<div class="chat-msg ${mine ? 'mine' : 'theirs'}${isNew ? ' anim-in' : ''}${emoCls}" data-msg-id="${msgId || ''}"${animStyle}>
-
+      ${gAvi}
       ${bubbleHtml}
     </div>`;
 }

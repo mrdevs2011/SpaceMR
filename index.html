@@ -76,7 +76,7 @@ html{color-scheme:dark;}
       else if (a === 's' && n === 2) ok = true;
       else if (a === 'chats' && n === 2) ok = b === 'groupcreate';
       else if (a === 'chats' && n === 3) ok = (b === 'u' || b === 'g') && !!s[2];
-      else if (a === 'chats' && n === 4) ok = b === 'g' && !!s[2] && (s[3] || '').toLowerCase() === 'info';
+      else if (a === 'chats' && n === 4) ok = (b === 'g' && !!s[2] && (s[3] || '').toLowerCase() === 'info') || (b === 'u' && !!s[2] && (s[3] || '').toLowerCase() === 'profile');
       if (/[?&](g|u|join|join_group)=/i.test(location.search)) ok = false; /* eski ?g= ?u= havolalar -> 404 */
       if (!ok) { document.documentElement.setAttribute('data-nf', '1'); document.title = '404 - SpaceMR'; }
     } catch (_) {}

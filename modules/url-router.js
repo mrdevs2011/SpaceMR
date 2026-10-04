@@ -21,6 +21,7 @@
  *   /s/<username>          foydalanuvchi hikoyalari ko'rgichi
  *   /u/<user>/<tab>        profil tabi: photos | text | music  (/profile/<tab> — o'z profilim)
  *   /chats/g/<ref>/info    guruh ma'lumoti paneli
+ *   /chats/u/<username>/profile   shaxsiy chatdan ochilgan suhbatdosh profili (chat ustida)
  *   /chats/(u|g)/<ref>#m-<id>  xabarga havola
  *   /explore?q=<so'z>      qidiruv natijasi
  *   /actions               admin panel — ichki URL YO'Q (faqat shu)
@@ -111,6 +112,9 @@ export function parsePath(rawPath) {
   }
   if (a === 'chats' && seg.length === 2 && b === 'groupcreate') {
     return { kind: 'overlay', overlay: 'groupcreate', base: 'chats' };
+  }
+  if (a === 'chats' && seg.length === 4 && b === 'u' && seg[2] && (seg[3] || '').toLowerCase() === 'profile') {
+    return { kind: 'thread', thread: 'dm', ref: seg[2], base: 'chats', profile: true };
   }
   if (a === 'chats' && seg.length === 3 && b === 'u' && seg[2]) {
     return { kind: 'thread', thread: 'dm', ref: seg[2], base: 'chats' };
@@ -229,6 +233,11 @@ function computeUrl() {
   if (hasShow('detailModal') && state.detailPostId) return `/p/${state.detailPostId}`;
 
   if (userProfileOpen()) {
+    // 1v1 chatdan ochilgan suhbatdosh profili: /u/<user> emas, chat ichida — /chats/u/<user>/profile
+    if (threadOpen() && state.currentChatKind === 'dm' && state.currentChatUid && state.currentChatUid === state.currentViewingUserId) {
+      const ct = dmToken(state.currentChatUid);
+      return ct ? `/chats/u/${encodeURIComponent(ct)}/profile` : null;
+    }
     const t = dmToken(state.currentViewingUserId);
     const tab = document.querySelector('#upGridTabs .active[data-up-tab]')?.dataset.upTab;
     return t ? `/u/${encodeURIComponent(t)}${tab && tab !== 'all' ? '/' + tab : ''}` : null;
@@ -611,9 +620,10 @@ export async function applyPath(rawPath, { initial = false } = {}) {
 
     /* Chat / guruh */
     if (route.kind === 'thread') {
-      let ok = false;
+      let ok = false, peerUid = null;
       if (route.thread === 'dm') {
         const uid = await uidByUsername(route.ref);
+        peerUid = uid;
         if (!uid) return missing();
         if (uid === state.me.uid) {
           // O'ziga chat yo'q — o'z profiliga o'tamiz (havola hamma uchun ochiladi)
@@ -621,7 +631,7 @@ export async function applyPath(rawPath, { initial = false } = {}) {
           return applyPath('/profile');
         }
         if (getCurrentRoute() !== 'chats') navigateTo('chats', false);
-        closeEverythingExcept(null);
+        closeEverythingExcept(route.profile ? 'userprofile' : null);
         if (!(threadOpen() && state.currentChatKind === 'dm' && state.currentChatUid === uid)) {
           await closeThreadIfOpen();
           const m = await import('./chat/chat.js');
@@ -643,6 +653,12 @@ export async function applyPath(rawPath, { initial = false } = {}) {
         ok = threadOpen() && $('chatThreadModal')?.dataset?.gid === gid;
       }
       if (!ok) return deny();
+      if (route.thread === 'dm' && route.profile && peerUid) {
+        if (!(userProfileOpen() && state.currentViewingUserId === peerUid)) {
+          const pm = await import('./profile/profile.js');
+          await pm.openUserProfileModal(peerUid);
+        }
+      }
       if (route.thread === 'group' && route.info) {
         const gid = $('chatThreadModal')?.dataset?.gid;
         if (gid && !hasShow('grpInfoOverlay')) {

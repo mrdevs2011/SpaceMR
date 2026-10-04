@@ -14083,3 +14083,31 @@ select.field option { background: #000000; color: var(--text); }
 .grp-invite-token { -webkit-user-select: text; user-select: text; }
 .grp-invite-regen-btn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; }
 .grp-invite-regen-btn .icon { display: block; }
+
+/* ── Guruh: yuboruvchi avatari (seriyaning birinchi xabarida) ─────────────────── */
+.chat-msg.theirs .msg-avi-btn.grp-avi {
+  display: block; width: 32px; height: 32px; margin: 0 8px 0 0; flex-shrink: 0;
+  align-self: flex-start; padding: 0; border: 0; border-radius: 50%; overflow: hidden;
+  background: var(--pal-gray-700); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.chat-msg.theirs .msg-avi-btn.grp-avi img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.chat-msg.theirs .msg-avi-btn.grp-avi:hover { box-shadow: none; opacity: .88; }
+.chat-msg.theirs .grp-avi-gap { width: 32px; margin-right: 8px; flex-shrink: 0; }
+.chat-msg.theirs:has(> .grp-avi, > .grp-avi-gap) { max-width: min(100%, calc(72% + 40px)); }
+
+/* ── Guruh: xabarimni kimlar ko'rdi (kontekst menyu pastida + hover ro'yxat) ───── */
+#msgCtx .mc-readers { min-height: 28px; }
+#msgCtx .mc-readers .mc-rd-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#msgCtx .mc-readers.has-list { cursor: default; border-radius: 9px; color: var(--text, #e7e9ea); }
+#msgCtx .mc-readers.has-list:hover { background: var(--pal-white-08); }
+#msgCtx .mc-rd-avi { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: block; }
+#msgCtx .mc-rd-stack { display: flex; flex-shrink: 0; }
+#msgCtx .mc-rd-stack .mc-rd-avi + .mc-rd-avi { margin-left: -7px; box-shadow: -1px 0 0 #000000; }
+#msgSeenList { position: fixed; z-index: 601; display: none; min-width: 200px; max-width: calc(100vw - 16px); padding: 6px; border-radius: 14px; background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; }
+#msgSeenList.show { display: block; animation: mcPop .12s ease-out; }
+#msgSeenList .sl-scroll { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+#msgSeenList .sl-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--text, #e7e9ea); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+#msgSeenList .sl-item:hover { background: var(--pal-white-08); }
+#msgSeenList .sl-avi { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: block; }
+#msgSeenList .sl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#msgSeenList .sl-item img.icon { flex-shrink: 0; }

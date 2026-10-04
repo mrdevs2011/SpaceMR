@@ -76,8 +76,115 @@ function ensureMenu() {
     run(b.dataset.mc, id);
   });
   menu.addEventListener('contextmenu', e => e.preventDefault());
+  // "Kimlar ko'rdi": desktop — hover, sensorli — bosish
+  menu.addEventListener('mouseover', e => {
+    const r = e.target.closest?.('.mc-readers.has-list');
+    if (r && !coarse()) showSeenList(r);
+  });
+  menu.addEventListener('mouseout', e => {
+    const r = e.target.closest?.('.mc-readers');
+    if (r && !r.contains(e.relatedTarget)) hideSeenSoon();
+  });
+  menu.addEventListener('click', e => {
+    const r = e.target.closest?.('.mc-readers.has-list');
+    if (!r || !coarse()) return;
+    if (seenEl?.classList.contains('show')) hideSeen(); else showSeenList(r);
+  });
   document.body.appendChild(menu);
 }
+
+/* ── Guruh: xabarimni kimlar ko'rdi ────────────────────────────────── */
+let seenEl = null, seenHideT = 0, readersSeq = 0;
+const _rdProf = new Map();                   // uid → {name, avatar}
+let _rdCache = { gid: null, at: 0, rows: [] };
+
+async function fetchReaders(gid, createdAt) {
+  const now = Date.now();
+  if (_rdCache.gid !== gid || now - _rdCache.at > 3000) {
+    const { data, error } = await sb.from('group_members').select('user_id, joined_at, last_read_at').eq('group_id', gid);
+    if (error) throw error;
+    _rdCache = { gid, at: now, rows: data || [] };
+  }
+  const me = state.me?.uid;
+  const t = Number(createdAt) || Date.parse(createdAt) || 0;
+  const rows = _rdCache.rows.filter(r => r.user_id !== me && r.last_read_at && Date.parse(r.last_read_at) >= t
+    && (!r.joined_at || Date.parse(r.joined_at) <= t + 1000));
+  const need = rows.map(r => r.user_id).filter(u => !_rdProf.has(u));
+  if (need.length) {
+    const { data } = await sb.from('profiles').select('id, full_name, username, avatar').in('id', need);
+    (data || []).forEach(p => _rdProf.set(p.id, { name: p.full_name || p.username || 'Foydalanuvchi', avatar: p.avatar || '' }));
+    need.forEach(u => { if (!_rdProf.has(u)) _rdProf.set(u, { name: 'Foydalanuvchi', avatar: '' }); });
+  }
+  return rows
+    .sort((a, b) => Date.parse(a.last_read_at) - Date.parse(b.last_read_at))
+    .map(r => ({ uid: r.user_id, ..._rdProf.get(r.user_id) }));
+}
+
+async function loadReaders(m) {
+  const gid = $('chatThreadModal')?.dataset?.gid;
+  if (!gid || !m.id || m.status === 'sending') return;
+  const seq = ++readersSeq;
+  try {
+    const list = await fetchReaders(gid, m.createdAt);
+    if (seq !== readersSeq || openId !== m.id || !list.length) return;
+    paintReaders(list);
+  } catch (_) { /* last_read_at ustuni hali yo'q (062) — oddiy "Yuborildi" qoladi */ }
+}
+
+const rdAvi = (u, cls) => `<img class="${cls}" src="${esc(u.avatar || defAvi(u.name))}" alt="" draggable="false">`;
+
+function paintReaders(list) {
+  const el = menu?.querySelector('.mc-readers');
+  if (!el) return;
+  const one = list.length === 1;
+  el.innerHTML = `${IC.seen}<span class="mc-rd-label">${one ? esc(list[0].name) : list.length + ' kishi ko‘rdi'}</span>`
+    + (one ? rdAvi(list[0], 'mc-rd-avi') : `<span class="mc-rd-stack">${list.slice(0, 3).map(u => rdAvi(u, 'mc-rd-avi')).join('')}</span>`);
+  el.classList.add('has-list');
+  el._list = list;
+}
+
+function ensureSeenList() {
+  if (seenEl) return;
+  seenEl = document.createElement('div');
+  seenEl.id = 'msgSeenList';
+  seenEl.addEventListener('mouseenter', () => clearTimeout(seenHideT));
+  seenEl.addEventListener('mouseleave', () => hideSeenSoon());
+  seenEl.addEventListener('contextmenu', e => e.preventDefault());
+  seenEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-uid]');
+    if (!b) return;
+    const uid = b.dataset.uid;
+    closeMenu();
+    import('../profile/profile.js').then(mod => mod.openUserProfileModal(uid)).catch(() => {});
+  });
+  document.body.appendChild(seenEl);
+}
+
+function showSeenList(rowEl) {
+  const list = rowEl?._list;
+  if (!list?.length || !menu) return;
+  clearTimeout(seenHideT);
+  ensureSeenList();
+  seenEl.innerHTML = `<div class="sl-scroll">${list.map(u =>
+    `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-name">${esc(u.name)}</span>${IC.seen}</button>`).join('')}</div>`;
+  seenEl.style.visibility = 'hidden';
+  seenEl.classList.add('show');
+  const mr = menu.getBoundingClientRect(), rr = rowEl.getBoundingClientRect();
+  const w = seenEl.offsetWidth, h = seenEl.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+  let left, top;
+  if (mr.right + 6 + w <= vw - 8) { left = mr.right + 6; top = rr.bottom - h; }          // menyuning o'ng tomonida
+  else if (mr.left - 6 - w >= 8) { left = mr.left - 6 - w; top = rr.bottom - h; }       // chap tomonida
+  else {                                                                                // tor ekran: menyu tagida / tepasida
+    left = Math.max(8, Math.min(vw - w - 8, mr.left));
+    top = mr.bottom + 6 + h <= vh - 8 ? mr.bottom + 6 : mr.top - h - 6;
+  }
+  seenEl.style.left = left + 'px';
+  seenEl.style.top = Math.max(8, Math.min(vh - h - 8, top)) + 'px';
+  seenEl.style.visibility = '';
+}
+
+function hideSeen() { clearTimeout(seenHideT); seenEl?.classList.remove('show'); }
+function hideSeenSoon() { clearTimeout(seenHideT); seenHideT = setTimeout(hideSeen, 160); }
 
 function menuHtml(m) {
   const mine = isMine(m);
@@ -95,7 +202,10 @@ function menuHtml(m) {
   h += it('fwd', IC.fwd, 'Uzatish');
   if (mine) h += it('del', IC.del, 'O‘chirish', 'danger');
   h += it('sel', IC.sel, 'Tanlash');
-  if (mine) {
+  if (mine && !isDM()) {
+    // Guruh: "kimlar ko'rdi" (ro'yxat openMenu() dan keyin asinxron yuklanadi)
+    h += `<div class="mc-sep"></div><div class="mc-seen mc-readers">${IC.sent}<span class="mc-rd-label">Yuborildi · ${when(m.createdAt)}</span></div>`;
+  } else if (mine) {
     const read = m.status === 'read' && m.readAt;
     h += `<div class="mc-sep"></div><div class="mc-seen">${read ? IC.seen : IC.sent}<span>${read ? 'O‘qildi · ' + when(m.readAt) : 'Yuborildi · ' + when(m.createdAt)}</span></div>`;
   }
@@ -110,6 +220,7 @@ function openMenu(row, x, y) {
   openId = id;
   row.classList.add('mc-active');
   menu.innerHTML = menuHtml(m);
+  if (!isDM() && isMine(m)) loadReaders(m);
   menu.style.visibility = 'hidden';
   menu.classList.add('show');
   const w = menu.offsetWidth, h = menu.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
@@ -132,6 +243,8 @@ function openMenu(row, x, y) {
 }
 
 function closeMenu() {
+  hideSeen();
+  readersSeq++;
   if (menu) menu.classList.remove('show');
   box?.querySelectorAll('.mc-active').forEach(r => r.classList.remove('mc-active'));
   openId = null;
@@ -572,7 +685,7 @@ export function initMsgMenu(opts) {
 
   // Menyudan tashqariga bosilsa yopiladi
   document.addEventListener('pointerdown', e => {
-    if (!openId || menu?.contains(e.target)) return;
+    if (!openId || menu?.contains(e.target) || seenEl?.contains(e.target)) return;
     if (e.pointerType === 'touch') suppressUntil = Date.now() + 350;
     closeMenu();
   }, true);
