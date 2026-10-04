@@ -93,3 +93,49 @@ export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmoji
   return { bubbleClassExtra, bubbleContent, emoCls };
 }
 
+/** Outer bubble shell — DM va guruh uchun bir xil */
+export function wrapChatBubble({ bubbleContent, bubbleClassExtra = '', outerMeta = '', gHead = '' }) {
+  return `<div class="chat-bubble${bubbleClassExtra}">
+        <div class="chat-bubble-wrap">
+          ${gHead}${bubbleContent}
+          ${outerMeta}
+        </div>
+      </div>`;
+}
+
+/** Bitta xabar qatori (date sep + msg) */
+export function assembleMessageHtml({
+  dateSep = '',
+  mine,
+  isNew,
+  emoCls = '',
+  msgId = '',
+  animStyle = '',
+  bubbleHtml,
+}) {
+  return `${dateSep}<div class="chat-msg ${mine ? 'mine' : 'theirs'}${isNew ? ' anim-in' : ''}${emoCls}" data-msg-id="${msgId || ''}"${animStyle}>
+
+      ${bubbleHtml}
+    </div>`;
+}
+
+/** Optimistic voice (yuborishdan oldin local blob) */
+export function generateOptimisticVoiceHtml({
+  safeUrl, duration, barCount, dur, time, chatId, chatUid, renderVoiceWave, renderTicks,
+}) {
+  return `<div class="chat-bubble">
+    <div class="chat-bubble-wrap">
+      <div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${Math.round(duration || 0)}" data-bar-count="${barCount}" data-chat-id="${chatId || ''}" data-chat-uid="${chatUid || ''}" data-name="Siz">
+        <button class="cvm-play" onclick="window._chatPlayVoice(this)">
+          <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
+        </button>
+        <div class="cvm-waveform">${renderVoiceWave(0, barCount)}</div>
+        <span class="cvm-dur">${dur}</span>
+      </div>
+      <span class="chat-msg-meta">
+        <span class="chat-msg-time">${time}</span>
+        ${renderTicks('sending')}
+      </span>
+    </div>
+  </div>`;
+}

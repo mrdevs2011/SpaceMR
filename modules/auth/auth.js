@@ -938,6 +938,7 @@ async function _handleSession(session) {
 
   const me = _buildMe(user, p);
   state.me = me;
+  try { import('../ui/ui.js').then(m => m.refreshHdrAvi?.()); } catch (_) {}
   try { document.dispatchEvent(new CustomEvent('meUpdated')); } catch (_) {}
 
   // Profil xato bilan olinmadi yoki offline

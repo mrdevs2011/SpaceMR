@@ -121,7 +121,7 @@ a { color: var(--link); }
 /* Desktop/planshet: markaz ustun */
 @media (min-width: 1100px) {
   :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #savedView.on { padding-top: 0; padding-bottom: 0; }
+  #homeView.on, #followingView.on, #savedView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
   .feed, #followingView .feed { max-width: var(--center-w); padding: 0; min-height: 100dvh; }
 }
 /* Keng ekran (≥1260px): sidebar + markaz + o'ng ustun, butun guruh markazda */
@@ -131,9 +131,10 @@ a { color: var(--link); }
   .feed, #followingView .feed { margin: 0; }
 }
 /* O'ng ustun tarkibi */
-/* ═══════════════════════════════════════════════════════════════════════ Header YO'Q (mobil ham) + Post: X u... */
-.app-hdr, .app-hdr.search-open { display: none; }
-#homeView.on, #followingView.on, #savedView.on { padding-top: 0; padding-bottom: 0; }
+/* Mobile header YOQILDI — logo + saved + notif + search + avi */
+.app-hdr { display: flex !important; }
+.app-hdr.search-open { display: none !important; }
+#homeView.on, #followingView.on, #savedView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
 .post, [data-theme] .post {
   --post-px: 16px;
   --post-avi: 40px;
@@ -5541,3 +5542,29 @@ a.cfm-name--link:hover {
   background: var(--pal-white-06);
 }
 
+
+/* Mobile header: professional icon row */
+@media (max-width: 1099px) {
+  .app-hdr {
+    padding: 0 8px 0 10px;
+    height: var(--hdr);
+    background: #000 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  }
+  .hdr-brand { font-size: 16px; letter-spacing: -0.3px; }
+  .hdr-new-post-btn { display: none !important; }
+  /* home-brand ichidagi saved — headerda bor */
+  .home-brand-saved { display: none !important; }
+}
+@media (min-width: 1100px) {
+  .hdr-avi-btn,
+  #hdrSavedBtn2,
+  #hdrNotifBtn { display: none !important; }
+}
+
+/* desktop: app-hdr yashirin (sidebar bor) */
+
+@media (min-width: 1100px) {
+  .app-hdr { display: none !important; }
+  #homeView.on, #followingView.on, #savedView.on { padding-top: 0 !important; }
+}

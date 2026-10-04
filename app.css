@@ -3521,6 +3521,91 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .ig-open-btn:hover {
   background: var(--bg4, #1c1f24);
 }
+
+.hdr-right { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+
+.hdr-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
+}
+.hdr-icon-btn:hover { background: var(--bg3, rgba(255,255,255,0.06)); }
+.hdr-icon-btn:active { background: var(--bg4, rgba(255,255,255,0.1)); transform: scale(0.94); }
+.hdr-icon-btn .icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.92;
+  filter: brightness(0) invert(1);
+}
+.hdr-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: #1d9bf0;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #000;
+  pointer-events: none;
+}
+.hdr-badge.dot {
+  min-width: 8px;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  top: 9px;
+  right: 9px;
+}
+.hdr-avi-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin-left: 2px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.hdr-avi {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg4, #202327);
+  border: 1.5px solid var(--line, #2f3336);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+}
+.hdr-avi img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.hdr-avi-btn:active .hdr-avi { transform: scale(0.94); }
+.hdr-icon-btn svg { width: 20px; height: 20px; }
 /* CSS/layers.css — theme, ui-improvements, local-utility, dark-theme-fix, borderless, chat-dark-redesign, 00-components.core, post-composer, card-sheets, sidebar-x, no-animations (F4.4), style (global reset). Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── theme ─── */
 /* ═══════════════════════════════════════════ SpaceMR — Theme System SpaceMR — Theme System ═════════════════... */
@@ -5551,7 +5636,7 @@ a { color: var(--link); }
 /* Desktop/planshet: markaz ustun */
 @media (min-width: 1100px) {
   :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #savedView.on { padding-top: 0; padding-bottom: 0; }
+  #homeView.on, #followingView.on, #savedView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
   .feed, #followingView .feed { max-width: var(--center-w); padding: 0; min-height: 100dvh; }
 }
 /* Keng ekran (≥1260px): sidebar + markaz + o'ng ustun, butun guruh markazda */
@@ -5561,9 +5646,10 @@ a { color: var(--link); }
   .feed, #followingView .feed { margin: 0; }
 }
 /* O'ng ustun tarkibi */
-/* ═══════════════════════════════════════════════════════════════════════ Header YO'Q (mobil ham) + Post: X u... */
-.app-hdr, .app-hdr.search-open { display: none; }
-#homeView.on, #followingView.on, #savedView.on { padding-top: 0; padding-bottom: 0; }
+/* Mobile header YOQILDI — logo + saved + notif + search + avi */
+.app-hdr { display: flex !important; }
+.app-hdr.search-open { display: none !important; }
+#homeView.on, #followingView.on, #savedView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
 .post, [data-theme] .post {
   --post-px: 16px;
   --post-avi: 40px;
@@ -10969,4 +11055,31 @@ a.cfm-name--link:hover {
 
 #chatContextMenu .ctx-item:hover {
   background: var(--pal-white-06);
+}
+
+
+/* Mobile header: professional icon row */
+@media (max-width: 1099px) {
+  .app-hdr {
+    padding: 0 8px 0 10px;
+    height: var(--hdr);
+    background: #000 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  }
+  .hdr-brand { font-size: 16px; letter-spacing: -0.3px; }
+  .hdr-new-post-btn { display: none !important; }
+  /* home-brand ichidagi saved — headerda bor */
+  .home-brand-saved { display: none !important; }
+}
+@media (min-width: 1100px) {
+  .hdr-avi-btn,
+  #hdrSavedBtn2,
+  #hdrNotifBtn { display: none !important; }
+}
+
+/* desktop: app-hdr yashirin (sidebar bor) */
+
+@media (min-width: 1100px) {
+  .app-hdr { display: none !important; }
+  #homeView.on, #followingView.on, #savedView.on { padding-top: 0 !important; }
 }

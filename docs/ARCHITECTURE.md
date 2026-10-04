@@ -45,3 +45,21 @@ Manba: `CSS/*.css` → `npm run build` → `app.css` (qo'lda tahrirlanmaydi).
 ## Right-rail (desktop ≥1200px)
 Floating karta: `position: fixed`, `border: 1px`, `border-radius: 16px`,
 `box-shadow`, yuqori/past 12px bo'shliq.
+
+## CSS domen SSOT (2026-10-04)
+
+Brauzerga bitta `app.css` (build: tokens → base → features → layers → admin → mono-x).
+
+| Domen | Manba |
+|-------|--------|
+| Chat thread + guruh bubble + voice | `mono-x.css` |
+| Call | `features.css` |
+| Feed / stories | `features.css` |
+| Guruh forma / picker / a'zolar | `features.css` |
+| Right-rail / nav / shell | `mono-x.css` |
+| Auth / splash | `base.css` + mono theme |
+| Admin | `admin.css` |
+
+**JS:** bubble HTML → `chat/components/message-bubble.js`; file icon → `core/file-icons.js`; DM+guruh paint → `chat.js` `paintMessages`.
+
+Batafsil: `docs/CONSOLIDATE-ROADMAP.md`.

@@ -27,13 +27,13 @@ const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return nu
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private rejim */ } };
 
 const I = {
-  share: '<img src="./svg/extra/icon-9157214ed9c4.svg" alt="" class="icon">',
+  share: '<img src="./svg/extra/icon-9157214ed9c4.svg" alt="" class="icon" width="20" height="20">',
   plus: '<img src="./svg/extra/icon-96495123cb1b.svg" alt="" class="icon" width="18" height="18">',
-  menu: '<img src="./svg/ui/dots-vertical.svg" alt="" class="icon">',
-  install: '<img src="./svg/extra/icon-649766ef725f.svg" alt="" class="icon">',
+  menu: '<img src="./svg/ui/dots-vertical.svg" alt="" class="icon" width="20" height="20">',
+  install: '<img src="./svg/extra/icon-649766ef725f.svg" alt="" class="icon" width="20" height="20">',
   open: '<img src="./svg/extra/icon-651dd2923a10.svg" alt="" class="icon" width="14" height="20">',
-  bell: '<img src="./svg/extra/icon-615b4dff4d09.svg" alt="" class="icon">',
-  check: '<img src="./svg/extra/icon-36ae445873ad.svg" alt="" class="icon">',
+  bell: '<img src="./svg/extra/icon-615b4dff4d09.svg" alt="" class="icon" width="20" height="20">',
+  check: '<img src="./svg/extra/icon-36ae445873ad.svg" alt="" class="icon" width="20" height="20">',
 };
 
 function buildSteps() {

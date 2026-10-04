@@ -308,3 +308,60 @@ document.addEventListener('click', e => {
 const sbSearchInput = $('sbSearchInput');
 if (sbSearchInput) sbSearchInput.oninput = e => handleSearchInput(e.target.value);
 
+
+
+/* ── Mobile header: saved / notif / profile avi ───────────────────────── */
+(function bindMobileHdr() {
+  const saved = document.getElementById('hdrSavedBtn2');
+  if (saved) {
+    saved.addEventListener('click', async () => {
+      const { navigateTo } = await import('../router.js');
+      navigateTo('saved');
+    });
+  }
+  const notif = document.getElementById('hdrNotifBtn');
+  if (notif) {
+    notif.addEventListener('click', async () => {
+      const { navigateTo } = await import('../router.js');
+      navigateTo('chats');
+    });
+  }
+  const aviBtn = document.getElementById('hdrAviBtn');
+  if (aviBtn) {
+    aviBtn.addEventListener('click', async () => {
+      const { navigateTo } = await import('../router.js');
+      navigateTo('profile');
+    });
+  }
+})();
+
+/** Header avatar yangilash (login / profil o'zgarishi) */
+export async function refreshHdrAvi() {
+  const box = document.getElementById('hdrAvi');
+  if (!box) return;
+  try {
+    const { state, sb } = await import('../core/config.js');
+    if (!state.me?.uid) { box.innerHTML = ''; return; }
+    let av = state._userCache?.[state.me.uid]?.avatar;
+    let name = state.me.displayName || state._userCache?.[state.me.uid]?.fullName || 'U';
+    if (!av) {
+      const { data } = await sb.from('profiles').select('full_name,avatar').eq('id', state.me.uid).maybeSingle();
+      av = data?.avatar || null;
+      name = data?.full_name || name;
+    }
+    if (av) {
+      box.innerHTML = `<img src="${av.replace(/"/g, '')}" alt="" width="30" height="30">`;
+    } else {
+      const letter = (name && name[0] ? name[0] : 'U').toUpperCase();
+      box.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:13px;font-weight:700;color:#e7e9ea;background:#2f3336">${letter}</span>`;
+    }
+  } catch (_) {}
+}
+
+// Login keyin avatar
+import('../core/config.js').then(({ state }) => {
+  const tryFill = () => { if (state.me) refreshHdrAvi(); };
+  tryFill();
+  setTimeout(tryFill, 800);
+  setTimeout(tryFill, 2500);
+}).catch(() => {});

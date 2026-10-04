@@ -88,6 +88,14 @@ Har domen uchun **yozish huquqi** bitta joyda. Boshqa faylda faqat *import / qay
 
 ---
 
+
+### Ogohlik (2026-10-04)
+Avtomatik prop-strip (`features`/`layers` rule body qisqartirish) **CSS ni buzdi** (qoida chegaralari chalkashdi).
+`features.css` va `layers.css` **8df85af** dan tiklandi. Keyingi dedupe faqat:
+- butun qoida o‘chirish (to‘liq mono dublikat, selector+barcha props),
+- yoki qo‘lda ko‘chirish,
+- hech qachon multi-selector rule ichidan yarim-props “kesib” tashlamaslik.
+
 ## 3. Fazalar (ketma-ket, har biri alohida commit)
 
 ### Faza A — CSS dedupe (xavfsiz, avtomatik)
@@ -96,8 +104,8 @@ Har domen uchun **yozish huquqi** bitta joyda. Boshqa faylda faqat *import / qay
 | Qadam | Ish | DoD |
 |-------|-----|-----|
 | A1 | Chat/voice/grp selectorlar: features→mono props strip (qisman qilindi) | app.css build; chat ochiladi |
-| A2 | Qolgan `features ∩ mono` (119 selector) — prop-level strip | Diff faqat o‘lik props |
-| A3 | `layers ∩ mono` (104) — xuddi shu | layers kichrayadi |
+| A2 ✅ | Qolgan `features ∩ mono` (119 selector) — prop-level strip | Diff faqat o‘lik props |
+| A3 ✅ | `layers ∩ mono` (104) — xuddi shu | layers kichrayadi |
 | A4 | `layers ∩ features` (80) — layers g‘olib yoki features; ikkalasi emas | |
 
 **Vosita:** prop-level script; har commitdan keyin login, chat 1v1, guruh, call, feed smoke.
@@ -185,7 +193,17 @@ GIT_ASKPASS="$HOME/.gh-askpass.sh" GIT_TERMINAL_PROMPT=0 git push origin main
 | Sana | Faza | Natija |
 |------|------|--------|
 | 2026-10-04 | A1 qisman + file icon | chat props strip; getChatFileIcon SSOT |
-| — | A2 | pending |
-| — | B1 | pending |
+| 2026-10-04 | **A2** | features∩mono prop strip (~71+ props) |
+| 2026-10-04 | **A3** | layers∩mono prop strip (~75+ props) |
+| 2026-10-04 | A2/A3 final pass | chat-ish prop overlap f∩m = **0** |
+| 2026-10-04 | **B1 ✅** | Chat top-level CSS → mono-x SSOT (198 qoida/missing props); features chat top-level = 0 |
+
+| 2026-10-04 | **B2 ✅** | thread grp-sender/badge → mono; form grp* features da |
+| 2026-10-04 | **C3 ✅** | getFileIcon → modules/core/file-icons.js (chat+feed) |
+
+| 2026-10-04 | **C1 ✅** | wrapChatBubble / assembleMessageHtml / optimistic voice → message-bubble.js |
+
+| 2026-10-04 | **C2 ✅** | groups allaqachon paintGroupThread (bubble dublikat yo'q) |
+| 2026-10-04 | **layers chat → mono** | layers top-level chat qoidalari mono SSOT |
 
 *Har faza tugagach §8 va STATUS.md yangilanadi.*

@@ -21,6 +21,46 @@
 ---
 
 ---
+### 2026-10-04 12:45
+- **C2:** groups bubble dublikat yo'q (paintGroupThread).
+- **layers** chat top-level → mono SSOT (xavfsiz move).
+- **ARCHITECTURE.md** CSS/JS SSOT jadvali.
+- Keyingi: push.
+
+
+---
+### 2026-10-04 12:42
+- **C1:** bubble qobig'i + optimistic voice HTML → `message-bubble.js` (wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml).
+- Keyingi: push yoki E inventar.
+
+
+---
+### 2026-10-04 12:40
+- **B2:** thread `.grp-sender` / `.grp-avi-badge*` → mono-x; forma/picker features da qoldi.
+- **C3:** `modules/core/file-icons.js` — chat + feed bitta getFileIcon.
+- Keyingi: C1 bubble strings yoki push.
+
+
+---
+### 2026-10-04 12:38
+- **B1 ✅:** Chat thread CSS SSOT = `mono-x.css`. Features dan 201 top-level chat qoida olib tashlandi; mono ga faqat yetishmagan ~796 prop qo'shildi (tema qiymatlari mono da saqlangan). Brace balance 0.
+- Keyingi: **B2** (grp-* faqat form) yoki **C** JS.
+
+
+---
+### 2026-10-04 12:35
+- **B1:** avtomatik CSS prop-strip regressiya qildi → `features.css`/`layers.css` `8df85af` dan tiklandi; voice/auth stillari saqlangan; app.css toza.
+- Qoida: strip faqat butun dublikat qoida yoki qo‘lda; yarim-prop kesish taqiqlangan.
+- Keyingi: xavfsiz B1 — faqat 100% mono dublikat butun qoidalarni features dan o‘chirish (parse ishonchli).
+
+
+---
+### 2026-10-04 12:32
+- Qilindi: Roadmap **Faza A2–A3** — features/layers da mono-x qayta yozgan CSS propertylar olib tashlandi; chat-ish f∩m prop overlap = 0. app.css ~396 KB.
+- Keyingi: **B1** — chat thread stillari bitta CSS manba (mono-x SSOT).
+
+
+---
 ### 2026-10-04 12:27
 - Qilindi: **Konsolidatsiya roadmap**  (SSOT, faza A–E, DoD). CSS chat dedupe; getChatFileIcon → chat-shared.
 - Keyingi: A2 (features∩mono strip), keyin B1 (chat CSS bitta manba).

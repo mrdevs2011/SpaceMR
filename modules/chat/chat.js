@@ -620,7 +620,7 @@ import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
 import { emojiOnlyClass, wrapEmojiNoSelect } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
-import { generateVoiceBubble, generateFileBubble, generateTextBubble, rememberImgRatio } from './components/message-bubble.js';
+import { generateVoiceBubble, generateFileBubble, generateTextBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
 import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
@@ -801,14 +801,27 @@ function _rtRetract(id) {
  // groupsUpdated leak oldini olish
 
 function updateChatBadge(count) {
+  const n = count > 0 ? (count > 99 ? '99+' : String(count)) : '';
   const badge = $('chatBadge');
-  if (!badge) return;
-  if (count > 0) {
-    badge.textContent = `+${count > 99 ? 99 : count}`;
-    badge.classList.remove('d-none');
-  } else {
-    badge.textContent = '';
-    badge.classList.add('d-none');
+  if (badge) {
+    if (count > 0) {
+      badge.textContent = `+${count > 99 ? 99 : count}`;
+      badge.classList.remove('d-none');
+    } else {
+      badge.textContent = '';
+      badge.classList.add('d-none');
+    }
+  }
+  // Mobile header bell
+  const hb = $('hdrNotifBadge');
+  if (hb) {
+    if (count > 0) {
+      hb.textContent = n;
+      hb.classList.remove('d-none', 'dot');
+    } else {
+      hb.textContent = '';
+      hb.classList.add('d-none');
+    }
   }
 }
 
@@ -1903,15 +1916,10 @@ export function paintMessages(msgs, grp = null) {
       ${mine ? renderTicks(m.status) : ''}
     </span>` : '';
 
-    return `${dateSep}<div class="chat-msg ${mine ? 'mine' : 'theirs'}${isNew ? ' anim-in' : ''}${emoCls}" data-msg-id="${m.id || ''}"${animStyle}>
-
-      <div class="chat-bubble${bubbleClassExtra}">
-        <div class="chat-bubble-wrap">
-          ${gHead}${bubbleContent}
-          ${outerMeta}
-        </div>
-      </div>
-    </div>`;
+    const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead });
+    return assembleMessageHtml({
+      dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml,
+    });
   });
   // Butun DOM'ni qayta yozmaymiz: o'zgarmagan xabarlar o'sha elementlarida qoladi
   // (rasm/avatar qayta yuklanmaydi, miltillash va sakrash yo'q). Faqat o'zgarganlari almashadi.
@@ -2350,27 +2358,21 @@ export function _showOptimisticVoiceBubble(id, localUrl, duration) {
   const barCount = _voiceBarCount(duration);
   const safeUrl = String(localUrl || '').replace(/"/g, '"');
   const time = fmtTime(Date.now());
-  const _mpName = 'Siz';
-
   const el = document.createElement('div');
   el.className = 'chat-msg mine anim-in';
   el.id = id;
   el.dataset.optimistic = '1';
-  el.innerHTML = `<div class="chat-bubble">
-    <div class="chat-bubble-wrap">
-      <div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${Math.round(duration||0)}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
-        <button class="cvm-play" onclick="window._chatPlayVoice(this)">
-          <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
-        </button>
-        <div class="cvm-waveform" >${renderVoiceWave(0, barCount)}</div>
-        <span class="cvm-dur">${dur}</span>
-      </div>
-      <span class="chat-msg-meta">
-        <span class="chat-msg-time">${time}</span>
-        ${renderTicks('sending')}
-      </span>
-    </div>
-  </div>`;
+  el.innerHTML = generateOptimisticVoiceHtml({
+    safeUrl,
+    duration,
+    barCount,
+    dur,
+    time,
+    chatId: state.currentChatId || '',
+    chatUid: state.currentChatUid || '',
+    renderVoiceWave,
+    renderTicks,
+  });
   box.appendChild(el);
   box.scrollTop = box.scrollHeight;
   // Waveformni darhol local blob dan hydrate qilish

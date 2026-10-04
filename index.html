@@ -260,21 +260,30 @@ html[data-nf],html[data-nf] body{background:#000}
   <header class="app-hdr" id="appHdr">
     <button class="hdr-logo" id="hdrLogoBtn" aria-label="Bosh sahifa">
       <div class="hdr-logo-glass">
-        <img src="./svg/SpaceMR.png" alt="SpaceMR" width="24" height="24">
+        <img src="./svg/SpaceMR.png" alt="SpaceMR" width="22" height="22">
       </div>
       <span class="hdr-brand">SpaceMR</span>
     </button>
-    <div class="hdr-right">
-      <!-- New Post Button (Mobile) -->
-      <button class="hdr-new-post-btn" id="hdrNewPostBtn" aria-label="Yangi post yaratish">
-        <img src="./svg/action/plus.svg" alt="" class="icon">
+    <div class="hdr-right" role="toolbar" aria-label="Tezkor amallar">
+      <button type="button" class="hdr-icon-btn" id="hdrSavedBtn2" aria-label="Saqlanganlar" title="Saqlanganlar">
+        <img src="./svg/social/bookmark.svg" alt="" class="icon" width="20" height="20">
       </button>
-      <!-- Qidiruv: hidden input expands on icon click -->
+      <button type="button" class="hdr-icon-btn hdr-notif-btn" id="hdrNotifBtn" aria-label="Bildirishnomalar" title="Bildirishnomalar">
+        <img src="./svg/ui/bell.svg" alt="" class="icon" width="20" height="20">
+        <span class="hdr-badge d-none" id="hdrNotifBadge" aria-hidden="true"></span>
+      </button>
       <div class="hdr-search-wrap" id="hdrSearchWrap">
-        <button class="hdr-icon-btn" id="hdrSearchBtn" aria-label="Kashf">
-          <img src="./svg/action/search.svg" alt="" class="icon" width="17" height="17">
+        <button type="button" class="hdr-icon-btn" id="hdrSearchBtn" aria-label="Kashf" title="Kashf">
+          <img src="./svg/action/search.svg" alt="" class="icon" width="19" height="19">
         </button>
       </div>
+      <button type="button" class="hdr-avi-btn" id="hdrAviBtn" aria-label="Profil" title="Profil">
+        <span class="hdr-avi" id="hdrAvi"></span>
+      </button>
+      <!-- desktop/composer fallback: yangi post -->
+      <button type="button" class="hdr-new-post-btn" id="hdrNewPostBtn" aria-label="Yangi post yaratish" hidden>
+        <img src="./svg/action/plus.svg" alt="" class="icon" width="20" height="20">
+      </button>
     </div>
   </header>
 
