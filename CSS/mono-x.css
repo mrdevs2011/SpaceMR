@@ -7854,3 +7854,15 @@ body::-webkit-scrollbar,
   flex: none !important;
   min-height: auto !important;
 }
+
+
+/* Desktop explore: o'ng chiziq yo'q */
+@media (min-width: 1100px) {
+  .search-overlay,
+  .search-overlay.open,
+  .search-overlay-inner,
+  [data-theme] .search-overlay-inner {
+    border-right: none !important;
+    box-shadow: none !important;
+  }
+}
