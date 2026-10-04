@@ -59,6 +59,7 @@ html{color-scheme:dark;}
       if (!n) ok = true;
       else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost)$/.test(a);
       else if (n === 2) ok = (a === 'profile' && b === 'settings');
+      else if (n === 3) ok = (a === 'profile' && b === 'settings' && /^(general|email|password)$/.test((s[2] || '').toLowerCase()));
       else if (a === 'u' && n === 2) ok = true;
       else if (a === 'chats' && n === 2) ok = b === 'groupcreate';
       else if (a === 'chats' && n === 3) ok = (b === 'u' || b === 'g') && !!s[2];
