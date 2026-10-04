@@ -1694,7 +1694,10 @@ function _bindPinTracking(box) {
 window._chatImgLoaded = function (img) {
   try { rememberImgRatio(img); } catch (_) {}
   const box = document.getElementById('chatThreadMessages');
-  if (box && chatState._pinned && box.contains(img)) box.scrollTop = box.scrollHeight;
+  if (!box || !chatState._pinned || !box.contains(img)) return;
+  // faqat haqiqatan pastda bo'lsak — aks holda o'qiyotganda sakramasin
+  const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
+  if (gap < 160) box.scrollTop = box.scrollHeight;
 };
 
 /** Xabarlar DOM'ini kalit (xabar id) bo'yicha yamaydi: bir xil HTML — o'sha element qoladi */
@@ -1935,7 +1938,8 @@ export function paintMessages(msgs, grp = null) {
   if (isAtBottom || isInitialLoad || hasMyNew) {
     chatState._pinned = true;
     box.scrollTop = box.scrollHeight;
-    setTimeout(() => { box.scrollTop = box.scrollHeight; }, SCROLL_SETTLE_MS);
+    // Bitta rAF — layout keyin; ikkinchi setTimeout sakrash berardi
+    requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
   }
 
   // "theirs" xabarlaridagi avatar bosilganda profil ochamiz

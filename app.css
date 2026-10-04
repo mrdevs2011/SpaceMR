@@ -104,6 +104,9 @@
   --ag-row-hover: var(--bg4);
   --ag-overlay: var(--pal-black);
 }
+/* scroll jump prevention */
+html { scroll-behavior: auto; }
+body { overflow-anchor: none; }
 /* CSS/base.css — splash, loading. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── Hech narsa tanlanmasin (matn belgilash/nusxalash/uzoq bosish menyusi yo'q) ───
    Istisno: yozish maydonlari — aks holda iOS/Safari'da yozib bo'lmaydi. Aniqlik (specificity) 0 — kerak bo'lsa komponent o'zi qayta belgilaydi. */
@@ -3263,28 +3266,26 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .ig-card-x:hover { color: #fff; background: rgba(255,255,255,0.08); }
 
 
-/* ═══ PERF: scroll list containment (SpaceMR tezlik) ═══ */
-.chat-msg {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 64px;
+/* ═══ SCROLL STABLE: content-visibility O'CHIRILDI (sakrash sababi) ═══ */
+.chat-msg, .post, .chat-row {
+  /* faqat layout isolation — height taxmin YO'Q */
   contain: layout style;
-}
-.post {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 280px;
-  contain: layout style;
-}
-.chat-row {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 72px;
+  overflow-anchor: auto;
 }
 .chat-thread-messages,
 .feed-scroll,
-#feedList {
-  /* scroll parent: layout/paint contain — overflow scroll ishlashi uchun strict emas */
-  contain: layout paint;
+#feedList,
+#feed {
+  overflow-anchor: none; /* brauzer o'zi "tuzatib" sakratmasin */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
-/* Animatsiyalar GPU da */
+/* Media joy band qilsin — yuklanishda sakrash yo'q */
+.post-media, .post-media img, .cfm-img-preview {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
 .chat-msg.anim-in,
 .msg-ticks.sending .msg-tick-hands,
 .cv-pulse,
@@ -3293,24 +3294,25 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 }
 
 
-/* ═══ ULTRA-SMOOTH UI (SpaceMR max perf) ═══ */
+/* ═══ SCROLL STABLE UI (sakrashsiz) ═══ */
 #feed, #feedList, .feed-scroll {
-  content-visibility: auto;
-  contain: layout paint style;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  overflow-anchor: none;
 }
 .post {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 300px;
-  contain: layout style paint;
-  transform: translateZ(0); /* GPU layer — scroll jank yo'q */
+  contain: layout style;
+  /* translateZ/will-change doimiy emas — layer thrash scrollni buzadi */
+}
+.post-media {
+  background: var(--bg3, #16181c);
+  min-height: 1px;
 }
 .post-media img {
-  content-visibility: auto;
-  transform: translateZ(0);
+  display: block;
+  width: 100%;
+  height: auto;
 }
-/* Like/save tugmalar — instant feedback */
 .act-btn, .like-btn, .save-btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -3321,13 +3323,12 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #DADADB; }
 .like-btn:active svg {
   transform: scale(0.88);
 }
-/* Modal/sheet ochilish — GPU */
-.sheet, .ua-modal, .composer-sheet, #cmtPanel, #chatThreadModal {
-  will-change: transform, opacity;
+/* will-change faqat ochiq holatda — doimiy emas */
+.sheet.show, .ua-modal.show, .composer-sheet.show,
+#cmtPanel.show, #chatThreadModal.show {
   backface-visibility: hidden;
 }
-/* Infinite scroll spinner — kam joy */
-.spin-wrap { contain: strict; min-height: 48px; }
+.spin-wrap { min-height: 48px; }
 
 
 /* ═══ Play button circular EQ (classic realistic) ═══ */
@@ -8901,14 +8902,9 @@ textarea:not(:focus) {
   transform: none !important;
 }
 
-/* ── Maximum Performance for Feed ── */
-.post {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 400px;
-}
-.chat-msg {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 60px;
+/* ── Scroll stable (content-visibility olib tashlandi — sakrash sababi) ── */
+.post, .chat-msg {
+  contain: layout style;
 }
 
 /* Desktop: settings page back/chevron button not needed — panel closes by clicking outside */

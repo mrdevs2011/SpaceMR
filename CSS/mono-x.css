@@ -3463,14 +3463,9 @@ textarea:not(:focus) {
   transform: none !important;
 }
 
-/* ── Maximum Performance for Feed ── */
-.post {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 400px;
-}
-.chat-msg {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 60px;
+/* ── Scroll stable (content-visibility olib tashlandi — sakrash sababi) ── */
+.post, .chat-msg {
+  contain: layout style;
 }
 
 /* Desktop: settings page back/chevron button not needed — panel closes by clicking outside */

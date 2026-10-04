@@ -1,3 +1,6 @@
+/* scroll jump prevention */
+html { scroll-behavior: auto; }
+body { overflow-anchor: none; }
 /* CSS/base.css — splash, loading. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── Hech narsa tanlanmasin (matn belgilash/nusxalash/uzoq bosish menyusi yo'q) ───
    Istisno: yozish maydonlari — aks holda iOS/Safari'da yozib bo'lmaydi. Aniqlik (specificity) 0 — kerak bo'lsa komponent o'zi qayta belgilaydi. */
