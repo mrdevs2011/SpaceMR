@@ -13355,3 +13355,43 @@ header.app-hdr.force-hide,
 #settingsOverlay.show {
   border: none !important;
 }
+
+
+/* Hisobni o'chirish menyusi: qora, tekis, 3 nuqta ustida */
+#settingsOverlay .settings-more-row { position: relative !important; }
+#settingsOverlay .settings-more-menu {
+  display: none;
+  position: absolute !important;
+  right: 0 !important;
+  bottom: calc(100% + 8px) !important;
+  left: auto !important;
+  min-width: 228px !important;
+  padding: 6px !important;
+  background: #000 !important;
+  border: 1px solid #2f3336 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.65) !important;
+  z-index: 20 !important;
+}
+#settingsOverlay .settings-more-menu.show { display: block !important; }
+#settingsOverlay .settings-more-menu-item,
+#settingsOverlay #deleteAccountBtn {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 40px !important;
+  padding: 10px 12px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background: #000 !important;
+  color: #f4212e !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+}
+#settingsOverlay .settings-more-menu-item:hover,
+#settingsOverlay #deleteAccountBtn:hover {
+  background: #16181c !important;
+}
