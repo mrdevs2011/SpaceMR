@@ -1,3 +1,4 @@
+import './chat-image-zoom.js';
 import { esc } from '../../core/utils.js';
 import { getChatFileIcon } from '../chat-shared.js';
 
