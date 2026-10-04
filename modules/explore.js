@@ -94,46 +94,7 @@ async function loadUsers() {
   }
 }
 
-/* ── Formatlash ──────────────────────────────────────────────────────── */
-function ago(p) {
-  const s = Math.max(0, (Date.now() - ms(p)) / 1000);
-  if (!ms(p) || s < 60) return 'hozirgina';
-  if (s < 3600)  return Math.floor(s / 60) + ' daqiqa oldin';
-  if (s < 86400) return Math.floor(s / 3600) + ' soat oldin';
-  if (s < 86400 * 30) return Math.floor(s / 86400) + ' kun oldin';
-  return Math.floor(s / 86400 / 30) + ' oy oldin';
-}
-
-function fmtN(n) {
-  n = Number(n) || 0;
-  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
-  return String(n);
-}
-
-function avatarOf(uid, name) {
-  const u = users.find(x => x.uid === uid);
-  return u?.avatar || defAvi(name || u?.fullName || u?.username || '?');
-}
-
 /* ── Qatorlar ────────────────────────────────────────────────────────── */
-function postTitle(p) {
-  const t = (p.text || '').trim();
-  if (t) return t;
-  if (p.mediaType?.startsWith('image')) return 'Rasm post';
-  return p.fileName || 'Post';
-}
-
-function postRow(p) {
-  const name = p.userFullName || users.find(u => u.uid === p.userId)?.fullName || 'Foydalanuvchi';
-  const likes = p.likes ? ` · ${fmtN(p.likes)} like` : '';
-  return `<button type="button" class="exp-item" data-post="${esc(p.id)}">
-    <span class="exp-item-main">
-      <span class="exp-title">${esc(postTitle(p))}</span>
-      <span class="exp-meta"><span class="exp-av"><img src="${esc(avatarOf(p.userId, name))}" alt="" onerror="this.style.display='none'"></span><span>${esc(name)} · ${esc(ago(p))}${likes}</span></span>
-    </span>
-  </button>`;
-}
 
 function personRow(u) {
   const name = u.fullName || u.username || 'Foydalanuvchi';
@@ -178,11 +139,24 @@ function listHtml() {
   if (pe.length)    html += section('Odamlar', pe.slice(0, 40).map(personRow).join(''), !posts.length && !groups.length);
   else if (!q && !usersOk) html += section('Odamlar', empty('Yuklanmoqda…'));
   if (groups.length) html += section('Guruhlar', groups.slice(0, 30).map(groupRow).join(''), !posts.length);
-  if (posts.length) html += section('Postlar', posts.slice(0, q ? 40 : 15).map(postRow).join(''), true);
+  _postsToPaint = posts.slice(0, q ? 40 : 15);
+  // X kabi: postlar to'liq post kartasi bo'lib chiqadi (lenta bilan bir xil)
+  if (posts.length) html += section('Postlar', '<div class="exp-posts-feed"></div>', true);
   return html || empty(q ? `"${query}" bo'yicha natija topilmadi` : 'Hozircha ko\'rsatadigan narsa yo\'q');
 }
 
-function render() { body.innerHTML = listHtml(); }
+let _postsToPaint = [];
+let _paintSeq = 0;
+async function render() {
+  const seq = ++_paintSeq;
+  body.innerHTML = listHtml();
+  const box = body.querySelector('.exp-posts-feed');
+  if (!box || !_postsToPaint.length) return;
+  const list = _postsToPaint;
+  const { renderFeedTo } = await import('./feed/feed.js');
+  if (seq !== _paintSeq || !box.isConnected) return; // yangiroq render boshlandi
+  await renderFeedTo(box, list);
+}
 
 /* ── Holat ───────────────────────────────────────────────────────────── */
 function reset() {

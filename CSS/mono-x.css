@@ -8074,8 +8074,7 @@ body::-webkit-scrollbar,
 .adm-wipe-btn.is-all:hover { background: rgba(244, 33, 46, 0.8); }
 
 /* ═══ Post kartasi — X tartibi: chapda 40px avatar, o'ngda ism·@username·vaqt, matn, media, tugmalar ═══ */
-#app .feed .post,
-#app .post {
+:is(#app, #searchOverlay) .post {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr);
   column-gap: 8px;
@@ -8088,57 +8087,57 @@ body::-webkit-scrollbar,
   box-shadow: none;
   position: relative;
 }
-#app .post:hover { background: rgba(231, 233, 234, 0.05); }
-#app .post > .post-head { display: contents; }
-#app .post > .post-head > .avi {
+:is(#app, #searchOverlay) .post:hover { background: rgba(231, 233, 234, 0.05); }
+:is(#app, #searchOverlay) .post > .post-head { display: contents; }
+:is(#app, #searchOverlay) .post > .post-head > .avi {
   grid-column: 1; grid-row: 1 / span 2;
   width: 40px; height: 40px; margin: 0; align-self: start;
 }
-#app .post > .post-head > .post-meta {
+:is(#app, #searchOverlay) .post > .post-head > .post-meta {
   grid-column: 2; grid-row: 1;
   display: flex; align-items: baseline; gap: 4px; min-width: 0;
   padding-right: 36px; height: 20px; line-height: 20px; overflow: hidden;
   font-size: 15px;
 }
-#app .post .post-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
-#app .post .post-user,
-#app .post .post-dot,
-#app .post .post-time { display: inline; font-size: 15px; font-weight: 400; color: var(--text3); white-space: nowrap; margin: 0; font-family: var(--font); }
-#app .post .post-user { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
-#app .post .post-time, #app .post .post-dot { flex: none; }
-#app .post > .post-head > .post-del-btn {
+:is(#app, #searchOverlay) .post .post-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+:is(#app, #searchOverlay) .post .post-user,
+:is(#app, #searchOverlay) .post .post-dot,
+:is(#app, #searchOverlay) .post .post-time { display: inline; font-size: 15px; font-weight: 400; color: var(--text3); white-space: nowrap; margin: 0; font-family: var(--font); }
+:is(#app, #searchOverlay) .post .post-user { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+:is(#app, #searchOverlay) .post .post-time, :is(#app, #searchOverlay) .post .post-dot { flex: none; }
+:is(#app, #searchOverlay) .post > .post-head > .post-del-btn {
   position: absolute; top: 8px; right: 8px;
   width: 34px; height: 34px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: transparent; opacity: 1;
 }
-#app .post > .post-head > .post-del-btn:hover { background: rgba(29, 155, 240, 0.1); }
-#app .post > .post-main { grid-column: 2; grid-row: 2; min-width: 0; padding: 0; margin: 0; }
-#app .post .post-caption { font-size: 15px; line-height: 20px; color: var(--text); margin: 2px 0 0; padding: 0; word-wrap: break-word; }
-#app .post .post-media { margin: 12px 0 0; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
-#app .post .post-actions {
+:is(#app, #searchOverlay) .post > .post-head > .post-del-btn:hover { background: rgba(29, 155, 240, 0.1); }
+:is(#app, #searchOverlay) .post > .post-main { grid-column: 2; grid-row: 2; min-width: 0; padding: 0; margin: 0; }
+:is(#app, #searchOverlay) .post .post-caption { font-size: 15px; line-height: 20px; color: var(--text); margin: 2px 0 0; padding: 0; word-wrap: break-word; }
+:is(#app, #searchOverlay) .post .post-media { margin: 12px 0 0; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
+:is(#app, #searchOverlay) .post .post-actions {
   display: flex; align-items: center; justify-content: space-between;
   margin: 12px 0 0; padding: 0; height: 20px;
 }
-#app .post .post-actions-left { display: flex; align-items: center; justify-content: space-between; flex: 1; max-width: 72%; gap: 0; }
-#app .post .post-actions-right { display: flex; align-items: center; gap: 4px; }
-#app .post .act-btn {
+:is(#app, #searchOverlay) .post .post-actions-left { display: flex; align-items: center; justify-content: space-between; flex: 1; max-width: 72%; gap: 0; }
+:is(#app, #searchOverlay) .post .post-actions-right { display: flex; align-items: center; gap: 4px; }
+:is(#app, #searchOverlay) .post .act-btn {
   display: inline-flex; align-items: center; gap: 4px;
   height: 20px; padding: 0; margin: 0; background: none; border: 0;
   color: var(--text3); font-size: 13px; font-family: var(--font);
 }
-#app .post .act-btn img.icon { width: 18.75px; height: 18.75px; }
+:is(#app, #searchOverlay) .post .act-btn img.icon { width: 18.75px; height: 18.75px; }
 /* X tartibi: javob (izoh) → ulashish → like */
-#app .post .cmt-open-btn { order: 1; }
-#app .post .share-btn    { order: 2; }
-#app .post .like-btn     { order: 3; }
-#app .post .cmt-open-btn:hover { color: var(--x-blue); }
-#app .post .share-btn:hover    { color: #00ba7c; }
-#app .post .like-btn:hover,
-#app .post .like-btn.liked     { color: #f91880; }
-#app .post .cap-short .cap-more { display: block; margin-top: 2px; color: var(--x-blue); font-size: 15px; line-height: 20px; cursor: pointer; }
-#app .post .cap-short .cap-more:hover { text-decoration: underline; }
-#app .post .post-actions-right { gap: 12px; }
+:is(#app, #searchOverlay) .post .cmt-open-btn { order: 1; }
+:is(#app, #searchOverlay) .post .share-btn    { order: 2; }
+:is(#app, #searchOverlay) .post .like-btn     { order: 3; }
+:is(#app, #searchOverlay) .post .cmt-open-btn:hover { color: var(--x-blue); }
+:is(#app, #searchOverlay) .post .share-btn:hover    { color: #00ba7c; }
+:is(#app, #searchOverlay) .post .like-btn:hover,
+:is(#app, #searchOverlay) .post .like-btn.liked     { color: #f91880; }
+:is(#app, #searchOverlay) .post .cap-short .cap-more { display: block; margin-top: 2px; color: var(--x-blue); font-size: 15px; line-height: 20px; cursor: pointer; }
+:is(#app, #searchOverlay) .post .cap-short .cap-more:hover { text-decoration: underline; }
+:is(#app, #searchOverlay) .post .post-actions-right { gap: 12px; }
 /* Izoh qatori — X javobi kabi: ism oq/qalin 15px, vaqt kulrang, matn 15px */
 .cmt-row .cmt-name,
 :is(.post-cmt-list, .rr-cmt-list) .cmt-name { color: var(--text) !important; font-size: 15px; font-weight: 700; font-family: var(--font); }
@@ -8193,3 +8192,126 @@ body::-webkit-scrollbar,
   }
   .up-back { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
 }
+
+/* Asosiy tugma — X: och fon, qora matn (oldingi qoidalar matnni fon rangiga bo'yab yuborardi) */
+.btn-primary,
+.btn-primary * { color: #000000 !important; }
+.btn-primary:not(.composer-post-btn) { background: #e7e9ea !important; border-color: #e7e9ea; }
+.btn-primary:not(.composer-post-btn):hover:not(:disabled) { background: rgba(231, 233, 234, 0.8) !important; }
+.btn-primary:disabled { opacity: 0.5; }
+
+/* Profil postlari lenta ko'rinishida (X) — Rasmlar tabida esa katakchalar qoladi */
+#profileGrid.profile-grid--list,
+#upGrid.up-grid--list { display: block; padding: 0; margin: 0; gap: 0; grid-template-columns: none; }
+#profileGrid.profile-grid--list > .post,
+#upGrid.up-grid--list > .post { width: auto; aspect-ratio: auto; }
+
+/* ═══ Sozlamalar — X: kartasiz qatorlar, oddiy yozuvli bo'lim sarlavhalari, konturli inputlar ═══ */
+#settingsOverlay .pe-card-group,
+#settingsOverlay .pe-accordion {
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--line) !important;
+  border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important;
+}
+#settingsOverlay .pe-group-title,
+#settingsOverlay .pe-acc-toggle {
+  text-transform: none !important; letter-spacing: 0 !important;
+  font: 400 15px/20px var(--font) !important; color: var(--text) !important;
+  min-height: 52px; padding: 16px !important; margin: 0 !important;
+  background: transparent !important; border-radius: 0 !important;
+}
+#settingsOverlay .pe-acc-toggle:hover { background: rgba(231, 233, 234, 0.05) !important; }
+#settingsOverlay .pe-acc-left img.icon { opacity: 1; width: 20px; height: 20px; }
+#settingsOverlay .pe-acc-chevron { color: var(--text3); }
+#settingsOverlay .pe-tag-optional {
+  text-transform: none !important; letter-spacing: 0 !important; font-size: 13px !important;
+  background: none !important; border: 0 !important; color: var(--text3) !important; padding: 0 !important;
+}
+#settingsOverlay .pe-acc-body { padding: 0 16px 16px !important; }
+#settingsOverlay .settings-section-label {
+  text-transform: none !important; letter-spacing: 0 !important;
+  font: 800 20px/24px var(--font) !important; color: var(--text) !important;
+  padding: 16px !important; margin: 0 !important;
+}
+#settingsOverlay .pe-input-label { font-size: 13px !important; color: var(--text3) !important; text-transform: none !important; letter-spacing: 0 !important; }
+#settingsOverlay .pe-input,
+#settingsOverlay .pe-pwd-input,
+#settingsOverlay .pe-prefix-field,
+#settingsOverlay .pe-textarea,
+#settingsOverlay input.field,
+#settingsOverlay textarea.field {
+  background: transparent !important; color: var(--text) !important;
+  border: 1px solid var(--line) !important; border-radius: 4px !important;
+  min-height: 56px; font-size: 17px !important; box-shadow: none !important;
+}
+#settingsOverlay .pe-textarea, #settingsOverlay textarea.field { min-height: 96px; }
+#settingsOverlay :is(.pe-input, .pe-pwd-input, .pe-prefix-field, .pe-textarea, .field):focus { border-color: var(--x-blue) !important; }
+#settingsOverlay .pe-field-box, #settingsOverlay .pe-pwd-wrap, #settingsOverlay .pe-field-prefix-wrap { background: transparent !important; border: 0 !important; }
+#settingsOverlay .pe-btn-save { margin: 16px !important; width: calc(100% - 32px) !important; height: 44px !important; border-radius: 999px !important; font: 700 15px var(--font) !important; }
+#settingsOverlay .settings-row { padding: 12px 16px !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; }
+#settingsOverlay .settings-row:hover { background: rgba(231, 233, 234, 0.05) !important; }
+#settingsOverlay .settings-row-title { font-size: 15px !important; color: var(--text) !important; }
+#settingsOverlay .settings-row-hint { font-size: 13px !important; color: var(--text3) !important; }
+#settingsOverlay .settings-actions { padding: 16px !important; }
+#settingsOverlay .pe-pwd-wrap { position: relative !important; }
+#settingsOverlay .pe-pwd-toggle { top: 50% !important; bottom: auto !important; transform: translateY(-50%) !important; }
+#settingsOverlay .pe-pwd-wrap > .pe-pwd-input { margin: 0 !important; }
+/* Avatar tahrirlash — X: rasm ustida qora yarim shaffof qatlam, o'rtada oq kamera */
+#settingsOverlay .pe-avatar-ring .pe-avi-edit-badge { background: rgba(0, 0, 0, 0.5) !important; border: 0 !important; }
+#settingsOverlay .pe-avatar-ring .pe-avi-edit-badge img.icon { filter: none !important; width: 22px !important; height: 22px !important; }
+
+/* ═══ Formadagi inputlar — X: shaffof fon, 1px kontur, 4px burchak, fokusda ko'k ═══ */
+input.field, textarea.field, select.field, textarea.ta,
+#authWrap .field, #authWrap input.field, #authWrap input:not([type="checkbox"]):not([type="radio"]) {
+  background: transparent !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  font-size: 17px;
+}
+input.field, select.field, #authWrap input:not([type="checkbox"]):not([type="radio"]) { min-height: 56px; padding: 0 12px; }
+textarea.field, textarea.ta { padding: 12px; }
+:is(input.field, textarea.field, select.field, textarea.ta):focus,
+#authWrap input:focus { border-color: var(--x-blue) !important; outline: none; }
+input.field::placeholder, textarea.field::placeholder, textarea.ta::placeholder { color: var(--text3); }
+select.field { appearance: auto; }
+select.field option { background: #000000; color: var(--text); }
+/* Forma yorliqlari — X: katta harf yo'q, 15px kulrang */
+.pe-field-label, .grp-form-section-title {
+  text-transform: none !important; letter-spacing: 0 !important;
+  font-size: 15px !important; font-weight: 400 !important; color: var(--text3) !important;
+}
+.grp-form-section-title { color: var(--text) !important; font-weight: 700 !important; }
+/* "@" prefiksi — input matni bilan bir chiziqda */
+.grp-username-prefix { top: 50% !important; bottom: auto !important; transform: translateY(-50%) !important; line-height: 1 !important; font-size: 17px !important; }
+.grp-username-input-wrap > input { margin: 0 !important; padding-left: 32px !important; }
+.grp-username-prefix { left: 13px !important; color: var(--text3) !important; font-weight: 400 !important; }
+
+/* ═══ Chat (DM) — X: yuborilgan ko'k pufak 24/24/4/24, kelgan #2f3336; yozish maydoni kulrang pill ═══ */
+#chatThreadModal .chat-msg.mine .chat-bubble {
+  background: var(--x-blue) !important; color: #e7e9ea !important;
+  border-radius: 24px 24px 4px 24px !important; border: 0 !important; box-shadow: none !important;
+}
+#chatThreadModal .chat-msg:not(.mine) .chat-bubble {
+  background: #2f3336 !important; color: var(--text) !important;
+  border-radius: 24px 24px 24px 4px !important; border: 0 !important; box-shadow: none !important;
+}
+#chatThreadModal .chat-bubble-text { font-size: 15px; line-height: 20px; }
+#chatThreadModal .chat-thread-input-row {
+  background: #202327 !important; border: 0 !important; border-radius: 16px !important;
+  margin: 4px 12px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+  padding: 4px 8px !important; box-shadow: none !important; min-height: 48px;
+}
+#chatThreadModal .chat-thread-input-row textarea,
+#chatThreadModal .chat-thread-input-row input:not([type="file"]) {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  font-size: 15px !important; color: var(--text) !important;
+}
+.chats-section-label { text-transform: none !important; letter-spacing: 0 !important; font-size: 15px !important; font-weight: 700 !important; color: var(--text) !important; }
+
+/* Boshqa profil: tablar va postlar ekran kengligida (eski -20px chiqib ketish yo'q) */
+#userProfileModal .up-posts-tab,
+#userProfileModal .up-grid { margin-left: 0; margin-right: 0; width: auto; }
+/* Bo'sh holat belgilari — asl o'lchamida (36px), kattalashtirilmaydi */
+.empty-icon svg, .empty-icon img.icon { width: 36px !important; height: 36px !important; }
+#settingsOverlay .pe-avatar-ring .pe-avi-edit-badge img.icon { width: 20px !important; height: 20px !important; }

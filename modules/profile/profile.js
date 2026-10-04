@@ -146,9 +146,13 @@ export async function renderProfileGrid(posts) {
   if (Array.isArray(posts)) _pgAllPosts = posts;
   const list = _filterPgPosts(_pgAllPosts, _pgTab);
 
-  // mosaic faqat Barchasi da; boshqa tablarda bir xil katak
+  // X kabi: Rasmlar — kvadrat katakchalar (Media), qolgan tablar — lenta (post kartalari)
   const grid = $('profileGrid');
-  if (grid) grid.classList.toggle('profile-grid--uniform', _pgTab !== 'all');
+  const asList = _pgTab !== 'photos';
+  if (grid) {
+    grid.classList.toggle('profile-grid--uniform', !asList);
+    grid.classList.toggle('profile-grid--list', asList);
+  }
 
   if (!list.length) {
     $('profileGrid').innerHTML = `<div class="up-grid-empty">
@@ -164,6 +168,12 @@ export async function renderProfileGrid(posts) {
       p.mediaUrl = await getMediaUrl(p);
     }
   }));
+
+  if (asList) {
+    const { renderFeedTo } = await import('../feed/feed.js');
+    await renderFeedTo(grid, list);
+    return;
+  }
 
   $('profileGrid').innerHTML = list.map(p => {
     const isImg = !!(p.mediaUrl && p.mediaType?.startsWith('image'));
@@ -340,11 +350,19 @@ function _upGridHtml(posts, uid, tab) {
   }).join('');
 }
 
-function _paintUpGrid(uid) {
+async function _paintUpGrid(uid) {
   const grid = document.getElementById('upGrid');
   if (!grid) return;
+  const asList = _upTab !== 'photos';
+  const list = _filterPgPosts(state.currentViewingUserPosts || [], _upTab);
+  grid.classList.toggle('up-grid--uniform', !asList);
+  grid.classList.toggle('up-grid--list', asList);
+  if (asList && list.length) {
+    const { renderFeedTo } = await import('../feed/feed.js');
+    await renderFeedTo(grid, list);
+    return;
+  }
   grid.innerHTML = _upGridHtml(state.currentViewingUserPosts || [], uid, _upTab);
-  grid.classList.toggle('up-grid--uniform', _upTab !== 'all');
   grid.querySelectorAll('.up-grid-cell[data-id]').forEach(cell => {
     cell.addEventListener('click', () => openDetail(cell.dataset.id));
   });
@@ -376,8 +394,6 @@ export async function renderUserProfileModal(uid) {
 
   const totalLikes     = userPublicPosts.reduce((s,p) => s + (p.likes||0), 0);
 
-  const gridHTML = _upGridHtml(userPublicPosts, uid, _upTab);
-
   $('upBody').innerHTML = `
     <div class="up-hero">
       <div class="up-avi" id="upAviImg" title="Rasmni ko'rish"><img class="w-full h-full object-cover" src="${esc(av)}" alt="" onerror="this.src='${defAvi(ud.fullName || 'U')}'"></div>
@@ -397,8 +413,9 @@ export async function renderUserProfileModal(uid) {
       <div class="up-posts-tab" id="upGridTabs" role="tablist">
         ${UP_TABS.map(([k, l]) => `<button type="button" class="profile-grid-tab${k === _upTab ? ' active' : ''}" data-up-tab="${k}" role="tab" aria-selected="${k === _upTab}">${l}</button>`).join('')}
       </div>
-      <div class="up-grid${_upTab !== 'all' ? ' up-grid--uniform' : ''}" id="upGrid">${gridHTML}</div>
+      <div class="up-grid" id="upGrid"></div>
     </div>`;
+  await _paintUpGrid(uid);
 
   const upChatBtn = document.getElementById('upChatBtn');
   if (upChatBtn) {
@@ -416,10 +433,6 @@ export async function renderUserProfileModal(uid) {
   if (upAviEl) {
     upAviEl.onclick = () => openZoom(av, 'avatar');
   }
-
-  document.querySelectorAll('.up-grid-cell[data-id]').forEach(cell => {
-    cell.addEventListener('click', () => openDetail(cell.dataset.id));
-  });
 
   document.getElementById('upGridTabs')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-up-tab]');
