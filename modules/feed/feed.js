@@ -561,8 +561,11 @@ export function ensureSavedLoaded() {
   state.mySavedPosts = new Set();
   _savedLoad = (async () => {
     try {
-      const { data, error } = await sb.from('saved_posts').select('post_id')
-        .eq('user_id', uid).order('created_at', { ascending: false }).limit(1000);
+      const { data, error } = await Promise.race([
+        sb.from('saved_posts').select('post_id')
+          .eq('user_id', uid).order('created_at', { ascending: false }).limit(1000),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000)),
+      ]);
       if (error) throw error;
       state.mySavedPosts = new Set((data || []).map(r => r.post_id));
     } catch (e) {
