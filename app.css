@@ -7589,7 +7589,7 @@ button:focus-visible,
   color: var(--pal-white) !important;
 }
 .chat-voice-btn svg {
-  fill: var(--pal-white) !important;
+  fill: none !important;            /* ikonlar kontur (stroke) bilan chizilgan — fill berilsa mikrofon/samolyot "dog'" bo'lib qoladi */
   stroke: var(--pal-white) !important;
 }
 
