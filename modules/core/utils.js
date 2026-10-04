@@ -243,7 +243,7 @@ export async function dlFile(url, name) {
 
 /* ── Zoom modal ───────────────────────────────────────────────────────── */
 /* ── Zoom lightbox: qorong'u fon, pinch / trackpad zoom, tashqariga bosib yopish ── */
-let _z = { scale: 1, x: 0, y: 0, base: 1, px: 0, py: 0, pinching: false, panning: false, lastTap: 0 };
+let _z = { scale: 1, x: 0, y: 0, base: 1, px: 0, py: 0, pinching: false, panning: false, lastTap: 0, didDrag: false };
 
 function _zApply() {
   const im = $('zoomImg');
@@ -313,18 +313,19 @@ function _bindZoomOnce() {
   if (!zm || !im || zm._zoomBound) return;
   zm._zoomBound = true;
 
-  // X tugmasi — faqat avatar (agar bor bo'lsa); rasm rejimida CSS yashiradi
   const zoomClose = $('zoomClose');
   if (zoomClose) zoomClose.onclick = (e) => { e.stopPropagation(); _zClose(); };
 
-  // Tashqariga bosish → yopish (rasm ustiga emas)
+  // Fon bosilsa yopish (rasm emas)
   zm.addEventListener('click', e => {
-    if (e.target === zm) _zClose();
+    if (e.target === zm && !_z.didDrag) _zClose();
+    _z.didDrag = false;
   });
 
-  // Double-tap → 2x / 1x
+  // Double-tap / double-click → 2.5x / 1x
   im.addEventListener('click', e => {
     e.stopPropagation();
+    if (_z.didDrag) { _z.didDrag = false; return; }
     const now = Date.now();
     if (now - _z.lastTap < 280) {
       if (_z.scale > 1.05) { _z.scale = 1; _z.x = 0; _z.y = 0; }
@@ -334,21 +335,28 @@ function _bindZoomOnce() {
     _z.lastTap = now;
   });
 
-  // Trackpad / mouse wheel pinch (ctrl+wheel)
+  // Trackpad: ctrl/pinch wheel = zoom; 2-barmoq scroll = pan (kattalashtirilganda)
   zm.addEventListener('wheel', e => {
     if (!zm.classList.contains('show')) return;
     e.preventDefault();
-    const delta = -e.deltaY * 0.004;
-    const next = Math.min(5, Math.max(1, _z.scale * (1 + delta)));
-    if (next === 1) { _z.x = 0; _z.y = 0; }
-    _z.scale = next;
-    _zApply();
+    if (e.ctrlKey || e.metaKey) {
+      const delta = -e.deltaY * 0.01;
+      const next = Math.min(6, Math.max(1, _z.scale * (1 + delta)));
+      if (next <= 1.02) { _z.scale = 1; _z.x = 0; _z.y = 0; }
+      else _z.scale = next;
+      _zApply();
+    } else if (_z.scale > 1.05) {
+      _z.x -= e.deltaX;
+      _z.y -= e.deltaY;
+      _zApply();
+    }
   }, { passive: false });
 
-  // Touch: pinch + pan
-  let startDist = 0, startScale = 1, startX = 0, startY = 0, mid0 = null;
+  // ── Touch: 2 barmoq pinch + 1 barmoq pan (zoom > 1) ──
+  let startDist = 0, startScale = 1, startX = 0, startY = 0, mid0 = null, pan0x = 0, pan0y = 0;
   zm.addEventListener('touchstart', e => {
     if (!zm.classList.contains('show')) return;
+    _z.didDrag = false;
     if (e.touches.length === 2) {
       e.preventDefault();
       _z.pinching = true;
@@ -356,6 +364,7 @@ function _bindZoomOnce() {
       startDist = _zDist(e.touches);
       startScale = _z.scale;
       mid0 = _zMid(e.touches);
+      pan0x = _z.x; pan0y = _z.y;
     } else if (e.touches.length === 1 && _z.scale > 1.05) {
       _z.panning = true;
       startX = e.touches[0].clientX - _z.x;
@@ -368,15 +377,23 @@ function _bindZoomOnce() {
     if (_z.pinching && e.touches.length === 2) {
       e.preventDefault();
       const d = _zDist(e.touches);
+      const mid = _zMid(e.touches);
       if (startDist > 0) {
-        _z.scale = Math.min(5, Math.max(1, startScale * (d / startDist)));
+        _z.scale = Math.min(6, Math.max(1, startScale * (d / startDist)));
         if (_z.scale <= 1.02) { _z.scale = 1; _z.x = 0; _z.y = 0; }
+        else if (mid0) {
+          // Pinch markaziga nisbatan pan
+          _z.x = pan0x + (mid.x - mid0.x);
+          _z.y = pan0y + (mid.y - mid0.y);
+        }
+        _z.didDrag = true;
         _zApply();
       }
     } else if (_z.panning && e.touches.length === 1) {
       e.preventDefault();
       _z.x = e.touches[0].clientX - startX;
       _z.y = e.touches[0].clientY - startY;
+      _z.didDrag = true;
       _zApply();
     }
   }, { passive: false });
@@ -389,7 +406,37 @@ function _bindZoomOnce() {
     }
   });
 
-  // Escape
+  // ── Mouse: left-click ushlab surish (faqat zoom > 1) ──
+  let mousePan = false, mStartX = 0, mStartY = 0;
+  im.addEventListener('pointerdown', e => {
+    if (!zm.classList.contains('show')) return;
+    if (e.pointerType === 'touch') return; // touch alohida
+    if (e.button !== 0) return;
+    if (_z.scale <= 1.05) return;
+    mousePan = true;
+    _z.didDrag = false;
+    mStartX = e.clientX - _z.x;
+    mStartY = e.clientY - _z.y;
+    im.setPointerCapture?.(e.pointerId);
+    im.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+  im.addEventListener('pointermove', e => {
+    if (!mousePan) return;
+    _z.x = e.clientX - mStartX;
+    _z.y = e.clientY - mStartY;
+    _z.didDrag = true;
+    _zApply();
+  });
+  const endMouse = e => {
+    if (!mousePan) return;
+    mousePan = false;
+    im.style.cursor = '';
+    try { im.releasePointerCapture?.(e.pointerId); } catch (_) {}
+  };
+  im.addEventListener('pointerup', endMouse);
+  im.addEventListener('pointercancel', endMouse);
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && zm.classList.contains('show')) _zClose();
   });

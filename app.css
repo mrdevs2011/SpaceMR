@@ -1169,9 +1169,11 @@ nav.bot-nav .sb-search-toggle img.icon {
   cursor: grab;
   user-select: none;
   -webkit-user-drag: none;
+  touch-action: none;
   will-change: transform;
   transform-origin: center center;
   transition: none;
+  pointer-events: auto;
 }
 #zoomImg:active { cursor: grabbing; }
 /* Post rasm: X tugmasi yo'q — tashqariga bosib yopiladi */
@@ -2058,8 +2060,6 @@ nav.bot-nav .sb-search-toggle img.icon {
 }
 .chats-add-btn:hover { background: color-mix(in srgb, var(--blue) 18%, var(--bg4)); }
 /* Group row badge (type icon on avi) */
-.grp-avi-badge--group { background: var(--blue, var(--pal-white)); color: var(--pal-white); }
-.grp-avi-badge--channel { background: var(--pal-white); color: var(--pal-white); }
 
 /* Create form */
 .grp-form-title { margin-bottom: 16px; }
@@ -2148,14 +2148,13 @@ nav.bot-nav .sb-search-toggle img.icon {
 .grp-member-kick:hover { background: color-mix(in srgb, var(--red) 24%, transparent); }
 .c-red { color: var(--red, var(--pal-red)) !important; }
 /* Sender name in group messages */
-.grp-sender-name { font-size: 11.5px; font-weight: 600; color: var(--blue); margin-bottom: 2px; }
+
 /* Chat list group/channel divider label */
 .chats-section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 14px 16px 4px; }
 /* mt-12px helper */
 .mt-12px { margin-top: 12px; }
 /* Badge o'lchami va joylashuvi aniqroq */
 
-.grp-avi-badge { position: absolute; bottom: -2px; right: -2px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); z-index: 2; pointer-events: none; }
 /* ═══════════════════════════════════════════════════════════════════════ GROUP / CHANNEL INFO OVERLAY — rede... */
 /* Sheet fills screen like a profile page */
 /* Group/Channel Info — full-screen page (like userProfileModal) */
@@ -10059,4 +10058,26 @@ a.cfm-name--link:hover {
 .chat-msg.theirs .cvm-eq-bar {
   background: var(--blue, #1d9bf0);
   box-shadow: 0 0 6px rgba(29,155,240,0.35);
+}
+
+/* B2: thread grp badges/sender → mono SSOT */
+.grp-sender-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.grp-avi-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg);
+  z-index: 2;
+  pointer-events: none;
 }
