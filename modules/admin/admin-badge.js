@@ -11,8 +11,8 @@ let _pendingUnsub = null;
 let _pendingCount = 0;
 let _running      = false;
 
-function _updateBadge() {
-  const badge = document.getElementById('adminActionsBadge');
+function _paint(id) {
+  const badge = document.getElementById(id);
   if (!badge) return;
   const total = _pendingCount;
   if (total > 0) {
@@ -22,6 +22,10 @@ function _updateBadge() {
     badge.textContent = '';
     badge.classList.add('d-none');
   }
+}
+function _updateBadge() {
+  _paint('adminActionsBadge');
+  _paint('hdrAdminBadge');
 }
 
 /** Admin tasdiqlangandan keyin bir marta chaqiriladi (idempotent) */
@@ -52,6 +56,8 @@ export function destroyAdminBadge() {
   if (_pendingUnsub) { _pendingUnsub(); _pendingUnsub = null; }
   _pendingCount = 0;
   _running      = false;
-  const badge = document.getElementById('adminActionsBadge');
-  if (badge) { badge.textContent = ''; badge.classList.add('d-none'); }
+  ['adminActionsBadge', 'hdrAdminBadge'].forEach((id) => {
+    const badge = document.getElementById(id);
+    if (badge) { badge.textContent = ''; badge.classList.add('d-none'); }
+  });
 }

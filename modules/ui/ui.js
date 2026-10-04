@@ -312,6 +312,13 @@ if (sbSearchInput) sbSearchInput.oninput = e => handleSearchInput(e.target.value
 
 /* ── Mobile header: saved / notif / profile avi ───────────────────────── */
 (function bindMobileHdr() {
+  const admin = document.getElementById('hdrAdminBtn');
+  if (admin) {
+    admin.addEventListener('click', async () => {
+      const { navigateTo } = await import('../router.js');
+      navigateTo('actions');
+    });
+  }
   const saved = document.getElementById('hdrSavedBtn2');
   if (saved) {
     saved.addEventListener('click', async () => {

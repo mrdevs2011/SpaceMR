@@ -13485,3 +13485,11 @@ body::-webkit-scrollbar,
   display: none !important;
   background: transparent !important;
 }
+
+
+/* Admin boshqaruv: headerda, faqat admin. Mobilda pastki nusxa yo'q. */
+#hdrAdminBtn.d-none { display: none !important; }
+#hdrAdminBtn { position: relative !important; }
+@media (max-width: 1099px) {
+  nav.bot-nav #adminActionsNavBtn { display: none !important; }
+}

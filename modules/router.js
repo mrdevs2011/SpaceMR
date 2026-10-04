@@ -414,6 +414,8 @@ export function applyAdminNav() {
   // Yangi birlashtirilgan actions tugma
   const actionsBtn = $('adminActionsNavBtn');
   if (actionsBtn) actionsBtn.classList.toggle('d-none', !isAdmin);
+  const hdrAdmin = $('hdrAdminBtn');
+  if (hdrAdmin) hdrAdmin.classList.toggle('d-none', !isAdmin);
 
   // Real-vaqt bildirishnoma badge (faqat admin uchun)
   import('./admin/admin-badge.js').then(m => {
