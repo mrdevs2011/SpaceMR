@@ -9,7 +9,7 @@
  *   /chats/groupcreate     "Yangi guruh" formasi
  *   /u/<username>          boshqa foydalanuvchi profili (hamma uchun ochiladi; o'zi ochsa /profile)
  *   /profile               profil
- *   /settings              sozlamalar
+ *   /profile/settings      sozlamalar (/settings → shu yerga)
  *   /explore               qidiruv (Explore)
  *   /newpost               yangi post oynasi
  *   /actions               admin boshqaruvi (faqat admin)
@@ -71,9 +71,12 @@ export function parsePath(rawPath) {
     if (a === 'profile')  return { kind: 'view', view: 'profile' };
     if (a === 'actions')  return { kind: 'view', view: 'actions', admin: true };
     if (a === 'saved')    return { kind: 'view', view: 'saved' };
-    if (a === 'settings') return { kind: 'overlay', overlay: 'settings', base: 'profile' };
+    if (a === 'settings') return { kind: 'redirect', to: '/profile/settings' };
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };
+  }
+  if (a === 'profile' && seg.length === 2 && b === 'settings') {
+    return { kind: 'overlay', overlay: 'settings', base: 'profile' };
   }
   if (a === 'u' && seg.length === 2 && seg[1]) {
     return { kind: 'userprofile', ref: seg[1] };
@@ -168,7 +171,7 @@ function computeUrl() {
     return t ? `/u/${encodeURIComponent(t)}` : null;
   }
 
-  if (hasShow('settingsOverlay') && (!settingsPinned() || location.pathname === '/settings')) return '/settings';
+  if (hasShow('settingsOverlay') && (!settingsPinned() || location.pathname === '/settings' || location.pathname === '/profile/settings')) return '/profile/settings';
 
   if (hasShow('uploadOverlay')) return '/newpost';
   if (hasShow('searchOverlay', 'open')) return '/explore';
@@ -232,7 +235,7 @@ function sync() {
 
 const TITLES = {
   '/login': 'Kirish', '/home': 'Bosh sahifa', '/chats': 'Suhbatlar', '/profile': 'Profil',
-  '/settings': 'Sozlamalar', '/explore': 'Kashf', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
+  '/settings': 'Sozlamalar', '/profile/settings': 'Sozlamalar', '/explore': 'Kashf', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
   '/chats/groupcreate': 'Yangi guruh',
 };
 function updateTitle(path) {
@@ -357,6 +360,12 @@ export async function applyPath(rawPath, { initial = false } = {}) {
 
     /* Huquq tekshiruvi */
     if (route.admin && !isAdminUser()) return notFound();
+
+    /* Redirect (masalan /settings → /profile/settings) */
+    if (route.kind === 'redirect' && route.to) {
+      history.replaceState({ i: (history.state?.i || 0), prev: null }, '', route.to + tail);
+      return applyPath(route.to);
+    }
 
     /* Tab (view) */
     if (route.kind === 'view') {
