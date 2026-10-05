@@ -8605,11 +8605,12 @@ select.field option { background: #000000; color: var(--text); }
 #vnotePreview .vnp-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
 #vnotePreview .vnp-ring-fg { fill: none; stroke: #ff3b30; stroke-width: 2.5; stroke-linecap: round; }
 
-.cfm-note-wrap { position: relative; width: min(240px, 64vw); aspect-ratio: 1; cursor: pointer; }
-.cfm-note { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #000; border: 1.5px solid rgba(231, 233, 234, 0.22); box-sizing: border-box; }
+.cfm-note-wrap { position: relative; display: flex; flex-direction: column; width: min(240px, 64vw); cursor: pointer; }
+.cfm-note { width: 100%; aspect-ratio: 1; height: auto; border-radius: 50%; overflow: hidden; background: #000; border: 1.5px solid rgba(231, 233, 234, 0.22); box-sizing: border-box; }
 .chat-msg.mine .cfm-note { border-color: rgba(29, 155, 240, 0.55); }
 .cfm-note-vid { width: 100%; height: 100%; object-fit: cover; display: block; }
-.cfm-note-play { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: none; }
+.cfm-note-play { position: absolute; left: 50%; top: calc(min(240px, 64vw) / 2); width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: none; }
 .cfm-note-wrap.playing .cfm-note-play { display: none; }
-.cfm-note-badge { right: 50%; bottom: 7%; transform: translateX(50%); }
-.cfm-note-wrap.playing .cfm-note-badge { opacity: 0; }
+/* Vaqt dumaloqdan tashqarida, pastda: o'zimniki — o'ngda, boshqaniki — chapda */
+.cfm-note-badge { position: static; align-self: flex-start; margin: 4px 0 0 !important; }
+.chat-msg.mine .cfm-note-badge { align-self: flex-end; }
