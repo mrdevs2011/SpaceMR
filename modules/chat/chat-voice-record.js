@@ -47,8 +47,8 @@ const _MODE_KEY = 'mrspace_rec_mode';
 /* SpaceMR camera bilan bir xil cheklovlar (faqat UI dumaloq + past o'ng tugma) */
 const VID_MAX_SEC = 60;                 // 1 daqiqa — camera MAX_VIDEO_MS
 const VID_MAX_BYTES = 30 * 1024 * 1024; // 30 MB — camera MAX_VIDEO_BYTES
-const VID_BITRATE = 2_500_000;
-const VID_AUDIO_BITRATE = 128000;
+const VID_BITRATE = 900_000;  // 480p circle — engil, tez yuklash/o'ynash
+const VID_AUDIO_BITRATE = 64000;
 let _recMode = 'audio';
 try { if (localStorage.getItem(_MODE_KEY) === 'video') _recMode = 'video'; } catch (_) {}
 /* Qurilmalar: sayt mikrofon/kamera borligini o'zi biladi (ulanganda/uzilganda ham — 'devicechange') */
@@ -134,7 +134,7 @@ async function startVideoRecording() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: _hasMic,   // mikrofon bo'lmasa ham rolik (ovozsiz) olinaveradi
-      video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 }, aspectRatio: { ideal: 1 }, frameRate: { ideal: 30 } },
+      video: { facingMode: 'user', width: { ideal: 360 }, height: { ideal: 360 }, aspectRatio: { ideal: 1 }, frameRate: { ideal: 24, max: 30 } },
     });
     _vidStream = stream;
     // Ruxsat dialogi paytida pointer yo'qolishi mumkin — stream olindi, hold qayta tekshiriladi
@@ -154,11 +154,12 @@ async function startVideoRecording() {
     // Hold yo'qolgan bo'lsa ham (permission UI) — yozishni davom ettiramiz, user qo'yib yuborganda to'xtaydi
     _isHoldingVoice = true;
     _vidActive = true;
+    // Mobile: vp8 tezroq encode/decode; mp4 (h264) ba'zi Androidlarda yaxshi
     const cands = [
-      'video/webm;codecs=vp9,opus',
-      'video/webm;codecs=vp8,opus',
-      'video/webm',
       'video/mp4',
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp9,opus',
+      'video/webm',
     ];
     const mime = cands.find(m => MediaRecorder.isTypeSupported?.(m)) || '';
     const opts = { videoBitsPerSecond: VID_BITRATE, audioBitsPerSecond: VID_AUDIO_BITRATE };
@@ -200,7 +201,7 @@ async function startVideoRecording() {
       if (typeof _onVideoRecorded === 'function') _onVideoRecorded(file, sec);
     };
     _vidStartTs = performance.now();
-    _vidRec.start(250);
+    _vidRec.start(500);
     _showVidPreview(stream);
     _startPulse(stream);
     clearTimeout(_vidAutoStop);

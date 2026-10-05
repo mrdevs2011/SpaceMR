@@ -194,7 +194,17 @@ if (!window.__chatNoteBound) {
     document.querySelectorAll('.cfm-note-wrap.playing').forEach(stopNote);
     document.querySelectorAll('.cfm-vid-wrap.playing video').forEach(o => o.pause());
     w.classList.add('playing');
-    v.play().catch(() => w.classList.remove('playing'));
+    // Kechni oldini olish: avval buffer, keyin play
+    try { v.muted = false; } catch (_) {}
+    const tryPlay = () => v.play().catch(() => w.classList.remove('playing'));
+    if (v.readyState >= 2) tryPlay();
+    else {
+      const onReady = () => { v.removeEventListener('canplay', onReady); tryPlay(); };
+      v.addEventListener('canplay', onReady);
+      try { v.load(); } catch (_) {}
+      // fallback agar canplay kelmasa
+      setTimeout(() => { if (w.classList.contains('playing') && v.paused) tryPlay(); }, 800);
+    }
   }, true);
   document.addEventListener('ended', e => {
     if (!e.target?.matches?.('.cfm-note-vid')) return;
