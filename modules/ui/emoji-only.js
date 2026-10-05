@@ -1,5 +1,5 @@
 /* emoji-only.js — xabar faqat emojidan iborat bo'lsa, chat.js/groups.js `.chat-msg` ga qo'shadigan klass.
-   1 ta emoji eng katta, 2 > 3 > 4 kichrayadi, 4 va undan ko'pi bir xil (CSS: .emo-1..emo-4). */
+   1 ta emoji eng katta, 2 va 3 ta — kichikroq (bubblesiz); 4+ — oddiy bubble (CSS: .emo-1..emo-3). */
 const SEG = (typeof Intl !== 'undefined' && Intl.Segmenter) ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
 const EMO = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[#*0-9]\uFE0F?\u20E3)/u;
 
@@ -13,7 +13,8 @@ export function emojiOnlyCount(text) {
 
 export function emojiOnlyClass(text) {
   const n = emojiOnlyCount(text);
-  return n ? ` emoji-only emo-${Math.min(n, 4)}` : '';
+  // Telegramdagidek: 1–3 ta emoji — bubblesiz katta; 4 va undan ko'p — oddiy bubble ichida
+  return (n >= 1 && n <= 3) ? ` emoji-only emo-${n}` : '';
 }
 
 /* ── Faqat 1 ta emoji bo'lsa, ustiga bosilganda elastik animatsiya + uchib chiqadigan emojilar ── */

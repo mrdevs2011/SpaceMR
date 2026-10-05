@@ -8420,3 +8420,16 @@ select.field option { background: #000000; color: var(--text); }
 .chat-bubble.bubble-media-only:has(> .chat-bubble-wrap > .grp-sender-name) .chat-bubble-wrap { display: flex; flex-direction: column; align-items: stretch; width: max-content; max-width: 280px; }
 .chat-bubble.bubble-media-only .grp-sender-name { margin: 0; padding: 7px 12px 6px; background: var(--pal-gray-800); border-radius: 16px 16px 0 0; }
 .chat-bubble.bubble-media-only .grp-sender-name + .cfm-media-wrap--standalone { border-radius: 0 0 16px 16px; }
+
+/* ── Faqat 1–3 emoji (Telegram uslubi): bubble YO'Q (guruh va 1v1), vaqt — pastda kichik quyuq "pill" ───── */
+#chatThreadModal .chat-msg.emoji-only.mine .chat-bubble,
+#chatThreadModal .chat-msg.emoji-only.theirs .chat-bubble,
+#chatThreadMessages.msg-selecting .chat-msg.emoji-only.mc-selected .chat-bubble { background: none !important; box-shadow: none !important; border: none !important; padding: 0 !important; border-radius: 0 !important; }
+.chat-msg.emoji-only.emo-1 { --emo-size: 80px; }
+.chat-msg.emoji-only.emo-2, .chat-msg.emoji-only.emo-3 { --emo-size: 38px; }
+.chat-msg.emoji-only .chat-bubble-wrap { display: flex; flex-direction: column; }
+.chat-msg.emoji-only.mine .chat-bubble-wrap { align-items: flex-end; }
+.chat-msg.emoji-only.theirs .chat-bubble-wrap { align-items: flex-start; }
+.chat-msg.emoji-only .chat-msg-meta { display: inline-flex; align-items: center; gap: 4px; float: none; width: fit-content; margin: 4px 0 0; padding: 2px 8px; border-radius: 10px; background: var(--pal-gray-800, #1c1f23); color: var(--pal-gray-400, #8b98a5); font-size: 12px; line-height: 16px; }
+.chat-msg.emoji-only .chat-msg-meta .chat-msg-time { color: inherit; }
+.chat-msg.emoji-only .grp-sender-name { display: none; }
