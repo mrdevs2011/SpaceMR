@@ -1,7 +1,7 @@
 # SpaceMR
 
 Yopiq oilaviy messenjer + lenta (PWA). ~50 yaqin odam uchun. Vanilla JS, Supabase, Vercel.
-Reja va holat: `MRSPACE-ROADMAP.md`. Eski to'liq tavsif: `docs/archive/`.
+Arxitektura: `docs/ARCHITECTURE.md`.
 
 ## Nima qila oladi
 - **Kirish:** faqat username + parol (email yo'q). Ro'yxatdan o'tgach hisob "kutish" holatida — admin tasdiqlaydi yoki rad etadi.
@@ -46,7 +46,6 @@ Hali ishga tushirilmagan patchlar `supabase/unfulfilled/` da — faqat 1 hafta k
 
 - Deploy: Vercel (`vercel.json` — build: bump-sw + build-env + build-css).
 - SQL migratsiyalar: `supabase/migrations/` (repo da saqlanadi; CDN ga `.vercelignore` orqali chiqarilmaydi).
-- Bir martalik patch/fix skriptlar: `docs/archive/oneoff/`.
 - CSS manba: `CSS/*.css` → `app.css` (`npm run build` / `node scripts/build-css.mjs`).
 
 ### URL himoya
