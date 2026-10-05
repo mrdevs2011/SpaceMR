@@ -34,27 +34,150 @@ window._chatVidMeta = function (v) {
   } catch (_) {}
   window._chatImgLoaded && window._chatImgLoaded(v);
 };
+function _fmtVidTime(s) {
+  if (!isFinite(s) || s < 0) return '0:00';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
+}
+function _ensureVidBar(wrap, v) {
+  let bar = wrap.querySelector('.cfm-vid-bar');
+  if (bar) return bar;
+  bar = document.createElement('div');
+  bar.className = 'cfm-vid-bar';
+  bar.innerHTML = `
+    <div class="cvb-progress"><div class="cvb-buf"></div><div class="cvb-fill"></div><div class="cvb-knob"></div></div>
+    <div class="cvb-row">
+      <button type="button" class="cvb-btn cvb-play" aria-label="Play/Pause">
+        <svg class="cvb-ico-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="cvb-ico-pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+      </button>
+      <span class="cvb-time"><span class="cvb-cur">0:00</span><span class="cvb-sep">/</span><span class="cvb-dur">0:00</span></span>
+      <button type="button" class="cvb-btn cvb-mute" aria-label="Ovoz">
+        <svg class="cvb-ico-vol" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+        <svg class="cvb-ico-mute" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+      </button>
+      <button type="button" class="cvb-btn cvb-fs" aria-label="To'liq ekran">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+    </div>`;
+  const box = wrap.querySelector('.cfm-vid-box') || wrap;
+  box.appendChild(bar);
+
+  const fill = bar.querySelector('.cvb-fill');
+  const buf = bar.querySelector('.cvb-buf');
+  const knob = bar.querySelector('.cvb-knob');
+  const curEl = bar.querySelector('.cvb-cur');
+  const durEl = bar.querySelector('.cvb-dur');
+  const playBtn = bar.querySelector('.cvb-play');
+  const muteBtn = bar.querySelector('.cvb-mute');
+  const fsBtn = bar.querySelector('.cvb-fs');
+  const prog = bar.querySelector('.cvb-progress');
+
+  const sync = () => {
+    const d = v.duration || 0, c = v.currentTime || 0;
+    const pct = d ? (c / d) * 100 : 0;
+    fill.style.width = pct + '%';
+    knob.style.left = pct + '%';
+    curEl.textContent = _fmtVidTime(c);
+    durEl.textContent = _fmtVidTime(d);
+    try {
+      if (v.buffered?.length) {
+        const end = v.buffered.end(v.buffered.length - 1);
+        buf.style.width = (d ? (end / d) * 100 : 0) + '%';
+      }
+    } catch (_) {}
+    bar.classList.toggle('is-paused', v.paused);
+    bar.classList.toggle('is-muted', v.muted || v.volume === 0);
+  };
+
+  v.addEventListener('timeupdate', sync);
+  v.addEventListener('loadedmetadata', sync);
+  v.addEventListener('progress', sync);
+  v.addEventListener('play', sync);
+  v.addEventListener('pause', sync);
+  v.addEventListener('volumechange', sync);
+
+  playBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  });
+  muteBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    v.muted = !v.muted;
+  });
+  fsBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const el = box;
+    if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {});
+    else document.exitFullscreen?.();
+  });
+
+  let scrubbing = false;
+  const seekFromEvent = ev => {
+    const r = prog.getBoundingClientRect();
+    const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const ratio = Math.max(0, Math.min(1, x / r.width));
+    if (isFinite(v.duration)) v.currentTime = ratio * v.duration;
+    sync();
+  };
+  prog.addEventListener('pointerdown', ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    scrubbing = true;
+    prog.setPointerCapture?.(ev.pointerId);
+    seekFromEvent(ev);
+  });
+  prog.addEventListener('pointermove', ev => { if (scrubbing) seekFromEvent(ev); });
+  prog.addEventListener('pointerup', () => { scrubbing = false; });
+  prog.addEventListener('pointercancel', () => { scrubbing = false; });
+
+  // bar ichidagi click video toggle qilmasin
+  bar.addEventListener('click', e => e.stopPropagation());
+  sync();
+  return bar;
+}
 function vidStop(wrap) {
   const v = wrap?.querySelector('video');
   if (!v) return;
   wrap.classList.remove('playing');
   v.controls = false;
+  v.pause();
 }
 if (!window.__chatVidBound) {
   window.__chatVidBound = true;
   document.addEventListener('click', e => {
     const wrap = e.target?.closest?.('.cfm-vid-wrap');
     if (!wrap || e.button !== 0) return;
-    if (wrap.closest('.msg-selecting')) return;          // tanlash rejimida — xabar tanlanadi
+    if (wrap.closest('.msg-selecting')) return;
+    if (e.target.closest?.('.cfm-vid-bar')) return;
     const v = wrap.querySelector('video');
-    if (!v || wrap.classList.contains('playing')) return; // ijro paytida — o'zining boshqaruvi
+    if (!v) return;
     e.preventDefault(); e.stopPropagation();
-    document.querySelectorAll('.cfm-vid-wrap.playing video').forEach(o => o.pause());
+    // boshqa videolarni to'xtat
+    document.querySelectorAll('.cfm-vid-wrap.playing').forEach(w => {
+      if (w !== wrap) {
+        const ov = w.querySelector('video');
+        if (ov) { ov.pause(); }
+        w.classList.remove('playing');
+      }
+    });
+    if (wrap.classList.contains('playing')) {
+      // toggle pause/play
+      if (v.paused) v.play().catch(() => {});
+      else v.pause();
+      return;
+    }
     wrap.classList.add('playing');
-    v.controls = true;
+    v.controls = false; // native emas — o'z barimiz
+    _ensureVidBar(wrap, v);
     v.play().catch(() => {});
   }, true);
-  document.addEventListener('ended', e => { if (e.target?.matches?.('.cfm-vid-wrap video')) { vidStop(e.target.closest('.cfm-vid-wrap')); try { e.target.currentTime = 0.1; } catch (_) {} } }, true);
+  document.addEventListener('ended', e => {
+    if (!e.target?.matches?.('.cfm-vid-wrap video')) return;
+    const wrap = e.target.closest('.cfm-vid-wrap');
+    vidStop(wrap);
+    try { e.target.currentTime = 0.1; } catch (_) {}
+  }, true);
 }
 
 if (!window.__chatNoteBound) {
@@ -237,10 +360,10 @@ export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmoji
 }
 
 /** Outer bubble shell — DM va guruh uchun bir xil */
-export function wrapChatBubble({ bubbleContent, bubbleClassExtra = '', outerMeta = '', gHead = '' }) {
+export function wrapChatBubble({ bubbleContent, bubbleClassExtra = '', outerMeta = '', gHead = '', replyHtml = '' }) {
   return `<div class="chat-bubble${bubbleClassExtra}">
         <div class="chat-bubble-wrap">
-          ${gHead}${bubbleContent}
+          ${gHead}${replyHtml}${bubbleContent}
           ${outerMeta}
         </div>
       </div>`;

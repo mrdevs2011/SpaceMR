@@ -1852,6 +1852,37 @@ function preloadRecentChatMedia(msgs) {
   }
 }
 
+
+/** Telegram-style reply quote inside bubble */
+function _replyQuoteHtml(m, msgs, grp) {
+  const rid = m.replyTo || m.reply_to;
+  if (!rid) return '';
+  // Prefer stored preview (optimistic), else look up in current list
+  let name = m.replyPreview?.name;
+  let preview = m.replyPreview?.text;
+  let rtype = m.replyPreview?.type;
+  if (!name || !preview) {
+    const orig = (msgs || []).find(x => x.id === rid);
+    if (orig) {
+      name = name || (orig.senderId === state.me?.uid ? 'Siz' : (grp?.names?.[orig.senderId]?.fullName || $('chatThreadName')?.textContent || 'Foydalanuvchi'));
+      if (orig.type === 'voice') preview = preview || '🎤 Ovozli xabar';
+      else if (orig.type === 'file') preview = preview || ('📎 ' + (orig.fileName || 'Fayl'));
+      else preview = preview || (orig.text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+      rtype = rtype || orig.type;
+    } else {
+      name = name || 'Xabar';
+      preview = preview || 'O‘chirilgan xabar';
+    }
+  }
+  if (!preview) preview = 'Xabar';
+  return `<div class="msg-reply-quote" data-reply-to="${esc(rid)}">
+    <div class="mrq-bar"></div>
+    <div class="mrq-body">
+      <div class="mrq-name">${esc(name)}</div>
+      <div class="mrq-text">${esc(preview)}</div>
+    </div>
+  </div>`;
+}
 export function paintMessages(msgs, grp = null) {
   const box = $('chatThreadMessages');
   if (!box) return;
@@ -1985,7 +2016,8 @@ export function paintMessages(msgs, grp = null) {
       ${mine ? renderTicks(m.status) : ''}
     </span>` : '';
 
-    const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead });
+    const replyHtml = _replyQuoteHtml(m, msgs, grp);
+    const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead, replyHtml });
     return assembleMessageHtml({
       dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml, gAvi,
     });

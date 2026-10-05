@@ -14320,15 +14320,114 @@ select.field option { background: #000000; color: var(--text); }
 .attach-menu .am-item:hover, .attach-menu .am-item:focus-visible { background: var(--pal-gray-800); outline: none; }
 .attach-menu .am-item svg { flex-shrink: 0; }
 
-#camCapture { position: fixed; inset: 0; z-index: 9200; background: #000; display: flex; align-items: center; justify-content: center; }
-#camCapture .cc-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+/* ═══ SpaceMR Camera UI ═══ */
+#camCapture {
+  position: fixed; inset: 0; z-index: 9200;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+  user-select: none; -webkit-user-select: none;
+}
+#camCapture .cc-video {
+  width: 100%; height: 100%;
+  object-fit: cover; background: #000;
+}
 #camCapture .cc-video.mirror { transform: scaleX(-1); }
-#camCapture .cc-btn { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer; }
-#camCapture .cc-close { left: 14px; }
-#camCapture .cc-flip { right: 14px; }
-#camCapture .cc-shutter { position: absolute; left: 50%; bottom: max(28px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: 70px; height: 70px; padding: 0; border: 4px solid #fff; border-radius: 50%; background: none; cursor: pointer; }
-#camCapture .cc-shutter span { display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
-#camCapture .cc-shutter:active span { transform: scale(0.88); }
+#camCapture .cc-top {
+  position: absolute; left: 0; right: 0;
+  top: 0; padding: max(12px, env(safe-area-inset-top, 0px)) 14px 0;
+  display: flex; align-items: center; gap: 10px;
+  z-index: 2;
+}
+#camCapture .cc-btn {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  color: #fff; cursor: pointer;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: background .15s ease, transform .12s ease;
+}
+#camCapture .cc-btn:active { transform: scale(0.92); }
+#camCapture .cc-btn:hover { background: rgba(0,0,0,0.6); }
+#camCapture .cc-flash { margin-left: auto; }
+#camCapture .cc-flash.on { color: #ffd60a; background: rgba(255,214,10,0.2); }
+#camCapture .cc-flip { margin-left: 0; }
+#camCapture .cc-flash[hidden] + .cc-flip { margin-left: auto; }
+#camCapture .cc-modes {
+  position: absolute; left: 50%; bottom: max(110px, calc(env(safe-area-inset-bottom, 0px) + 100px));
+  transform: translateX(-50%);
+  display: flex; gap: 6px;
+  padding: 4px;
+  border-radius: 24px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  z-index: 2;
+}
+#camCapture .cc-mode {
+  border: 0; background: transparent;
+  color: rgba(255,255,255,0.65);
+  font: 600 13px/1 system-ui, sans-serif;
+  padding: 8px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+#camCapture .cc-mode.active {
+  background: #fff;
+  color: #0f1419;
+}
+#camCapture .cc-bottom {
+  position: absolute; left: 0; right: 0;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2;
+}
+#camCapture .cc-shutter {
+  width: 74px; height: 74px; padding: 0;
+  border: 3px solid #fff; border-radius: 50%;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s ease, transform .1s ease;
+}
+#camCapture .cc-shutter-inner {
+  display: block; width: 60px; height: 60px;
+  border-radius: 50%; background: #fff;
+  transition: transform .12s ease, border-radius .15s ease, background .15s ease, width .15s ease, height .15s ease;
+}
+#camCapture .cc-shutter:active .cc-shutter-inner { transform: scale(0.88); }
+#camCapture .cc-shutter.snap .cc-shutter-inner { transform: scale(0.82); }
+/* Video mode shutter — qizil */
+#camCapture .cc-shutter.video-mode { border-color: #fff; }
+#camCapture .cc-shutter.video-mode .cc-shutter-inner { background: #ff3b30; }
+#camCapture .cc-shutter.video-mode.recording .cc-shutter-inner {
+  width: 28px; height: 28px; border-radius: 6px; background: #ff3b30;
+}
+#camCapture .cc-rec-timer {
+  position: absolute; top: max(64px, calc(env(safe-area-inset-top, 0px) + 52px));
+  left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 20px;
+  background: rgba(0,0,0,0.55);
+  color: #fff; font: 600 14px/1 system-ui, sans-serif;
+  z-index: 2;
+}
+#camCapture .cc-rec-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ff3b30;
+  animation: cc-blink 1s ease infinite;
+}
+@keyframes cc-blink { 50% { opacity: 0.25; } }
+#camCapture .cc-hint {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: max(108px, calc(env(safe-area-inset-bottom, 0px) + 100px));
+  margin-bottom: 44px;
+  color: rgba(255,255,255,0.7);
+  font: 500 12px/1.3 system-ui, sans-serif;
+  text-align: center;
+  pointer-events: none;
+  z-index: 1;
+  white-space: nowrap;
+}
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */
@@ -14382,4 +14481,202 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   }
   #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 1; pointer-events: auto; }
   @starting-style { #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 0; } }
+}
+
+/* ── Telegram-style reply quote inside message bubble ── */
+.msg-reply-quote {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  max-width: 100%;
+}
+.chat-msg.mine .msg-reply-quote {
+  background: rgba(255, 255, 255, 0.12);
+}
+.msg-reply-quote .mrq-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--blue);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+.msg-reply-quote .mrq-body {
+  min-width: 0;
+  flex: 1;
+}
+.msg-reply-quote .mrq-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.msg-reply-quote .mrq-text {
+  font-size: 12px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* ── Rasm/video preview: davomiylik va vaqt faqat hover'da ── */
+.cfm-vid-dur,
+.cfm-media-wrap .cfm-media-badge {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+/* Desktop / sichqoncha: hover'da ko'rinadi */
+@media (hover: hover) and (pointer: fine) {
+  .cfm-vid-wrap:hover .cfm-vid-dur,
+  .cfm-media-wrap:hover .cfm-media-badge,
+  .cfm-media-wrap:hover .cfm-vid-dur {
+    opacity: 1;
+  }
+}
+/* Sensorli qurilma: doim ko'rinsin (hover yo'q) */
+@media (hover: none), (pointer: coarse) {
+  .cfm-vid-dur,
+  .cfm-media-wrap .cfm-media-badge {
+    opacity: 1;
+  }
+}
+/* Video ijro paytida yashirish (avvalgidek) */
+.cfm-vid-wrap.playing .cfm-vid-dur,
+.cfm-vid-wrap.playing .cfm-media-badge {
+  opacity: 0 !important;
+  display: none;
+}
+
+/* ═══ Custom video bottom bar (Telegram-style) ═══ */
+.cfm-vid-box { position: relative; }
+.cfm-vid-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+  padding: 28px 10px 8px;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 55%, transparent 100%);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+  border-radius: 0 0 14px 14px;
+}
+.cfm-vid-wrap.playing .cfm-vid-bar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+/* Hover/focus — bar doim o'ynayotganda ko'rinadi; sekin yashirish uchun */
+.cfm-vid-wrap.playing:not(:hover):not(:focus-within) .cfm-vid-bar {
+  /* mobil: doim ko'rsat; desktop: 2s dan keyin biroz shaffof */
+}
+@media (hover: hover) and (pointer: fine) {
+  .cfm-vid-wrap.playing:not(:hover):not(:focus-within) .cfm-vid-bar {
+    opacity: 0.85;
+  }
+}
+.cfm-vid-bar .cvb-progress {
+  position: relative;
+  height: 4px;
+  margin: 0 2px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.22);
+  cursor: pointer;
+  touch-action: none;
+}
+.cfm-vid-bar .cvb-progress:hover { height: 6px; margin-bottom: 7px; }
+.cfm-vid-bar .cvb-buf {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  border-radius: inherit;
+  background: rgba(255,255,255,0.28);
+  width: 0%;
+  pointer-events: none;
+}
+.cfm-vid-bar .cvb-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  border-radius: inherit;
+  background: #1d9bf0;
+  width: 0%;
+  pointer-events: none;
+}
+.cfm-vid-bar .cvb-knob {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 12px; height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+.cfm-vid-bar .cvb-progress:hover .cvb-knob,
+.cfm-vid-bar .cvb-progress:active .cvb-knob { opacity: 1; }
+.cfm-vid-bar .cvb-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cfm-vid-bar .cvb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
+}
+.cfm-vid-bar .cvb-btn:hover { background: rgba(255,255,255,0.12); }
+.cfm-vid-bar .cvb-btn:active { background: rgba(255,255,255,0.2); }
+.cfm-vid-bar .cvb-time {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255,255,255,0.92);
+  padding-left: 4px;
+  user-select: none;
+}
+.cfm-vid-bar .cvb-sep { opacity: 0.5; margin: 0 2px; }
+/* play/pause icon swap */
+.cfm-vid-bar .cvb-ico-pause { display: none; }
+.cfm-vid-bar:not(.is-paused) .cvb-ico-play { display: none; }
+.cfm-vid-bar:not(.is-paused) .cvb-ico-pause { display: block; }
+.cfm-vid-bar.is-paused .cvb-ico-play { display: block; }
+.cfm-vid-bar.is-paused .cvb-ico-pause { display: none; }
+/* mute icon swap */
+.cfm-vid-bar .cvb-ico-mute { display: none; }
+.cfm-vid-bar.is-muted .cvb-ico-vol { display: none; }
+.cfm-vid-bar.is-muted .cvb-ico-mute { display: block; }
+/* fullscreen ichida video to'liq */
+.cfm-vid-box:fullscreen,
+.cfm-vid-box:-webkit-full-screen {
+  width: 100%; height: 100%;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+}
+.cfm-vid-box:fullscreen .cfm-vid,
+.cfm-vid-box:-webkit-full-screen .cfm-vid {
+  max-width: 100%; max-height: 100%; width: 100%; height: 100%;
+  object-fit: contain;
+  aspect-ratio: auto;
+}
+.cfm-vid-box:fullscreen .cfm-vid-bar,
+.cfm-vid-box:-webkit-full-screen .cfm-vid-bar {
+  border-radius: 0;
+  opacity: 1;
 }

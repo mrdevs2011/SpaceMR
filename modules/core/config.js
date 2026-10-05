@@ -260,6 +260,7 @@ export function mapMessage(r) {
     readAt: ts(r.read_at),
     editedAt: ts(r.edited_at),
     createdAt: ts(r.created_at),
+    replyTo: r.reply_to || null,
   };
 }
 

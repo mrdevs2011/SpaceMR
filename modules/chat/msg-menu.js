@@ -19,13 +19,14 @@ const IC = {
   del: '<img src="./svg/menu/del.svg" alt="" class="icon" width="18" height="18">',
   sel: '<img src="./svg/menu/sel.svg" alt="" class="icon" width="18" height="18">',
   resend: '<img src="./svg/menu/resend.svg" alt="" class="icon" width="18" height="18">',
+  reply: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
   x: '<img src="./svg/menu/x.svg" alt="" class="icon" width="18" height="18">',
   seen: '<img src="./svg/extra/icon-041fdea3033a.svg" alt="" class="icon" width="18" height="11">',
   sent: '<img src="./svg/extra/icon-e20961b31619.svg" alt="" class="icon" width="12" height="10">',
 };
 
 let api = null, box = null, menu = null, selBar = null, fwdEl = null;
-let openId = null, selMode = false, editing = null;
+let openId = null, selMode = false, editing = null, replying = null;
 let lp = null, lpTimer = null, lpOpened = false, suppressUntil = 0;
 let drag = null, scrollRaf = 0; // surib belgilash holati
 const sel = new Set();
@@ -226,6 +227,8 @@ function menuHtml(m) {
   const hasText = !!(m.text || '').trim();
   let h = '';
   const isPostShare = m.text && m.text.includes('"__postShare"');
+  // Reply — har qanday oddiy xabar uchun (Telegram uslubida)
+  if (!isCallMsg(m) && !(mine && m.status === 'sending')) h += it('reply', IC.reply, 'Javob');
   if (hasText && isDM()) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
   if (mine && m.type === 'text' && !isPostShare) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('link', IC.copy, 'Xabar havolasi');
@@ -364,6 +367,7 @@ function run(act, id) {
     toast('Havola nusxalandi');
     return;
   }
+  if (act === 'reply') return startReply(m);
   if (act === 'edit') return startEdit(m);
   if (act === 'fwd') return forward([id]);
   if (act === 'del') return remove([id]);
@@ -433,8 +437,14 @@ function remove(ids) {
     if (typeof api.applyLocalDelete === 'function') api.applyLocalDelete(own);
     else api.reload?.();
 
-    // 2) Haqiqiy o'chirish orqa fonda
+    // 2) Haqiqiy o'chirish orqa fonda (+ media best-effort Storage API)
     const idList = own.slice();
+    const paths = idList.map(id => msgOf(id)?.mediaPath).filter(Boolean);
+    if (paths.length) {
+      sb.storage.from('media').remove(paths).then(({ error: se }) => {
+        if (se) console.warn('[MsgMenu] storage remove:', se.message);
+      }).catch(e => console.warn('[MsgMenu] storage remove:', e?.message || e));
+    }
     sb.from(tbl()).delete().in('id', idList).then(({ error }) => {
       if (error) {
         unmarkDissolve(idList);
@@ -451,9 +461,43 @@ function remove(ids) {
   }, 'O‘chirish', 'O‘chirish');
 }
 
+
+/* ── Javob (Telegram uslubida, reply-bar qayta ishlatiladi) ── */
+function startReply(m) {
+  if (!m || !m.id) return;
+  exitSelect();
+  cancelEdit(false);
+  const name = isMine(m)
+    ? 'Siz'
+    : (api?.getSenderName?.(m.senderId) || $('chatThreadName')?.textContent || 'Foydalanuvchi');
+  let preview = '';
+  if (m.type === 'voice') preview = '🎤 Ovozli xabar';
+  else if (m.type === 'file') preview = '📎 ' + (m.fileName || 'Fayl');
+  else preview = (m.text || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  if (!preview) preview = 'Xabar';
+  replying = { id: m.id, senderId: m.senderId, name, preview, type: m.type || 'text' };
+  $('chatReplyName').textContent = name;
+  $('chatReplyText').textContent = preview;
+  $('chatReplyBar').classList.add('active');
+  const inp = $('chatThreadInput');
+  if (inp) { inp.focus(); }
+  api?.syncInput?.();
+}
+
+export function isReplying() { return !!replying; }
+export function getReplying() { return replying; }
+
+export function cancelReply(clearInput = false) {
+  if (!replying) return;
+  replying = null;
+  $('chatReplyBar')?.classList.remove('active');
+  if (clearInput) { const inp = $('chatThreadInput'); if (inp) inp.value = ''; api?.syncInput?.(); }
+}
+
 /* ── Tahrirlash (input ustida "Tahrirlash" paneli, reply-bar qayta ishlatiladi) ── */
 function startEdit(m) {
   exitSelect();
+  cancelReply(false);
   editing = { id: m.id, text: m.text || '' };
   const inp = $('chatThreadInput');
   inp.value = editing.text;
@@ -799,7 +843,7 @@ export function initMsgMenu(opts) {
     return false;
   });
   window.addEventListener('resize', () => { if (menu?.contains(document.activeElement)) return; closeMenu(); });
-  $('chatReplyClose')?.addEventListener('click', () => cancelEdit(true));
+  $('chatReplyClose')?.addEventListener('click', () => { if (editing) cancelEdit(true); else cancelReply(true); });
 }
 
 /** paintMessages() dan keyin chaqiriladi — tanlov/ochiq menyu holatini yangi DOM'ga qaytaradi */

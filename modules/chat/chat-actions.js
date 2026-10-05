@@ -6,7 +6,7 @@ import { chatState, chatUI } from './chat-state.js';
 import { uploadViaControllerProgress, _showPendingBubble, _updatePendingProgress, _removePendingBubble, _uuid } from './chat-shared.js';
 import { inboxSend } from '../core/rt-bus.js';
 import { sendGroupMessage, sendGroupVoice, sendGroupFile } from './groups.js';
-import { commitEdit, isEditing } from './msg-menu.js';
+import { commitEdit, isEditing, getReplying, cancelReply } from './msg-menu.js';
 import { rateOk } from '../core/rate-limit.js';
 import { fileMsgPreview } from './components/video-note.js';
 import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
@@ -40,6 +40,10 @@ export async function sendChatMessage() {
     ? JSON.stringify({ __postShare: true, post: postShare, comment: userText })
     : userText;
 
+  const replyInfo = getReplying();
+  const replyToId = replyInfo?.id || null;
+  if (replyInfo) cancelReply(false);
+
   const previewText = postShare
     ? (userText ? `📌 ${userText}` : `📌 Post: ${postShare.authorName || 'Post'}`)
     : userText.slice(0, 120);
@@ -51,6 +55,8 @@ export async function sendChatMessage() {
     id, chatId, senderId: state.me.uid, type: 'text', text: finalMsgText,
     mediaPath: null, mediaUrl: '', mediaType: null, fileName: null, fileSize: null, duration: null,
     status: 'sending', readAt: null, editedAt: null, createdAt: nowMs, _at: nowMs,
+    replyTo: replyToId,
+    replyPreview: replyInfo ? { name: replyInfo.name, text: replyInfo.preview, type: replyInfo.type } : null,
   };
   chatState._rtLocal.set(id, localMsg);
   chatUI.paintMessages([...chatState._curMsgs, localMsg]);
@@ -74,7 +80,7 @@ export async function sendChatMessage() {
   try {
     // 3) Baza (haqiqat manbai) — xuddi shu ID bilan, dedup uchun
     const { error } = await sb.from('messages')
-      .insert({ id, chat_id: chatId, sender_id: state.me.uid, type: 'text', text: finalMsgText });
+      .insert({ id, chat_id: chatId, sender_id: state.me.uid, type: 'text', text: finalMsgText, reply_to: replyToId });
     if (error) throw error;
     // DB tasdiqladi — clock → 1 chek (faqat tick, to'liq paint YO'Q)
     const conf = chatState._rtLocal.get(id);

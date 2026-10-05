@@ -3,6 +3,7 @@ import { sb, state, MAX_FILE, uploadViaController, mapPost } from '../core/confi
 import { compressImage } from './compress.js';
 import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
+import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -762,10 +763,15 @@ function _bindHomeComposer() {
     // blur oldin ishlashi uchun
     e.preventDefault();
   });
-  $('homeComposerAttach')?.addEventListener('click', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    $('homeComposerFile')?.click();
+  // Umumiy skrepka menyusi (Kamera / Fayl / Media) — chat bilan bir xil
+  initAttachMenu({
+    btn: $('homeComposerAttach'),
+    fileInput: $('homeComposerFile'),
+    onPick: f => _pickHomeFile(f),
+    showCamera: true,
+    showFile: true,
+    showMedia: true,
+    mediaAccept: 'image/*',
   });
 
   $('homeComposerFile')?.addEventListener('change', e => {
@@ -798,7 +804,25 @@ $('uploadOverlay').onclick = e => {
 };
 
 /* ── File input / drop / paste ───────────────────────────────────────── */
-$('uploadDrop').onclick = () => $('fileInput').click();
+// Upload overlay: skrepka menyusi (post + story)
+initAttachMenu({
+  btn: $('uploadDrop'),
+  fileInput: $('fileInput'),
+  onPick: f => pickFile(f),
+  showCamera: true,
+  showFile: true,
+  showMedia: true,
+  mediaAccept: 'image/*',
+  getOptions: () => {
+    const story = _composerMode === 'story';
+    return {
+      showFile: !story,           // story: faqat rasm/kamera
+      showMedia: true,
+      mediaAccept: story ? 'image/*' : 'image/*',
+      showCamera: true,
+    };
+  },
+});
 $('fileInput').onchange = e => { if (e.target.files[0]) pickFile(e.target.files[0]); };
 
 $('uploadDrop').addEventListener('dragover', e => {

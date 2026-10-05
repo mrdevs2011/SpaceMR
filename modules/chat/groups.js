@@ -35,7 +35,7 @@ import {
   uploadViaControllerProgress, ensureChatsView,
 } from './chat-shared.js';
 import { chatUI } from './chat-state.js';
-import { isEditing, commitEdit }                    from './msg-menu.js';
+import { isEditing, commitEdit, getReplying, cancelReply } from './msg-menu.js';
 
 /* ─────────────────────────────────────────────────────────────────────
    STATE
@@ -676,6 +676,10 @@ export async function sendGroupMessage() {
     ? JSON.stringify({ __postShare: true, post: postShare, comment: userText })
     : userText;
 
+  const replyInfo = getReplying();
+  const replyToId = replyInfo?.id || null;
+  if (replyInfo) cancelReply(false);
+
   const previewText = postShare
     ? (userText ? `📌 ${userText}` : `📌 Post: ${postShare.authorName || 'Post'}`)
     : userText.slice(0, 120);
@@ -687,7 +691,8 @@ export async function sendGroupMessage() {
   // Optimistik: o'z xabarimiz shu zahoti ekranda, baza orqada (xuddi shu ID bilan — dedup)
   const mid = _gUuid();
   const nowMs = Date.now();
-  const localMsg = mapMessage({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'text', text: finalMsgText, created_at: new Date(nowMs).toISOString() });
+  const localMsg = mapMessage({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'text', text: finalMsgText, created_at: new Date(nowMs).toISOString(), reply_to: replyToId });
+  if (replyInfo) localMsg.replyPreview = { name: replyInfo.name, text: replyInfo.preview, type: replyInfo.type };
   localMsg._at = nowMs;
   localMsg.status = 'sending';
   _gPending.set(mid, localMsg);
@@ -698,7 +703,7 @@ export async function sendGroupMessage() {
 
   try {
     const { error } = await sb.from('group_messages')
-      .insert({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'text', text: finalMsgText });
+      .insert({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'text', text: finalMsgText, reply_to: replyToId });
     if (error) throw error;
     // DB tasdiqladi — clock → 1 chek (tez: faqat tick)
     const conf = _gPending.get(mid);
