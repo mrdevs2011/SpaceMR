@@ -103,3 +103,42 @@
 .cfm-vid-bar:not(.is-muted) .cvb-ico-vol { display: block; }
 .cfm-vid-bar:not(.is-muted) .cvb-ico-mute { display: none; }
 .cfm-vid-wrap:not(.playing) .cfm-vid-bar { display: none; }
+
+/* Fullscreen — mobil layout buzilmasin */
+.cfm-vid-box:fullscreen,
+.cfm-vid-box:-webkit-full-screen,
+.cfm-vid:fullscreen,
+.cfm-vid:-webkit-full-screen {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  background: #000 !important;
+  object-fit: contain !important;
+}
+.cfm-vid-box:fullscreen,
+.cfm-vid-box:-webkit-full-screen {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.cfm-vid-box:fullscreen .cfm-vid,
+.cfm-vid-box:-webkit-full-screen .cfm-vid {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+}
+.cfm-vid-box:fullscreen .cfm-vid-bar,
+.cfm-vid-box:-webkit-full-screen .cfm-vid-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 5;
+}
+.cfm-vid {
+  -webkit-playsinline: true;
+}

@@ -39,6 +39,43 @@ function _fmtVidTime(s) {
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
   return m + ':' + String(sec).padStart(2, '0');
 }
+function _playVidReliable(v) {
+  if (!v) return Promise.resolve();
+  try {
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    v.playsInline = true;
+  } catch (_) {}
+  const go = () => v.play().catch(() => {
+    // ba'zi mobil brauzerlar ovozli play ni bloklaydi — muted boshlab keyin ochamiz
+    const wasMuted = v.muted;
+    v.muted = true;
+    return v.play().then(() => { if (!wasMuted) v.muted = false; }).catch(() => {});
+  });
+  if (v.readyState >= 2) return go();
+  return new Promise(res => {
+    let done = false;
+    const finish = () => { if (done) return; done = true; v.removeEventListener('canplay', onReady); go().then(res, res); };
+    const onReady = () => finish();
+    v.addEventListener('canplay', onReady);
+    try { v.load(); } catch (_) {}
+    setTimeout(finish, 1200);
+  });
+}
+function _requestFs(el, video) {
+  const targets = [video, el].filter(Boolean);
+  for (const t of targets) {
+    const req = t.requestFullscreen || t.webkitRequestFullscreen || t.webkitEnterFullscreen || t.msRequestFullscreen;
+    if (typeof req === 'function') {
+      try {
+        const r = req.call(t);
+        if (r && typeof r.catch === 'function') r.catch(() => {});
+        return;
+      } catch (_) {}
+    }
+  }
+}
+
 function _ensureVidBar(wrap, v) {
   let bar = wrap.querySelector('.cfm-vid-bar');
   if (bar) return bar;
@@ -99,7 +136,7 @@ function _ensureVidBar(wrap, v) {
 
   playBtn.addEventListener('click', e => {
     e.stopPropagation();
-    if (v.paused) v.play().catch(() => {});
+    if (v.paused) _playVidReliable(v);
     else v.pause();
   });
   muteBtn.addEventListener('click', e => {
@@ -108,9 +145,13 @@ function _ensureVidBar(wrap, v) {
   });
   fsBtn.addEventListener('click', e => {
     e.stopPropagation();
-    const el = box;
-    if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {});
-    else document.exitFullscreen?.();
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fsEl) {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+      return;
+    }
+    // video element fullscreen — mobil layout to'g'ri
+    _requestFs(box, v);
   });
 
   let scrubbing = false;
@@ -163,14 +204,19 @@ if (!window.__chatVidBound) {
     });
     if (wrap.classList.contains('playing')) {
       // toggle pause/play
-      if (v.paused) v.play().catch(() => {});
+      if (v.paused) _playVidReliable(v);
       else v.pause();
       return;
     }
     wrap.classList.add('playing');
     v.controls = false; // native emas — o'z barimiz
+    try {
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
+      v.playsInline = true;
+    } catch (_) {}
     _ensureVidBar(wrap, v);
-    v.play().catch(() => {});
+    _playVidReliable(v);
   }, true);
   document.addEventListener('ended', e => {
     if (!e.target?.matches?.('.cfm-vid-wrap video')) return;
@@ -256,7 +302,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     bubbleContent = renderVideoNote({ url: safeUrl, fileName: m.fileName, time, ticks: mine ? renderTicks(m.status) : '', ttl: _ttl });
   } else if (_isVideo) {
     const vid = `<div class="cfm-vid-box"${_ttl}>
-        <video class="cfm-vid" src="${esc(safeUrl)}#t=0.1" preload="metadata" playsinline disablepictureinpicture${imgRatioAttr(safeUrl.split('#')[0])} onloadedmetadata="window._chatVidMeta&&window._chatVidMeta(this)"></video>
+        <video class="cfm-vid" src="${esc(safeUrl)}" preload="metadata" playsinline disablepictureinpicture${imgRatioAttr(safeUrl.split('#')[0])} onloadedmetadata="window._chatVidMeta&&window._chatVidMeta(this)"></video>
         <button type="button" class="cfm-vid-play" aria-label="Ijro etish">${PLAY_SVG}</button>
         <span class="cfm-vid-dur"></span>
       </div>`;
