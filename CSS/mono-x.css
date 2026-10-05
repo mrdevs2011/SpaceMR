@@ -1123,15 +1123,10 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 /* Tanlangan xabar: chegara (outline) yo'q — pufak to'liq X ko'k rangga kiradi (rasm-faqat pufagida pufak yo'q, u features.css'dagi qoplama bilan) */
 #chatThreadMessages.msg-selecting .chat-msg.mc-selected .chat-bubble:not(.bubble-media-only) { background: var(--x-blue) !important; box-shadow: none !important; }
 
-/* Tanlash paneli: Telegramdagidek TEPADA, sarlavha o'rnida — [UZATISH n] [O'CHIRISH n] ... BEKOR QILISH */
-#msgSelBar { display: none; flex-shrink: 0; align-items: center; gap: 10px; min-height: 56px; box-sizing: border-box; padding: 8px 14px; padding-top: max(8px, env(safe-area-inset-top)); background: var(--bg); border-bottom: 1px solid var(--pal-gray-700); overflow-x: auto; scrollbar-width: none; }
+/* Tanlash paneli: Telegramdagidek TEPADA, sarlavha USTIGA yopishadi (balandligi JS'da sarlavhaga tenglanadi — hech narsa siljimaydi, yozish qatori joyida) — [UZATISH n] [O'CHIRISH n] ... BEKOR QILISH */
+#msgSelBar { display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 30; align-items: center; gap: 10px; box-sizing: border-box; padding: 8px 14px; padding-top: max(8px, env(safe-area-inset-top)); background: var(--bg); border-bottom: 1px solid var(--pal-gray-700); overflow-x: auto; scrollbar-width: none; }
 #msgSelBar::-webkit-scrollbar { display: none; }
 #chatThreadModal.msg-sel-on #msgSelBar { display: flex; }
-#chatThreadModal.msg-sel-on .chat-thread-hdr { display: none !important; }
-#chatThreadModal.msg-sel-on .chat-thread-input-row,
-#chatThreadModal.msg-sel-on .chat-reply-bar,
-#chatThreadModal.msg-sel-on .chat-file-preview,
-#chatThreadModal.msg-sel-on .chat-post-attach-bar { display: none !important; }
 #msgSelBar .msb-btn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; height: 40px; padding: 0 18px; border: 0; border-radius: 10px; background: rgba(29, 155, 240, 0.22); color: #ffffff; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap; cursor: pointer; }
 #msgSelBar .msb-btn:hover { background: rgba(29, 155, 240, 0.34); }
 #msgSelBar .msb-btn[hidden] { display: none; }

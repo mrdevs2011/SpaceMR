@@ -437,6 +437,9 @@ function enterSelect(id) {
   selMode = true;
   sel.clear();
   if (id) sel.add(id);
+  // Panel sarlavha ustiga yopishadi: balandligi sarlavhaga teng — layout siljimaydi
+  const _hd = $('chatThreadModal').querySelector('.chat-thread-hdr');
+  if (_hd && _hd.offsetHeight) selBar.style.height = _hd.offsetHeight + 'px';
   box.classList.add('msg-selecting');
   $('chatThreadModal').classList.add('msg-sel-on');
   paintSel();
