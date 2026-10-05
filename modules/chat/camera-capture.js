@@ -2,7 +2,7 @@
 import { toast } from '../ui/toast.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
-  trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced,
+  trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced, waitTrackTorchReady,
 } from './camera-access.js';
 import {
   MAX_VIDEO_MS, MAX_VIDEO_BYTES, VIDEO_BITRATE, VIDEO_W, VIDEO_H, markVideoReady,
@@ -245,7 +245,8 @@ export async function openCameraCapture(options = {}) {
       await liveVid.play().catch(() => {});
       initZoom();
       refreshFlash();
-      setTimeout(() => { if (stream === s) refreshFlash(); }, 500);   // ba'zi qurilmalarda torch imkoniyati biroz kechroq ko'rinadi
+      setTimeout(() => { if (stream === s) refreshFlash(); }, 400);
+      waitTrackTorchReady(vTrack(), 1000).then(() => { if (stream === s) refreshFlash(); });
     };
     /* ── Mikrofon (alohida oqim) ── */
     let audioStream = null, audioAsk = null;
@@ -613,17 +614,32 @@ export async function openCameraCapture(options = {}) {
 
       flashBtn.addEventListener('click', async () => {
         if (reviewing || switchingFace) return;
-        const tr = vTrack();
+        let tr = vTrack();
         if (!tr) return;
-        if (facing !== 'environment' && !trackSupportsTorch(tr)) {
-          toast('Fonar faqat orqa kamerada ishlaydi', 'error');
+        let face = facing;
+        try {
+          const st = tr.getSettings?.() || {};
+          if (st.facingMode) face = st.facingMode;
+        } catch (_) {}
+        if (face !== 'environment' && !trackSupportsTorch(tr)) {
+          toast("Fonarni yoqish uchun orqa kameraga o'ting", 'error');
           return;
         }
+        if (!trackSupportsTorch(tr)) await waitTrackTorchReady(tr, 600);
         const want = !torchOn;
         let ok = await setTorch(tr, want);
-        if (!ok) { await new Promise(r => setTimeout(r, 200)); ok = await setTorch(tr, want); }
-        if (!ok) { torchOn = false; toast("Fonarni yoqib bo'lmadi — brauzer yoki qurilma qo'llamaydi", 'error'); }
-        else { torchOn = want; if (want) hasTorchDevice = true; }
+        if (!ok) {
+          await new Promise(r => setTimeout(r, 150));
+          tr = vTrack();
+          ok = await setTorch(tr, want);
+        }
+        if (!ok) {
+          torchOn = false;
+          toast("Fonarni yoqib bo'lmadi. Orqa kamera + Chrome (HTTPS) kerak", 'error');
+        } else {
+          torchOn = want;
+          if (want) hasTorchDevice = true;
+        }
         refreshFlash();
       });
       modesEl.addEventListener('click', e => {

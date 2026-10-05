@@ -4,7 +4,7 @@
  */
 import { $ } from '../core/utils.js';
 import { videoNoteFileName } from './components/video-note.js';
-import { mediaErrorKind, trackSupportsTorch, trackMaybeTorch, setTorch, probeInputDevices, listCameras } from './camera-access.js';
+import { mediaErrorKind, trackSupportsTorch, trackMaybeTorch, setTorch, probeInputDevices, listCameras, waitTrackTorchReady } from './camera-access.js';
 import { toast } from '../ui/toast.js';
 
 let _onVoiceRecorded = null;
@@ -323,22 +323,30 @@ async function _vidRefreshCamList() {
 }
 
 async function _vidToggleTorch() {
-  const tr = _vidVideoTrack;
+  let tr = _vidVideoTrack;
   if (!tr || _vidSwitching) return;
-  if (_vidFacing !== 'environment' && !trackSupportsTorch(tr)) {
-    toast('Fonar faqat orqa kamerada ishlaydi', 'error');
+  // Haqiqiy facing — settings dan (ideal constraint ba'zan front qoldiradi)
+  let face = _vidFacing;
+  try {
+    const st = tr.getSettings?.() || {};
+    if (st.facingMode) face = st.facingMode;
+  } catch (_) {}
+  if (face !== 'environment' && !trackSupportsTorch(tr)) {
+    toast("Fonarni yoqish uchun orqa kameraga o'ting (almashtirish)", "error");
     return;
   }
-  // Capabilities kechiksa ham urinish (Android)
+  // Capabilities kelishini kutish
+  if (!trackSupportsTorch(tr)) await waitTrackTorchReady(tr, 600);
   const want = !_vidTorchOn;
   let ok = await setTorch(tr, want);
   if (!ok) {
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 150));
+    tr = _vidVideoTrack; // track yangilangan bo'lishi mumkin
     ok = await setTorch(tr, want);
   }
   if (!ok) {
     _vidTorchOn = false;
-    toast("Fonarni yoqib bo'lmadi — brauzer yoki qurilma qo'llamaydi", 'error');
+    toast("Fonarni yoqib bo'lmadi. Orqa kamera + Chrome (HTTPS) kerak", 'error');
   } else {
     _vidTorchOn = want;
     if (want) _vidTorchSeen = true;
@@ -382,8 +390,9 @@ async function _vidFlip() {
     if (ns) {
       _vidVideoTrack = ns.getVideoTracks()[0];
       if (pv) { pv.srcObject = new MediaStream([_vidVideoTrack]); pv.play().catch(() => {}); }
-      setTimeout(() => _vidSyncCtrls(), 350);
-      setTimeout(() => _vidSyncCtrls(), 900);
+      waitTrackTorchReady(_vidVideoTrack, 1000).then(() => _vidSyncCtrls());
+      setTimeout(() => _vidSyncCtrls(), 400);
+      setTimeout(() => _vidSyncCtrls(), 1000);
     }
   } finally {
     if (!failed) {

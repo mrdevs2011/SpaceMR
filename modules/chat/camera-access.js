@@ -94,24 +94,21 @@ export async function listCameras() {
   }
 }
 
-/** Track torch (fonar) qo'llab-quvvatlaydimi — ba'zi qurilmalarda capabilities kechikadi */
+/** Track torch (fonar) qo'llab-quvvatlaydimi */
 export function trackSupportsTorch(track) {
   try {
     if (!track || track.readyState !== 'live') return false;
     const caps = track.getCapabilities?.() || {};
-    // Chrome Android: torch: true → qo'llab-quvvatlaydi
-    if ('torch' in caps) return caps.torch !== false;
-    // Ba'zi implementatsiyalar fillLightMode orqali
+    if ('torch' in caps) return !!caps.torch;
     const fl = caps.fillLightMode;
     if (Array.isArray(fl) && (fl.includes('torch') || fl.includes('flash'))) return true;
   } catch (_) {}
   return false;
 }
 
-/** Capabilities hali bo'sh bo'lsa ham orqa kamerada urinishga ruxsat */
+/** Orqa kamera + live — capabilities kechiksa ham urinishga ruxsat */
 export function trackMaybeTorch(track, facingHint) {
   if (trackSupportsTorch(track)) return true;
-  // Orqa kamera + live track — ko'p telefonlarda fonar bor, lekin API kechikadi
   try {
     const face = facingHint || track?.getSettings?.()?.facingMode;
     if (face === 'environment' && track?.readyState === 'live') return true;
@@ -119,48 +116,99 @@ export function trackMaybeTorch(track, facingHint) {
   return false;
 }
 
-/* applyConstraints() oldingi advanced sozlamalarni ALMASHTIRADI: zoom berilsa fonar o'chib qolardi.
-   Shu sabab track uchun torch/zoom holati saqlanadi va HAR chaqiruvda hammasi birga qo'llanadi
-   (har biri alohida advanced elementda — biri qo'llanmasa ikkinchisi baribir ishlaydi). */
+/* applyConstraints oldingi advanced ni ALMASHTIRADI — zoom+torch birga saqlanadi */
 const _adv = new WeakMap();
 export async function applyTrackAdvanced(track, patch) {
-  if (!track) return false;
+  if (!track || track.readyState !== 'live') return false;
   const cur = { ...(_adv.get(track) || {}), ...patch };
+  // null/undefined ni olib tashlash
+  for (const k of Object.keys(cur)) if (cur[k] == null) delete cur[k];
   const advanced = Object.keys(cur).map(k => ({ [k]: cur[k] }));
+  if (!advanced.length) return true;
   for (let i = 0; i < 2; i++) {
     try {
       await track.applyConstraints({ advanced });
       _adv.set(track, cur);
       return true;
     } catch (err) {
-      console.warn('[camera] applyConstraints xato:', err?.name, err?.message);
-      if (i === 0) await new Promise(r => setTimeout(r, 150));   // ba'zi qurilmalarda birinchi urinish kech qoladi
+      console.warn('[camera] applyConstraints:', err?.name, err?.message);
+      if (i === 0) await new Promise(r => setTimeout(r, 120));
     }
   }
   return false;
 }
 
+function _torchSettings(track) {
+  try { return track.getSettings?.() || {}; } catch (_) { return {}; }
+}
+
+function _torchVerified(track, want) {
+  const st = _torchSettings(track);
+  if ('torch' in st) return st.torch === want;
+  // settings da torch yo'q — ba'zi Android applyConstraints throw qilmasa ham ishlaydi
+  return null; // noma'lum
+}
+
+/**
+ * Fonarni yoqish/o'chirish — bir necha usul (Chrome Android, WebView).
+ * @returns {Promise<boolean>}
+ */
 export async function setTorch(track, on) {
   if (!track || track.readyState !== 'live') return false;
   const want = !!on;
-  // 1) advanced (standart)
-  if (await applyTrackAdvanced(track, { torch: want })) {
-    // tasdiqlash
-    try {
-      const st = track.getSettings?.() || {};
-      if ('torch' in st && st.torch === want) return true;
-    } catch (_) {}
-    return true;
-  }
-  // 2) to'g'ridan-to'g'ri constraint (ba'zi WebView)
-  try {
-    await track.applyConstraints({ torch: want });
-    return true;
-  } catch (_) {}
-  // 3) advanced faqat torch
-  try {
+  const prev = _adv.get(track) || {};
+  const zoom = prev.zoom;
+
+  const attempts = [];
+
+  // 1) Faqat torch (advanced) — eng ishonchli Chrome Android
+  attempts.push(async () => {
     await track.applyConstraints({ advanced: [{ torch: want }] });
-    return true;
-  } catch (_) {}
+  });
+  // 2) To'g'ridan-to'g'ri
+  attempts.push(async () => {
+    await track.applyConstraints({ torch: want });
+  });
+  // 3) Zoom bilan birga (oldingi zoom yo'qolmasin)
+  if (zoom != null) {
+    attempts.push(async () => {
+      await track.applyConstraints({ advanced: [{ torch: want }, { zoom }] });
+    });
+  }
+  // 4) ImageCapture fillLightMode (ba'zi qurilmalar)
+  attempts.push(async () => {
+    if (typeof ImageCapture === 'undefined') throw new Error('no ImageCapture');
+    const ic = new ImageCapture(track);
+    if (typeof ic.setOptions !== 'function') throw new Error('no setOptions');
+    await ic.setOptions({ fillLightMode: want ? 'torch' : 'off' });
+  });
+
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      await attempts[i]();
+      await new Promise(r => setTimeout(r, 40));
+      const v = _torchVerified(track, want);
+      if (v === false) continue; // aniq ishlamadi — keyingi usul
+      _adv.set(track, { ...prev, torch: want, ...(zoom != null ? { zoom } : {}) });
+      return true;
+    } catch (err) {
+      console.warn('[setTorch] usul', i + 1, err?.name || err?.message || err);
+    }
+  }
   return false;
 }
+
+/** Track tayyor bo'lgach capabilities qayta o'qish (kechikish) */
+export function waitTrackTorchReady(track, ms = 800) {
+  return new Promise(resolve => {
+    if (!track) { resolve(false); return; }
+    const t0 = Date.now();
+    const tick = () => {
+      if (trackSupportsTorch(track)) { resolve(true); return; }
+      if (Date.now() - t0 >= ms) { resolve(trackSupportsTorch(track)); return; }
+      setTimeout(tick, 100);
+    };
+    tick();
+  });
+}
+
