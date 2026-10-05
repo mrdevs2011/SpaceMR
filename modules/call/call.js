@@ -88,11 +88,10 @@ export async function flushPendingCallEnd() {
 }
 
 // HARD END: kutmasdan darhol, to'liq tugatadi
-function _hardEnd(reason) {
+function _hardEnd(reason, endSound = 'local') {
   if (_ending || (!_callId && !_pc)) return;
   console.warn('[call] hard end:', reason);
-  _beaconEnd(_callId);
-  _endCall(false);
+  _endCall(false, endSound);
 }
 
 async function _userInfo(uid) {
@@ -321,6 +320,43 @@ function _playConnectBeep() {
   } catch (_) {}
 }
 
+/* ── Classic end-call / reject tones ─────────────────────────────────────
+ * local  — men qizilni bosdim yoki ring timeout (40–45s) avto-tugatish
+ * remote — qarshi tomon o'zi qizilni bosdi / rad etdi
+ * Farqi seziladi: local = classic ikki pasayuvchi beep; remote = yumshoqroq uchlik. */
+function _playCallEndSound(kind = 'local') {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const t0 = ctx.currentTime + 0.02;
+    const mk = (freq, start, dur, vol) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, t0 + start);
+      g.gain.setValueAtTime(0, t0 + start);
+      g.gain.linearRampToValueAtTime(vol, t0 + start + 0.02);
+      g.gain.setValueAtTime(vol, t0 + start + Math.max(0.04, dur - 0.06));
+      g.gain.linearRampToValueAtTime(0, t0 + start + dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t0 + start);
+      o.stop(t0 + start + dur + 0.02);
+    };
+    if (kind === 'remote') {
+      // U tugatdi: pastroq, 3 ta qisqa ("busy/hangup boshqacha")
+      mk(420, 0.00, 0.14, 0.16);
+      mk(360, 0.16, 0.14, 0.14);
+      mk(300, 0.32, 0.18, 0.12);
+      setTimeout(() => { try { ctx.close(); } catch (_) {} }, 700);
+    } else {
+      // Men / timeout: classic end-call — ikki pasayuvchi ton
+      mk(480, 0.00, 0.16, 0.20);
+      mk(320, 0.18, 0.22, 0.18);
+      setTimeout(() => { try { ctx.close(); } catch (_) {} }, 550);
+    }
+  } catch (_) {}
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    UMUMIY (SHARED) AudioContext — BUGFIX (2026-07-08)
    ══════════════════════════════════════════════════════════════════════
@@ -539,9 +575,11 @@ function _clearCallerRingTimer() { if (_callerRingTimer) { clearTimeout(_callerR
 
 /* ── Qo'ng'iroqni to'liq tugatish ── */
 let _ending = false;
-async function _endCall(notify = true) {
+async function _endCall(notify = true, endSound = null) {
   if (_ending) return;
   _ending = true;
+  // endSound: 'local' | 'remote' | null (ovozsiz — ichki tozalash)
+  if (endSound === 'local' || endSound === 'remote') _playCallEndSound(endSound);
   // Tarix yozuvi — faqat chaqiruvchi, bir marta
   let _log = null;
   if (_isCaller && _callId && _callChatId && !_logged.has(_callId)) {
@@ -864,7 +902,8 @@ async function initiateCall(isVideo) {
     if (!data) { await _endCall(false); return; }
 
     if (data.status === 'declined' || data.status === 'ended') {
-      await _endCall(false);
+      // Qarshi tomon rad etdi yoki qizilni bosdi
+      await _endCall(false, 'remote');
       return;
     }
     if (!_pc) return;
@@ -957,7 +996,7 @@ async function _acceptIncomingCall(callData, callId) {
   // Caller ICE candidates stream
   _callUnsub = _watchCall(callId, async data => {
     if (!data) { await _endCall(false); return; }
-    if (data.status === 'ended') { await _endCall(false); return; }
+    if (data.status === 'ended') { await _endCall(false, 'remote'); return; }
     if (!_pc) return;
 
     if (data.callerCandidates?.length) {
@@ -1049,6 +1088,7 @@ async function _handleIncomingRow(data) {
 
   // Rad etish
   _boundReject = async () => {
+    _playCallEndSound('local');  // men rad etdim
     _cleanCallModal();
     try { await _updateCall(data.id, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
   };
@@ -1059,6 +1099,7 @@ async function _handleIncomingRow(data) {
   // Maksimal jiringlash vaqtidan keyin avtomatik rad etish (CALL_RING_MAX_MS)
   _autoRejectTimer = setTimeout(async () => {
     if (_activeCallDocId === data.id) {
+      _playCallEndSound('local');  // ring timeout — avto-rad
       _cleanCallModal();
       try { await _updateCall(data.id, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
     }
@@ -1134,7 +1175,7 @@ document.getElementById('callEndBtn')?.addEventListener('click', async () => {
   if (_callId) {
     try { await _updateCall(_callId, { status: 'ended' }); } catch (e) { console.warn('[call]', e?.message || e); }
   }
-  await _endCall(false);
+  await _endCall(false, 'local');  // men qizilni bosdim
 });
 
 document.getElementById('callMicBtn')?.addEventListener('click', function () {
