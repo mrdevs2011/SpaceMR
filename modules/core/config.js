@@ -256,6 +256,7 @@ export function mapMessage(r) {
     fileName: r.file_name,
     fileSize: r.file_size,
     duration: r.duration,
+    waveform: Array.isArray(r.waveform) && r.waveform.length ? r.waveform : null,
     status: r.status,
     readAt: ts(r.read_at),
     editedAt: ts(r.edited_at),

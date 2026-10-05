@@ -9,6 +9,7 @@ import { onEsc } from '../ui/esc-stack.js';
 
 const IMG_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
 const AUD_EXT = ['mp3', 'm4a', 'wav', 'ogg', 'oga', 'aac', 'flac', 'opus', 'wma'];
+const VID_EXT = ['mp4', 'webm', 'mov', 'm4v', 'mkv', 'ogv', '3gp'];
 const LIMIT = 300;
 
 const ICON_PLAY = '<img src="./svg/extra/icon-e5c4dc67a486.svg" alt="" class="icon" width="16" height="16">';
@@ -25,15 +26,17 @@ let _bound = false;
 let _viewer = null;
 let _avatar = '';
 
-const TABS = [['all', 'Barchasi'], ['photos', 'Rasmlar'], ['music', 'Musiqa'], ['file', 'Fayllar']];
+const TABS = [['all', 'Barchasi'], ['photos', 'Media'], ['music', 'Musiqa'], ['file', 'Fayllar']];
 
 function _kind(m) {
   const mime = (m.mediaType || '').toLowerCase();
   const ext = (m.fileName || '').toLowerCase().split('.').pop() || '';
   if (mime.startsWith('audio')) return 'audio';
   if (mime.startsWith('image')) return 'image';
+  if (mime.startsWith('video')) return 'video';
   if (AUD_EXT.includes(ext)) return 'audio';
   if (IMG_EXT.includes(ext)) return 'image';
+  if (VID_EXT.includes(ext)) return 'video';
   return 'file';
 }
 
@@ -79,7 +82,7 @@ function _deactivate() {
 
 /* ── Chizish ────────────────────────────────────────────────────────── */
 function _counts() {
-  const photos = _data.media.filter(m => m.kind === 'image').length;
+  const photos = _data.media.length; // rasm + video
   return { photos, music: _data.audio.length, file: _data.file.length };
 }
 
@@ -109,8 +112,10 @@ function _paintTabs() {
     `<button type="button" class="profile-grid-tab${k === _tab ? ' active' : ''}" data-cm-tab="${k}" role="tab" aria-selected="${k === _tab}">${l}</button>`).join('');
 }
 
-const _cellMedia = (m, i) =>
-  `<div class="up-grid-cell up-grid-cell--media" data-cm-open="${i}"><img class="w-full h-full object-cover" src="${esc(_url(m))}" alt="" decoding="async" onerror="this.onerror=null;this.style.display='none';this.parentNode.classList.add('cm-broken')"></div>`;
+const _BROKEN = `this.onerror=null;this.style.display='none';this.parentNode.classList.add('cm-broken')`;
+const _cellMedia = (m, i) => m.kind === 'video'
+  ? `<div class="up-grid-cell up-grid-cell--media up-grid-cell--video" data-cm-open="${i}"><video class="w-full h-full object-cover" src="${esc(_url(m))}#t=0.1" preload="metadata" muted playsinline disablePictureInPicture onerror="${_BROKEN}"></video><span class="cm-vbadge" aria-hidden="true"></span></div>`
+  : `<div class="up-grid-cell up-grid-cell--media" data-cm-open="${i}"><img class="w-full h-full object-cover" src="${esc(_url(m))}" alt="" decoding="async" onerror="${_BROKEN}"></div>`;
 
 function _rowsAudio() {
   return _data.audio.map((m, i) => `
@@ -135,9 +140,9 @@ function _paintContent() {
   const grid = (html, uniform) => `<div class="up-grid${uniform ? ' up-grid--uniform' : ''}" id="upGrid">${html}</div>`;
   const media = _data.media.map((m, i) => ({ m, i }));
   if (_tab === 'photos') {
-    const list = media.filter(x => x.m.kind === 'image');
+    const list = media;
     box.innerHTML = list.length ? grid(list.map(x => _cellMedia(x.m, x.i)).join(''), true)
-      : empty('Hali rasm ulashilmagan');
+      : empty('Hali media ulashilmagan');
   } else if (_tab === 'music') {
     box.innerHTML = _data.audio.length ? `<div class="cm-rows">${_rowsAudio()}</div>` : empty('Hali musiqa ulashilmagan');
     _syncAudioUI();
@@ -189,7 +194,7 @@ function _ensureViewer() {
   if (_viewer) return _viewer;
   _viewer = document.createElement('div');
   _viewer.id = 'cmViewer';
-  _viewer.addEventListener('click', e => { if (!e.target.closest('img')) _closeViewer(); });
+  _viewer.addEventListener('click', e => { if (!e.target.closest('img, video')) _closeViewer(); });
   document.body.appendChild(_viewer);
   return _viewer;
 }
@@ -197,12 +202,15 @@ function _openViewer(i) {
   const m = _data.media[i];
   if (!m) return;
   const v = _ensureViewer();
-  v.innerHTML = `<img src="${esc(_url(m))}" alt="">`;
+  v.innerHTML = m.kind === 'video'
+    ? `<video src="${esc(_url(m))}" controls autoplay playsinline></video>`
+    : `<img src="${esc(_url(m))}" alt="">`;
   v.classList.add('show');
 }
 function _closeViewer() {
   if (!_viewer) return;
   _viewer.classList.remove('show');
+  try { _viewer.querySelector('video')?.pause(); } catch (_) {}
   _viewer.innerHTML = '';
 }
 
@@ -233,7 +241,7 @@ export async function openChatMedia({ chatId, name, avatar } = {}) {
     const m = mapMessage(r);
     if (!m || !m.mediaUrl) continue;
     m.kind = _kind(m);
-    if (m.kind === 'image') _data.media.push(m);
+    if (m.kind === 'image' || m.kind === 'video') _data.media.push(m);
     else if (m.kind === 'audio') _data.audio.push(m);
     else _data.file.push(m);
   }

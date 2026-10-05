@@ -657,6 +657,7 @@ import {
   reattachActiveVoiceUI as _reattachActiveVoiceUI,
   registerLocalVoiceUrl,
   getLocalVoiceUrl,
+  primeWaveform,
   _syncMiniPlayer,
 } from './chat-voice-player.js';
 import {
@@ -754,6 +755,7 @@ function _rtIncoming(m) {
     fileName: m.fileName || null,
     fileSize: m.fileSize ?? null,
     duration: m.duration ?? null,
+    waveform: Array.isArray(m.waveform) ? m.waveform : null,
     status: 'sent', readAt: null, editedAt: null, createdAt: now, _at: now,
   };
   chatState._rtLocal.set(m.id, msg);
@@ -1930,6 +1932,8 @@ export function paintMessages(msgs, grp = null) {
       const dur = voiceMedia.duration ? fmtVoiceDur(voiceMedia.duration) : '0:00';
       const barCount = _voiceBarCount(voiceMedia.duration);
       const safeUrl = (voiceMedia.url || '').replace(/"/g, '&quot;');
+      // Serverdagi to'lqin bor bo'lsa — decode/fetch kerak emas (barlar darhol to'g'ri chiziladi)
+      if (Array.isArray(m.waveform) && m.waveform.length) primeWaveform(voiceMedia.url, barCount, m.waveform);
       const _mpName = (mine ? 'Siz' : (grp ? (grp.names?.[m.senderId]?.fullName || 'Ovozli xabar') : ($('chatThreadName')?.textContent || 'Ovozli xabar'))).replace(/"/g, '&quot;');
       bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state });
     } else if (m.type === 'file') {
@@ -2564,7 +2568,7 @@ initEmojiPicker({ btn: $('chatEmojiBtn'), pop: $('chatEmojiQuickpick'), input: $
 
 /* Voice hold-to-talk — modules/chat-voice-record.js */
 initChatVoiceRecording({
-  onRecorded: (blob, duration) => { sendVoiceMessage(blob, duration); },
+  onRecorded: (blob, duration) => sendVoiceMessage(blob, duration),
   onVideoRecorded: (file) => { sendChatFile(file, ''); },
   onDevicesChange: () => { try { updateVoiceSendBtn(); } catch (_) {} },
   isComposerBusy: () => {

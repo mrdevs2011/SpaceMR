@@ -25,7 +25,7 @@ import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlock
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
-import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
+import { registerLocalVoiceUrl, voiceBarCount, getVoiceWaveform } from './chat-voice-player.js';
 import { openRtGroup }                              from './rt-chat.js';
 import { fileMsgPreview }                           from './components/video-note.js';
 import { busOn, groupJoin, groupInboxSend, isUidOnline } from '../core/rt-bus.js';
@@ -219,6 +219,7 @@ function _gIncoming(groupId, m) {
     file_name: m.fileName || null,
     file_size: m.fileSize ?? null,
     duration: m.duration ?? null,
+    waveform: Array.isArray(m.waveform) ? m.waveform : null,
     created_at: new Date(now).toISOString(),
   };
   const msg = mapMessage(row);
@@ -784,14 +785,23 @@ export async function sendGroupVoice(blob, duration) {
     const ext = blob.type.includes('ogg') ? 'ogg' : 'webm';
     const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: blob.type });
     const result = await uploadViaControllerProgress(file, 'chat-voice');
-    const { error } = await sb.from('group_messages').insert({
+    const waveform = await getVoiceWaveform(localUrl, voiceBarCount(duration));
+    const row = {
       id: mid, group_id: groupId, sender_id: state.me.uid, type: 'voice',
       media_path: result.path, media_type: blob.type || null,
       duration: Math.round(duration || 0),
-    });
+      ...(waveform ? { waveform } : {}),
+    };
+    let { error } = await sb.from('group_messages').insert(row);
+    // 069 migratsiya hali yurgizilmagan bo'lsa — to'lqinsiz qayta urinamiz
+    if (error && waveform && /waveform|PGRST204|42703/i.test(`${error.code || ''} ${error.message || ''}`)) {
+      delete row.waveform;
+      ({ error } = await sb.from('group_messages').insert(row));
+    }
     if (error) throw error;
     const conf = _gPending.get(mid);
     if (conf) {
+      conf.waveform = waveform;
       conf.status = 'sent';
       conf.mediaPath = result.path;
       conf.mediaUrl = result.url || conf.mediaUrl;
@@ -801,6 +811,7 @@ export async function sendGroupVoice(blob, duration) {
     _gRt?.send({
       id: mid, type: 'voice', mediaPath: result.path,
       mediaType: blob.type || null, duration: Math.round(duration || 0),
+      waveform: waveform || null,
     });
     groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: mid, text: 'Ovozli xabar', ts: Date.now() });
     _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || m.mediaUrl } : m);

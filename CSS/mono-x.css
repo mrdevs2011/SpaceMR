@@ -3267,6 +3267,7 @@ button:focus-visible,
 }
 #chatThreadModal .chat-msg.theirs .cvm-play svg , #chatThreadModal .chat-msg.theirs .cvm-play img.icon {
   fill: var(--pal-black) !important;
+  filter: brightness(0) !important;   /* <img> SVG ichidagi fill CSS bilan o'zgarmaydi — qora qilamiz */
 }
 #chatThreadModal .chat-msg.theirs .cvm-bar.played {
   background: var(--pal-white) !important;
@@ -8588,3 +8589,55 @@ select.field option { background: #000000; color: var(--text); }
 .cfm-cap-dm .cfm-caption p { margin: 0; }
 #chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }
 #chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-bottom-left-radius: 5px; }
+
+/* Play tugmasi atrofidagi silliq doira-waveform (SVG halqa; chat-voice-player.js chizadi) */
+.cvm-eq .cvm-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cvm-ring-path {
+  fill: currentColor;
+  fill-opacity: 0.1;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0;
+  will-change: d, opacity;
+}
+
+.chat-msg.mine .cvm-ring-path { color: #e7e9ea; }
+.chat-msg.theirs .cvm-ring-path { color: var(--x-blue, var(--blue, #1d9bf0)); }
+
+/* Mobil: chat ro'yxatida gorizontal scroll bo'lmasin (overflow-y:auto bo'lsa overflow-x ham auto bo'lib qoladi) */
+#chatThreadModal .chat-thread-messages {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Mobil: profillarda gorizontal scroll yo'q — tablar ekranga sig'adi, modal yon tomonga surilmaydi */
+#userProfileModal { overflow-x: hidden; overscroll-behavior-x: none; }
+#userProfileModal .up-body { max-width: 100%; overflow-x: hidden; }
+#userProfileModal .up-posts-tab,
+#profileView .profile-grid-hdr { overflow-x: hidden; }
+#userProfileModal .up-posts-tab .profile-grid-tab {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 14px;
+}
+
+/* Chat profili (chat-media.js): fayl/musiqa qatorlari -20px bilan chiqib ketmasin */
+#userProfileModal #cmContent .cm-rows { margin-left: 0; margin-right: 0; width: auto; }
+
+/* Chat profili (chat-media.js): video (mp4/webm...) rasmlar bilan bir gridda preview bo'lib chiqadi */
+#cmContent .up-grid-cell--video { position: relative; overflow: hidden; background: var(--bg3); }
+#cmContent .up-grid-cell--video video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+#cmContent .cm-vbadge { position: absolute; right: 6px; bottom: 6px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0, 0, 0, .6); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#cmContent .cm-vbadge::before { content: ''; margin-left: 2px; border-style: solid; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent #fff; }
+#cmContent .cm-broken .cm-vbadge { display: none; }
+#cmViewer video { max-width: 100%; max-height: 100%; outline: none; }

@@ -293,6 +293,7 @@ let _progRaf        = null;
 
 function _setBtnState() {
   if (!_activeBtn) return;
+  const ring = _activeBtn.querySelector('.cvm-eq');   // innerHTML halqani o'chirmasin (pauzada silliq so'nishi uchun)
   if (_activeLoading) {
     _activeBtn.innerHTML = LOADING_ICON;
     _activeBtn.classList.add('cvm-play--loading');
@@ -300,6 +301,7 @@ function _setBtnState() {
     _activeBtn.classList.remove('cvm-play--loading');
     _activeBtn.innerHTML = (_activeAudio && !_activeAudio.paused) ? PAUSE_ICON : PLAY_ICON;
   }
+  if (ring) _activeBtn.appendChild(ring);
 }
 
 function _curDur() {
@@ -311,6 +313,18 @@ function _paintProgress(force) {
   if (!_activeAudio || !_activeBtn) return;
   const wrap = _activeBtn.closest('.chat-voice-msg');
   if (!wrap) return;
+  /* Yuklangan audio fayl (mp3...) — to'lqin EMAS, Telegramdagidek oddiy progress chiziq */
+  if (wrap.classList.contains('cvm-file')) {
+    const trk = wrap.querySelector('.cvm-track');
+    const d = _curDur() || 0;
+    const c = _activeAudio.currentTime || 0;
+    const p = d > 0 ? Math.max(0, Math.min(1, c / d)) : 0;
+    if (trk) trk.style.setProperty('--cvm-p', (p * 100).toFixed(2) + '%');
+    const subEl = wrap.querySelector('.cvm-dur');
+    if (subEl) { const t = fmtVoiceDur(c) + (d ? ' / ' + fmtVoiceDur(d) : ''); if (subEl.dataset.cur !== t) { subEl.textContent = t; subEl.dataset.cur = t; } }
+    _updateMiniPlayerProgress(p);
+    return;
+  }
   if (_activeBarsWrap !== wrap) {
     _activeBarsWrap = wrap;
     _activeBars = wrap.querySelectorAll('.cvm-bar');
@@ -374,8 +388,12 @@ function _resetActiveVisual() {
         b.style.opacity = '';
       });
       wrap.querySelector('.cvm-waveform')?.classList.remove('playing');
+      wrap.querySelector('.cvm-track')?.style.setProperty('--cvm-p', '0%');
       const durEl = wrap.querySelector('.cvm-dur');
-      if (durEl) durEl.textContent = fmtVoiceDur(_activeTotal || 0);
+      if (durEl) {
+        if (wrap.classList.contains('cvm-file')) { durEl.textContent = durEl.dataset.sub || ''; delete durEl.dataset.cur; }
+        else durEl.textContent = fmtVoiceDur(_activeTotal || 0);
+      }
     }
   }
   _activeBars = null; _activeBarsWrap = null; _lastFilled = -1;
@@ -411,15 +429,21 @@ function _reattachActiveVoiceUI(box) {
 }
 
 
-/* ── Play button circular EQ (classic realistic ring) ─────────────────
- * Ijro paytida tugma atrofida 16 ta radial bar — haqiqiy audio amplituda. */
-const _EQ_BARS = 16;
+/* ── Play button: silliq doira-waveform (SVG) ─────────────────────────
+ * Ijro paytida tugma atrofida yopiq silliq egri chiziq — radiusi haqiqiy audio
+ * spektr bilan o'zgaradi (chap/o'ng simmetrik). Catmull-Rom → Bezier, shuning
+ * uchun "chiziqchalar" emas, yumshoq to'lqinli doira. */
+const _EQ_PTS = 48;
+const _RING_C = 27, _RING_R0 = 20, _RING_A = 5;
+const _SVGNS = 'http://www.w3.org/2000/svg';
 let _eqCtx = null;
 let _eqAnalyser = null;
 let _eqData = null;
 let _eqRaf = null;
 let _eqBtn = null;
 let _eqSmooth = 0;
+let _ringLv = new Float32Array(_EQ_PTS);
+let _ringTmp = new Float32Array(_EQ_PTS);
 
 function _ensureEqRing(btn) {
   if (!btn) return null;
@@ -428,29 +452,53 @@ function _ensureEqRing(btn) {
   ring = document.createElement('span');
   ring.className = 'cvm-eq';
   ring.setAttribute('aria-hidden', 'true');
-  for (let i = 0; i < _EQ_BARS; i++) {
-    const b = document.createElement('span');
-    b.className = 'cvm-eq-bar';
-    b.style.setProperty('--i', String(i));
-    b.style.setProperty('--n', String(_EQ_BARS));
-    ring.appendChild(b);
-  }
+  const svg = document.createElementNS(_SVGNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 54 54');
+  svg.setAttribute('class', 'cvm-ring');
+  const path = document.createElementNS(_SVGNS, 'path');
+  path.setAttribute('class', 'cvm-ring-path');
+  svg.appendChild(path);
+  ring.appendChild(svg);
   btn.appendChild(ring);
   return ring;
+}
+
+function _ringD(lv) {
+  const n = lv.length, P = [];
+  for (let i = 0; i < n; i++) {
+    const th = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const r = _RING_R0 + lv[i] * _RING_A;
+    P.push([_RING_C + Math.cos(th) * r, _RING_C + Math.sin(th) * r]);
+  }
+  const f = v => v.toFixed(2);
+  let d = 'M' + f(P[0][0]) + ' ' + f(P[0][1]);
+  for (let i = 0; i < n; i++) {
+    const p0 = P[(i - 1 + n) % n], p1 = P[i], p2 = P[(i + 1) % n], p3 = P[(i + 2) % n];
+    d += 'C' + f(p1[0] + (p2[0] - p0[0]) / 6) + ' ' + f(p1[1] + (p2[1] - p0[1]) / 6) + ' '
+             + f(p2[0] - (p3[0] - p1[0]) / 6) + ' ' + f(p2[1] - (p3[1] - p1[1]) / 6) + ' '
+             + f(p2[0]) + ' ' + f(p2[1]);
+  }
+  return d + 'Z';
+}
+
+function _paintRing(path, opacity) {
+  // qo'shni nuqtalar bilan 3-nuqtali yumshatish → yanada silliq doira
+  const n = _EQ_PTS;
+  for (let i = 0; i < n; i++) {
+    _ringTmp[i] = (_ringLv[(i - 1 + n) % n] + 2 * _ringLv[i] + _ringLv[(i + 1) % n]) / 4;
+  }
+  path.setAttribute('d', _ringD(_ringTmp));
+  path.style.opacity = opacity.toFixed(3);
 }
 
 function _stopPlayEq() {
   if (_eqRaf) { cancelAnimationFrame(_eqRaf); _eqRaf = null; }
   if (_eqBtn) {
     _eqBtn.classList.remove('cvm-play--eq');
-    const ring = _eqBtn.querySelector('.cvm-eq');
-    if (ring) {
-      ring.querySelectorAll('.cvm-eq-bar').forEach(b => {
-        b.style.setProperty('--h', '0');
-        b.style.opacity = '0';
-      });
-    }
+    const path = _eqBtn.querySelector('.cvm-ring-path');
+    if (path) { path.removeAttribute('d'); path.style.opacity = '0'; }
   }
+  _ringLv.fill(0);
   _eqBtn = null;
   _eqSmooth = 0;
 }
@@ -459,7 +507,8 @@ function _startPlayEq(audio, btn) {
   if (!audio || !btn || audio.__noEq) return;
   _stopPlayEq();
   const ring = _ensureEqRing(btn);
-  if (!ring) return;
+  const path = ring?.querySelector('.cvm-ring-path');
+  if (!path) return;
   btn.classList.add('cvm-play--eq');
   _eqBtn = btn;
 
@@ -481,50 +530,63 @@ function _startPlayEq(audio, btn) {
     _eqAnalyser = audio.__cvmEqNode.analyser;
     _eqData = new Uint8Array(_eqAnalyser.frequencyBinCount);
 
-    const bars = ring.querySelectorAll('.cvm-eq-bar');
     const tick = () => {
       _eqRaf = null;
       if (!_eqAnalyser || !_eqBtn || !_activeAudio || _activeAudio.paused) {
         if (_eqBtn && (!_activeAudio || _activeAudio.paused)) {
-          // pause: silliq so'nish
+          // pauza: silliq so'nish
           _eqSmooth *= 0.85;
-          bars.forEach((b, i) => {
-            const h = _eqSmooth * (0.3 + 0.7 * Math.abs(Math.sin(i * 0.7)));
-            b.style.setProperty('--h', h.toFixed(3));
-            b.style.opacity = String(Math.min(1, h * 1.2));
-          });
+          for (let i = 0; i < _EQ_PTS; i++) _ringLv[i] *= 0.85;
+          _paintRing(path, 0.5 * Math.min(1, _eqSmooth * 6));
           if (_eqSmooth > 0.02) _eqRaf = requestAnimationFrame(tick);
           else _stopPlayEq();
         }
         return;
       }
       _eqAnalyser.getByteFrequencyData(_eqData);
-      const n = _eqData.length;
-      // Umumiy energiya (bass+mid)
+      const use = Math.min(48, _eqData.length);
       let sum = 0;
-      const use = Math.min(48, n);
       for (let i = 1; i < use; i++) sum += _eqData[i];
       const avg = sum / (use - 1) / 255;
       const target = Math.min(1, Math.max(0, (avg - 0.04) * 2.8));
       _eqSmooth += (target - _eqSmooth) * (target > _eqSmooth ? 0.45 : 0.18);
 
-      // Har bar o'z frekvensiya bo'lagidan + biroz global
-      const per = Math.max(1, Math.floor(use / _EQ_BARS));
-      for (let i = 0; i < bars.length; i++) {
-        let s = 0;
-        const a0 = 1 + i * per;
-        for (let j = 0; j < per && a0 + j < use; j++) s += _eqData[a0 + j];
-        const local = s / per / 255;
-        const h = Math.min(1, Math.max(0.06, local * 1.6 * 0.55 + _eqSmooth * 0.45));
-        bars[i].style.setProperty('--h', h.toFixed(3));
-        bars[i].style.opacity = String(0.35 + h * 0.65);
+      for (let i = 0; i < _EQ_PTS; i++) {
+        // f: 0 → 1 → 0 (tepada past chastota, pastda yuqori) — chap/o'ng simmetrik
+        const f = 1 - Math.abs(1 - (2 * i) / _EQ_PTS);
+        const bin = 1 + f * (use - 2);
+        const b0 = Math.floor(bin), b1 = Math.min(use - 1, b0 + 1), t = bin - b0;
+        const v = (_eqData[b0] * (1 - t) + _eqData[b1] * t) / 255;
+        const tgt = Math.min(1, Math.max(0, v * (1 + 1.3 * f) * 0.9 + _eqSmooth * 0.4));
+        _ringLv[i] += (tgt - _ringLv[i]) * (tgt > _ringLv[i] ? 0.5 : 0.2);
       }
+      _paintRing(path, 0.55 + _eqSmooth * 0.45);
       _eqRaf = requestAnimationFrame(tick);
     };
     _eqRaf = requestAnimationFrame(tick);
   } catch (e) {
     console.warn('Play EQ ishlamadi:', e?.message || e);
   }
+}
+
+/* ── Avtomatik keyingisiga o'tish: voice tugagach pastdagi keyingi voice ───── */
+function _nextVoiceBtn(btn, url) {
+  const box = $('chatThreadMessages');
+  if (!box) return null;
+  const all = Array.from(box.querySelectorAll('.chat-voice-msg'));
+  let i = -1;
+  const wrap = btn?.closest?.('.chat-voice-msg');
+  if (wrap && box.contains(wrap)) i = all.indexOf(wrap);
+  if (i < 0 && url) {                       // DOM qayta chizilgan bo'lsa — URL bo'yicha topamiz
+    const key = String(url).split('?')[0];
+    i = all.findIndex(w => String(w.dataset.url || '').split('?')[0] === key);
+  }
+  if (i < 0) return null;
+  for (let j = i + 1; j < all.length; j++) {
+    const b = all[j].querySelector('.cvm-play');
+    if (b && all[j].dataset.url) return b;
+  }
+  return null;
 }
 
 window._chatPlayVoice = function(btn) {
@@ -582,8 +644,15 @@ window._chatPlayVoice = function(btn) {
   };
   audio.onended = () => {
     if (_activeAudio !== audio) return;
+    const prevBtn = _activeBtn, prevUrl = _activeUrl;
     _stopActive();
     _syncMiniPlayer();
+    // Keyingi voice (pastda) bo'lsa — avtomatik ijro
+    const next = _nextVoiceBtn(prevBtn, prevUrl);
+    if (next) {
+      next.closest('.chat-voice-msg')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      window._chatPlayVoice(next);
+    }
   };
   audio.onerror = (e) => {
     if (_activeAudio !== audio) return;
@@ -667,8 +736,69 @@ const PAUSE_ICON = `<img src="./svg/extra/icon-4ed8972aa2b8.svg" alt="" class="i
 const LOADING_ICON = `<span class="cvm-spin" aria-hidden="true"></span>`;
 
 
+/* ── Server to'lqini (messages.waveform smallint[] 0..31) ──
+ * Server qiymati bo'lsa — decode/fetch KERAK EMAS: barlar darhol to'g'ri balandlikda chiziladi. */
+const WF_MAX = 31;
+function _wfResample(arr, count) {
+  const n = arr.length;
+  if (n === count) return arr;
+  const out = new Array(count);
+  for (let i = 0; i < count; i++) {
+    const a = Math.floor(i * n / count), b = Math.max(a + 1, Math.floor((i + 1) * n / count));
+    let m = 0;
+    for (let j = a; j < b && j < n; j++) if (arr[j] > m) m = arr[j];
+    out[i] = m;
+  }
+  return out;
+}
+function primeWaveform(url, count, arr) {
+  if (!url || !Array.isArray(arr) || arr.length < 8) return false;
+  const key = _wfKey(url, count);
+  if (_waveResolved.has(key)) return true;
+  const norm = arr.map(v => Math.max(0, Math.min(1, (Number(v) || 0) / WF_MAX)));
+  _waveResolved.set(key, _wfResample(norm, count));
+  return true;
+}
+/** Yozib olingan ovozdan serverga yuboriladigan to'lqin (0..31 butun sonlar) yoki null */
+async function getVoiceWaveform(url, count) {
+  try {
+    const norm = await Promise.race([_getWaveformData(url, count), new Promise(r => setTimeout(() => r(null), 3500))]);
+    if (!norm || !norm.length) return null;
+    return norm.map(v => Math.max(0, Math.min(WF_MAX, Math.round(v * WF_MAX))));
+  } catch (_) { return null; }
+}
+
+/* ── Audio fayl (mp3...) progress chizig'i: bosib/surib o'tkazish (seek) ── */
+let _seekBound = false;
+function _bindTrackSeek() {
+  if (_seekBound) return;
+  _seekBound = true;
+  document.addEventListener('pointerdown', (e) => {
+    const trk = e.target?.closest?.('.cvm-track');
+    if (!trk) return;
+    const btn = trk.closest('.chat-voice-msg')?.querySelector('.cvm-play');
+    if (!btn) return;
+    if (!_activeAudio || _activeBtn !== btn) { window._chatPlayVoice(btn); return; }
+    const d = _curDur();
+    if (!(d > 0)) return;
+    const apply = (ev) => {
+      const r = trk.getBoundingClientRect();
+      const p = Math.max(0, Math.min(1, (ev.clientX - r.left) / Math.max(1, r.width)));
+      try { _activeAudio.currentTime = p * d; } catch (_) {}
+      _paintProgress(true);
+    };
+    apply(e);
+    try { trk.setPointerCapture(e.pointerId); } catch (_) {}
+    const up = () => { trk.removeEventListener('pointermove', apply); trk.removeEventListener('pointerup', up); trk.removeEventListener('pointercancel', up); };
+    trk.addEventListener('pointermove', apply);
+    trk.addEventListener('pointerup', up);
+    trk.addEventListener('pointercancel', up);
+  });
+}
+
 export function initVoicePlayer(opts = {}) {
   _openChatCb = opts.openChat || null;
+  _bindTrackSeek();
 }
 
 export {
@@ -680,4 +810,6 @@ export {
   _reattachActiveVoiceUI as reattachActiveVoiceUI,
   registerLocalVoiceUrl,
   getLocalVoiceUrl,
+  primeWaveform,
+  getVoiceWaveform,
 };

@@ -36,6 +36,11 @@ let _pulseAnalyser     = null;
 let _pulseRaf          = null;
 let _pulseLevel        = 0;
 let _voiceStopRequested = false;
+let _segTimer = null;
+let _voiceTail = Promise.resolve();   // bo'laklar TARTIB bilan yuborilishi uchun navbat
+/* Bitta ovozli xabar maksimal uzunligi. Bosib turilsa, shundan keyin yozuv to'xtamaydi —
+   silliq yangi bo'lakka o'tadi, har bo'lak alohida ovozli xabar bo'lib ketadi (2 soat = 12 ta). */
+const VOICE_MAX_SEC = 600; // 10 daqiqa
 
 /* ── Rolik (dumaloq video xabar) rejimi ────────────────────────────────────
  * Logika SpaceMR camera (camera-capture.js) bilan bir xil:
@@ -463,6 +468,57 @@ function _abortVoiceUi() {
   _voiceCancelled = true;
 }
 
+/* ── Uzun yozuv: VOICE_MAX_SEC dan keyin silliq yangi bo'lakka o'tish ──────────
+ * Mikrofon oqimi (stream) OCHIQ qoladi, faqat MediaRecorder almashadi: yangisi avval
+ * boshlanadi, keyin eskisi to'xtaydi — orada uzilish ham, ovoz buzilishi ham bo'lmaydi.
+ * Har bo'lak o'zining chunk'lari bilan mustaqil fayl; navbat orqali ketma-ket yuboriladi. */
+function _deliverVoice(blob, duration) {
+  if (typeof _onVoiceRecorded !== 'function') return;
+  _voiceTail = _voiceTail
+    .then(() => _onVoiceRecorded(blob, duration))
+    .catch(() => {});
+}
+
+function _newSegmentRecorder(stream, mime) {
+  const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+  const chunks = [];
+  const t0 = performance.now();
+  rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+  rec.onstop = () => {
+    // Mikrofon faqat YAKUNIY bo'lak tugaganda o'chadi (almashtirishda emas)
+    if (rec._final) {
+      stream.getTracks().forEach(t => t.stop());
+      _mediaStream = null;
+    }
+    if (!chunks.length) return;
+    const duration = Math.max(1, Math.round((performance.now() - t0) / 1000));
+    _deliverVoice(new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' }), duration);
+  };
+  rec.start();
+  return rec;
+}
+
+function _scheduleSegment(stream, mime, ms = VOICE_MAX_SEC * 1000) {
+  clearTimeout(_segTimer);
+  _segTimer = setTimeout(() => {
+    _segTimer = null;
+    if (_voiceStopRequested || !_isHoldingVoice || !_mediaRec) return;
+    const old = _mediaRec;
+    let next;
+    try {
+      next = _newSegmentRecorder(stream, mime);   // avval yangisi boshlanadi...
+    } catch (err) {
+      console.warn("[Voice] keyingi bo'lak boshlanmadi, qayta uriniladi:", err);
+      _scheduleSegment(stream, mime, 1000);       // eskisi yozishda davom etadi
+      return;
+    }
+    _mediaRec = next;
+    try { if (old.state !== 'inactive') old.stop(); } catch (_) {}  // ...keyin eskisi to'xtaydi
+    toast(`${Math.round(VOICE_MAX_SEC / 60)} daqiqa to'ldi — yangi ovozli xabar boshlandi`);
+    _scheduleSegment(stream, mime);
+  }, ms);
+}
+
 async function startRecording() {
   _voiceStopRequested = false;
   _recChunks = [];
@@ -514,23 +570,8 @@ async function startRecording() {
       'audio/webm',
     ];
     const chosenMime = MIME_CANDIDATES.find(m => MediaRecorder.isTypeSupported?.(m));
-    const opts = chosenMime ? { mimeType: chosenMime } : {};
-
-    _mediaRec = new MediaRecorder(stream, opts);
-    _mediaRec.ondataavailable = e => {
-      if (e.data && e.data.size > 0) _recChunks.push(e.data);
-    };
-    _mediaRec.onstop = () => {
-      stream.getTracks().forEach(t => t.stop());
-      _mediaStream = null;
-      const duration = Math.round((performance.now() - _recStartTs) / 1000);
-      if (!_recChunks.length) return;
-      const mimeType = _mediaRec.mimeType || chosenMime || 'audio/webm';
-      const blob = new Blob(_recChunks, { type: mimeType });
-      if (typeof _onVoiceRecorded === 'function') _onVoiceRecorded(blob, duration);
-    };
-
-    _mediaRec.start();
+    _mediaRec = _newSegmentRecorder(stream, chosenMime || '');
+    _scheduleSegment(stream, chosenMime || '');
     _startPulse(stream);
 
   } catch (err) {
@@ -578,7 +619,9 @@ async function startRecording() {
 
 function stopRecording() {
   _voiceStopRequested = true;
+  clearTimeout(_segTimer); _segTimer = null;
   if (_mediaRec && _mediaRec.state !== 'inactive') {
+    _mediaRec._final = true;
     _mediaRec.stop();
   } else if (_mediaStream) {
     _mediaStream.getTracks().forEach(t => t.stop());
@@ -589,6 +632,7 @@ function stopRecording() {
 
 function cancelRecording() {
   _voiceStopRequested = true;
+  clearTimeout(_segTimer); _segTimer = null;
   if (_mediaRec) {
     _mediaRec.ondataavailable = null;
     _mediaRec.onstop = null;

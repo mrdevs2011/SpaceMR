@@ -366,6 +366,11 @@ button:active > img.icon {
   height: 20px !important;
   opacity: 0.95;
 }
+
+/* ── PWA: butun ekran (edge-to-edge). Status bar / pastki panel ilova rangi (#000) bilan bir xil bo'lsin:
+   manifest.json theme_color/background_color + <meta theme-color> + html/body fon — hammasi #000000. ── */
+html { background: #000000; min-height: 100%; overscroll-behavior: none; }
+body { min-height: 100vh; min-height: 100dvh; background: #000000; overscroll-behavior: none; }
 /* SSOT: feed, call, group-form, profile layout — chat thread YO'Q (mono-x) */
 /* CSS/features.css — feed, profile, nav, chat, groups. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── feed ─── */
@@ -8968,6 +8973,7 @@ button:focus-visible,
 }
 #chatThreadModal .chat-msg.theirs .cvm-play svg , #chatThreadModal .chat-msg.theirs .cvm-play img.icon {
   fill: var(--pal-black) !important;
+  filter: brightness(0) !important;   /* <img> SVG ichidagi fill CSS bilan o'zgarmaydi — qora qilamiz */
 }
 #chatThreadModal .chat-msg.theirs .cvm-bar.played {
   background: var(--pal-white) !important;
@@ -14289,6 +14295,58 @@ select.field option { background: #000000; color: var(--text); }
 .cfm-cap-dm .cfm-caption p { margin: 0; }
 #chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }
 #chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-bottom-left-radius: 5px; }
+
+/* Play tugmasi atrofidagi silliq doira-waveform (SVG halqa; chat-voice-player.js chizadi) */
+.cvm-eq .cvm-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cvm-ring-path {
+  fill: currentColor;
+  fill-opacity: 0.1;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0;
+  will-change: d, opacity;
+}
+
+.chat-msg.mine .cvm-ring-path { color: #e7e9ea; }
+.chat-msg.theirs .cvm-ring-path { color: var(--x-blue, var(--blue, #1d9bf0)); }
+
+/* Mobil: chat ro'yxatida gorizontal scroll bo'lmasin (overflow-y:auto bo'lsa overflow-x ham auto bo'lib qoladi) */
+#chatThreadModal .chat-thread-messages {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Mobil: profillarda gorizontal scroll yo'q — tablar ekranga sig'adi, modal yon tomonga surilmaydi */
+#userProfileModal { overflow-x: hidden; overscroll-behavior-x: none; }
+#userProfileModal .up-body { max-width: 100%; overflow-x: hidden; }
+#userProfileModal .up-posts-tab,
+#profileView .profile-grid-hdr { overflow-x: hidden; }
+#userProfileModal .up-posts-tab .profile-grid-tab {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 14px;
+}
+
+/* Chat profili (chat-media.js): fayl/musiqa qatorlari -20px bilan chiqib ketmasin */
+#userProfileModal #cmContent .cm-rows { margin-left: 0; margin-right: 0; width: auto; }
+
+/* Chat profili (chat-media.js): video (mp4/webm...) rasmlar bilan bir gridda preview bo'lib chiqadi */
+#cmContent .up-grid-cell--video { position: relative; overflow: hidden; background: var(--bg3); }
+#cmContent .up-grid-cell--video video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+#cmContent .cm-vbadge { position: absolute; right: 6px; bottom: 6px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0, 0, 0, .6); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#cmContent .cm-vbadge::before { content: ''; margin-left: 2px; border-style: solid; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent #fff; }
+#cmContent .cm-broken .cm-vbadge { display: none; }
+#cmViewer video { max-width: 100%; max-height: 100%; outline: none; }
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */
@@ -14628,6 +14686,23 @@ select.field option { background: #000000; color: var(--text); }
 
   100% { transform: rotate(360deg); }
 }
+
+/* ── Yuklangan audio fayl (mp3...): TO'LQINSIZ, Telegram uslubidagi oddiy progress chiziq ──
+   To'lqin (.cvm-waveform) faqat yozib olingan ovozli xabar (type='voice') uchun. */
+.chat-voice-msg.cvm-file { min-width: 220px; max-width: 280px; gap: 10px; overflow: visible; }
+.cvm-file .cvm-fmeta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.cvm-file .cvm-ftitle { font-size: 14px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cvm-file .cvm-track { position: relative; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
+.cvm-file .cvm-track::before { content: ''; position: absolute; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--cvm-track-bg, rgba(231, 233, 234, .28)); }
+.cvm-file .cvm-track-fill { position: absolute; left: 0; top: 50%; height: 3px; margin-top: -1.5px; width: var(--cvm-p, 0%); border-radius: 2px; background: var(--cvm-track-fg, #e7e9ea); transition: width .12s linear; }
+.cvm-file .cvm-track-fill::after { content: ''; position: absolute; right: -4px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; background: var(--cvm-track-fg, #e7e9ea); }
+.cvm-file .cvm-dur { font-size: 11px; line-height: 1.2; white-space: nowrap; }
+.cvm-file .cfm-dl { flex-shrink: 0; }
+.chat-msg.mine .cvm-file { --cvm-track-bg: rgba(231, 233, 234, .28); --cvm-track-fg: #e7e9ea; }
+.chat-msg.mine .cvm-file .cvm-ftitle { color: #e7e9ea; }
+.chat-msg.theirs .cvm-file { --cvm-track-bg: var(--text3); --cvm-track-fg: var(--blue); }
+.chat-msg.theirs .cvm-file .cvm-ftitle { color: var(--text); }
+.chat-msg.theirs .cvm-file .cvm-dur { color: var(--text2); }
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */

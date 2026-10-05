@@ -193,3 +193,20 @@
 
   100% { transform: rotate(360deg); }
 }
+
+/* ── Yuklangan audio fayl (mp3...): TO'LQINSIZ, Telegram uslubidagi oddiy progress chiziq ──
+   To'lqin (.cvm-waveform) faqat yozib olingan ovozli xabar (type='voice') uchun. */
+.chat-voice-msg.cvm-file { min-width: 220px; max-width: 280px; gap: 10px; overflow: visible; }
+.cvm-file .cvm-fmeta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.cvm-file .cvm-ftitle { font-size: 14px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cvm-file .cvm-track { position: relative; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
+.cvm-file .cvm-track::before { content: ''; position: absolute; left: 0; right: 0; height: 3px; border-radius: 2px; background: var(--cvm-track-bg, rgba(231, 233, 234, .28)); }
+.cvm-file .cvm-track-fill { position: absolute; left: 0; top: 50%; height: 3px; margin-top: -1.5px; width: var(--cvm-p, 0%); border-radius: 2px; background: var(--cvm-track-fg, #e7e9ea); transition: width .12s linear; }
+.cvm-file .cvm-track-fill::after { content: ''; position: absolute; right: -4px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; background: var(--cvm-track-fg, #e7e9ea); }
+.cvm-file .cvm-dur { font-size: 11px; line-height: 1.2; white-space: nowrap; }
+.cvm-file .cfm-dl { flex-shrink: 0; }
+.chat-msg.mine .cvm-file { --cvm-track-bg: rgba(231, 233, 234, .28); --cvm-track-fg: #e7e9ea; }
+.chat-msg.mine .cvm-file .cvm-ftitle { color: #e7e9ea; }
+.chat-msg.theirs .cvm-file { --cvm-track-bg: var(--text3); --cvm-track-fg: var(--blue); }
+.chat-msg.theirs .cvm-file .cvm-ftitle { color: var(--text); }
+.chat-msg.theirs .cvm-file .cvm-dur { color: var(--text2); }

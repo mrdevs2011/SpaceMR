@@ -9,7 +9,7 @@ import { sendGroupMessage, sendGroupVoice, sendGroupFile } from './groups.js';
 import { commitEdit, isEditing, getReplying, cancelReply } from './msg-menu.js';
 import { rateOk } from '../core/rate-limit.js';
 import { fileMsgPreview } from './components/video-note.js';
-import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
+import { registerLocalVoiceUrl, voiceBarCount, getVoiceWaveform } from './chat-voice-player.js';
 
 export async function sendChatMessage() {
   // Route to group/channel send if in that mode
@@ -149,14 +149,24 @@ export async function sendVoiceMessage(blob, duration) {
     const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: blob.type });
     const result = await uploadViaControllerProgress(file, 'chat-voice');
 
-    const { error } = await sb.from('messages').insert({
+    // To'lqin (0..31) — yozib olingan ovoz uchun serverda saqlanadi; mp3 kabi yuklangan fayllarda YO'Q
+    const waveform = await getVoiceWaveform(localUrl, voiceBarCount(duration));
+    const row = {
       id, chat_id: chatId, sender_id: state.me.uid, type: 'voice',
       media_path: result.path, media_type: blob.type || null,
       duration: Math.round(duration || 0),
-    });
+      ...(waveform ? { waveform } : {}),
+    };
+    let { error } = await sb.from('messages').insert(row);
+    // 069 migratsiya hali yurgizilmagan bo'lsa (waveform ustuni yo'q) — to'lqinsiz qayta urinamiz
+    if (error && waveform && /waveform|PGRST204|42703/i.test(`${error.code || ''} ${error.message || ''}`)) {
+      delete row.waveform;
+      ({ error } = await sb.from('messages').insert(row));
+    }
     if (error) throw error;
     const conf = chatState._rtLocal.get(id);
     if (conf) {
+      conf.waveform = waveform;
       conf.status = 'sent';
       conf.mediaPath = result.path;
       conf.mediaUrl = result.url || conf.mediaUrl;
@@ -168,6 +178,7 @@ export async function sendVoiceMessage(blob, duration) {
       chatState._rt.send({
         id, type: 'voice', mediaPath: result.path,
         mediaType: blob.type || null, duration: Math.round(duration || 0),
+        waveform: waveform || null,
       });
     }
     inboxSend(otherUid, { chatId, from: state.me.uid, id, text: 'Ovozli xabar', ts: Date.now() });

@@ -862,14 +862,36 @@ const _chatCtx = () => _isOpenEl('chatThreadModal') && ![
 ].some(_isOpenEl);
 const _toChat = f => document.dispatchEvent(new CustomEvent('chat:attach-file', { detail: { file: f } }));
 
+/* Ctrl+V (fayl/rasm) — qayerda ekaniga qarab, faqat 3 joyda ishlaydi:
+     1) suhbat ochiq            → shu suhbatga biriktiriladi
+     2) post yoki story oynasi  → shu composer'ga (rejimi _composerMode: post/story)
+     3) Home tab (inline composer) → home post composer'iga
+   Boshqa tab/oynalarda hech narsa qilinmaydi (oddiy matn paste esa avvalgidek ishlaydi). */
+const _PASTE_BLOCKERS = [
+  'chatThreadModal', 'userProfileModal', 'detailModal', 'settingsOverlay',
+  'cmtModal', 'zoomModal', 'grpInfoOverlay', 'grpEditOverlay', 'confirmOverlay',
+];
+function _pasteTarget() {
+  if (!state.me) return null;
+  if (_chatCtx()) return 'chat';
+  if (_isOpenEl('uploadOverlay')) return 'composer';
+  if (_PASTE_BLOCKERS.some(_isOpenEl)) return null;
+  if (state.view === 'home' && $('homeComposer')) return 'home';
+  return null;
+}
+
 window.addEventListener('paste', e => {
   for (const item of (e.clipboardData?.items || [])) {
-    if (item.kind === 'file') {
-      const f = item.getAsFile();
-      if (!f) continue;
-      if (_chatCtx()) { e.preventDefault(); _toChat(f); break; }
-      pickFile(f); $('uploadOverlay').classList.add('show'); lockScroll('uploadOverlay'); break;
-    }
+    if (item.kind !== 'file') continue;
+    const f = item.getAsFile();
+    if (!f) continue;
+    const target = _pasteTarget();
+    if (!target) return;                       // boshqa joy — Ctrl+V ishlamaydi
+    e.preventDefault();
+    if (target === 'chat') _toChat(f);
+    else if (target === 'composer') pickFile(f);
+    else { _pickHomeFile(f); $('homeComposerInput')?.focus({ preventScroll: true }); }
+    return;
   }
 });
 

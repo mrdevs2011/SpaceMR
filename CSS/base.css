@@ -259,3 +259,8 @@ button:active > img.icon {
   height: 20px !important;
   opacity: 0.95;
 }
+
+/* ── PWA: butun ekran (edge-to-edge). Status bar / pastki panel ilova rangi (#000) bilan bir xil bo'lsin:
+   manifest.json theme_color/background_color + <meta theme-color> + html/body fon — hammasi #000000. ── */
+html { background: #000000; min-height: 100%; overscroll-behavior: none; }
+body { min-height: 100vh; min-height: 100dvh; background: #000000; overscroll-behavior: none; }

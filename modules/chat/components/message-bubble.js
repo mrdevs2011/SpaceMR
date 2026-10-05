@@ -25,6 +25,7 @@ export function rememberImgRatio(img) {
 }
 /* ── Video preview: birinchi kadr + play tugmasi + davomiylik; bosilsa shu yerning o'zida ijro bo'ladi ── */
 const VID_EXT = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
+const AUD_EXT = ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'oga', 'opus', 'flac', 'weba'];
 window._chatVidMeta = function (v) {
   try {
     rememberImgRatio({ getAttribute: () => v.getAttribute('src').split('#')[0], naturalWidth: v.videoWidth, naturalHeight: v.videoHeight });
@@ -287,7 +288,9 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
   let bubbleContent = '';
 
   const _ext = String(m.fileName || '').toLowerCase().split('.').pop() || '';
-  const _isVideo = !_isImage && (String(m.mediaType || '').toLowerCase().startsWith('video') || VID_EXT.includes(_ext));
+  const _mimeL = String(m.mediaType || '').toLowerCase();
+  const _isAudio = !_isImage && !_mimeL.startsWith('video') && (_mimeL.startsWith('audio') || AUD_EXT.includes(_ext));
+  const _isVideo = !_isImage && !_isAudio && (_mimeL.startsWith('video') || VID_EXT.includes(_ext));
 
 
   /* 1v1 chat: rasm/video pufakka o'ralmaydi — faqat yupqa border. Izoh bo'lsa, u alohida kichik pufakda pastda.
@@ -361,6 +364,26 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
         ${captionHtml}
       </div>`;
     }
+  } else if (_isAudio) {
+    /* Yuklangan audio fayl (mp3...) — TO'LQIN YO'Q: Telegramdagidek play + nom + oddiy progress chiziq.
+       To'lqin faqat yozib olingan ovozli xabar (type='voice') uchun. Pleyer mantig'i umumiy (chat-voice-player.js). */
+    const _title = esc(String(m.fileName || 'Audio').replace(/\.[^.]+$/, '') || 'Audio');
+    bubbleContent = `<div class="cfm-file-wrap cfm-audio-wrap">
+      <div class="chat-voice-msg cvm-file" data-url="${safeUrl}" data-dur="0" data-name="${_title}">
+        <button class="cvm-play" type="button" onclick="window._chatPlayVoice(this)" aria-label="Ijro etish">
+          <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
+        </button>
+        <div class="cvm-fmeta">
+          <div class="cvm-ftitle">${_title}</div>
+          <div class="cvm-track" role="slider" aria-label="Ijro joyi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i class="cvm-track-fill"></i></div>
+          <span class="cvm-dur" data-sub="${fsz}">${fsz}</span>
+        </div>
+        <a class="cfm-dl" href="${safeUrl}" download="${fname}" title="Yuklab olish">
+          <img src="./svg/extra/icon-2f7c262fe1e7.svg" alt="" class="icon" width="14" height="14">
+        </a>
+      </div>
+      ${captionHtml}
+    </div>`;
   } else {
     // Other files
     bubbleContent = `<div class="cfm-file-wrap">
