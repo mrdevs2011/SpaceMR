@@ -48,6 +48,7 @@ let _currentGroupData = null;
 import { markDissolve } from '../ui/dissolve.js';
 let _gMsgs = [];            // joriy guruh threadidagi xabarlar (realtime payload shu ro'yxatga qo'llanadi)
 let _gLoaded = false;
+let _gReadMax = 0;          // boshqa a'zolardan biri o'qigan eng so'nggi vaqt (ms) — 062 (last_read_at)
 let _gRt = null;            // guruh uchun WebRTC mesh (zaxira: broadcast)
 const _gPending = new Map(); // bazadan hali tasdiqlanmagan optimistik xabarlar
 const _gUuid = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -415,7 +416,7 @@ export async function openGroupThread(groupId) {
   // Subscribe to messages
   if (_groupThreadUnsub) { _groupThreadUnsub(); _groupThreadUnsub = null; }
   let _gDead = false, _gTimer = null;
-  _gMsgs = []; _gLoaded = false; _gPending.clear();
+  _gMsgs = []; _gLoaded = false; _gReadMax = 0; _gPending.clear();
   // Tezkor yo'l: a'zolar bilan to'liq mesh (WebRTC DataChannel); baza baribir asosiy
   if (_gRt) { _gRt.close(); _gRt = null; }
   _gRt = openRtGroup(groupId, (_currentGroupData || groupData)?.members || [], {
@@ -453,6 +454,8 @@ export async function openGroupThread(groupId) {
         if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
       }
     }
+    await _gLoadReadMax(groupId);
+    if (_gDead || _currentGroupId !== groupId) return;
     _gMsgs = msgs; _gLoaded = true;
     paintGroupMessages(msgs, _currentGroupData || groupData);
     // Thread ochiq turganda kelgan xabarlar o'qilmagan bo'lib qolmasin
@@ -484,6 +487,15 @@ export async function openGroupThread(groupId) {
   window.addEventListener('spacemr:resync', sched);   // ochiq guruh chati ham uyg'onganda yangilanadi
   const gch = sb.channel('gthread-' + groupId)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, applyGroupPayload)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `group_id=eq.${groupId}` }, (p) => {
+      if (_gDead || _currentGroupId !== groupId || !_gLoaded) return;
+      const r = p.new;
+      if (!r || r.user_id === state.me?.uid || !r.last_read_at) return;
+      const t = Date.parse(r.last_read_at) || 0;
+      if (t <= _gReadMax) return;
+      _gReadMax = t;
+      paintGroupMessages(_gMsgs, _currentGroupData || groupData);
+    })
     .subscribe(st => { if (st === 'SUBSCRIBED') sched(); });
   _groupThreadUnsub = () => {
     _gDead = true; clearTimeout(_gTimer); sb.removeChannel(gch);
@@ -548,8 +560,25 @@ export function closeGroupThread() {
    ───────────────────────────────────────────────────────────────────── */
 const _senderCache = {};   // uid → profil (ism/avatar) — har chizishda tarmoqqa bormaslik uchun
 let _paintSeq = 0;
+/* Guruhda o'z xabarimni kamida 1 kishi o'qigan bo'lsa — 2 chek (status='read') */
+const _gTime = v => Number(v) || Date.parse(v) || 0;
+function _gTicked(msgs) {
+  if (!_gReadMax) return msgs;
+  const me = state.me?.uid;
+  return msgs.map(m => (m.senderId === me && m.status !== 'sending' && m.status !== 'read' && _gTime(m.createdAt) <= _gReadMax)
+    ? { ...m, status: 'read' } : m);
+}
+async function _gLoadReadMax(groupId) {
+  try {
+    const { data, error } = await sb.from('group_members').select('user_id, last_read_at').eq('group_id', groupId);
+    if (error) throw error;
+    _gReadMax = (data || []).reduce((mx, r) => (r.user_id !== state.me?.uid && r.last_read_at) ? Math.max(mx, Date.parse(r.last_read_at) || 0) : mx, 0);
+  } catch (_) { /* 062 hali ishga tushmagan — 1 chek qoladi */ }
+}
+
 async function paintGroupMessages(msgs, groupData) {
   if (!$('chatThreadMessages')) return;
+  msgs = _gTicked(msgs);
   // DM bilan BIR XIL painter (chat.js paintMessages); yagona farq — pufak sarlavhasida yuboruvchi ismi.
   // Avval keshdagi ismlar bilan darhol chizamiz, yetishmaganlari kelgach qayta chizamiz.
   chatUI.paintGroupThread(msgs, _senderCache);
@@ -559,7 +588,7 @@ async function paintGroupMessages(msgs, groupData) {
   const got = await _profilesByIds(missing);
   Object.assign(_senderCache, got);
   missing.forEach(u => { if (!_senderCache[u]) _senderCache[u] = { fullName: 'Foydalanuvchi', avatar: '' }; });
-  if (seq === _paintSeq && _currentGroupId && _gLoaded) chatUI.paintGroupThread(_gMsgs, _senderCache);
+  if (seq === _paintSeq && _currentGroupId && _gLoaded) chatUI.paintGroupThread(_gTicked(_gMsgs), _senderCache);
 }
 
 /* ── "Yozmoqda..." (DM bilan bir xil, sarlavhada; guruhda kim yozayotgani) ── */
