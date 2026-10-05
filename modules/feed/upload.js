@@ -862,11 +862,11 @@ const _chatCtx = () => _isOpenEl('chatThreadModal') && ![
 ].some(_isOpenEl);
 const _toChat = f => document.dispatchEvent(new CustomEvent('chat:attach-file', { detail: { file: f } }));
 
-/* Ctrl+V (fayl/rasm) — qayerda ekaniga qarab, faqat 3 joyda ishlaydi:
-     1) suhbat ochiq            → shu suhbatga biriktiriladi
-     2) post yoki story oynasi  → shu composer'ga (rejimi _composerMode: post/story)
-     3) Home tab (inline composer) → home post composer'iga
-   Boshqa tab/oynalarda hech narsa qilinmaydi (oddiy matn paste esa avvalgidek ishlaydi). */
+/* Ctrl+V + mobil buffer (clipboard) — rasm/fayl:
+     1) suhbat (DM yoki guruh) ochiq → chatga biriktiriladi
+     2) post / story composer → shu rejimga
+     3) Home inline composer → home post
+   Mobil: clipboardData.items ba'zan bo'sh — Clipboard API read() fallback. */
 const _PASTE_BLOCKERS = [
   'chatThreadModal', 'userProfileModal', 'detailModal', 'settingsOverlay',
   'cmtModal', 'zoomModal', 'grpInfoOverlay', 'grpEditOverlay', 'confirmOverlay',
@@ -874,26 +874,102 @@ const _PASTE_BLOCKERS = [
 function _pasteTarget() {
   if (!state.me) return null;
   if (_chatCtx()) return 'chat';
-  if (_isOpenEl('uploadOverlay')) return 'composer';
+  if (_isOpenEl('uploadOverlay')) return 'composer';  // post yoki story (_composerMode)
   if (_PASTE_BLOCKERS.some(_isOpenEl)) return null;
   if (state.view === 'home' && $('homeComposer')) return 'home';
   return null;
 }
 
-window.addEventListener('paste', e => {
-  for (const item of (e.clipboardData?.items || [])) {
-    if (item.kind !== 'file') continue;
-    const f = item.getAsFile();
-    if (!f) continue;
-    const target = _pasteTarget();
-    if (!target) return;                       // boshqa joy — Ctrl+V ishlamaydi
+/** Paste event dan fayllarni yig'ish (desktop + mobil) */
+function _filesFromPasteEvent(e) {
+  const out = [];
+  const seen = new Set();
+  const add = (f) => {
+    if (!f || !(f.size > 0)) return;
+    const key = `${f.name}|${f.size}|${f.type}|${f.lastModified || 0}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    // Nom yo'q (mobil) — image.png qilib qo'yamiz
+    if (!f.name || f.name === 'image.png' || f.name === 'blob') {
+      const ext = (f.type || 'image/png').split('/')[1]?.split(';')[0] || 'png';
+      out.push(new File([f], `clipboard-${Date.now()}.${ext}`, { type: f.type || 'image/png', lastModified: Date.now() }));
+    } else {
+      out.push(f);
+    }
+  };
+  const cd = e.clipboardData;
+  if (!cd) return out;
+  try {
+    for (const item of (cd.items || [])) {
+      // kind=file yoki type=image/* (ba'zi mobil brauzerlar)
+      if (item.kind === 'file' || (item.type && item.type.startsWith('image/'))) {
+        try { add(item.getAsFile()); } catch (_) {}
+      }
+    }
+  } catch (_) {}
+  try {
+    if (cd.files && cd.files.length) {
+      for (let i = 0; i < cd.files.length; i++) add(cd.files[i]);
+    }
+  } catch (_) {}
+  return out;
+}
+
+/** Mobil: navigator.clipboard.read() — paste eventda items bo'sh bo'lganda */
+async function _filesFromClipboardApi() {
+  if (!navigator.clipboard?.read) return [];
+  try {
+    const items = await navigator.clipboard.read();
+    const out = [];
+    for (const item of items) {
+      for (const type of item.types) {
+        if (!type.startsWith('image/') && !type.startsWith('video/')) continue;
+        try {
+          const blob = await item.getType(type);
+          const ext = type.split('/')[1]?.split(';')[0] || 'png';
+          out.push(new File([blob], `clipboard-${Date.now()}.${ext}`, {
+            type: blob.type || type,
+            lastModified: Date.now(),
+          }));
+        } catch (_) {}
+      }
+    }
+    return out;
+  } catch (_) {
+    // NotAllowedError / no permission — jim
+    return [];
+  }
+}
+
+function _routePastedFile(f) {
+  const target = _pasteTarget();
+  if (!target || !f) return false;
+  if (target === 'chat') _toChat(f);
+  else if (target === 'composer') pickFile(f);
+  else {
+    _pickHomeFile(f);
+    $('homeComposerInput')?.focus({ preventScroll: true });
+  }
+  return true;
+}
+
+function _onPasteMedia(e) {
+  const files = _filesFromPasteEvent(e);
+  if (files.length) {
+    if (!_pasteTarget()) return; // matn paste ishlasin
     e.preventDefault();
-    if (target === 'chat') _toChat(f);
-    else if (target === 'composer') pickFile(f);
-    else { _pickHomeFile(f); $('homeComposerInput')?.focus({ preventScroll: true }); }
+    _routePastedFile(files[0]);
     return;
   }
-});
+  // Mobil fallback: eventda fayl yo'q, lekin bufferda rasm bor bo'lishi mumkin
+  const target = _pasteTarget();
+  if (!target) return;
+  _filesFromClipboardApi().then(list => {
+    if (list[0]) _routePastedFile(list[0]);
+  });
+}
+
+window.addEventListener('paste', _onPasteMedia, true); // capture — input ichida ham
 
 /* ── Sahifaning istalgan joyiga fayl tashlash → composer ochiladi ───── */
 let _dragDepth = 0;
