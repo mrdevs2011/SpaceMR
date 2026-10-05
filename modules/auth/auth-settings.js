@@ -174,7 +174,7 @@ if (helpBtn) {
   helpBtn.onclick = () => {
     const href = (helpBtn.dataset.href || '').trim();
     if (!href) { toast('Yordam manzili hali sozlanmagan', 'error'); return; }
-    window.open(href, '_blank', 'noopener');
+    location.assign(href);
   };
 }
 

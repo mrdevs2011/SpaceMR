@@ -50,7 +50,7 @@ export function renderMarkdown(rawText) {
   s = s.replace(/\|\|([\s\S]*?)\|\|/g, '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
 
   s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+?)(?:\s+"[^"]*")?\)/g,
-    '<a href="$2" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
+    '<a href="$2" class="md-link">$1</a>');
 
   const htmlTags = [];
   s = s.replace(/<[^>]+>/g, m => {
@@ -59,7 +59,7 @@ export function renderMarkdown(rawText) {
   });
 
   // \u0000 (placeholder) va qo'shtirnoqlarda to'xtaydi — aks holda tayyor <a> tegi href ichiga tushib, atribut in'ektsiyasi bo'ladi
-  s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, '<a href="$1" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
+  s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, '<a href="$1" class="md-link">$1</a>');
 
   s = s.replace(/\u0000TG(\d+)\u0000/g, (_m, idx) => htmlTags[parseInt(idx, 10)]);
 
@@ -246,8 +246,7 @@ export async function dlFile(url, name) {
     setTimeout(() => { URL.revokeObjectURL(burl); a.remove(); }, 1000);
     toast('Yuklab olindi!', 'success');
   } catch {
-    window.open(url, '_blank');
-    toast('Yangi oynada ochildi', 'info');
+    location.assign(url);
   }
 }
 
@@ -286,7 +285,7 @@ function _zMid(t) {
 
 export function openZoom(url, type) {
   const im = $('zoomImg'), zm = $('zoomModal');
-  if (!im || !zm) { window.open(url, '_blank'); return; }
+  if (!im || !zm) { location.assign(url); return; }
   _zReset();
   const isAvi = type === 'avatar';
   zm.classList.toggle('zoom-avatar', isAvi);
@@ -308,7 +307,7 @@ export function openZoom(url, type) {
     im.style.maxWidth = '96vw';
     im.style.maxHeight = '96dvh';
   } else {
-    window.open(url, '_blank');
+    location.assign(url);
     return;
   }
   im.style.transform = 'translate(0,0) scale(1)';

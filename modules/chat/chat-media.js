@@ -121,7 +121,7 @@ function _rowsAudio() {
 }
 function _rowsFiles() {
   return _data.file.map(m => `
-    <a class="cm-row" href="${_url(m)}" target="_blank" rel="noopener" download="${esc(m.fileName || 'file')}">
+    <a class="cm-row" href="${_url(m)}" download="${esc(m.fileName || 'file')}">
       <div class="cm-ico">${ICON_FILE}</div>
       <div class="cm-info"><div class="cm-fn">${esc(m.fileName || 'Fayl')}</div><div class="cm-sub">${esc(_sub(m))}</div></div>
       <div class="cm-dl">${ICON_DL}</div>

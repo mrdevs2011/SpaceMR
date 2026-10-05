@@ -550,7 +550,7 @@ function bindFeedEvents(feedEl) {
     const card = t.closest('.file-card');
     if (card && !t.closest('.file-dl')) {
       const url = card.dataset.url;
-      if (url) window.open(url, '_blank', 'noopener');
+      if (url) location.assign(url);
       return;
     }
     const capMore = t.closest('.cap-more');

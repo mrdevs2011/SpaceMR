@@ -44,7 +44,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       bubbleClassExtra = ' bubble-media-only';
       metaOutside = false;
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone">
-        <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link"${_ttl}>
+        <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
           <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
         </a>
         <span class="chat-msg-meta cfm-media-badge">
@@ -55,7 +55,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     } else {
       bubbleClassExtra = ' bubble-media-caption';
       bubbleContent = `<div class="cfm-media-wrap">
-        <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link"${_ttl}>
+        <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
           <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
         </a>
         ${captionHtml}
@@ -67,10 +67,10 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       <div class="chat-file-msg">
         <div class="cfm-icon">${getChatFileIcon(m.fileName, m.mediaType)}</div>
         <div class="cfm-info">
-          <a class="cfm-name cfm-name--link" href="${safeUrl}" target="_blank" rel="noopener" title="Ochish">${fname}</a>
+          <a class="cfm-name cfm-name--link" href="${safeUrl}" title="Ochish">${fname}</a>
           ${fsz ? `<div class="cfm-size">${fsz}</div>` : ''}
         </div>
-        <a class="cfm-dl" href="${safeUrl}" download="${fname}" target="_blank" title="Yuklab olish">
+        <a class="cfm-dl" href="${safeUrl}" download="${fname}" title="Yuklab olish">
           <img src="./svg/extra/icon-2f7c262fe1e7.svg" alt="" class="icon" width="14" height="14">
         </a>
       </div>

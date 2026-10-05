@@ -1012,7 +1012,7 @@ export async function openGroupInfo(groupId) {
             if (typeof openZoom === 'function') {
               openZoom(cell.dataset.url, cell.dataset.type);
             } else {
-              window.open(cell.dataset.url, '_blank', 'noopener');
+              location.assign(cell.dataset.url);
             }
           });
         });
