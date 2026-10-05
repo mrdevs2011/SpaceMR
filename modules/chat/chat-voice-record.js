@@ -4,7 +4,7 @@
  */
 import { $ } from '../core/utils.js';
 import { videoNoteFileName } from './components/video-note.js';
-import { mediaErrorKind } from './camera-access.js';
+import { mediaErrorKind, trackSupportsTorch, setTorch } from './camera-access.js';
 import { toast } from '../ui/toast.js';
 
 let _onVoiceRecorded = null;
@@ -38,8 +38,9 @@ let _pulseLevel        = 0;
 let _voiceStopRequested = false;
 let _segTimer = null;
 let _voiceTail = Promise.resolve();   // bo'laklar TARTIB bilan yuborilishi uchun navbat
-/* Bitta ovozli xabar maksimal uzunligi. Bosib turilsa, shundan keyin yozuv to'xtamaydi —
-   silliq yangi bo'lakka o'tadi, har bo'lak alohida ovozli xabar bo'lib ketadi (2 soat = 12 ta). */
+/* Bitta ovozli xabar maksimal uzunligi (10 daqiqa).
+   Limitga yetganda yozuv TO'XTAYDI — keyingi ovoz uchun yana bosib yozish kerak
+   (avtomatik yangi bo'lak boshlanmaydi). */
 const VOICE_MAX_SEC = 600; // 10 daqiqa
 
 /* ── Rolik (dumaloq video xabar) rejimi ────────────────────────────────────
@@ -57,7 +58,7 @@ const VID_AUDIO_BITRATE = 64000;
 let _recMode = 'audio';
 try { if (localStorage.getItem(_MODE_KEY) === 'video') _recMode = 'video'; } catch (_) {}
 /* Qurilmalar: sayt mikrofon/kamera borligini o'zi biladi (ulanganda/uzilganda ham — 'devicechange') */
-let _hasMic = true, _hasCam = true;
+let _hasMic = true, _hasCam = true, _camCount = 0, _vidTorchSeen = false;
 let _onDevicesChange = null;
 function _effMode() {
   if (!_hasMic && !_hasCam) return 'none';
@@ -73,6 +74,7 @@ async function _scanDevices() {
       const d = await navigator.mediaDevices.enumerateDevices();
       _hasMic = d.some(x => x.kind === 'audioinput');
       _hasCam = d.some(x => x.kind === 'videoinput');
+      _camCount = d.filter(x => x.kind === 'videoinput').length;
     } else { _hasMic = _hasCam = false; }
   } catch (_) {}
   _applyRecMode();
@@ -102,14 +104,122 @@ function _toggleRecMode() {
   _applyRecMode();
 }
 
+/* ── Rolik: Telegram uslubida LOCK + kamera almashtirish ─────────────────────
+ * Bosib turib YUQORIGA surilsa → qulflanadi: qo'l bo'shaydi, yozuv davom etadi,
+ *   old/orqa kamera almashadi (yozuv TO'XTAMAYDI — canvas orqali bitta uzluksiz video),
+ *   orqa kamerada fonar tugmasi chiqadi. Qulflangan yozuvda yozuv tugmasini yana bossangiz — yuboriladi;
+ *   «Bekor qilish» — o'chiriladi; 1 daqiqada o'zi yuboriladi.
+ * Qulflanmagan (bosib turish): qo'yib yuborilsa yuboriladi; kamera almashtirib bo'lmaydi. */
+const VID_SIZE = 360;
+const _VID_LOCK_DIST = 90;   // px yuqoriga (rolik + oddiy ovoz uchun bir xil)
+let _vidLocked = false, _vidFacing = 'user', _vidTorchOn = false, _vidSwitching = false;
+/* Oddiy ovoz: yuqoriga surilsa qulflanadi (rolik bilan bir xil UX) */
+let _voiceLocked = false;
+let _vidVideoTrack = null, _vidAudioTracks = [];
+let _vidCanvas = null, _vidCtx = null, _vidRaf = 0, _vidLastDraw = 0, _vidOutStream = null, _vidUseCanvas = false, _vidPreviewEl = null;
+
+const _VN_ICO_FLIP = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>';
+const _VN_ICO_FLASH = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>';
+
+function _vidVideoConstraints(face) {
+  return { facingMode: { ideal: face }, width: { ideal: VID_SIZE }, height: { ideal: VID_SIZE }, aspectRatio: { ideal: 1 }, frameRate: { ideal: 24, max: 30 } };
+}
+
+function _vidWaitFrame(v, ms) {
+  return new Promise(res => {
+    if (!v) { res(); return; }
+    let done = false;
+    const fin = () => { if (!done) { done = true; res(); } };
+    setTimeout(fin, ms);
+    if (v.readyState >= 2 && v.videoWidth) { fin(); return; }
+    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(fin);
+    else v.addEventListener('loadeddata', fin, { once: true });
+  });
+}
+
+/* Canvas pipeline: kamera → kvadrat canvas → MediaRecorder. Kamera almashganda recorder to'xtamaydi,
+   canvas oxirgi kadrni ushlab turadi. */
+function _vidPaint() {
+  const v = _vidPreviewEl;
+  if (!_vidCtx || _vidSwitching || !v || v.readyState < 2 || !v.videoWidth) return;
+  const S = VID_SIZE, vw = v.videoWidth, vh = v.videoHeight;
+  const sc = Math.max(S / vw, S / vh), dw = vw * sc, dh = vh * sc;
+  _vidCtx.drawImage(v, (S - dw) / 2, (S - dh) / 2, dw, dh);
+}
+function _vidLoop(ts) {
+  _vidRaf = requestAnimationFrame(_vidLoop);
+  if (ts - _vidLastDraw < 30) return;   // ~30 fps
+  _vidLastDraw = ts;
+  _vidPaint();
+}
+function _vidBuildOut(pv, audioTracks) {
+  _vidPreviewEl = pv;
+  _vidCanvas = document.createElement('canvas');
+  _vidCanvas.width = _vidCanvas.height = VID_SIZE;
+  _vidCtx = _vidCanvas.getContext('2d', { alpha: false });
+  _vidCtx.fillStyle = '#000';
+  _vidCtx.fillRect(0, 0, VID_SIZE, VID_SIZE);
+  _vidPaint();
+  _vidLastDraw = 0;
+  _vidRaf = requestAnimationFrame(_vidLoop);
+  const out = new MediaStream(_vidCanvas.captureStream(30).getVideoTracks());
+  audioTracks.forEach(t => out.addTrack(t));
+  return out;
+}
+function _vidTeardownCanvas() {
+  cancelAnimationFrame(_vidRaf); _vidRaf = 0;
+  if (_vidUseCanvas) { try { _vidOutStream?.getVideoTracks().forEach(t => t.stop()); } catch (_) {} }
+  _vidOutStream = null; _vidCanvas = null; _vidCtx = null; _vidPreviewEl = null;
+}
+function _vidStopAll() {
+  _vidTeardownCanvas();
+  try { _vidStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
+  try { _vidVideoTrack?.stop(); } catch (_) {}
+  _vidStream = null; _vidVideoTrack = null; _vidAudioTracks = [];
+  _vidSwitching = false;
+}
+
+/* ── Lock hint (yozuv tugmasi tepasida) ── */
+function _lockHintEl() {
+  let el = document.getElementById('vnLockHint');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'vnLockHint';
+    el.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>'
+      + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function _showLockHint() {
+  const btn = $('chatVoiceBtn');
+  const el = _lockHintEl();
+  if (btn) {
+    const r = btn.getBoundingClientRect();
+    el.style.left = Math.round(r.left + r.width / 2 - 18) + 'px';
+    el.style.top = Math.max(8, Math.round(r.top - 96)) + 'px';
+  }
+  el.style.setProperty('--lp', '0');
+  el.classList.add('show');
+}
+function _setLockProgress(p) { document.getElementById('vnLockHint')?.style.setProperty('--lp', String(p)); }
+function _hideLockHint() { document.getElementById('vnLockHint')?.classList.remove('show'); }
+
+/* ── Preview (ekran o'rtasidagi doira) ── */
 function _showVidPreview(stream) {
   let el = document.getElementById('vnotePreview');
   if (!el) {
     el = document.createElement('div');
     el.id = 'vnotePreview';
-    el.innerHTML = '<div class="vnp-circle"><video class="vnp-video" muted playsinline autoplay></video>'
-      + '<svg class="vnp-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="vnp-ring-fg" cx="50" cy="50" r="48"/></svg></div>';
+    el.innerHTML = '<div class="vnp-stage"><div class="vnp-circle"><video class="vnp-video" muted playsinline autoplay></video><canvas class="vnp-freeze"></canvas>'
+      + '<svg class="vnp-ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="vnp-ring-fg" cx="50" cy="50" r="48"/></svg></div>'
+      + '<div class="vnp-ctrls">'
+      + '<button type="button" class="vnp-btn vnp-flip" aria-label="Kamerani almashtirish">' + _VN_ICO_FLIP + '</button>'
+      + '<button type="button" class="vnp-btn vnp-flash" aria-label="Fonar" hidden>' + _VN_ICO_FLASH + '</button>'
+      + '</div></div>';
     document.body.appendChild(el);
+    el.querySelector('.vnp-flip').addEventListener('click', () => _vidFlip());
+    el.querySelector('.vnp-flash').addEventListener('click', () => _vidToggleTorch());
   }
   const v = el.querySelector('video');
   v.srcObject = stream;
@@ -128,36 +238,200 @@ function _hideVidPreview() {
   clearInterval(_vidRingTimer); _vidRingTimer = null;
   const el = document.getElementById('vnotePreview');
   if (!el) return;
-  el.classList.remove('show');
+  el.classList.remove('show', 'locked');
   const v = el.querySelector('video');
   if (v) v.srcObject = null;
+  el.querySelector('.vnp-freeze')?.classList.remove('show');
+}
+
+/* Lock holati tugmalari: flip har doim (lock bo'lganda), fonar — faqat ORQA kamerada */
+function _vidSyncCtrls() {
+  const el = document.getElementById('vnotePreview');
+  if (!el) return;
+  const back = _vidFacing === 'environment';
+  const fl = el.querySelector('.vnp-flash');
+  if (fl) {
+    // Fonar: faqat qurilmada bor bo'lsa; old kamerada sekin yo'qoladi, orqada qaytadi
+    const trackOk = trackSupportsTorch(_vidVideoTrack);
+    if (trackOk) _vidTorchSeen = true;
+    fl.hidden = !_vidTorchSeen;
+    fl.classList.toggle('off', !trackOk);
+    fl.classList.toggle('on', _vidTorchOn);
+  }
+  el.querySelector('.vnp-video')?.classList.toggle('back', back);
+  const fb = el.querySelector('.vnp-flip');
+  if (fb) fb.hidden = !_vidUseCanvas || _camCount < 2;   // bitta kamera — almashtirish yo'q
+}
+
+async function _vidToggleTorch() {
+  const t = _vidVideoTrack;
+  if (!t || _vidSwitching) return;
+  if (!trackSupportsTorch(t)) { toast('Bu qurilmada fonar ishlamaydi', 'error'); return; }
+  _vidTorchOn = !_vidTorchOn;
+  const ok = await setTorch(t, _vidTorchOn);
+  if (!ok) { _vidTorchOn = false; toast("Fonarni yoqib bo'lmadi", 'error'); }
+  _vidSyncCtrls();
+}
+
+async function _vidFlip() {
+  if (!_vidLocked || !_vidActive || _vidSwitching || !_vidRec) return;
+  if (!_vidUseCanvas) { toast("Bu brauzerda yozuv paytida kamerani almashtirib bo'lmaydi", 'error'); return; }
+  _vidSwitching = true;
+  const el = document.getElementById('vnotePreview');
+  const pv = el?.querySelector('video');
+  const fz = el?.querySelector('.vnp-freeze');
+  const prevFace = _vidFacing;
+  const next = prevFace === 'user' ? 'environment' : 'user';
+  let failed = false;
+  // Oxirgi kadr xira holda ushlab turiladi (qora ekran ko'rinmaydi)
+  try {
+    if (fz && pv?.videoWidth) {
+      fz.width = 180; fz.height = 180;
+      const sc = Math.max(180 / pv.videoWidth, 180 / pv.videoHeight);
+      const dw = pv.videoWidth * sc, dh = pv.videoHeight * sc;
+      fz.getContext('2d').drawImage(pv, (180 - dw) / 2, (180 - dh) / 2, dw, dh);
+      fz.classList.toggle('back', prevFace === 'environment');
+      fz.classList.add('show');
+    }
+  } catch (_) {}
+  try {
+    if (_vidTorchOn) { try { await setTorch(_vidVideoTrack, false); } catch (_) {} _vidTorchOn = false; }
+    try { _vidVideoTrack?.stop(); } catch (_) {}
+    let ns = null;
+    try {
+      ns = await navigator.mediaDevices.getUserMedia({ audio: false, video: _vidVideoConstraints(next) });
+      _vidFacing = next;
+    } catch (_) {
+      toast("Kamerani almashtirib bo'lmadi", 'error');
+      try { ns = await navigator.mediaDevices.getUserMedia({ audio: false, video: _vidVideoConstraints(prevFace) }); }
+      catch (_2) { failed = true; }
+    }
+    if (ns) {
+      _vidVideoTrack = ns.getVideoTracks()[0];
+      if (pv) { pv.srcObject = new MediaStream([_vidVideoTrack]); pv.play().catch(() => {}); }
+    }
+  } finally {
+    if (!failed) {
+      _vidSyncCtrls();
+      await new Promise(r => {
+        const t = setTimeout(r, 900);
+        if (pv?.requestVideoFrameCallback) pv.requestVideoFrameCallback(() => { clearTimeout(t); r(); });
+        else setTimeout(r, 150);
+      });
+      fz?.classList.remove('show');
+    }
+    _vidSwitching = false;
+  }
+  if (failed) _vidCancelLocked();
+}
+
+function _lockVideo() {
+  if (_vidLocked || !_vidActive) return;
+  _vidLocked = true;
+  _voiceCancelled = false;
+  _hideLockHint();
+  const btn = $('chatVoiceBtn');
+  if (btn) { btn.classList.add('vn-locked'); btn.classList.remove('cancelling'); }
+  _clearVoiceCancelVisuals();
+  const bar = $('chatRecordBar');
+  if (bar) { bar.classList.add('locked'); bar.classList.remove('cancelling'); }
+  const ct = $('crbCancelText');
+  if (ct) { ct.textContent = 'Bekor qilish'; ct.style.opacity = '1'; }
+  $('vnotePreview')?.classList.add('locked');
+  _vidSyncCtrls();
+  try { navigator.vibrate?.(15); } catch (_) {}
+}
+
+function _vidResetLockUi() {
+  _vidLocked = false;
+  _hideLockHint();
+  $('chatVoiceBtn')?.classList.remove('vn-locked');
+  $('chatRecordBar')?.classList.remove('locked');
+  $('vnotePreview')?.classList.remove('locked');
+  if (_vidTorchOn) { try { setTorch(_vidVideoTrack, false); } catch (_) {} _vidTorchOn = false; }
+}
+
+/* Qulflangan yozuvni yuborish (yozuv tugmasi yana bosilganda yoki 1 daqiqada) */
+function _vidSendLocked() {
+  if (!_vidLocked || !_vidActive) return;
+  _vidActive = false;
+  $('chatVoiceBtn')?.classList.remove('recording', 'cancelling');
+  _hideRecordBar();
+  stopVideoRecording();
+}
+function _vidCancelLocked() {
+  _vidActive = false;
+  $('chatVoiceBtn')?.classList.remove('recording', 'cancelling');
+  _hideRecordBar();
+  cancelVideoRecording();
+  toast('Video xabar bekor qilindi');
+}
+
+/* ── Oddiy ovoz LOCK (rolik bilan bir xil UX: yuqoriga surish) ─────────────── */
+function _lockVoice() {
+  if (_voiceLocked || _vidActive) return;
+  if (!_mediaRec || _mediaRec.state === 'inactive') return;
+  _voiceLocked = true;
+  _voiceCancelled = false;
+  _hideLockHint();
+  const btn = $('chatVoiceBtn');
+  if (btn) { btn.classList.add('vn-locked'); btn.classList.remove('cancelling'); }
+  _clearVoiceCancelVisuals();
+  const bar = $('chatRecordBar');
+  if (bar) { bar.classList.add('locked'); bar.classList.remove('cancelling'); }
+  const ct = $('crbCancelText');
+  if (ct) { ct.textContent = 'Bekor qilish'; ct.style.opacity = '1'; }
+  try { navigator.vibrate?.(15); } catch (_) {}
+}
+function _voiceResetLockUi() {
+  _voiceLocked = false;
+  _hideLockHint();
+  $('chatVoiceBtn')?.classList.remove('vn-locked');
+  $('chatRecordBar')?.classList.remove('locked');
+}
+function _voiceSendLocked() {
+  if (!_voiceLocked) return;
+  _isHoldingVoice = false;
+  $('chatVoiceBtn')?.classList.remove('recording', 'cancelling');
+  _hideRecordBar();
+  stopRecording();
+  _voiceResetLockUi();
+}
+function _voiceCancelLocked() {
+  _isHoldingVoice = false;
+  $('chatVoiceBtn')?.classList.remove('recording', 'cancelling');
+  _hideRecordBar();
+  cancelRecording();
+  _voiceResetLockUi();
+  toast('Ovozli xabar bekor qilindi');
 }
 
 async function startVideoRecording() {
   _voiceStopRequested = false;
   _vidChunks = [];
+  _vidFacing = 'user'; _vidTorchOn = false; _vidSwitching = false;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: _hasMic,   // mikrofon bo'lmasa ham rolik (ovozsiz) olinaveradi
-      video: { facingMode: 'user', width: { ideal: 360 }, height: { ideal: 360 }, aspectRatio: { ideal: 1 }, frameRate: { ideal: 24, max: 30 } },
+      video: _vidVideoConstraints('user'),
     });
     _vidStream = stream;
+    _vidVideoTrack = stream.getVideoTracks()[0] || null;
+    _vidAudioTracks = stream.getAudioTracks();
     // Ruxsat dialogi paytida pointer yo'qolishi mumkin — stream olindi, hold qayta tekshiriladi
     if (_voiceStopRequested) {
-      stream.getTracks().forEach(t => t.stop());
-      _vidStream = null;
+      _vidStopAll();
       _stopPulse();
       return;
     }
     if (!_isHoldingVoice && !_vidActive) {
       // Hali yozuv UI boshlanmagan va hold yo'q — to'xtat
-      stream.getTracks().forEach(t => t.stop());
-      _vidStream = null;
+      _vidStopAll();
       _stopPulse();
       return;
     }
     // Hold yo'qolgan bo'lsa ham (permission UI) — yozishni davom ettiramiz, user qo'yib yuborganda to'xtaydi
-    _isHoldingVoice = true;
+    if (!_vidLocked) _isHoldingVoice = true;
     _vidActive = true;
     // Mobile: vp8 tezroq encode/decode; mp4 (h264) ba'zi Androidlarda yaxshi
     const cands = [
@@ -169,16 +443,34 @@ async function startVideoRecording() {
     const mime = cands.find(m => MediaRecorder.isTypeSupported?.(m)) || '';
     const opts = { videoBitsPerSecond: VID_BITRATE, audioBitsPerSecond: VID_AUDIO_BITRATE };
     if (mime) opts.mimeType = mime;
+
+    // Preview avval; birinchi kadr kelgach yozuv boshlanadi (boshida qora kadr bo'lmasin)
+    _vidStartTs = performance.now();
+    _showVidPreview(new MediaStream(_vidVideoTrack ? [_vidVideoTrack] : []));
+    const pv = $('vnotePreview')?.querySelector('video');
+    await _vidWaitFrame(pv, 900);
+    if (_voiceStopRequested || !_vidActive) {
+      _vidStopAll();
+      _hideVidPreview();
+      _stopPulse();
+      return;
+    }
+
+    _vidUseCanvas = typeof HTMLCanvasElement !== 'undefined' && !!HTMLCanvasElement.prototype.captureStream;
+    _vidOutStream = _vidUseCanvas
+      ? _vidBuildOut(pv, _vidAudioTracks)
+      : new MediaStream([...(_vidVideoTrack ? [_vidVideoTrack] : []), ..._vidAudioTracks]);
+    _vidSyncCtrls();
     try {
       _vidRec = mime
-        ? new MediaRecorder(stream, opts)
-        : new MediaRecorder(stream, { videoBitsPerSecond: VID_BITRATE, audioBitsPerSecond: VID_AUDIO_BITRATE });
+        ? new MediaRecorder(_vidOutStream, opts)
+        : new MediaRecorder(_vidOutStream, { videoBitsPerSecond: VID_BITRATE, audioBitsPerSecond: VID_AUDIO_BITRATE });
     } catch (_)
     {
-      try { _vidRec = new MediaRecorder(stream); }
+      try { _vidRec = new MediaRecorder(_vidOutStream); }
       catch (e2) {
-        stream.getTracks().forEach(t => t.stop());
-        _vidStream = null;
+        _vidStopAll();
+        _hideVidPreview();
         _abortVoiceUi();
         toast("Video yozib bo'lmadi", "error");
         return;
@@ -186,8 +478,7 @@ async function startVideoRecording() {
     }
     _vidRec.ondataavailable = e => { if (e.data && e.data.size > 0) _vidChunks.push(e.data); };
     _vidRec.onstop = () => {
-      stream.getTracks().forEach(t => t.stop());
-      _vidStream = null;
+      _vidStopAll();
       const sec = Math.max(1, Math.round((performance.now() - _vidStartTs) / 1000));
       if (!_vidChunks.length) return;
       const type = String(_vidRec?.mimeType || mime || 'video/webm').split(';')[0];
@@ -207,12 +498,12 @@ async function startVideoRecording() {
     };
     _vidStartTs = performance.now();
     _vidRec.start(500);
-    _showVidPreview(stream);
     _startPulse(stream);
     clearTimeout(_vidAutoStop);
-    // 1 daqiqa — kamera bilan bir xil avto-to'xtash
+    // 1 daqiqa — avto-yuborish (qulflangan bo'lsa ham, bosib turilgan bo'lsa ham)
     _vidAutoStop = setTimeout(() => {
-      if (_isHoldingVoice || _vidActive) _finishHoldRef?.();
+      if (_vidLocked) _vidSendLocked();
+      else if (_isHoldingVoice || _vidActive) _finishHoldRef?.();
     }, VID_MAX_SEC * 1000);
   } catch (err) {
     console.error('Kamera xatosi:', err);
@@ -227,12 +518,12 @@ async function startVideoRecording() {
 function stopVideoRecording() {
   _voiceStopRequested = true;
   clearTimeout(_vidAutoStop); _vidAutoStop = null;
+  _vidResetLockUi();
   _hideVidPreview();
   if (_vidRec && _vidRec.state !== 'inactive') {
     try { _vidRec.stop(); } catch (_) {}
-  } else if (_vidStream) {
-    _vidStream.getTracks().forEach(t => t.stop());
-    _vidStream = null;
+  } else {
+    _vidStopAll();
   }
   _stopPulse();
 }
@@ -242,6 +533,7 @@ function cancelVideoRecording() {
   clearTimeout(_vidAutoStop); _vidAutoStop = null;
   clearTimeout(_vidHoldTimer); _vidHoldTimer = null;
   _vidActive = false;
+  _vidResetLockUi();
   _hideVidPreview();
   if (_vidRec) {
     _vidRec.ondataavailable = null;
@@ -249,7 +541,7 @@ function cancelVideoRecording() {
     if (_vidRec.state !== 'inactive') { try { _vidRec.stop(); } catch (_) {} }
     _vidRec = null;
   }
-  if (_vidStream) { _vidStream.getTracks().forEach(t => t.stop()); _vidStream = null; }
+  _vidStopAll();
   _vidChunks = [];
   _stopPulse();
 }
@@ -285,7 +577,8 @@ function _showRecordBar() {
 
 function _hideRecordBar() {
   const bar = $('chatRecordBar');
-  if (bar) bar.classList.remove('active', 'cancelling');
+  if (bar) bar.classList.remove('active', 'cancelling', 'locked');
+  _hideLockHint();
   if (_recTimerInterval) { clearInterval(_recTimerInterval); _recTimerInterval = null; }
   const wrap = $('chatVoiceWrap');
   if (wrap) wrap.classList.remove('cancelling');
@@ -461,17 +754,14 @@ function _micErrorKind(err) { return mediaErrorKind(err); }   // umumiy: camera-
 
 function _abortVoiceUi() {
   cancelVideoRecording();
-  $('chatVoiceBtn')?.classList.remove('recording', 'cancelling');
+  $('chatVoiceBtn')?.classList.remove('recording', 'cancelling', 'vn-locked');
   _hideRecordBar();
   _stopPulse();
   _isHoldingVoice = false;
   _voiceCancelled = true;
 }
 
-/* ── Uzun yozuv: VOICE_MAX_SEC dan keyin silliq yangi bo'lakka o'tish ──────────
- * Mikrofon oqimi (stream) OCHIQ qoladi, faqat MediaRecorder almashadi: yangisi avval
- * boshlanadi, keyin eskisi to'xtaydi — orada uzilish ham, ovoz buzilishi ham bo'lmaydi.
- * Har bo'lak o'zining chunk'lari bilan mustaqil fayl; navbat orqali ketma-ket yuboriladi. */
+/* ── Uzun yozuv: VOICE_MAX_SEC da to'xtaydi (yangi bo'lak avtomatik boshlanmaydi) ── */
 function _deliverVoice(blob, duration) {
   if (typeof _onVoiceRecorded !== 'function') return;
   _voiceTail = _voiceTail
@@ -498,29 +788,30 @@ function _newSegmentRecorder(stream, mime) {
   return rec;
 }
 
-function _scheduleSegment(stream, mime, ms = VOICE_MAX_SEC * 1000) {
+/* 10 daqiqa limit: yozuv to'xtaydi, keyingi ovoz uchun yana bosish kerak */
+function _scheduleVoiceMaxStop(ms = VOICE_MAX_SEC * 1000) {
   clearTimeout(_segTimer);
   _segTimer = setTimeout(() => {
     _segTimer = null;
-    if (_voiceStopRequested || !_isHoldingVoice || !_mediaRec) return;
-    const old = _mediaRec;
-    let next;
-    try {
-      next = _newSegmentRecorder(stream, mime);   // avval yangisi boshlanadi...
-    } catch (err) {
-      console.warn("[Voice] keyingi bo'lak boshlanmadi, qayta uriniladi:", err);
-      _scheduleSegment(stream, mime, 1000);       // eskisi yozishda davom etadi
-      return;
+    if (_voiceStopRequested || !_mediaRec) return;
+    // Qulflangan yoki bosib turilgan — bir xil: yozuvni yakunlab yuboramiz
+    toast(`${Math.round(VOICE_MAX_SEC / 60)} daqiqa to'ldi — ovoz yuborildi`);
+    if (_voiceLocked) {
+      _voiceSendLocked();
+    } else {
+      _isHoldingVoice = false;
+      $('chatVoiceBtn')?.classList.remove('recording', 'cancelling');
+      _clearVoiceCancelVisuals();
+      _hideRecordBar();
+      stopRecording();
+      _voiceResetLockUi();
     }
-    _mediaRec = next;
-    try { if (old.state !== 'inactive') old.stop(); } catch (_) {}  // ...keyin eskisi to'xtaydi
-    toast(`${Math.round(VOICE_MAX_SEC / 60)} daqiqa to'ldi — yangi ovozli xabar boshlandi`);
-    _scheduleSegment(stream, mime);
   }, ms);
 }
 
 async function startRecording() {
   _voiceStopRequested = false;
+  _voiceLocked = false;
   _recChunks = [];
   _recStartTs = performance.now();
 
@@ -571,7 +862,7 @@ async function startRecording() {
     ];
     const chosenMime = MIME_CANDIDATES.find(m => MediaRecorder.isTypeSupported?.(m));
     _mediaRec = _newSegmentRecorder(stream, chosenMime || '');
-    _scheduleSegment(stream, chosenMime || '');
+    _scheduleVoiceMaxStop();
     _startPulse(stream);
 
   } catch (err) {
@@ -628,6 +919,7 @@ function stopRecording() {
     _mediaStream = null;
   }
   _stopPulse();
+  _voiceResetLockUi();
 }
 
 function cancelRecording() {
@@ -647,6 +939,7 @@ function cancelRecording() {
   }
   _recChunks = [];
   _stopPulse();
+  _voiceResetLockUi();
 }
 
 /* ── Hold-to-talk: faqat mic pulse (chiziqli waveform olib tashlandi) ── */
@@ -766,6 +1059,22 @@ if (_vBtn) {
   _vBtn.addEventListener('pointerdown', e => {
     if (e.button !== undefined && e.button !== 0) return;
 
+    // QULFLANGAN yozuv: yozuv tugmasini yana bosish = yuborish (rolik yoki ovoz)
+    if (_vidLocked && _vidActive) {
+      e.preventDefault();
+      _voiceJustHandled = true;
+      setTimeout(() => { _voiceJustHandled = false; }, 350);
+      _vidSendLocked();
+      return;
+    }
+    if (_voiceLocked && _mediaRec && _mediaRec.state !== 'inactive') {
+      e.preventDefault();
+      _voiceJustHandled = true;
+      setTimeout(() => { _voiceJustHandled = false; }, 350);
+      _voiceSendLocked();
+      return;
+    }
+
     // Matn yoki fayl yoki post bo'lsa — bu yuborish tugmasi (click orqali ishlaydi)
     if (typeof _isComposerBusy === 'function' && _isComposerBusy()) return;
     if (!canRecordMedia()) return;   // qurilma yo'q — bu faqat yuborish tugmasi (click)
@@ -792,18 +1101,30 @@ if (_vBtn) {
         _vBtn.classList.add('recording');
         _vBtn.classList.remove('cancelling');
         _showRecordBar();
+        _showLockHint();
         startVideoRecording();
       }, 280);
     } else {
       _vBtn.classList.add('recording');
       _vBtn.classList.remove('cancelling');
       _showRecordBar();
+      _showLockHint();
       startRecording();
     }
   });
 
   _vBtn.addEventListener('pointermove', e => {
+    if (_vidLocked || _voiceLocked) return;
     if (!_isHoldingVoice) return;
+    if (!_voiceCancelled) {
+      // Yuqoriga surish (Telegram) → qulflash — rolik va oddiy ovoz
+      const lp = Math.max(0, Math.min(1, (_voiceStartY - e.clientY) / _VID_LOCK_DIST));
+      _setLockProgress(lp);
+      if (lp >= 1) {
+        if (_vidActive) { _lockVideo(); return; }
+        if (_mediaRec && _mediaRec.state !== 'inactive') { _lockVoice(); return; }
+      }
+    }
     const dx = e.clientX - _voiceStartX;
     // Chapga surish: 0..1 progress — rang silliq o'zgaradi, to'satdan qizarib ketmaydi
     const progress = dx >= 0 ? 0 : Math.min(1, (-dx) / _VOICE_CANCEL_DIST);
@@ -823,9 +1144,14 @@ if (_vBtn) {
       _activePointerId = null;
     }
 
+    // Qulflangan (rolik yoki ovoz): barmoq ko'tarildi, lekin yozuv DAVOM etadi
+    if (_vidActive && _vidLocked) return;
+    if (_voiceLocked) return;
+
     _vBtn.classList.remove('recording', 'cancelling');
     _clearVoiceCancelVisuals();
     _hideRecordBar();
+    _voiceResetLockUi();
 
     const duration = Date.now() - _voiceStartTime;
 
@@ -883,9 +1209,12 @@ if (_vBtn) {
     }
   });
 
+  $('chatRecordCancel')?.addEventListener('click', () => { if (_vidLocked) _vidCancelLocked(); else if (_voiceLocked) _voiceCancelLocked(); });
+
   window.addEventListener('blur', () => {
     // Ruxsat dialogi blur beradi — yozuv boshlangan bo'lsa bekor qilmaymiz
     if (!_isHoldingVoice) return;
+    if (_vidLocked || _voiceLocked) return;
     if (_vidActive || (_mediaRec && _mediaRec.state === 'recording')) return;
     _voiceCancelled = true;
     _finishVoiceHold();

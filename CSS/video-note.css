@@ -12,7 +12,7 @@
 #vnotePreview .vnp-circle { position: relative; width: min(72vw, 300px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #000; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6); }
 #vnotePreview .vnp-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
 #vnotePreview .vnp-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
-#vnotePreview .vnp-ring-fg { fill: none; stroke: #ff3b30; stroke-width: 2.5; stroke-linecap: round; }
+#vnotePreview .vnp-ring-fg { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; }
 
 .cfm-note-wrap { position: relative; display: flex; flex-direction: column; width: min(240px, 64vw); cursor: pointer; }
 .cfm-note { width: 100%; aspect-ratio: 1; height: auto; border-radius: 50%; overflow: hidden; background: #000; border: 1.5px solid rgba(231, 233, 234, 0.22); box-sizing: border-box; }
@@ -142,3 +142,49 @@
 .cfm-vid {
   -webkit-playsinline: true;
 }
+
+/* ═══ Rolik: LOCK (yuqoriga surish), kamera almashtirish, fonar ═══ */
+#vnotePreview .vnp-stage { position: relative; display: flex; align-items: center; justify-content: center; }
+#vnotePreview .vnp-video.back { transform: none; }
+#vnotePreview .vnp-freeze {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  filter: blur(10px) brightness(0.85); transform: scaleX(-1); pointer-events: none;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+#vnotePreview .vnp-freeze.back { transform: none; }
+#vnotePreview .vnp-freeze.show { opacity: 1; transition: none; }
+#vnotePreview .vnp-ctrls { position: absolute; left: 0; right: 0; top: calc(100% + 18px); display: none; justify-content: center; gap: 16px; }
+#vnotePreview.locked .vnp-ctrls { display: flex; }
+#vnotePreview .vnp-btn {
+  pointer-events: auto; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18); color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+#vnotePreview .vnp-btn:active { transform: scale(0.92); }
+#vnotePreview .vnp-btn.on { background: #fff; color: #000; }
+#vnotePreview .vnp-btn[hidden] { display: none; }
+
+#vnLockHint {
+  position: fixed; z-index: 9100; width: 36px; height: 64px; border-radius: 18px;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(32, 35, 39, 0.92); border: 1px solid rgba(231, 233, 234, 0.18); color: #e7e9ea;
+  pointer-events: none; transform: translateY(calc(var(--lp, 0) * -22px));
+  opacity: calc(1 - var(--lp, 0) * 0.35); transition: opacity 0.1s linear;
+}
+#vnLockHint.show { display: flex; animation: vnLockPop 0.2s ease-out; }
+@keyframes vnLockPop { from { opacity: 0; } to { opacity: 1; } }
+
+/* Qulflangan rolik: yozuv tugmasi = YUBORISH (qog'oz samolyot) */
+.chat-voice-btn .icon-vsend { display: none; width: 22px; height: 22px; fill: #fff !important; stroke: none !important; }
+.chat-voice-btn.vn-locked .icon-vsend { display: block; }
+.chat-voice-btn.vn-locked .icon-vnote,
+.chat-voice-btn.vn-locked .icon-mic { display: none !important; }
+
+/* Qulflangan: "Bekor qilish" bosiladigan tugma */
+.chat-record-bar.locked .crb-cancel { pointer-events: auto; cursor: pointer; animation: none; color: var(--x-blue, #1d9bf0); font-weight: 600; padding: 8px 14px; }
+.chat-record-bar.locked .crb-cancel img { display: none; }
+
+/* Rolik: fonar/almashtirish tugmalari silliq paydo bo'ladi/yo'qoladi */
+#vnotePreview .vnp-btn { transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.15s ease; }
+#vnotePreview .vnp-btn.off { opacity: 0; transform: scale(0.6); pointer-events: none; }

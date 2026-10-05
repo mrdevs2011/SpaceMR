@@ -81,10 +81,28 @@ export function trackSupportsTorch(track) {
   } catch (_) { return false; }
 }
 
+/* applyConstraints() oldingi advanced sozlamalarni ALMASHTIRADI: zoom berilsa fonar o'chib qolardi.
+   Shu sabab track uchun torch/zoom holati saqlanadi va HAR chaqiruvda hammasi birga qo'llanadi
+   (har biri alohida advanced elementda — biri qo'llanmasa ikkinchisi baribir ishlaydi). */
+const _adv = new WeakMap();
+export async function applyTrackAdvanced(track, patch) {
+  if (!track) return false;
+  const cur = { ...(_adv.get(track) || {}), ...patch };
+  const advanced = Object.keys(cur).map(k => ({ [k]: cur[k] }));
+  for (let i = 0; i < 2; i++) {
+    try {
+      await track.applyConstraints({ advanced });
+      _adv.set(track, cur);
+      return true;
+    } catch (err) {
+      console.warn('[camera] applyConstraints xato:', err?.name, err?.message);
+      if (i === 0) await new Promise(r => setTimeout(r, 150));   // ba'zi qurilmalarda birinchi urinish kech qoladi
+    }
+  }
+  return false;
+}
+
 export async function setTorch(track, on) {
   if (!track || !trackSupportsTorch(track)) return false;
-  try {
-    await track.applyConstraints({ advanced: [{ torch: !!on }] });
-    return true;
-  } catch (_) { return false; }
+  return applyTrackAdvanced(track, { torch: !!on });
 }

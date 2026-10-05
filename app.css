@@ -14361,7 +14361,7 @@ select.field option { background: #000000; color: var(--text); }
 #vnotePreview .vnp-circle { position: relative; width: min(72vw, 300px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #000; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6); }
 #vnotePreview .vnp-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
 #vnotePreview .vnp-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
-#vnotePreview .vnp-ring-fg { fill: none; stroke: #ff3b30; stroke-width: 2.5; stroke-linecap: round; }
+#vnotePreview .vnp-ring-fg { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; }
 
 .cfm-note-wrap { position: relative; display: flex; flex-direction: column; width: min(240px, 64vw); cursor: pointer; }
 .cfm-note { width: 100%; aspect-ratio: 1; height: auto; border-radius: 50%; overflow: hidden; background: #000; border: 1.5px solid rgba(231, 233, 234, 0.22); box-sizing: border-box; }
@@ -14491,6 +14491,52 @@ select.field option { background: #000000; color: var(--text); }
 .cfm-vid {
   -webkit-playsinline: true;
 }
+
+/* ═══ Rolik: LOCK (yuqoriga surish), kamera almashtirish, fonar ═══ */
+#vnotePreview .vnp-stage { position: relative; display: flex; align-items: center; justify-content: center; }
+#vnotePreview .vnp-video.back { transform: none; }
+#vnotePreview .vnp-freeze {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  filter: blur(10px) brightness(0.85); transform: scaleX(-1); pointer-events: none;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+#vnotePreview .vnp-freeze.back { transform: none; }
+#vnotePreview .vnp-freeze.show { opacity: 1; transition: none; }
+#vnotePreview .vnp-ctrls { position: absolute; left: 0; right: 0; top: calc(100% + 18px); display: none; justify-content: center; gap: 16px; }
+#vnotePreview.locked .vnp-ctrls { display: flex; }
+#vnotePreview .vnp-btn {
+  pointer-events: auto; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18); color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+#vnotePreview .vnp-btn:active { transform: scale(0.92); }
+#vnotePreview .vnp-btn.on { background: #fff; color: #000; }
+#vnotePreview .vnp-btn[hidden] { display: none; }
+
+#vnLockHint {
+  position: fixed; z-index: 9100; width: 36px; height: 64px; border-radius: 18px;
+  display: none; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(32, 35, 39, 0.92); border: 1px solid rgba(231, 233, 234, 0.18); color: #e7e9ea;
+  pointer-events: none; transform: translateY(calc(var(--lp, 0) * -22px));
+  opacity: calc(1 - var(--lp, 0) * 0.35); transition: opacity 0.1s linear;
+}
+#vnLockHint.show { display: flex; animation: vnLockPop 0.2s ease-out; }
+@keyframes vnLockPop { from { opacity: 0; } to { opacity: 1; } }
+
+/* Qulflangan rolik: yozuv tugmasi = YUBORISH (qog'oz samolyot) */
+.chat-voice-btn .icon-vsend { display: none; width: 22px; height: 22px; fill: #fff !important; stroke: none !important; }
+.chat-voice-btn.vn-locked .icon-vsend { display: block; }
+.chat-voice-btn.vn-locked .icon-vnote,
+.chat-voice-btn.vn-locked .icon-mic { display: none !important; }
+
+/* Qulflangan: "Bekor qilish" bosiladigan tugma */
+.chat-record-bar.locked .crb-cancel { pointer-events: auto; cursor: pointer; animation: none; color: var(--x-blue, #1d9bf0); font-weight: 600; padding: 8px 14px; }
+.chat-record-bar.locked .crb-cancel img { display: none; }
+
+/* Rolik: fonar/almashtirish tugmalari silliq paydo bo'ladi/yo'qoladi */
+#vnotePreview .vnp-btn { transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.15s ease; }
+#vnotePreview .vnp-btn.off { opacity: 0; transform: scale(0.6); pointer-events: none; }
 /* chat-attach.css — skrepka menyusi (Kamera / Fayl / Media) va kamera oynasi. DM va guruh uchun bitta. JS: modules/chat/attach-menu.js, camera-capture.js */
 .attach-menu { position: fixed; z-index: 9100; min-width: 180px; padding: 6px; background: var(--pal-gray-900); border: 1px solid var(--line, rgba(231, 233, 234, 0.16)); border-radius: 14px; }
 .attach-menu .am-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--pal-white); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
@@ -14503,12 +14549,31 @@ select.field option { background: #000000; color: var(--text); }
   background: #000;
   display: flex; align-items: center; justify-content: center;
   user-select: none; -webkit-user-select: none;
+  touch-action: none; overflow: hidden;
 }
 #camCapture .cc-video {
   width: 100%; height: 100%;
   object-fit: cover; background: #000;
+  transform: scale(var(--cc-zoom, 1)); transform-origin: center;
 }
-#camCapture .cc-video.mirror { transform: scaleX(-1); }
+#camCapture .cc-video.mirror { transform: scaleX(-1) scale(var(--cc-zoom, 1)); }
+#camCapture .cc-zoom-badge {
+  position: absolute; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff;
+  font-size: 14px; font-weight: 600; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 3;
+}
+#camCapture .cc-zoom-badge.show { opacity: 1; }
+#camCapture .cc-video { will-change: transform; }
+#camCapture .cc-freeze {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  filter: blur(14px) brightness(0.85); pointer-events: none; z-index: 1;
+  opacity: 0; transition: opacity 0.22s ease;
+  transform: scale(var(--cc-zoom, 1)); transform-origin: center;
+}
+#camCapture .cc-freeze.mirror { transform: scaleX(-1) scale(var(--cc-zoom, 1)); }
+#camCapture .cc-freeze.show { opacity: 1; transition: none; }
+#camCapture .cc-flip.spin svg { animation: ccFlipSpin 0.45s cubic-bezier(0.3, 0.7, 0.2, 1); }
+@keyframes ccFlipSpin { from { transform: rotate(0); } to { transform: rotate(180deg); } }
 #camCapture .cc-top {
   /* mobile browser chrome ostida qolmasin */
   position: absolute; left: 0; right: 0;
@@ -14718,6 +14783,10 @@ select.field option { background: #000000; color: var(--text); }
   contain: none;
   overflow: visible;
 }
+
+/* Fonar tugmasi: old kamerada sekin yo'qoladi, orqa kameraga qaytganda yana paydo bo'ladi */
+#camCapture .cc-flash { transition: opacity 0.28s ease, transform 0.28s ease, background-color 0.15s ease; }
+#camCapture .cc-flash.faded { opacity: 0; transform: scale(0.6); pointer-events: none; }
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */

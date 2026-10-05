@@ -2,7 +2,7 @@
 import { toast } from '../ui/toast.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
-  trackSupportsTorch, setTorch,
+  trackSupportsTorch, setTorch, applyTrackAdvanced,
 } from './camera-access.js';
 import {
   MAX_VIDEO_MS, MAX_VIDEO_BYTES, VIDEO_BITRATE, VIDEO_W, VIDEO_H, markVideoReady,
@@ -30,8 +30,12 @@ function _constraints(deviceId, facing, withAudio) {
   return { audio: !!withAudio, video };
 }
 
-async function _startStream(deviceId, facing, withAudio) {
-  return navigator.mediaDevices.getUserMedia(_constraints(deviceId, facing, withAudio));
+// Video oqimi HAR DOIM ovozsiz — mikrofon alohida (kamera almashganda ovoz uzilmasin)
+async function _startStream(deviceId, facing) {
+  return navigator.mediaDevices.getUserMedia(_constraints(deviceId, facing, false));
+}
+async function _startAudio() {
+  return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
 }
 
 function _pickMime() {
@@ -47,11 +51,13 @@ function _pickMime() {
   return '';
 }
 
-function _capturePhoto(videoEl) {
+function _capturePhoto(videoEl, digitalZoom = 1) {
   return new Promise(resolve => {
     const vw = videoEl.videoWidth, vh = videoEl.videoHeight;
     if (!vw || !vh) { resolve(null); return; }
-    let w = vw, h = vh;
+    const z = Math.max(1, digitalZoom || 1);
+    const sw = vw / z, sh = vh / z, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+    let w = Math.round(sw), h = Math.round(sh);
     const max = PHOTO_MAX_SIDE;
     if (w > max || h > max) {
       if (w >= h) { h = Math.round(h * (max / w)); w = max; }
@@ -59,7 +65,7 @@ function _capturePhoto(videoEl) {
     }
     const c = document.createElement('canvas');
     c.width = w; c.height = h;
-    c.getContext('2d').drawImage(videoEl, 0, 0, w, h);
+    c.getContext('2d').drawImage(videoEl, sx, sy, sw, sh, 0, 0, w, h);
     c.toBlob(
       b => resolve(b ? new File([b], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' }) : null),
       'image/jpeg',
@@ -100,41 +106,13 @@ export async function openCameraCapture(options = {}) {
       return null;
     }
 
-    try {
-      stream = await _startStream(null, facing, mode === 'video');
-    } catch (err) {
-      try {
-        facing = 'environment';
-        stream = await _startStream(null, facing, mode === 'video');
-      } catch (err2) {
-        console.error('Kamera xatosi:', err2);
-        toast(cameraErrorMsg(err2), 'error');
-        return null;
-      }
-    }
-
-    cams = await listCameras();
-    if (cams.front && !cams.back) {
-      facing = 'user'; deviceId = cams.front.deviceId;
-    } else if (cams.back && !cams.front) {
-      facing = 'environment'; deviceId = cams.back.deviceId;
-    } else if (cams.front && cams.back) {
-      facing = 'environment'; deviceId = cams.back.deviceId;
-    }
-    if (deviceId) {
-      try {
-        stream.getTracks().forEach(t => t.stop());
-        stream = await _startStream(deviceId, facing, mode === 'video');
-      } catch (_) {}
-    }
-
-    const canSwitch = !!(cams.front && cams.back && cams.front.deviceId !== cams.back.deviceId)
-      || (cams.list && cams.list.length >= 2);
+    facing = 'environment';
 
     const ov = document.createElement('div');
     ov.id = 'camCapture';
     ov.innerHTML = `
-      <video class="cc-video" autoplay muted playsinline></video>
+      <video class="cc-video" autoplay muted playsinline disablepictureinpicture></video>
+      <canvas class="cc-freeze"></canvas>
       <img class="cc-preview-img" alt="" hidden>
       <video class="cc-preview-vid" playsinline controls hidden></video>
       <div class="cc-top">
@@ -172,17 +150,89 @@ export async function openCameraCapture(options = {}) {
     const shutter = ov.querySelector('.cc-shutter');
     const reviewEl = ov.querySelector('.cc-review');
     const flipBtn = ov.querySelector('.cc-flip');
+    const freezeEl = ov.querySelector('.cc-freeze');
 
     const vTrack = () => stream?.getVideoTracks?.()[0] || null;
 
+    let hasTorchDevice = false;   // qurilmada (biror kamerada) fonar bor — bo'lmasa tugma umuman yo'q
+    let canSwitch = false;        // 2+ kamera — bo'lmasa almashtirish tugmasi ham, surish ham yo'q
     const refreshFlash = () => {
       const t = vTrack();
-      const ok = trackSupportsTorch(t) && !reviewing;
-      flashBtn.hidden = !ok;
-      if (!ok) torchOn = false;
+      const trackOk = trackSupportsTorch(t);
+      if (trackOk) hasTorchDevice = true;
+      flashBtn.hidden = !(hasTorchDevice && !reviewing);
+      // Old kamerada fonar yo'q: tugma sekin yo'qoladi, orqa kameraga qaytsa — yana paydo bo'ladi
+      flashBtn.classList.toggle('faded', !trackOk);
+      if (!trackOk) torchOn = false;
       flashBtn.innerHTML = torchOn ? SVG.flashOn : SVG.flashOff;
       flashBtn.classList.toggle('on', torchOn);
     };
+
+    /* ── Pinch-to-zoom (2 barmoq) ──
+       Qurilma zoom'ni qo'llasa (Android Chrome) — haqiqiy kamera zoom'i (foto ham, video ham).
+       Aks holda raqamli zoom: faqat FOTO rejimida (video MediaRecorder orqali stream'dan yoziladi). */
+    let zoomLevel = 1, zoomMin = 1, zoomHwMax = 1, zoomHw = false;
+    let zoomBusy = false, zoomPending = null, zoomBadgeT = null;
+    const zoomMaxNow = () => (zoomHw ? zoomHwMax : (mode === 'photo' ? 4 : 1));
+    const zoomBadge = document.createElement('div');
+    zoomBadge.className = 'cc-zoom-badge';
+    ov.appendChild(zoomBadge);
+    const showZoomBadge = () => {
+      zoomBadge.textContent = zoomLevel.toFixed(1) + '×';
+      zoomBadge.classList.add('show');
+      clearTimeout(zoomBadgeT);
+      zoomBadgeT = setTimeout(() => zoomBadge.classList.remove('show'), 900);
+    };
+    const applyZoom = (z) => {
+      z = Math.min(zoomMaxNow(), Math.max(zoomMin, z));
+      if (z === zoomLevel && !zoomHw) return;
+      zoomLevel = z;
+      if (zoomHw) {
+        zoomPending = z;
+        if (!zoomBusy) {
+          zoomBusy = true;
+          (async () => {
+            while (zoomPending != null) {
+              const v = zoomPending; zoomPending = null;
+              try { await applyTrackAdvanced(vTrack(), { zoom: v }); } catch (_) {}
+            }
+            zoomBusy = false;
+          })();
+        }
+      } else {
+        liveVid.style.setProperty('--cc-zoom', String(z));
+      }
+      showZoomBadge();
+    };
+    const initZoom = () => {
+      zoomHw = false; zoomMin = 1; zoomHwMax = 1; zoomLevel = 1; zoomPending = null;
+      liveVid.style.setProperty('--cc-zoom', '1');
+      try {
+        const t = vTrack();
+        const zc = t?.getCapabilities?.().zoom;
+        if (zc && typeof zc.max === 'number' && zc.max > (zc.min || 1)) {
+          zoomHw = true; zoomMin = zc.min || 1; zoomHwMax = Math.min(zc.max, 10); zoomLevel = zoomMin;
+          applyTrackAdvanced(t, { zoom: zoomMin });
+        }
+      } catch (_) {}
+    };
+    const ptrs = new Map();
+    let pinch = null;
+    const ptrDist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+    ov.addEventListener('pointerdown', e => {
+      if (reviewing) return;
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (ptrs.size === 2) pinch = { d: ptrDist(), z: zoomLevel };
+    });
+    ov.addEventListener('pointermove', e => {
+      if (!ptrs.has(e.pointerId)) return;
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && ptrs.size >= 2 && !reviewing) applyZoom(pinch.z * ptrDist() / pinch.d);
+    });
+    const endPtr = e => { ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; };
+    ov.addEventListener('pointerup', endPtr);
+    ov.addEventListener('pointercancel', endPtr);
+    ov.addEventListener('gesturestart', e => e.preventDefault());   // iOS Safari sahifa zoom'ini o'chiradi
 
     const setStream = async (s, face) => {
       stream = s;
@@ -190,9 +240,102 @@ export async function openCameraCapture(options = {}) {
       liveVid.srcObject = s;
       liveVid.classList.toggle('mirror', face === 'user');
       await liveVid.play().catch(() => {});
+      initZoom();
       refreshFlash();
+      setTimeout(() => { if (stream === s) refreshFlash(); }, 500);   // ba'zi qurilmalarda torch imkoniyati biroz kechroq ko'rinadi
     };
-    await setStream(stream, facing);
+    /* ── Mikrofon (alohida oqim) ── */
+    let audioStream = null, audioAsk = null;
+    const ensureAudio = () => {
+      if (audioStream) return Promise.resolve(audioStream);
+      if (!audioAsk) {
+        audioAsk = _startAudio()
+          .then(a => {
+            if (mode !== 'video' && !recording) { a.getTracks().forEach(t => t.stop()); return null; }
+            audioStream = a; return a;
+          })
+          .catch(() => { toast("Mikrofonga ruxsat yo'q — video ovozsiz yoziladi", 'error'); return null; })
+          .finally(() => { audioAsk = null; });
+      }
+      return audioAsk;
+    };
+    const releaseAudio = () => {
+      try { audioStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
+      audioStream = null;
+    };
+
+    /* ── Yozuv pipeline: kamera → canvas → MediaRecorder.
+       Kamera almashganda recorder TO'XTAMAYDI: canvas oxirgi kadrni ushlab turadi,
+       yangi kamera tayyor bo'lgach kadrlar davom etadi — natija BITTA uzluksiz video. ── */
+    const canCanvasRec = typeof HTMLCanvasElement !== 'undefined' && !!HTMLCanvasElement.prototype.captureStream;
+    let switchingFace = false;
+    let recStarting = false, recRaf = 0, recCanvas = null, recCtx = null, recLastDraw = 0, recOutStream = null;
+    const paintRec = () => {
+      const v = liveVid;
+      if (!recCtx || switchingFace || v.readyState < 2 || !v.videoWidth) return;
+      const cw = recCanvas.width, ch = recCanvas.height, vw = v.videoWidth, vh = v.videoHeight;
+      const sc = Math.max(cw / vw, ch / vh), dw = vw * sc, dh = vh * sc;
+      recCtx.drawImage(v, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    };
+    const recLoop = ts => {
+      recRaf = requestAnimationFrame(recLoop);
+      if (ts - recLastDraw < 30) return;   // ~30 fps
+      recLastDraw = ts;
+      paintRec();
+    };
+    const buildRecStream = () => {
+      const vw = liveVid.videoWidth || VIDEO_W, vh = liveVid.videoHeight || VIDEO_H;
+      const k = Math.min(1, Math.max(VIDEO_W, VIDEO_H) / Math.max(vw, vh), Math.min(VIDEO_W, VIDEO_H) / Math.min(vw, vh));
+      recCanvas = document.createElement('canvas');
+      recCanvas.width = Math.max(2, Math.round(vw * k / 2) * 2);
+      recCanvas.height = Math.max(2, Math.round(vh * k / 2) * 2);
+      recCtx = recCanvas.getContext('2d', { alpha: false });
+      recCtx.fillStyle = '#000';
+      recCtx.fillRect(0, 0, recCanvas.width, recCanvas.height);
+      paintRec();
+      recLastDraw = 0;
+      recRaf = requestAnimationFrame(recLoop);
+      const out = new MediaStream(recCanvas.captureStream(30).getVideoTracks());
+      audioStream?.getAudioTracks().forEach(t => out.addTrack(t));
+      return out;
+    };
+    const teardownRec = () => {
+      cancelAnimationFrame(recRaf); recRaf = 0;
+      if (canCanvasRec) { try { recOutStream?.getVideoTracks().forEach(t => t.stop()); } catch (_) {} }
+      recOutStream = null; recCanvas = null; recCtx = null;
+    };
+
+    /* ── Kamerani OCHISH: overlay darhol ko'rinadi, bitta getUserMedia (qayta ochish yo'q) ── */
+    try {
+      let s0;
+      try { s0 = await _startStream(null, 'environment'); }
+      catch (e1) {
+        if (e1?.name === 'NotAllowedError' || e1?.name === 'SecurityError') throw e1;
+        s0 = await _startStream(null, 'user');
+      }
+      const st0 = s0.getVideoTracks()[0]?.getSettings?.() || {};
+      facing = st0.facingMode === 'environment' ? 'environment' : 'user';
+      deviceId = st0.deviceId || null;
+      await setStream(s0, facing);
+    } catch (err) {
+      console.error('Kamera xatosi:', err);
+      toast(cameraErrorMsg(err), 'error');
+      ov.remove();
+      return null;
+    }
+    // Kameralar ro'yxati — fonda (ochilishni kutdirmaydi)
+    listCameras().then(c => {
+      cams = c;
+      canSwitch = !!(c.front && c.back && c.front.deviceId !== c.back.deviceId) || !!(c.list && c.list.length >= 2);
+      if (flipBtn) flipBtn.hidden = !canSwitch || reviewing;
+      const id = vTrack()?.getSettings?.().deviceId;
+      if (id) {
+        deviceId = id;
+        if (cams.back && id === cams.back.deviceId && facing !== 'environment') { facing = 'environment'; liveVid.classList.remove('mirror'); }
+        else if (cams.front && id === cams.front.deviceId && facing !== 'user') { facing = 'user'; liveVid.classList.add('mirror'); }
+      }
+    }).catch(() => {});
+    if (mode === 'video') ensureAudio();
 
     const clearPending = () => {
       if (pendingUrl) { try { URL.revokeObjectURL(pendingUrl); } catch (_) {} }
@@ -238,7 +381,7 @@ export async function openCameraCapture(options = {}) {
         reviewEl.setAttribute('hidden', '');
         shutter.removeAttribute('hidden');
         liveVid.hidden = false;
-        if (flipBtn) flipBtn.hidden = false;
+        if (flipBtn) flipBtn.hidden = !canSwitch;
         refreshFlash();
       }
     };
@@ -272,100 +415,71 @@ export async function openCameraCapture(options = {}) {
       liveVid.play().catch(() => {});
     };
 
-    let switchingFace = false;
-    const switchFacing = async () => {
-      if (reviewing || switchingFace) return;
-      switchingFace = true;
-      const nextFace = facing === 'user' ? 'environment' : 'user';
-      const nextDev = nextFace === 'user' ? cams.front : cams.back;
-      const wasRecording = recording && mediaRec && mediaRec.state === 'recording';
+    /* Kamera almashtirish: oxirgi kadr xira holda ushlab turiladi (qora ekran/uzilish ko'rinmaydi) */
+    const freezeFrame = () => {
       try {
-        await setTorch(vTrack(), false);
+        const vw = liveVid.videoWidth, vh = liveVid.videoHeight;
+        if (!vw || !vh) return;
+        const k = 320 / Math.max(vw, vh);
+        freezeEl.width = Math.max(1, Math.round(vw * k));
+        freezeEl.height = Math.max(1, Math.round(vh * k));
+        freezeEl.getContext('2d').drawImage(liveVid, 0, 0, freezeEl.width, freezeEl.height);
+        freezeEl.classList.toggle('mirror', liveVid.classList.contains('mirror'));
+        freezeEl.style.setProperty('--cc-zoom', liveVid.style.getPropertyValue('--cc-zoom') || '1');
+        freezeEl.classList.add('show');
+      } catch (_) {}
+    };
+    const unfreezeFrame = async () => {
+      await new Promise(r => {
+        let done = false;
+        const fin = () => { if (!done) { done = true; r(); } };
+        setTimeout(fin, 900);
+        if (liveVid.requestVideoFrameCallback) liveVid.requestVideoFrameCallback(fin);
+        else setTimeout(fin, 150);
+      });
+      freezeEl.classList.remove('show');
+    };
+
+    const switchFacing = async (want) => {
+      if (reviewing || switchingFace || !stream || !canSwitch) return;
+      if (recording && !canCanvasRec) { toast("Yozuv paytida kamerani almashtirib bo'lmaydi", 'error'); return; }
+      switchingFace = true;
+      const nextFace = want || (facing === 'user' ? 'environment' : 'user');
+      if (nextFace === facing) return;
+      const nextDev = nextFace === 'user' ? cams.front : cams.back;
+      const prevFace = facing, prevDev = deviceId;
+      freezeFrame();
+      if (flipBtn) { flipBtn.classList.remove('spin'); void flipBtn.offsetWidth; flipBtn.classList.add('spin'); }
+      try {
+        try { await setTorch(vTrack(), false); } catch (_) {}
         torchOn = false;
-
-        // Yozuv davom etayotgan bo'lsa — recorder ni pauza (chunklar saqlanadi)
-        if (wasRecording) {
-          await new Promise(res => {
-            const rec = mediaRec;
-            const prev = rec.onstop;
-            rec.onstop = () => { rec.onstop = prev; res(); };
-            try { rec.requestData?.(); rec.stop(); } catch (_) { res(); }
-          });
-          mediaRec = null;
-        }
-
-        // A12: bir vaqtda 2 kamera ochilmaydi — avval eski tracklarni yop
-        const old = stream;
-        liveVid.srcObject = null;
-        try { old?.getTracks().forEach(t => t.stop()); } catch (_) {}
-        stream = null;
-
-        const needAudio = mode === 'video' || wasRecording;
-        const s = await _startStream(nextDev?.deviceId || null, nextFace, needAudio);
-        deviceId = nextDev?.deviceId || null;
-        await setStream(s, nextFace);
-
-        // Yozuvni yangi stream bilan davom ettirish
-        if (wasRecording && stream) {
-          const mime = _pickMime();
-          try {
-            mediaRec = mime
-              ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 })
-              : new MediaRecorder(stream, { videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 });
-          } catch (_) {
-            try { mediaRec = new MediaRecorder(stream); } catch (e2) {
-              toast('Kamera almashtirildi, lekin yozuv davom etmadi', 'error');
-              recording = false;
-              stopRecTimer();
-              syncUi();
-              return;
-            }
-          }
-          mediaRec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
-          mediaRec.start(250);
-          recording = true;
-          syncUi();
-        }
+        // Yozuv to'xtamaydi — canvas oxirgi kadrni ushlab turadi, mikrofon alohida oqimda davom etadi
+        try { stream.getTracks().forEach(t => t.stop()); } catch (_) {}
+        const s1 = await _startStream(nextDev?.deviceId || null, nextFace);
+        deviceId = nextDev?.deviceId || s1.getVideoTracks()[0]?.getSettings?.().deviceId || null;
+        await setStream(s1, nextFace);
       } catch (err) {
         toast(cameraErrorMsg(err), 'error');
         try {
-          const s2 = await _startStream(deviceId, facing, mode === 'video' || wasRecording);
-          await setStream(s2, facing);
-          if (wasRecording && stream && !mediaRec) {
-            try {
-              mediaRec = new MediaRecorder(stream);
-              mediaRec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
-              mediaRec.start(250);
-              recording = true;
-              syncUi();
-            } catch (_) {}
-          }
+          const s2 = await _startStream(prevDev, prevFace);
+          deviceId = prevDev;
+          await setStream(s2, prevFace);
         } catch (_) {}
       } finally {
+        await unfreezeFrame();
         switchingFace = false;
       }
     };
 
+    // Rejim almashtirish: oqim QAYTA OCHILMAYDI (tez va silliq); faqat mikrofon ulanadi/uziladi
     const switchMode = async (next) => {
       if (recording || reviewing || next === mode) return;
-      const prev = mode;
       mode = next;
-      try {
-        await setTorch(vTrack(), false);
-        torchOn = false;
-        const old = stream;
-        liveVid.srcObject = null;
-        try { old?.getTracks().forEach(t => t.stop()); } catch (_) {}
-        stream = null;
-        const s = await _startStream(deviceId, facing, mode === 'video');
-        await setStream(s, facing);
-      } catch (err) {
-        mode = prev;
-        toast(cameraErrorMsg(err), 'error');
-        try {
-          const s2 = await _startStream(deviceId, facing, mode === 'video');
-          await setStream(s2, facing);
-        } catch (_) {}
+      if (mode === 'video') {
+        if (!zoomHw && zoomLevel > 1) applyZoom(1);   // raqamli zoom faqat foto rejimida
+        ensureAudio();
+      } else {
+        releaseAudio();
       }
       syncUi();
     };
@@ -374,35 +488,41 @@ export async function openCameraCapture(options = {}) {
       if (recTimer) { clearInterval(recTimer); recTimer = null; }
     };
 
-    const startRecording = () => {
-      if (recording || reviewing || !stream) return;
-      const mime = _pickMime();
-      recChunks = [];
+    const startRecording = async () => {
+      if (recording || reviewing || !stream || recStarting) return;
+      recStarting = true;
       try {
-        mediaRec = mime
-          ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 })
-          : new MediaRecorder(stream, { videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 });
-      } catch (err) {
-        try { mediaRec = new MediaRecorder(stream); }
-        catch (e2) {
-          toast('Video yozib bo\'lmadi', 'error');
-          return;
+        await ensureAudio();   // allaqachon ochiq bo'lsa — darhol
+        if (!stream || reviewing || recording) return;
+        recOutStream = canCanvasRec
+          ? buildRecStream()
+          : new MediaStream([...stream.getVideoTracks(), ...(audioStream ? audioStream.getAudioTracks() : [])]);
+        const mime = _pickMime();
+        const opts = { videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 };
+        recChunks = [];
+        try {
+          mediaRec = mime ? new MediaRecorder(recOutStream, { mimeType: mime, ...opts }) : new MediaRecorder(recOutStream, opts);
+        } catch (_) {
+          try { mediaRec = new MediaRecorder(recOutStream); }
+          catch (e2) { teardownRec(); toast("Video yozib bo'lmadi", 'error'); return; }
         }
+        mediaRec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
+        mediaRec.start(250);
+        recording = true;
+        recStarted = Date.now();
+        timeTxt.textContent = '0:00';
+        recTimer = setInterval(() => {
+          const ms = Date.now() - recStarted;
+          const sec = Math.floor(ms / 1000);
+          timeTxt.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+          if (ms >= MAX_VIDEO_MS) {
+            stopRecording().then(f => { if (f) enterReview(f); });
+          }
+        }, 200);
+        syncUi();
+      } finally {
+        recStarting = false;
       }
-      mediaRec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
-      mediaRec.start(250);
-      recording = true;
-      recStarted = Date.now();
-      timeTxt.textContent = '0:00';
-      recTimer = setInterval(() => {
-        const ms = Date.now() - recStarted;
-        const s = Math.floor(ms / 1000);
-        timeTxt.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-        if (ms >= MAX_VIDEO_MS) {
-          stopRecording().then(f => { if (f) enterReview(f); });
-        }
-      }, 200);
-      syncUi();
     };
 
     const stopRecording = () => new Promise(resolve => {
@@ -412,6 +532,7 @@ export async function openCameraCapture(options = {}) {
       stopRecTimer();
       syncUi();
       rec.onstop = () => {
+        teardownRec();
         const type = rec.mimeType || 'video/webm';
         const blob = new Blob(recChunks, { type });
         recChunks = [];
@@ -428,7 +549,7 @@ export async function openCameraCapture(options = {}) {
         }
         resolve(_blobToVideoFile(blob));
       };
-      try { rec.stop(); } catch (_) { resolve(null); }
+      try { rec.stop(); } catch (_) { teardownRec(); resolve(null); }
     });
 
     return await new Promise(resolve => {
@@ -438,6 +559,8 @@ export async function openCameraCapture(options = {}) {
         clearPending();
         try { if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop(); } catch (_) {}
         try { setTorch(vTrack(), false); } catch (_) {}
+        teardownRec();
+        releaseAudio();
         try { stream?.getTracks().forEach(t => t.stop()); } catch (_) {}
         stream = null;
         liveVid.srcObject = null;
@@ -466,13 +589,32 @@ export async function openCameraCapture(options = {}) {
       };
 
       flipBtn?.addEventListener('click', () => switchFacing());
+
+      // Chapga surish → orqa kamera, o'ngga surish → old kamera (faqat 2+ kamerali qurilmada)
+      let sw = null;
+      ov.addEventListener('pointerdown', e => {
+        if (sw && e.pointerId !== sw.id) { sw.multi = true; return; }   // 2 barmoq = pinch-zoom
+        if (e.target.closest('button, .cc-shutter')) { sw = null; return; }
+        sw = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), multi: false };
+      });
+      ov.addEventListener('pointerup', e => {
+        const g = sw;
+        if (!g || e.pointerId !== g.id) return;
+        sw = null;
+        if (g.multi || !canSwitch || reviewing || switchingFace) return;
+        const dx = e.clientX - g.x, dy = e.clientY - g.y;
+        if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6 || performance.now() - g.t > 700) return;
+        switchFacing(dx < 0 ? 'environment' : 'user');
+      });
+      ov.addEventListener('pointercancel', () => { sw = null; });
+
       flashBtn.addEventListener('click', async () => {
-        if (reviewing || recording) return;
+        if (reviewing || switchingFace) return;
         const t = vTrack();
         if (!trackSupportsTorch(t)) return;
         torchOn = !torchOn;
         const ok = await setTorch(t, torchOn);
-        if (!ok) torchOn = false;
+        if (!ok) { torchOn = false; toast("Fonarni yoqib bo'lmadi", 'error'); }
         refreshFlash();
       });
       modesEl.addEventListener('click', e => {
@@ -529,7 +671,7 @@ export async function openCameraCapture(options = {}) {
           if (recording) return;
           shutter.classList.add('snap');
           setTimeout(() => shutter.classList.remove('snap'), 180);
-          const file = await _capturePhoto(liveVid);
+          const file = await _capturePhoto(liveVid, zoomHw ? 1 : zoomLevel);
           if (file) enterReview(file);
           else toast('Rasm olinmadi', 'error');
           return;
