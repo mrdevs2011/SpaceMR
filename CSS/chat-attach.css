@@ -191,29 +191,5 @@
 #camCapture .cc-flash { order: 2; }
 #camCapture .cc-flip { order: 1; }
 
-/* Camera switch button — kamera + aylana strelka, bosilganda animatsiya */
-#camCapture .cc-flip svg { overflow: visible; }
-#camCapture .cc-flip .cc-flip-cam {
-  transform-origin: 12px 12.6px;
-  transform-box: fill-box;
-}
-#camCapture .cc-flip .cc-flip-arrows {
-  transform-origin: 18.6px 5.4px;
-  transform-box: fill-box;
-}
-#camCapture .cc-flip.cc-flip-anim .cc-flip-cam {
-  animation: cc-cam-flip 0.5s cubic-bezier(.2,.8,.2,1);
-}
-#camCapture .cc-flip.cc-flip-anim .cc-flip-arrows {
-  animation: cc-arrow-spin 0.5s cubic-bezier(.2,.8,.2,1);
-}
-@keyframes cc-cam-flip {
-  0%   { transform: scaleX(1); }
-  45%  { transform: scaleX(0.08); }
-  55%  { transform: scaleX(-0.08); }
-  100% { transform: scaleX(-1); }
-}
-@keyframes cc-arrow-spin {
-  0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }

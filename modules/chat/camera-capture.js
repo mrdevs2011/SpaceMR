@@ -17,7 +17,7 @@ const PHOTO_QUALITY = 0.85;
 
 const SVG = {
   close: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-  flip: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g class="cc-flip-cam"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3"/></g><g class="cc-flip-arrows"><path d="M19 2v3h-3"/><path d="M19 5a7 7 0 0 0-11-1"/></g></svg>',  flashOn: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>',
+  flip: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>',  flashOn: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>',
   flashOff: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v11h3v9l7-12h-4l4-8z"/><path d="M4 4l16 16"/></svg>',
   photo: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-1.5-2h-7L7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   video: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>',
@@ -276,12 +276,6 @@ export async function openCameraCapture(options = {}) {
 
     const switchFacing = async () => {
       if (recording || reviewing) return;
-      if (flipBtn) {
-        flipBtn.classList.remove('cc-flip-anim');
-        void flipBtn.offsetWidth;
-        flipBtn.classList.add('cc-flip-anim');
-        setTimeout(() => flipBtn.classList.remove('cc-flip-anim'), 520);
-      }
       const nextFace = facing === 'user' ? 'environment' : 'user';
       const nextDev = nextFace === 'user' ? cams.front : cams.back;
       try {

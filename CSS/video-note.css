@@ -44,3 +44,62 @@
   user-select: none;
   -webkit-user-drag: none;
 }
+
+/* ── Chat video custom bar (cfm-vid-bar) ── */
+.cfm-vid-box { position: relative; }
+.cfm-vid-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  padding: 8px 10px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.72));
+  color: #fff;
+  font: 500 12px/1.2 system-ui, -apple-system, sans-serif;
+  -webkit-user-select: none; user-select: none;
+  pointer-events: auto;
+}
+.cfm-vid-bar .cvb-progress {
+  position: relative; height: 4px; margin: 0 0 8px;
+  background: rgba(255,255,255,0.25); border-radius: 99px;
+  cursor: pointer; touch-action: none;
+}
+.cfm-vid-bar .cvb-buf {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: rgba(255,255,255,0.35); border-radius: inherit; pointer-events: none;
+}
+.cfm-vid-bar .cvb-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: #1d9bf0; border-radius: inherit; pointer-events: none;
+}
+.cfm-vid-bar .cvb-knob {
+  position: absolute; top: 50%; left: 0; width: 12px; height: 12px;
+  margin: -6px 0 0 -6px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.45); pointer-events: none;
+  opacity: 0; transition: opacity .15s ease;
+}
+.cfm-vid-bar .cvb-progress:active .cvb-knob,
+.cfm-vid-bar .cvb-progress:hover .cvb-knob { opacity: 1; }
+.cfm-vid-bar .cvb-row {
+  display: flex; align-items: center; gap: 6px;
+}
+.cfm-vid-bar .cvb-btn {
+  flex-shrink: 0; width: 32px; height: 32px; padding: 0; border: 0;
+  border-radius: 50%; background: rgba(255,255,255,0.12);
+  color: #fff; display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.cfm-vid-bar .cvb-btn:active { background: rgba(255,255,255,0.22); }
+.cfm-vid-bar .cvb-time {
+  flex: 1; min-width: 0; color: rgba(255,255,255,0.9);
+  font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+}
+.cfm-vid-bar .cvb-sep { opacity: 0.55; margin: 0 2px; }
+.cfm-vid-bar .cvb-ico-pause { display: none; }
+.cfm-vid-bar .cvb-ico-mute { display: none; }
+.cfm-vid-bar.is-paused .cvb-ico-play { display: block; }
+.cfm-vid-bar.is-paused .cvb-ico-pause { display: none; }
+.cfm-vid-bar:not(.is-paused) .cvb-ico-play { display: none; }
+.cfm-vid-bar:not(.is-paused) .cvb-ico-pause { display: block; }
+.cfm-vid-bar.is-muted .cvb-ico-vol { display: none; }
+.cfm-vid-bar.is-muted .cvb-ico-mute { display: block; }
+.cfm-vid-bar:not(.is-muted) .cvb-ico-vol { display: block; }
+.cfm-vid-bar:not(.is-muted) .cvb-ico-mute { display: none; }
+.cfm-vid-wrap:not(.playing) .cfm-vid-bar { display: none; }
