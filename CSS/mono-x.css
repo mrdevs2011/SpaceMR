@@ -960,6 +960,20 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 
 /* Emoji ustiga bosilganda animatsiya (Telegram uslubi) */
 .chat-msg.emoji-only .chat-bubble { position: relative; overflow: visible !important; -webkit-tap-highlight-color: transparent; }
+
+/* Katta emoji (jelly/BOOM) hech qayerda kesilmasin. Sabab: `.chat-msg` dagi content-visibility:auto
+   (yashirin paint containment) emojini xabar qutisi chegarasida qirqardi, contain:layout esa stacking context
+   yaratib, keyingi xabarni kattalashgan emoji ustiga chiqarardi. Emoji xabarlar kam va yengil — bu yerda ikkalasi ham o'chiq. */
+.chat-msg.emoji-only {
+  content-visibility: visible;
+  contain: none;
+  overflow: visible !important;
+}
+.chat-msg.emoji-only .chat-bubble-wrap,
+.chat-msg.emoji-only .chat-bubble,
+.chat-msg.emoji-only .chat-bubble-text { overflow: visible !important; }
+/* animatsiya paytida shu xabar qo'shnilari ustida turadi */
+.chat-msg.emoji-only:has(.emo-play, .emo-boom) { position: relative; z-index: 6; }
 .chat-msg.emoji-only.emo-1 .chat-bubble { cursor: pointer; user-select: none; -webkit-user-select: none; }
 .chat-msg.emoji-only .chat-bubble-text { width: fit-content; transform-origin: 50% 70%; }
 .chat-msg.emoji-only .chat-bubble-text.emo-play { will-change: transform; }
