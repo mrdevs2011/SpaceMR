@@ -300,12 +300,12 @@ export function openZoom(url, type) {
     im.style.maxWidth = 'none';
     im.style.maxHeight = 'none';
   } else if (type === 'image') {
-    im.style.borderRadius = '0';
+    im.style.borderRadius = '8px';
     im.style.width = '';
     im.style.height = '';
     im.style.objectFit = 'contain';
-    im.style.maxWidth = '96vw';
-    im.style.maxHeight = '96dvh';
+    im.style.maxWidth = 'min(90vw, calc(100vw - 48px))';
+    im.style.maxHeight = 'min(86dvh, calc(100dvh - 56px))';
   } else {
     location.assign(url);
     return;

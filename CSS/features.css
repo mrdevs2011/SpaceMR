@@ -839,10 +839,11 @@
 #zoomModal.show { display: flex; }
 #zoomModal.zoom-image { background: #000000; }
 #zoomImg {
-  max-width: 96vw;
-  max-height: 96dvh;
+  /* Ekran chetlaridan doim bo'sh joy (safe-area + margin) */
+  max-width: min(90vw, calc(100vw - 48px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+  max-height: min(86dvh, calc(100dvh - 56px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
   object-fit: contain;
-  border-radius: 0;
+  border-radius: 8px;
   cursor: grab;
   user-select: none;
   -webkit-user-drag: none;
