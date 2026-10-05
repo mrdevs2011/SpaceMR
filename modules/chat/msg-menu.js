@@ -406,12 +406,12 @@ function ensureSelBar() {
   selBar = document.createElement('div');
   selBar.id = 'msgSelBar';
   selBar.innerHTML = `
-    <button type="button" class="msb-x" data-sb="x" title="Bekor qilish">${IC.x}</button>
-    <div class="msb-count" id="msbCount"></div>
-    <button type="button" class="msb-btn" data-sb="copy">${IC.copy}<span>Nusxalash</span></button>
-    <button type="button" class="msb-btn" data-sb="edit">${IC.edit}<span>Tahrirlash</span></button>
-    <button type="button" class="msb-btn" data-sb="fwd">${IC.fwd}<span>Uzatish</span></button>
-    <button type="button" class="msb-btn danger" data-sb="del">${IC.del}<span>O‘chirish</span></button>`;
+    <button type="button" class="msb-btn" data-sb="fwd"><span>Uzatish</span><b class="msb-n"></b></button>
+    <button type="button" class="msb-btn" data-sb="del"><span>O‘chirish</span><b class="msb-n"></b></button>
+    <button type="button" class="msb-btn" data-sb="copy"><span>Nusxalash</span></button>
+    <button type="button" class="msb-btn" data-sb="edit"><span>Tahrirlash</span></button>
+    <span class="msb-sp"></span>
+    <button type="button" class="msb-cancel" data-sb="x">Bekor qilish</button>`;
   selBar.addEventListener('click', e => {
     const b = e.target.closest('[data-sb]');
     if (!b) return;
@@ -425,7 +425,9 @@ function ensureSelBar() {
     else if (b.dataset.sb === 'fwd') forward(ids, true);
     else if (b.dataset.sb === 'del') remove(ids);
   });
-  $('chatThreadModal').appendChild(selBar);
+  // Telegramdagidek: tanlash paneli SARLAVHA o'rnida (tepada)
+  const _m = $('chatThreadModal'), _h = _m.querySelector('.chat-thread-hdr');
+  if (_h && _h.parentNode === _m) _m.insertBefore(selBar, _h); else _m.appendChild(selBar);
 }
 
 function enterSelect(id) {
@@ -458,7 +460,8 @@ function paintSel(keepEmpty) {
   if (!selMode) return;
   if (!sel.size && !keepEmpty) { exitSelect(); return; }
   box.querySelectorAll('.chat-msg[data-msg-id]').forEach(r => r.classList.toggle('mc-selected', sel.has(r.dataset.msgId)));
-  $('msbCount').textContent = `${sel.size} ta tanlandi`;
+  selBar.querySelectorAll('.msb-n').forEach(n => { n.textContent = sel.size; });
+  selBar.querySelector('[data-sb="copy"]').hidden = !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const allMine = [...sel].every(id => isMine(msgOf(id)));
   selBar.querySelector('[data-sb="del"]').hidden = !allMine;
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
