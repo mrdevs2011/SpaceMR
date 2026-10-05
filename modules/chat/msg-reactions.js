@@ -115,12 +115,17 @@ function paintMsg(id, force) {
   const row = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(String(id))}"]`);
   const bub = row?.querySelector('.chat-bubble');
   if (!bub) return;
-  let el = bub.querySelector(':scope > .msg-reacts');
+  // Chiplar pufak ICHIDA emas — qatorning o'zida, pufakdan butunlay pastda (Telegram uslubi)
+  bub.querySelector(':scope > .msg-reacts')?.remove();   // eski joydagi nusxa bo'lsa
+  let el = row.querySelector(':scope > .msg-reacts');
   const m = byMsg.get(id);
-  if (!m || !m.size) { el?.remove(); return; }
+  if (!m || !m.size) { el?.remove(); row.classList.remove('has-reacts'); return; }
+  row.classList.add('has-reacts');
   const html = chipsHtml(m);
-  if (el && !force && el._html === html) return;
-  if (!el) { el = document.createElement('div'); el.className = 'msg-reacts'; bub.appendChild(el); }
+  if (!el) { el = document.createElement('div'); el.className = 'msg-reacts'; row.appendChild(el); }
+  // Guruhda boshqa odam xabari: chiplar avatardan emas, pufak chetidan boshlansin
+  el.style.marginLeft = row.classList.contains('theirs') ? bub.offsetLeft + 'px' : '';
+  if (el._html === html && !force) return;
   el._html = html;
   el.innerHTML = html;
   el.querySelectorAll('.mr-av').forEach(im => im.addEventListener('error', () => { im.onerror = null; im.src = defAvi('U'); }, { once: true }));
@@ -300,6 +305,12 @@ export function reactInit(boxEl) {
 export function reactAfterPaint() {
   sync(); paintAll();
   if (hRow) { if (hRow.isConnected) placeHover(); else reactHoverHide(); }
+}
+
+/** Xabarga qo'yilgan reaksiyalar: Map(uid -> emoji) (menyudagi "ko'rganlar" ro'yxati uchun) */
+export function reactionsOf(msgId) {
+  sync();
+  return new Map(byMsg.get(msgId) || []);
 }
 
 /** Chat yopilganda */

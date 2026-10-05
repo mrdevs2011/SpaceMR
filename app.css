@@ -6879,17 +6879,21 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgHoverPick .hp-e.on { background: rgba(231, 233, 234, 0.2); }
 @keyframes hrPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
 
-/* Xabar tagidagi reaksiya chiplari */
-.chat-bubble > .msg-reacts { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 1px; clear: both; }
-.chat-bubble .mr-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border: 0; border-radius: 13px; background: rgba(231, 233, 234, 0.14); color: inherit; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s ease; }
-.chat-bubble .mr-chip:hover { background: rgba(231, 233, 234, 0.22); }
-.chat-bubble .mr-chip.mine { background: rgba(231, 233, 234, 0.3); }
-.chat-bubble .mr-chip.few { padding: 0 3px 0 8px; }
-.chat-bubble .mr-chip .mr-e { font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
-.chat-bubble .mr-chip .mr-n { font-size: 12px; font-weight: 600; }
-.chat-bubble .mr-chip .mr-avs { display: inline-flex; align-items: center; }
-.chat-bubble .mr-chip .mr-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
-.chat-bubble .mr-chip .mr-av + .mr-av { margin-left: -6px; box-shadow: 0 0 0 1.5px #2f3336; }
+/* Xabar tagidagi reaksiya chiplari — pufakdan BUTUNLAY pastda, alohida qatorda (Telegram uslubi), ko'zga tashlanib turadi */
+.chat-msg.has-reacts { flex-wrap: wrap; margin-bottom: 5px; }
+.chat-msg > .msg-reacts { flex: 0 0 100%; display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 0; }
+.chat-msg.mine > .msg-reacts { justify-content: flex-end; }
+.chat-msg .mr-chip { --chip-bg: #16181c; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid rgba(231, 233, 234, 0.24); border-radius: 14px; background: var(--chip-bg); color: #e7e9ea; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); -webkit-tap-highlight-color: transparent; transition: background .12s ease, transform .12s ease; }
+.chat-msg .mr-chip:hover { --chip-bg: #202327; }
+.chat-msg .mr-chip:active { transform: scale(.94); }
+.chat-msg .mr-chip.mine { --chip-bg: var(--x-blue, #1d9bf0); border-color: transparent; color: #fff; }
+.chat-msg .mr-chip.mine:hover { --chip-bg: #1a8cd8; }
+.chat-msg .mr-chip.few { padding: 0 3px 0 9px; }
+.chat-msg .mr-chip .mr-e { font-size: 16px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.chat-msg .mr-chip .mr-n { font-size: 13px; font-weight: 700; }
+.chat-msg .mr-chip .mr-avs { display: inline-flex; align-items: center; }
+.chat-msg .mr-chip .mr-av { width: 21px; height: 21px; border-radius: 50%; object-fit: cover; }
+.chat-msg .mr-chip .mr-av + .mr-av { margin-left: -6px; box-shadow: 0 0 0 1.5px var(--chip-bg); }
 
 /* Menyu ochiq bo'lgan xabar */
 .chat-msg.mc-active .chat-bubble { box-shadow: 0 0 0 2px rgba(231, 233, 234, 0.2); }
@@ -14207,6 +14211,7 @@ select.field option { background: #000000; color: var(--text); }
 #msgSeenList .sl-avi { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: block; }
 #msgSeenList .sl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #msgSeenList .sl-item img.icon { flex-shrink: 0; }
+#msgSeenList .sl-react { flex-shrink: 0; font-size: 19px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 
 /* ── Guruh: yuboruvchi sarlavhasi — ism + owner/admin nishoni; rasm (media-only) ustida kichik sarlavha-kartochka ───── */
 .grp-sender-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }

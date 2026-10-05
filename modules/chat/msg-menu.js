@@ -8,7 +8,7 @@ import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
-import { reactInit, reactStripHtml, reactPickerHtml, reactBindPicker, reactToggle, reactAfterPaint, reactReset, reactHoverHide } from './msg-reactions.js';
+import { reactInit, reactStripHtml, reactPickerHtml, reactBindPicker, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -136,14 +136,26 @@ async function loadReaders(m) {
   const seq = ++readersSeq;
   try {
     const list = await fetchReaders(gid, m.createdAt);
+    // Reaksiya bildirgan odam xabarni ko'rgan — o'qish belgisi bo'lmasa ham ro'yxatga qo'shamiz
+    const rx = reactionsOf(m.id), have = new Set(list.map(u => u.uid));
+    const extra = [...rx.keys()].filter(u => u !== state.me?.uid && !have.has(u));
+    if (extra.length) {
+      const need = extra.filter(u => !_rdProf.has(u));
+      if (need.length) {
+        const { data } = await sb.from('profiles').select('id, full_name, username, avatar').in('id', need);
+        (data || []).forEach(p => _rdProf.set(p.id, { name: p.full_name || p.username || 'Foydalanuvchi', avatar: p.avatar || '' }));
+        need.forEach(u => { if (!_rdProf.has(u)) _rdProf.set(u, { name: 'Foydalanuvchi', avatar: '' }); });
+      }
+      extra.forEach(u => list.push({ uid: u, ..._rdProf.get(u) }));
+    }
     if (seq !== readersSeq || openId !== m.id || !list.length) return;
-    paintReaders(list);
+    paintReaders(list, m.id);
   } catch (_) { /* last_read_at ustuni hali yo'q (062) — oddiy "Yuborildi" qoladi */ }
 }
 
 const rdAvi = (u, cls) => `<img class="${cls}" src="${esc(u.avatar || defAvi(u.name))}" alt="" draggable="false">`;
 
-function paintReaders(list) {
+function paintReaders(list, mid) {
   const el = menu?.querySelector('.mc-readers');
   if (!el) return;
   const one = list.length === 1;
@@ -151,6 +163,7 @@ function paintReaders(list) {
     + (one ? rdAvi(list[0], 'mc-rd-avi') : `<span class="mc-rd-stack">${list.slice(0, 3).map(u => rdAvi(u, 'mc-rd-avi')).join('')}</span>`);
   el.classList.add('has-list');
   el._list = list;
+  el._mid = mid;
 }
 
 function ensureSeenList() {
@@ -175,8 +188,9 @@ function showSeenList(rowEl) {
   if (!list?.length || !menu) return;
   clearTimeout(seenHideT);
   ensureSeenList();
+  const rx = reactionsOf(rowEl._mid);   // kim qanday emoji bilan reaksiya bildirgan
   seenEl.innerHTML = `<div class="sl-scroll">${list.map(u =>
-    `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-name">${esc(u.name)}</span>${IC.seen}</button>`).join('')}</div>`;
+    `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-name">${esc(u.name)}</span>${rx.get(u.uid) ? `<span class="sl-react">${esc(rx.get(u.uid))}</span>` : ''}${IC.seen}</button>`).join('')}</div>`;
   seenEl.style.visibility = 'hidden';
   seenEl.classList.add('show');
   const mr = menu.getBoundingClientRect(), rr = rowEl.getBoundingClientRect();
