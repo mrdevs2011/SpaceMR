@@ -14158,8 +14158,11 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal .chat-msg.emoji-only.mine .chat-bubble,
 #chatThreadModal .chat-msg.emoji-only.theirs .chat-bubble,
 #chatThreadMessages.msg-selecting .chat-msg.emoji-only.mc-selected .chat-bubble { background: none !important; box-shadow: none !important; border: none !important; padding: 0 !important; border-radius: 0 !important; }
-.chat-msg.emoji-only.emo-1 { --emo-size: 80px; }
-.chat-msg.emoji-only.emo-2, .chat-msg.emoji-only.emo-3 { --emo-size: 38px; }
+.chat-msg.emoji-only.emo-1 { --emo-size: 88px; }
+.chat-msg.emoji-only.emo-2 { --emo-size: 48px; }
+.chat-msg.emoji-only.emo-3 { --emo-size: 44px; }
+/* `#chatThreadModal .chat-bubble-text { font-size: 15px }` (id) --emo-size ni bosib ketardi: emojilar hammasi 15px chiqardi */
+#chatThreadModal .chat-msg.emoji-only .chat-bubble-text { font-size: var(--emo-size, 38px); line-height: 1.15; }
 .chat-msg.emoji-only .chat-bubble-wrap { display: flex; flex-direction: column; }
 .chat-msg.emoji-only.mine .chat-bubble-wrap { align-items: flex-end; }
 .chat-msg.emoji-only.theirs .chat-bubble-wrap { align-items: flex-start; }
