@@ -284,6 +284,7 @@ function _vnFloatRecordBtn(on) {
     btn.style.filter = 'none';
     btn.style.pointerEvents = 'auto';
     btn.style.touchAction = 'none';
+    try { _pulseFloatContainer(true); _pulsePlaceRingsNearBtn(); } catch (_) {}
   } else if (btn.dataset.vnFloat === '1') {
     const ph = document.getElementById('chatVoiceBtnPh');
     if (ph && ph.parentElement) {
@@ -295,6 +296,7 @@ function _vnFloatRecordBtn(on) {
     else btn.removeAttribute('style');
     delete btn.dataset.vnFloat;
     delete btn.dataset.vnPrevStyle;
+    try { _pulseFloatContainer(false); } catch (_) {}
   }
 }
 
@@ -1094,86 +1096,164 @@ function cancelRecording() {
   _voiceResetLockUi();
 }
 
-/* ── Hold-to-talk: faqat mic pulse (chiziqli waveform olib tashlandi) ── */
+/* ── Hold-to-talk: Telegram-style real amplitude pulse (voice + rolik) ── */
+function _pulseAudioStream(stream) {
+  // Faqat audio track — video track analyser ni buzmasin
+  try {
+    const tracks = stream?.getAudioTracks?.() || [];
+    if (!tracks.length) return stream;
+    return new MediaStream(tracks);
+  } catch (_) { return stream; }
+}
+
+function _pulsePlaceRingsNearBtn() {
+  // Float tugma body da bo'lsa — ringlar ham tugma markaziga bog'lanadi
+  const btn = $('chatVoiceBtn');
+  const cont = $('cvPulseContainer');
+  if (!btn || !cont) return;
+  const r = btn.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  // Container body da fixed bo'lsa — markazni yangilaymiz
+  if (cont.dataset.vnPulseFloat === '1') {
+    cont.style.left = cx + 'px';
+    cont.style.top = cy + 'px';
+  }
+}
+
+function _pulseFloatContainer(on) {
+  const cont = $('cvPulseContainer');
+  const wrap = $('chatVoiceWrap');
+  if (!cont) return;
+  if (on) {
+    if (cont.dataset.vnPulseFloat === '1') { _pulsePlaceRingsNearBtn(); return; }
+    cont.dataset.vnPulseFloat = '1';
+    cont.dataset.vnPulsePrev = cont.getAttribute('style') || '';
+    document.body.appendChild(cont);
+    cont.style.position = 'fixed';
+    cont.style.zIndex = '10040'; // tugma (10050) ostida, overlay (9000) ustida
+    cont.style.pointerEvents = 'none';
+    cont.style.transform = 'none';
+    cont.style.width = '38px';
+    cont.style.height = '38px';
+    cont.style.margin = '0';
+    _pulsePlaceRingsNearBtn();
+  } else if (cont.dataset.vnPulseFloat === '1') {
+    if (wrap) wrap.insertBefore(cont, wrap.firstChild);
+    const prev = cont.dataset.vnPulsePrev || '';
+    if (prev) cont.setAttribute('style', prev);
+    else cont.removeAttribute('style');
+    delete cont.dataset.vnPulseFloat;
+    delete cont.dataset.vnPulsePrev;
+  }
+}
 
 function _startPulse(stream) {
+  _stopPulse(false); // ring float holatini saqlash mumkin emas — to'liq tozalash
   const r1 = $('cvPulse1');
   const r2 = $('cvPulse2');
   const r3 = $('cvPulse3');
   const vBtn = $('chatVoiceBtn');
+  if (!stream) return;
+
+  // Rolik / float: ringlar tugma yonida ko'rinsin
+  try { _pulseFloatContainer(!!document.body.classList.contains('vn-rec') || !!vBtn?.classList.contains('recording')); } catch (_) {}
 
   try {
-    _pulseCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = _pulseCtx.createMediaStreamSource(stream);
+    const AC = window.AudioContext || window.webkitAudioContext;
+    _pulseCtx = new AC();
+    if (_pulseCtx.state === 'suspended') _pulseCtx.resume().catch(() => {});
+
+    const aStream = _pulseAudioStream(stream);
+    const src = _pulseCtx.createMediaStreamSource(aStream);
     const analyser = _pulseCtx.createAnalyser();
-    // Telegramga yaqin: tez reaction + silliq decay
-    analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.55;
+    // Telegram: tez reaction, past latency
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.35;
+    analyser.minDecibels = -70;
+    analyser.maxDecibels = -10;
     src.connect(analyser);
     _pulseAnalyser = analyser;
 
-    const freq = new Uint8Array(analyser.frequencyBinCount);
     const time = new Uint8Array(analyser.fftSize);
+    const freq = new Uint8Array(analyser.frequencyBinCount);
     let lastTime = performance.now();
     let phase = 0;
-    _pulseLevel = 0.08;
+    _pulseLevel = 0;
 
     const tick = (now) => {
       if (!_pulseAnalyser) return;
 
-      // 1) Time-domain RMS — gapirish amplitudasi (realistik)
+      // 1) Peak + RMS (time domain) — gapirish aniq seziladi
       analyser.getByteTimeDomainData(time);
-      let sumSq = 0;
+      let sumSq = 0, peak = 0;
       for (let i = 0; i < time.length; i++) {
         const n = (time[i] - 128) / 128;
+        const a = Math.abs(n);
+        if (a > peak) peak = a;
         sumSq += n * n;
       }
       const rms = Math.sqrt(sumSq / time.length);
-      // threshold + gain (jimlikda deyarli 0, gapirganda 0.2..1)
-      let amp = Math.min(1, Math.max(0, (rms - 0.015) * 4.5));
+      // Soft noise gate + kuchli gain (Telegram sezgirligi)
+      let amp = Math.max(0, (peak * 0.55 + rms * 0.45) - 0.012);
+      amp = Math.min(1, Math.pow(amp * 5.2, 0.85));
 
-      // 2) Frequency energy (o'rta diapazon) — boyroq waveform
+      // 2) Speech band energy (~300–3400 Hz) — shovqin vs gapirish
       analyser.getByteFrequencyData(freq);
-      let fSum = 0;
-      const fMax = Math.min(48, freq.length);
-      for (let i = 2; i < fMax; i++) fSum += freq[i];
-      const fAvg = fSum / (fMax - 2) / 255;
-      const fAmp = Math.min(1, Math.max(0, (fAvg - 0.02) * 2.4));
+      const binHz = (_pulseCtx.sampleRate / 2) / freq.length;
+      let fSum = 0, fN = 0;
+      for (let i = 0; i < freq.length; i++) {
+        const hz = i * binHz;
+        if (hz < 250 || hz > 3800) continue;
+        fSum += freq[i];
+        fN++;
+      }
+      const fAvg = fN ? (fSum / fN) / 255 : 0;
+      const fAmp = Math.min(1, Math.max(0, (fAvg - 0.04) * 2.8));
 
-      // aralashma: asosan RMS, biroz spektr
-      const raw = Math.min(1, amp * 0.72 + fAmp * 0.28);
+      // Aralashma: peak/RMS asosiy, spektr qo'shimcha
+      const raw = Math.min(1, amp * 0.78 + fAmp * 0.22);
 
-      // Telegram physics: tez attack, sekin decay
-      const speed = raw > _pulseLevel ? 0.42 : 0.14;
+      // Telegram physics: juda tez attack, o'rtacha decay
+      const speed = raw > _pulseLevel ? 0.55 : 0.12;
       _pulseLevel += (raw - _pulseLevel) * speed;
 
-      const dt = (now - lastTime) / 1000;
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
-      phase += dt * 2.8;
-      const breathe = Math.sin(phase) * 0.04;
+      phase += dt * (2.2 + _pulseLevel * 1.8);
+      const breathe = Math.sin(phase) * (0.02 + _pulseLevel * 0.03);
 
-      // ── Mic button + 3 pulse rings (Telegram) ──
+      // Tugma scale — jimlikda ~1.18, baland ovozda ~1.38
       if (vBtn && !_voiceCancelled) {
-        const btnScale = 1.18 + (_pulseLevel * 0.14) + breathe * 0.25;
-        vBtn.style.transform = `scale(${btnScale.toFixed(3)})`;
+        const btnScale = 1.16 + (_pulseLevel * 0.22) + breathe;
+        vBtn.style.transform = 'scale(' + btnScale.toFixed(3) + ')';
+        // Soft glow — amplituda bilan
+        const g = (0.35 + _pulseLevel * 0.55).toFixed(2);
+        const blur = (12 + _pulseLevel * 22).toFixed(0);
+        vBtn.style.boxShadow =
+          '0 4px ' + blur + 'px rgba(29,155,240,' + g + '), 0 0 0 2px rgba(231,233,234,' + (0.12 + _pulseLevel * 0.2).toFixed(2) + ')';
       }
+
+      _pulsePlaceRingsNearBtn();
+
+      // 3 ring — Telegram: ichki kichik, tashqi katta, opacity amplituda bilan
       if (r1) {
-        const s1 = 1.0 + (_pulseLevel * 0.85) + breathe * 0.4;
-        r1.style.transform = `translate(-50%, -50%) scale(${s1.toFixed(3)})`;
-        r1.style.opacity = (0.4 + _pulseLevel * 0.55).toFixed(3);
+        const s1 = 1.05 + _pulseLevel * 1.15 + breathe * 0.5;
+        r1.style.transform = 'translate(-50%, -50%) scale(' + s1.toFixed(3) + ')';
+        r1.style.opacity = (0.15 + _pulseLevel * 0.7).toFixed(3);
       }
       if (r2) {
-        const s2 = 1.25 + (_pulseLevel * 1.55) + Math.sin(phase - 0.6) * 0.08;
-        r2.style.transform = `translate(-50%, -50%) scale(${s2.toFixed(3)})`;
-        r2.style.opacity = (0.28 + _pulseLevel * 0.45).toFixed(3);
+        const s2 = 1.35 + _pulseLevel * 1.9 + Math.sin(phase - 0.7) * 0.06;
+        r2.style.transform = 'translate(-50%, -50%) scale(' + s2.toFixed(3) + ')';
+        r2.style.opacity = (0.08 + _pulseLevel * 0.55).toFixed(3);
       }
       if (r3) {
-        const s3 = 1.55 + (_pulseLevel * 2.35) + Math.sin(phase - 1.2) * 0.1;
-        r3.style.transform = `translate(-50%, -50%) scale(${s3.toFixed(3)})`;
-        r3.style.opacity = (0.15 + _pulseLevel * 0.4).toFixed(3);
+        const s3 = 1.7 + _pulseLevel * 2.7 + Math.sin(phase - 1.4) * 0.08;
+        r3.style.transform = 'translate(-50%, -50%) scale(' + s3.toFixed(3) + ')';
+        r3.style.opacity = (0.04 + _pulseLevel * 0.4).toFixed(3);
       }
 
-          _pulseRaf = requestAnimationFrame(tick);
+      _pulseRaf = requestAnimationFrame(tick);
     };
 
     _pulseRaf = requestAnimationFrame(tick);
@@ -1188,7 +1268,12 @@ function _stopPulse() {
   _pulseAnalyser = null;
   _pulseLevel = 0;
   const vBtn = $('chatVoiceBtn');
-  if (vBtn) vBtn.style.transform = '';
+  if (vBtn) {
+    vBtn.style.transform = '';
+    // boxShadow ni recording CSS qayta qo'ysin — inline olib tashlaymiz
+    if (!vBtn.classList.contains('recording')) vBtn.style.boxShadow = '';
+    else vBtn.style.removeProperty('box-shadow');
+  }
   ['cvPulse1', 'cvPulse2', 'cvPulse3'].forEach(id => {
     const el = $(id);
     if (el) {
@@ -1196,7 +1281,9 @@ function _stopPulse() {
       el.style.opacity = '0';
     }
   });
+  try { _pulseFloatContainer(false); } catch (_) {}
 }
+
 
 
 function _bindVoiceHoldUi() {
