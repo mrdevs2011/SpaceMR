@@ -1909,7 +1909,7 @@ export function paintMessages(msgs, grp = null) {
       const hasCaption = !!(m.text && m.text.trim());
       const captionHtml = hasCaption ? `<div class="chat-bubble-text cfm-caption">${renderMarkdown(m.text)}</div>` : '';
       
-      const bData = generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks });
+      const bData = generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when: `${_dateSepLabel(m.createdAt)}, ${time}` });
       bubbleClassExtra = bData.bubbleClassExtra;
       metaOutside = bData.metaOutside;
       bubbleContent = bData.bubbleContent;

@@ -33,7 +33,8 @@ export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpNam
   </div>`;
 }
 
-export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks }) {
+export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when = '' }) {
+  const _ttl = when ? ` title="${esc(when)}"` : '';
   let bubbleClassExtra = '';
   let metaOutside = true;
   let bubbleContent = '';
@@ -43,7 +44,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       bubbleClassExtra = ' bubble-media-only';
       metaOutside = false;
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone">
-        <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link">
+        <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link"${_ttl}>
           <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
         </a>
         <span class="chat-msg-meta cfm-media-badge">
@@ -54,7 +55,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     } else {
       bubbleClassExtra = ' bubble-media-caption';
       bubbleContent = `<div class="cfm-media-wrap">
-        <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link">
+        <a href="${safeUrl}" target="_blank" rel="noopener" class="cfm-img-link"${_ttl}>
           <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
         </a>
         ${captionHtml}
