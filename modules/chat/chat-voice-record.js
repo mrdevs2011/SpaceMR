@@ -296,12 +296,12 @@ function _vidSyncCtrls() {
     const trackOk = trackSupportsTorch(_vidVideoTrack);
     const maybe = trackMaybeTorch(_vidVideoTrack, _vidFacing);
     if (trackOk) _vidTorchSeen = true;
-    // Orqa kamera yoki qurilmada fonar ko'rilgan — tugma ko'rinsin
-    fl.hidden = !(back || _vidTorchSeen);
-    // Imkoniyat hali kelmagan: tugma biroz xira, lekin bosiladi (urinish)
+    // Faqat ORQA kamera — old kamerada fonar tugmasi YO'Q
+    fl.hidden = !back;
+    if (!back) _vidTorchOn = false;
     fl.classList.toggle('off', back && !trackOk && !maybe);
-    fl.classList.toggle('on', _vidTorchOn);
-    fl.setAttribute('aria-disabled', trackOk || maybe ? 'false' : 'true');
+    fl.classList.toggle('on', !!_vidTorchOn && back);
+    fl.setAttribute('aria-disabled', (trackOk || maybe) && back ? 'false' : 'true');
   }
   el.querySelector('.vnp-video')?.classList.toggle('back', back);
   const fb = el.querySelector('.vnp-flip');

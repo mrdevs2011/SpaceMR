@@ -161,14 +161,14 @@ export async function openCameraCapture(options = {}) {
       const trackOk = trackSupportsTorch(tr);
       const maybe = trackMaybeTorch(tr, facing);
       if (trackOk) hasTorchDevice = true;
-      // Orqa kamera: tugmani ko'rsat (capabilities kechikishi mumkin)
-      const show = !reviewing && (hasTorchDevice || facing === 'environment');
+      // Faqat ORQA kamera — old kamerada fonar tugmasi YO'Q
+      const back = facing === 'environment';
+      const show = !reviewing && back;
       flashBtn.hidden = !show;
-      flashBtn.classList.toggle('faded', !trackOk && !maybe);
-      if (!trackOk && !torchOn) { /* keep torchOn only if API says on */ }
-      if (!trackOk && facing !== 'environment') torchOn = false;
+      if (!back && torchOn) torchOn = false;
+      flashBtn.classList.toggle('faded', back && !trackOk && !maybe);
       flashBtn.innerHTML = torchOn ? SVG.flashOn : SVG.flashOff;
-      flashBtn.classList.toggle('on', torchOn);
+      flashBtn.classList.toggle('on', !!torchOn && back);
     };
 
     /* ── Pinch-to-zoom (2 barmoq) ──
