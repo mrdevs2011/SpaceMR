@@ -962,27 +962,52 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 .chat-msg.emoji-only .chat-bubble { position: relative; overflow: visible !important; -webkit-tap-highlight-color: transparent; }
 .chat-msg.emoji-only.emo-1 .chat-bubble { cursor: pointer; user-select: none; -webkit-user-select: none; }
 .chat-msg.emoji-only .chat-bubble-text { width: fit-content; transform-origin: 50% 70%; }
-.chat-msg.emoji-only .chat-bubble-text.emo-play { animation: emoElastic .95s both; will-change: transform; }
-/* Avval tez kattalashadi, keyin prujinadek (elastik) tebranib joyiga qaytadi */
-@keyframes emoElastic {
-  0% { transform: scale(1); animation-timing-function: cubic-bezier(.2, .9, .3, 1); }
-  16% { transform: scale(1.38); animation-timing-function: cubic-bezier(.34, 1.56, .64, 1); }
-  100% { transform: scale(1); }
+.chat-msg.emoji-only .chat-bubble-text.emo-play { will-change: transform; }
+/* Jelly: ezilib-cho'zilib sakraydi (har emojida bir xil); BOOM: 5 ta ketma-ket bosilganda katta portlash */
+@keyframes emoJelly {
+  0%   { transform: translateY(0) scale(1, 1) rotate(0); }
+  14%  { transform: translateY(4px) scale(1.34, .7) rotate(-6deg); }
+  30%  { transform: translateY(-18px) scale(.8, 1.3) rotate(9deg); }
+  46%  { transform: translateY(0) scale(1.2, .84) rotate(-6deg); }
+  62%  { transform: translateY(-5px) scale(.94, 1.08) rotate(4deg); }
+  80%  { transform: translateY(0) scale(1.04, .98) rotate(-1.5deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(0); }
 }
-@supports (animation-timing-function: linear(0, 1)) {
-  @keyframes emoElastic {
-    0% { transform: scale(1); animation-timing-function: cubic-bezier(.2, .9, .3, 1); }
-    16% { transform: scale(1.38); animation-timing-function: linear(0, 0.164, 0.38, 0.614, 0.838, 1.029, 1.175, 1.27, 1.315, 1.317, 1.285, 1.229, 1.162, 1.092, 1.028, 0.975, 0.937, 0.913, 0.904, 0.908, 0.92, 0.938, 0.959, 0.979, 0.997, 1.012, 1.022, 1.027, 1.029, 1.027, 1.022, 1.017, 1.01, 1.004, 0.999, 0.995, 0.993, 0.992, 0.992, 0.992, 0.994); }
-    100% { transform: scale(1); }
-  }
+@keyframes emoBoom {
+  0%   { transform: scale(1) rotate(0); }
+  12%  { transform: scale(.55) rotate(-12deg); }
+  30%  { transform: scale(1.85) rotate(9deg); }
+  42%  { transform: scale(1.5) rotate(-7deg); }
+  56%  { transform: scale(1.7) rotate(6deg); }
+  70%  { transform: scale(1.2) rotate(-3deg); }
+  86%  { transform: scale(.96) rotate(1deg); }
+  100% { transform: scale(1) rotate(0); }
 }
-.emo-fx { position: absolute; left: 50%; top: 40%; font-size: var(--sz, 20px); line-height: 1; pointer-events: none; z-index: 8; opacity: 0; animation: emoFly 1.1s cubic-bezier(.2, .8, .3, 1) var(--dl, 0ms) forwards; }
-@keyframes emoFly {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
-  15% { opacity: 1; }
+.chat-msg.emoji-only .chat-bubble-text.emo-play { animation: emoJelly .75s cubic-bezier(.3, .7, .4, 1) both; }
+.chat-msg.emoji-only .chat-bubble-text.emo-boom { animation: emoBoom .95s cubic-bezier(.3, .7, .4, 1) both; position: relative; z-index: 5; will-change: transform; }
+
+/* Effekt qatlami: butun ekran ustida (chat scroll konteyneri kesib qo'ymasin), bosishlarga xalaqit bermaydi */
+.emo-fxlayer { position: fixed; inset: 0; z-index: 700; pointer-events: none; overflow: hidden; }
+.emo-p { position: absolute; left: var(--x); top: var(--y); font-size: var(--sz, 24px); line-height: 1; opacity: 0; will-change: transform, opacity; animation: emoP var(--dur, 1000ms) cubic-bezier(.15, .8, .3, 1) var(--dl, 0ms) forwards; }
+@keyframes emoP {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(0deg); }
+  12%  { opacity: 1; }
+  70%  { opacity: 1; }
   100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -80px))) scale(1) rotate(var(--rot, 0deg)); }
 }
-@media (prefers-reduced-motion: reduce) { .chat-msg.emoji-only .chat-bubble-text.emo-play { animation-duration: .3s; } }
+.emo-ring { position: absolute; left: var(--x); top: var(--y); width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 5px solid rgba(255, 214, 10, .95); box-shadow: 0 0 24px rgba(255, 170, 0, .6); opacity: 0; animation: emoRing .8s ease-out var(--dl, 0ms) forwards; }
+@keyframes emoRing { 0% { opacity: .95; transform: scale(.25); } 100% { opacity: 0; transform: scale(var(--s, 6)); border-width: 1px; } }
+.emo-flash { position: absolute; left: var(--x); top: var(--y); width: 340px; height: 340px; margin: -170px 0 0 -170px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 140, .85), rgba(255, 170, 0, .3) 45%, transparent 70%); opacity: 0; animation: emoFlash .6s ease-out forwards; }
+@keyframes emoFlash { 0% { opacity: 0; transform: scale(.2); } 22% { opacity: 1; } 100% { opacity: 0; transform: scale(1.35); } }
+.emo-combo { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -100%); font: 800 20px/1 var(--font, system-ui, sans-serif); color: #ffd60a; text-shadow: 0 2px 0 rgba(0, 0, 0, .55), 0 0 12px rgba(255, 170, 0, .7); white-space: nowrap; opacity: 0; animation: emoCombo .7s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+.emo-combo-boom { font-size: 30px; letter-spacing: 1px; animation-duration: 1s; }
+@keyframes emoCombo {
+  0%   { opacity: 0; transform: translate(-50%, -60%) scale(.3); }
+  25%  { opacity: 1; transform: translate(-50%, -110%) scale(var(--cs, 1.2)); }
+  70%  { opacity: 1; transform: translate(-50%, -130%) scale(var(--cs, 1.2)); }
+  100% { opacity: 0; transform: translate(-50%, -170%) scale(var(--cs, 1.2)); }
+}
+@media (prefers-reduced-motion: reduce) { .chat-msg.emoji-only .chat-bubble-text.emo-play, .chat-msg.emoji-only .chat-bubble-text.emo-boom { animation-duration: .3s; } }
 
 /* Bosiladigan elementlar: cursor pointer (:where — o'ziga xos qoidalar ustidan g'olib kelmaydi) */
 :where(button, [role="button"], [role="tab"], a[href], summary, label[for], select, input[type="checkbox"], input[type="radio"], input[type="range"], input[type="file"], [onclick]) { cursor: pointer; }
@@ -1104,6 +1129,54 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgCtx .mc-seen { display: flex; align-items: center; gap: 10px; padding: 6px 12px 4px; font-size: 12px; color: var(--pal-gray-500); }
 #msgCtx .mc-seen svg , #msgCtx .mc-seen img.icon { flex-shrink: 0; }
 @media (pointer: coarse) { #msgCtx .mc-item { padding: 12px 14px; } }
+
+/* ═══ Reaksiyalar (modules/chat/msg-reactions.js) ═══ */
+#msgCtx { min-width: 296px; }
+#msgCtx .mc-react { display: flex; align-items: center; gap: 2px; padding: 2px 2px 6px; }
+#msgCtx .mc-r { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent; }
+#msgCtx .mc-r:hover, #msgCtx .mc-r:focus-visible { background: var(--pal-white-08); transform: scale(1.16); outline: none; }
+#msgCtx .mc-r.on { background: rgba(231, 233, 234, 0.18); }
+#msgCtx .mc-r-more { flex: 0 0 30px; width: 30px; height: 30px; margin-left: 2px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--pal-white-08); color: var(--pal-gray-500); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+#msgCtx .mc-r-more:hover { background: rgba(231, 233, 234, 0.18); color: var(--text, #e7e9ea); }
+#msgCtx .mc-r-more svg { transition: transform .18s ease; }
+#msgCtx.mc-expanded .mc-r-more svg { transform: rotate(180deg); }
+#msgCtx .mc-react + .mc-items { padding-top: 6px; border-top: 1px solid var(--pal-gray-700); }
+#msgCtx.mc-expanded .mc-items { display: none; }
+#msgCtx .mr-pick { display: none; }
+#msgCtx.mc-expanded .mr-pick { display: block; padding-top: 6px; border-top: 1px solid var(--pal-gray-700); }
+#msgCtx .mr-search input { width: 100%; box-sizing: border-box; height: 34px; padding: 0 12px; border: 0; border-radius: 17px; background: var(--pal-white-08); color: var(--text, #e7e9ea); font: inherit; font-size: 14px; outline: none; }
+#msgCtx .mr-search input::placeholder { color: var(--pal-gray-500); }
+#msgCtx .mr-scroll { height: min(260px, 42vh); margin-top: 6px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--pal-gray-700) transparent; }
+#msgCtx .mr-cat { position: sticky; top: 0; z-index: 1; padding: 6px 6px 4px; background: #000; color: var(--pal-gray-500); font-size: 12px; font-weight: 600; }
+#msgCtx .mr-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+#msgCtx .mr-grid .mc-r { flex: none; }
+#msgCtx .mr-none { padding: 24px 0; text-align: center; color: var(--pal-gray-500); font-size: 13px; }
+
+/* Hover: xabar chetidagi tezkor reaksiya + ochiladigan vertikal ro'yxat (faqat hover:hover qurilmalar) */
+#msgHoverReact { overflow: visible; position: fixed; z-index: 590; display: none; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 1px solid rgba(231, 233, 234, 0.14); background: #15181c; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); font-size: 16px; line-height: 28px; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; -webkit-tap-highlight-color: transparent; }
+#msgHoverReact.show { display: block; animation: hrPop .14s ease-out; }
+#msgHoverReact:hover { background: #1f2328; }
+#msgHoverReact.on { border-color: rgba(231, 233, 234, 0.5); }
+#msgHoverPick { position: fixed; z-index: 591; display: none; padding: 0; overflow: visible; border-radius: 22px; background: #15181c; border: 1px solid rgba(231, 233, 234, 0.14); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7); -webkit-user-select: none; user-select: none; }
+#msgHoverPick.show { display: block; animation: hrPop .14s ease-out; transform-origin: 50% 100%; }
+#msgHoverPick .hp-list { display: flex; flex-direction: column-reverse; align-items: center; gap: 4px; padding: 8px 8px; max-height: 188px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#msgHoverPick .hp-list::-webkit-scrollbar { display: none; }
+#msgHoverPick .hp-e { flex: none; width: 34px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; font-size: 22px; line-height: 1; overflow: visible; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .1s ease, background .1s ease; }
+#msgHoverPick .hp-e:hover { background: var(--pal-white-08); transform: scale(1.18); }
+#msgHoverPick .hp-e.on { background: rgba(231, 233, 234, 0.2); }
+@keyframes hrPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+
+/* Xabar tagidagi reaksiya chiplari */
+.chat-bubble > .msg-reacts { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 1px; clear: both; }
+.chat-bubble .mr-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border: 0; border-radius: 13px; background: rgba(231, 233, 234, 0.14); color: inherit; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s ease; }
+.chat-bubble .mr-chip:hover { background: rgba(231, 233, 234, 0.22); }
+.chat-bubble .mr-chip.mine { background: rgba(231, 233, 234, 0.3); }
+.chat-bubble .mr-chip.few { padding: 0 3px 0 8px; }
+.chat-bubble .mr-chip .mr-e { font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.chat-bubble .mr-chip .mr-n { font-size: 12px; font-weight: 600; }
+.chat-bubble .mr-chip .mr-avs { display: inline-flex; align-items: center; }
+.chat-bubble .mr-chip .mr-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.chat-bubble .mr-chip .mr-av + .mr-av { margin-left: -6px; box-shadow: 0 0 0 1.5px #2f3336; }
 
 /* Menyu ochiq bo'lgan xabar */
 .chat-msg.mc-active .chat-bubble { box-shadow: 0 0 0 2px rgba(231, 233, 234, 0.2); }
@@ -8434,8 +8507,11 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal .chat-msg.emoji-only.mine .chat-bubble,
 #chatThreadModal .chat-msg.emoji-only.theirs .chat-bubble,
 #chatThreadMessages.msg-selecting .chat-msg.emoji-only.mc-selected .chat-bubble { background: none !important; box-shadow: none !important; border: none !important; padding: 0 !important; border-radius: 0 !important; }
-.chat-msg.emoji-only.emo-1 { --emo-size: 80px; }
-.chat-msg.emoji-only.emo-2, .chat-msg.emoji-only.emo-3 { --emo-size: 38px; }
+.chat-msg.emoji-only.emo-1 { --emo-size: 88px; }
+.chat-msg.emoji-only.emo-2 { --emo-size: 48px; }
+.chat-msg.emoji-only.emo-3 { --emo-size: 44px; }
+/* `#chatThreadModal .chat-bubble-text { font-size: 15px }` (id) --emo-size ni bosib ketardi: emojilar hammasi 15px chiqardi */
+#chatThreadModal .chat-msg.emoji-only .chat-bubble-text { font-size: var(--emo-size, 38px); line-height: 1.15; }
 .chat-msg.emoji-only .chat-bubble-wrap { display: flex; flex-direction: column; }
 .chat-msg.emoji-only.mine .chat-bubble-wrap { align-items: flex-end; }
 .chat-msg.emoji-only.theirs .chat-bubble-wrap { align-items: flex-start; }
