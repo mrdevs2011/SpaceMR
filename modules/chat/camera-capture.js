@@ -274,28 +274,77 @@ export async function openCameraCapture(options = {}) {
       liveVid.play().catch(() => {});
     };
 
+    let switchingFace = false;
     const switchFacing = async () => {
-      if (recording || reviewing) return;
+      if (reviewing || switchingFace) return;
+      switchingFace = true;
       const nextFace = facing === 'user' ? 'environment' : 'user';
       const nextDev = nextFace === 'user' ? cams.front : cams.back;
+      const wasRecording = recording && mediaRec && mediaRec.state === 'recording';
       try {
         await setTorch(vTrack(), false);
         torchOn = false;
+
+        // Yozuv davom etayotgan bo'lsa — recorder ni pauza (chunklar saqlanadi)
+        if (wasRecording) {
+          await new Promise(res => {
+            const rec = mediaRec;
+            const prev = rec.onstop;
+            rec.onstop = () => { rec.onstop = prev; res(); };
+            try { rec.requestData?.(); rec.stop(); } catch (_) { res(); }
+          });
+          mediaRec = null;
+        }
+
         // A12: bir vaqtda 2 kamera ochilmaydi — avval eski tracklarni yop
         const old = stream;
         liveVid.srcObject = null;
         try { old?.getTracks().forEach(t => t.stop()); } catch (_) {}
         stream = null;
-        const s = await _startStream(nextDev?.deviceId || null, nextFace, mode === 'video');
+
+        const needAudio = mode === 'video' || wasRecording;
+        const s = await _startStream(nextDev?.deviceId || null, nextFace, needAudio);
         deviceId = nextDev?.deviceId || null;
         await setStream(s, nextFace);
+
+        // Yozuvni yangi stream bilan davom ettirish
+        if (wasRecording && stream) {
+          const mime = _pickMime();
+          try {
+            mediaRec = mime
+              ? new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 })
+              : new MediaRecorder(stream, { videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: 128000 });
+          } catch (_) {
+            try { mediaRec = new MediaRecorder(stream); } catch (e2) {
+              toast('Kamera almashtirildi, lekin yozuv davom etmadi', 'error');
+              recording = false;
+              stopRecTimer();
+              syncUi();
+              return;
+            }
+          }
+          mediaRec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
+          mediaRec.start(250);
+          recording = true;
+          syncUi();
+        }
       } catch (err) {
         toast(cameraErrorMsg(err), 'error');
-        // tiklash: oldingi facing bilan qayta ochishga urin
         try {
-          const s2 = await _startStream(deviceId, facing, mode === 'video');
+          const s2 = await _startStream(deviceId, facing, mode === 'video' || wasRecording);
           await setStream(s2, facing);
+          if (wasRecording && stream && !mediaRec) {
+            try {
+              mediaRec = new MediaRecorder(stream);
+              mediaRec.ondataavailable = e => { if (e.data?.size) recChunks.push(e.data); };
+              mediaRec.start(250);
+              recording = true;
+              syncUi();
+            } catch (_) {}
+          }
         } catch (_) {}
+      } finally {
+        switchingFace = false;
       }
     };
 
