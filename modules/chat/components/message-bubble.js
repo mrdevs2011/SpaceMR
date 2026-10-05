@@ -42,6 +42,16 @@ function _fmtVidTime(s) {
 function _playVidReliable(v) {
   if (!v) return Promise.resolve();
   try {
+    // Mobil Chrome: src dagi #fragment Range so'rovini buzadi
+    const attr = v.getAttribute('src') || '';
+    const cur = v.currentSrc || '';
+    const raw = attr || cur;
+    if (raw.includes('#')) {
+      const clean = raw.split('#')[0];
+      v.removeAttribute('src');
+      while (v.firstChild) v.removeChild(v.firstChild);
+      v.src = clean;
+    }
     v.setAttribute('playsinline', '');
     v.setAttribute('webkit-playsinline', '');
     v.playsInline = true;
@@ -222,7 +232,7 @@ if (!window.__chatVidBound) {
     if (!e.target?.matches?.('.cfm-vid-wrap video')) return;
     const wrap = e.target.closest('.cfm-vid-wrap');
     vidStop(wrap);
-    try { e.target.currentTime = 0.1; } catch (_) {}
+    try { e.target.currentTime = 0; } catch (_) {}
   }, true);
 }
 
@@ -255,7 +265,7 @@ if (!window.__chatNoteBound) {
   document.addEventListener('ended', e => {
     if (!e.target?.matches?.('.cfm-note-vid')) return;
     e.target.closest('.cfm-note-wrap')?.classList.remove('playing');
-    try { e.target.currentTime = 0.1; } catch (_) {}
+    try { e.target.currentTime = 0; } catch (_) {}
   }, true);
 }
 
