@@ -4,7 +4,7 @@
  */
 import { $ } from '../core/utils.js';
 import { videoNoteFileName } from './components/video-note.js';
-import { mediaErrorKind, trackSupportsTorch, setTorch, probeInputDevices } from './camera-access.js';
+import { mediaErrorKind, trackSupportsTorch, trackMaybeTorch, setTorch, probeInputDevices, listCameras } from './camera-access.js';
 import { toast } from '../ui/toast.js';
 
 let _onVoiceRecorded = null;
@@ -156,6 +156,7 @@ const _VID_LOCK_DIST = 90;   // px yuqoriga (rolik + oddiy ovoz uchun bir xil)
 let _vidLocked = false, _vidFacing = 'user', _vidTorchOn = false, _vidSwitching = false;
 /* Oddiy ovoz: yuqoriga surilsa qulflanadi (rolik bilan bir xil UX) */
 let _voiceLocked = false;
+let _vidCanSwitch = false;  // 2+ kamera (listCameras)
 let _vidVideoTrack = null, _vidAudioTracks = [];
 let _vidCanvas = null, _vidCtx = null, _vidRaf = 0, _vidLastDraw = 0, _vidOutStream = null, _vidUseCanvas = false, _vidPreviewEl = null;
 
@@ -292,25 +293,56 @@ function _vidSyncCtrls() {
   const back = _vidFacing === 'environment';
   const fl = el.querySelector('.vnp-flash');
   if (fl) {
-    // Fonar: faqat qurilmada bor bo'lsa; old kamerada sekin yo'qoladi, orqada qaytadi
     const trackOk = trackSupportsTorch(_vidVideoTrack);
+    const maybe = trackMaybeTorch(_vidVideoTrack, _vidFacing);
     if (trackOk) _vidTorchSeen = true;
-    fl.hidden = !_vidTorchSeen;
-    fl.classList.toggle('off', !trackOk);
+    // Orqa kamera yoki qurilmada fonar ko'rilgan — tugma ko'rinsin
+    fl.hidden = !(back || _vidTorchSeen);
+    // Imkoniyat hali kelmagan: tugma biroz xira, lekin bosiladi (urinish)
+    fl.classList.toggle('off', back && !trackOk && !maybe);
     fl.classList.toggle('on', _vidTorchOn);
+    fl.setAttribute('aria-disabled', trackOk || maybe ? 'false' : 'true');
   }
   el.querySelector('.vnp-video')?.classList.toggle('back', back);
   const fb = el.querySelector('.vnp-flip');
-  if (fb) fb.hidden = !_vidUseCanvas || _camCount < 2;   // bitta kamera — almashtirish yo'q
+  if (fb) {
+    // Canvas yo'q bo'lsa yozuv paytida switch ishlamaydi; 2+ kamera kerak
+    const canFlip = !!_vidUseCanvas && (_vidCanSwitch || _camCount >= 2);
+    fb.hidden = !canFlip;
+  }
+}
+
+/** Ruxsatdan keyin kameralar sonini yangilash (flip tugmasi uchun) */
+async function _vidRefreshCamList() {
+  try {
+    const c = await listCameras();
+    _camCount = c.list?.length || 0;
+    _vidCanSwitch = _camCount >= 2 || !!(c.front && c.back && c.front.deviceId !== c.back.deviceId);
+  } catch (_) {}
+  _vidSyncCtrls();
 }
 
 async function _vidToggleTorch() {
-  const t = _vidVideoTrack;
-  if (!t || _vidSwitching) return;
-  if (!trackSupportsTorch(t)) { toast('Bu qurilmada fonar ishlamaydi', 'error'); return; }
-  _vidTorchOn = !_vidTorchOn;
-  const ok = await setTorch(t, _vidTorchOn);
-  if (!ok) { _vidTorchOn = false; toast("Fonarni yoqib bo'lmadi", 'error'); }
+  const tr = _vidVideoTrack;
+  if (!tr || _vidSwitching) return;
+  if (_vidFacing !== 'environment' && !trackSupportsTorch(tr)) {
+    toast('Fonar faqat orqa kamerada ishlaydi', 'error');
+    return;
+  }
+  // Capabilities kechiksa ham urinish (Android)
+  const want = !_vidTorchOn;
+  let ok = await setTorch(tr, want);
+  if (!ok) {
+    await new Promise(r => setTimeout(r, 200));
+    ok = await setTorch(tr, want);
+  }
+  if (!ok) {
+    _vidTorchOn = false;
+    toast("Fonarni yoqib bo'lmadi — brauzer yoki qurilma qo'llamaydi", 'error');
+  } else {
+    _vidTorchOn = want;
+    if (want) _vidTorchSeen = true;
+  }
   _vidSyncCtrls();
 }
 
@@ -350,6 +382,8 @@ async function _vidFlip() {
     if (ns) {
       _vidVideoTrack = ns.getVideoTracks()[0];
       if (pv) { pv.srcObject = new MediaStream([_vidVideoTrack]); pv.play().catch(() => {}); }
+      setTimeout(() => _vidSyncCtrls(), 350);
+      setTimeout(() => _vidSyncCtrls(), 900);
     }
   } finally {
     if (!failed) {
@@ -542,6 +576,10 @@ async function startVideoRecording() {
     _vidStartTs = performance.now();
     _vidRec.start(500);
     _startPulse(stream);
+    _vidRefreshCamList();   // flip tugmasi uchun 2+ kamera
+    // Torch capabilities ba'zan kechikadi
+    setTimeout(() => _vidSyncCtrls(), 400);
+    setTimeout(() => _vidSyncCtrls(), 1200);
     clearTimeout(_vidAutoStop);
     // 1 daqiqa — avto-yuborish (qulflangan bo'lsa ham, bosib turilgan bo'lsa ham)
     _vidAutoStop = setTimeout(() => {

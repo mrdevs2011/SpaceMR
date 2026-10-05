@@ -2,7 +2,7 @@
 import { toast } from '../ui/toast.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
-  trackSupportsTorch, setTorch, applyTrackAdvanced,
+  trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced,
 } from './camera-access.js';
 import {
   MAX_VIDEO_MS, MAX_VIDEO_BYTES, VIDEO_BITRATE, VIDEO_W, VIDEO_H, markVideoReady,
@@ -157,13 +157,16 @@ export async function openCameraCapture(options = {}) {
     let hasTorchDevice = false;   // qurilmada (biror kamerada) fonar bor — bo'lmasa tugma umuman yo'q
     let canSwitch = false;        // 2+ kamera — bo'lmasa almashtirish tugmasi ham, surish ham yo'q
     const refreshFlash = () => {
-      const t = vTrack();
-      const trackOk = trackSupportsTorch(t);
+      const tr = vTrack();
+      const trackOk = trackSupportsTorch(tr);
+      const maybe = trackMaybeTorch(tr, facing);
       if (trackOk) hasTorchDevice = true;
-      flashBtn.hidden = !(hasTorchDevice && !reviewing);
-      // Old kamerada fonar yo'q: tugma sekin yo'qoladi, orqa kameraga qaytsa — yana paydo bo'ladi
-      flashBtn.classList.toggle('faded', !trackOk);
-      if (!trackOk) torchOn = false;
+      // Orqa kamera: tugmani ko'rsat (capabilities kechikishi mumkin)
+      const show = !reviewing && (hasTorchDevice || facing === 'environment');
+      flashBtn.hidden = !show;
+      flashBtn.classList.toggle('faded', !trackOk && !maybe);
+      if (!trackOk && !torchOn) { /* keep torchOn only if API says on */ }
+      if (!trackOk && facing !== 'environment') torchOn = false;
       flashBtn.innerHTML = torchOn ? SVG.flashOn : SVG.flashOff;
       flashBtn.classList.toggle('on', torchOn);
     };
@@ -610,11 +613,17 @@ export async function openCameraCapture(options = {}) {
 
       flashBtn.addEventListener('click', async () => {
         if (reviewing || switchingFace) return;
-        const t = vTrack();
-        if (!trackSupportsTorch(t)) return;
-        torchOn = !torchOn;
-        const ok = await setTorch(t, torchOn);
-        if (!ok) { torchOn = false; toast("Fonarni yoqib bo'lmadi", 'error'); }
+        const tr = vTrack();
+        if (!tr) return;
+        if (facing !== 'environment' && !trackSupportsTorch(tr)) {
+          toast('Fonar faqat orqa kamerada ishlaydi', 'error');
+          return;
+        }
+        const want = !torchOn;
+        let ok = await setTorch(tr, want);
+        if (!ok) { await new Promise(r => setTimeout(r, 200)); ok = await setTorch(tr, want); }
+        if (!ok) { torchOn = false; toast("Fonarni yoqib bo'lmadi — brauzer yoki qurilma qo'llamaydi", 'error'); }
+        else { torchOn = want; if (want) hasTorchDevice = true; }
         refreshFlash();
       });
       modesEl.addEventListener('click', e => {

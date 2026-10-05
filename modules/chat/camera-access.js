@@ -94,12 +94,29 @@ export async function listCameras() {
   }
 }
 
-/** Track torch (fonar) qo'llab-quvvatlaydimi */
+/** Track torch (fonar) qo'llab-quvvatlaydimi — ba'zi qurilmalarda capabilities kechikadi */
 export function trackSupportsTorch(track) {
   try {
-    const caps = track?.getCapabilities?.();
-    return !!(caps && 'torch' in caps && caps.torch);
-  } catch (_) { return false; }
+    if (!track || track.readyState !== 'live') return false;
+    const caps = track.getCapabilities?.() || {};
+    // Chrome Android: torch: true → qo'llab-quvvatlaydi
+    if ('torch' in caps) return caps.torch !== false;
+    // Ba'zi implementatsiyalar fillLightMode orqali
+    const fl = caps.fillLightMode;
+    if (Array.isArray(fl) && (fl.includes('torch') || fl.includes('flash'))) return true;
+  } catch (_) {}
+  return false;
+}
+
+/** Capabilities hali bo'sh bo'lsa ham orqa kamerada urinishga ruxsat */
+export function trackMaybeTorch(track, facingHint) {
+  if (trackSupportsTorch(track)) return true;
+  // Orqa kamera + live track — ko'p telefonlarda fonar bor, lekin API kechikadi
+  try {
+    const face = facingHint || track?.getSettings?.()?.facingMode;
+    if (face === 'environment' && track?.readyState === 'live') return true;
+  } catch (_) {}
+  return false;
 }
 
 /* applyConstraints() oldingi advanced sozlamalarni ALMASHTIRADI: zoom berilsa fonar o'chib qolardi.
@@ -124,6 +141,26 @@ export async function applyTrackAdvanced(track, patch) {
 }
 
 export async function setTorch(track, on) {
-  if (!track || !trackSupportsTorch(track)) return false;
-  return applyTrackAdvanced(track, { torch: !!on });
+  if (!track || track.readyState !== 'live') return false;
+  const want = !!on;
+  // 1) advanced (standart)
+  if (await applyTrackAdvanced(track, { torch: want })) {
+    // tasdiqlash
+    try {
+      const st = track.getSettings?.() || {};
+      if ('torch' in st && st.torch === want) return true;
+    } catch (_) {}
+    return true;
+  }
+  // 2) to'g'ridan-to'g'ri constraint (ba'zi WebView)
+  try {
+    await track.applyConstraints({ torch: want });
+    return true;
+  } catch (_) {}
+  // 3) advanced faqat torch
+  try {
+    await track.applyConstraints({ advanced: [{ torch: want }] });
+    return true;
+  } catch (_) {}
+  return false;
 }
