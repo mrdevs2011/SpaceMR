@@ -24,7 +24,7 @@ import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapG
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
-import { emojiOnlyClass, wrapEmojiNoSelect }             from '../ui/emoji-only.js';
+import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
 import { openRtGroup }                              from './rt-chat.js';
 import { busOn, groupJoin, groupInboxSend, isUidOnline } from '../core/rt-bus.js';
@@ -422,6 +422,7 @@ export async function openGroupThread(groupId) {
   _gRt = openRtGroup(groupId, (_currentGroupData || groupData)?.members || [], {
     onMsg: (m) => { _gOnTyping(false, m.from); _gIncoming(groupId, m); },
     onTyping: (v, from) => _gOnTyping(v, from),
+    onEmo: (id, k) => { if (_currentGroupId === groupId) playRemoteEmoji(id, k); },
     onRetract: (id) => {
       if (!_gPending.has(id) || _currentGroupId !== groupId) return;   // faqat hali bazada tasdiqlanmagan nusxa
       _gPending.delete(id);
@@ -623,6 +624,11 @@ function _gOnTyping(v, from) {
   else _gTyp.delete(from);
   _gPaintSub();
 }
+// Katta emoji bosildi / BOOM — guruh a'zolariga uzatamiz (DM da chat.js)
+document.addEventListener('emo-tap', e => {
+  if (!_currentGroupId || !(state.currentChatKind && state.currentChatKind !== 'dm')) return;
+  try { _gRt?.sendEmo(e.detail.id, e.detail.k); } catch (_) {}
+});
 function _gSetTyping(v) {
   if (_gIamTyping === v) return;
   _gIamTyping = v;

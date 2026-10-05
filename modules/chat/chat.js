@@ -617,7 +617,7 @@ import { initMsgMenu, msgMenuAfterPaint, msgMenuReset, isEditing, commitEdit } f
 import { dissolveMarks, markDissolve, playDeleteDissolve, dissolveGroupInfo } from '../ui/dissolve.js';
 import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
-import { emojiOnlyClass, wrapEmojiNoSelect } from '../ui/emoji-only.js';
+import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
 import { generateVoiceBubble, generateFileBubble, generateTextBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
@@ -1434,7 +1434,7 @@ export async function openChatThread(uid) {
   if (chatState._rt) { chatState._rt.close(); chatState._rt = null; }
   chatState._rtLocal.clear(); chatState._rtRead.clear();
   chatState._rtChatId = chatId;
-  chatState._rt = openRt(chatId, uid, { onMsg: _rtIncoming, onRead: _rtReadAck, onRetract: _rtRetract, onTyping: (v) => chatState._onPeerTyping(v) });
+  chatState._rt = openRt(chatId, uid, { onMsg: _rtIncoming, onRead: _rtReadAck, onRetract: _rtRetract, onTyping: (v) => chatState._onPeerTyping(v), onEmo: (id, k) => playRemoteEmoji(id, k) });
   inboxWarm(uid);
 
   // unread_count endi faqat ekranda ko'rilgan xabarlar bo'yicha kamayadi (IntersectionObserver)
@@ -2475,6 +2475,11 @@ initMsgMenu({
 });
 $('chatThreadModal').addEventListener('click', e => {
   if (e.target === $('chatThreadModal')) closeChatThread();
+});
+// Katta emoji bosildi / BOOM — DM da suhbatdoshga ham uzatamiz (guruhda groups.js)
+document.addEventListener('emo-tap', e => {
+  if (state.currentChatKind && state.currentChatKind !== 'dm') return;
+  try { chatState._rt?.sendEmo(e.detail.id, e.detail.k); } catch (_) {}
 });
 
 // Groups DOM injection + "+" button

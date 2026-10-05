@@ -7,7 +7,7 @@
  *
  *  - openRt(chatId, peerUid, h)         — DM (1 peer)
  *  - openRtGroup(groupId, uids, h)      — guruh: to'liq mesh (<= MAX_MESH a'zo), kattaroq guruhda faqat broadcast
- * Xabar turlari: m (matn), r (o'qildi), x (qaytarib olish), y (yozmoqda).
+ * Xabar turlari: m (matn), r (o'qildi), x (qaytarib olish), y (yozmoqda), b (katta emoji bosildi / boom).
  * Signalizatsiya: `rt-<chatId>` / `rtg-<groupId>` broadcast kanali.
  */
 import { sb, state } from '../core/config.js';
@@ -108,6 +108,9 @@ function createMesh(chName, peerUids, h = {}, groupMode = false) {
       if (typeof o.id === 'string') h.onRetract?.(o.id, o.from);
     } else if (o.t === 'y') {
       h.onTyping?.(!!o.v, o.from);
+    } else if (o.t === 'b') {
+      // katta emoji bosildi (k=1) yoki BOOM (k=2)
+      if (typeof o.id === 'string' && o.id.length <= 64 && (o.k === 1 || o.k === 2)) h.onEmo?.(o.id, o.k, o.from);
     }
   };
 
@@ -266,6 +269,7 @@ function createMesh(chName, peerUids, h = {}, groupMode = false) {
     sendRead: (ids) => { if (ids?.length) sendRaw({ t: 'r', ids }); },
     retract: (id) => sendRaw({ t: 'x', id }),
     sendTyping: (v) => sendRaw({ t: 'y', v: !!v }),
+    sendEmo: (id, k) => { if (typeof id === 'string' && (k === 1 || k === 2)) sendRaw({ t: 'b', id, k }); },
     /** hamma peer bilan DC ochiq (DM da: yagona peer) */
     isP2P: () => [...P.values()].every(p => p.dc && p.dc.readyState === 'open'),
     p2pCount: () => [...P.values()].filter(p => p.dc && p.dc.readyState === 'open').length,
