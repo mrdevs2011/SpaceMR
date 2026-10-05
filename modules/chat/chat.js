@@ -544,10 +544,10 @@ function _paintUserRows(users, animate = false) {
     const isAdminUser = u.username === 'admin';
     const rawPreview = c?.lastMessage || '';
     const formattedLastMsg = formatLastMessageText(rawPreview);
-    const preview = c
+    const preview = (c && rawPreview)
       ? `${c.lastSenderId === state.me.uid ? 'You: ' : ''}${esc(formattedLastMsg.slice(0, 46))}`
       : isAdminUser ? "Admin bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
-    const time   = c?.lastMessageAt ? fmt(c.lastMessageAt) : '';
+    const time   = (c?.lastMessageAt && rawPreview) ? fmt(c.lastMessageAt) : '';
     const unread = c?.unreadCount?.[state.me.uid] || 0;
     const badgeTxt = unread > 99 ? '+99' : '+' + unread;
     const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
@@ -1145,7 +1145,7 @@ async function _appendGroupRows(root, term = '') {
       const rawPreview = g.lastMessage || '';
       const formattedLastMsg = formatLastMessageText(rawPreview);
       const preview  = rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh';
-      const time     = g.lastMessageAt ? fmt(g.lastMessageAt) : '';
+      const time     = (g.lastMessageAt && rawPreview) ? fmt(g.lastMessageAt) : '';
       const typeIcon = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="9" height="9">`;
       const badgeClass = 'chat-row-grp-badge--group';
       const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
@@ -2467,6 +2467,14 @@ initMsgMenu({
     const next = chatState._curMsgs.filter(x => !set.has(String(x.id)));
     // Guruhda ism/avatar sarlavhalari yo'qolib ketmasligi uchun guruh painter'i bilan chizamiz
     if (state.currentChatKind === 'group') chatUI.dropGroupMsgs?.(ids);
+    else {
+      // DM: chatlar ro'yxatidagi oxirgi xabar prevyusi ham o'chirilgan xabarda qolmasin
+      const cm = chatState._latestChatMap?.[state.currentChatUid], last = next[next.length - 1];
+      if (cm) {
+        cm.lastMessage = last ? (last.type === 'voice' ? 'Ovozli xabar' : last.type === 'file' ? (last.text || last.fileName || 'Fayl') : (last.text || '')).slice(0, 120) : '';
+        cm.lastSenderId = last ? last.senderId : null;
+      }
+    }
     if (state.currentChatKind === 'group' && chatUI.groupNames) paintGroupThread(next, chatUI.groupNames());
     else paintMessages(next);
   },
