@@ -484,8 +484,11 @@ function _hideActiveCallModal() {
 }
 
 /* ── Qo'ng'iroqni to'liq tugatish ── */
+let _ending = false;
 async function _endCall(notify = true) {
-  // Tarix yozuvi uchun holatni timer/flaglar nollanishidan OLDIN olamiz (faqat chaqiruvchi yozadi)
+  if (_ending) return;
+  _ending = true;
+  // Tarix yozuvi — faqat chaqiruvchi, bir marta
   let _log = null;
   if (_isCaller && _callId && _callChatId && !_logged.has(_callId)) {
     _logged.add(_callId);
@@ -494,20 +497,19 @@ async function _endCall(notify = true) {
   _stopCallTimer();
   _stopRingback();
   _stopMicPulse();
+  _cleanCallModal();
 
   if (_callUnsub) { _callUnsub(); _callUnsub = null; }
 
   if (_localStream) {
-    _localStream.getTracks().forEach(t => t.stop());
+    try { _localStream.getTracks().forEach(t => t.stop()); } catch (_) {}
     _localStream = null;
   }
-
   if (_pc) {
-    _pc.close();
+    try { _pc.close(); } catch (_) {}
     _pc = null;
   }
 
-  // Video elementlarni tozalash
   const rv = document.getElementById('callRemoteVideo');
   const lv = document.getElementById('callLocalVideo');
   const ra = document.getElementById('callRemoteAudio');
@@ -518,19 +520,17 @@ async function _endCall(notify = true) {
   _hideActiveCallModal();
   document.getElementById('incomingCallModal')?.classList.remove('show');
 
-  // Call yozuvini HAR DOIM o'chiramiz (notify'dan qat'i nazar). Har qo'ng'iroq
-  // alohida uuid oladi, shuning uchun o'chmay qolgan eski yozuv keyingi
-  // qo'ng'iroqqa xalaqit bermaydi. Ikkala tomon ham o'chira oladi (RLS).
-  // Vaqtinchalik xatoga qarshi bitta qayta urinish bor.
-  if (_callId) {
-    const idToDelete = _callId;
+  // Avval status=ended (boshqa tab/PWA/domain ringing ni to'xtatadi), keyin delete
+  const idToDelete = _callId;
+  if (idToDelete) {
+    try { await sb.from('calls').update({ status: 'ended' }).eq('id', idToDelete); } catch (_) {}
     for (let i = 0; i < 2; i++) {
       try {
         const { error } = await sb.from('calls').delete().eq('id', idToDelete);
         if (!error) break;
-        if (i === 1) console.error("[Call] Qo'ng'iroq yozuvini o'chirib bo'lmadi:", error.message);
+        if (i === 1) console.error("[Call] delete failed:", error.message);
       } catch (e) {
-        if (i === 1) console.error("[Call] Qo'ng'iroq yozuvini o'chirib bo'lmadi:", e);
+        if (i === 1) console.error("[Call] delete failed:", e);
       }
     }
   }
@@ -539,14 +539,13 @@ async function _endCall(notify = true) {
   _pendingIce = [];
   _isCaller   = false;
   _facingMode = 'user';
-
-  _localVideoOn      = false;
-  _remoteHasVideo    = false;
-  _callConnected     = false;
-  _lastRenegoOfferTs  = 0;
+  _localVideoOn = false;
+  _remoteHasVideo = false;
+  _callConnected = false;
+  _lastRenegoOfferTs = 0;
   _lastRenegoAnswerTs = 0;
+  _ending = false;
 
-  // Chatga qo'ng'iroq yozuvi (chiquvchi/bekor qilingan) — kiruvchi tomonda o'tkazib yuborilgan/kiruvchi bo'lib ko'rinadi
   if (_log) sendCallLog(_log.chat, _log.peer, { connected: _log.connected, seconds: _log.sec });
 }
 
@@ -707,6 +706,17 @@ function _disableLocalVideo() {
 async function initiateCall(isVideo) {
   const uid = state.currentChatUid;
   if (!uid || !state.me) return;
+  // Ikki marta bosish / parallel tab — bitta faol qo'ng'iroq
+  if (_pc || _callId || _ending) {
+    toast("Allaqachon qo'ng'iroqdasiz", 'error');
+    return;
+  }
+
+  // O'zining eski 'ringing' ghostlarini yop (boshqa tab/PWA qoldirgan)
+  try {
+    await sb.from('calls').update({ status: 'ended' })
+      .eq('caller_id', state.me.uid).eq('status', 'ringing');
+  } catch (_) {}
 
   _callIsVideo = isVideo;
   _isCaller    = true;
@@ -1003,10 +1013,20 @@ export function startCallWatcher() {
         const since = new Date(Date.now() - RING_WINDOW_MS).toISOString();
         const { data, error } = await sb.from('calls').select('*')
           .eq('callee_id', me).eq('status', 'ringing').gte('created_at', since)
-          .order('created_at', { ascending: false }).limit(1);
+          .order('created_at', { ascending: false }).limit(3);
         if (stopped) return;
         if (error) { console.error('[CallWatcher] xato:', error.message); continue; }
-        await _handleIncomingRow(data && data[0] ? mapCall(data[0]) : null);
+        const rows = data || [];
+        // 60s dan eski ringing — ghost, yopamiz
+        const now = Date.now();
+        for (const row of rows) {
+          const age = now - Date.parse(row.created_at);
+          if (age > 60000) {
+            try { await sb.from('calls').update({ status: 'ended' }).eq('id', row.id).eq('status', 'ringing'); } catch (_) {}
+          }
+        }
+        const fresh = rows.find(r => now - Date.parse(r.created_at) <= 60000);
+        await _handleIncomingRow(fresh ? mapCall(fresh) : null);
       } while (again && !stopped);
     } finally { busy = false; }
   };
@@ -1193,3 +1213,20 @@ export function _resetSpeaker() {
   const btn = document.getElementById('callSpeakerBtn');
   if (btn) { btn.classList.remove('active'); btn.title = 'Dinamik (ovoz)'; }
 }
+
+/* Tab/PWA yopilganda ringing ghost qolmasin */
+window.addEventListener('pagehide', () => {
+  if (!_callId) return;
+  const id = _callId;
+  try {
+    // beacon: status ended (best-effort; delete async may not finish)
+    const body = JSON.stringify({ status: 'ended' });
+    // supabase REST needs auth — fall back to fire-and-forget update via client
+  } catch (_) {}
+  try { sb.from('calls').update({ status: 'ended' }).eq('id', id).then(() => {}); } catch (_) {}
+  try { _localStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
+});
+window.addEventListener('beforeunload', () => {
+  if (!_callId) return;
+  try { sb.from('calls').update({ status: 'ended' }).eq('id', _callId); } catch (_) {}
+});
