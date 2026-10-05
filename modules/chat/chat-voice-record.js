@@ -1157,7 +1157,7 @@ function _startPulse(stream) {
   if (!stream) return;
 
   // Rolik / float: ringlar tugma yonida ko'rinsin
-  try { _pulseFloatContainer(!!document.body.classList.contains('vn-rec') || !!vBtn?.classList.contains('recording')); } catch (_) {}
+  try { _pulseFloatContainer(true); } catch (_) {}
 
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -1225,7 +1225,7 @@ function _startPulse(stream) {
 
       // Tugma scale — jimlikda ~1.18, baland ovozda ~1.38
       if (vBtn && !_voiceCancelled) {
-        const btnScale = 1.16 + (_pulseLevel * 0.22) + breathe;
+        const btnScale = 1.0 + (_pulseLevel * 0.12) + breathe * 0.5;
         vBtn.style.transform = 'scale(' + btnScale.toFixed(3) + ')';
         // Soft glow — amplituda bilan
         const g = (0.35 + _pulseLevel * 0.55).toFixed(2);
@@ -1236,21 +1236,21 @@ function _startPulse(stream) {
 
       _pulsePlaceRingsNearBtn();
 
-      // 3 ring — Telegram: ichki kichik, tashqi katta, opacity amplituda bilan
+      // Telegram soft blobs
       if (r1) {
-        const s1 = 1.05 + _pulseLevel * 1.15 + breathe * 0.5;
+        const s1 = 1.0 + _pulseLevel * 0.55 + breathe * 0.15;
         r1.style.transform = 'translate(-50%, -50%) scale(' + s1.toFixed(3) + ')';
-        r1.style.opacity = (0.15 + _pulseLevel * 0.7).toFixed(3);
+        r1.style.opacity = Math.min(0.55, 0.12 + _pulseLevel * 0.5).toFixed(3);
       }
       if (r2) {
-        const s2 = 1.35 + _pulseLevel * 1.9 + Math.sin(phase - 0.7) * 0.06;
+        const s2 = 1.25 + _pulseLevel * 1.15 + Math.sin(phase - 0.5) * 0.04;
         r2.style.transform = 'translate(-50%, -50%) scale(' + s2.toFixed(3) + ')';
-        r2.style.opacity = (0.08 + _pulseLevel * 0.55).toFixed(3);
+        r2.style.opacity = Math.min(0.4, 0.06 + _pulseLevel * 0.38).toFixed(3);
       }
       if (r3) {
-        const s3 = 1.7 + _pulseLevel * 2.7 + Math.sin(phase - 1.4) * 0.08;
+        const s3 = 1.55 + _pulseLevel * 1.85 + Math.sin(phase - 1.1) * 0.05;
         r3.style.transform = 'translate(-50%, -50%) scale(' + s3.toFixed(3) + ')';
-        r3.style.opacity = (0.04 + _pulseLevel * 0.4).toFixed(3);
+        r3.style.opacity = Math.min(0.28, 0.03 + _pulseLevel * 0.28).toFixed(3);
       }
 
       _pulseRaf = requestAnimationFrame(tick);
