@@ -7,8 +7,45 @@
 .chat-voice-btn.is-send .icon-vnote { display: none !important; }
 .chat-voice-btn.recording .icon-vnote { stroke: var(--pal-white) !important; }
 
-#vnotePreview { position: fixed; inset: 0; z-index: 9000; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.45); pointer-events: none; }
+#vnotePreview {
+  position: fixed; inset: 0; z-index: 9000;
+  display: none; align-items: center; justify-content: center;
+  /* Fon: biroz qoraroq + blur — bg "freeze" ko'rinishi */
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  /* Overlay bosiladi — pastdagi chat/input ishlamaydi */
+  pointer-events: auto;
+}
 #vnotePreview.show { display: flex; }
+#vnotePreview .vnp-stage { pointer-events: none; }
+#vnotePreview.locked .vnp-ctrls,
+#vnotePreview .vnp-btn { pointer-events: auto; }
+
+/* Faqat rolik record tugmasi overlay ustida float — rang/active saqlanadi */
+body.vn-rec #chatVoiceBtn,
+body.vn-rec .chat-voice-btn.recording {
+  /* position: fixed JS orqali — overlay (9000) ustida */
+  z-index: 9200 !important;
+  isolation: isolate;
+  filter: none !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  background: var(--voice-rec-bg, linear-gradient(135deg, #1d9bf0 0%, #1a8cd8 100%)) !important;
+  box-shadow: var(--voice-rec-shadow, 0 4px 22px rgba(29, 155, 240, 0.55), 0 0 0 2px rgba(231, 233, 234, 0.25)) !important;
+  transform: scale(1.18);
+}
+body.vn-rec #chatVoiceBtn.vn-locked,
+body.vn-rec .chat-voice-btn.vn-locked {
+  /* Lock: yuborish holati ham float */
+  z-index: 9200 !important;
+}
+/* Timer/bekor — biroz ko'rinsin, lekin asosiy float tugma */
+body.vn-rec .chat-record-bar.active {
+  z-index: 9200;
+  position: relative;
+  filter: none;
+  opacity: 1;
+}
 #vnotePreview .vnp-circle { position: relative; width: min(72vw, 300px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #000; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6); }
 #vnotePreview .vnp-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
 #vnotePreview .vnp-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
@@ -188,3 +225,11 @@
 /* Rolik: fonar/almashtirish tugmalari silliq paydo bo'ladi/yo'qoladi */
 #vnotePreview .vnp-btn { transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.15s ease; }
 #vnotePreview .vnp-btn.off { opacity: 0; transform: scale(0.6); pointer-events: none; }
+
+/* Input qatori overlay ustida — record btn float uchun stacking context */
+body.vn-rec #chatThreadModal .chat-thread-input-row {
+  position: relative;
+  z-index: 9200;
+  isolation: isolate;
+}
+/* Pastdagi boshqa elementlar bosilmasin (overlay pointer-events auto) */

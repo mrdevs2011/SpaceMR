@@ -248,6 +248,34 @@ function _setLockProgress(p) { document.getElementById('vnLockHint')?.style.setP
 function _hideLockHint() { document.getElementById('vnLockHint')?.classList.remove('show'); }
 
 /* ── Preview (ekran o'rtasidagi doira) ── */
+
+/* Record tugmasini overlay (z 9000) ustida float — rang/active saqlanadi */
+function _vnFloatRecordBtn(on) {
+  const btn = $('chatVoiceBtn');
+  if (!btn) return;
+  if (on) {
+    if (btn.dataset.vnFloat === '1') return;
+    const r = btn.getBoundingClientRect();
+    btn.dataset.vnFloat = '1';
+    btn.dataset.vnPrevStyle = btn.getAttribute('style') || '';
+    btn.style.position = 'fixed';
+    btn.style.left = Math.round(r.left) + 'px';
+    btn.style.top = Math.round(r.top) + 'px';
+    btn.style.width = Math.round(r.width) + 'px';
+    btn.style.height = Math.round(r.height) + 'px';
+    btn.style.zIndex = '9200';
+    btn.style.margin = '0';
+    btn.style.opacity = '1';
+    btn.style.filter = 'none';
+    btn.style.pointerEvents = 'auto';
+  } else if (btn.dataset.vnFloat === '1') {
+    const prev = btn.dataset.vnPrevStyle || '';
+    if (prev) btn.setAttribute('style', prev);
+    else btn.removeAttribute('style');
+    delete btn.dataset.vnFloat;
+    delete btn.dataset.vnPrevStyle;
+  }
+}
 function _showVidPreview(stream) {
   let el = document.getElementById('vnotePreview');
   if (!el) {
@@ -275,9 +303,13 @@ function _showVidPreview(stream) {
     if (fg) fg.style.strokeDashoffset = String(C * (1 - p));
   }, 100);
   el.classList.add('show');
+  try { document.body.classList.add('vn-rec'); } catch (_) {}
+  _vnFloatRecordBtn(true);
 }
 function _hideVidPreview() {
   clearInterval(_vidRingTimer); _vidRingTimer = null;
+  try { document.body.classList.remove('vn-rec'); } catch (_) {}
+  _vnFloatRecordBtn(false);
   const el = document.getElementById('vnotePreview');
   if (!el) return;
   el.classList.remove('show', 'locked');
