@@ -6804,6 +6804,40 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgCtx .mc-seen svg , #msgCtx .mc-seen img.icon { flex-shrink: 0; }
 @media (pointer: coarse) { #msgCtx .mc-item { padding: 12px 14px; } }
 
+/* ═══ Reaksiyalar (modules/chat/msg-reactions.js) ═══ */
+#msgCtx { min-width: 296px; }
+#msgCtx .mc-react { display: flex; align-items: center; gap: 2px; padding: 2px 2px 6px; }
+#msgCtx .mc-r { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent; }
+#msgCtx .mc-r:hover, #msgCtx .mc-r:focus-visible { background: var(--pal-white-08); transform: scale(1.16); outline: none; }
+#msgCtx .mc-r.on { background: rgba(231, 233, 234, 0.18); }
+#msgCtx .mc-r-more { flex: 0 0 30px; width: 30px; height: 30px; margin-left: 2px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--pal-white-08); color: var(--pal-gray-500); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+#msgCtx .mc-r-more:hover { background: rgba(231, 233, 234, 0.18); color: var(--text, #e7e9ea); }
+#msgCtx .mc-r-more svg { transition: transform .18s ease; }
+#msgCtx.mc-expanded .mc-r-more svg { transform: rotate(180deg); }
+#msgCtx .mc-react + .mc-items { padding-top: 6px; border-top: 1px solid var(--pal-gray-700); }
+#msgCtx.mc-expanded .mc-items { display: none; }
+#msgCtx .mr-pick { display: none; }
+#msgCtx.mc-expanded .mr-pick { display: block; padding-top: 6px; border-top: 1px solid var(--pal-gray-700); }
+#msgCtx .mr-search input { width: 100%; box-sizing: border-box; height: 34px; padding: 0 12px; border: 0; border-radius: 17px; background: var(--pal-white-08); color: var(--text, #e7e9ea); font: inherit; font-size: 14px; outline: none; }
+#msgCtx .mr-search input::placeholder { color: var(--pal-gray-500); }
+#msgCtx .mr-scroll { height: min(260px, 42vh); margin-top: 6px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--pal-gray-700) transparent; }
+#msgCtx .mr-cat { position: sticky; top: 0; z-index: 1; padding: 6px 6px 4px; background: #000; color: var(--pal-gray-500); font-size: 12px; font-weight: 600; }
+#msgCtx .mr-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+#msgCtx .mr-grid .mc-r { flex: none; }
+#msgCtx .mr-none { padding: 24px 0; text-align: center; color: var(--pal-gray-500); font-size: 13px; }
+
+/* Xabar tagidagi reaksiya chiplari */
+.chat-bubble > .msg-reacts { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 1px; clear: both; }
+.chat-bubble .mr-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border: 0; border-radius: 13px; background: rgba(231, 233, 234, 0.14); color: inherit; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s ease; }
+.chat-bubble .mr-chip:hover { background: rgba(231, 233, 234, 0.22); }
+.chat-bubble .mr-chip.mine { background: rgba(231, 233, 234, 0.3); }
+.chat-bubble .mr-chip.few { padding: 0 3px 0 8px; }
+.chat-bubble .mr-chip .mr-e { font-size: 15px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.chat-bubble .mr-chip .mr-n { font-size: 12px; font-weight: 600; }
+.chat-bubble .mr-chip .mr-avs { display: inline-flex; align-items: center; }
+.chat-bubble .mr-chip .mr-av { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.chat-bubble .mr-chip .mr-av + .mr-av { margin-left: -6px; box-shadow: 0 0 0 1.5px #2f3336; }
+
 /* Menyu ochiq bo'lgan xabar */
 .chat-msg.mc-active .chat-bubble { box-shadow: 0 0 0 2px rgba(231, 233, 234, 0.2); }
 

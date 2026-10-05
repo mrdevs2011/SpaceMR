@@ -8,6 +8,7 @@ import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
+import { reactInit, reactStripHtml, reactPickerHtml, reactBindPicker, reactToggle, reactAfterPaint, reactReset } from './msg-reactions.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -74,6 +75,12 @@ function ensureMenu() {
     const id = openId;
     closeMenu();
     run(b.dataset.mc, id);
+  });
+  // Reaksiya: tezkor qator yoki kengaytirilgan paneldagi emoji; chevron — panelni ochadi/yopadi
+  menu.addEventListener('click', e => {
+    const r = e.target.closest('[data-r]');
+    if (r) { const id = openId; closeMenu(); if (id) reactToggle(id, r.dataset.r); return; }
+    if (e.target.closest('[data-rmore]')) toggleReactPanel();
   });
   menu.addEventListener('contextmenu', e => e.preventDefault());
   // "Kimlar ko'rdi": desktop — hover, sensorli — bosish
@@ -219,7 +226,9 @@ function openMenu(row, x, y) {
   ensureMenu();
   openId = id;
   row.classList.add('mc-active');
-  menu.innerHTML = menuHtml(m);
+  const canReact = !!m.id && !(isMine(m) && m.status === 'sending');
+  menu.classList.remove('mc-expanded');
+  menu.innerHTML = (canReact ? reactStripHtml(m) : '') + `<div class="mc-items">${menuHtml(m)}</div>`;
   if (!isDM() && isMine(m)) loadReaders(m);
   menu.style.visibility = 'hidden';
   menu.classList.add('show');
@@ -240,6 +249,30 @@ function openMenu(row, x, y) {
   menu.style.top = top + 'px';
   menu.style.transformOrigin = `${x != null ? '0' : (isMine(m) ? '100%' : '0')} 0`;
   menu.style.visibility = '';
+}
+
+/** Chevron: menyu ichida belgilangan balandlikdagi emoji paneli (menyu bandlari yopiladi), qayta bosilsa — orqaga */
+async function toggleReactPanel() {
+  if (!menu || !openId) return;
+  const more = menu.querySelector('[data-rmore]');
+  if (menu.classList.contains('mc-expanded')) {
+    menu.classList.remove('mc-expanded');
+    menu.querySelector('.mr-pick')?.remove();
+    more?.setAttribute('aria-expanded', 'false');
+    return;
+  }
+  const id = openId;
+  const html = await reactPickerHtml();
+  if (openId !== id || !menu.classList.contains('show')) return;
+  menu.insertAdjacentHTML('beforeend', html);
+  menu.classList.add('mc-expanded');
+  more?.setAttribute('aria-expanded', 'true');
+  reactBindPicker(menu);
+  // kattalashgan menyu ekrandan chiqib ketmasin
+  const r = menu.getBoundingClientRect(), vh = window.innerHeight;
+  let top = r.top;
+  if (r.bottom > vh - 8) top = vh - 8 - r.height;
+  menu.style.top = Math.max(8, top) + 'px';
 }
 
 function closeMenu() {
@@ -591,6 +624,7 @@ export function initMsgMenu(opts) {
   box = opts.box;
   if (!box || box.dataset.msgMenu) return;
   box.dataset.msgMenu = '1';
+  reactInit(box);
 
   // Desktop: o'ng tugma. Sensorli qurilmada brauzerning o'z menyusini bostiramiz (long-press o'zimiz ushlaymiz).
   box.addEventListener('contextmenu', e => {
@@ -704,13 +738,14 @@ export function initMsgMenu(opts) {
     if (editing) { cancelEdit(true); return true; }
     return false;
   });
-  window.addEventListener('resize', closeMenu);
+  window.addEventListener('resize', () => { if (menu?.contains(document.activeElement)) return; closeMenu(); });
   $('chatReplyClose')?.addEventListener('click', () => cancelEdit(true));
 }
 
 /** paintMessages() dan keyin chaqiriladi — tanlov/ochiq menyu holatini yangi DOM'ga qaytaradi */
 export function msgMenuAfterPaint() {
   if (!api) return;
+  reactAfterPaint();
   if (selMode) {
     const ids = new Set((api.getMsgs() || []).map(m => m.id));
     for (const id of [...sel]) if (!ids.has(id)) sel.delete(id);
@@ -724,6 +759,7 @@ export function msgMenuAfterPaint() {
 
 /** Chat yopilganda / almashtirilganda */
 export function msgMenuReset() {
+  reactReset();
   cancelLp();
   endDrag();
   closeMenu();
