@@ -461,9 +461,10 @@ function paintSel(keepEmpty) {
   if (!sel.size && !keepEmpty) { exitSelect(); return; }
   box.querySelectorAll('.chat-msg[data-msg-id]').forEach(r => r.classList.toggle('mc-selected', sel.has(r.dataset.msgId)));
   selBar.querySelectorAll('.msb-n').forEach(n => { n.textContent = sel.size; });
-  selBar.querySelector('[data-sb="copy"]').hidden = !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
+  // Faqat o'z xabarlarim tanlangan bo'lsa — o'chirish/nusxalash/tahrirlash; boshqalarniki aralashsa — faqat "Uzatish"
   const allMine = [...sel].every(id => isMine(msgOf(id)));
   selBar.querySelector('[data-sb="del"]').hidden = !allMine;
+  selBar.querySelector('[data-sb="copy"]').hidden = !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
   selBar.querySelector('[data-sb="edit"]').hidden = !(one && isMine(one) && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
 }
