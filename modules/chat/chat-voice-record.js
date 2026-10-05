@@ -249,26 +249,47 @@ function _hideLockHint() { document.getElementById('vnLockHint')?.classList.remo
 
 /* ── Preview (ekran o'rtasidagi doira) ── */
 
-/* Record tugmasini overlay (z 9000) ustida float — rang/active saqlanadi */
+/* Record/send tugmasi: body ga chiqariladi — #vnotePreview (9000) stacking contextidan tashqarida */
 function _vnFloatRecordBtn(on) {
   const btn = $('chatVoiceBtn');
   if (!btn) return;
   if (on) {
-    if (btn.dataset.vnFloat === '1') return;
     const r = btn.getBoundingClientRect();
-    btn.dataset.vnFloat = '1';
-    btn.dataset.vnPrevStyle = btn.getAttribute('style') || '';
+    if (btn.dataset.vnFloat !== '1') {
+      btn.dataset.vnFloat = '1';
+      btn.dataset.vnPrevStyle = btn.getAttribute('style') || '';
+      // Joy saqlash (layout sakramasin)
+      let ph = document.getElementById('chatVoiceBtnPh');
+      if (!ph) {
+        ph = document.createElement('span');
+        ph.id = 'chatVoiceBtnPh';
+        ph.setAttribute('aria-hidden', 'true');
+        ph.style.cssText = 'display:inline-block;flex-shrink:0;visibility:hidden;pointer-events:none;';
+      }
+      ph.style.width = Math.round(r.width) + 'px';
+      ph.style.height = Math.round(r.height) + 'px';
+      if (btn.parentElement && btn.parentElement.id !== 'chatVoiceBtnPh') {
+        btn.parentElement.insertBefore(ph, btn);
+      }
+      document.body.appendChild(btn);
+    }
     btn.style.position = 'fixed';
     btn.style.left = Math.round(r.left) + 'px';
     btn.style.top = Math.round(r.top) + 'px';
-    btn.style.width = Math.round(r.width) + 'px';
-    btn.style.height = Math.round(r.height) + 'px';
-    btn.style.zIndex = '9200';
+    btn.style.width = Math.round(Math.max(r.width, 36)) + 'px';
+    btn.style.height = Math.round(Math.max(r.height, 36)) + 'px';
+    btn.style.zIndex = '10050';
     btn.style.margin = '0';
     btn.style.opacity = '1';
     btn.style.filter = 'none';
     btn.style.pointerEvents = 'auto';
+    btn.style.touchAction = 'none';
   } else if (btn.dataset.vnFloat === '1') {
+    const ph = document.getElementById('chatVoiceBtnPh');
+    if (ph && ph.parentElement) {
+      ph.parentElement.insertBefore(btn, ph);
+      ph.remove();
+    }
     const prev = btn.dataset.vnPrevStyle || '';
     if (prev) btn.setAttribute('style', prev);
     else btn.removeAttribute('style');
@@ -276,6 +297,7 @@ function _vnFloatRecordBtn(on) {
     delete btn.dataset.vnPrevStyle;
   }
 }
+
 function _showVidPreview(stream) {
   let el = document.getElementById('vnotePreview');
   if (!el) {
@@ -454,6 +476,7 @@ function _lockVideo() {
   const ct = $('crbCancelText');
   if (ct) { ct.textContent = 'Bekor qilish'; ct.style.opacity = '1'; }
   $('vnotePreview')?.classList.add('locked');
+  _vnFloatRecordBtn(true); // lock: send btn overlay ustida qolsin
   _vidSyncCtrls();
   try { navigator.vibrate?.(15); } catch (_) {}
 }

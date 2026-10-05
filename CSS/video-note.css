@@ -25,7 +25,7 @@
 body.vn-rec #chatVoiceBtn,
 body.vn-rec .chat-voice-btn.recording {
   /* position: fixed JS orqali — overlay (9000) ustida */
-  z-index: 9200 !important;
+  z-index: 10050 !important;
   isolation: isolate;
   filter: none !important;
   opacity: 1 !important;
@@ -37,11 +37,11 @@ body.vn-rec .chat-voice-btn.recording {
 body.vn-rec #chatVoiceBtn.vn-locked,
 body.vn-rec .chat-voice-btn.vn-locked {
   /* Lock: yuborish holati ham float */
-  z-index: 9200 !important;
+  z-index: 10050 !important;
 }
 /* Timer/bekor — biroz ko'rinsin, lekin asosiy float tugma */
 body.vn-rec .chat-record-bar.active {
-  z-index: 9200;
+  z-index: 10050;
   position: relative;
   filter: none;
   opacity: 1;
@@ -229,7 +229,19 @@ body.vn-rec .chat-record-bar.active {
 /* Input qatori overlay ustida — record btn float uchun stacking context */
 body.vn-rec #chatThreadModal .chat-thread-input-row {
   position: relative;
-  z-index: 9200;
+  z-index: 10050;
   isolation: isolate;
 }
 /* Pastdagi boshqa elementlar bosilmasin (overlay pointer-events auto) */
+
+/* Bekor qilish (lock) ham overlay ustida */
+body.vn-rec .chat-record-bar.active.locked,
+body.vn-rec .chat-record-bar.locked {
+  position: relative;
+  z-index: 10050 !important;
+  pointer-events: auto !important;
+}
+body.vn-rec .chat-record-bar.locked .crb-cancel {
+  pointer-events: auto !important;
+  z-index: 10050;
+}
