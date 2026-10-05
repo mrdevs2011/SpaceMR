@@ -4,14 +4,12 @@ import {
   hasCameraDevice, cameraErrorMsg, listCameras,
   trackSupportsTorch, setTorch,
 } from './camera-access.js';
+import {
+  MAX_VIDEO_MS, MAX_VIDEO_BYTES, VIDEO_BITRATE, VIDEO_W, VIDEO_H, markVideoReady,
+} from '../core/video-policy.js';
 
 let _open = false;
 
-const MAX_VIDEO_MS = 60_000;
-const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
-const VIDEO_BITRATE = 2_500_000;
-const VIDEO_W = 1280;
-const VIDEO_H = 720;
 const PHOTO_MAX_SIDE = 1920;
 const PHOTO_QUALITY = 0.85;
 
@@ -73,7 +71,7 @@ function _capturePhoto(videoEl) {
 function _blobToVideoFile(blob) {
   if (!blob || !blob.size) return null;
   const ext = (blob.type || '').includes('mp4') ? 'mp4' : 'webm';
-  return new File([blob], `video_${Date.now()}.${ext}`, { type: blob.type || 'video/webm' });
+  return markVideoReady(new File([blob], `video_${Date.now()}.${ext}`, { type: blob.type || 'video/webm' }));
 }
 
 export async function openCameraCapture(options = {}) {

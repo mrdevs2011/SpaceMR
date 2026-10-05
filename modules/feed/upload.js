@@ -4,7 +4,8 @@ import { compressImage } from './compress.js';
 import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
-import { isAllowedUpload, isImageFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
+import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
+import { prepareVideo } from '../core/video-policy.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    FILE TYPE → SVG icon + label + accent color
@@ -140,8 +141,9 @@ function _measureSelectedMedia(file, objUrl) {
 }
 
 /* ── Composer rejimi: 'post' (odatiy) yoki 'story' (24 soatlik hikoya) ──
-   Story ham xuddi shu composer kartasida ochiladi — faqat matn maydoni o'rniga
-   qisqa izoh, faqat rasm, tugma "Story". */
+   Story ham xuddi shu composer kartasida ochiladi — qisqa izoh, rasm yoki video, tugma "Story".
+   Video (yuklangan yoki kameradan) core/video-policy.js orqali kamera standartiga keltiriladi:
+   1 daqiqa, 720p, 30 fps, 2.5 Mbps, 30 MB. */
 const STORY_CAPTION_MAX = 200;
 const _POST_ACCEPT = $('fileInput').accept;
 const _POST_PLACEHOLDER = $('captionInput').placeholder;
@@ -153,8 +155,8 @@ function _setComposerMode(mode) {
   const cap = $('captionInput');
   cap.placeholder = story ? "Story 24 soat davomida ko'rinadi. Izoh yozing (ixtiyoriy)…" : _POST_PLACEHOLDER;
   if (story) cap.maxLength = STORY_CAPTION_MAX; else cap.removeAttribute('maxlength');
-  $('fileInput').accept = story ? 'image/*' : ALLOWED_UPLOAD_ACCEPT;
-  $('uploadDrop').setAttribute('aria-label', story ? 'Story uchun rasm tanlash' : "Rasm yoki fayl qo'shish");
+  $('fileInput').accept = story ? 'image/*,video/*' : (ALLOWED_UPLOAD_ACCEPT || '');
+  $('uploadDrop').setAttribute('aria-label', story ? 'Story uchun rasm yoki video tanlash' : "Rasm, video yoki fayl qo'shish");
 }
 
 /* ── Button enable/disable check ────────────────────────────────────── */
@@ -200,23 +202,25 @@ function hideProgress() {
 
 /* ── File pick ───────────────────────────────────────────────────────── */
 export function pickFile(f) {
-  if (!isAllowedUpload(f)) {
+  const video = isVideoFile(f);
+  // Post va story: video ruxsat. Yuklashdan oldin prepareVideo kamera chekloviga keltiradi.
+  if (!video && !isAllowedUpload(f)) {
     toast(UPLOAD_DENIED_MSG, 'error');
     $('fileInput').value = '';
     return;
   }
-  if (_composerMode === 'story' && !isImageFile(f)) {
+  if (_composerMode === 'story' && !video && !isImageFile(f)) {
     toast(STORY_DENIED_MSG, 'error');
     $('fileInput').value = '';
     return;
   }
-  {
-    if (f.size > MAX_FILE) {
-      const limTxt = '49.9 MB';
-      $('sizeWarn').textContent = `Fayl ${fmtSz(f.size)} — limit ${limTxt}`;
-      toast(`Fayl hajmi ${limTxt} dan oshmasligi kerak`, 'error');
-      return;
-    }
+  // Video hajmi oldindan kesilmaydi: 100000000 Mbps / juda yuqori fps bo'lsa ham
+  // prepareVideo uni 1 daqiqa / 720p / 30fps standartiga tushiradi.
+  if (!video && f.size > MAX_FILE) {
+    const limTxt = '49.9 MB';
+    $('sizeWarn').textContent = `Fayl ${fmtSz(f.size)} — limit ${limTxt}`;
+    toast(`Fayl hajmi ${limTxt} dan oshmasligi kerak`, 'error');
+    return;
   }
   $('sizeWarn').textContent = '';
   revokeObjUrl();
@@ -230,6 +234,10 @@ export function pickFile(f) {
     $('previewArea').innerHTML = `<div class="preview-wrap"><img src="${esc(state._objUrl)}"><button class="preview-clear" data-action="clear-file">
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
     </button></div>`;
+  } else if (video) {
+    $('previewArea').innerHTML = `<div class="preview-wrap"><video src="${esc(state._objUrl)}" controls playsinline muted style="width:100%;max-height:280px;background:#000;display:block"></video><button class="preview-clear" data-action="clear-file">
+      <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
+    </button><div class="fs-11px c-text3-theme" style="padding:6px 8px">Kamera standarti: 1 daqiqa · 720p · 30 fps</div></div>`;
   } else {
     const info = getFileTypeInfo(f.name, f.type);
     $('previewArea').innerHTML = `<div class="preview-file">
@@ -269,6 +277,15 @@ function clearFile() {
 /* Rasm kerak bo'lganda siqadi (compress.js). Float bar'da foiz ko'rsatiladi. */
 async function _prepareUploadFile(file, label) {
   if (!file) return file;
+  // Video — kamera yozgan fayl tayyor bo'lsa qayta kodlanmaydi; boshqasi standartga tushadi.
+  if (isVideoFile(file)) {
+    const nameEl = $('ufbName');
+    if (nameEl) nameEl.textContent = 'Video standartga keltirilmoqda';
+    const res = await prepareVideo(file, { onProgress: p => floatBarUpdate(Math.round((p || 0) * 40)) });
+    if (res.truncated) toast('Video 1 daqiqadan oshdi — faqat dastlabki 60 soniya olindi', 'info');
+    console.info('[video] standart:', fmtSz(file.size), '→', fmtSz(res.file.size), res.file.type);
+    return res.file;
+  }
   // Rasm — shaffoflikni saqlagan holda siqish
   if (file.type.startsWith('image/')) {
     try {
@@ -363,7 +380,7 @@ async function submitStory() {
     item: {
       id: tempId,
       mediaUrl: localBlob,
-      mediaType: 'image',
+      mediaType: isVideoFile(file) ? 'video' : 'image',
       caption: caption || '',
       createdAt: new Date().toISOString(),
     },
@@ -405,7 +422,7 @@ async function submitStory() {
     const row = {
       user_id:    state.me.uid,
       media_path: path,
-      media_type: 'image',
+      media_type: isVideoFile(file) ? 'video' : 'image',
       expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     };
     if (caption) row.caption = caption;
@@ -771,7 +788,7 @@ function _bindHomeComposer() {
     showCamera: true,
     showFile: true,
     showMedia: true,
-    mediaAccept: 'image/*',
+    mediaAccept: 'image/*,video/*',
   });
 
   $('homeComposerFile')?.addEventListener('change', e => {
@@ -812,13 +829,13 @@ initAttachMenu({
   showCamera: true,
   showFile: true,
   showMedia: true,
-  mediaAccept: 'image/*',
+  mediaAccept: 'image/*,video/*',
   getOptions: () => {
     const story = _composerMode === 'story';
     return {
-      showFile: !story,           // story: faqat rasm/kamera
+      showFile: !story,           // story: rasm/video/kamera
       showMedia: true,
-      mediaAccept: story ? 'image/*' : 'image/*',
+      mediaAccept: 'image/*,video/*',
       showCamera: true,
     };
   },

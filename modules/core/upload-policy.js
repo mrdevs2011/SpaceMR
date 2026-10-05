@@ -1,10 +1,13 @@
 /**
- * SpaceMR yuklash siyosati: VIDEO taqiqlangan, qolgan hamma fayl ruxsat
+ * 2026-10: post va story'ga video ruxsat (core/video-policy.js: 1 daqiqa, 720p, 30fps, 30MB — kamera bilan bir xil).
+ * SpaceMR yuklash siyosati: VIDEO taqiqlangan (post/story/chat-media'dan tashqari), qolgan hamma fayl ruxsat
  * (barcha rasm formatlari, PDF/Word/Excel/ZIP, audio, ovozli xabar...).
- * Istisno: story, profil avatari va guruh avatari — faqat RASM.
+ * Istisno: profil avatari va guruh avatari — faqat RASM. Story — rasm yoki video-policy standarti.
  * Istisno 2: chat/guruhga FAYL sifatida (chat-files, group-files) video ham ruxsat (057).
  * (Baza tomoni: supabase/migrations/056_block_video_only.sql, 057_allow_video_as_chat_file.sql)
  */
+import { isVideoReady } from './video-policy.js';
+
 export const UPLOAD_DENIED_MSG = 'Video yuklash mumkin emas';
 export const STORY_DENIED_MSG = "Storyga faqat rasm qo'yish mumkin";
 export const IMAGE_ONLY_MSG = "Bu yerga faqat rasm qo'yish mumkin";
@@ -15,6 +18,8 @@ const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif|svg|heic|heif|bmp)$/;
 const IMAGE_ONLY_FOLDERS = ['stories', 'avatars', 'group-avatars'];
 // Chat/guruhga FAYL sifatida yuborilganda video (mp4...) ham ruxsat: oddiy fayl kartochkasi, pleyer yo'q.
 const FILE_ANY_FOLDERS = ['chat-files', 'group-files'];
+// Post va story: video ruxsat, lekin FAQAT video-policy.js standartiga (<=60s, 720p, 30fps, <=30MB) keltirilgan bo'lsa.
+const VIDEO_OK_FOLDERS = ['posts', 'stories'];
 
 function _t(file) { return String(file?.type || '').toLowerCase(); }
 function _n(file) { return String(file?.name || '').toLowerCase(); }
@@ -51,7 +56,10 @@ export function assertAllowedUpload(file, folder = '') {
   if (!file) throw new Error(UPLOAD_DENIED_MSG);
   if (folder === 'chat-voice' && isAllowedVoice(file)) return;
   if (FILE_ANY_FOLDERS.includes(folder)) return;
-  if (isVideoFile(file)) throw new Error(UPLOAD_DENIED_MSG);
+  if (isVideoFile(file)) {
+    if (VIDEO_OK_FOLDERS.includes(folder) && isVideoReady(file)) return;
+    throw new Error(UPLOAD_DENIED_MSG);
+  }
   if (folder === 'stories') {
     if (!isImageFile(file)) throw new Error(STORY_DENIED_MSG);
   } else if (IMAGE_ONLY_FOLDERS.includes(folder) && !isImageFile(file)) {

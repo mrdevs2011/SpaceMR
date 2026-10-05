@@ -189,11 +189,12 @@ function ensureStoriesCss() {
   -webkit-touch-callout: none;
   pointer-events: none;
 }
-.sv-media img {
+.sv-media img, .sv-media video {
   max-width: 100%; max-height: 100%;
   width: 100%; height: 100%;
   object-fit: contain;
   display: block;
+  background: #000;
   user-select: none; -webkit-user-select: none;
   -webkit-touch-callout: none; -webkit-user-drag: none;
   pointer-events: none;
@@ -660,10 +661,13 @@ function openViewer(groupIdx, itemIdx) {
   showCurrent();
 }
 
+function _storyVideo() { return $('svMedia')?.querySelector('video') || null; }
+
 function freezeStory() {
   if (_paused) return;
   _paused = true;
   _pausedAt = performance.now();
+  try { _storyVideo()?.pause(); } catch (_) {}
 }
 
 function unfreezeStory() {
@@ -673,6 +677,7 @@ function unfreezeStory() {
     _startedAt += (performance.now() - _pausedAt);
     _pausedAt = 0;
   }
+  try { const v = _storyVideo(); if (v) v.play().catch(() => {}); } catch (_) {}
 }
 
 function closeViewer() {
@@ -744,12 +749,19 @@ async function showCurrent() {
   const media = $('svMedia');
   media.innerHTML = '';
   let duration = STORY_MS;
+  const isVideo = String(item.mediaType || '').startsWith('video');
 
   const token = ++_showToken;
-  const img = document.createElement('img');
-  img.alt = '';
-  img.style.opacity = '0';
-  media.appendChild(img);
+  const el = document.createElement(isVideo ? 'video' : 'img');
+  el.alt = '';
+  el.style.opacity = '0';
+  if (isVideo) {
+    el.playsInline = true;
+    el.setAttribute('playsinline', '');
+    el.preload = 'auto';
+    duration = 15000;
+  }
+  media.appendChild(el);
 
   if (item.caption) {
     const cap = document.createElement('div');
@@ -761,12 +773,12 @@ async function showCurrent() {
   // Mark viewed
   markViewed(item);
 
-  // Progress faqat rasm to'liq yuklangandan KEYIN boshlanadi
+  // Progress faqat media tayyor bo'lgandan KEYIN boshlanadi
   const n = g.items.length;
   buildProgress(n, _itemIdx, 0);
   const startProgress = () => {
     if (token !== _showToken) return;
-    img.style.opacity = '1';
+    el.style.opacity = '1';
     _startedAt = performance.now();
     const tick = (now) => {
       if (_paused) {
@@ -776,6 +788,7 @@ async function showCurrent() {
       const ratio = Math.min(1, (now - _startedAt) / duration);
       buildProgress(n, _itemIdx, ratio);
       if (ratio >= 1) {
+        try { el.pause && el.pause(); } catch (_) {}
         step(1);
         return;
       }
@@ -783,13 +796,32 @@ async function showCurrent() {
     };
     _progressRaf = requestAnimationFrame(tick);
   };
-  img.onload = startProgress;
-  img.onerror = startProgress;
-  img.src = item.mediaUrl;
+  if (isVideo) {
+    el.addEventListener('loadedmetadata', () => {
+      if (token !== _showToken) return;
+      const d = el.duration;
+      if (isFinite(d) && d > 0) duration = Math.min(d, 60) * 1000;
+    });
+    el.addEventListener('ended', () => { if (token === _showToken) step(1); });
+    const begin = () => {
+      el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
+      startProgress();
+    };
+    el.onerror = startProgress;
+    el.src = item.mediaUrl;
+    if (el.readyState >= 1) begin();
+    else el.addEventListener('loadeddata', begin, { once: true });
+  } else {
+    el.onload = startProgress;
+    el.onerror = startProgress;
+    el.src = item.mediaUrl;
+  }
 
-  // Keyingi story rasmini oldindan yuklab qo'yish
+  // Keyingi story mediasini oldindan yuklab qo'yish
   const nextItem = g.items[_itemIdx + 1] || _groups[_viewerIdx + 1]?.items?.[0];
-  if (nextItem?.mediaUrl) { const pre = new Image(); pre.src = nextItem.mediaUrl; }
+  if (nextItem?.mediaUrl && !String(nextItem.mediaType || '').startsWith('video')) {
+    const pre = new Image(); pre.src = nextItem.mediaUrl;
+  }
 }
 
 async function markViewed(item) {

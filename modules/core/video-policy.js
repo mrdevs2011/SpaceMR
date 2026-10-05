@@ -1,0 +1,181 @@
+/**
+ * SpaceMR VIDEO SIYOSATI — kamera mantig'i bilan bir xil (yagona manba).
+ *
+ * Har qanday video (kamera orqali olinganmi, galereyadan yuklanganmi, 4K/240fps bo'lsa ham)
+ * story va postga FAQAT shu standartga keltirilgandan keyin chiqadi:
+ *   - davomiyligi 1 daqiqadan oshmaydi (uzunroq bo'lsa dastlabki 60 soniya olinadi)
+ *   - eng ko'pi 1280x720 chegarasida (portret bo'lsa 720x1280), 30 fps
+ *   - video 2.5 Mbps, audio 128 kbps
+ *   - fayl 30 MB dan oshmaydi
+ * Kamera yozgan fayllar allaqachon shu standartda — markVideoReady() bilan belgilanadi
+ * va qayta kodlanmaydi. Boshqa har qanday video prepareVideo() orqali qayta kodlanadi.
+ */
+
+export const MAX_VIDEO_MS = 60_000;
+export const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
+export const VIDEO_BITRATE = 2_500_000;
+export const AUDIO_BITRATE = 128_000;
+export const VIDEO_W = 1280;
+export const VIDEO_H = 720;
+export const VIDEO_FPS = 30;
+
+const _ready = new WeakSet();
+
+/** Fayl siyosatga mos (kamera yozgan yoki prepareVideo chiqargan) deb belgilanadi. */
+export function markVideoReady(file) {
+  if (file) _ready.add(file);
+  return file;
+}
+export function isVideoReady(file) { return !!file && _ready.has(file); }
+
+export function pickVideoMime() {
+  const cands = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+  for (const m of cands) {
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.(m)) return m;
+  }
+  return '';
+}
+
+function _el(file) {
+  const url = URL.createObjectURL(file);
+  const v = document.createElement('video');
+  v.preload = 'auto';
+  v.playsInline = true;
+  v.setAttribute('playsinline', '');
+  v.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none';
+  v.src = url;
+  document.body.appendChild(v);
+  const dispose = () => { try { v.pause(); } catch (_) {} v.remove(); try { URL.revokeObjectURL(url); } catch (_) {} };
+  return { v, dispose };
+}
+
+function _waitMeta(v, ms = 20000) {
+  return new Promise((res, rej) => {
+    if (v.readyState >= 1 && v.videoWidth) return res();
+    const t = setTimeout(() => rej(new Error("Videoni o'qib bo'lmadi")), ms);
+    v.addEventListener('loadedmetadata', () => { clearTimeout(t); res(); }, { once: true });
+    v.addEventListener('error', () => { clearTimeout(t); rej(new Error("Bu video formatini o'qib bo'lmadi")); }, { once: true });
+  });
+}
+
+/** Video metadatasi: davomiylik (s), kenglik, balandlik. */
+export async function probeVideo(file) {
+  const { v, dispose } = _el(file);
+  try {
+    await _waitMeta(v);
+    let d = v.duration;
+    // MediaRecorder webm fayllarida duration = Infinity bo'lishi mumkin
+    if (!isFinite(d)) {
+      d = await new Promise(res => {
+        const t = setTimeout(() => res(Infinity), 4000);
+        v.addEventListener('durationchange', () => { if (isFinite(v.duration)) { clearTimeout(t); res(v.duration); } });
+        v.currentTime = 1e7;
+      });
+    }
+    return { duration: d, width: v.videoWidth, height: v.videoHeight };
+  } finally { dispose(); }
+}
+
+function _fit(sw, sh) {
+  const s = Math.min(1, VIDEO_W / Math.max(sw, sh), VIDEO_H / Math.min(sw, sh));
+  const even = n => Math.max(2, Math.round(n * s) & ~1);
+  return { w: even(sw), h: even(sh) };
+}
+
+async function _transcode(file, meta, onProgress) {
+  if (typeof MediaRecorder === 'undefined') throw new Error('MediaRecorder yo\'q');
+  const mime = pickVideoMime();
+  const { v, dispose } = _el(file);
+  let ac = null, timer = null, rec = null;
+  try {
+    await _waitMeta(v);
+    const { w, h } = _fit(v.videoWidth, v.videoHeight);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const vstream = canvas.captureStream(VIDEO_FPS);
+
+    // Audio: MediaElementSource → MediaStreamDestination (dinamikka chiqmaydi, jim yoziladi)
+    let atrack = null;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ac = new AC();
+      const src = ac.createMediaElementSource(v);
+      const dest = ac.createMediaStreamDestination();
+      src.connect(dest);
+      atrack = dest.stream.getAudioTracks()[0] || null;
+      if (ac.state === 'suspended') await ac.resume().catch(() => {});
+    } catch (_) { atrack = null; }
+
+    const out = new MediaStream([...vstream.getVideoTracks(), ...(atrack ? [atrack] : [])]);
+    const opts = { videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: AUDIO_BITRATE };
+    if (mime) opts.mimeType = mime;
+    rec = new MediaRecorder(out, opts);
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+
+    const total = Math.min(isFinite(meta?.duration) ? meta.duration : MAX_VIDEO_MS / 1000, MAX_VIDEO_MS / 1000);
+    let truncated = isFinite(meta?.duration) ? meta.duration > MAX_VIDEO_MS / 1000 + 0.25 : false;
+
+    const done = new Promise((res, rej) => {
+      rec.onstop = () => res();
+      rec.onerror = e => rej(e?.error || new Error('Yozish xatosi'));
+    });
+
+    v.currentTime = 0;
+    v.muted = false;
+    try { await v.play(); }
+    catch (_) { v.muted = true; await v.play(); } // autoplay bloklansa — ovozsiz davom
+    rec.start(1000);
+
+    const stop = () => { if (rec.state !== 'inactive') rec.stop(); };
+    const t0 = performance.now();
+    timer = setInterval(() => {
+      try { ctx.drawImage(v, 0, 0, w, h); } catch (_) {}
+      const cur = v.currentTime;
+      if (onProgress) onProgress(Math.min(1, cur / (total || 1)));
+      if (cur * 1000 >= MAX_VIDEO_MS) { truncated = true; stop(); }
+      else if (v.ended) stop();
+      else if (performance.now() - t0 > MAX_VIDEO_MS + 15000) { truncated = true; stop(); } // qotib qolsa
+    }, 1000 / VIDEO_FPS);
+    v.addEventListener('ended', stop, { once: true });
+
+    await done;
+    clearInterval(timer); timer = null;
+    const blob = new Blob(chunks, { type: (rec.mimeType || mime || 'video/webm').split(';')[0] });
+    if (!blob.size) throw new Error('Bo\'sh natija');
+    if (blob.size > MAX_VIDEO_BYTES) throw new Error('Video 30 MB dan oshdi — qisqaroq video tanlang');
+    const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+    const outFile = new File([blob], `video_${Date.now()}.${ext}`, { type: blob.type });
+    return { file: markVideoReady(outFile), truncated, width: w, height: h };
+  } finally {
+    if (timer) clearInterval(timer);
+    try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (_) {}
+    try { ac && ac.close(); } catch (_) {}
+    dispose();
+  }
+}
+
+/**
+ * Har qanday videoni kamera standartiga keltiradi.
+ * @returns {Promise<{file: File, truncated: boolean, width: number, height: number}>}
+ * @throws Error (foydalanuvchiga ko'rsatiladigan matn bilan)
+ */
+export async function prepareVideo(file, { onProgress } = {}) {
+  if (isVideoReady(file)) {
+    return { file, truncated: false, width: null, height: null };
+  }
+  let meta = null;
+  try { meta = await probeVideo(file); } catch (e) { throw new Error(e?.message || "Videoni o'qib bo'lmadi"); }
+  try {
+    return await _transcode(file, meta, onProgress);
+  } catch (e) {
+    // Qayta kodlash ishlamasa — faqat asl fayl allaqachon standartga mos bo'lsa (metadata bo'yicha) o'tkazamiz
+    const ok = isFinite(meta.duration) && meta.duration <= MAX_VIDEO_MS / 1000 + 0.25
+      && file.size <= MAX_VIDEO_BYTES
+      && Math.max(meta.width, meta.height) <= VIDEO_W && Math.min(meta.width, meta.height) <= VIDEO_H;
+    if (ok) return { file: markVideoReady(file), truncated: false, width: meta.width, height: meta.height };
+    console.warn('[video] qayta kodlanmadi:', e?.message || e);
+    throw new Error(e?.message && /MB|oshdi/.test(e.message) ? e.message : "Videoni 1 daqiqa / 720p standartiga keltirib bo'lmadi");
+  }
+}
