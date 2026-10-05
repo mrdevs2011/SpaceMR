@@ -4,7 +4,7 @@
  */
 import { $ } from '../core/utils.js';
 import { videoNoteFileName } from './components/video-note.js';
-import { mediaErrorKind, trackSupportsTorch, setTorch } from './camera-access.js';
+import { mediaErrorKind, trackSupportsTorch, setTorch, probeInputDevices } from './camera-access.js';
 import { toast } from '../ui/toast.js';
 
 let _onVoiceRecorded = null;
@@ -57,28 +57,62 @@ const VID_BITRATE = 900_000;  // 480p circle — engil, tez yuklash/o'ynash
 const VID_AUDIO_BITRATE = 64000;
 let _recMode = 'audio';
 try { if (localStorage.getItem(_MODE_KEY) === 'video') _recMode = 'video'; } catch (_) {}
-/* Qurilmalar: sayt mikrofon/kamera borligini o'zi biladi (ulanganda/uzilganda ham — 'devicechange') */
-let _hasMic = true, _hasCam = true, _camCount = 0, _vidTorchSeen = false;
+/* Qurilmalar: enumerateDevices + muvaffaqiyatli stream (proven).
+ * Boshlang'ich false — skan tugaguncha "yuborish" xavfsiz default.
+ * devicechange / focus da qayta skan. NotFoundError → shu tur o'chiriladi. */
+let _hasMic = false, _hasCam = false, _camCount = 0, _vidTorchSeen = false;
+let _micProven = false, _camProven = false;  // getUserMedia muvaffaqiyatli ochilgan
+let _mediaScanDone = false;
 let _onDevicesChange = null;
+let _scanTimer = null;
+
 function _effMode() {
   if (!_hasMic && !_hasCam) return 'none';
   if (!_hasMic) return 'video';
   if (!_hasCam) return 'audio';
   return _recMode;
 }
-/** false → na mikrofon, na kamera: tugma doim "yuborish" (qog'oz samolyot) */
+
+/** false → na mikrofon, na kamera: tugma doim "yuborish" */
 export function canRecordMedia() { return _hasMic || _hasCam; }
+export function hasMicDevice() { return _hasMic; }
+export function hasCamDevice() { return _hasCam; }
+export function isMediaScanDone() { return _mediaScanDone; }
+
+function _markMicProven(ok) {
+  if (ok) { _micProven = true; _hasMic = true; }
+  else { _micProven = false; }
+}
+function _markCamProven(ok) {
+  if (ok) { _camProven = true; _hasCam = true; }
+  else { _camProven = false; }
+}
+
 async function _scanDevices() {
   try {
-    if (navigator.mediaDevices?.enumerateDevices) {
-      const d = await navigator.mediaDevices.enumerateDevices();
-      _hasMic = d.some(x => x.kind === 'audioinput');
-      _hasCam = d.some(x => x.kind === 'videoinput');
-      _camCount = d.filter(x => x.kind === 'videoinput').length;
-    } else { _hasMic = _hasCam = false; }
-  } catch (_) {}
+    const p = await probeInputDevices();
+    // Proven stream bor, lekin enumerate 0 qaytarsa — qurilma uzilgan
+    if (_micProven && p.micCount === 0) _micProven = false;
+    if (_camProven && p.camCount === 0) _camProven = false;
+    _hasMic = p.mic || _micProven;
+    _hasCam = p.cam || _camProven;
+    _camCount = p.camCount;
+    // Faqat mic yoki faqat cam bo'lsa — rejimni majburan moslashtirish
+    if (_hasMic && !_hasCam) _recMode = 'audio';
+    else if (!_hasMic && _hasCam) _recMode = 'video';
+  } catch (_) {
+    // Skan xatosi: proven bo'lmasa o'chiramiz
+    if (!_micProven) _hasMic = false;
+    if (!_camProven) _hasCam = false;
+  }
+  _mediaScanDone = true;
   _applyRecMode();
   try { _onDevicesChange?.(); } catch (_) {}
+}
+
+function _scheduleScan(delay = 80) {
+  clearTimeout(_scanTimer);
+  _scanTimer = setTimeout(() => { _scanDevices(); }, delay);
 }
 let _vidHoldTimer = null;
 let _vidActive    = false;
@@ -95,7 +129,14 @@ function _applyRecMode() {
   if (!b) return;
   const m = _effMode();
   b.classList.toggle('mode-video', m === 'video');
-  b.title = m === 'video' ? 'Video xabar (bosib turing)' : m === 'none' ? 'Yuborish' : 'Ovozli xabar';
+  b.classList.toggle('no-mic', !_hasMic);
+  b.classList.toggle('no-cam', !_hasCam);
+  b.classList.toggle('no-media', m === 'none');
+  b.dataset.hasMic = _hasMic ? '1' : '0';
+  b.dataset.hasCam = _hasCam ? '1' : '0';
+  if (m === 'video') b.title = 'Video xabar (bosib turing)';
+  else if (m === 'none') b.title = 'Yuborish';
+  else b.title = 'Ovozli xabar (bosib turing, yuqoriga — qulflash)';
 }
 function _toggleRecMode() {
   if (!_hasMic || !_hasCam) return;   // faqat bittasi bo'lsa — almashmaydi
@@ -418,6 +459,8 @@ async function startVideoRecording() {
     _vidStream = stream;
     _vidVideoTrack = stream.getVideoTracks()[0] || null;
     _vidAudioTracks = stream.getAudioTracks();
+    if (_vidVideoTrack) _markCamProven(true);
+    if (_vidAudioTracks.length) _markMicProven(true);
     // Ruxsat dialogi paytida pointer yo'qolishi mumkin — stream olindi, hold qayta tekshiriladi
     if (_voiceStopRequested) {
       _vidStopAll();
@@ -509,8 +552,10 @@ async function startVideoRecording() {
     console.error('Kamera xatosi:', err);
     _abortVoiceUi();
     const kind = _micErrorKind(err);
-    if (kind === 'notfound') toast('Kamera yoki mikrofon topilmadi', 'error');
-    else if (kind === 'busy') toast('Kamera boshqa dasturda band', 'error');
+    if (kind === 'notfound') {
+      _scheduleScan(0);
+      toast('Kamera yoki mikrofon topilmadi', 'error');
+    } else if (kind === 'busy') toast('Kamera boshqa dasturda band', 'error');
     else toast('Kamera va mikrofonga ruxsat bering (manzil qatoridagi qulf ikonka)', 'error');
   }
 }
@@ -846,6 +891,7 @@ async function startRecording() {
   try {
     const stream = await _requestMicStream();
     _mediaStream = stream;
+    _markMicProven(true);   // jismoniy mic ishlayapti
 
     if (_voiceStopRequested || !_isHoldingVoice) {
       stream.getTracks().forEach(t => t.stop());
@@ -871,7 +917,11 @@ async function startRecording() {
     const kind = _micErrorKind(err);
 
     if (kind === 'notfound') {
-      // Faqat jismoniy qurilma yo'qligida — ruxsat emas
+      // Jismoniy qurilma yo'q — UI ni darhol yangilaymiz
+      _markMicProven(false);
+      _hasMic = false;
+      _applyRecMode();
+      try { _onDevicesChange?.(); } catch (_) {}
       toast('Mikrofon topilmadi. Tashqi adapter yoki mikrofon ulanganligini tekshiring', 'error');
       return;
     }
@@ -1238,8 +1288,11 @@ export function initChatVoiceRecording(opts = {}) {
   _applyRecMode();
   if (!_devWatch) {
     _devWatch = true;
-    try { navigator.mediaDevices?.addEventListener?.('devicechange', _scanDevices); } catch (_) {}
-    window.addEventListener('focus', _scanDevices);
+    try { navigator.mediaDevices?.addEventListener?.('devicechange', () => _scheduleScan(120)); } catch (_) {}
+    window.addEventListener('focus', () => _scheduleScan(50));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') _scheduleScan(50);
+    });
   }
   _scanDevices();
   if (!_voiceUiBound) {

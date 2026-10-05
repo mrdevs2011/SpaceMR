@@ -1,13 +1,34 @@
 /* camera-access.js — kamera/mikrofon yordamchilari (attach + rolik).
    Ruxsat rad etilishi eslab qolinmaydi — har bosishda getUserMedia yangidan. */
 
+/**
+ * Qurilmadagi audio/video inputlarni aniqlash (jismoniy qurilma taxmini).
+ * - secure context bo'lmasa → yo'q
+ * - enumerateDevices: audioinput / videoinput bor-yo'qligi
+ * Ruxsat berilmaguncha label bo'sh bo'lishi mumkin, lekin kind odatda bor.
+ * @returns {Promise<{ mic: boolean, cam: boolean, micCount: number, camCount: number }>}
+ */
+export async function probeInputDevices() {
+  const out = { mic: false, cam: false, micCount: 0, camCount: 0 };
+  try {
+    if (!window.isSecureContext) return out;
+    if (!navigator.mediaDevices?.enumerateDevices) return out;
+    const list = await navigator.mediaDevices.enumerateDevices();
+    const mics = list.filter(d => d.kind === 'audioinput');
+    const cams = list.filter(d => d.kind === 'videoinput');
+    out.micCount = mics.length;
+    out.camCount = cams.length;
+    // deviceId bo'sh bo'lsa ham (ruxsat oldin) kind mavjudligi — qurilma borligiga ishora
+    out.mic = mics.length > 0;
+    out.cam = cams.length > 0;
+  } catch (_) {}
+  return out;
+}
+
 /** Qurilmada kamera (videoinput) bormi. */
 export async function hasCameraDevice() {
-  try {
-    if (!navigator.mediaDevices?.enumerateDevices) return false;
-    const d = await navigator.mediaDevices.enumerateDevices();
-    return d.some(x => x.kind === 'videoinput');
-  } catch (_) { return false; }
+  const p = await probeInputDevices();
+  return p.cam;
 }
 
 export function mediaErrorKind(err) {
