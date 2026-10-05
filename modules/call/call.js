@@ -324,35 +324,56 @@ function _playConnectBeep() {
  * local  — men qizilni bosdim yoki ring timeout (40–45s) avto-tugatish
  * remote — qarshi tomon o'zi qizilni bosdi / rad etdi
  * Farqi seziladi: local = classic ikki pasayuvchi beep; remote = yumshoqroq uchlik. */
+/* End-call tovush: SHARED AudioContext + darhol resume.
+ * Yangi context har safar suspended bo'lib eshitilmasligi mumkin (mobil).
+ * User gesture ichida chaqirish kerak (qizil tugma); remote uchun avvalgi call audio ctx ishlaydi. */
+let _endSoundCtx = null;
+function _endSoundAudioCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  // Shared call ctx (mic pulse) — eng ishonchli
+  if (_sharedAudioCtx && _sharedAudioCtx.state !== 'closed') return _sharedAudioCtx;
+  if (!_endSoundCtx || _endSoundCtx.state === 'closed') _endSoundCtx = new AC();
+  return _endSoundCtx;
+}
 function _playCallEndSound(kind = 'local') {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-    const t0 = ctx.currentTime + 0.02;
-    const mk = (freq, start, dur, vol) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(freq, t0 + start);
-      g.gain.setValueAtTime(0, t0 + start);
-      g.gain.linearRampToValueAtTime(vol, t0 + start + 0.02);
-      g.gain.setValueAtTime(vol, t0 + start + Math.max(0.04, dur - 0.06));
-      g.gain.linearRampToValueAtTime(0, t0 + start + dur);
-      o.connect(g); g.connect(ctx.destination);
-      o.start(t0 + start);
-      o.stop(t0 + start + dur + 0.02);
+    const ctx = _endSoundAudioCtx();
+    if (!ctx) return;
+    const fire = () => {
+      try {
+        const t0 = ctx.currentTime + 0.01;
+        const mk = (freq, start, dur, vol) => {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(freq, t0 + start);
+          g.gain.setValueAtTime(0.0001, t0 + start);
+          g.gain.exponentialRampToValueAtTime(Math.max(0.001, vol), t0 + start + 0.025);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(t0 + start);
+          o.stop(t0 + start + dur + 0.05);
+        };
+        if (kind === 'remote') {
+          // U tugatdi — 3 ta pastroq
+          mk(440, 0.00, 0.15, 0.32);
+          mk(370, 0.17, 0.15, 0.28);
+          mk(290, 0.34, 0.20, 0.24);
+        } else {
+          // Men / timeout — classic ikki pasayuvchi (balandroq)
+          mk(520, 0.00, 0.18, 0.38);
+          mk(340, 0.20, 0.28, 0.34);
+        }
+      } catch (_) {}
     };
-    if (kind === 'remote') {
-      // U tugatdi: pastroq, 3 ta qisqa ("busy/hangup boshqacha")
-      mk(420, 0.00, 0.14, 0.16);
-      mk(360, 0.16, 0.14, 0.14);
-      mk(300, 0.32, 0.18, 0.12);
-      setTimeout(() => { try { ctx.close(); } catch (_) {} }, 700);
+    if (ctx.state === 'suspended') {
+      // resume async — lekin fire ni ham darhol urinish (ba'zi brauzerlar)
+      const p = ctx.resume();
+      if (p && typeof p.then === 'function') p.then(fire).catch(fire);
+      else fire();
     } else {
-      // Men / timeout: classic end-call — ikki pasayuvchi ton
-      mk(480, 0.00, 0.16, 0.20);
-      mk(320, 0.18, 0.22, 0.18);
-      setTimeout(() => { try { ctx.close(); } catch (_) {} }, 550);
+      fire();
     }
   } catch (_) {}
 }
@@ -578,8 +599,6 @@ let _ending = false;
 async function _endCall(notify = true, endSound = null) {
   if (_ending) return;
   _ending = true;
-  // endSound: 'local' | 'remote' | null (ovozsiz — ichki tozalash)
-  if (endSound === 'local' || endSound === 'remote') _playCallEndSound(endSound);
   // Tarix yozuvi — faqat chaqiruvchi, bir marta
   let _log = null;
   if (_isCaller && _callId && _callChatId && !_logged.has(_callId)) {
@@ -590,6 +609,8 @@ async function _endCall(notify = true, endSound = null) {
   _clearCallerRingTimer();
   _stopRingback();
   _stopMicPulse();
+  // Ringback/ringtone to'xtagach end-tone (aks holda eshitilmaydi yoki kechikadi)
+  if (endSound === 'local' || endSound === 'remote') _playCallEndSound(endSound);
   _cleanCallModal();
 
   if (_callUnsub) { _callUnsub(); _callUnsub = null; }
@@ -889,7 +910,10 @@ async function initiateCall(isVideo) {
     try { await _withTimeout(sb.from('calls').update({ status: 'ended' }).eq('id', callId).eq('status', 'ringing')); } catch (_) {}
     if (_callId !== callId || _callConnected || _callAnswerSeen || _ending) return;
     toast('Javob bermadi');
-    _hardEnd('ring-timeout');   // realtime kutmaymiz — darhol to'liq tugatamiz
+    _stopRingback();
+    try { navigator.vibrate?.([40, 40, 40]); } catch (_) {}
+    _playCallEndSound('local');
+    _hardEnd('ring-timeout', null);   // ovoz yuqorida
   }, CALL_RING_MAX_MS);
 
   // Yozuv yaratilguncha yig'ilgan ICE candidate'larni yuboramiz
@@ -1099,6 +1123,8 @@ async function _handleIncomingRow(data) {
   // Maksimal jiringlash vaqtidan keyin avtomatik rad etish (CALL_RING_MAX_MS)
   _autoRejectTimer = setTimeout(async () => {
     if (_activeCallDocId === data.id) {
+      _stopRingtone();  // avval to'xtat — context bo'shaysin
+      try { navigator.vibrate?.([40, 40, 40]); } catch (_) {}
       _playCallEndSound('local');  // ring timeout — avto-rad
       _cleanCallModal();
       try { await _updateCall(data.id, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
@@ -1172,10 +1198,12 @@ document.getElementById('chatVoiceCallBtn')?.addEventListener('click', () => ini
 
 /* ── Active call controls ── */
 document.getElementById('callEndBtn')?.addEventListener('click', async () => {
+  // Tovush DARHOL — user gesture ichida (await dan OLDIN), aks holda mobil ovozsiz qoladi
+  _playCallEndSound('local');
   if (_callId) {
     try { await _updateCall(_callId, { status: 'ended' }); } catch (e) { console.warn('[call]', e?.message || e); }
   }
-  await _endCall(false, 'local');  // men qizilni bosdim
+  await _endCall(false, null);  // ovoz allaqachon chalinadi
 });
 
 document.getElementById('callMicBtn')?.addEventListener('click', function () {
