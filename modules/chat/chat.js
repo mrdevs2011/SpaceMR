@@ -1943,7 +1943,8 @@ export function paintMessages(msgs, grp = null) {
     let gHead = '';
     if (grp && !mine) {
       const sn = grp.names?.[m.senderId]?.fullName || 'Foydalanuvchi';
-      gHead = `<div class="grp-sender-name" data-uid="${esc(m.senderId)}">${esc(sn)}</div>`;
+      const _role = grp.names?.[m.senderId]?.role;
+      gHead = `<div class="grp-sender-name" data-uid="${esc(m.senderId)}"><span class="grp-sn-text">${esc(sn)}</span>${_role ? `<span class="grp-role">${_role === 'owner' ? 'owner' : 'admin'}</span>` : ''}</div>`;
     }
 
     // Kun almashgan bo'lsa — Telegram uslubidagi "Bugun"/"Kecha"/sana pill'i

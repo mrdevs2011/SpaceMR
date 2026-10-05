@@ -576,19 +576,30 @@ async function _gLoadReadMax(groupId) {
   } catch (_) { /* 062 hali ishga tushmagan — 1 chek qoladi */ }
 }
 
+/* Yuboruvchi ismlari + guruhdagi roli (owner/admin) — sarlavhada nishon uchun */
+function _gNames() {
+  const out = { ..._senderCache };
+  const g = _currentGroupData;
+  if (g) {
+    if (g.ownerId && out[g.ownerId]) out[g.ownerId] = { ...out[g.ownerId], role: 'owner' };
+    (g.adminIds || []).forEach(u => { if (u !== g.ownerId && out[u]) out[u] = { ...out[u], role: 'admin' }; });
+  }
+  return out;
+}
+
 async function paintGroupMessages(msgs, groupData) {
   if (!$('chatThreadMessages')) return;
   msgs = _gTicked(msgs);
   // DM bilan BIR XIL painter (chat.js paintMessages); yagona farq — pufak sarlavhasida yuboruvchi ismi.
   // Avval keshdagi ismlar bilan darhol chizamiz, yetishmaganlari kelgach qayta chizamiz.
-  chatUI.paintGroupThread(msgs, _senderCache);
+  chatUI.paintGroupThread(msgs, _gNames());
   const missing = [...new Set(msgs.map(m => m.senderId).filter(u => u && !_senderCache[u]))];
   if (!missing.length) return;
   const seq = ++_paintSeq;
   const got = await _profilesByIds(missing);
   Object.assign(_senderCache, got);
   missing.forEach(u => { if (!_senderCache[u]) _senderCache[u] = { fullName: 'Foydalanuvchi', avatar: '' }; });
-  if (seq === _paintSeq && _currentGroupId && _gLoaded) chatUI.paintGroupThread(_gTicked(_gMsgs), _senderCache);
+  if (seq === _paintSeq && _currentGroupId && _gLoaded) chatUI.paintGroupThread(_gTicked(_gMsgs), _gNames());
 }
 
 /* ── "Yozmoqda..." (DM bilan bir xil, sarlavhada; guruhda kim yozayotgani) ── */
