@@ -456,7 +456,7 @@ function _stopPlayEq() {
 }
 
 function _startPlayEq(audio, btn) {
-  if (!audio || !btn) return;
+  if (!audio || !btn || audio.__noEq) return;
   _stopPlayEq();
   const ring = _ensureEqRing(btn);
   if (!ring) return;
@@ -562,6 +562,9 @@ window._chatPlayVoice = function(btn) {
 
   const audio = new Audio();
   audio.preload = 'auto';
+  // MUHIM: createMediaElementSource (EQ) cross-origin (Supabase) audio'ni CORS'siz JIM qiladi.
+  // Supabase ACAO:* beradi, shuning uchun 'anonymous' bilan ochamiz.
+  audio.crossOrigin = 'anonymous';
   _activeAudio = audio;
   _activeLoading = true;          // yuklanish tugaguncha tugma ichida spinner aylanadi
   _setBtnState();
@@ -584,6 +587,14 @@ window._chatPlayVoice = function(btn) {
   };
   audio.onerror = (e) => {
     if (_activeAudio !== audio) return;
+    if (audio.crossOrigin && !audio.__corsRetried) {
+      // CORS ishlamasa: EQ'siz, oddiy rejimda qayta urinish (ovoz baribir chiqsin)
+      audio.__corsRetried = true; audio.__noEq = true;
+      audio.removeAttribute('crossorigin');
+      audio.src = url;
+      audio.play().catch(() => {});
+      return;
+    }
     console.error('Audio xatosi:', e, 'URL:', url);
     toast('Audio yuklanmadi', 'error');
     _stopActive();
