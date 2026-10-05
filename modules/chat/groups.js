@@ -362,7 +362,7 @@ export async function openGroupThread(groupId) {
 
   const modal = $('chatThreadModal');
   modal.classList.add('show');
-  lockScroll();
+  lockScroll('chatThreadModal');
   modal.dataset.kind = groupData.type;
   modal.dataset.gid  = groupId;
 
@@ -553,7 +553,7 @@ export function closeGroupThread() {
   _currentGroupId   = null;
   _currentGroupData = null;
   state.currentChatKind = 'dm';
-  unlockScroll(); // Modal yopildi — body scrollini qayta ochamiz
+  unlockScroll('chatThreadModal'); // Modal yopildi — body scrollini qayta ochamiz
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -1167,7 +1167,7 @@ export function openGroupEdit(groupId, g) {
     try {
       await _updateGroup(groupId, updates);
       panel.classList.remove('show');
-      unlockScroll();
+      unlockScroll('grpEditOverlay');
       toast(`${typeLabel} yangilandi`, 'success');
       openGroupInfo(groupId);
     } catch(e) { toast('Xato: ' + e.message, 'error'); }
@@ -1176,12 +1176,12 @@ export function openGroupEdit(groupId, g) {
   // Cancel
   panel.querySelector('#grpEditCancelBtn').onclick = () => {
     panel.classList.remove('show');
-    unlockScroll();
+    unlockScroll('grpEditOverlay');
     openGroupInfo(groupId);
   };
 
   panel.classList.add('show');
-  lockScroll();
+  lockScroll('grpEditOverlay');
 }
 
 // Q: kanal turi yo'q — "+" to'g'ridan-to'g'ri guruh yaratish formasini ochadi
@@ -1808,7 +1808,7 @@ export function injectGroupsDOM() {
   // Backdrop click closes
   ['grpAddUserOverlay','grpCreateFormOverlay','grpInfoOverlay','grpEditOverlay'].forEach(id => {
     document.getElementById(id)?.addEventListener('click', e => {
-      if (e.target.id === id) { document.getElementById(id).classList.remove('show'); unlockScroll(); }
+      if (e.target.id === id) { document.getElementById(id).classList.remove('show'); unlockScroll(id); }
     });
   });
 }

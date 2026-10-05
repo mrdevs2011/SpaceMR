@@ -608,7 +608,7 @@ function _showMandatoryPasswordResetModal(me) {
   if (!overlay) return;
 
   overlay.style.display = 'flex';
-  lockScroll();
+  lockScroll('mandatoryPwdOverlay');
 
   const errEl = $('mandatoryPwdErr');
   if (errEl) errEl.textContent = '';
@@ -701,7 +701,7 @@ function _hideMandatoryPasswordResetModal() {
   _mandatoryModalActive = false;
   const overlay = $('mandatoryPwdOverlay');
   if (overlay) overlay.style.display = 'none';
-  unlockScroll();
+  unlockScroll('mandatoryPwdOverlay');
 }
 
 /** Profilning eng so'nggi holatiga qarab ekranni to'g'irlaydi (idempotent). */

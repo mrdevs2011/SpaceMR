@@ -6,7 +6,7 @@
  */
 
 import { state } from './core/config.js';
-import { $ } from './core/utils.js';
+import { $, resetScrollLock } from './core/utils.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    ROUTE CONFIGURATION
@@ -118,7 +118,8 @@ export function navigateTo(routeName, pushState = true) {
     state.currentViewingUserId    = null;
     state.currentViewingUserPosts = [];
   }
-  // Scroll lock ni ham tozalaymiz
+  // Scroll lock ni ham tozalaymiz (position:fixed + hisoblagich bilan, faqat overflow emas)
+  resetScrollLock();
   document.body.style.overflow = '';
   document.documentElement.style.overflow = '';
 

@@ -499,31 +499,56 @@ export function addHapticTouch(el, type = 'light') {
    SCROLL LOCK — modal/sheet ochilganda orqa sahifa scroll bo'lmasin
    ═══════════════════════════════════════════════════════════════════════ */
 
-let _scrollLockCount = 0;
+/* Scroll qulfi. MUHIM: har qulf o'z KALITI bilan ro'yxatga olinadi (masalan 'uploadOverlay'):
+   - bir kalit bilan takror lockScroll — qo'shimcha hisoblanmaydi (qulf "oqib" qolmaydi, scroll o'lmaydi);
+   - qulflanmagan kalit bilan unlockScroll — hech narsa qilmaydi (eski xato: ortiqcha unlock
+     window.scrollTo(0, eski_scrollY) chaqirib lentani tepaga otib yuborardi).
+   Kalitsiz chaqiruv (eski kod) — oddiy hisoblagich, lekin u ham 0 dan pastga tushmaydi. */
+const _scrollLocks = new Set();
+let _scrollLockAnon = 0;
+let _scrollLockApplied = false;   // body haqiqatan qulflanganmi
 let _scrollY = 0;
 
-/** Body scrollini bloklash — modal/sheet ochilganda chaqiring */
-export function lockScroll() {
-  _scrollLockCount++;
-  if (_scrollLockCount === 1) {
-    _scrollY = window.scrollY;
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${_scrollY}px`;
-    document.body.style.width = '100%';
-  }
+const _scrollLockTotal = () => _scrollLocks.size + _scrollLockAnon;
+
+function _applyScrollLock() {
+  if (_scrollLockApplied) return;
+  _scrollLockApplied = true;
+  _scrollY = window.scrollY;
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${_scrollY}px`;
+  document.body.style.width = '100%';
 }
 
-/** Body scrollini qayta ochish — modal/sheet yopilganda chaqiring */
-export function unlockScroll() {
-  _scrollLockCount = Math.max(0, _scrollLockCount - 1);
-  if (_scrollLockCount === 0) {
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo(0, _scrollY);
-  }
+function _releaseScrollLock(restore) {
+  if (!_scrollLockApplied) return;   // qulflanmagan bo'lsa — scroll joyiga umuman tegmaymiz
+  _scrollLockApplied = false;
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  if (restore) window.scrollTo(0, _scrollY);
+}
+
+/** Body scrollini bloklash — modal/sheet ochilganda. key = qulf egasi (masalan overlay id). */
+export function lockScroll(key) {
+  if (key) _scrollLocks.add(key); else _scrollLockAnon++;
+  _applyScrollLock();
+}
+
+/** Body scrollini qayta ochish — modal/sheet yopilganda. Shu key bilan lock qilinmagan bo'lsa — e'tiborsiz. */
+export function unlockScroll(key) {
+  if (key) { if (!_scrollLocks.delete(key)) return; }
+  else { if (_scrollLockAnon === 0) return; _scrollLockAnon--; }
+  if (_scrollLockTotal() === 0) _releaseScrollLock(true);
+}
+
+/** Barcha qulflarni majburan tozalash (sahifa/route almashganda). Scroll joyi tiklanmaydi. */
+export function resetScrollLock() {
+  _scrollLocks.clear();
+  _scrollLockAnon = 0;
+  _releaseScrollLock(false);
 }
 
 /** 1234 -> "1.2K", 0 -> "" (X uslubi) */

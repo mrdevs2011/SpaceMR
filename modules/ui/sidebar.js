@@ -4,7 +4,7 @@
  * o'zgaradi — shuning uchun engil imzo-tekshiruv bilan yangilanadi.
  */
 import { state } from '../core/config.js';
-import { $, esc, defAvi } from '../core/utils.js';
+import { $, esc, defAvi, lockScroll } from '../core/utils.js';
 import { onEsc } from './esc-stack.js';
 import { navigateTo } from '../router.js';
 
@@ -116,7 +116,7 @@ export function openProfileSettings() {
     if (window.matchMedia('(min-width: 1200px)').matches) {
       document.body.classList.add('desktop-settings-pinned');
     } else {
-      document.body.style.overflow = 'hidden';
+      lockScroll('settingsOverlay');
     }
   };
   requestAnimationFrame(() => requestAnimationFrame(open));

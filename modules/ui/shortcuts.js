@@ -21,7 +21,7 @@ const backdrop = id => () => {
   const el = $(id);
   if (!el) return;
   el.click();
-  if (isOpen(el)) { el.classList.remove('show', 'open'); unlockScroll(); }
+  if (isOpen(el)) { el.classList.remove('show', 'open'); unlockScroll(id); }
 };
 
 /* Ochiq oynalar. Qaysi biri ustda ekani z-index bo'yicha ish vaqtida aniqlanadi (closeTopmost) */
