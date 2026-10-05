@@ -196,7 +196,7 @@ function menuHtml(m) {
   const hasText = !!(m.text || '').trim();
   let h = '';
   const isPostShare = m.text && m.text.includes('"__postShare"');
-  if (hasText) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
+  if (hasText && isDM()) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
   if (mine && m.type === 'text' && !isPostShare) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('link', IC.copy, 'Xabar havolasi');
   h += it('fwd', IC.fwd, 'Uzatish');
@@ -467,7 +467,7 @@ function paintSel(keepEmpty) {
   // Faqat o'z xabarlarim tanlangan bo'lsa — o'chirish/nusxalash/tahrirlash; boshqalarniki aralashsa — faqat "Uzatish"
   const allMine = [...sel].every(id => isMine(msgOf(id)));
   selBar.querySelector('[data-sb="del"]').hidden = !allMine;
-  selBar.querySelector('[data-sb="copy"]').hidden = !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
+  selBar.querySelector('[data-sb="copy"]').hidden = !isDM() || !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
   selBar.querySelector('[data-sb="edit"]').hidden = !(one && isMine(one) && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
 }
