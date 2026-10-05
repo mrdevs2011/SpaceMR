@@ -583,6 +583,8 @@ chatUI.isGroupModerator = () => {
   return !!(g && me && (g.ownerId === me || (g.adminIds || []).includes(me)));
 };
 chatUI.groupNames = () => _gNames();
+/* Lokal (optimistik) o'chirishda guruh xabarlar keshidan ham darhol olib tashlaymiz — DELETE hodisasi kelguncha qayta chizilsa xabar qaytib chiqmasin */
+chatUI.dropGroupMsgs = (ids) => { const set = new Set((ids || []).map(String)); _gMsgs = _gMsgs.filter(x => !set.has(String(x.id))); };
 
 /* Yuboruvchi ismlari + guruhdagi roli (owner/admin) — sarlavhada nishon uchun */
 function _gNames() {

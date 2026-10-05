@@ -2466,6 +2466,7 @@ initMsgMenu({
     ids.forEach(id => { try { chatState._rtLocal.delete(id); } catch (_) {} });
     const next = chatState._curMsgs.filter(x => !set.has(String(x.id)));
     // Guruhda ism/avatar sarlavhalari yo'qolib ketmasligi uchun guruh painter'i bilan chizamiz
+    if (state.currentChatKind === 'group') chatUI.dropGroupMsgs?.(ids);
     if (state.currentChatKind === 'group' && chatUI.groupNames) paintGroupThread(next, chatUI.groupNames());
     else paintMessages(next);
   },

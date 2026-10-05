@@ -135,12 +135,13 @@ function __dissolveDomToCanvas(el, dprOverride) {
       canvas.height = Math.ceil(h * dpr);
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      // Sanity: if almost fully transparent, treat as failure
+      // Sanity: butun rasm deyarli shaffof bo'lsagina xato (faqat burchakka qarab emas —
+      // chat qatorida burchak doim bo'sh: pufak o'ngda/chapda, yumaloq burchakli)
       try {
-        const sample = ctx.getImageData(0, 0, Math.min(8, canvas.width), Math.min(8, canvas.height)).data;
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         let opaque = 0;
-        for (let i = 3; i < sample.length; i += 4) if (sample[i] > 10) opaque++;
-        if (opaque < 2) {
+        for (let i = 3; i < data.length && opaque < 4; i += 16) if (data[i] > 10) opaque++;
+        if (opaque < 4) {
           reject(new Error("blank snapshot"));
           return;
         }
