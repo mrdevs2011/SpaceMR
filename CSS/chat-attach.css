@@ -4,12 +4,215 @@
 .attach-menu .am-item:hover, .attach-menu .am-item:focus-visible { background: var(--pal-gray-800); outline: none; }
 .attach-menu .am-item svg { flex-shrink: 0; }
 
-#camCapture { position: fixed; inset: 0; z-index: 9200; background: #000; display: flex; align-items: center; justify-content: center; }
-#camCapture .cc-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+/* ═══ SpaceMR Camera UI ═══ */
+#camCapture {
+  position: fixed; inset: 0; z-index: 9200;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+  user-select: none; -webkit-user-select: none;
+}
+#camCapture .cc-video {
+  width: 100%; height: 100%;
+  object-fit: cover; background: #000;
+}
 #camCapture .cc-video.mirror { transform: scaleX(-1); }
-#camCapture .cc-btn { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer; }
-#camCapture .cc-close { left: 14px; }
-#camCapture .cc-flip { right: 14px; }
-#camCapture .cc-shutter { position: absolute; left: 50%; bottom: max(28px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: 70px; height: 70px; padding: 0; border: 4px solid #fff; border-radius: 50%; background: none; cursor: pointer; }
-#camCapture .cc-shutter span { display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
-#camCapture .cc-shutter:active span { transform: scale(0.88); }
+#camCapture .cc-top {
+  position: absolute; left: 0; right: 0;
+  top: 0; padding: max(10px, env(safe-area-inset-top, 0px)) 12px 0;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 2;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+#camCapture .cc-top-right {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+#camCapture .cc-btn {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  color: #fff; cursor: pointer;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: background .15s ease, transform .12s ease;
+}
+#camCapture .cc-btn:active { transform: scale(0.92); }
+#camCapture .cc-btn:hover { background: rgba(0,0,0,0.6); }
+#camCapture .cc-flash.on { color: #ffd60a; background: rgba(255,214,10,0.2); }
+#camCapture .cc-top-center {
+  position: absolute;
+  left: 50%; top: max(10px, env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 96px; min-height: 42px;
+}
+#camCapture .cc-modes {
+  display: flex; gap: 4px;
+  box-sizing: border-box;
+  width: 98px; height: 42px;
+  padding: 3px;
+  border-radius: 22px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+#camCapture .cc-modes[hidden] {
+  display: flex !important;
+  opacity: 0;
+  transform: scale(0.88);
+  pointer-events: none;
+  position: absolute;
+  visibility: hidden;
+}
+#camCapture .cc-mode {
+  border: 0; background: transparent;
+  color: rgba(255,255,255,0.55);
+  width: 44px; height: 36px;
+  padding: 0;
+  border-radius: 18px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s ease, color .15s ease;
+}
+#camCapture .cc-mode svg { display: block; }
+#camCapture .cc-mode.active {
+  background: #fff;
+  color: #0f1419;
+}
+#camCapture .cc-bottom {
+  position: absolute; left: 0; right: 0;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  display: flex; justify-content: center; align-items: center;
+  gap: 0;
+  z-index: 2;
+}
+#camCapture .cc-shutter {
+  width: 74px; height: 74px; padding: 0;
+  border: 3px solid #fff; border-radius: 50%;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s ease, transform .1s ease;
+}
+#camCapture .cc-shutter-inner {
+  display: block; width: 60px; height: 60px;
+  border-radius: 50%; background: #fff;
+  transition: transform .12s ease, border-radius .15s ease, background .15s ease, width .15s ease, height .15s ease;
+}
+#camCapture .cc-shutter:active .cc-shutter-inner { transform: scale(0.88); }
+#camCapture .cc-shutter.snap .cc-shutter-inner { transform: scale(0.82); }
+#camCapture .cc-shutter.video-mode { border-color: #fff; }
+#camCapture .cc-shutter.video-mode .cc-shutter-inner { background: #ff3b30; }
+#camCapture .cc-shutter.video-mode.recording .cc-shutter-inner {
+  width: 28px; height: 28px; border-radius: 6px; background: #ff3b30;
+}
+#camCapture .cc-rec-timer {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  box-sizing: border-box;
+  width: 98px; height: 42px;
+  padding: 3px 10px;
+  border-radius: 22px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: #fff; font: 700 16px/1 system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+#camCapture .cc-rec-timer[hidden] {
+  display: flex !important;
+  opacity: 0;
+  transform: scale(0.88);
+  position: absolute;
+  visibility: hidden;
+}
+#camCapture.is-recording .cc-rec-timer:not([hidden]) {
+  opacity: 1;
+  transform: scale(1);
+  visibility: visible;
+}
+#camCapture .cc-rec-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ff3b30;
+  animation: cc-blink 1s ease infinite;
+}
+@keyframes cc-blink { 50% { opacity: 0.25; } }
+#camCapture .cc-hint { display: none !important; }
+
+/* Camera review: retake + paperplane send */
+#camCapture .cc-preview-img,
+#camCapture .cc-preview-vid {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; background: #000;
+  z-index: 1;
+}
+#camCapture .cc-preview-vid { object-fit: contain; }
+#camCapture .cc-review {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  width: 100%;
+  padding: 0 24px;
+  animation: cc-review-in 0.28s cubic-bezier(.2,.8,.2,1);
+}
+#camCapture .cc-review[hidden] {
+  display: none !important;
+}
+@keyframes cc-review-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#camCapture .cc-retake {
+  width: 52px; height: 52px;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+}
+#camCapture .cc-send {
+  width: 56px; height: 56px;
+  background: #1d9bf0;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(29,155,240,0.35);
+}
+#camCapture .cc-send:active { transform: scale(0.94); }
+#camCapture .cc-shutter[hidden] { display: none !important; }
+#camCapture .cc-close[hidden] { display: none !important; visibility: hidden; }
+#camCapture.is-review .cc-top {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+#camCapture .cc-flash { order: 2; }
+#camCapture .cc-flip { order: 1; }
+
+/* Camera switch button — kamera + aylana strelka, bosilganda animatsiya */
+#camCapture .cc-flip svg { overflow: visible; }
+#camCapture .cc-flip .cc-flip-cam {
+  transform-origin: 12px 12.6px;
+  transform-box: fill-box;
+}
+#camCapture .cc-flip .cc-flip-arrows {
+  transform-origin: 18.6px 5.4px;
+  transform-box: fill-box;
+}
+#camCapture .cc-flip.cc-flip-anim .cc-flip-cam {
+  animation: cc-cam-flip 0.5s cubic-bezier(.2,.8,.2,1);
+}
+#camCapture .cc-flip.cc-flip-anim .cc-flip-arrows {
+  animation: cc-arrow-spin 0.5s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes cc-cam-flip {
+  0%   { transform: scaleX(1); }
+  45%  { transform: scaleX(0.08); }
+  55%  { transform: scaleX(-0.08); }
+  100% { transform: scaleX(-1); }
+}
+@keyframes cc-arrow-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

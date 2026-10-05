@@ -3,417 +3,118 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<title>SpaceMR Camera UI — 1:1 Demo</title>
+<title>SpaceMR Camera UI — 1:1</title>
+<link rel="stylesheet" href="./app.css">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: #0f1419; color: #e7e9ea; font-family: system-ui, -apple-system, sans-serif; }
-
-  /* ── Launch screen ── */
-  #launch {
-    min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 16px; padding: 24px; text-align: center;
-  }
-  #launch h1 { font-size: 22px; font-weight: 700; }
-  #launch p { color: #8b98a5; font-size: 14px; max-width: 340px; line-height: 1.45; }
-  .opts {
-    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 8px 0 4px;
-  }
-  .opt {
-    display: flex; align-items: center; gap: 8px;
-    background: #1c1f23; border: 1px solid rgba(231,233,234,0.12);
-    border-radius: 12px; padding: 10px 14px; font-size: 13px; cursor: pointer;
-  }
-  .opt input { accent-color: #1d9bf0; }
-  .btn-open {
-    margin-top: 8px; border: 0; border-radius: 999px;
-    background: #1d9bf0; color: #fff; font: 600 15px system-ui;
-    padding: 12px 28px; cursor: pointer;
-  }
-  .btn-open:active { transform: scale(0.97); }
-  #result {
-    margin-top: 12px; font-size: 13px; color: #8b98a5; min-height: 1.4em;
-  }
-  #result strong { color: #e7e9ea; }
-
-  /* ═══ SpaceMR Camera UI — 1:1 (app.css #camCapture) ═══ */
-  #camCapture {
-    position: fixed; inset: 0; z-index: 9200;
-    background: #000;
-    display: flex; align-items: center; justify-content: center;
-    user-select: none; -webkit-user-select: none;
-  }
-  #camCapture[hidden] { display: none !important; }
-  #camCapture .cc-video {
-    width: 100%; height: 100%;
-    object-fit: cover; background: #000;
-  }
-  #camCapture .cc-video.mirror { transform: scaleX(-1); }
+  html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+  /* force visible for demo without real stream */
+  #camCapture { display: flex !important; }
   #camCapture .cc-mock {
     position: absolute; inset: 0;
     background:
       radial-gradient(ellipse at 30% 20%, rgba(29,155,240,0.25), transparent 50%),
       radial-gradient(ellipse at 70% 80%, rgba(120,80,200,0.2), transparent 45%),
       linear-gradient(160deg, #1a1f2e 0%, #0d1117 50%, #151a22 100%);
+    transition: filter 0.45s ease;
   }
+  #camCapture .cc-mock.front { filter: hue-rotate(38deg) brightness(1.05); }
   #camCapture .cc-mock-label {
     position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
-    text-align: center; color: rgba(255,255,255,0.55); font-size: 14px; line-height: 1.5;
+    text-align: center; color: rgba(255,255,255,0.45); font: 500 13px/1.5 system-ui;
     pointer-events: none; z-index: 1;
-  }
-  #camCapture .cc-top {
-    position: absolute; left: 0; right: 0;
-    top: 0; padding: max(12px, env(safe-area-inset-top, 0px)) 14px 0;
-    display: flex; align-items: center; gap: 10px;
-    z-index: 2;
-  }
-  #camCapture .cc-btn {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    border: 0; border-radius: 50%;
-    background: rgba(0,0,0,0.45);
-    color: #fff; cursor: pointer;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    transition: background .15s ease, transform .12s ease;
-  }
-  #camCapture .cc-btn:active { transform: scale(0.92); }
-  #camCapture .cc-btn:hover { background: rgba(0,0,0,0.6); }
-  #camCapture .cc-flash { margin-left: auto; }
-  #camCapture .cc-flash.on { color: #ffd60a; background: rgba(255,214,10,0.2); }
-  #camCapture .cc-flip { margin-left: 0; }
-  #camCapture .cc-flash[hidden] + .cc-flip { margin-left: auto; }
-  #camCapture .cc-modes {
-    position: absolute; left: 50%; bottom: max(110px, calc(env(safe-area-inset-bottom, 0px) + 100px));
-    transform: translateX(-50%);
-    display: flex; gap: 6px;
-    padding: 4px;
-    border-radius: 24px;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    z-index: 2;
-  }
-  #camCapture .cc-mode {
-    border: 0; background: transparent;
-    color: rgba(255,255,255,0.65);
-    font: 600 13px/1 system-ui, sans-serif;
-    padding: 8px 18px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background .15s ease, color .15s ease;
-  }
-  #camCapture .cc-mode.active {
-    background: #fff;
-    color: #0f1419;
-  }
-  #camCapture .cc-bottom {
-    position: absolute; left: 0; right: 0;
-    bottom: max(24px, env(safe-area-inset-bottom, 0px));
-    display: flex; justify-content: center; align-items: center;
-    z-index: 2;
-  }
-  #camCapture .cc-shutter {
-    width: 74px; height: 74px; padding: 0;
-    border: 3px solid #fff; border-radius: 50%;
-    background: transparent; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: border-color .15s ease, transform .1s ease;
-  }
-  #camCapture .cc-shutter-inner {
-    display: block; width: 60px; height: 60px;
-    border-radius: 50%; background: #fff;
-    transition: transform .12s ease, border-radius .15s ease, background .15s ease, width .15s ease, height .15s ease;
-  }
-  #camCapture .cc-shutter:active .cc-shutter-inner { transform: scale(0.88); }
-  #camCapture .cc-shutter.snap .cc-shutter-inner { transform: scale(0.82); }
-  #camCapture .cc-shutter.video-mode .cc-shutter-inner { background: #ff3b30; }
-  #camCapture .cc-shutter.video-mode.recording .cc-shutter-inner {
-    width: 28px; height: 28px; border-radius: 6px; background: #ff3b30;
-  }
-  #camCapture .cc-rec-timer {
-    position: absolute; top: max(64px, calc(env(safe-area-inset-top, 0px) + 52px));
-    left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 14px; border-radius: 20px;
-    background: rgba(0,0,0,0.55);
-    color: #fff; font: 600 14px/1 system-ui, sans-serif;
-    z-index: 2;
-  }
-  #camCapture .cc-rec-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #ff3b30;
-    animation: cc-blink 1s ease infinite;
-  }
-  @keyframes cc-blink { 50% { opacity: 0.25; } }
-  #camCapture .cc-hint {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    bottom: max(108px, calc(env(safe-area-inset-bottom, 0px) + 100px));
-    margin-bottom: 44px;
-    color: rgba(255,255,255,0.7);
-    font: 500 12px/1.3 system-ui, sans-serif;
-    text-align: center;
-    pointer-events: none;
-    z-index: 1;
-    white-space: nowrap;
-  }
-  #camCapture .cc-facing-badge {
-    position: absolute; top: max(64px, calc(env(safe-area-inset-top, 0px) + 52px));
-    right: 14px; z-index: 2;
-    font-size: 11px; color: rgba(255,255,255,0.7);
-    background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 12px;
   }
 </style>
 </head>
 <body>
-
-<div id="launch">
-  <h1>SpaceMR Camera UI</h1>
-  <p>Ilovadagi kamera interfeysi 1:1. Kamera bo‘lmasa ham UI ishlaydi (mock preview). Sozlamalar bilan switch / fonar ko‘rinishini sinang.</p>
-  <div class="opts">
-    <label class="opt"><input type="checkbox" id="optFront" checked> Old kamera</label>
-    <label class="opt"><input type="checkbox" id="optBack" checked> Orqa kamera</label>
-    <label class="opt"><input type="checkbox" id="optTorch" checked> Fonar</label>
-    <label class="opt"><input type="checkbox" id="optReal"> Haqiqiy kamera (agar bor)</label>
-  </div>
-  <button type="button" class="btn-open" id="btnOpen">Kamerani ochish</button>
-  <div id="result"></div>
-</div>
-
-<!-- 1:1 camera shell (SpaceMR) -->
-<div id="camCapture" hidden>
+<div id="camCapture">
   <div class="cc-mock" id="ccMock">
-    <div class="cc-mock-label">Kamera preview (demo)<br><small>SpaceMR mock fon</small></div>
+    <div class="cc-mock-label">Kamera preview<br><small>SpaceMR mock</small></div>
   </div>
   <video class="cc-video" id="ccVideo" autoplay muted playsinline hidden></video>
+  <img class="cc-preview-img" alt="" hidden>
+  <video class="cc-preview-vid" playsinline controls hidden></video>
   <div class="cc-top">
-    <button type="button" class="cc-btn cc-close" id="ccClose" aria-label="Yopish">
+    <button type="button" class="cc-btn cc-close" aria-label="Yopish">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <button type="button" class="cc-btn cc-flash" id="ccFlash" aria-label="Fonar">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v11h3v9l7-12h-4l4-8z"/><path d="M4 4l16 16"/></svg>
-    </button>
-    <button type="button" class="cc-btn cc-flip" id="ccFlip" aria-label="Kamerani almashtirish">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 21H3v-5"/><path d="M21 3l-7 7M3 21l7-7"/></svg>
-    </button>
+    <div class="cc-top-center">
+      <div class="cc-modes">
+        <button type="button" class="cc-mode active" data-mode="photo" aria-label="Foto">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-1.5-2h-7L7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        </button>
+        <button type="button" class="cc-mode" data-mode="video" aria-label="Video">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>
+        </button>
+      </div>
+      <div class="cc-rec-timer" hidden><span class="cc-rec-dot"></span><span class="cc-rec-time">0:00</span></div>
+    </div>
+    <div class="cc-top-right">
+      <button type="button" class="cc-btn cc-flip" id="ccFlip" aria-label="Kamerani almashtirish">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <g class="cc-flip-cam">
+            <path d="M4.5 8.2h2.2l1.1-1.6h6.4l1.1 1.6h2.2a1.4 1.4 0 0 1 1.4 1.4v7.2a1.4 1.4 0 0 1-1.4 1.4H4.5a1.4 1.4 0 0 1-1.4-1.4v-7.2a1.4 1.4 0 0 1 1.4-1.4z"/>
+            <circle cx="12" cy="12.6" r="2.7"/>
+          </g>
+          <g class="cc-flip-arrows">
+            <circle cx="18.6" cy="5.4" r="4.1" fill="currentColor" stroke="none" opacity="0.18"/>
+            <path d="M17.1 3.6a2.6 2.6 0 0 1 3.2 1.1" stroke-width="1.5"/>
+            <path d="M20.3 4.2l0.1 1.5 -1.5 -0.2" stroke-width="1.5"/>
+            <path d="M20.1 7.2a2.6 2.6 0 0 1-3.2-1.1" stroke-width="1.5"/>
+            <path d="M16.9 6.6l-0.1-1.5 1.5 0.2" stroke-width="1.5"/>
+          </g>
+        </svg>
+      </button>
+      <button type="button" class="cc-btn cc-flash" id="ccFlash" aria-label="Fonar">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v11h3v9l7-12h-4l4-8z"/><path d="M4 4l16 16"/></svg>
+      </button>
+    </div>
   </div>
-  <div class="cc-facing-badge" id="ccFacing">orqa</div>
-  <div class="cc-rec-timer" id="ccTimer" hidden>
-    <span class="cc-rec-dot"></span><span id="ccTimeTxt">0:00</span>
-  </div>
-  <div class="cc-modes">
-    <button type="button" class="cc-mode active" data-mode="photo">Foto</button>
-    <button type="button" class="cc-mode" data-mode="video">Video</button>
-  </div>
-  <div class="cc-hint" id="ccHint">Suratga olish</div>
   <div class="cc-bottom">
-    <button type="button" class="cc-shutter" id="ccShutter" aria-label="Surat / yozish">
-      <span class="cc-shutter-inner"></span>
-    </button>
+    <button type="button" class="cc-shutter" id="ccShutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
+    <div class="cc-review" hidden>
+      <button type="button" class="cc-btn cc-retake" aria-label="Qayta olish">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <button type="button" class="cc-btn cc-send" aria-label="Yuborish">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3.4 20.6L21 12 3.4 3.4l.1 6.8L15 12 3.5 13.8z"/></svg>
+      </button>
+    </div>
   </div>
 </div>
-
 <script>
-const SVG_FLASH_OFF = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v11h3v9l7-12h-4l4-8z"/><path d="M4 4l16 16"/></svg>';
-const SVG_FLASH_ON  = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>';
-
-const $ = id => document.getElementById(id);
-const cam = $('camCapture');
-const video = $('ccVideo');
-const mock = $('ccMock');
-const shutter = $('ccShutter');
-const hint = $('ccHint');
-const timerEl = $('ccTimer');
-const timeTxt = $('ccTimeTxt');
-const flashBtn = $('ccFlash');
-const flipBtn = $('ccFlip');
-const facingBadge = $('ccFacing');
-const result = $('result');
-
+const flip = document.getElementById('ccFlip');
+const mock = document.getElementById('ccMock');
+const modes = document.querySelector('.cc-modes');
+const shutter = document.getElementById('ccShutter');
+let front = false;
 let mode = 'photo';
-let facing = 'environment'; // orqa default (agar bor)
-let torchOn = false;
-let recording = false;
-let recTimer = null;
-let recStarted = 0;
-let stream = null;
-let useReal = false;
 
-function opts() {
-  return {
-    front: $('optFront').checked,
-    back: $('optBack').checked,
-    torch: $('optTorch').checked,
-    real: $('optReal').checked,
-  };
+function doFlip() {
+  flip.classList.remove('cc-flip-anim');
+  void flip.offsetWidth;
+  flip.classList.add('cc-flip-anim');
+  setTimeout(() => flip.classList.remove('cc-flip-anim'), 520);
+  front = !front;
+  mock.classList.toggle('front', front);
 }
+flip.addEventListener('click', doFlip);
 
-function applyDeviceUi() {
-  const o = opts();
-  // Switch faqat ikkalasi bor bo'lsa
-  flipBtn.hidden = !(o.front && o.back);
-  // Fonar faqat torch opsiyasi (demo) yoki haqiqiy track
-  flashBtn.hidden = !o.torch;
-  // Default facing: orqa bor → orqa, aks holda old
-  if (o.back && !o.front) facing = 'environment';
-  else if (o.front && !o.back) facing = 'user';
-  else if (!o.front && !o.back) facing = 'user';
-  updateFacingUi();
-}
-
-function updateFacingUi() {
-  facingBadge.textContent = facing === 'user' ? 'old (front)' : 'orqa (back)';
-  video.classList.toggle('mirror', facing === 'user');
-  mock.style.filter = facing === 'user' ? 'hue-rotate(40deg)' : 'none';
-}
-
-function syncModeUi() {
-  document.querySelectorAll('.cc-mode').forEach(b => {
-    b.classList.toggle('active', b.dataset.mode === mode);
-  });
-  shutter.classList.toggle('video-mode', mode === 'video');
-  shutter.classList.toggle('recording', recording);
-  hint.textContent = mode === 'video'
-    ? (recording ? 'Yozilmoqda… (max 1 daqiqa)' : 'Bosib video yozing · max 1 daq / 30 MB')
-    : 'Suratga olish';
-}
-
-function syncFlashUi() {
-  flashBtn.innerHTML = torchOn ? SVG_FLASH_ON : SVG_FLASH_OFF;
-  flashBtn.classList.toggle('on', torchOn);
-}
-
-async function tryRealCamera() {
-  if (!opts().real || !navigator.mediaDevices?.getUserMedia) return false;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: mode === 'video',
-    });
-    video.srcObject = stream;
-    video.hidden = false;
-    mock.hidden = true;
-    await video.play().catch(() => {});
-    useReal = true;
-    return true;
-  } catch (e) {
-    console.warn(e);
-    result.innerHTML = 'Haqiqiy kamera ochilmadi — <strong>mock</strong> rejimda.';
-    return false;
-  }
-}
-
-function stopReal() {
-  try { stream?.getTracks().forEach(t => t.stop()); } catch (_) {}
-  stream = null;
-  video.srcObject = null;
-  video.hidden = true;
-  mock.hidden = false;
-  useReal = false;
-}
-
-async function openCam() {
-  applyDeviceUi();
-  mode = 'photo';
-  recording = false;
-  torchOn = false;
-  syncModeUi();
-  syncFlashUi();
-  cam.hidden = false;
-  const ok = await tryRealCamera();
-  if (!ok) {
-    video.hidden = true;
-    mock.hidden = false;
-    result.textContent = '';
-  }
-}
-
-function closeCam(msg) {
-  if (recTimer) { clearInterval(recTimer); recTimer = null; }
-  recording = false;
-  stopReal();
-  cam.hidden = true;
-  if (msg) result.innerHTML = msg;
-}
-
-$('btnOpen').onclick = () => openCam();
-$('ccClose').onclick = () => closeCam('Yopildi — bekor qilindi');
-
-$('ccFlip').onclick = async () => {
-  if (recording) return;
-  const o = opts();
-  if (!(o.front && o.back)) return;
-  facing = facing === 'user' ? 'environment' : 'user';
-  updateFacingUi();
-  if (useReal) {
-    stopReal();
-    await tryRealCamera();
-  }
-};
-
-$('ccFlash').onclick = () => {
-  if (flashBtn.hidden) return;
-  torchOn = !torchOn;
-  syncFlashUi();
-  // demo: mock fon yorug'ligi
-  mock.style.opacity = torchOn ? '1' : '1';
-  mock.style.filter = (torchOn ? 'brightness(1.35) ' : '') + (facing === 'user' ? 'hue-rotate(40deg)' : '');
-};
-
-document.querySelector('.cc-modes').onclick = e => {
+modes.addEventListener('click', e => {
   const b = e.target.closest('.cc-mode');
-  if (!b || recording) return;
+  if (!b) return;
   mode = b.dataset.mode;
-  syncModeUi();
-};
-
-$('ccShutter').onclick = () => {
-  if (mode === 'photo') {
-    shutter.classList.add('snap');
-    setTimeout(() => shutter.classList.remove('snap'), 180);
-    // flash effect
-    const flash = document.createElement('div');
-    flash.style.cssText = 'position:fixed;inset:0;background:#fff;opacity:0.7;z-index:9300;pointer-events:none;transition:opacity .25s';';
-    document.body.appendChild(flash);
-    requestAnimationFrame(() => { flash.style.opacity = '0'; });
-    setTimeout(() => flash.remove(), 280);
-    closeCam('✅ <strong>Foto</strong> olindi (demo) · max 1920px JPEG');
-    return;
-  }
-  // video
-  if (!recording) {
-    recording = true;
-    recStarted = Date.now();
-    timerEl.hidden = false;
-    timeTxt.textContent = '0:00';
-    syncModeUi();
-    recTimer = setInterval(() => {
-      const ms = Date.now() - recStarted;
-      const s = Math.floor(ms / 1000);
-      timeTxt.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-      // demo: 15s da to'xtatamiz (haqiqiy appda 60s)
-      if (s >= 15) {
-        clearInterval(recTimer); recTimer = null;
-        recording = false;
-        timerEl.hidden = true;
-        syncModeUi();
-        closeCam('✅ <strong>Video</strong> yozildi (demo 15s) · appda max 60s / 30 MB');\n      }
-    }, 200);
-  } else {
-    clearInterval(recTimer); recTimer = null;
-    recording = false;
-    timerEl.hidden = true;
-    syncModeUi();
-    const sec = Math.floor((Date.now() - recStarted) / 1000);
-    closeCam('✅ <strong>Video</strong> to‘xtatildi · ' + sec + 's (demo)');
-  }
-};
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && !cam.hidden) closeCam('Esc — yopildi');
+  modes.querySelectorAll('.cc-mode').forEach(x => x.classList.toggle('active', x === b));
+  shutter.classList.toggle('video-mode', mode === 'video');
 });
 
-// live update opts while open
-['optFront','optBack','optTorch'].forEach(id => {
-  $(id).addEventListener('change', () => { if (!cam.hidden) applyDeviceUi(); });
-});
+// auto sequence for recording: flips every ~1.6s
+const delays = [800, 1600, 1600, 1600, 1600, 1800, 1800];
+let i = 0;
+function tick() {
+  if (i >= delays.length) return;
+  setTimeout(() => { doFlip(); i++; tick(); }, delays[i]);
+}
+setTimeout(tick, 600);
 </script>
 </body>
 </html>

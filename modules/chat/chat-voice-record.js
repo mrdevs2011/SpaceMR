@@ -38,11 +38,17 @@ let _pulseLevel        = 0;
 let _voiceStopRequested = false;
 
 /* ── Rolik (dumaloq video xabar) rejimi ────────────────────────────────────
- * Tugmaga qisqa bosish: mikrofon ⇄ rolik ikonka almashadi (tanlov eslab qolinadi).
- * Rolik rejimida BOSIB TURISH = ovozli xabar bilan bir xil (pastdagi yozuv paneli, chapga surish = bekor),
- * ekran o'rtasida esa dumaloq kamera ko'rinadi. Qo'yib yuborilganda fayl sifatida (vnote_<ts>_<sek>.webm) ketadi. */
+ * Logika SpaceMR camera (camera-capture.js) bilan bir xil:
+ *   max 60s, max 30 MB, xuddi shu mime/bitrate, timeslice 250ms.
+ * Farqi faqat UI: dumaloq preview + past o'ng (chatVoiceBtn) bosib turish.
+ * Qisqa bosish: mikrofon ⇄ rolik. Bosib turish = yozish; qo'yib yuborish = yuborish;
+ * chapga surish = bekor. 60s da avto-to'xtaydi. */
 const _MODE_KEY = 'mrspace_rec_mode';
-const VID_MAX_SEC = 60;
+/* SpaceMR camera bilan bir xil cheklovlar (faqat UI dumaloq + past o'ng tugma) */
+const VID_MAX_SEC = 60;                 // 1 daqiqa — camera MAX_VIDEO_MS
+const VID_MAX_BYTES = 30 * 1024 * 1024; // 30 MB — camera MAX_VIDEO_BYTES
+const VID_BITRATE = 2_500_000;
+const VID_AUDIO_BITRATE = 128000;
 let _recMode = 'audio';
 try { if (localStorage.getItem(_MODE_KEY) === 'video') _recMode = 'video'; } catch (_) {}
 /* Qurilmalar: sayt mikrofon/kamera borligini o'zi biladi (ulanganda/uzilganda ham — 'devicechange') */
@@ -138,11 +144,30 @@ async function startVideoRecording() {
       if (!_voiceCancelled && !_voiceStopRequested) toast('Video yozilmadi — tugmani bosib turing');
       return;
     }
-    const cands = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+    const cands = [
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm',
+      'video/mp4',
+    ];
     const mime = cands.find(m => MediaRecorder.isTypeSupported?.(m)) || '';
-    const opts = { videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 };
+    const opts = { videoBitsPerSecond: VID_BITRATE, audioBitsPerSecond: VID_AUDIO_BITRATE };
     if (mime) opts.mimeType = mime;
-    _vidRec = new MediaRecorder(stream, opts);
+    try {
+      _vidRec = mime
+        ? new MediaRecorder(stream, opts)
+        : new MediaRecorder(stream, { videoBitsPerSecond: VID_BITRATE, audioBitsPerSecond: VID_AUDIO_BITRATE });
+    } catch (_)
+    {
+      try { _vidRec = new MediaRecorder(stream); }
+      catch (e2) {
+        stream.getTracks().forEach(t => t.stop());
+        _vidStream = null;
+        _abortVoiceUi();
+        toast("Video yozib bo'lmadi", "error");
+        return;
+      }
+    }
     _vidRec.ondataavailable = e => { if (e.data && e.data.size > 0) _vidChunks.push(e.data); };
     _vidRec.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
@@ -151,16 +176,28 @@ async function startVideoRecording() {
       if (!_vidChunks.length) return;
       const type = String(_vidRec?.mimeType || mime || 'video/webm').split(';')[0];
       const ext = type.includes('mp4') ? 'mp4' : 'webm';
-      const file = new File(_vidChunks, videoNoteFileName(sec, ext), { type });
+      const blob = new Blob(_vidChunks, { type });
       _vidChunks = [];
+      if (blob.size > VID_MAX_BYTES) {
+        toast('Video 30 MB dan oshdi — qisqaroq yozing', 'error');
+        return;
+      }
+      if (blob.size < 1000) {
+        toast('Video juda qisqa', 'error');
+        return;
+      }
+      const file = new File([blob], videoNoteFileName(sec, ext), { type });
       if (typeof _onVideoRecorded === 'function') _onVideoRecorded(file, sec);
     };
     _vidStartTs = performance.now();
-    _vidRec.start(1000);
+    _vidRec.start(250);
     _showVidPreview(stream);
     _startPulse(stream);
     clearTimeout(_vidAutoStop);
-    _vidAutoStop = setTimeout(() => { if (_isHoldingVoice) _finishHoldRef?.(); }, VID_MAX_SEC * 1000);
+    // 1 daqiqa — kamera bilan bir xil avto-to'xtash
+    _vidAutoStop = setTimeout(() => {
+      if (_isHoldingVoice || _vidActive) _finishHoldRef?.();
+    }, VID_MAX_SEC * 1000);
   } catch (err) {
     console.error('Kamera xatosi:', err);
     _abortVoiceUi();
