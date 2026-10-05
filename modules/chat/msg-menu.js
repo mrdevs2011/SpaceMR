@@ -8,7 +8,7 @@ import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
-import { reactInit, reactStripHtml, reactPickerHtml, reactBindPicker, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
+import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -296,27 +296,39 @@ function morphMenu(change) {
   morphMenu._t = setTimeout(() => { menu.style.height = ''; menu.style.transition = ''; menu.style.overflow = ''; menu.style.boxSizing = ''; }, 300);
 }
 
-/** Chevron: menyu ichida tanlangan reaksiya emojilari paneli (menyu bandlari yopiladi), qayta bosilsa — orqaga */
-async function toggleReactPanel() {
+/** Reaksiya qatorining emojilarini (FLIP) silliq ko'chiradi: change() qatorni chiziqdan to'rga (yoki aksincha) o'zgartiradi.
+ *  Har bir emoji eski joyidan yangisiga uchib o'tadi — chiziq "pastga to'kiladi" / qayta "yig'iladi". */
+function flipReacts(change) {
+  const btns = [...menu.querySelectorAll('.mc-r-scroll .mc-r')];
+  const first = btns.map(b => b.getBoundingClientRect());
+  change();
+  const last = btns.map(b => b.getBoundingClientRect());
+  btns.forEach((b, i) => {
+    const dx = first[i].left - last[i].left, dy = first[i].top - last[i].top;
+    b.style.transition = 'none';
+    b.style.transform = (dx || dy) ? `translate(${dx}px, ${dy}px)` : '';
+  });
+  void menu.offsetWidth;
+  btns.forEach((b, i) => {
+    b.style.transition = `transform .38s cubic-bezier(.2, .8, .2, 1) ${Math.min(i, 20) * 12}ms`;
+    b.style.transform = '';
+  });
+  clearTimeout(flipReacts._t);
+  flipReacts._t = setTimeout(() => btns.forEach(b => { b.style.transition = ''; b.style.transform = ''; }), 700);
+}
+
+/** Chevron: reaksiya qatori pastga ochiladi (emojilar silliq tushadi, menyu bandlari yashiriladi); qayta bosilsa — emojilar chiziqqa yig'iladi */
+function toggleReactPanel() {
   if (!menu || !openId) return;
   const more = menu.querySelector('[data-rmore]');
-  if (menu.classList.contains('mc-expanded')) {
-    morphMenu(() => {
-      menu.classList.remove('mc-expanded');
-      menu.querySelector('.mr-pick')?.remove();
-    });
-    more?.setAttribute('aria-expanded', 'false');
-    return;
-  }
-  const id = openId;
-  const html = await reactPickerHtml();
-  if (openId !== id || !menu.classList.contains('show')) return;
-  morphMenu(() => {
-    menu.insertAdjacentHTML('beforeend', html);
-    menu.classList.add('mc-expanded');
-  });
-  more?.setAttribute('aria-expanded', 'true');
-  reactBindPicker(menu);
+  const open = !menu.classList.contains('mc-expanded');
+  morphMenu(() => flipReacts(() => {
+    menu.classList.toggle('mc-expanded', open);
+    const items = menu.querySelector('.mc-items');
+    if (items && !open) { items.classList.add('mc-items-in'); setTimeout(() => items.classList.remove('mc-items-in'), 400); }
+    if (open) menu.querySelector('.mc-r-scroll')?.scrollTo?.({ left: 0, behavior: 'instant' });
+  }));
+  more?.setAttribute('aria-expanded', String(open));
 }
 
 function closeMenu() {

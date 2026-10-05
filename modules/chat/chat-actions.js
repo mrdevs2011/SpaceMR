@@ -8,6 +8,7 @@ import { inboxSend } from '../core/rt-bus.js';
 import { sendGroupMessage, sendGroupVoice, sendGroupFile } from './groups.js';
 import { commitEdit, isEditing } from './msg-menu.js';
 import { rateOk } from '../core/rate-limit.js';
+import { fileMsgPreview } from './components/video-note.js';
 import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
 
 export async function sendChatMessage() {
@@ -225,7 +226,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
       text: caption || null,
     });
     if (error) throw error;
-    const previewText = caption ? ('📎 ' + caption) : (/^vnote_/i.test(file.name || '') ? '🎥 Video xabar' : ('📎 ' + (file.name || 'Fayl')));
+    const previewText = fileMsgPreview({ caption, fileName: file.name });
     // Tezkor yo'l: peer darhol ko'rsin
     if (chatState._rt && chatState._rtChatId === chatId) {
       chatState._rt.send({

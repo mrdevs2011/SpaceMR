@@ -6844,7 +6844,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 @media (pointer: coarse) { #msgCtx .mc-item { padding: 12px 14px; } }
 
 /* ═══ Reaksiyalar (modules/chat/msg-reactions.js) ═══ */
-#msgCtx { min-width: 296px; }
+#msgCtx { width: 296px; min-width: 296px; }   /* aniq kenglik: reaksiya qatori (overflow-x) max-content ni kattalashtirib menyuni 100% qilib yubormasin */
 #msgCtx .mc-react { display: flex; align-items: center; gap: 2px; padding: 2px 2px 6px; }
 #msgCtx .mc-r-scroll { flex: 1 1 auto; min-width: 0; display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); }
 #msgCtx .mc-r-scroll::-webkit-scrollbar { display: none; }
@@ -6858,15 +6858,14 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgCtx.mc-expanded .mc-r-more svg { transform: rotate(180deg); }
 #msgCtx .mc-react + .mc-items { padding-top: 6px; border-top: 1px solid var(--pal-gray-700); }
 #msgCtx.mc-expanded .mc-items { display: none; }
-#msgCtx .mr-pick { display: none; }
-#msgCtx.mc-expanded .mr-pick { display: block; padding-top: 6px; border-top: 1px solid var(--pal-gray-700); }
-@keyframes mrPickIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-@keyframes mrEmoIn { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
-#msgCtx.mc-expanded .mr-pick { animation: mrPickIn .24s ease; }
-#msgCtx.mc-expanded .mr-grid .mc-r { animation: mrEmoIn .26s cubic-bezier(.34, 1.56, .64, 1) backwards; }
-#msgCtx.mc-expanded .mr-grid .mc-r:nth-child(-n+24) { animation-delay: calc(var(--n, 0) * 12ms); }
-#msgCtx .mr-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
-#msgCtx .mr-grid .mc-r { flex: none; }
+/* Chevron bosilganda qator pastga ochiladi: emojilar 7 ustunli to'rga tushadi (chevron birinchi qatorning oxirgi katagida) — JS: flipReacts() silliq ko'chiradi */
+#msgCtx.mc-expanded .mc-react { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px 2px; align-items: center; justify-items: center; padding: 4px 2px 6px; max-height: min(320px, 60vh); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#msgCtx.mc-expanded .mc-react::-webkit-scrollbar { display: none; }
+#msgCtx.mc-expanded .mc-r-scroll { display: contents; }
+#msgCtx.mc-expanded .mc-r-scroll .mc-r { flex: none; width: 100%; min-width: 0; }
+#msgCtx.mc-expanded .mc-r-more { grid-column: 7; grid-row: 1; margin: 0; }
+@keyframes mcItemsIn { from { opacity: 0; } to { opacity: 1; } }
+#msgCtx .mc-items.mc-items-in { animation: mcItemsIn .24s ease .1s backwards; }
 
 /* Hover: xabar chetidagi tezkor reaksiya + ochiladigan vertikal ro'yxat (faqat hover:hover qurilmalar) */
 #msgHoverReact { overflow: visible; position: fixed; z-index: 590; display: none; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 1px solid rgba(231, 233, 234, 0.14); background: #15181c; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); font-size: 16px; line-height: 28px; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -14288,8 +14287,8 @@ select.field option { background: #000000; color: var(--text); }
 .cfm-cap-dm .cfm-caption p { margin: 0; }
 #chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }
 #chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-bottom-left-radius: 5px; }
-
-
+/* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
+   Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */
 .chat-voice-btn .icon-vnote { display: none; width: 24px; height: 24px; fill: none !important; stroke: var(--text) !important; }
 .chat-voice-btn.mode-video:not(.is-send) .icon-vnote { display: block; }
@@ -14313,3 +14312,20 @@ select.field option { background: #000000; color: var(--text); }
 /* Vaqt dumaloqdan tashqarida, pastda: o'zimniki — o'ngda, boshqaniki — chapda */
 .cfm-note-badge { position: static; align-self: flex-start; margin: 4px 0 0 !important; }
 .chat-msg.mine .cfm-note-badge { align-self: flex-end; }
+/* Guruhda ham rolik chatdagi bilan bir xil: yuboruvchi ismi kartochkasiz, dumaloq tepasida oddiy qator */
+.chat-bubble.bubble-vnote .grp-sender-name { padding: 0 6px 4px; background: none; border-radius: 0; }
+/* chat-attach.css — skrepka menyusi (Kamera / Fayl / Media) va kamera oynasi. DM va guruh uchun bitta. JS: modules/chat/attach-menu.js, camera-capture.js */
+.attach-menu { position: fixed; z-index: 9100; min-width: 180px; padding: 6px; background: var(--pal-gray-900); border: 1px solid var(--line, rgba(231, 233, 234, 0.16)); border-radius: 14px; }
+.attach-menu .am-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 10px; background: none; color: var(--pal-white); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+.attach-menu .am-item:hover, .attach-menu .am-item:focus-visible { background: var(--pal-gray-800); outline: none; }
+.attach-menu .am-item svg { flex-shrink: 0; }
+
+#camCapture { position: fixed; inset: 0; z-index: 9200; background: #000; display: flex; align-items: center; justify-content: center; }
+#camCapture .cc-video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+#camCapture .cc-video.mirror { transform: scaleX(-1); }
+#camCapture .cc-btn { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer; }
+#camCapture .cc-close { left: 14px; }
+#camCapture .cc-flip { right: 14px; }
+#camCapture .cc-shutter { position: absolute; left: 50%; bottom: max(28px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: 70px; height: 70px; padding: 0; border: 4px solid #fff; border-radius: 50%; background: none; cursor: pointer; }
+#camCapture .cc-shutter span { display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; }
+#camCapture .cc-shutter:active span { transform: scale(0.88); }

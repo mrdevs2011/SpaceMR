@@ -645,6 +645,8 @@ import {
   getChatDeletedAt,
 } from './chat-storage.js';
 import { initChatVoiceRecording, forceStopVoiceRecording, canRecordMedia } from './chat-voice-record.js';
+import { fileMsgPreview } from './components/video-note.js';
+import { initAttachMenu } from './attach-menu.js';
 import {
   initVoicePlayer,
   fmtVoiceDur,
@@ -2481,7 +2483,7 @@ initMsgMenu({
       // DM: chatlar ro'yxatidagi oxirgi xabar prevyusi ham o'chirilgan xabarda qolmasin
       const cm = chatState._latestChatMap?.[state.currentChatUid], last = next[next.length - 1];
       if (cm) {
-        cm.lastMessage = last ? (last.type === 'voice' ? 'Ovozli xabar' : last.type === 'file' ? (last.text || (/^vnote_/i.test(last.fileName || '') ? 'Video xabar' : last.fileName) || 'Fayl') : (last.text || '')).slice(0, 120) : '';
+        cm.lastMessage = last ? (last.type === 'voice' ? 'Ovozli xabar' : last.type === 'file' ? fileMsgPreview({ caption: last.text, fileName: last.fileName, icons: false }) : (last.text || '')).slice(0, 120) : '';
         cm.lastSenderId = last ? last.senderId : null;
       }
     }
@@ -2588,9 +2590,12 @@ initKeyboardAdaptation();
 
 
 // File attach
-$('chatAttachBtn')?.addEventListener('click', () => {
-  if ($('chatVoiceBtn')?.classList.contains('recording') || $('chatThreadInputRow')?.classList.contains('recording')) return;
-  $('chatFileInput')?.click();
+/* Skrepka: menyu (Kamera / Fayl / Media) — modules/chat/attach-menu.js; DM va guruh uchun bitta */
+initAttachMenu({
+  btn: $('chatAttachBtn'),
+  fileInput: $('chatFileInput'),
+  isBusy: () => !!($('chatVoiceBtn')?.classList.contains('recording') || $('chatThreadInputRow')?.classList.contains('recording')),
+  onPick: f => { setChatFile(f); $('chatThreadInput')?.focus({ preventScroll: true }); },
 });
 $('chatFileInput')?.addEventListener('change', e => {
   const f = e.target.files?.[0];

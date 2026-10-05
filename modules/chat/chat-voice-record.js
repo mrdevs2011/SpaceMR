@@ -3,6 +3,8 @@
  * chat.js dan ehtiyotkor ajratilgan. Playback/waveform chat.js da qoladi.
  */
 import { $ } from '../core/utils.js';
+import { videoNoteFileName } from './components/video-note.js';
+import { mediaErrorKind } from './camera-access.js';
 import { toast } from '../ui/toast.js';
 
 let _onVoiceRecorded = null;
@@ -125,7 +127,7 @@ async function startVideoRecording() {
   _vidChunks = [];
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
+      audio: _hasMic,   // mikrofon bo'lmasa ham rolik (ovozsiz) olinaveradi
       video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 }, aspectRatio: { ideal: 1 }, frameRate: { ideal: 30 } },
     });
     _vidStream = stream;
@@ -149,7 +151,7 @@ async function startVideoRecording() {
       if (!_vidChunks.length) return;
       const type = String(_vidRec?.mimeType || mime || 'video/webm').split(';')[0];
       const ext = type.includes('mp4') ? 'mp4' : 'webm';
-      const file = new File(_vidChunks, `vnote_${Date.now()}_${sec}.${ext}`, { type });
+      const file = new File(_vidChunks, videoNoteFileName(sec, ext), { type });
       _vidChunks = [];
       if (typeof _onVideoRecorded === 'function') _onVideoRecorded(file, sec);
     };
@@ -402,17 +404,7 @@ async function _requestMicStream() {
   return navigator.mediaDevices.getUserMedia({ audio: true });
 }
 
-function _micErrorKind(err) {
-  const name = err?.name || '';
-  const msg = (err?.message || '').toLowerCase();
-  if (name === 'NotFoundError' || name === 'DevicesNotFoundError' || msg.includes('not found') || msg.includes('no device'))
-    return 'notfound';
-  if (name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError')
-    return 'denied';
-  if (name === 'NotReadableError' || name === 'TrackStartError' || msg.includes('in use') || msg.includes('busy'))
-    return 'busy';
-  return 'other';
-}
+function _micErrorKind(err) { return mediaErrorKind(err); }   // umumiy: camera-access.js
 
 function _abortVoiceUi() {
   cancelVideoRecording();

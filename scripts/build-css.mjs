@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-/* build-css.mjs — CSS/*.css (6 fayl) ni bitta app.css ga yig'adi. Kutubxonasiz concat.
-   Kaskad tartibi MUHIM (oxirgi fayl g'olib): tokens → base → features → layers → admin → mono-x.
+/* build-css.mjs — CSS/*.css (8 fayl) ni bitta app.css ga yig'adi. Kutubxonasiz concat.
+   Kaskad tartibi MUHIM (oxirgi fayl g'olib): tokens → base → features → layers → admin → mono-x → video-note → chat-attach.
    Ishlatish: node scripts/build-css.mjs  (yoki: npm run build). app.css qo'lda tahrirlanmaydi. */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['tokens', 'base', 'features', 'layers', 'admin', 'mono-x'].map(n => `CSS/${n}.css`);
+const FILES = ['tokens', 'base', 'features', 'layers', 'admin', 'mono-x', 'video-note', 'chat-attach'].map(n => `CSS/${n}.css`);
 
 const parts = ['/* SpaceMR app.css — build-css.mjs orqali avtomatik yig\'ilgan. Qo\'lda tahrirlamang! */'];
 for (const f of FILES) parts.push(readFileSync(join(ROOT, f), 'utf8').trim());

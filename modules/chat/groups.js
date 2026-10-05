@@ -27,6 +27,7 @@ import { rateOk }                                   from '../core/rate-limit.js'
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { registerLocalVoiceUrl, voiceBarCount } from './chat-voice-player.js';
 import { openRtGroup }                              from './rt-chat.js';
+import { fileMsgPreview }                           from './components/video-note.js';
 import { busOn, groupJoin, groupInboxSend, isUidOnline } from '../core/rt-bus.js';
 import {
   _toDateSafe, _isSameDay, _dateSepLabel,
@@ -738,7 +739,7 @@ export async function sendGroupFile(file, caption = '') {
       text: captionText || null,
     });
     if (error) throw error;
-    const previewText = captionText ? ('📎 ' + captionText) : (/^vnote_/i.test(file.name || '') ? '🎥 Video xabar' : ('📎 ' + (file.name || 'Fayl')));
+    const previewText = fileMsgPreview({ caption: captionText, fileName: file.name });
     _gRt?.send({
       id, type: 'file', text: captionText || null,
       mediaPath: result.path, mediaType: file.type || null,

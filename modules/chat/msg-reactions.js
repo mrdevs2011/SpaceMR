@@ -193,15 +193,6 @@ export function reactStripHtml(m) {
   return `<div class="mc-react"><div class="mc-r-scroll">${REACTS.map(e => `<button type="button" class="mc-r${mine === e ? ' on' : ''}" data-r="${e}" aria-label="${e}">${e}</button>`).join('')}</div><button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
 }
 
-const btn = e => `<button type="button" class="mc-r" data-r="${e}">${e}</button>`;
-
-/** Kengaytirilgan panel: faqat tanlangan reaksiya emojilari (qidiruv ham, bo'lim sarlavhalari ham yo'q) */
-export async function reactPickerHtml() {
-  return `<div class="mr-pick"><div class="mr-grid">${REACTS.map((e, i) => `<button type="button" class="mc-r" data-r="${e}" style="--n:${i}">${e}</button>`).join('')}</div></div>`;
-}
-
-export function reactBindPicker() {}
-
 /* ── Hover (faqat sichqonchali qurilma): xabar chetida bitta tezkor reaksiya; ustiga borilsa — vertikal scrollli ro'yxat (10 ta) ── */
 export const HOVER_SET = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😮', '😢', '🎉'];
 const QK = 'spacemr_react_quick';

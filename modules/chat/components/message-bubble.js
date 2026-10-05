@@ -1,6 +1,7 @@
 import './chat-image-zoom.js';
 import { esc } from '../../core/utils.js';
 import { getChatFileIcon, callLogInfo, fmtCallDur } from '../chat-shared.js';
+import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
 
 /* Rasm nisbatini eslab qolish: qayta chizilganda (innerHTML) rasm yuklanmasdan oldin ham
    joyi band bo'lsin — chat sakramasin. Birinchi marta ko'rilganda nisbat noma'lum. */
@@ -24,8 +25,6 @@ export function rememberImgRatio(img) {
 }
 /* ── Video preview: birinchi kadr + play tugmasi + davomiylik; bosilsa shu yerning o'zida ijro bo'ladi ── */
 const VID_EXT = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
-const PLAY_SVG = '<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.55)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>';
-const fmtDur = t => { t = Math.max(0, Math.round(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
 window._chatVidMeta = function (v) {
   try {
     rememberImgRatio({ getAttribute: () => v.getAttribute('src').split('#')[0], naturalWidth: v.videoWidth, naturalHeight: v.videoHeight });
@@ -116,22 +115,12 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       </div>${hasCaption ? `<div class="cfm-cap-dm">${captionHtml}</div>` : ''}`;
   };
 
-  const _isNote = _isVideo && /^vnote_/i.test(String(m.fileName || ''));
+  const _isNote = _isVideo && isVideoNote(m.fileName);
   if (_isNote) {
-    /* Rolik (dumaloq video xabar): vnote_<ts>_<sek>.webm */
-    const _nd = /^vnote_\d+_(\d+)\./i.exec(String(m.fileName || ''));
+    /* Rolik: DM va guruh uchun bitta umumiy chizuvchi — components/video-note.js */
     bubbleClassExtra = ' bubble-media-only bubble-vnote';
     metaOutside = false;
-    bubbleContent = `<div class="cfm-note-wrap"${_ttl}>
-        <div class="cfm-note">
-          <video class="cfm-note-vid" src="${esc(safeUrl)}#t=0.1" preload="metadata" playsinline disablepictureinpicture></video>
-          <button type="button" class="cfm-note-play" aria-label="Ijro etish">${PLAY_SVG}</button>
-        </div>
-        <span class="chat-msg-meta cfm-media-badge cfm-note-badge">
-          ${_nd ? `<span class="chat-msg-time">${fmtDur(+_nd[1])}</span><span aria-hidden="true">·</span>` : ''}<span class="chat-msg-time">${time}</span>
-          ${mine ? renderTicks(m.status) : ''}
-        </span>
-      </div>`;
+    bubbleContent = renderVideoNote({ url: safeUrl, fileName: m.fileName, time, ticks: mine ? renderTicks(m.status) : '', ttl: _ttl });
   } else if (_isVideo) {
     const vid = `<div class="cfm-vid-box"${_ttl}>
         <video class="cfm-vid" src="${esc(safeUrl)}#t=0.1" preload="metadata" playsinline disablepictureinpicture${imgRatioAttr(safeUrl.split('#')[0])} onloadedmetadata="window._chatVidMeta&&window._chatVidMeta(this)"></video>
