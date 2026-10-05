@@ -1865,8 +1865,8 @@ function _replyQuoteHtml(m, msgs, grp) {
     const orig = (msgs || []).find(x => x.id === rid);
     if (orig) {
       name = name || (orig.senderId === state.me?.uid ? 'Siz' : (grp?.names?.[orig.senderId]?.fullName || $('chatThreadName')?.textContent || 'Foydalanuvchi'));
-      if (orig.type === 'voice') preview = preview || '🎤 Ovozli xabar';
-      else if (orig.type === 'file') preview = preview || ('📎 ' + (orig.fileName || 'Fayl'));
+      if (orig.type === 'voice') preview = preview || 'Ovozli xabar';
+      else if (orig.type === 'file') preview = preview || (orig.fileName || 'Fayl');
       else preview = preview || (orig.text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
       rtype = rtype || orig.type;
     } else {

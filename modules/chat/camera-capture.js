@@ -21,6 +21,8 @@ const SVG = {
   flip: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 21H3v-5"/><path d="M21 3l-7 7M3 21l7-7"/></svg>',
   flashOn: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>',
   flashOff: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v11h3v9l7-12h-4l4-8z"/><path d="M4 4l16 16"/></svg>',
+  photo: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-3l-1.5-2h-7L7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  video: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>',
 };
 
 function _constraints(deviceId, facing, withAudio) {
@@ -154,14 +156,13 @@ export async function openCameraCapture(options = {}) {
         ${canSwitch ? `<button type="button" class="cc-btn cc-flip" aria-label="Kamerani almashtirish">${SVG.flip}</button>` : ''}
       </div>
       <div class="cc-modes">
-        <button type="button" class="cc-mode" data-mode="photo">Foto</button>
-        <button type="button" class="cc-mode" data-mode="video">Video</button>
+        <button type="button" class="cc-mode" data-mode="photo" aria-label="Foto">${SVG.photo}</button>
+        <button type="button" class="cc-mode" data-mode="video" aria-label="Video">${SVG.video}</button>
       </div>
       <div class="cc-rec-timer" hidden><span class="cc-rec-dot"></span><span class="cc-rec-time">0:00</span></div>
       <div class="cc-bottom">
         <button type="button" class="cc-shutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
       </div>
-      <div class="cc-hint">Foto yoki Video tanlang</div>
     `;
     document.body.appendChild(ov);
 
@@ -171,7 +172,6 @@ export async function openCameraCapture(options = {}) {
     const timerEl = ov.querySelector('.cc-rec-timer');
     const timeTxt = ov.querySelector('.cc-rec-time');
     const shutter = ov.querySelector('.cc-shutter');
-    const hint = ov.querySelector('.cc-hint');
 
     const vTrack = () => stream?.getVideoTracks?.()[0] || null;
 
@@ -200,9 +200,6 @@ export async function openCameraCapture(options = {}) {
       });
       shutter.classList.toggle('video-mode', mode === 'video');
       shutter.classList.toggle('recording', recording);
-      hint.textContent = mode === 'video'
-        ? (recording ? 'Yozilmoqda… (max 1 daqiqa)' : 'Bosib video yozing · max 1 daq / 30 MB')
-        : 'Suratga olish';
     };
     syncModeUi();
 

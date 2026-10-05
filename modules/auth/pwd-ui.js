@@ -51,7 +51,7 @@ export function bindMeter({ input, confirm, meter, text, match }) {
     if (match) {
       const c = confirm?.value || '';
       if (!c) { match.textContent = ''; match.className = 'pw-match'; }
-      else if (c === p) { match.textContent = '✓ Parollar mos keldi'; match.className = 'pw-match ok'; }
+      else if (c === p) { match.textContent = 'Parollar mos keldi'; match.className = 'pw-match ok'; }
       else { match.textContent = 'Parollar mos kelmadi'; match.className = 'pw-match bad'; }
     }
   };

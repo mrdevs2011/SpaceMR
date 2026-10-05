@@ -681,7 +681,7 @@ function _renderHomePreview(f) {
   if (f.type.startsWith('image/')) {
     inner = `<img src="${esc(url)}" alt="">`;
   } else {
-    inner = `<div class="hc-file"><span>📎</span><span>${esc(f.name)} · ${fmtSz(f.size)}</span></div>`;
+    inner = `<div class="hc-file"><span class="hc-file-ico" aria-hidden="true"></span><span>${esc(f.name)} · ${fmtSz(f.size)}</span></div>`;
   }
   prev.innerHTML = inner + `<button type="button" class="hc-clear" data-action="hc-clear" aria-label="O'chirish">
     <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">

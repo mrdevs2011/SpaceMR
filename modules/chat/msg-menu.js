@@ -471,8 +471,8 @@ function startReply(m) {
     ? 'Siz'
     : (api?.getSenderName?.(m.senderId) || $('chatThreadName')?.textContent || 'Foydalanuvchi');
   let preview = '';
-  if (m.type === 'voice') preview = '🎤 Ovozli xabar';
-  else if (m.type === 'file') preview = '📎 ' + (m.fileName || 'Fayl');
+  if (m.type === 'voice') preview = 'Ovozli xabar';
+  else if (m.type === 'file') preview = m.fileName || 'Fayl';
   else preview = (m.text || '').replace(/\s+/g, ' ').trim().slice(0, 140);
   if (!preview) preview = 'Xabar';
   replying = { id: m.id, senderId: m.senderId, name, preview, type: m.type || 'text' };

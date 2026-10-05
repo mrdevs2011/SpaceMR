@@ -14,10 +14,10 @@ export function videoNoteSec(name) {
   return m ? +m[1] : null;
 }
 
-/* Fayl-xabar prevyusi (chatlar ro'yxati / inbox). icons=true: "📎 ..." / "🎥 Video xabar" */
+/* Fayl-xabar prevyusi (chatlar ro'yxati / inbox). icons=true: prefix bilan */
 export function fileMsgPreview({ caption = '', fileName = '', icons = true } = {}) {
   const note = isVideoNote(fileName);
-  if (icons) return caption ? '📎 ' + caption : note ? '🎥 Video xabar' : '📎 ' + (fileName || 'Fayl');
+  if (icons) return caption ? caption : note ? 'Video xabar' : (fileName || 'Fayl');
   return caption || (note ? 'Video xabar' : fileName) || 'Fayl';
 }
 

@@ -85,14 +85,14 @@ export function callLogInfo(cl, mine) {
 export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
   const cl = parseCallLog(raw);
-  if (cl) return `📞 ${callLogInfo(cl, mine).title}`;
+  if (cl) return callLogInfo(cl, mine).title;
   const ps = parsePostShare(raw);
   if (ps) {
     if (ps.comment && ps.comment.trim()) {
-      return `📌 ${ps.comment.trim()}`;
+      return ps.comment.trim();
     }
     const name = ps.post?.authorName ? `${ps.post.authorName}` : 'Post';
-    return `📌 Post: ${name}`;
+    return `Post: ${name}`;
   }
   return raw;
 }

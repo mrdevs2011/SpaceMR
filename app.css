@@ -7214,6 +7214,15 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 .home-composer-preview img {
   display: block; max-width: 100%; max-height: 220px; object-fit: contain; background: #000000;
 }
+.home-composer-preview .hc-file-ico {
+  display: inline-block;
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: url(./svg/media/paperclip.svg) center / contain no-repeat;
+  mask: url(./svg/media/paperclip.svg) center / contain no-repeat;
+  opacity: 0.85;
+}
 .home-composer-preview .hc-file {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px; font-size: 13px; color: var(--text2);
@@ -14365,13 +14374,15 @@ select.field option { background: #000000; color: var(--text); }
 }
 #camCapture .cc-mode {
   border: 0; background: transparent;
-  color: rgba(255,255,255,0.65);
-  font: 600 13px/1 system-ui, sans-serif;
-  padding: 8px 18px;
-  border-radius: 20px;
+  color: rgba(255,255,255,0.55);
+  width: 44px; height: 36px;
+  padding: 0;
+  border-radius: 18px;
   cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
   transition: background .15s ease, color .15s ease;
 }
+#camCapture .cc-mode svg { display: block; }
 #camCapture .cc-mode.active {
   background: #fff;
   color: #0f1419;
@@ -14417,17 +14428,7 @@ select.field option { background: #000000; color: var(--text); }
   animation: cc-blink 1s ease infinite;
 }
 @keyframes cc-blink { 50% { opacity: 0.25; } }
-#camCapture .cc-hint {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: max(108px, calc(env(safe-area-inset-bottom, 0px) + 100px));
-  margin-bottom: 44px;
-  color: rgba(255,255,255,0.7);
-  font: 500 12px/1.3 system-ui, sans-serif;
-  text-align: center;
-  pointer-events: none;
-  z-index: 1;
-  white-space: nowrap;
-}
+#camCapture .cc-hint { display: none !important; }
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */

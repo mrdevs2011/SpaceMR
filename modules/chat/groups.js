@@ -681,7 +681,7 @@ export async function sendGroupMessage() {
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
-    ? (userText ? `📌 ${userText}` : `📌 Post: ${postShare.authorName || 'Post'}`)
+    ? (userText ? userText : `Post: ${postShare.authorName || 'Post'}`)
     : userText.slice(0, 120);
 
   const groupId = _currentGroupId;
@@ -802,7 +802,7 @@ export async function sendGroupVoice(blob, duration) {
       id: mid, type: 'voice', mediaPath: result.path,
       mediaType: blob.type || null, duration: Math.round(duration || 0),
     });
-    groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: mid, text: '🎤 Ovozli xabar', ts: Date.now() });
+    groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: mid, text: 'Ovozli xabar', ts: Date.now() });
     _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || m.mediaUrl } : m);
     if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
     _reloadGroupThread && _reloadGroupThread();

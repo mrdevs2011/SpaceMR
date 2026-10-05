@@ -45,7 +45,7 @@ export async function sendChatMessage() {
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
-    ? (userText ? `📌 ${userText}` : `📌 Post: ${postShare.authorName || 'Post'}`)
+    ? (userText ? userText : `Post: ${postShare.authorName || 'Post'}`)
     : userText.slice(0, 120);
 
   // 1) Optimistik: o'z xabarimiz shu zahoti ekranda (DB javobini kutmaymiz)
@@ -113,7 +113,7 @@ export async function sendCallLog(chatId, otherUid, { connected = false, seconds
     const { error } = await sb.from('messages').insert({ id, chat_id: chatId, sender_id: state.me.uid, type: 'text', text });
     if (error) throw error;
     // Peer ro'yxatida: o'zining nuqtai nazaridan (kiruvchi / o'tkazib yuborilgan)
-    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: connected ? "📞 Kiruvchi qo'ng'iroq" : "📞 O'tkazib yuborilgan qo'ng'iroq", ts: nowMs });
+    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: connected ? "Kiruvchi qo'ng'iroq" : "O'tkazib yuborilgan qo'ng'iroq", ts: nowMs });
     const lc = chatState._latestChatMap[otherUid];
     if (lc) { lc.lastMessage = text; lc.lastMessageAt = nowMs; lc.lastSenderId = state.me.uid; }
     chatState._reloadThread && chatState._reloadThread();
@@ -170,9 +170,9 @@ export async function sendVoiceMessage(blob, duration) {
         mediaType: blob.type || null, duration: Math.round(duration || 0),
       });
     }
-    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: '🎤 Ovozli xabar', ts: Date.now() });
+    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: 'Ovozli xabar', ts: Date.now() });
     if (chatState._latestChatMap[otherUid]) {
-      chatState._latestChatMap[otherUid].lastMessage = '🎤 Ovozli xabar';
+      chatState._latestChatMap[otherUid].lastMessage = 'Ovozli xabar';
       chatState._latestChatMap[otherUid].lastMessageAt = Date.now();
       chatState._latestChatMap[otherUid].lastSenderId = state.me.uid;
     }
