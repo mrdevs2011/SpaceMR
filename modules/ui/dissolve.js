@@ -13,9 +13,9 @@ export function unmarkDissolve(ids) { (ids || []).forEach(id => dissolveMarks.de
    - Fully inlined computed styles (no fetch dependency)
    - Guaranteed visual effect (never snaps away)
    ============================================================ */
-const ANIM_DURATION  = 900;    // qisqa — uzoq osilib qolmasin
-const SWEEP_DURATION = 380;    // to'lqin tez, bir tekis
-const COLLAPSE_DELAY = 220;    // qator tez yopiladi, sakrashsiz
+const ANIM_DURATION  = 1300;   // zarra umri (Telegram: ~1.3s, yengil chang)
+const SWEEP_DURATION = 520;    // chapdan o'ngga uzilish to'lqini
+const COLLAPSE_DELAY = 480;    // qator chang uchib bo'lgach yopiladi
 const FADE_IN_MS     = 60;     // tez crossfade
 const TILE_SIZE      = 1.5;    // biroz yirikroq = FPS yuqori, silliq
 const DRIFT_X        = 42;     // tor sochilish — chalkashlik yo'q
@@ -23,6 +23,12 @@ const PUFF_Y         = 6;      // yumshoq nafas
 const GRAVITY        = 0.00115;// pastga silliq tushish
 const START_SPEED    = 0.012;  // boshlang'ich tezlik
 const NOISE_AMP      = 0;
+/* Telegram uslubidagi "chang": zarralar chapdan o'ngga to'lqin bo'lib uziladi, shamol bilan o'ng-yuqoriga suzib, so'nadi */
+const DUST_DRIFT_X = 120;   // o'ngga siljish (css px)
+const DUST_LIFT_Y  = 64;    // yuqoriga ko'tarilish (css px)
+const DUST_TAU     = 460;   // "puff" vaqti (ms): boshida tez, keyin sekinlashadi
+const DUST_GLIDE   = 0.018; // davom etuvchi sekin suzish (css px / ms)
+const PAD_L = 40, PAD_R = 260, PAD_TOP = 170, PAD_BOTTOM = 50;   // canvas atrofidagi bo'sh joy (css px)
 
 function __dissolveHash(n) {
   const s = Math.sin(n * 127.1) * 43758.5453;
@@ -137,9 +143,10 @@ function __dissolveDomToCanvas(el, dprOverride) {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       // Sanity: if almost fully transparent, treat as failure
       try {
-        const sample = ctx.getImageData(0, 0, Math.min(8, canvas.width), Math.min(8, canvas.height)).data;
+        // Butun rasm bo'yicha (burchak shaffof bo'lishi mumkin: o'ngdagi xabar, yumaloq pufak, emoji) — 2 ta rangli piksel topilsa yetadi
+        const sample = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         let opaque = 0;
-        for (let i = 3; i < sample.length; i += 4) if (sample[i] > 10) opaque++;
+        for (let i = 3; i < sample.length && opaque < 2; i += 4) if (sample[i] > 10) opaque++;
         if (opaque < 2) {
           reject(new Error("blank snapshot"));
           return;
@@ -193,20 +200,18 @@ function __dissolveBuildGrains(snapCanvas, cssW, cssH, dpr, epX, epY, groupCtx, 
       x[n] = xx; y[n] = yy;
       // Wide, natural spread: bell-shaped random sideways speed + a push away
       // from the epicenter, so the cloud opens up like a puff of dust.
-      const away = (cx - epX) / (cssW || 1);              // -1 … 1
-      vx[n] = tabMode
-        ? (Math.random() + Math.random() - 1) * 0.25
-        : groupCtx
-        ? (Math.random() + Math.random() - 1) * 0.35
-        : (Math.random() + Math.random() - 1) * 0.7 + away * 0.55; // tor, silliq sochilish
-      lift[n] = tabMode ? 0.05 + Math.random() * 0.2 : 0.25 + Math.random() * 0.7;
+      const rx = cx / (cssW || 1);                         // 0 (chap) … 1 (o'ng)
+      // Telegram "chang": asosan o'ngga (shamol), biroz yuqoriga; o'ng tomon uzoqroq uchadi, ba'zi zarra orqaga qaytadi
+      vx[n] = tabMode ? (Math.random() + Math.random() - 1) * 0.25
+            : (0.2 + Math.random() * 0.9 + rx * 0.3) * (Math.random() < 0.12 ? -0.4 : 1);
+      lift[n] = tabMode ? 0.05 + Math.random() * 0.2 : 0.15 + Math.random() * 0.85;
       ph[n] = Math.random() * 6.2832;
-      g[n] = tabMode ? 1.05 + Math.random() * 0.5 : 0.9 + Math.random() * 0.35;
+      g[n] = tabMode ? 1.05 + Math.random() * 0.5 : 0.8 + Math.random() * 0.5;   // zarra umri koeffitsienti
       delay[n] = tabMode
         ? ((1 - cy / cssH) * 0.35) * SWEEP_DURATION * 0.5 + Math.random() * 120
         : groupCtx
         ? ((groupCtx.offsetY + cy) / groupCtx.span) * groupCtx.sweep + Math.random() * 80
-        : ((cy / cssH) * 0.75 + (dist / maxDist) * 0.25) * SWEEP_DURATION + Math.random() * 90;
+        : (rx * 0.8 + (cy / cssH) * 0.2) * SWEEP_DURATION + Math.random() * 140;   // chapdan o'ngga to'lqin
       col[n] = c;
       n++;
     }
@@ -339,11 +344,10 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
   card.style.flexShrink = "0";
   card.style.contain = "layout size";
 
-  const padX = 150, padTop = 60;
-  const padBottom = Math.min(340, Math.max(200, window.innerHeight - startRect.top + 40));
+  const padL = PAD_L, padR = PAD_R, padTop = PAD_TOP, padBottom = PAD_BOTTOM;
   // Match the screen's real resolution (a 1x snapshot over a 2x card looks blurry -> visible "pop").
   // Only step down if the pixel buffer would get too big.
-  const overlayCss = (startRect.width + padX * 2) * (startRect.height + padTop + padBottom);
+  const overlayCss = (startRect.width + padL + padR) * (startRect.height + padTop + padBottom);
   let sdpr = Math.min(Math.round(window.devicePixelRatio || 1), 3) || 1;
   while (sdpr > 1 && overlayCss * sdpr * sdpr > 2.4e6) sdpr--;
 
@@ -369,8 +373,8 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
       await __dissolveFloatFallback(card);
     } else {
       const { n, G, x: gx, y: gy, vx: gvx, g: gg, delay: gdelay, col: gcol, lift: glift, ph: gph } = grains;
-      const ox = Math.round(padX * dpr), oy = Math.round(padTop * dpr);
-      const OW = Math.ceil((width + padX * 2) * dpr);
+      const ox = Math.round(padL * dpr), oy = Math.round(padTop * dpr);
+      const OW = Math.ceil((width + padL + padR) * dpr);
       const OH = Math.ceil((height + padTop + padBottom) * dpr);
 
       const overlay = document.createElement("canvas");
@@ -379,7 +383,7 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
       overlay.height = OH;
       overlay.style.width = (OW / dpr) + "px";
       overlay.style.height = (OH / dpr) + "px";
-      overlay.style.left = (rect.left - padX) + "px";
+      overlay.style.left = (rect.left - padL) + "px";
       overlay.style.top = (rect.top - padTop) + "px";
       document.body.appendChild(overlay);
 
@@ -387,12 +391,11 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
       // Whole frame = one Uint32 pixel buffer + ONE putImageData (no per-grain draw calls).
       const img = octx.createImageData(OW, OH);
       const buf = new Uint32Array(img.data.buffer);
-      const fadeZone = 130 * dpr;            // grains dissolve smoothly before the canvas edge
-      const fadeZoneX = 100 * dpr;           // …and before the left/right edges
-      const gravDev = GRAVITY * dpr;
-      const v0Dev = START_SPEED * dpr;
-      const driftDev = DRIFT_X * dpr * (tabMode ? 0.2 : 1);
-      const puffDev = PUFF_Y * dpr;
+      const fadeZone = 60 * dpr;             // yuqori chetga yetganda yumshoq so'nadi
+      const fadeZoneX = 70 * dpr;            // o'ng chetga yetganda yumshoq so'nadi
+      const driftDev = DUST_DRIFT_X * dpr * (tabMode ? 0.2 : 1);
+      const liftDev = DUST_LIFT_Y * dpr * (tabMode ? 0.2 : 1);
+      const glideDev = DUST_GLIDE * dpr;
       let started = false;
       let prevMin = -1, prevMax = -1;
 
@@ -417,42 +420,28 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
             px = gx[i]; py = gy[i];
             alive = true;
           } else {
-            const life = local / ANIM_DURATION;
+            const life = local / (ANIM_DURATION * gg[i]);
             if (life >= 1) continue;
             alive = true;
-            const tSec = local * 0.55;
-            // Sideways spread eases OUT (fast start, glides to a stop) and a slow
-            // sway makes each grain wander instead of travelling in a straight line.
-            const inv = 1 - life;
-            const driftEase = 1 - inv * inv * inv;
-            const sway = Math.sin(local * 0.0012 + gph[i]) * (groupCtx || tabMode ? 1.2 : 3.2) * dpr * Math.min(1, life * 4);
-            px = gx[i] + gvx[i] * driftDev * driftEase + sway;
-            // Tiny soft "lift" right as the grain breaks loose (decays in ~150ms),
-            // then gravity takes over — reads as a gentle breath, not a hard drop.
-            const puff = puffDev * glift[i] * Math.exp(-local / 320);
-            py = gy[i] - puff + v0Dev * local + gravDev * gg[i] * tSec * tSec;
-            // stays solid while falling, fades smoothly near the end
+            // Telegram "chang": boshida tez "puff" (eksponensial), so'ng sekin suzib davom etadi; har zarra o'z yo'lida to'lqinlanadi
+            const f = 1 - Math.exp(-local / DUST_TAU);
+            const wob = Math.min(1, life * 3) * dpr;
+            const sx = Math.sin(local * 0.0042 + gph[i]) * 4.5 * wob;
+            const sy = Math.cos(local * 0.0035 + gph[i] * 1.7) * 3.5 * wob;
+            px = gx[i] + gvx[i] * (driftDev * f + glideDev * local) + sx;
+            py = gy[i] - glift[i] * liftDev * f + sy;
             let a = 1;
-            if (life > 0.35) {
-              const f = (life - 0.35) / 0.65;
-              a = 1 - f * f * (3 - 2 * f);
-            }
-            const room = OH - (py + oy);
-            if (room < fadeZone) {
-              const t = Math.max(0, room / fadeZone);
-              a *= t * t * (3 - 2 * t); // smoothstep — no hard edge cutoff
-            }
-            const roomX = Math.min(px + ox, OW - (px + ox));
-            if (roomX < fadeZoneX) {
-              const t = Math.max(0, roomX / fadeZoneX);
-              a *= t * t * (3 - 2 * t);
-            }
+            if (life > 0.3) { const q = (life - 0.3) / 0.7; a = 1 - q * q * (3 - 2 * q); }   // so'nish
+            const roomR = OW - (px + ox);
+            if (roomR < fadeZoneX) { const t = Math.max(0, roomR / fadeZoneX); a *= t * t * (3 - 2 * t); }
+            const roomT = py + oy;
+            if (roomT < fadeZone) { const t = Math.max(0, roomT / fadeZone); a *= t * t * (3 - 2 * t); }
             if (a <= 0.01) continue;
             if (a < 1) c = (c & 0x00ffffff) | ((((c >>> 24) * a) | 0) << 24);
           }
 
           const ix = (px + ox) | 0, iy = (py + oy) | 0;
-          if (iy >= OH || ix < 0 || ix >= OW) continue;
+          if (iy < 0 || iy >= OH || ix < 0 || ix >= OW) continue;
           if (G === 1) {
             buf[iy * OW + ix] = c;
             if (iy < minY) minY = iy;
@@ -493,6 +482,7 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
       setTimeout(() => { card.style.visibility = "hidden"; }, FADE_IN_MS + 30);
 
       // Particles run independently (do not block delete/API)
+      const capMs = FADE_IN_MS + SWEEP_DURATION + 140 + ANIM_DURATION * 1.3 + 160 + (groupCtx ? groupCtx.sweep : 0);
       let _overlayGone = false;
       const killOverlay = () => {
         if (_overlayGone) return;
@@ -503,12 +493,12 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
         const elapsed = now - startT;
         const alive = paint(elapsed);
         // hard cap: animatsiya uzoq osilib qolmasin
-        if (alive && elapsed < ANIM_DURATION + FADE_IN_MS + 120) requestAnimationFrame(frame);
+        if (alive && elapsed < capMs) requestAnimationFrame(frame);
         else killOverlay();
       }
       requestAnimationFrame(frame);
       // zaxira tozalash (leftover particle-canvas oldini olish)
-      setTimeout(killOverlay, ANIM_DURATION + FADE_IN_MS + 180);
+      setTimeout(killOverlay, capMs + 200);
 
       // Collapse the list row after COLLAPSE_DELAY while grains still fall
       await new Promise((r) => setTimeout(r, COLLAPSE_DELAY + (group ? Math.max(0, group.sweep - SWEEP_DURATION) : 0)));
