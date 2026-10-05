@@ -1041,7 +1041,7 @@
   #detailModal { padding-left: var(--sidebar); }
   #userProfileModal { left: var(--sidebar); }
   #grpInfoOverlay { left: var(--sidebar); }
-  .up-back { left: calc(var(--sidebar) + 14px); }
+  .up-back, .gi-back-btn { left: calc(var(--sidebar) + 14px); }
   .bot-nav { display: flex; position: fixed; }
 }
 /* ═══════════════════════════════════════════ DESKTOP SEARCH PANEL — Solid ══════════════════════════════════... */

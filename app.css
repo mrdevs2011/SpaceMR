@@ -1409,7 +1409,7 @@ button:active > img.icon {
   #detailModal { padding-left: var(--sidebar); }
   #userProfileModal { left: var(--sidebar); }
   #grpInfoOverlay { left: var(--sidebar); }
-  .up-back { left: calc(var(--sidebar) + 14px); }
+  .up-back, .gi-back-btn { left: calc(var(--sidebar) + 14px); }
   .bot-nav { display: flex; position: fixed; }
 }
 /* ═══════════════════════════════════════════ DESKTOP SEARCH PANEL — Solid ══════════════════════════════════... */
@@ -6754,7 +6754,8 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
     max-width: var(--center-w);
     box-sizing: border-box;
   }
-  body:has(#chatsView.on) .up-back { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
+  body:has(#chatsView.on) .up-back,
+  body:has(#chatsView.on) .gi-back-btn { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
 }
 /* Chat media: yuklanmagan rasm katakchasi */
 .up-grid-cell.cm-broken { background: var(--bg3); }
