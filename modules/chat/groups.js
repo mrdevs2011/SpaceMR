@@ -812,7 +812,7 @@ export async function sendGroupVoice(blob, duration) {
     _gMsgs = _gMsgs.filter(x => x.id !== mid);
     if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
     try { URL.revokeObjectURL(localUrl); } catch (_) {}
-    toast('Ovozli xabar yuborilmadi', 'error');
+    toast('Guruh ovozi yuborilmadi: ' + String(err?.message || err?.error || err?.statusCode || err).slice(0, 140) + (err?.code ? ' [' + err.code + ']' : ''), 'error');
   }
 }
 

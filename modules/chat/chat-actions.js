@@ -188,7 +188,7 @@ export async function sendVoiceMessage(blob, duration) {
     chatState._rtLocal.delete(id);
     if (state.currentChatId === chatId) chatUI.paintMessages(chatState._curMsgs.filter(x => x.id !== id));
     try { URL.revokeObjectURL(localUrl); } catch (_) {}
-    toast('Ovozli xabar yuborilmadi', 'error');
+    toast('Ovozli xabar yuborilmadi: ' + String(err?.message || err?.error || err?.statusCode || err).slice(0, 140) + (err?.code ? ' [' + err.code + ']' : ''), 'error');
   }
 }
 
