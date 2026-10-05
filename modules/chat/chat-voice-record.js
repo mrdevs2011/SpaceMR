@@ -41,7 +41,7 @@ let _voiceTail = Promise.resolve();   // bo'laklar TARTIB bilan yuborilishi uchu
 /* Bitta ovozli xabar maksimal uzunligi (10 daqiqa).
    Limitga yetganda yozuv TO'XTAYDI — keyingi ovoz uchun yana bosib yozish kerak
    (avtomatik yangi bo'lak boshlanmaydi). */
-const VOICE_MAX_SEC = 600; // 10 daqiqa
+const VOICE_MAX_SEC = 5; // TEMP test: 5s (asli 600 = 10 daqiqa)
 
 /* ── Rolik (dumaloq video xabar) rejimi ────────────────────────────────────
  * Logika SpaceMR camera (camera-capture.js) bilan bir xil:
