@@ -25,3 +25,22 @@
 .chat-msg.mine .cfm-note-badge { align-self: flex-end; }
 /* Guruhda ham rolik chatdagi bilan bir xil: yuboruvchi ismi kartochkasiz, dumaloq tepasida oddiy qator */
 .chat-bubble.bubble-vnote .grp-sender-name { padding: 0 6px 4px; background: none; border-radius: 0; }
+
+/* Mic/rolik long-press: Chrome image.svg context menu chiqmasin */
+.chat-voice-btn,
+#chatVoiceBtn {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+.chat-voice-btn img,
+.chat-voice-btn svg,
+#chatVoiceBtn img,
+#chatVoiceBtn svg {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}

@@ -712,6 +712,12 @@ function _stopPulse() {
 function _bindVoiceHoldUi() {
 const _vBtn = $('chatVoiceBtn');
 if (_vBtn) {
+  // Mobile Chrome: img.mic.svg long-press -> Copy/Download image menyu
+  _vBtn.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });
+  _vBtn.querySelectorAll('img, svg').forEach(el => {
+    el.setAttribute('draggable', 'false');
+    el.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); });
+  });
   _vBtn.addEventListener('pointerdown', e => {
     if (e.button !== undefined && e.button !== 0) return;
 
