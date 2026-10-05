@@ -1152,6 +1152,20 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgCtx .mr-grid .mc-r { flex: none; }
 #msgCtx .mr-none { padding: 24px 0; text-align: center; color: var(--pal-gray-500); font-size: 13px; }
 
+/* Hover: xabar chetidagi tezkor reaksiya + ochiladigan vertikal ro'yxat (faqat hover:hover qurilmalar) */
+#msgHoverReact { position: fixed; z-index: 590; display: none; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 1px solid rgba(231, 233, 234, 0.14); background: #15181c; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); font-size: 16px; line-height: 28px; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; -webkit-tap-highlight-color: transparent; }
+#msgHoverReact.show { display: block; animation: hrPop .14s ease-out; }
+#msgHoverReact:hover { background: #1f2328; }
+#msgHoverReact.on { border-color: rgba(231, 233, 234, 0.5); }
+#msgHoverPick { position: fixed; z-index: 591; display: none; padding: 4px; border-radius: 22px; background: #15181c; border: 1px solid rgba(231, 233, 234, 0.14); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7); -webkit-user-select: none; user-select: none; }
+#msgHoverPick.show { display: block; animation: hrPop .14s ease-out; transform-origin: 50% 100%; }
+#msgHoverPick .hp-list { display: flex; flex-direction: column-reverse; gap: 2px; max-height: 168px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+#msgHoverPick .hp-list::-webkit-scrollbar { display: none; }
+#msgHoverPick .hp-e { flex: none; width: 34px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; font-size: 22px; line-height: 1; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .1s ease, background .1s ease; }
+#msgHoverPick .hp-e:hover { background: var(--pal-white-08); transform: scale(1.18); }
+#msgHoverPick .hp-e.on { background: rgba(231, 233, 234, 0.2); }
+@keyframes hrPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+
 /* Xabar tagidagi reaksiya chiplari */
 .chat-bubble > .msg-reacts { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 1px; clear: both; }
 .chat-bubble .mr-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border: 0; border-radius: 13px; background: rgba(231, 233, 234, 0.14); color: inherit; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .12s ease; }

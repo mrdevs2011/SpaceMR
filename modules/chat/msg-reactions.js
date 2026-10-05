@@ -184,11 +184,108 @@ export function reactBindPicker(menuEl) {
   inp.addEventListener('keydown', e => e.stopPropagation());
 }
 
+/* ── Hover (faqat sichqonchali qurilma): xabar chetida bitta tezkor reaksiya; ustiga borilsa — vertikal scrollli ro'yxat (10 ta) ── */
+export const HOVER_SET = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😮', '😢', '🎉'];
+const QK = 'spacemr_react_quick';
+const canHover = () => !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+let hb = null, hp = null, hRow = null, hideT = 0, openT = 0;
+const quick = () => { try { const q = localStorage.getItem(QK); if (q && HOVER_SET.includes(q)) return q; } catch (_) {} return HOVER_SET[0]; };
+const setQuick = e => { try { localStorage.setItem(QK, e); } catch (_) {} };
+const busy = () => !box || box.classList.contains('msg-selecting') || document.getElementById('msgCtx')?.classList.contains('show');
+
+function ensureHover() {
+  if (hb) return;
+  hb = document.createElement('button');
+  hb.type = 'button'; hb.id = 'msgHoverReact'; hb.setAttribute('aria-label', 'Reaksiya');
+  hp = document.createElement('div');
+  hp.id = 'msgHoverPick';
+  hp.innerHTML = '<div class="hp-list"></div>';
+  hb.addEventListener('click', e => { e.stopPropagation(); pickHover(quick()); });
+  hb.addEventListener('mouseenter', () => { clearTimeout(hideT); clearTimeout(openT); openT = setTimeout(openPick, 140); });
+  hb.addEventListener('mouseleave', () => { clearTimeout(openT); scheduleHide(); });
+  hp.addEventListener('mouseenter', () => clearTimeout(hideT));
+  hp.addEventListener('mouseleave', scheduleHide);
+  hp.addEventListener('contextmenu', e => e.preventDefault());
+  hp.addEventListener('click', e => {
+    const b = e.target.closest('[data-e]');
+    if (b) { e.stopPropagation(); pickHover(b.dataset.e); }
+  });
+  document.body.append(hb, hp);
+}
+
+function pickHover(emoji) {
+  const id = hRow?.dataset.msgId;
+  hideHover();
+  if (!id) return;
+  setQuick(emoji);
+  reactToggle(id, emoji);
+}
+
+function scheduleHide() { clearTimeout(hideT); hideT = setTimeout(hideHover, 220); }
+
+function placeHover() {
+  const bub = hRow?.querySelector('.chat-bubble');
+  if (!bub || !hb || !box) return;
+  const r = bub.getBoundingClientRect(), b = box.getBoundingClientRect();
+  if (r.bottom < b.top + 8 || r.top > b.bottom - 8) { hideHover(); return; }
+  const mine = hRow.classList.contains('mine');
+  const left = Math.max(b.left + 2, Math.min(window.innerWidth - 36, mine ? r.left - 36 : r.right + 6));
+  const top = Math.min(r.bottom, b.bottom - 6) - 30;
+  hb.style.left = left + 'px';
+  hb.style.top = Math.max(b.top + 6, top) + 'px';
+}
+
+function showHover(row) {
+  if (!canHover() || !row?.isConnected) return;
+  if (busy()) { hideHover(); return; }
+  ensureHover();
+  clearTimeout(hideT);
+  if (hRow !== row) { hidePick(); hRow = row; }
+  const q = quick();
+  hb.textContent = q;
+  hb.classList.toggle('on', byMsg.get(row.dataset.msgId)?.get(me()) === q);
+  hb.classList.add('show');
+  placeHover();
+}
+
+function openPick() {
+  if (!hb || !hp || !hRow?.isConnected || !hb.classList.contains('show') || busy()) return;
+  const q = quick(), mineE = byMsg.get(hRow.dataset.msgId)?.get(me());
+  // column-reverse: birinchi (tezkor) emoji pastda — tugma ustida; qolganlari tepaga scroll
+  hp.firstChild.innerHTML = [q, ...HOVER_SET.filter(e => e !== q)]
+    .map(e => `<button type="button" class="hp-e${mineE === e ? ' on' : ''}" data-e="${e}" aria-label="${e}">${e}</button>`).join('');
+  hp.style.visibility = 'hidden';
+  hp.classList.add('show');
+  hp.firstChild.scrollTop = 0;
+  const r = hb.getBoundingClientRect(), w = hp.offsetWidth, h = hp.offsetHeight;
+  hp.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + 'px';
+  hp.style.top = Math.max(6, r.bottom + 4 - h) + 'px';
+  hp.style.visibility = '';
+}
+
+function hidePick() { clearTimeout(openT); hp?.classList.remove('show'); }
+
+export function reactHoverHide() {
+  clearTimeout(hideT);
+  hidePick();
+  hb?.classList.remove('show');
+  hRow = null;
+}
+const hideHover = reactHoverHide;
+
 /* ── Hayot sikli ───────────────────────────────────────────────────── */
 export function reactInit(boxEl) {
   box = boxEl;
   if (bound || !box) return;
   bound = true;
+  // Hover: xabar ustida — chetda tezkor reaksiya tugmasi
+  box.addEventListener('mouseover', e => {
+    if (!canHover()) return;
+    const row = e.target.closest?.('.chat-msg[data-msg-id]:not([data-msg-id=""])');
+    if (row) showHover(row); else if (hRow) scheduleHide();
+  });
+  box.addEventListener('mouseleave', () => { if (hRow) scheduleHide(); });
+  box.addEventListener('scroll', () => { if (hRow) reactHoverHide(); }, { passive: true });
   box.addEventListener('click', e => {
     const c = e.target.closest?.('.mr-chip');
     if (!c) return;
@@ -200,7 +297,10 @@ export function reactInit(boxEl) {
 }
 
 /** paintMessages() dan keyin: yangi chizilgan qatorlarga chiplarni qaytaradi */
-export function reactAfterPaint() { sync(); paintAll(); }
+export function reactAfterPaint() {
+  sync(); paintAll();
+  if (hRow) { if (hRow.isConnected) placeHover(); else reactHoverHide(); }
+}
 
 /** Chat yopilganda */
-export function reactReset() { teardown(); cur = null; byMsg.clear(); }
+export function reactReset() { teardown(); cur = null; byMsg.clear(); reactHoverHide(); }

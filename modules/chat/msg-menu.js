@@ -8,7 +8,7 @@ import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
-import { reactInit, reactStripHtml, reactPickerHtml, reactBindPicker, reactToggle, reactAfterPaint, reactReset } from './msg-reactions.js';
+import { reactInit, reactStripHtml, reactPickerHtml, reactBindPicker, reactToggle, reactAfterPaint, reactReset, reactHoverHide } from './msg-reactions.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -224,6 +224,7 @@ function openMenu(row, x, y) {
   if (!m) return;
   closeMenu();
   ensureMenu();
+  reactHoverHide();
   openId = id;
   row.classList.add('mc-active');
   const canReact = !!m.id && !(isMine(m) && m.status === 'sending');
@@ -465,6 +466,7 @@ function ensureSelBar() {
 
 function enterSelect(id) {
   closeMenu();
+  reactHoverHide();
   cancelEdit(true);
   ensureSelBar();
   selMode = true;
