@@ -71,6 +71,19 @@ export function mediaPublicUrl(path) {
   return sb.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
+/** Private bucket / CORS muammosida — imzolangan vaqtinchalik URL */
+export async function mediaSignedUrl(path, expiresSec = 3600) {
+  if (!path) return null;
+  try {
+    const { data, error } = await sb.storage.from(MEDIA_BUCKET).createSignedUrl(path, expiresSec);
+    if (error) { console.warn('[media] signedUrl:', error.message); return null; }
+    return data?.signedUrl || null;
+  } catch (e) {
+    console.warn('[media] signedUrl:', e?.message || e);
+    return null;
+  }
+}
+
 /* ── Mapperlar (DB qatori → eski Firestore ko'rinishi) ──────────────── */
 export function mapProfile(r) {
   if (!r) return null;
@@ -255,7 +268,7 @@ export function mapMessage(r) {
     mediaType: r.media_type,
     fileName: r.file_name,
     fileSize: r.file_size,
-    duration: r.duration,
+    duration: (r.duration == null ? null : Number(r.duration)) || null,
     waveform: Array.isArray(r.waveform) && r.waveform.length ? r.waveform : null,
     status: r.status,
     readAt: ts(r.read_at),

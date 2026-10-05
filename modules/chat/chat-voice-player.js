@@ -2,7 +2,7 @@
  * chat-voice-player.js — waveform hydrate, playback, mini-player
  * Ehtiyotkor ajratish: paintMessages/closeChatThread chat.js da qoladi.
  */
-import { state } from '../core/config.js';
+import { state, mediaSignedUrl } from '../core/config.js';
 import { $ } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 
@@ -208,17 +208,31 @@ function _cvmGetObserver() {
 
 function _cvmStartHydrate(waveEl) {
   const wrap = waveEl.closest('.chat-voice-msg');
-  const url = wrap?.dataset.url;
+  let url = wrap?.dataset.url;
+  const path = wrap?.dataset.path || '';
   const count = parseInt(wrap?.dataset.barCount, 10) || CVM_BAR_COUNT;
-  if (!url || waveEl.dataset.hydrated === '1' || waveEl.dataset.hydrated === 'pending') return;
-  const known = _waveResolved.get(_wfKey(url, count));
-  if (known) { _applyWave(waveEl, known); return; }
+  if ((!url && !path) || waveEl.dataset.hydrated === '1' || waveEl.dataset.hydrated === 'pending') return;
+  if (url) {
+    const known = _waveResolved.get(_wfKey(url, count));
+    if (known) { _applyWave(waveEl, known); return; }
+  }
   waveEl.dataset.hydrated = 'pending';
-  _cvmEnqueue(() => _getWaveformData(url, count).then(data => {
+  _cvmEnqueue(async () => {
+    let data = url ? await _getWaveformData(url, count) : null;
+    if (!data && path) {
+      try {
+        const signed = await mediaSignedUrl(path, 7200);
+        if (signed) {
+          url = signed;
+          if (wrap) wrap.dataset.url = signed;
+          data = await _getWaveformData(signed, count);
+        }
+      } catch (_) {}
+    }
     if (!waveEl.isConnected) return;
     if (!data) { waveEl.dataset.hydrated = ''; return; }
     _applyWave(waveEl, data);
-  }));
+  });
 }
 
 /* Berilgan konteyner ichidagi hali "hydrate" qilinmagan barcha voice
@@ -589,9 +603,17 @@ function _nextVoiceBtn(btn, url) {
   return null;
 }
 
-window._chatPlayVoice = function(btn) {
+window._chatPlayVoice = async function(btn) {
   const wrap = btn.closest('.chat-voice-msg');
-  const url  = wrap?.dataset?.url;
+  let url = wrap?.dataset?.url || '';
+  const path = wrap?.dataset?.path || '';
+  if (!url && path) {
+    try {
+      const { mediaPublicUrl } = await import('../core/config.js');
+      url = mediaPublicUrl(path) || '';
+      if (url) wrap.dataset.url = url;
+    } catch (_) {}
+  }
   if (!url) {
     console.warn('Voice: URL topilmadi', wrap?.dataset);
     toast('Audio URL topilmadi', 'error');
@@ -612,7 +634,6 @@ window._chatPlayVoice = function(btn) {
     return;
   }
 
-  // Boshqa xabar o'ynayotgan bo'lsa — to'liq to'xtatib, vizualini tozalaymiz
   if (_activeAudio) _stopActive();
 
   _activeBtn     = btn;
@@ -624,19 +645,26 @@ window._chatPlayVoice = function(btn) {
 
   const audio = new Audio();
   audio.preload = 'auto';
-  // MUHIM: createMediaElementSource (EQ) cross-origin (Supabase) audio'ni CORS'siz JIM qiladi.
-  // Supabase ACAO:* beradi, shuning uchun 'anonymous' bilan ochamiz.
-  audio.crossOrigin = 'anonymous';
+  audio.playsInline = true;
+  // Avval CORS siz — mobilida ishonchliroq; EQ keyin yoqiladi agar CORS ishlasa
+  audio.__noEq = false;
   _activeAudio = audio;
-  _activeLoading = true;          // yuklanish tugaguncha tugma ichida spinner aylanadi
+  _activeLoading = true;
   _setBtnState();
   wrap.querySelector('.cvm-waveform')?.classList.add('playing');
+
+  const tryPlay = (src, withCors) => {
+    if (withCors) audio.crossOrigin = 'anonymous';
+    else { try { audio.removeAttribute('crossorigin'); } catch (_) {} audio.crossOrigin = null; }
+    audio.src = src;
+    return audio.play();
+  };
 
   audio.onwaiting = () => { if (_activeAudio !== audio) return; _activeLoading = true; _setBtnState(); };
   audio.onplaying = () => {
     if (_activeAudio !== audio) return;
     _activeLoading = false; _setBtnState(); _syncMiniPlayer(); _startProgressLoop();
-    _startPlayEq(audio, _activeBtn);
+    if (!audio.__noEq) _startPlayEq(audio, _activeBtn);
   };
   audio.onpause = () => {
     if (_activeAudio !== audio || audio.ended) return;
@@ -647,38 +675,60 @@ window._chatPlayVoice = function(btn) {
     const prevBtn = _activeBtn, prevUrl = _activeUrl;
     _stopActive();
     _syncMiniPlayer();
-    // Keyingi voice (pastda) bo'lsa — avtomatik ijro
     const next = _nextVoiceBtn(prevBtn, prevUrl);
     if (next) {
       next.closest('.chat-voice-msg')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       window._chatPlayVoice(next);
     }
   };
-  audio.onerror = (e) => {
+
+  let step = 0; // 0: no-cors, 1: cors, 2: signed no-cors, 3: signed cors
+  const failOrRetry = async (why) => {
     if (_activeAudio !== audio) return;
-    if (audio.crossOrigin && !audio.__corsRetried) {
-      // CORS ishlamasa: EQ'siz, oddiy rejimda qayta urinish (ovoz baribir chiqsin)
-      audio.__corsRetried = true; audio.__noEq = true;
-      audio.removeAttribute('crossorigin');
-      audio.src = url;
-      audio.play().catch(() => {});
-      return;
+    step++;
+    try {
+      if (step === 1) {
+        await tryPlay(url, true);
+        return;
+      }
+      if (step === 2 && path) {
+        const signed = await mediaSignedUrl(path, 7200);
+        if (signed) {
+          url = signed;
+          _activeUrl = signed;
+          wrap.dataset.url = signed;
+          audio.__noEq = true;
+          await tryPlay(signed, false);
+          return;
+        }
+      }
+      if (step === 3 && path) {
+        const signed = await mediaSignedUrl(path, 7200);
+        if (signed) {
+          url = signed;
+          _activeUrl = signed;
+          await tryPlay(signed, true);
+          return;
+        }
+      }
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+      return failOrRetry(err);
     }
-    console.error('Audio xatosi:', e, 'URL:', url);
+    console.error('Audio xatosi:', why, 'URL:', url, 'path:', path);
     toast('Audio yuklanmadi', 'error');
     _stopActive();
     _syncMiniPlayer();
   };
 
-  audio.src = url;
-  audio.play().catch(e => {
-    if (e?.name === 'AbortError') return;   // tez almashtirish — kutilgan holat
-    if (_activeAudio !== audio) return;
-    console.error('Audio play xatosi:', e, 'URL:', url);
-    toast('Audio ijro etilmadi', 'error');
-    _stopActive();
-    _syncMiniPlayer();
-  });
+  audio.onerror = () => failOrRetry('onerror');
+
+  try {
+    await tryPlay(url, false);
+  } catch (e) {
+    if (e?.name === 'AbortError') return;
+    await failOrRetry(e);
+  }
 
   _syncMiniPlayer();
 };

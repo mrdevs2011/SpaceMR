@@ -272,7 +272,8 @@ if (!window.__chatNoteBound) {
 
 export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state }) {
   const readyCls = typeof waveReadyClass === 'function' ? waveReadyClass(voiceMedia.url, barCount) : '';
-  return `<div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
+  const safePath = String(voiceMedia.path || '').replace(/"/g, '"');
+  return `<div class="chat-voice-msg" data-url="${safeUrl}" data-path="${safePath}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
     <button class="cvm-play" onclick="window._chatPlayVoice(this)">
       <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
     </button>

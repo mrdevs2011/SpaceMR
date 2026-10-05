@@ -1928,12 +1928,14 @@ export function paintMessages(msgs, grp = null) {
 
     if (m.type === 'voice') {
       /* ── Voice message ── */
-      const voiceMedia = { url: getLocalVoiceUrl(m.id) || m.mediaUrl || '', duration: m.duration || 0 };
-      const dur = voiceMedia.duration ? fmtVoiceDur(voiceMedia.duration) : '0:00';
-      const barCount = _voiceBarCount(voiceMedia.duration);
-      const safeUrl = (voiceMedia.url || '').replace(/"/g, '&quot;');
-      // Serverdagi to'lqin bor bo'lsa — decode/fetch kerak emas (barlar darhol to'g'ri chiziladi)
-      if (Array.isArray(m.waveform) && m.waveform.length) primeWaveform(voiceMedia.url, barCount, m.waveform);
+      const _dur = Math.max(0, Number(m.duration) || 0);
+      const _vUrl = getLocalVoiceUrl(m.id) || m.mediaUrl || (m.mediaPath ? (mediaPublicUrl(m.mediaPath) || '') : '') || '';
+      const voiceMedia = { url: _vUrl, path: m.mediaPath || '', duration: _dur };
+      const dur = _dur ? fmtVoiceDur(_dur) : '0:00';
+      const barCount = _voiceBarCount(_dur);
+      const safeUrl = (_vUrl || '').replace(/"/g, '"');
+      // Server waveform: decode/fetch kerak emas
+      if (Array.isArray(m.waveform) && m.waveform.length && _vUrl) primeWaveform(_vUrl, barCount, m.waveform);
       const _mpName = (mine ? 'Siz' : (grp ? (grp.names?.[m.senderId]?.fullName || 'Ovozli xabar') : ($('chatThreadName')?.textContent || 'Ovozli xabar'))).replace(/"/g, '&quot;');
       bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state });
     } else if (m.type === 'file') {
