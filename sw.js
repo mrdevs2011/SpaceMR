@@ -10,6 +10,7 @@
 function friendlyBody(data) {
   let b = String(data.body || '').replace(/\s+/g, ' ').trim();
   b = b.replace(/\{\s*"__postShare"[\s\S]*$/, '📌 Post ulashdi');
+  b = b.replace(/\{\s*"__callLog"[\s\S]*$/, "📞 Qo'ng'iroq");
   if (b.startsWith('{"__')) b = '💬 Yangi xabar';
   if (data.type === 'call' && b && !b.startsWith('📞')) b = '📞 ' + b;
   return b;

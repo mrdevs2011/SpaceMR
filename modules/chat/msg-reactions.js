@@ -263,7 +263,7 @@ function placeHover() {
 
 function showHover(row) {
   if (!canHover() || !row?.isConnected) return;
-  if (busy() || mineOn(row)) { hideHover(); return; }   // men allaqachon reaksiya qo'ygan — hover panel yo'q
+  if (busy() || mineOn(row) || row.querySelector('.bubble-call')) { hideHover(); return; }   // men allaqachon reaksiya qo'ygan — hover panel yo'q
   ensureHover();
   clearTimeout(hideT);
   if (hRow !== row) { hidePick(); hRow = row; }

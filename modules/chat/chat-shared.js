@@ -56,8 +56,36 @@ export function parsePostShare(raw) {
   return null;
 }
 
-export function formatLastMessageText(raw) {
+/* ── Qo'ng'iroq yozuvi (chatda saqlanadi): {"__callLog":true,"s":"ok"|"no","d":soniya}.
+   Qo'ng'iroq qilgan odam yuboradi (sender = chaqiruvchi) — shuning uchun faqat u o'chira oladi. */
+export function parseCallLog(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const t = raw.trim();
+  if (!t.startsWith('{') || !t.includes('"__callLog"')) return null;
+  try {
+    const p = JSON.parse(t);
+    if (p && (p.__callLog === true || p.__callLog === 'true')) return { ok: p.s === 'ok', d: Math.max(0, Math.round(+p.d || 0)) };
+  } catch (_) {}
+  return null;
+}
+
+export function fmtCallDur(sec) {
+  sec = Math.max(0, Math.round(sec || 0));
+  if (sec < 60) return `${sec} soniya`;
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return s ? `${m} daq ${s} soniya` : `${m} daq`;
+}
+
+/** mine = yozuvni men (chaqiruvchi) yuborganman. kind: 'out' | 'in' | 'miss' | 'cancel' */
+export function callLogInfo(cl, mine) {
+  if (mine) return cl.ok ? { kind: 'out', title: "Chiquvchi qo'ng'iroq" } : { kind: 'cancel', title: "Bekor qilingan qo'ng'iroq" };
+  return cl.ok ? { kind: 'in', title: "Kiruvchi qo'ng'iroq" } : { kind: 'miss', title: "O'tkazib yuborilgan qo'ng'iroq" };
+}
+
+export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
+  const cl = parseCallLog(raw);
+  if (cl) return `📞 ${callLogInfo(cl, mine).title}`;
   const ps = parsePostShare(raw);
   if (ps) {
     if (ps.comment && ps.comment.trim()) {

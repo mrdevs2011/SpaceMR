@@ -22,6 +22,7 @@ export {
 import { sb, state } from '../core/config.js';
 import { $ } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
+import { sendCallLog } from '../chat/chat-actions.js';
 import { TURN_URLS, TURN_USERNAME, TURN_CREDENTIAL } from '../core/env.js';
 
 /* calls qatori (snake_case) → eski Firestore ko'rinishi */
@@ -142,6 +143,9 @@ document.addEventListener('visibilitychange', () => {
 let _pc          = null;
 let _localStream = null;
 let _callId      = null; // hozirgi qo'ng'iroq yozuvining uuid si
+let _callChatId  = null; // chaqiruvchi: qo'ng'iroq boshlangan chat (tarix yozuvi uchun)
+let _callPeerUid = null;
+const _logged    = new Set(); // tarix yozuvi ikki marta yozilmasin
 let _pendingIce  = [];   // call yozuvi yaratilguncha kelgan ICE candidate'lar
 let _callUnsub   = null;
 let _callTimer   = null;
@@ -198,35 +202,40 @@ let _ringVibrate  = null;
 function _startRingtone() {
   _stopRingtone();
 
-  // Telefon jiringlash ovozi (klassik ring pattern: 440Hz + 480Hz mix)
+  // So'zsiz marimba/music-box melodiyasi (WebAudio, fayl kerak emas): pentatonika, har ~3.2s da takrorlanadi.
+  // Eslatma: veb-ilova qurilmaning tizim ringtone'ini o'qiy olmaydi — shuning uchun doim shu melodiya.
   try {
     _ringCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_ringCtx.state === 'suspended') _ringCtx.resume().catch(() => {});
 
+    const MELODY = [ // [chastota Hz, boshlanish s]
+      [659.25, 0.00], [783.99, 0.20], [1046.5, 0.40], [783.99, 0.70],
+      [659.25, 0.90], [783.99, 1.10], [1174.66, 1.30], [1046.5, 1.70],
+    ];
+    function _marimba(freq, t) {
+      const g = _ringCtx.createGain();
+      g.connect(_ringCtx.destination);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.2, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      [[1, 1], [4, 0.22], [10, 0.05]].forEach(([mul, amp]) => {
+        const o = _ringCtx.createOscillator();
+        const og = _ringCtx.createGain();
+        og.gain.value = amp;
+        o.type = 'sine';
+        o.frequency.value = freq * mul;
+        o.connect(og); og.connect(g);
+        o.start(t); o.stop(t + 1);
+      });
+    }
     function _ringOnce() {
       if (!_ringCtx) return;
-      const dur = 1.2; // bir marta jiringlash davomiyligi
-
-      [440, 480].forEach(freq => {
-        const osc  = _ringCtx.createOscillator();
-        const gain = _ringCtx.createGain();
-        osc.connect(gain);
-        gain.connect(_ringCtx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-
-        const t = _ringCtx.currentTime;
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.25, t + 0.05);
-        gain.gain.setValueAtTime(0.25, t + dur - 0.1);
-        gain.gain.linearRampToValueAtTime(0, t + dur);
-        osc.start(t);
-        osc.stop(t + dur);
-      });
+      const t0 = _ringCtx.currentTime + 0.02;
+      MELODY.forEach(([f, dt]) => _marimba(f, t0 + dt));
     }
 
     _ringOnce();
-    // Har 2 soniyada jiringlaydi (1.2s ovoz + 0.8s pauza)
-    _ringLoop = setInterval(_ringOnce, 2000);
+    _ringLoop = setInterval(_ringOnce, 3200);
   } catch (_) {}
 
   // Tebranish pattern: [jiringlash, pauza, jiringlash, pauza...]
@@ -476,6 +485,12 @@ function _hideActiveCallModal() {
 
 /* ── Qo'ng'iroqni to'liq tugatish ── */
 async function _endCall(notify = true) {
+  // Tarix yozuvi uchun holatni timer/flaglar nollanishidan OLDIN olamiz (faqat chaqiruvchi yozadi)
+  let _log = null;
+  if (_isCaller && _callId && _callChatId && !_logged.has(_callId)) {
+    _logged.add(_callId);
+    _log = { chat: _callChatId, peer: _callPeerUid, connected: _callConnected, sec: _callSec };
+  }
   _stopCallTimer();
   _stopRingback();
   _stopMicPulse();
@@ -520,6 +535,7 @@ async function _endCall(notify = true) {
     }
   }
   _callId = null;
+  _callChatId = null; _callPeerUid = null;
   _pendingIce = [];
   _isCaller   = false;
   _facingMode = 'user';
@@ -529,6 +545,9 @@ async function _endCall(notify = true) {
   _callConnected     = false;
   _lastRenegoOfferTs  = 0;
   _lastRenegoAnswerTs = 0;
+
+  // Chatga qo'ng'iroq yozuvi (chiquvchi/bekor qilingan) — kiruvchi tomonda o'tkazib yuborilgan/kiruvchi bo'lib ko'rinadi
+  if (_log) sendCallLog(_log.chat, _log.peer, { connected: _log.connected, seconds: _log.sec });
 }
 
 /* ── PeerConnection yaratish ── */
@@ -692,6 +711,8 @@ async function initiateCall(isVideo) {
   _callIsVideo = isVideo;
   _isCaller    = true;
   _facingMode  = 'user';
+  _callChatId  = state.currentChatId || null;
+  _callPeerUid = uid;
 
   // Har yangi qo'ng'iroqda speaker = off (earpiece, default)
   _speakerOn = false;

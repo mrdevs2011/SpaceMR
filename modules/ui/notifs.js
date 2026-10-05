@@ -8,6 +8,7 @@ import { $, esc, defAvi } from '../core/utils.js';
 function preview(m) {
   if (m.type === 'voice') return 'Ovozli xabar';
   if (m.type === 'file' || m.type === 'image') return m.text || 'Fayl';
+  if ((m.text || '').includes('"__callLog"')) { try { return JSON.parse(m.text).s === 'ok' ? 'Kiruvchi qo‘ng‘iroq' : 'O‘tkazib yuborilgan qo‘ng‘iroq'; } catch (_) {} }
   return (m.text || '').trim() || 'Xabar';
 }
 function when(ts) {

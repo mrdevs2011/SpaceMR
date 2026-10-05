@@ -543,7 +543,7 @@ function _paintUserRows(users, animate = false) {
     const online = isUidOnline(u.uid, isOnline(u.lastSeenAt));
     const isAdminUser = u.username === 'admin';
     const rawPreview = c?.lastMessage || '';
-    const formattedLastMsg = formatLastMessageText(rawPreview);
+    const formattedLastMsg = formatLastMessageText(rawPreview, c?.lastSenderId === state.me?.uid);
     const preview = (c && rawPreview)
       ? `${c.lastSenderId === state.me.uid ? 'You: ' : ''}${esc(formattedLastMsg.slice(0, 46))}`
       : isAdminUser ? "Admin bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
@@ -619,7 +619,7 @@ import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
-import { generateVoiceBubble, generateFileBubble, generateTextBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
+import { generateVoiceBubble, generateFileBubble, generateTextBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
 import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
@@ -644,7 +644,7 @@ import {
   clearChatDeletedLocal,
   getChatDeletedAt,
 } from './chat-storage.js';
-import { initChatVoiceRecording, forceStopVoiceRecording } from './chat-voice-record.js';
+import { initChatVoiceRecording, forceStopVoiceRecording, canRecordMedia } from './chat-voice-record.js';
 import {
   initVoicePlayer,
   fmtVoiceDur,
@@ -662,6 +662,7 @@ import {
   _isSameDay,
   _dateSepLabel,
   parsePostShare,
+  parseCallLog,
   formatLastMessageText,
   _showPendingBubble,
   _updatePendingProgress,
@@ -1909,17 +1910,26 @@ export function paintMessages(msgs, grp = null) {
       const hasCaption = !!(m.text && m.text.trim());
       const captionHtml = hasCaption ? `<div class="chat-bubble-text cfm-caption">${renderMarkdown(m.text)}</div>` : '';
       
-      const bData = generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when: `${_dateSepLabel(m.createdAt)}, ${time}` });
+      const bData = generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when: `${_dateSepLabel(m.createdAt)}, ${time}`, dm: !grp });
       bubbleClassExtra = bData.bubbleClassExtra;
       metaOutside = bData.metaOutside;
       bubbleContent = bData.bubbleContent;
     } else {
       /* ── Text message ── */
-      const postShare = parsePostShare(m.text);
-      const bData = generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
-      bubbleClassExtra = bData.bubbleClassExtra;
-      bubbleContent = bData.bubbleContent;
-      emoCls = bData.emoCls;
+      const callLog = grp ? null : parseCallLog(m.text);
+      if (callLog) {
+        /* ── Qo'ng'iroq yozuvi ── */
+        const cData = generateCallBubble({ cl: callLog, mine, time });
+        bubbleClassExtra = cData.bubbleClassExtra;
+        bubbleContent = cData.bubbleContent;
+        metaOutside = false;
+      } else {
+        const postShare = parsePostShare(m.text);
+        const bData = generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
+        bubbleClassExtra = bData.bubbleClassExtra;
+        bubbleContent = bData.bubbleContent;
+        emoCls = bData.emoCls;
+      }
     }
 
     // ID asosida "yangi"lik: shu xabar ID'si ilgari chizilmagan bo'lsagina
@@ -2402,7 +2412,7 @@ export function updateVoiceSendBtn() {
   const hasText = inp?.value?.trim().length > 0;
   const hasFile = !!chatState._chatSelFile;
   const hasPost = !!chatState._pendingPostShare;
-  const showSend = hasText || hasFile || hasPost;
+  const showSend = hasText || hasFile || hasPost || !canRecordMedia();   // mic ham, kamera ham yo'q → doim yuborish tugmasi
   const mic  = $('chatVoiceBtn').querySelector('.icon-mic');
   const send = $('chatVoiceBtn').querySelector('.icon-send');
   if (mic)  mic.style.display  = showSend ? 'none'  : '';
@@ -2471,7 +2481,7 @@ initMsgMenu({
       // DM: chatlar ro'yxatidagi oxirgi xabar prevyusi ham o'chirilgan xabarda qolmasin
       const cm = chatState._latestChatMap?.[state.currentChatUid], last = next[next.length - 1];
       if (cm) {
-        cm.lastMessage = last ? (last.type === 'voice' ? 'Ovozli xabar' : last.type === 'file' ? (last.text || last.fileName || 'Fayl') : (last.text || '')).slice(0, 120) : '';
+        cm.lastMessage = last ? (last.type === 'voice' ? 'Ovozli xabar' : last.type === 'file' ? (last.text || (/^vnote_/i.test(last.fileName || '') ? 'Video xabar' : last.fileName) || 'Fayl') : (last.text || '')).slice(0, 120) : '';
         cm.lastSenderId = last ? last.senderId : null;
       }
     }
@@ -2521,6 +2531,8 @@ initEmojiPicker({ btn: $('chatEmojiBtn'), pop: $('chatEmojiQuickpick'), input: $
 /* Voice hold-to-talk — modules/chat-voice-record.js */
 initChatVoiceRecording({
   onRecorded: (blob, duration) => { sendVoiceMessage(blob, duration); },
+  onVideoRecorded: (file) => { sendChatFile(file, ''); },
+  onDevicesChange: () => { try { updateVoiceSendBtn(); } catch (_) {} },
   isComposerBusy: () => {
     const hasText = !!$('chatThreadInput')?.value?.trim();
     return hasText || !!chatState._chatSelFile || !!chatState._pendingPostShare;

@@ -41,6 +41,10 @@ function preview(r: any): string {
     return c ? `📌 ${clip(c)}` : `📌 Post: ${share.post?.authorName || "ulashilgan post"}`;
   }
   const t = String(r.text ?? "");
+  // Qo'ng'iroq yozuvi ({"__callLog":true,"s":"ok"|"no"}) — chaqiruvchi yuboradi, qabul qiluvchiga: kiruvchi / o'tkazib yuborilgan
+  if (t.includes('"__callLog"')) {
+    try { return JSON.parse(t).s === "ok" ? "📞 Qo'ng'iroq" : "📞 O'tkazib yuborilgan qo'ng'iroq"; } catch { /* pastga */ }
+  }
   // Kutilmagan xom JSON (boshqa maxsus xabar) — chiroyli umumiy matn
   if (t.trim().startsWith('{"__')) return "💬 Yangi xabar";
   return clip(t);

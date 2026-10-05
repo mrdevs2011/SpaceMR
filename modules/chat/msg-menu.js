@@ -34,6 +34,7 @@ const isDM = () => !state.currentChatKind || state.currentChatKind === 'dm';
 const tbl = () => isDM() ? 'messages' : 'group_messages';
 const msgOf = id => (api?.getMsgs() || []).find(m => m.id === id);
 const isMine = m => m && m.senderId === state.me?.uid;
+const isCallMsg = m => !!(m && m.text && m.text.includes('"__callLog"'));   // qo'ng'iroq yozuvi: faqat o'chirish / tanlash
 /* O'chirish huquqi: o'z xabarim YOKI moderator (sayt admini / shu guruhning owner-admini) — boshqaning xabarini ham.
    Haqiqiy ruxsatni baza (RLS: messages_delete / gmsg_delete) ham tekshiradi. */
 const canDel = m => !!m && (isMine(m) || !!api.canModerate?.());
@@ -217,6 +218,11 @@ function menuHtml(m) {
   if (mine && m.status === 'sending') {
     return it('resend', IC.resend, 'Qayta yuborish');
   }
+  if (isCallMsg(m)) {
+    let c = '';
+    if (canDel(m)) c += it('del', IC.del, 'O‘chirish', 'danger');
+    return c + it('sel', IC.sel, 'Tanlash');
+  }
   const hasText = !!(m.text || '').trim();
   let h = '';
   const isPostShare = m.text && m.text.includes('"__postShare"');
@@ -244,7 +250,7 @@ function openMenu(row, x, y) {
   reactHoverHide();
   openId = id;
   row.classList.add('mc-active');
-  const canReact = !!m.id && !(isMine(m) && m.status === 'sending');
+  const canReact = !!m.id && !(isMine(m) && m.status === 'sending') && !isCallMsg(m);
   menu.classList.remove('mc-expanded');
   menu.innerHTML = (canReact ? reactStripHtml(m) : '') + `<div class="mc-items">${menuHtml(m)}</div>`;
   // Reaksiya qatori: sichqoncha g'ildiragi bilan gorizontal aylantirish
@@ -539,10 +545,12 @@ function paintSel(keepEmpty) {
   // Nusxalash / Tahrirlash / O'chirish — FAQAT o'z xabarlarim tanlangan bo'lsa (DM ham, guruh ham).
   // Birorta begona xabar aralashsa — faqat "Uzatish" qoladi.
   const allMine = [...sel].every(id => isMine(msgOf(id)));
+  const hasCall = [...sel].some(id => isCallMsg(msgOf(id)));
+  selBar.querySelector('[data-sb="fwd"]').hidden = hasCall;
   selBar.querySelector('[data-sb="del"]').hidden = !allMine || ![...sel].every(id => canDel(msgOf(id)));
-  selBar.querySelector('[data-sb="copy"]').hidden = !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
+  selBar.querySelector('[data-sb="copy"]').hidden = hasCall || !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
-  selBar.querySelector('[data-sb="edit"]').hidden = !(allMine && one && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
+  selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
 }
 
 /* ── Uzatish (foydalanuvchi tanlash oynasi) ────────────────────────── */

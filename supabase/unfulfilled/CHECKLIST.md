@@ -28,3 +28,5 @@ Eslatma: Bajarilgan patchlar `migrations/` ga ko'chiriladi (README).
 > 2026-10-01 (kech): 013 ham yurgizildi va `migrations/` ga ko'chirildi.
 
 > 2026-10-01 (18:10): 016 (`group_messages.duration`, type='voice' check constraint, trigger last_message) CLI orqali bazada to'liq yurgizildi va `migrations/` ga ko'chirildi. `unfulfilled/` da ochiq patch qolmadi.
+
+> 2026-10-05: 064 (o'chirilgan xabar prevyusi) bazada yurgizilgan va `migrations/` ga ko'chirildi. `unfulfilled/` da ochiq patch yo'q.

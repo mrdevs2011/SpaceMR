@@ -6901,8 +6901,8 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 .chat-msg .mr-chip { --chip-bg: #16181c; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid rgba(231, 233, 234, 0.24); border-radius: 14px; background: var(--chip-bg); color: #e7e9ea; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); -webkit-tap-highlight-color: transparent; transition: background .12s ease, transform .12s ease; }
 .chat-msg .mr-chip:hover { --chip-bg: #202327; }
 .chat-msg .mr-chip:active { transform: scale(.94); }
-.chat-msg .mr-chip.mine { --chip-bg: var(--x-blue, #1d9bf0); border-color: transparent; color: #fff; }
-.chat-msg .mr-chip.mine:hover { --chip-bg: #1a8cd8; }
+.chat-msg .mr-chip.mine { --chip-bg: #2b2152; border-color: rgba(167, 139, 250, 0.75); color: #fff; }
+.chat-msg .mr-chip.mine:hover { --chip-bg: #382a6a; }
 .chat-msg .mr-chip.few { padding: 0 3px 0 9px; }
 .chat-msg .mr-chip .mr-e { font-size: 16px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 .chat-msg .mr-chip .mr-n { font-size: 13px; font-weight: 700; }
@@ -14251,3 +14251,64 @@ select.field option { background: #000000; color: var(--text); }
 .chat-msg.emoji-only .chat-msg-meta { display: inline-flex; align-items: center; gap: 4px; float: none; width: fit-content; margin: 4px 0 0; padding: 2px 8px; border-radius: 10px; background: var(--pal-gray-800, #1c1f23); color: var(--pal-gray-400, #8b98a5); font-size: 12px; line-height: 16px; }
 .chat-msg.emoji-only .chat-msg-meta .chat-msg-time { color: inherit; }
 .chat-msg.emoji-only .grp-sender-name { display: none; }
+
+
+/* ═══ Chatdagi video preview (message-bubble.js): birinchi kadr + play + davomiylik ═══ */
+.cfm-vid-box { position: relative; display: block; line-height: 0; border-radius: 16px; overflow: hidden; background: #000; }
+.cfm-vid { display: block; width: 100%; max-width: 280px; max-height: 340px; aspect-ratio: 16 / 9; object-fit: cover; background: #000; border-radius: inherit; }
+.cfm-vid-wrap.playing .cfm-vid { object-fit: contain; }
+.cfm-vid-play { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .15s ease, opacity .15s ease; -webkit-tap-highlight-color: transparent; }
+.cfm-vid-wrap:hover .cfm-vid-play { transform: scale(1.1); }
+.cfm-vid-dur { position: absolute; left: 6px; top: 6px; padding: 2px 7px; border-radius: 12px; background: rgba(0, 0, 0, 0.55); color: #e7e9ea; font-size: 11px; line-height: 1.2; pointer-events: none; }
+.cfm-vid-dur:empty { display: none; }
+.cfm-vid-wrap.playing .cfm-vid-play, .cfm-vid-wrap.playing .cfm-vid-dur, .cfm-vid-wrap.playing .cfm-media-badge { display: none; }
+.bubble-media-caption .cfm-vid-box, .bubble-media-caption .cfm-vid { max-width: 100%; border-radius: 0; }
+
+
+/* ═══ Chatdagi qo'ng'iroq yozuvi (Telegram uslubi): message-bubble.js → generateCallBubble ═══ */
+#chatThreadModal .chat-msg.mine .chat-bubble.bubble-call { background: #2b5278; border-radius: 18px; }
+#chatThreadModal .chat-msg.theirs .chat-bubble.bubble-call { background: #222c36; border-radius: 18px; }
+.chat-call-msg { display: flex; align-items: center; gap: 22px; min-width: 210px; padding: 2px 2px; color: #fff; }
+.chat-call-msg .ccm-info { flex: 1 1 auto; min-width: 0; }
+.chat-call-msg .ccm-title { font-size: 15px; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+.chat-call-msg .ccm-sub { display: flex; align-items: center; gap: 5px; margin-top: 2px; font-size: 13px; line-height: 1.2; color: #8fb8dc; white-space: nowrap; }
+.chat-call-msg .ccm-arrow { display: inline-flex; transform: rotate(180deg); color: #6ab3f3; }
+.chat-call-msg .ccm-arrow.out { transform: none; }
+.chat-call-msg.bad .ccm-arrow { color: #ff6b6b; }
+.chat-call-msg .ccm-btn { flex: none; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; color: #5eb5f7; cursor: pointer; transition: background .12s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
+.chat-call-msg .ccm-btn:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.08); }
+
+
+/* ═══ 1v1 chat: rasm/video pufakka o'ralmaydi — faqat 1.5px border (pufak faqat guruhlarda) ═══ */
+.cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: 16px; overflow: hidden; }
+.chat-msg.mine .cfm-media-dm { border-color: rgba(29, 155, 240, 0.55); }
+.cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview { border-radius: 0; }
+.cfm-cap-dm { margin-top: 4px; max-width: 280px; }
+.cfm-cap-dm .cfm-caption { padding: 7px 12px; border-radius: 18px; font-size: 14.5px; line-height: 1.4; word-break: break-word; }
+.cfm-cap-dm .cfm-caption p { margin: 0; }
+#chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }
+#chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-bottom-left-radius: 5px; }
+
+
+/* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */
+.chat-voice-btn .icon-vnote { display: none; width: 24px; height: 24px; fill: none !important; stroke: var(--text) !important; }
+.chat-voice-btn.mode-video:not(.is-send) .icon-vnote { display: block; }
+.chat-voice-btn.mode-video .icon-mic { display: none !important; }
+.chat-voice-btn.is-send .icon-vnote { display: none !important; }
+.chat-voice-btn.recording .icon-vnote { stroke: var(--pal-white) !important; }
+
+#vnotePreview { position: fixed; inset: 0; z-index: 9000; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.45); pointer-events: none; }
+#vnotePreview.show { display: flex; }
+#vnotePreview .vnp-circle { position: relative; width: min(72vw, 300px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #000; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6); }
+#vnotePreview .vnp-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+#vnotePreview .vnp-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
+#vnotePreview .vnp-ring-fg { fill: none; stroke: #ff3b30; stroke-width: 2.5; stroke-linecap: round; }
+
+.cfm-note-wrap { position: relative; width: min(240px, 64vw); aspect-ratio: 1; cursor: pointer; }
+.cfm-note { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #000; border: 1.5px solid rgba(231, 233, 234, 0.22); box-sizing: border-box; }
+.chat-msg.mine .cfm-note { border-color: rgba(29, 155, 240, 0.55); }
+.cfm-note-vid { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cfm-note-play { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: none; }
+.cfm-note-wrap.playing .cfm-note-play { display: none; }
+.cfm-note-badge { right: 50%; bottom: 7%; transform: translateX(50%); }
+.cfm-note-wrap.playing .cfm-note-badge { opacity: 0; }

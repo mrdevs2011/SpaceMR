@@ -1,7 +1,7 @@
 -- 063 (2026-10-05): xabarlarga reaksiya (DM + guruh). Bir foydalanuvchi — bir xabarga bitta reaksiya.
 -- Klient: modules/chat/msg-reactions.js (menyu tepasida tezkor emoji qatori + chevron paneli, chiplar xabar tagida).
 -- message_id — messages.id yoki group_messages.id (ikki jadval, shuning uchun FK yo'q; xabar o'chsa trigger tozalaydi).
--- Idempotent. Ishga tushirish: Supabase SQL editor.
+-- Idempotent. Bazada yurgizilgan (2026-10-05).
 
 create table if not exists public.message_reactions (
   message_id uuid        not null,

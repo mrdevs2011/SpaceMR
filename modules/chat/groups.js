@@ -738,7 +738,7 @@ export async function sendGroupFile(file, caption = '') {
       text: captionText || null,
     });
     if (error) throw error;
-    const previewText = captionText ? ('📎 ' + captionText) : ('📎 ' + (file.name || 'Fayl'));
+    const previewText = captionText ? ('📎 ' + captionText) : (/^vnote_/i.test(file.name || '') ? '🎥 Video xabar' : ('📎 ' + (file.name || 'Fayl')));
     _gRt?.send({
       id, type: 'file', text: captionText || null,
       mediaPath: result.path, mediaType: file.type || null,

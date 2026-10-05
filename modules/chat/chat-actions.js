@@ -96,6 +96,25 @@ export async function sendChatMessage() {
   }
 }
 
+/** Qo'ng'iroq tugagach chatga yozuv qo'shadi (chaqiruvchi tomondan). connected=false → bekor qilingan/o'tkazib yuborilgan. */
+export async function sendCallLog(chatId, otherUid, { connected = false, seconds = 0 } = {}) {
+  if (!chatId || !state.me) return;
+  const id = _uuid();
+  const nowMs = Date.now();
+  const text = JSON.stringify({ __callLog: true, s: connected ? 'ok' : 'no', d: connected ? Math.max(0, Math.round(seconds || 0)) : 0 });
+  try {
+    const { error } = await sb.from('messages').insert({ id, chat_id: chatId, sender_id: state.me.uid, type: 'text', text });
+    if (error) throw error;
+    // Peer ro'yxatida: o'zining nuqtai nazaridan (kiruvchi / o'tkazib yuborilgan)
+    inboxSend(otherUid, { chatId, from: state.me.uid, id, text: connected ? "📞 Kiruvchi qo'ng'iroq" : "📞 O'tkazib yuborilgan qo'ng'iroq", ts: nowMs });
+    const lc = chatState._latestChatMap[otherUid];
+    if (lc) { lc.lastMessage = text; lc.lastMessageAt = nowMs; lc.lastSenderId = state.me.uid; }
+    chatState._reloadThread && chatState._reloadThread();
+  } catch (e) {
+    console.warn('[callLog]', e?.message || e);
+  }
+}
+
 export async function sendVoiceMessage(blob, duration) {
   if (state.currentChatKind && state.currentChatKind !== 'dm') return sendGroupVoice(blob, duration);
   if (!state.currentChatId || !state.me) return;
@@ -206,7 +225,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
       text: caption || null,
     });
     if (error) throw error;
-    const previewText = caption ? ('📎 ' + caption) : ('📎 ' + (file.name || 'Fayl'));
+    const previewText = caption ? ('📎 ' + caption) : (/^vnote_/i.test(file.name || '') ? '🎥 Video xabar' : ('📎 ' + (file.name || 'Fayl')));
     // Tezkor yo'l: peer darhol ko'rsin
     if (chatState._rt && chatState._rtChatId === chatId) {
       chatState._rt.send({
