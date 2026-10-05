@@ -371,7 +371,7 @@ async function submitStory() {
   $('uploadBtn').disabled    = true;
   $('uploadBtn').textContent = 'Yuklanmoqda…';
   $('uploadOverlay').classList.remove('show');
-  unlockScroll();
+  unlockScroll('uploadOverlay');
   floatBarShow('story');
   // Composer tozalanadi, lekin blob URL revoke qilinmaydi (optimistic ko'rinish uchun)
   const fileRef = file;
@@ -484,7 +484,7 @@ export async function submitPost() {
   $('uploadBtn').disabled    = true;
   $('uploadBtn').textContent = 'Yuklanmoqda…';
   $('uploadOverlay').classList.remove('show');
-  unlockScroll();
+  unlockScroll('uploadOverlay');
   if (hasFile) floatBarShow('post');
   _clearHomeComposerUi();
   // Composer tozalash — blob revoke YO'Q (optimistic media uchun)
@@ -590,7 +590,7 @@ function loadComposerAvi() {
 /* ── Overlay open/close ──────────────────────────────────────────────── */
 export function openComposer() {
   $('uploadOverlay').classList.add('show');
-  lockScroll();
+  lockScroll('uploadOverlay');
   resetUpload();
   loadComposerAvi();
 }
@@ -598,7 +598,7 @@ export function openComposer() {
 export function openStoryComposer() {
   if (!state.me) return;
   $('uploadOverlay').classList.add('show');
-  lockScroll();
+  lockScroll('uploadOverlay');
   resetUpload();
   _setComposerMode('story');
   $('uploadBtn').textContent = 'Story';
@@ -792,9 +792,9 @@ function _bindHomeComposer() {
 }
 _bindHomeComposer();
 
-$('cancelUpload').onclick = () => { $('uploadOverlay').classList.remove('show'); unlockScroll(); resetUpload(); };
+$('cancelUpload').onclick = () => { $('uploadOverlay').classList.remove('show'); unlockScroll('uploadOverlay'); resetUpload(); };
 $('uploadOverlay').onclick = e => {
-  if (e.target === $('uploadOverlay')) { $('uploadOverlay').classList.remove('show'); unlockScroll(); resetUpload(); }
+  if (e.target === $('uploadOverlay')) { $('uploadOverlay').classList.remove('show'); unlockScroll('uploadOverlay'); resetUpload(); }
 };
 
 /* ── File input / drop / paste ───────────────────────────────────────── */
@@ -827,7 +827,7 @@ window.addEventListener('paste', e => {
       const f = item.getAsFile();
       if (!f) continue;
       if (_chatCtx()) { e.preventDefault(); _toChat(f); break; }
-      pickFile(f); $('uploadOverlay').classList.add('show'); lockScroll(); break;
+      pickFile(f); $('uploadOverlay').classList.add('show'); lockScroll('uploadOverlay'); break;
     }
   }
 });

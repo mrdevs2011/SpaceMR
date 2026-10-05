@@ -9292,6 +9292,15 @@ textarea:not(:focus) {
   contain: layout style;
 }
 
+/* Lenta: content-visibility HAQIQATAN o'chirildi. features.css dagi `.post` / `#feed` uchun
+   `content-visibility: auto` yuqoridagi izohga qaramay kuchda qolgan edi: ko'rinmagan postlar
+   300px deb hisoblanib, haqiqiy balandlikka o'tganda scroll siljirdi (body{overflow-anchor:none} bo'lgani uchun
+   brauzer buni tuzatmaydi). Qaytarish kerak bo'lsa — faqat shu blokni olib tashlang. */
+.post, #feed, #feedList, .feed-scroll {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
 /* Desktop: settings page back/chevron button not needed — panel closes by clicking outside */
 @media (min-width: 1100px) {
   #settingsOverlay .settings-back,

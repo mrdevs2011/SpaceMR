@@ -77,7 +77,7 @@ if (settingsBtn) {
     if (settingsOverlay) {
       settingsOverlay.classList.add('show');
       // Desktopda scroll qulflanmasin (side panel)
-      if (!window.matchMedia('(min-width: 1200px)').matches) lockScroll();
+      if (!window.matchMedia('(min-width: 1200px)').matches) lockScroll('settingsOverlay');
     }
   };
 }
@@ -94,7 +94,7 @@ if (closeSettingsBtn) {
     if (isDesktopSettingsPinned()) return;
     $('settingsMoreMenu')?.classList.remove('show');
     const settingsOverlay = $('settingsOverlay');
-    if (settingsOverlay) { settingsOverlay.classList.remove('show'); unlockScroll(); }
+    if (settingsOverlay) { settingsOverlay.classList.remove('show'); unlockScroll('settingsOverlay'); }
   };
 }
 
@@ -105,7 +105,7 @@ if (settingsOverlay) {
       if (isDesktopSettingsPinned()) return;
       $('settingsMoreMenu')?.classList.remove('show');
       settingsOverlay.classList.remove('show');
-      unlockScroll();
+      unlockScroll('settingsOverlay');
     }
   };
 }

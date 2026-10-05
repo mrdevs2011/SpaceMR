@@ -55,7 +55,7 @@ let _regenRot = 0;
 function closeOverlay() {
   const ov = $('adminResetPwdOverlay');
   if (ov) ov.style.display = 'none';
-  unlockScroll();
+  unlockScroll('adminResetPwdOverlay');
 }
 
 function showStep(step) {
@@ -99,7 +99,7 @@ export function adminResetPassword(uid, displayName) {
 
   showStep('confirm');
   ov.style.display = 'flex';
-  lockScroll();
+  lockScroll('adminResetPwdOverlay');
 
   /* Backdrop click → yopish */
   ov.onclick = (e) => { if (e.target === ov) closeOverlay(); };
