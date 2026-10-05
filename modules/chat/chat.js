@@ -2451,6 +2451,8 @@ $('chatThreadBack').onclick = closeChatThread;
 initMsgMenu({
   box: $('chatThreadMessages'),
   getMsgs: () => chatState._curMsgs,
+  // Moderator: sayt admini yoki shu guruhning owner/admini — boshqalarning xabarini ham o'chira oladi
+  canModerate: () => isAdmin() || (state.currentChatKind === 'group' && !!chatUI.isGroupModerator?.()),
   reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) chatState._reloadThread(); },
   markSent: (id) => {
     const conf = chatState._rtLocal.get(id);
@@ -2462,7 +2464,10 @@ initMsgMenu({
     const set = new Set((ids || []).map(String));
     if (!set.size) return;
     ids.forEach(id => { try { chatState._rtLocal.delete(id); } catch (_) {} });
-    paintMessages(chatState._curMsgs.filter(x => !set.has(String(x.id))));
+    const next = chatState._curMsgs.filter(x => !set.has(String(x.id)));
+    // Guruhda ism/avatar sarlavhalari yo'qolib ketmasligi uchun guruh painter'i bilan chizamiz
+    if (state.currentChatKind === 'group' && chatUI.groupNames) paintGroupThread(next, chatUI.groupNames());
+    else paintMessages(next);
   },
   syncInput: updateVoiceSendBtn,
   getUsers: async () => (chatState._usersCache && chatState._usersCache.length) ? chatState._usersCache : await _fetchChatUsers(),

@@ -34,6 +34,9 @@ const isDM = () => !state.currentChatKind || state.currentChatKind === 'dm';
 const tbl = () => isDM() ? 'messages' : 'group_messages';
 const msgOf = id => (api?.getMsgs() || []).find(m => m.id === id);
 const isMine = m => m && m.senderId === state.me?.uid;
+/* O'chirish huquqi: o'z xabarim YOKI moderator (sayt admini / shu guruhning owner-admini) — boshqaning xabarini ham.
+   Haqiqiy ruxsatni baza (RLS: messages_delete / gmsg_delete) ham tekshiradi. */
+const canDel = m => !!m && (isMine(m) || !!api.canModerate?.());
 const rowOf = el => el?.closest?.('.chat-msg[data-msg-id]:not([data-msg-id=""])') || null;
 /** Xabar qatori: pufakning o'zi yoki uning yonidagi bo'sh joy (qator bo'ylab) — ikkalasi ham xabarga tegishli */
 function rowAtPoint(target, y) {
@@ -207,7 +210,7 @@ function menuHtml(m) {
   if (mine && m.type === 'text' && !isPostShare) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('link', IC.copy, 'Xabar havolasi');
   h += it('fwd', IC.fwd, 'Uzatish');
-  if (mine) h += it('del', IC.del, 'O‘chirish', 'danger');
+  if (canDel(m)) h += it('del', IC.del, 'O‘chirish', 'danger');
   h += it('sel', IC.sel, 'Tanlash');
   if (mine && !isDM()) {
     // Guruh: "kimlar ko'rdi" (ro'yxat openMenu() dan keyin asinxron yuklanadi)
@@ -368,7 +371,7 @@ async function resendMsg(id) {
 }
 
 function remove(ids) {
-  const own = ids.filter(id => isMine(msgOf(id)));
+  const own = ids.filter(id => canDel(msgOf(id)));   // o'chirishga ruxsat berilganlar (o'zimniki yoki moderator sifatida)
   if (!own.length) return;
   showConfirm(own.length > 1 ? `${own.length} ta xabar o‘chirilsinmi?` : 'Xabar o‘chirilsinmi?', () => {
     // 1) UI dan darhol (0 ms) — dissolve + local list
@@ -501,7 +504,7 @@ function paintSel(keepEmpty) {
   selBar.querySelectorAll('.msb-n').forEach(n => { n.textContent = sel.size; });
   // Faqat o'z xabarlarim tanlangan bo'lsa — o'chirish/nusxalash/tahrirlash; boshqalarniki aralashsa — faqat "Uzatish"
   const allMine = [...sel].every(id => isMine(msgOf(id)));
-  selBar.querySelector('[data-sb="del"]').hidden = !allMine;
+  selBar.querySelector('[data-sb="del"]').hidden = ![...sel].every(id => canDel(msgOf(id)));
   selBar.querySelector('[data-sb="copy"]').hidden = !isDM() || !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
   selBar.querySelector('[data-sb="edit"]').hidden = !(one && isMine(one) && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));

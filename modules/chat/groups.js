@@ -577,6 +577,13 @@ async function _gLoadReadMax(groupId) {
   } catch (_) { /* 062 hali ishga tushmagan — 1 chek qoladi */ }
 }
 
+/* chat.js / msg-menu uchun: joriy guruhda men owner/admin'manmi (boshqalarning xabarini o'chirish huquqi) */
+chatUI.isGroupModerator = () => {
+  const g = _currentGroupData, me = state.me?.uid;
+  return !!(g && me && (g.ownerId === me || (g.adminIds || []).includes(me)));
+};
+chatUI.groupNames = () => _gNames();
+
 /* Yuboruvchi ismlari + guruhdagi roli (owner/admin) — sarlavhada nishon uchun */
 function _gNames() {
   const out = { ..._senderCache };
