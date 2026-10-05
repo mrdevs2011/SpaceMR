@@ -128,8 +128,7 @@ export async function initView() {
   const st = await import('../admin/admin-storage.js').catch(() => null);
   st?.renderStorageUsage(anchor);
   import('../admin/admin-wipe.js').then(m => m.renderWipePanel(document.getElementById('actionsStorageInfo') || anchor, () => {
-    st?.removeStorageUsage();
-    st?.renderStorageUsage(anchor);
+    st?.refreshStorageUsage?.() || (st?.removeStorageUsage(), st?.renderStorageUsage(anchor));
   })).catch(() => {});
   import('../admin/admin-keys.js').then(m => m.renderKeysCheck(anchor)).catch(() => {});
 

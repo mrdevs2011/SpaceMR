@@ -38,18 +38,33 @@ async function run(scope, onDone) {
     // 1) Fayllar — Storage API (fayl o'zi ham o'chadi, faqat jadval qatori emas)
     const { data: paths, error: pe } = await sb.rpc('admin_wipe_paths', { p_scope: scope, p_password: password });
     if (pe) throw pe;
-    const list = paths || [];
+    const list = (paths || []).filter(Boolean);
     const bucket = sb.storage.from(MEDIA_BUCKET);
+    let removed = 0, failed = 0;
     for (let i = 0; i < list.length; i += 100) {
-      const { error } = await bucket.remove(list.slice(i, i + 100));
-      if (error) console.warn('[wipe] storage', error.message);
+      const chunk = list.slice(i, i + 100);
+      const { data: rm, error } = await bucket.remove(chunk);
+      if (error) {
+        console.warn('[wipe] storage', error.message);
+        failed += chunk.length;
+      } else {
+        removed += Array.isArray(rm) ? rm.length : chunk.length;
+      }
     }
-    // 2) Jadvallar
+    // 2) Jadvallar (+ storage.objects qatorlari RPC ichida)
     const { data, error } = await sb.rpc('admin_wipe', { p_scope: scope, p_password: password });
     if (error) throw error;
     const total = Object.values(data || {}).reduce((a, n) => a + (Number(n) || 0), 0);
-    toast(`${s.label} tozalandi: ${list.length} fayl, ${total} qator`, 'success');
+    const msg = failed
+      ? `${s.label}: ${removed} fayl o'chirildi, ${failed} xato; ${total} qator`
+      : `${s.label} tozalandi: ${removed} fayl, ${total} qator`;
+    toast(msg, failed ? 'error' : 'success');
     onDone?.();
+    // Storage hisobini darhol yangilash
+    try {
+      const st = await import('./admin-storage.js');
+      await st.refreshStorageUsage();
+    } catch (_) {}
   } catch (e) {
     console.error('[wipe]', e);
     toast('Tozalab bo\'lmadi: ' + (e?.message || 'xato'), 'error');
