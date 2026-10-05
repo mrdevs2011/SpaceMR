@@ -247,6 +247,10 @@ function openMenu(row, x, y) {
   const canReact = !!m.id && !(isMine(m) && m.status === 'sending');
   menu.classList.remove('mc-expanded');
   menu.innerHTML = (canReact ? reactStripHtml(m) : '') + `<div class="mc-items">${menuHtml(m)}</div>`;
+  // Reaksiya qatori: sichqoncha g'ildiragi bilan gorizontal aylantirish
+  menu.querySelector('.mc-r-scroll')?.addEventListener('wheel', ev => {
+    if (Math.abs(ev.deltaY) > Math.abs(ev.deltaX)) { ev.currentTarget.scrollLeft += ev.deltaY; ev.preventDefault(); }
+  }, { passive: false });
   if (!isDM() && isMine(m)) loadReaders(m);
   menu.style.visibility = 'hidden';
   menu.classList.add('show');
@@ -269,28 +273,44 @@ function openMenu(row, x, y) {
   menu.style.visibility = '';
 }
 
-/** Chevron: menyu ichida belgilangan balandlikdagi emoji paneli (menyu bandlari yopiladi), qayta bosilsa — orqaga */
+/** Menyu balandligini (va kerak bo'lsa top'ini) silliq o'zgartiradi: change() DOM'ni o'zgartiradi */
+function morphMenu(change) {
+  const r0 = menu.getBoundingClientRect(), h0 = r0.height;
+  change();
+  menu.style.transition = 'none'; menu.style.boxSizing = 'border-box'; menu.style.height = 'auto';
+  const h1 = menu.getBoundingClientRect().height, vh = window.innerHeight;
+  let top = r0.top;
+  if (top + h1 > vh - 8) top = vh - 8 - h1;
+  top = Math.max(8, top);
+  menu.style.height = h0 + 'px'; menu.style.overflow = 'hidden';
+  void menu.offsetHeight;
+  menu.style.transition = 'height .26s cubic-bezier(.2, .8, .2, 1), top .26s cubic-bezier(.2, .8, .2, 1)';
+  menu.style.height = h1 + 'px'; menu.style.top = top + 'px';
+  clearTimeout(morphMenu._t);
+  morphMenu._t = setTimeout(() => { menu.style.height = ''; menu.style.transition = ''; menu.style.overflow = ''; menu.style.boxSizing = ''; }, 300);
+}
+
+/** Chevron: menyu ichida tanlangan reaksiya emojilari paneli (menyu bandlari yopiladi), qayta bosilsa — orqaga */
 async function toggleReactPanel() {
   if (!menu || !openId) return;
   const more = menu.querySelector('[data-rmore]');
   if (menu.classList.contains('mc-expanded')) {
-    menu.classList.remove('mc-expanded');
-    menu.querySelector('.mr-pick')?.remove();
+    morphMenu(() => {
+      menu.classList.remove('mc-expanded');
+      menu.querySelector('.mr-pick')?.remove();
+    });
     more?.setAttribute('aria-expanded', 'false');
     return;
   }
   const id = openId;
   const html = await reactPickerHtml();
   if (openId !== id || !menu.classList.contains('show')) return;
-  menu.insertAdjacentHTML('beforeend', html);
-  menu.classList.add('mc-expanded');
+  morphMenu(() => {
+    menu.insertAdjacentHTML('beforeend', html);
+    menu.classList.add('mc-expanded');
+  });
   more?.setAttribute('aria-expanded', 'true');
   reactBindPicker(menu);
-  // kattalashgan menyu ekrandan chiqib ketmasin
-  const r = menu.getBoundingClientRect(), vh = window.innerHeight;
-  let top = r.top;
-  if (r.bottom > vh - 8) top = vh - 8 - r.height;
-  menu.style.top = Math.max(8, top) + 'px';
 }
 
 function closeMenu() {
@@ -516,12 +536,13 @@ function paintSel(keepEmpty) {
   if (!sel.size && !keepEmpty) { exitSelect(); return; }
   box.querySelectorAll('.chat-msg[data-msg-id]').forEach(r => r.classList.toggle('mc-selected', sel.has(r.dataset.msgId)));
   selBar.querySelectorAll('.msb-n').forEach(n => { n.textContent = sel.size; });
-  // Faqat o'z xabarlarim tanlangan bo'lsa — o'chirish/nusxalash/tahrirlash; boshqalarniki aralashsa — faqat "Uzatish"
+  // Nusxalash / Tahrirlash / O'chirish — FAQAT o'z xabarlarim tanlangan bo'lsa (DM ham, guruh ham).
+  // Birorta begona xabar aralashsa — faqat "Uzatish" qoladi.
   const allMine = [...sel].every(id => isMine(msgOf(id)));
-  selBar.querySelector('[data-sb="del"]').hidden = ![...sel].every(id => canDel(msgOf(id)));
-  selBar.querySelector('[data-sb="copy"]').hidden = !isDM() || !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
+  selBar.querySelector('[data-sb="del"]').hidden = !allMine || ![...sel].every(id => canDel(msgOf(id)));
+  selBar.querySelector('[data-sb="copy"]').hidden = !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
-  selBar.querySelector('[data-sb="edit"]').hidden = !(one && isMine(one) && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
+  selBar.querySelector('[data-sb="edit"]').hidden = !(allMine && one && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
 }
 
 /* ── Uzatish (foydalanuvchi tanlash oynasi) ────────────────────────── */

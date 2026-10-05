@@ -9,12 +9,15 @@ import { esc, defAvi } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 
 export const QUICK = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁'];
+/** Reaksiyaga arziydigan tanlangan emojilar (menyu qatori + chevron paneli) */
+export const REACTS = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😂', '🤣', '😮', '😢', '😭', '😡', '🤯', '😱', '🤔', '🤩', '😍', '😎', '🥳', '🎉', '💯', '🙏', '👌', '💪', '🤝', '👀', '💔', '❤️‍🔥', '😴', '🤡', '🥴', '🫡', '🏆', '⚡', '🍾'];
 const TABLE = 'message_reactions';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CHEV = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 
 let box = null, cur = null, ch = null, seq = 0, bound = false;
 const byMsg = new Map();   // msgId -> Map(uid -> emoji)
+const pops = new Map();    // msgId -> { e, t } — yangi qo'shilgan reaksiya (animatsiya uchun)
 const prof = new Map();    // uid -> { name, avatar } (keshda yo'q bo'lsa)
 const me = () => state.me?.uid;
 
@@ -64,6 +67,7 @@ function sync() {
       if (my !== seq) return;
       const row = p.eventType === 'DELETE' ? p.old : p.new;
       if (!row?.message_id) return;
+      if (p.eventType !== 'DELETE' && row.user_id !== me() && byMsg.get(row.message_id)?.get(row.user_id) !== row.emoji) pops.set(row.message_id, { e: row.emoji, t: Date.now() });
       if (p.eventType === 'DELETE') drop(row); else put(row);
       paintMsg(row.message_id);
     })
@@ -129,6 +133,34 @@ function paintMsg(id, force) {
   el._html = html;
   el.innerHTML = html;
   el.querySelectorAll('.mr-av').forEach(im => im.addEventListener('error', () => { im.onerror = null; im.src = defAvi('U'); }, { once: true }));
+  const pp = pops.get(id);
+  if (pp) {
+    pops.delete(id);
+    if (Date.now() - pp.t < 1500) {
+      const chip = [...el.querySelectorAll('.mr-chip')].find(c => c.dataset.re === pp.e);
+      if (chip) { chip.classList.add('pop'); burst(chip, pp.e); }
+    }
+  }
+}
+
+/** Yangi reaksiya: katta emoji uchib chiqadi + atrofga mayda zarralar sochiladi */
+function burst(chip, emoji) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const r = chip.getBoundingClientRect();
+  if (r.bottom < 0 || r.top > window.innerHeight) return;
+  const w = document.createElement('div');
+  w.className = 'mr-burst';
+  w.style.left = (r.left + 18) + 'px';
+  w.style.top = (r.top + r.height / 2) + 'px';
+  let h = `<span class="mr-burst-big">${esc(emoji)}</span>`;
+  const N = 8;
+  for (let i = 0; i < N; i++) {
+    const a = (Math.PI * 2 * i) / N + Math.random() * 0.5, d = 34 + Math.random() * 26;
+    h += `<span class="mr-burst-p" style="--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d - 14)}px;--dl:${Math.round(Math.random() * 80)}ms">${esc(emoji)}</span>`;
+  }
+  w.innerHTML = h;
+  document.body.appendChild(w);
+  setTimeout(() => w.remove(), 1100);
 }
 
 function paintAll(force) {
@@ -143,8 +175,8 @@ export async function reactToggle(msgId, emoji) {
   if (!t || !uid || !msgId) return;
   const prev = byMsg.get(msgId)?.get(uid);
   const remove = prev === emoji;
-  const rollback = () => { if (prev) put({ message_id: msgId, user_id: uid, emoji: prev }); else drop({ message_id: msgId, user_id: uid }); paintMsg(msgId); };
-  if (remove) drop({ message_id: msgId, user_id: uid }); else put({ message_id: msgId, user_id: uid, emoji });
+  const rollback = () => { pops.delete(msgId); if (prev) put({ message_id: msgId, user_id: uid, emoji: prev }); else drop({ message_id: msgId, user_id: uid }); paintMsg(msgId); };
+  if (remove) drop({ message_id: msgId, user_id: uid }); else { put({ message_id: msgId, user_id: uid, emoji }); pops.set(msgId, { e: emoji, t: Date.now() }); }
   paintMsg(msgId);   // optimistik — darhol
   try {
     const { error } = remove
@@ -158,44 +190,33 @@ export async function reactToggle(msgId, emoji) {
 export function reactStripHtml(m) {
   sync();
   const mine = byMsg.get(m.id)?.get(me());
-  return `<div class="mc-react">${QUICK.map(e => `<button type="button" class="mc-r${mine === e ? ' on' : ''}" data-r="${e}" aria-label="${e}">${e}</button>`).join('')}<button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
+  return `<div class="mc-react"><div class="mc-r-scroll">${REACTS.map(e => `<button type="button" class="mc-r${mine === e ? ' on' : ''}" data-r="${e}" aria-label="${e}">${e}</button>`).join('')}</div><button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
 }
 
-let _pickHtml = null, _all = null, _uz = null;
 const btn = e => `<button type="button" class="mc-r" data-r="${e}">${e}</button>`;
 
-/** Kengaytirilgan panel (qidiruv + scrollli emoji ro'yxati). Ma'lumot birinchi marta lazy yuklanadi. */
+/** Kengaytirilgan panel: faqat tanlangan reaksiya emojilari (qidiruv ham, bo'lim sarlavhalari ham yo'q) */
 export async function reactPickerHtml() {
-  if (!_pickHtml) {
-    const { EMOJI_CATS } = await import('../ui/emoji-data.js');
-    _all = EMOJI_CATS.flatMap(c => c.list);
-    _pickHtml = EMOJI_CATS.map(c => `<div class="mr-cat">${esc(c.name)}</div><div class="mr-grid">${c.list.map(([e]) => btn(e)).join('')}</div>`).join('');
-  }
-  return `<div class="mr-pick"><div class="mr-search"><input type="text" placeholder="Qidirish..." autocomplete="off" spellcheck="false" aria-label="Emoji qidirish"></div><div class="mr-scroll">${_pickHtml}</div></div>`;
+  return `<div class="mr-pick"><div class="mr-grid">${REACTS.map((e, i) => `<button type="button" class="mc-r" data-r="${e}" style="--n:${i}">${e}</button>`).join('')}</div></div>`;
 }
 
-export function reactBindPicker(menuEl) {
-  const inp = menuEl.querySelector('.mr-search input'), sc = menuEl.querySelector('.mr-scroll');
-  if (!inp || !sc) return;
-  inp.addEventListener('input', async () => {
-    const q = inp.value.trim().toLowerCase();
-    if (!q) { sc.innerHTML = _pickHtml; sc.scrollTop = 0; return; }
-    if (!_uz) { try { ({ EMOJI_UZ: _uz } = await import('../ui/emoji-uz.js')); } catch (_) { _uz = {}; } }
-    if (inp.value.trim().toLowerCase() !== q) return;
-    const hit = _all.filter(([e, k]) => k.includes(q) || (_uz[e.replace(/\uFE0F/g, '')] || '').toLowerCase().includes(q)).slice(0, 140);
-    sc.innerHTML = hit.length ? `<div class="mr-grid">${hit.map(([e]) => btn(e)).join('')}</div>` : '<div class="mr-none">Topilmadi</div>';
-    sc.scrollTop = 0;
-  });
-  inp.addEventListener('keydown', e => e.stopPropagation());
-}
+export function reactBindPicker() {}
 
 /* ── Hover (faqat sichqonchali qurilma): xabar chetida bitta tezkor reaksiya; ustiga borilsa — vertikal scrollli ro'yxat (10 ta) ── */
 export const HOVER_SET = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😮', '😢', '🎉'];
 const QK = 'spacemr_react_quick';
 const canHover = () => !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
-let hb = null, hp = null, hRow = null, hideT = 0, openT = 0;
+let hb = null, hp = null, hRow = null, hideT = 0, openT = 0, dwellT = 0, dwellRow = null;
+const DWELL_MS = 2000;   // xabar ustida shuncha turilgandan keyin tezkor reaksiya tugmasi chiqadi
 const quick = () => { try { const q = localStorage.getItem(QK); if (q && HOVER_SET.includes(q)) return q; } catch (_) {} return HOVER_SET[0]; };
 const setQuick = e => { try { localStorage.setItem(QK, e); } catch (_) {} };
+const mineOn = row => !!byMsg.get(row?.dataset?.msgId)?.get(me());
+// Chat sarlavhasi (suzuvchi) tagiga panel kirib ketmasin: pastroq chegara
+const minTop = () => {
+  const hdr = document.querySelector('#chatThreadModal .chat-thread-hdr');
+  const bt = box ? box.getBoundingClientRect().top : 0;
+  return Math.max(6, bt + 6, hdr ? hdr.getBoundingClientRect().bottom + 6 : 0);
+};
 const busy = () => !box || box.classList.contains('msg-selecting') || document.getElementById('msgCtx')?.classList.contains('show');
 
 function ensureHover() {
@@ -231,40 +252,44 @@ function scheduleHide() { clearTimeout(hideT); hideT = setTimeout(hideHover, 220
 function placeHover() {
   const bub = hRow?.querySelector('.chat-bubble');
   if (!bub || !hb || !box) return;
-  const r = bub.getBoundingClientRect(), b = box.getBoundingClientRect();
-  if (r.bottom < b.top + 8 || r.top > b.bottom - 8) { hideHover(); return; }
+  const r = bub.getBoundingClientRect(), b = box.getBoundingClientRect(), mt = minTop();
+  if (r.bottom < mt + 8 || r.top > b.bottom - 8) { hideHover(); return; }
   const mine = hRow.classList.contains('mine');
   const left = Math.max(b.left + 2, Math.min(window.innerWidth - 36, mine ? r.left - 36 : r.right + 6));
   const top = Math.min(r.bottom, b.bottom - 6) - 30;
   hb.style.left = left + 'px';
-  hb.style.top = Math.max(b.top + 6, top) + 'px';
+  hb.style.top = Math.max(mt, top) + 'px';
 }
 
 function showHover(row) {
   if (!canHover() || !row?.isConnected) return;
-  if (busy()) { hideHover(); return; }
+  if (busy() || mineOn(row)) { hideHover(); return; }   // men allaqachon reaksiya qo'ygan — hover panel yo'q
   ensureHover();
   clearTimeout(hideT);
   if (hRow !== row) { hidePick(); hRow = row; }
   const q = quick();
   hb.textContent = q;
-  hb.classList.toggle('on', byMsg.get(row.dataset.msgId)?.get(me()) === q);
   hb.classList.add('show');
   placeHover();
 }
 
 function openPick() {
-  if (!hb || !hp || !hRow?.isConnected || !hb.classList.contains('show') || busy()) return;
+  if (!hb || !hp || !hRow?.isConnected || !hb.classList.contains('show') || busy() || mineOn(hRow)) return;
   const q = quick(), mineE = byMsg.get(hRow.dataset.msgId)?.get(me());
   // column-reverse: birinchi (tezkor) emoji pastda — tugma ustida; qolganlari tepaga scroll
   hp.firstChild.innerHTML = [q, ...HOVER_SET.filter(e => e !== q)]
-    .map(e => `<button type="button" class="hp-e${mineE === e ? ' on' : ''}" data-e="${e}" aria-label="${e}">${e}</button>`).join('');
+    .map((e, i) => `<button type="button" class="hp-e${mineE === e ? ' on' : ''}" data-e="${e}" aria-label="${e}" style="--i:${i}">${e}</button>`).join('');
+  const r = hb.getBoundingClientRect();
+  // Bo'sh joyga BUTUN emoji sig'adigan qilib balandlik: 36px emoji + 4px oraliq (kesilib qolmasin)
+  const room = r.bottom + 4 - minTop() - 18;
+  const n = Math.max(3, Math.min(5, Math.floor((room + 4) / 40)));
+  hp.firstChild.style.maxHeight = (n * 36 + (n - 1) * 4) + 'px';
   hp.style.visibility = 'hidden';
   hp.classList.add('show');
   hp.firstChild.scrollTop = 0;
-  const r = hb.getBoundingClientRect(), w = hp.offsetWidth, h = hp.offsetHeight;
+  const w = hp.offsetWidth, h = hp.offsetHeight;
   hp.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + 'px';
-  hp.style.top = Math.max(6, r.bottom + 4 - h) + 'px';
+  hp.style.top = Math.max(minTop(), r.bottom + 4 - h) + 'px';
   hp.style.visibility = '';
 }
 
@@ -272,6 +297,7 @@ function hidePick() { clearTimeout(openT); hp?.classList.remove('show'); }
 
 export function reactHoverHide() {
   clearTimeout(hideT);
+  clearTimeout(dwellT); dwellRow = null;
   hidePick();
   hb?.classList.remove('show');
   hRow = null;
@@ -287,10 +313,15 @@ export function reactInit(boxEl) {
   box.addEventListener('mouseover', e => {
     if (!canHover()) return;
     const row = e.target.closest?.('.chat-msg[data-msg-id]:not([data-msg-id=""])');
-    if (row) showHover(row); else if (hRow) scheduleHide();
+    if (!row) { clearTimeout(dwellT); dwellRow = null; if (hRow) scheduleHide(); return; }
+    if (row === hRow && hb?.classList.contains('show')) { clearTimeout(hideT); return; }
+    if (hRow) scheduleHide();   // boshqa xabarga o'tildi — eskisi yopiladi
+    if (row === dwellRow) return;   // shu xabar ustida turish davom etyapti
+    clearTimeout(dwellT); dwellRow = row;
+    dwellT = setTimeout(() => { if (dwellRow === row) { dwellRow = null; showHover(row); } }, DWELL_MS);
   });
-  box.addEventListener('mouseleave', () => { if (hRow) scheduleHide(); });
-  box.addEventListener('scroll', () => { if (hRow) reactHoverHide(); }, { passive: true });
+  box.addEventListener('mouseleave', () => { clearTimeout(dwellT); dwellRow = null; if (hRow) scheduleHide(); });
+  box.addEventListener('scroll', () => { if (hRow || dwellRow) reactHoverHide(); }, { passive: true });
   box.addEventListener('click', e => {
     const c = e.target.closest?.('.mr-chip');
     if (!c) return;
@@ -304,7 +335,7 @@ export function reactInit(boxEl) {
 /** paintMessages() dan keyin: yangi chizilgan qatorlarga chiplarni qaytaradi */
 export function reactAfterPaint() {
   sync(); paintAll();
-  if (hRow) { if (hRow.isConnected) placeHover(); else reactHoverHide(); }
+  if (hRow) { if (hRow.isConnected && !mineOn(hRow)) placeHover(); else reactHoverHide(); }
 }
 
 /** Xabarga qo'yilgan reaksiyalar: Map(uid -> emoji) (menyudagi "ko'rganlar" ro'yxati uchun) */
