@@ -130,7 +130,8 @@ export async function openCameraCapture(options = {}) {
       } catch (_) {}
     }
 
-    const canSwitch = !!(cams.front && cams.back && cams.front.deviceId !== cams.back.deviceId);
+    const canSwitch = !!(cams.front && cams.back && cams.front.deviceId !== cams.back.deviceId)
+      || (cams.list && cams.list.length >= 2);
 
     const ov = document.createElement('div');
     ov.id = 'camCapture';
@@ -148,7 +149,7 @@ export async function openCameraCapture(options = {}) {
           <div class="cc-rec-timer" hidden><span class="cc-rec-dot"></span><span class="cc-rec-time">0:00</span></div>
         </div>
         <div class="cc-top-right">
-          ${canSwitch ? `<button type="button" class="cc-btn cc-flip" aria-label="Kamerani almashtirish">${SVG.flip}</button>` : ''}
+          <button type="button" class="cc-btn cc-flip" aria-label="Kamerani almashtirish">${SVG.flip}</button>
           <button type="button" class="cc-btn cc-flash" aria-label="Fonar" hidden>${SVG.flashOff}</button>
         </div>
       </div>
@@ -239,7 +240,7 @@ export async function openCameraCapture(options = {}) {
         reviewEl.setAttribute('hidden', '');
         shutter.removeAttribute('hidden');
         liveVid.hidden = false;
-        if (flipBtn) flipBtn.hidden = !canSwitch;
+        if (flipBtn) flipBtn.hidden = false;
         refreshFlash();
       }
     };
@@ -274,7 +275,7 @@ export async function openCameraCapture(options = {}) {
     };
 
     const switchFacing = async () => {
-      if (!canSwitch || recording || reviewing) return;
+      if (recording || reviewing) return;
       if (flipBtn) {
         flipBtn.classList.remove('cc-flip-anim');
         void flipBtn.offsetWidth;
@@ -286,7 +287,7 @@ export async function openCameraCapture(options = {}) {
       try {
         await setTorch(vTrack(), false);
         torchOn = false;
-        const s = await _startStream(nextDev?.deviceId, nextFace, mode === 'video');
+        const s = await _startStream(nextDev?.deviceId || null, nextFace, mode === 'video');
         stream?.getTracks().forEach(t => t.stop());
         deviceId = nextDev?.deviceId || null;
         await setStream(s, nextFace);

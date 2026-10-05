@@ -17,8 +17,9 @@
 }
 #camCapture .cc-video.mirror { transform: scaleX(-1); }
 #camCapture .cc-top {
+  /* mobile browser chrome ostida qolmasin */
   position: absolute; left: 0; right: 0;
-  top: 0; padding: max(10px, env(safe-area-inset-top, 0px)) 12px 0;
+  top: 0; padding: max(14px, calc(env(safe-area-inset-top, 0px) + 8px)) 12px 0;
   display: flex; align-items: center; gap: 8px;
   z-index: 2;
   transition: opacity 0.28s ease, transform 0.28s ease;
@@ -42,7 +43,7 @@
 #camCapture .cc-flash.on { color: #ffd60a; background: rgba(255,214,10,0.2); }
 #camCapture .cc-top-center {
   position: absolute;
-  left: 50%; top: max(10px, env(safe-area-inset-top, 0px));
+  left: 50%; top: max(14px, calc(env(safe-area-inset-top, 0px) + 8px));
   transform: translateX(-50%);
   z-index: 3;
   display: flex; align-items: center; justify-content: center;
@@ -54,7 +55,7 @@
   width: 98px; height: 42px;
   padding: 3px;
   border-radius: 22px;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.55);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   pointer-events: auto;
   transition: opacity 0.22s ease, transform 0.22s ease;

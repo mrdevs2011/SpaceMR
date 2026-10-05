@@ -137,13 +137,23 @@ async function startVideoRecording() {
       video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 }, aspectRatio: { ideal: 1 }, frameRate: { ideal: 30 } },
     });
     _vidStream = stream;
-    if (_voiceStopRequested || !_isHoldingVoice) {
+    // Ruxsat dialogi paytida pointer yo'qolishi mumkin — stream olindi, hold qayta tekshiriladi
+    if (_voiceStopRequested) {
       stream.getTracks().forEach(t => t.stop());
       _vidStream = null;
       _stopPulse();
-      if (!_voiceCancelled && !_voiceStopRequested) toast('Video yozilmadi — tugmani bosib turing');
       return;
     }
+    if (!_isHoldingVoice && !_vidActive) {
+      // Hali yozuv UI boshlanmagan va hold yo'q — to'xtat
+      stream.getTracks().forEach(t => t.stop());
+      _vidStream = null;
+      _stopPulse();
+      return;
+    }
+    // Hold yo'qolgan bo'lsa ham (permission UI) — yozishni davom ettiramiz, user qo'yib yuborganda to'xtaydi
+    _isHoldingVoice = true;
+    _vidActive = true;
     const cands = [
       'video/webm;codecs=vp9,opus',
       'video/webm;codecs=vp8,opus',
@@ -297,7 +307,7 @@ function _setRecordBarCancelState(isCancelling) {
 }
 
 /* Chapga surish progressi (0..1) — rang/pulse silliq o'zgaradi */
-const _VOICE_CANCEL_DIST = 72; // px — to'liq bekor qilish masofasi
+const _VOICE_CANCEL_DIST = 120; // px — to'liq bekor (Samsung jitter uchun katta)
 function _lerp(a, b, t) { return a + (b - a) * t; }
 function _rgbMix(r1, g1, b1, r2, g2, b2, t) {
   return `rgb(${Math.round(_lerp(r1,r2,t))},${Math.round(_lerp(g1,g2,t))},${Math.round(_lerp(b1,b2,t))})`;
@@ -803,9 +813,9 @@ if (_vBtn) {
 
   _finishHoldRef = _finishVoiceHold;
   _vBtn.addEventListener('pointerup', _finishVoiceHold);
+  // Samsung/Chrome: permission dialog yoki scroll pointercancel beradi — bekor qilmaymiz, oddiy release
   _vBtn.addEventListener('pointercancel', () => {
     if (!_isHoldingVoice) return;
-    _voiceCancelled = true;
     _finishVoiceHold();
   });
 
@@ -823,10 +833,11 @@ if (_vBtn) {
   });
 
   window.addEventListener('blur', () => {
-    if (_isHoldingVoice) {
-      _voiceCancelled = true;
-      _finishVoiceHold();
-    }
+    // Ruxsat dialogi blur beradi — yozuv boshlangan bo'lsa bekor qilmaymiz
+    if (!_isHoldingVoice) return;
+    if (_vidActive || (_mediaRec && _mediaRec.state === 'recording')) return;
+    _voiceCancelled = true;
+    _finishVoiceHold();
   });
 }
 
