@@ -411,7 +411,7 @@ function ensureSelBar() {
     <button type="button" class="msb-btn" data-sb="copy"><span>Nusxalash</span></button>
     <button type="button" class="msb-btn" data-sb="edit"><span>Tahrirlash</span></button>
     <span class="msb-sp"></span>
-    <button type="button" class="msb-cancel" data-sb="x">Bekor qilish</button>`;
+    <button type="button" class="msb-cancel" data-sb="x" title="Bekor qilish" aria-label="Bekor qilish">${IC.x}</button>`;
   selBar.addEventListener('click', e => {
     const b = e.target.closest('[data-sb]');
     if (!b) return;
