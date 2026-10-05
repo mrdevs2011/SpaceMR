@@ -210,3 +210,18 @@
 .chat-msg.theirs .cvm-file { --cvm-track-bg: var(--text3); --cvm-track-fg: var(--blue); }
 .chat-msg.theirs .cvm-file .cvm-ftitle { color: var(--text); }
 .chat-msg.theirs .cvm-file .cvm-dur { color: var(--text2); }
+
+/* Play tugmasi atrofidagi aylanuvchi ring/equalizer ovozli xabar pufagiga KESILMASIN — erkin (overflow: visible).
+   Faqat to'lqin (.cvm-waveform) o'z ichida kesadi, shuning uchun barlar chetga chiqmaydi. */
+.chat-voice-msg { overflow: visible; }
+.chat-voice-msg .cvm-play,
+.chat-voice-msg .cvm-eq,
+.chat-voice-msg .cvm-eq .cvm-ring { overflow: visible; }
+.chat-msg .chat-bubble:has(.chat-voice-msg) { overflow: visible; }
+/* `.chat-msg` dagi content-visibility:auto (yashirin paint containment) aylanuvchi ringni xabar qutisi chegarasida qirqardi —
+   emoji xabarlardagi kabi, ovozli xabar qatorida ham o'chiq. */
+.chat-msg:has(.chat-voice-msg) {
+  content-visibility: visible;
+  contain: none;
+  overflow: visible;
+}
