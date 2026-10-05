@@ -1,0 +1,54 @@
+/* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
+   Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
+   prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */
+:root { --ease-out: cubic-bezier(.2, .8, .2, 1); --ease-io: cubic-bezier(.4, 0, .2, 1); --dur-1: .14s; --dur-2: .24s; --dur-3: .32s; }
+
+/* Teginish: 300ms kechikish va kulrang "flash" yo'q */
+button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* Ro'yxatlar/xabarlar: chekkaga yetganda sahifa "tortilib" ketmasin */
+#chatThreadMessages, #chatsListWrap, .chats-list { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. Barcha tugma/havola/maydon: rang, fon, chegara, shaffoflik silliq o'zgaradi (o'z transition'i bor elementlar — klass bilan ustun) */
+  button, a, [role="button"], input, textarea, select { transition: background-color var(--dur-1) ease, color var(--dur-1) ease, border-color var(--dur-1) ease, opacity var(--dur-1) ease; }
+
+  /* 2. Bo'limlar (Bosh sahifa / Suhbatlar / Profil ...) almashganda yumshoq paydo bo'ladi */
+  .view.on { animation: mViewIn var(--dur-2) var(--ease-out); }
+  @keyframes mViewIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* 3. Pastki navigatsiya: bosilganda ikonka biroz kichrayadi */
+  .nav-btn svg, .nav-btn img.icon { transition: transform var(--dur-1) var(--ease-out); }
+  .nav-btn:active svg, .nav-btn:active img.icon { transform: scale(.88); }
+
+  /* 4. Sahifa-oynalar (suhbat, profil, guruh info): o'ngdan suzib kiradi, yopilganda o'ngga suzib chiqadi (display ham silliq) */
+  #chatThreadModal, #userProfileModal, #grpInfoOverlay {
+    opacity: 0; transform: translateX(28px); pointer-events: none;
+    transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-3) var(--ease-out), display var(--dur-3) allow-discrete;
+  }
+  #chatThreadModal.show, #userProfileModal.show, #grpInfoOverlay.show { opacity: 1; transform: none; pointer-events: auto; }
+  @starting-style {
+    #chatThreadModal.show, #userProfileModal.show, #grpInfoOverlay.show { opacity: 0; transform: translateX(28px); }
+  }
+
+  /* 5. Pastki varaqlar (.overlay / #detailModal): fon yumshoq paydo bo'ladi, varaq pastdan ko'tariladi */
+  .overlay, #detailModal {
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-2) ease, display var(--dur-2) allow-discrete;
+  }
+  .overlay.show, #detailModal.show { opacity: 1; pointer-events: auto; }
+  @starting-style { .overlay.show, #detailModal.show { opacity: 0; } }
+  .overlay:not(#confirmOverlay) .sheet, #detailModal #detailContent { transform: translateY(32px); transition: transform var(--dur-3) var(--ease-out); }
+  .overlay.show:not(#confirmOverlay) .sheet, #detailModal.show #detailContent { transform: none; }
+  @starting-style {
+    .overlay.show:not(#confirmOverlay) .sheet, #detailModal.show #detailContent { transform: translateY(32px); }
+  }
+
+  /* 6. Rasm/video ko'rgazmalari va uzatish oynasi: fade */
+  #zoomModal, #chatLightbox, #cmViewer, #msgFwd {
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-2) ease, display var(--dur-2) allow-discrete;
+  }
+  #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 1; pointer-events: auto; }
+  @starting-style { #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 0; } }
+}
