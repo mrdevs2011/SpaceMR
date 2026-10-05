@@ -281,26 +281,44 @@ export async function openCameraCapture(options = {}) {
       try {
         await setTorch(vTrack(), false);
         torchOn = false;
+        // A12: bir vaqtda 2 kamera ochilmaydi — avval eski tracklarni yop
+        const old = stream;
+        liveVid.srcObject = null;
+        try { old?.getTracks().forEach(t => t.stop()); } catch (_) {}
+        stream = null;
         const s = await _startStream(nextDev?.deviceId || null, nextFace, mode === 'video');
-        stream?.getTracks().forEach(t => t.stop());
         deviceId = nextDev?.deviceId || null;
         await setStream(s, nextFace);
       } catch (err) {
         toast(cameraErrorMsg(err), 'error');
+        // tiklash: oldingi facing bilan qayta ochishga urin
+        try {
+          const s2 = await _startStream(deviceId, facing, mode === 'video');
+          await setStream(s2, facing);
+        } catch (_) {}
       }
     };
 
     const switchMode = async (next) => {
       if (recording || reviewing || next === mode) return;
+      const prev = mode;
       mode = next;
       try {
         await setTorch(vTrack(), false);
         torchOn = false;
+        const old = stream;
+        liveVid.srcObject = null;
+        try { old?.getTracks().forEach(t => t.stop()); } catch (_) {}
+        stream = null;
         const s = await _startStream(deviceId, facing, mode === 'video');
-        stream?.getTracks().forEach(t => t.stop());
         await setStream(s, facing);
       } catch (err) {
+        mode = prev;
         toast(cameraErrorMsg(err), 'error');
+        try {
+          const s2 = await _startStream(deviceId, facing, mode === 'video');
+          await setStream(s2, facing);
+        } catch (_) {}
       }
       syncUi();
     };
