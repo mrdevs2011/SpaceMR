@@ -654,8 +654,9 @@ async function _flushSave(postId) {
       const target = _saveWant.get(postId);
       try {
         if (target) {
-          const { error } = await sb.from('saved_posts').insert({ post_id: postId, user_id: state.me.uid });
-          if (error && error.code !== '23505') throw error; // 23505 = allaqachon saqlangan
+          // upsert + ignoreDuplicates: allaqachon saqlangan bo'lsa 409 (konsol xatosi) o'rniga jimgina o'tadi
+          const { error } = await sb.from('saved_posts').upsert({ post_id: postId, user_id: state.me.uid }, { onConflict: 'user_id,post_id', ignoreDuplicates: true });
+          if (error && error.code !== '23505') throw error;
         } else {
           const { error } = await sb.from('saved_posts').delete().eq('post_id', postId).eq('user_id', state.me.uid);
           if (error) throw error;
