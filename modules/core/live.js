@@ -116,6 +116,10 @@ export function initLive() {
         document.querySelectorAll(`.save-btn[data-id="${CSS.escape(pid)}"]`).forEach(b => {
           b.classList.toggle('saved', on);
           b.setAttribute('aria-pressed', String(on));
+          const im = b.querySelector('img.icon');
+          if (im && (im.getAttribute('src') || '').includes('/bookmark')) {
+            im.setAttribute('src', on ? './svg/social/bookmark-filled.svg' : './svg/social/bookmark-outline.svg');
+          }
         });
       }
       reloadSaved();

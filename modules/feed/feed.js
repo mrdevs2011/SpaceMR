@@ -597,6 +597,11 @@ function paintSaveBtn(btn, on) {
   btn.classList.toggle('saved', on);
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   btn.title = on ? 'Saqlanganlardan olib tashlash' : 'Saqlash';
+  // Bookmark endi <img> — manbani almashtiramiz (to'la / kontur)
+  const im = btn.querySelector('img.icon');
+  if (im && (im.getAttribute('src') || '').includes('/bookmark')) {
+    im.setAttribute('src', on ? './svg/social/bookmark-filled.svg' : './svg/social/bookmark-outline.svg');
+  }
   const svg = btn.querySelector('svg');
   if (svg) {
     svg.setAttribute('fill', on ? 'currentColor' : 'none');
@@ -651,10 +656,17 @@ function paintLike(postId, on, n, btn, pop) {
     const svg = b.querySelector('svg');
     svg?.setAttribute('fill', on ? '#f91880' : 'none');
     svg?.setAttribute('stroke', on ? '#f91880' : 'currentColor');
+    // Yurak endi <img> — manbani almashtiramiz (faqat heart ikonkasi bo'lsa)
+    const im = b.querySelector('img.icon');
+    const cs = im?.getAttribute('src') || '';
+    if (im && cs.includes('/heart')) im.setAttribute('src', on ? './svg/social/heart-filled.svg' : './svg/social/heart.svg');
+    // Tugmaning o'z hisoblagichi (feed: #lc-<id>, profil detali: .dm-act-count)
+    const sp = b.querySelector('span');
+    if (sp) sp.textContent = fmtCount(n);
     if (on && pop) { b.classList.add('like-pop'); setTimeout(() => b.classList.remove('like-pop'), 400); }
   });
-  const lc = document.getElementById(`lc-${postId}`);
-  if (lc) lc.textContent = fmtCount(n);
+  // Bir post bir nechta view'da bo'lishi mumkin (ID takrorlanadi) — hammasini yangilaymiz
+  document.querySelectorAll(`[id="lc-${postId}"]`).forEach(el => { el.textContent = fmtCount(n); });
 }
 
 export function doLike(postId, btn) {
@@ -662,7 +674,9 @@ export function doLike(postId, btn) {
   const wasLiked = state.myLikedPosts.has(postId);
   const post     = state.allPosts.find(p => p.id === postId);
   const lc       = document.getElementById(`lc-${postId}`);
-  const cur      = post?.likes ?? (parseInt(lc?.textContent, 10) || 0); // Saqlanganlar kabi allPosts'da yo'q postlar uchun DOM'dan
+  const ownN     = parseInt(btn?.querySelector('span')?.textContent, 10);
+  // Saqlanganlar kabi allPosts'da yo'q postlar uchun — bosilgan tugmaning o'z hisoblagichidan (ID takrorlanishi mumkin)
+  const cur      = post?.likes ?? (Number.isFinite(ownN) ? ownN : (parseInt(lc?.textContent, 10) || 0));
   const want     = !wasLiked;
   const n        = Math.max(0, cur + (want ? 1 : -1));
 
