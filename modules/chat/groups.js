@@ -139,15 +139,30 @@ async function _removeMember(groupId, uid) {
 function _myNoticeName() {
   return (state.me?.displayName || state.me?.username || 'User').trim() || 'User';
 }
+function _showNoticeNow(groupId, text) {
+  if (_currentGroupId !== groupId || !_gLoaded || !text) return;
+  const id = (crypto.randomUUID && crypto.randomUUID()) || ('nt_' + Date.now());
+  _gIncoming(groupId, { id, from: state.me.uid, text, type: 'text', notice: true });
+}
+function _pushGroupLive(groupId, payload) {
+  if (!groupId) return;
+  groupInboxSend(groupId, { gid: groupId, from: state.me?.uid, ts: Date.now(), ...payload });
+  if (_currentGroupId === groupId) {
+    try { _gRt?.send({ id: payload.id, type: 'text', text: payload.text, notice: true }); } catch (_) {}
+  }
+}
 async function _postGroupNotice(groupId, text) {
   if (!groupId || !state.me?.uid || !text) return;
+  const id = (crypto.randomUUID && crypto.randomUUID()) || ('nt_' + Date.now());
+  _showNoticeNow(groupId, text);
+  _pushGroupLive(groupId, { id, kind: 'notice', text });
   const { error } = await sb.from('group_messages').insert({
-    group_id: groupId,
-    sender_id: state.me.uid,
-    type: 'text',
-    text,
+    id, group_id: groupId, sender_id: state.me.uid, type: 'text', text,
   });
   if (error) console.warn('[group notice]', error.message);
+}
+function _pushGroupMeta(groupId, patch) {
+  _pushGroupLive(groupId, { id: 'meta_' + Date.now(), kind: 'meta', text: patch.lastMessage || '', meta: patch });
 }
 async function _joinedNotices(groupId, uids) {
   const ids = [...new Set((uids || []).filter(Boolean))];
@@ -164,6 +179,7 @@ export async function joinGroup(groupId) {
   if (!state.me?.uid || !groupId) return;
   await _addMembers(groupId, [state.me.uid]);
   await _postGroupNotice(groupId, _myNoticeName() + ' joined the group');
+  _pushGroupMeta(groupId, { count: ((_latestGroupMap[groupId]?.members || []).length || 0) + 1 });
 }
 
 export async function leaveGroup(groupId) {
@@ -279,8 +295,9 @@ export function stopGroupsWatcher() {
 function _gIncoming(groupId, m) {
   if (!m?.id || _currentGroupId !== groupId || !_gLoaded) return;
   if (_gPending.has(m.id) || _gMsgs.some(x => x.id === m.id)) return;
-  if (m.from === state.me?.uid) return;
-  if (!(_currentGroupData?.members || []).includes(m.from)) return;
+  if (m.from === state.me?.uid && !m.notice) return;
+  const notice = m.notice || / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/.test(m.text || '');
+  if (!notice && !(_currentGroupData?.members || []).includes(m.from) && m.from !== state.me?.uid) return;
   const now = Date.now();
   const type = m.type || 'text';
   const row = {
@@ -306,8 +323,28 @@ function _gIncoming(groupId, m) {
 busOn('ginbox', (o) => {
   const me = state.me?.uid;
   if (!me || !o || !o.gid || o.from === me) return;
+  if (o.kind === 'notice' && _currentGroupId === o.gid) {
+    _gIncoming(o.gid, { id: o.id, from: o.from, text: o.text, type: 'text', notice: true });
+  }
+  if (o.kind === 'meta' && _currentGroupId === o.gid && o.meta) {
+    const g0 = _currentGroupData;
+    if (g0 && g0.id === o.gid) {
+      if (o.meta.name) { g0.name = o.meta.name; const n = document.getElementById('chatThreadName'); if (n) n.textContent = o.meta.name; }
+      if (o.meta.avatar) { g0.avatar = o.meta.avatar; const a = document.getElementById('chatThreadAvi'); if (a) a.innerHTML = `<img src="${esc(o.meta.avatar)}" onerror="this.style.display='none'">`; }
+      if (o.meta.username != null) g0.username = o.meta.username;
+      if (o.meta.count != null) _setGroupPeopleLabel(o.meta.count);
+    }
+  }
   const g = _latestGroupMap[o.gid];
   if (!g) return;
+  if (o.kind === 'meta' && o.meta) {
+    if (o.meta.name) g.name = o.meta.name;
+    if (o.meta.avatar) g.avatar = o.meta.avatar;
+    if (o.meta.username != null) g.username = o.meta.username;
+    if (o.meta.count != null) g.subscriberCount = o.meta.count;
+    if (state.view === 'chats') document.dispatchEvent(new CustomEvent('groupsUpdated'));
+    if (_currentGroupId === o.gid) return;
+  }
   if (_currentGroupId === o.gid) return;            // ochiq thread o'zi yangilanadi
   if (g._lastId === o.id) return;
   g._lastId = o.id;
@@ -1368,6 +1405,13 @@ export function openGroupEdit(groupId, g) {
       if ((updates.username || '') !== (g.username || '')) notices.push(who + ' changed the group username');
       await _updateGroup(groupId, updates);
       for (const line of notices) await _postGroupNotice(groupId, line);
+      _pushGroupMeta(groupId, {
+        name: updates.name,
+        avatar: updates.avatar || g.avatar || '',
+        username: updates.username || '',
+        count: (g.members || []).length,
+        lastMessage: notices[0] || '',
+      });
       panel.classList.remove('show');
       unlockScroll('grpEditOverlay');
       toast(`${typeLabel} yangilandi`, 'success');
@@ -1473,7 +1517,7 @@ async function _loadUsersForPicker() {
 
 /**
  * Guruh a'zo picker: FAQAT mening kontaktlarim.
- * contacts jadvali + (zaxira) DM chat sheriklari — hech qachon butun profiles emas.
+ * contacts jadvali — hech qachon butun profiles va DM zaxirasi emas.
  */
 async function _loadContactsForPicker() {
   const me = state.me?.uid;
@@ -1491,30 +1535,7 @@ async function _loadContactsForPicker() {
       if (r.contact_id && r.contact_id !== me) idSet.add(r.contact_id);
     }
 
-    // 2) Zaxira: ochilgan DM chat ishtirokchilari (kontakt yozilmagan bo'lsa ham)
-    if (idSet.size === 0) {
-      try {
-        const { data: mems } = await sb
-          .from('chat_members')
-          .select('chat_id')
-          .eq('user_id', me)
-          .limit(80);
-        const chatIds = [...new Set((mems || []).map(m => m.chat_id).filter(Boolean))];
-        if (chatIds.length) {
-          const { data: peers } = await sb
-            .from('chat_members')
-            .select('user_id')
-            .in('chat_id', chatIds)
-            .neq('user_id', me);
-          for (const p of peers || []) {
-            if (p.user_id) idSet.add(p.user_id);
-          }
-        }
-      } catch (e) {
-        console.warn('[Groups] chat peers fallback:', e?.message || e);
-      }
-    }
-
+    // Faqat contacts. DM sheriklari va barcha SpaceMR userlari ko'rsatilmaydi.
     if (!idSet.size) return [];
 
     const ids = [...idSet];

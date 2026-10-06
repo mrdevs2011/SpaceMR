@@ -437,12 +437,20 @@ export function initChatHeaderMenu() {
     const existing = document.getElementById('chatHeaderDropdown');
     if (existing) { existing.remove(); return; }
 
-    const isGroup = state.currentChatKind === 'group' || !!getCurrentGroupId() || !!document.getElementById('chatThreadModal')?.dataset?.gid;
+    const isSaved = _isSavedUid(state.currentChatUid) || document.getElementById('chatThreadModal')?.classList.contains('is-saved');
+    const isGroup = !isSaved && (state.currentChatKind === 'group' || !!getCurrentGroupId() || !!document.getElementById('chatThreadModal')?.dataset?.gid);
     const drop = document.createElement('div');
     drop.id = 'chatHeaderDropdown';
     drop.className = 'chat-header-dropdown';
 
-    if (isGroup) {
+    if (isSaved) {
+      drop.innerHTML = `
+        <button type="button" class="chat-header-dropdown-item danger" id="chmClearSaved">
+          <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
+          <span>Tarixni tozalash</span>
+        </button>
+      `;
+    } else if (isGroup) {
       drop.innerHTML = `
         <button type="button" class="chat-header-dropdown-item danger" id="chmLeaveGroup">
           <img src="./svg/action/logout.svg" alt="" class="icon" width="16" height="16">
@@ -460,6 +468,28 @@ export function initChatHeaderMenu() {
 
     const hdr = document.querySelector('.chat-thread-hdr');
     if (hdr) hdr.appendChild(drop);
+
+    drop.querySelector('#chmClearSaved')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      drop.remove();
+      const chatId = state.currentChatId;
+      const uid = state.currentChatUid;
+      if (!chatId || !_isSavedUid(uid)) return;
+      if (!confirm("Saqlangan xabarlar tarixini tozalaysizmi?")) return;
+      try {
+        const { error } = await sb.from('messages').delete().eq('chat_id', chatId).eq('sender_id', state.me.uid);
+        if (error) throw error;
+        chatState._curMsgs = [];
+        paintMessages([]);
+        const c = chatState._latestChatMap?.[uid];
+        if (c) { c.lastMessage = ''; c.lastMessageAt = 0; c.lastSenderId = null; c.lastMessageId = null; }
+        try { localStorage.removeItem('thread_' + chatId); } catch (_) {}
+        toast('Tarix tozalandi', 'success');
+        if (state.view === 'chats') renderChatsList();
+      } catch (err) {
+        toast('Tarix tozalanmadi: ' + (err?.message || 'xato'), 'error');
+      }
+    });
 
     drop.querySelector('#chmLeaveGroup')?.addEventListener('click', async (ev) => {
       ev.stopPropagation();

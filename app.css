@@ -14440,8 +14440,8 @@ select.field option { background: #000000; color: var(--text); }
 
 /* ── Saqlangan xabarlar (o'zim bilan chat): qo'ng'iroq va menyu yo'q ── */
 #chatThreadModal.is-saved #chatVoiceCallBtn,
-#chatThreadModal.is-saved #chatVideoCallBtn,
-#chatThreadModal.is-saved #chatHeaderMenuBtn { display: none !important; }
+#chatThreadModal.is-saved #chatVideoCallBtn { display: none !important; }
+#chatThreadModal.is-saved #chatHeaderMenuBtn { display: inline-flex !important; }
 .chat-row-saved .chat-avi img { border-radius: 50%; object-fit: cover; background: transparent; }
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
