@@ -4770,11 +4770,16 @@ a.cfm-name--link:hover {
 }
 
 .bubble-media-caption .cfm-img-link,
-.bubble-media-caption .cfm-img-preview {
+.bubble-media-caption .cfm-img-preview,
+.bubble-media-caption .cfm-vid-box,
+.bubble-media-caption .cfm-vid {
   width: 100%;
   max-width: 100%;
-  border-radius: 0;
+  border-radius: 0 !important;
   display: block;
+}
+.bubble-media-caption .cfm-caption {
+  border-radius: 0;
 }
 
 .bubble-media-caption .cfm-caption {
@@ -6556,10 +6561,12 @@ a.cfm-name--link:hover {
 }
 
 .bubble-media-caption .cfm-img-link,
-.bubble-media-caption .cfm-img-preview {
+.bubble-media-caption .cfm-img-preview,
+.bubble-media-caption .cfm-vid-box,
+.bubble-media-caption .cfm-vid {
   width: 100%;
   max-width: 100%;
-  border-radius: 0;
+  border-radius: 0 !important;
   display: block;
 }
 
@@ -6568,6 +6575,7 @@ a.cfm-name--link:hover {
   font-size: 14.5px;
   line-height: 1.4;
   word-break: break-word;
+  border-radius: 0;
 }
 
 .bubble-media-caption .cfm-caption p {
@@ -8564,7 +8572,32 @@ select.field option { background: #000000; color: var(--text); }
 .cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: var(--radius); overflow: hidden; }
 .chat-msg.mine .cfm-media-dm { border-color: rgba(29, 155, 240, 0.55); }
 .cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview { border-radius: 0; }
-.cfm-cap-dm { margin-top: 4px; max-width: 280px; }
+/* DM + caption: tashqi pufak fonisiz — border cfm-media-dm da, o'rtada radius yo'q */
+#chatThreadModal .chat-msg .chat-bubble.bubble-media-dm.bubble-media-caption {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible;
+}
+/* Rasm/video + izoh bitta xabar: o'rtada radius yo'q, bir butun blok */
+.cfm-media-dm--cap { max-width: 280px; display: flex; flex-direction: column; gap: 0; }
+.cfm-media-dm--cap .cfm-img-link,
+.cfm-media-dm--cap .cfm-img-preview,
+.cfm-media-dm--cap .cfm-vid-box { border-radius: 0; display: block; width: 100%; }
+.cfm-media-dm--cap .cfm-caption {
+  margin: 0;
+  padding: 7px 12px 6px;
+  border-radius: 0;
+  font-size: 14.5px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.cfm-media-dm--cap .cfm-caption p { margin: 0; }
+#chatThreadModal .chat-msg.mine .cfm-media-dm--cap .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); }
+#chatThreadModal .chat-msg.theirs .cfm-media-dm--cap .cfm-caption { background: var(--line); color: var(--text); }
+/* Eski alohida caption (agar qolgan bo'lsa) */
+.cfm-cap-dm { margin-top: 0; max-width: 280px; }
 .cfm-cap-dm .cfm-caption { padding: 7px 12px; border-radius: var(--radius); font-size: 14.5px; line-height: 1.4; word-break: break-word; }
 .cfm-cap-dm .cfm-caption p { margin: 0; }
 #chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }

@@ -260,3 +260,10 @@
   - Chat bubble sync: duration noma'lum paytda fill=0%; fixed dan keyin oxirida qolgan currentTime ni 0 ga.
   - Feed: `window.__fixVidDur = ensureVideoDuration`.
   - chat-media viewer: open da ensureVideoDuration.
+
+---
+### 2026-10-06 20:38
+- **UI: rasm/video + izoh bitta xabarda o'rtada border-radius yo'q**
+  - DM: caption endi media bilan bir blokda (`cfm-media-dm--cap`); o'rtada radius/bo'shliq yo'q.
+  - Guruh `bubble-media-caption`: img/video pastki radius 0, caption yuqori radius 0.
+  - Fayllar: message-bubble.js, mono-x.css, app.css rebuild.

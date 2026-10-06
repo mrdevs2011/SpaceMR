@@ -337,15 +337,29 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
   /* 1v1 chat: rasm/video pufakka o'ralmaydi — faqat yupqa border. Izoh bo'lsa, u alohida kichik pufakda pastda.
      (Pufakka o'rash faqat guruhlar uchun.) */
   const _dmMedia = (inner, extraWrapCls = '') => {
-    bubbleClassExtra = ' bubble-media-only bubble-media-dm';
+    /* Rasm/video + izoh bitta xabar: o'rtada radius/bo'shliq yo'q — bir butun blok */
+    bubbleClassExtra = hasCaption
+      ? ' bubble-media-caption bubble-media-dm'
+      : ' bubble-media-only bubble-media-dm';
     metaOutside = false;
-    bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone cfm-media-dm${extraWrapCls}">
+    if (hasCaption) {
+      bubbleContent = `<div class="cfm-media-wrap cfm-media-dm cfm-media-dm--cap${extraWrapCls}">
         ${inner}
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
           ${mine ? renderTicks(m.status) : ''}
         </span>
-      </div>${hasCaption ? `<div class="cfm-cap-dm">${captionHtml}</div>` : ''}`;
+        ${captionHtml}
+      </div>`;
+    } else {
+      bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone cfm-media-dm${extraWrapCls}">
+        ${inner}
+        <span class="chat-msg-meta cfm-media-badge">
+          ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
+          ${mine ? renderTicks(m.status) : ''}
+        </span>
+      </div>`;
+    }
   };
 
   const _isNote = _isVideo && isVideoNote(m.fileName);
