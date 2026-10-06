@@ -240,15 +240,19 @@ export function pickFile(f) {
     </button><div class="fs-11px c-text3-theme" style="padding:6px 8px">Kamera standarti: 1 daqiqa · 1080p · 30 fps</div></div>`;
   } else {
     const info = getFileTypeInfo(f.name, f.type);
-    $('previewArea').innerHTML = `<div class="preview-file">
-      <div class="preview-file-icon w-44px h-44px flex-shrink-0">${info.svg}</div>
-      <div class="flex-1 min-w-0">
-        <div class="fs-13px fw-500 ws-nowrap overflow-hidden text-ellipsis">${esc(f.name)}</div>
-        <div class="fs-11px c-text3-theme mt-2px">${info.label} · ${fmtSz(f.size)}</div>
-      </div>
-      <button class="bg-transparent border-none c-text3-theme cursor-pointer d-flex items-center flex-shrink-0" data-action="clear-file">
-        <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
+    const ext = (String(f.name || '').split('.').pop() || info.label || 'FILE').toUpperCase().slice(0, 5);
+    const name = f.name || 'Fayl';
+    const short = name.length > 28 ? name.slice(0, 26) + '…' : name;
+    $('previewArea').innerHTML = `<div class="preview-file preview-file--card">
+      <button type="button" class="preview-clear" data-action="clear-file" aria-label="Olib tashlash">
+        <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
       </button>
+      <div class="pf-body">
+        <div class="pf-icon">${info.svg}</div>
+        <div class="pf-name" title="${esc(name)}">${esc(short)}</div>
+        <div class="pf-meta">${esc(fmtSz(f.size))}</div>
+        <div class="pf-badge">${esc(ext)}</div>
+      </div>
     </div>`;
   }
   refreshPostBtn();
@@ -714,8 +718,17 @@ function _renderHomePreview(f) {
   let inner = '';
   if (f.type.startsWith('image/')) {
     inner = `<img src="${esc(url)}" alt="">`;
+  } else if (f.type.startsWith('video/')) {
+    inner = `<video src="${esc(url)}#t=0.1" muted playsinline preload="metadata" class="hc-vid"></video>`;
   } else {
-    inner = `<div class="hc-file"><span class="hc-file-ico" aria-hidden="true"></span><span>${esc(f.name)} · ${fmtSz(f.size)}</span></div>`;
+    const ext = (String(f.name || '').split('.').pop() || 'FILE').toUpperCase().slice(0, 5);
+    const name = f.name || 'Fayl';
+    const short = name.length > 28 ? name.slice(0, 26) + '…' : name;
+    inner = `<div class="hc-file hc-file--card">
+      <div class="hc-file-name" title="${esc(name)}">${esc(short)}</div>
+      <div class="hc-file-meta">${esc(fmtSz(f.size))}</div>
+      <div class="hc-file-badge">${esc(ext)}</div>
+    </div>`;
   }
   prev.innerHTML = inner + `<button type="button" class="hc-clear" data-action="hc-clear" aria-label="O'chirish">
     <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
