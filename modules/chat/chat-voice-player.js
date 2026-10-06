@@ -530,6 +530,11 @@ function _startPlayEq(audio, btn) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!_eqCtx) _eqCtx = new AC();
     if (_eqCtx.state === 'suspended') _eqCtx.resume().catch(() => {});
+    // Context ishlamayotgan bo'lsa — audio'ni graph'ga ULAMAYMIZ (ovoz o'chib qolmasin)
+    if (_eqCtx.state !== 'running' && !audio.__cvmEqNode) {
+      btn.classList.remove('cvm-play--eq'); _eqBtn = null; audio.__noEq = true;
+      return;
+    }
 
     // Har audio element uchun MediaElementSource bir marta
     if (!audio.__cvmEqNode) {
@@ -643,6 +648,13 @@ window._chatPlayVoice = async function(btn) {
   _activeChatUid = wrap.dataset.chatUid || state.currentChatUid || null;
   _activeName    = wrap.dataset.name || 'Ovozli xabar';
 
+  // AudioContext'ni foydalanuvchi bosishi (gesture) ichida yaratib/uyg'otamiz —
+  // aks holda iOS/Safari'da suspended qolib, EQ ulangan audio jim bo'lib qoladi.
+  try {
+    const AC0 = window.AudioContext || window.webkitAudioContext;
+    if (AC0) { if (!_eqCtx) _eqCtx = new AC0(); if (_eqCtx.state === 'suspended') _eqCtx.resume().catch(() => {}); }
+  } catch (_) {}
+
   const audio = new Audio();
   audio.preload = 'auto';
   audio.playsInline = true;
@@ -654,6 +666,9 @@ window._chatPlayVoice = async function(btn) {
   wrap.querySelector('.cvm-waveform')?.classList.add('playing');
 
   const tryPlay = (src, withCors) => {
+    // CORS'siz cross-origin audio'ni WebAudio'ga ulasak ovoz O'CHIB qoladi (jim) —
+    // shuning uchun EQ faqat CORS bilan yuklanganda yoqiladi.
+    audio.__noEq = !withCors;
     if (withCors) audio.crossOrigin = 'anonymous';
     else { try { audio.removeAttribute('crossorigin'); } catch (_) {} audio.crossOrigin = null; }
     audio.src = src;
