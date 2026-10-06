@@ -151,7 +151,33 @@ export async function render() {
 
 /* ── Runner (ilovani ochish) ────────────────────────────────────────── */
 
+/* Runner: kod ko'rinishi (faqat o'qish, rangli) <-> ilova ko'rinishi, sarlavhadagi bitta tugma bilan */
+let runnerHtml = null;
+const svgIco = p => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const CODE_ICO = svgIco('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>');
+const VIEW_ICO = svgIco('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
+
+function toggleCode() {
+  const el = $('appRunner');
+  if (!el || runnerHtml === null) return;
+  const on = el.classList.toggle('code');
+  const code = el.querySelector('.apr-code code');
+  if (on && code && !code.dataset.ready) {
+    code.innerHTML = runnerHtml.length > 250000 ? esc(runnerHtml) : highlight(runnerHtml);
+    code.dataset.ready = '1';
+  }
+  const pane = el.querySelector('.apr-code');
+  if (pane) { pane.scrollTop = 0; pane.scrollLeft = 0; }
+  const b = el.querySelector('[data-act="run-code"]');
+  if (b) {
+    b.innerHTML = on ? VIEW_ICO : CODE_ICO;
+    const t = on ? 'Ilovani ko\'rish' : 'Kodni ko\'rish';
+    b.setAttribute('title', t); b.setAttribute('aria-label', t);
+  }
+}
+
 function closeRunner() {
+  runnerHtml = null;
   if (runner) { try { runner.destroy(); } catch (_) {} runner = null; }
   runnerId = '';
   $('appRunner')?.remove();
@@ -167,6 +193,7 @@ async function openRunner(a, c) {
       <button type="button" class="apr-ib" data-act="run-back" aria-label="Orqaga">${ico('nav/chevron-left', 22)}</button>
       ${logoHtml(a, 'apr-logo')}
       <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.slug)}/${esc(a.slug)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
+      <button type="button" class="apr-ib" data-act="run-code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>
       <button type="button" class="apr-ib" data-act="run-reload" aria-label="Qayta yuklash" title="Qayta yuklash">${ico('action/refresh', 20)}</button>
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}
@@ -181,8 +208,9 @@ async function openRunner(a, c) {
     body.innerHTML = `<div class="aps-empty"><b>Ilovani yuklab bo'lmadi</b><span>${esc(error?.message || 'Topilmadi')}</span></div>`;
     return;
   }
-  body.innerHTML = '';
-  runner = runApp(body, { id: a.id, html: data.html });
+  body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><pre><code></code></pre></div>';
+  runnerHtml = String(data.html || '');
+  runner = runApp(body.querySelector('.apr-view'), { id: a.id, html: data.html });
 }
 
 /* ── Formalar ───────────────────────────────────────────────────────── */
@@ -230,7 +258,7 @@ async function openAppForm(editId, presetCat) {
     <div class="apf-h"><b>${a ? 'Ilovani tahrirlash' : 'Yangi ilova'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish">✕</button></div>
     <label class="apf-l">Nomi<input id="afName" maxlength="40" autocomplete="off" value="${esc(a?.name || '')}" placeholder="Mening o'yinim"></label>
     <label class="apf-l">Unikal nom (URL)
-      <span class="apf-slug"><i>/apps/…/</i><input id="afSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(a?.slug || '')}" placeholder="mygame"${a ? ' readonly' : ''}></span>
+      <span class="apf-slug"><i>/apps/…/</i><input id="afSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(a?.slug || '')}" placeholder="mygame"${a ? ' readonly aria-readonly="true" tabindex="-1"' : ''}></span>
       <span class="apf-hint" id="afSlugHint">${a ? 'Unikal nom keyin o\'zgarmaydi' : ''}</span></label>
     <label class="apf-l">Kategoriya
       <span class="apf-row"><select id="afCat">${catOptions(a?.category_id || presetCat || cats[0].id)}</select>
@@ -239,8 +267,8 @@ async function openAppForm(editId, presetCat) {
     <div class="apf-l">Logo
       <span class="apf-row"><span class="apf-logo" id="afLogoPrev">${safeLogo(a?.logo) ? `<img src="${safeLogo(a.logo)}" alt="">` : '<i>▣</i>'}</span>
       <span class="apf-hint" id="afLogoSrc">${a?.logo ? 'Saqlangan logo. Kod o\'zgarsa, qayta aniqlanadi' : 'HTML koddan avtomatik olinadi (favicon, logotip SVG, rasm yoki emoji)'}</span></span></div>
-    <div class="apf-l">HTML kod
-      <div class="apf-code"><pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre><textarea id="afHtml" class="apf-ta" rows="10" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="<!doctype html>…">${esc(a?.html || '')}</textarea></div>
+    <div class="apf-l">
+      <div class="apf-code"><pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre><textarea id="afHtml" class="apf-ta" aria-label="HTML kod" rows="10" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="<!doctype html>…">${esc(a?.html || '')}</textarea></div>
       <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 1 MB</span></span></div>
     <div class="apf-hint bad" id="afErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
@@ -328,7 +356,7 @@ function openCatForm(editId, fromEmpty, onDone) {
     <div class="apf-h"><b>${c ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish">✕</button></div>
     <label class="apf-l">Nomi<input id="acName" maxlength="40" autocomplete="off" value="${esc(c?.name || '')}" placeholder="Maktab"></label>
     <label class="apf-l">Unikal nom (URL)
-      <span class="apf-slug"><i>/apps/</i><input id="acSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(c?.slug || '')}" placeholder="school"${c ? ' readonly' : ''}></span>
+      <span class="apf-slug"><i>/apps/</i><input id="acSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(c?.slug || '')}" placeholder="school"${c ? ' readonly aria-readonly="true" tabindex="-1"' : ''}></span>
       <span class="apf-hint" id="acHint">${c ? 'Unikal nom keyin o\'zgarmaydi' : ''}</span></label>
     <div class="apf-hint bad" id="acErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="acSave">${c ? 'Saqlash' : 'Yaratish'}</button></div>
@@ -432,6 +460,7 @@ function onRunnerClick(e) {
   if (!b) return;
   const k = b.dataset.act;
   if (k === 'run-back') { const p = parts(); return go(p[0] || ''); }
+  if (k === 'run-code') return toggleCode();
   if (k === 'run-reload') return runner?.reload();
   if (k === 'edit-app') return openAppForm(b.dataset.id);
   if (k === 'del-app') return delApp(b.dataset.id);

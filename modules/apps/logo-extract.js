@@ -197,6 +197,73 @@ function lumHex(h) {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 }
 
+/* ── Matnli logotip: <div class="app-logo-icon">FX</div> ──
+   Rasm yo'q — qisqa matn + CSS fon (rang/gradient) bilan chizilgan. Fon va rang sahifa CSS'idan olinadi. */
+const COLOR_TOK = /#[0-9a-f]{3,8}\b|(?:rgb|hsl)a?\([^)]*\)/gi;
+const BAD_NAME = /^(none|transparent|inherit|initial|unset|currentcolor|auto)$/i;
+const colorOf = s => {
+  const t = String(s || '').trim();
+  const m = t.match(COLOR_TOK);
+  if (m) return m[0];
+  return /^[a-z]{3,20}$/i.test(t) && !BAD_NAME.test(t) ? t : null;
+};
+function cssProps(doc, el, vars) {
+  const css = [...doc.querySelectorAll('style')].map(s => s.textContent || '').join('\n').replace(/@import[^;]*;/gi, '');
+  let rules = [];
+  try { const sh = new CSSStyleSheet(); sh.replaceSync(css); rules = [...sh.cssRules]; }
+  catch (_) { try { rules = [...doc.styleSheets].flatMap(s => [...s.cssRules]); } catch (__) { rules = []; } }
+  const p = {};
+  const take = st => {
+    const bi = st.getPropertyValue('background-image');
+    const bg = st.getPropertyValue('background') || (bi && bi !== 'none' ? bi : '') || st.getPropertyValue('background-color');
+    if (bg) p.bg = bg;
+    for (const k of ['color', 'border-radius', 'width', 'font-weight']) { const v = st.getPropertyValue(k); if (v) p[k] = v; }
+  };
+  for (const r of rules) {
+    if (!r.selectorText || !r.style) continue;
+    let hit = false;
+    try { hit = el.matches(r.selectorText); } catch (_) { hit = false; }
+    if (hit) take(r.style);
+  }
+  if (el.style) take(el.style);
+  return p;
+}
+function textLogo(doc, vars) {
+  for (const el of doc.querySelectorAll('[class],[id]')) {
+    if (el.children.length || !hintOf(el)) continue;
+    const chars = [...(el.textContent || '').trim()];
+    if (!chars.length || chars.length > 3) continue;
+    const p = cssProps(doc, el, vars);
+    if (!p.bg) continue;
+    const bg = resolveVars(p.bg, vars);
+    let cols = bg.match(COLOR_TOK) || [];
+    if (!cols.length) { const one = colorOf(bg); if (one) cols = [one]; }
+    if (!cols.length) continue;
+    /* gradient yo'nalishi (CSS burchagi: 0 = tepaga, 90 = o'ngga) */
+    let ang = 180;
+    const am = /(-?[\d.]+)deg/.exec(bg), to = /to\s+((?:top|bottom|left|right)(?:\s+(?:top|bottom|left|right))?)/i.exec(bg);
+    if (am) ang = +am[1];
+    else if (to) {
+      const w = new Set(to[1].toLowerCase().split(/\s+/));
+      ang = w.has('top') ? (w.has('right') ? 45 : w.has('left') ? 315 : 0) : w.has('bottom') ? (w.has('right') ? 135 : w.has('left') ? 225 : 180) : w.has('right') ? 90 : 270;
+    }
+    const rad = ang * Math.PI / 180, sx = Math.sin(rad), sy = -Math.cos(rad);
+    const defs = cols.length > 1
+      ? `<defs><linearGradient id="g" x1="${(0.5 - sx / 2).toFixed(3)}" y1="${(0.5 - sy / 2).toFixed(3)}" x2="${(0.5 + sx / 2).toFixed(3)}" y2="${(0.5 + sy / 2).toFixed(3)}">${cols.map((c, i) => `<stop offset="${(i / (cols.length - 1)).toFixed(3)}" stop-color="${esc(c)}"/>`).join('')}</linearGradient></defs>`
+      : '';
+    const fill = cols.length > 1 ? 'url(#g)' : esc(cols[0]);
+    /* burchak radiusi: element kengligiga nisbatan */
+    let rx = 28;
+    const bw = /px/.test(p.width || '') ? parseFloat(p.width) : 0, br = parseFloat(p['border-radius']);
+    if (/%/.test(p['border-radius'] || '')) rx = Math.min(64, br / 100 * S);
+    else if (bw > 0 && br >= 0) rx = Math.min(64, br / bw * S);
+    const fg = colorOf(resolveVars(p.color || '', vars)) || (HEX.test(cols[0]) && lumHex(cols[0]) > 0.6 ? '#000000' : '#ffffff');
+    const fs = [0, 70, 58, 44][chars.length], fw = parseInt(p['font-weight'], 10) >= 600 || p['font-weight'] === 'bold' ? 800 : 700;
+    return `<svg xmlns="${SVGNS}" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">${defs}<rect width="${S}" height="${S}" rx="${rx.toFixed(1)}" fill="${fill}"/><text x="64" y="68" font-size="${fs}" font-weight="${fw}" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" text-anchor="middle" dominant-baseline="central" fill="${esc(fg)}">${esc(chars.join(''))}</text></svg>`;
+  }
+  return null;
+}
+
 function collect(doc, name, vars) {
   const out = []; let order = 0;
   const push = (score, source, c) => out.push({ score: score - order++ * 0.001, source, ...c });
@@ -217,6 +284,9 @@ function collect(doc, name, vars) {
     let score = own ? 88 : nested ? 84 : inHead ? 66 : inBtn ? 12 : 30;
     push(score, own || nested ? 'logotip SVG' : 'SVG rasm', { el, vars });
   });
+
+  const tl = textLogo(doc, vars);
+  if (tl) push(86, 'matnli logotip', { svgText: tl });
 
   let imgN = 0;
   doc.querySelectorAll('img[src^="data:image"]').forEach(el => {

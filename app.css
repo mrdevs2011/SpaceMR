@@ -15141,17 +15141,31 @@ html[data-theme] .apf-code .apf-hl code { font: inherit; white-space: inherit; }
 html[data-theme] .apf div.apf-code textarea.apf-ta { z-index: 1; overflow: auto; resize: none !important; background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent; caret-color: #e7e9ea; outline: none; scrollbar-width: thin; scrollbar-color: #2f3336 transparent; }
 html[data-theme] .apf div.apf-code textarea.apf-ta::selection { background: rgba(29, 155, 240, 0.35); -webkit-text-fill-color: transparent; }
 html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-fill-color: #536471; color: #536471; }
-.apf-hl .hl-c, .apf-hl .hl-d, .apf-hl .hl-p { color: #8b949e; }
-.apf-hl .hl-t { color: #7ee787; }
-.apf-hl .hl-a { color: #79c0ff; }
-.apf-hl .hl-s { color: #a5d6ff; }
-.apf-hl .hl-n { color: #ffa657; }
-.apf-hl .hl-k { color: #ff7b72; }
-.apf-hl .hl-f { color: #d2a8ff; }
-.apf-hl .hl-sel { color: #7ee787; }
+:is(.apf-hl, .apr-code) .hl-c, :is(.apf-hl, .apr-code) .hl-d, :is(.apf-hl, .apr-code) .hl-p { color: #8b949e; }
+:is(.apf-hl, .apr-code) .hl-t { color: #7ee787; }
+:is(.apf-hl, .apr-code) .hl-a { color: #79c0ff; }
+:is(.apf-hl, .apr-code) .hl-s { color: #a5d6ff; }
+:is(.apf-hl, .apr-code) .hl-n { color: #ffa657; }
+:is(.apf-hl, .apr-code) .hl-k { color: #ff7b72; }
+:is(.apf-hl, .apr-code) .hl-f { color: #d2a8ff; }
+:is(.apf-hl, .apr-code) .hl-sel { color: #7ee787; }
 @media (max-width: 699px) {
   html[data-theme] .apf-code { --cb-fs: 16px; --cb-lh: 22px; }
 }
+
+/* Runner: kod ko'rinishi — faqat o'qish, rangli; sarlavhadagi tugma bilan almashadi */
+.apr-body .apr-view { position: absolute; inset: 0; }
+.apr-code { display: none; position: absolute; inset: 0; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; outline: none; }
+.apr.code .apr-code { display: block; }
+.apr.code .apr-view, .apr.code [data-act="run-reload"] { display: none; }
+.apr.code [data-act="run-code"] { color: #1d9bf0; }
+.apr-code pre { box-sizing: border-box; margin: 0; width: max-content; min-width: 100%; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)); font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e7e9ea; white-space: pre; tab-size: 2; -webkit-user-select: text; user-select: text; }
+.apr-code code { font: inherit; }
+
+/* Unikal nom yaratilgandan keyin o'zgarmaydi: qulflangan ko'rinish (bosilmaydi, fokus yo'q, ko'k ramka yo'q) */
+html[data-theme] .apf-slug:has(input[readonly]) { cursor: not-allowed; background: #0a0a0a; }
+html[data-theme] .apf-slug:has(input[readonly]):focus-within { border-color: #2f3336; }
+html[data-theme] .apf .apf-slug input[readonly] { pointer-events: none; -webkit-user-select: none; user-select: none; }
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */
