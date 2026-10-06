@@ -5006,6 +5006,7 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   border: 0.5px solid var(--glass-border, var(--pal-gray-700));
   border-radius: var(--radius);
   box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(231, 233, 234, 0.1);
+  overflow: hidden;
 }
 .chats-x-item { display: block; width: 100%; padding: 12px 18px; text-align: left; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: 15px; font-weight: 500; color: var(--text); }
 .chats-x-item.on { font-weight: 700; }
@@ -6562,6 +6563,7 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
   right: 0;
   top: calc(100% + 6px);
   z-index: 50;
+  overflow: hidden;
   background: #000;
   border: 1px solid #2f3336;
   border-radius: 14px;
@@ -9549,6 +9551,7 @@ button:focus-visible,
   background: var(--bg2); border: 1px solid var(--line);
   border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   padding: 6px; min-width: 190px;
+  overflow: hidden;
 }
 .chat-header-dropdown-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
@@ -15643,6 +15646,25 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal:has(#groupJoinBar) #chatThreadInputRow,
 #chatThreadModal:has(#groupJoinBar) .chat-thread-input-row {
   display: none !important;
+}
+
+
+/* dropdown overflow-hidden — tanlagichlar burchakdan chiqmasin */
+.chats-x-menu,
+.chat-header-dropdown,
+.chat-ctx-menu,
+#chatContextMenu,
+#msgCtx,
+.sb-acc-menu,
+.settings-more-menu,
+.ua-dd-menu,
+.ua-more-menu,
+.apf-dd-list,
+.attach-menu,
+.emoji-picker,
+.chat-emoji-quickpick,
+.search-suggestions {
+  overflow: hidden;
 }
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */

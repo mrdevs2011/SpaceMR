@@ -1050,6 +1050,7 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   border: 0.5px solid var(--glass-border, var(--pal-gray-700));
   border-radius: var(--radius);
   box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(231, 233, 234, 0.1);
+  overflow: hidden;
 }
 .chats-x-item { display: block; width: 100%; padding: 12px 18px; text-align: left; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: 15px; font-weight: 500; color: var(--text); }
 .chats-x-item.on { font-weight: 700; }
