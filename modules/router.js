@@ -41,11 +41,15 @@ const routes = {
   'notifs': {
     view: 'notifsView',
     title: 'Bildirishnomalar'
+  },
+  'apps': {
+    view: 'appsView',
+    title: 'Ilovalar'
   }
 };
 
 // Allowed route names for security
-const ALLOWED_ROUTES = ['home', 'profile', 'chats', 'login', 'actions', 'saved', 'notifs'];
+const ALLOWED_ROUTES = ['home', 'profile', 'chats', 'login', 'actions', 'saved', 'notifs', 'apps'];
 
 /* ═══════════════════════════════════════════════════════════════════════
    CURRENT STATE
@@ -383,6 +387,9 @@ export function initRouter() {
       navigateTo(btn.dataset.v);
     });
   });
+
+  // Mobil header: Ilovalar tugmasi
+  $('hdrAppsBtn')?.addEventListener('click', () => navigateTo('apps'));
 
   // Admin tab visibility
   applyAdminNav();

@@ -18,6 +18,7 @@
  *   /newpost               yangi post oynasi
  *   /actions               admin boshqaruvi (faqat admin)
  *   /saved                 saqlangan postlar
+ *   /apps  /apps/<kategoriya>  /apps/<kategoriya>/<ilova>   foydalanuvchi ilovalari (sandbox)
  *   /p/<id>                post (bosh sahifada shu postga o'tadi); /p/<id>#c-<izoh> — izoh ochilib yoritiladi
  *   /s/<username>          foydalanuvchi hikoyalari ko'rgichi
  *   /u/<user>/<tab>        profil tabi: photos | text | music  (/profile/<tab> — o'z profilim)
@@ -43,7 +44,7 @@ import { navigateTo, getCurrentRoute } from './router.js';
 
 const $ = id => document.getElementById(id);
 
-const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications' };
+const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications', apps: '/apps' };
 const NEXT_KEY = 'spacemr_next_path';
 const PROFILE_TABS = ['photos', 'videos', 'text', 'music'];   // 'all' = sukut (URL da yo'q)
 const LAST_KEY = 'spacemr_last_path'; // kirgan foydalanuvchining oxirgi joyi (/login yozsa shu yerga qaytadi)
@@ -87,9 +88,16 @@ export function parsePath(rawPath) {
     if (a === 'actions')  return { kind: 'view', view: 'actions', admin: true };
     if (a === 'saved')    return { kind: 'view', view: 'saved' };
     if (a === 'notifications') return { kind: 'view', view: 'notifs' };
+    if (a === 'apps')     return { kind: 'view', view: 'apps', sub: '' };
     if (a === 'settings') return { kind: 'redirect', to: isWideDesktop() ? '/profile' : '/profile/settings' };
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };
+  }
+  if (a === 'apps' && (seg.length === 2 || seg.length === 3)) {
+    const SL = /^[a-z0-9][a-z0-9_-]{2,29}$/;
+    const sub = seg.slice(1).map(s => s.toLowerCase());
+    if (!sub.every(s => SL.test(s))) return { kind: 'notfound' };
+    return { kind: 'view', view: 'apps', sub: sub.join('/') };
   }
   if (a === 'p' && seg.length === 3 && UUID_RE.test(seg[1]) && (seg[2] || '').toLowerCase() === 'comments') return { kind: 'post', ref: seg[1].toLowerCase(), comments: true };
   if (a === 'p' && seg.length === 2 && UUID_RE.test(seg[1])) return { kind: 'post', ref: seg[1].toLowerCase() };
@@ -284,6 +292,7 @@ function computeUrl() {
     if (tab && tab !== 'all') return '/profile/' + tab;
   }
 
+  if (getCurrentRoute() === 'apps') return '/apps' + (state.appsPath ? '/' + state.appsPath : '');
   return VIEW_PATH[getCurrentRoute()] || '/home';
 }
 
@@ -354,7 +363,7 @@ const TITLES = {
   '/chats/saved-messages': 'Saqlangan xabarlar',
 };
 function updateTitle(path) {
-  const t = TITLES[path] || (path.startsWith('/chats/') ? 'Suhbatlar' : (path.startsWith('/u/') ? 'Profil' : (path.startsWith('/p/') ? 'Post' : (path.startsWith('/s/') ? 'Hikoya' : (path.startsWith('/profile/') ? 'Profil' : null)))));
+  const t = TITLES[path] || (path.startsWith('/chats/') ? 'Suhbatlar' : (path.startsWith('/u/') ? 'Profil' : (path.startsWith('/apps') ? 'Ilovalar' : path.startsWith('/p/') ? 'Post' : (path.startsWith('/s/') ? 'Hikoya' : (path.startsWith('/profile/') ? 'Profil' : null)))));
   if (t) document.title = `${t} - SpaceMR`;
 }
 
@@ -572,12 +581,14 @@ export async function applyPath(rawPath, { initial = false } = {}) {
 
     /* Tab (view) */
     if (route.kind === 'view') {
+      if (route.view === 'apps') state.appsPath = route.sub || '';
       if (getCurrentRoute() !== route.view || threadOpen() || hasAnyOverlay()) {
         navigateTo(route.view, false);
       }
       closeEverythingExcept(null);
       await closeThreadIfOpen();
       if (route.view === 'profile') pickTab('#profileGridTabs [data-pg-tab]', 'pgTab', route.tab || 'all');
+      if (route.view === 'apps') window.dispatchEvent(new Event('apps:path'));
       updateTitle(cleanPath(rawPath));
       return;
     }
