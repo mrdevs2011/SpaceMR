@@ -1,3 +1,4 @@
+import { smoothScrollIntoView } from './core/utils.js';
 /**
  * SpaceMR — URL router (path asosida).
  *
@@ -461,7 +462,7 @@ function scrollToMsg(id) {
   const tick = () => {
     const el = document.querySelector(`.chat-msg[data-msg-id="${q}"]`);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      smoothScrollIntoView(el, { block: 'center' });
       el.classList.add('msg-link-highlight');
       setTimeout(() => el.classList.remove('msg-link-highlight'), 3000);
       return;

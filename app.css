@@ -7722,6 +7722,25 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 /* Menyu ochiq bo'lgan xabar */
 .chat-msg.mc-active .chat-bubble { box-shadow: 0 0 0 2px rgba(231, 233, 234, 0.2); }
+/* Reply quote bosilganda: sekin scroll dan keyin och ko'k "men shu yerdaman" flash */
+.chat-msg.msg-reply-hl {
+  border-radius: var(--radius, 12px);
+  animation: msg-reply-hl 2.2s ease-out forwards;
+}
+.chat-msg.msg-reply-hl .chat-bubble {
+  transition: box-shadow .25s ease;
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.55);
+}
+@keyframes msg-reply-hl {
+  0%   { background-color: transparent; }
+  12%  { background-color: rgba(29, 155, 240, 0.28); }
+  45%  { background-color: rgba(29, 155, 240, 0.18); }
+  100% { background-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-msg.msg-reply-hl { animation: none; background-color: rgba(29, 155, 240, 0.2); }
+}
+
 
 /* Tanlash rejimi: chapda aylana, bosib belgilanadi */
 #chatThreadMessages.msg-selecting .chat-msg[data-msg-id] { align-self: stretch; max-width: 100%; align-items: center; cursor: pointer; }

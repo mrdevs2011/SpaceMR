@@ -1,3 +1,4 @@
+import { smoothScrollIntoView } from '../core/utils.js';
 /**
  * Bildirishnomalar: o'qilmagan xabarlar ro'yxati.
  * Bosilsa chat ochiladi va o'sha xabarga scroll qilinadi (glow yo'q).
@@ -126,7 +127,7 @@ async function openItem(kind, ref, msgId) {
   let n = 0;
   const tick = () => {
     const el = document.querySelector(`.chat-msg[data-msg-id="${q}"]`);
-    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    if (el) { smoothScrollIntoView(el, { block: 'center' }); return; }
     if (n++ < 15) setTimeout(tick, 200);
   };
   setTimeout(tick, 250);

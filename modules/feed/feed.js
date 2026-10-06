@@ -2,7 +2,7 @@ import { busEmit } from '../core/rt-bus.js';
 import { sb, state, CAP_LIMIT, getMediaUrl, isAdmin, mapProfile, mapPost, MEDIA_BUCKET } from '../core/config.js';
 import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          showConfirm,
-         dlFile, openZoom, showHeartBurst, fmtCount } from '../core/utils.js';
+         dlFile, openZoom, showHeartBurst, fmtCount, smoothScrollIntoView} from '../core/utils.js';
 import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
@@ -403,7 +403,7 @@ async function focusCommentFromLink(postId, cmtId) {
     for (let i = 0; i < 24; i++) {
       const row = document.querySelector(`.cmt-row[data-cmt-id="${cmtId}"]`);
       if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        smoothScrollIntoView(row, { block: 'center' });
         row.classList.add('cmt-link-highlight');
         setTimeout(() => row.classList.remove('cmt-link-highlight'), CMT_HL_MS);
         return;
@@ -445,7 +445,7 @@ export function scrollToPostFromHash() {
     let el = document.querySelector(`.post[data-id="${targetId}"]`);
     if (el) {
       _scrolledTargetId = targetId;
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      smoothScrollIntoView(el, { block: 'center' });
       const cmtId = getTargetCommentId();
       if (cmtId) {
         // Izoh havolasi: yoritish izohning o'zida bo'ladi, post emas

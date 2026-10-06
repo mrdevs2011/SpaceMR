@@ -5,7 +5,7 @@
    holat (tanlov, ochiq menyu) xabar ID'lari bo'yicha saqlanadi va msgMenuAfterPaint() bilan tiklanadi. */
 import { sb, state } from '../core/config.js';
 import { toast } from '../ui/toast.js';
-import { $, esc, defAvi, showConfirm, copyToClipboard } from '../core/utils.js';
+import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
@@ -789,7 +789,7 @@ export function initMsgMenu(opts) {
   if (!box || box.dataset.msgMenu) return;
   box.dataset.msgMenu = '1';
   reactInit(box);
-  // Reply quote bosilsa — asl xabarga scroll
+  // Reply quote bosilsa — asl xabarga SEKIN smooth scroll + och ko'k "men shu yerdaman" flash
   box.addEventListener('click', e => {
     const q = e.target.closest?.('.msg-reply-quote');
     if (!q) return;
@@ -798,11 +798,14 @@ export function initMsgMenu(opts) {
     e.preventDefault();
     e.stopPropagation();
     const el = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(id)}"]`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('mc-active');
-      setTimeout(() => el.classList.remove('mc-active'), 1200);
-    }
+    if (!el) return;
+    smoothScrollIntoView(el, { block: 'center' }).then(() => {
+      el.classList.remove('msg-reply-hl');
+      void el.offsetWidth; // reflow — animatsiya qayta ishlasin
+      el.classList.add('msg-reply-hl');
+      clearTimeout(el._hlT);
+      el._hlT = setTimeout(() => el.classList.remove('msg-reply-hl'), 2200);
+    });
   });
 
   // Desktop: o'ng tugma. Sensorli qurilmada brauzerning o'z menyusini bostiramiz (long-press o'zimiz ushlaymiz).

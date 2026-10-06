@@ -267,3 +267,9 @@
   - DM: caption endi media bilan bir blokda (`cfm-media-dm--cap`); o'rtada radius/bo'shliq yo'q.
   - Guruh `bubble-media-caption`: img/video pastki radius 0, caption yuqori radius 0.
   - Fayllar: message-bubble.js, mono-x.css, app.css rebuild.
+
+---
+### 2026-10-06 20:42
+- **Reply quote → sekin smooth scroll + och ko'k flash** (`msg-reply-hl` 2.2s)
+- **Global sekin auto-smooth**: `smoothScrollContainer` / `smoothScrollIntoView` (~750ms ease-in-out) — chat pastga, reply, feed, notifs, voice
+- **Edit → chats list last_message**: migration `085_last_message_on_edit.sql` (remote push qilindi)

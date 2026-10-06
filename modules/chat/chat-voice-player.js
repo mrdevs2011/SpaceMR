@@ -1,3 +1,4 @@
+import { smoothScrollIntoView } from '../core/utils.js';
 /**
  * chat-voice-player.js — waveform hydrate, playback, mini-player
  * Ehtiyotkor ajratish: paintMessages/closeChatThread chat.js da qoladi.
@@ -711,7 +712,7 @@ window._chatPlayVoice = async function(btn) {
     _syncMiniPlayer();
     const next = _nextVoiceBtn(prevBtn, prevUrl);
     if (next) {
-      next.closest('.chat-voice-msg')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const _vn = next.closest('.chat-voice-msg'); if (_vn) smoothScrollIntoView(_vn, { block: 'nearest' });
       window._chatPlayVoice(next);
     }
   };

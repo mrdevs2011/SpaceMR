@@ -660,7 +660,7 @@ import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
   mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
 } from '../core/config.js';
-import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser } from '../core/utils.js';
+import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer} from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
 import { mark, armFlashDetector, syncPath } from '../core/perf.js';
 import { initMsgMenu, msgMenuAfterPaint, msgMenuReset, isEditing, commitEdit } from './msg-menu.js';
@@ -2014,10 +2014,9 @@ function _bindPinTracking(box) {
 }
 function _smoothToBottom(box) {
   if (!box) return;
-  box._smoothUntil = Date.now() + 900;
   const top = box.scrollHeight;
-  try { box.scrollTo({ top, behavior: 'smooth' }); }
-  catch (_) { box.scrollTop = top; }
+  box._smoothUntil = Date.now() + 900;
+  smoothScrollContainer(box, top);
 }
 window._chatImgLoaded = function (img) {
   try { rememberImgRatio(img); } catch (_) {}

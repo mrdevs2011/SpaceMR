@@ -583,3 +583,84 @@ export function isActiveUser(u) {
   if (!u.blocked) return true;
   return !!(u.blockedUntil && u.blockedUntil < Date.now());
 }
+
+/* ── SpaceMR sekin smooth scroll (barcha auto-scroll uchun) ─────────────
+   Brauzer native smooth (~300ms) juda tez — bu yerda ~750ms ease-in-out. */
+export const SMOOTH_MS = 750;
+
+function _easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+/** Scrollable konteynerda `top` ga sekin silliq scroll */
+export function smoothScrollContainer(box, top, duration = SMOOTH_MS) {
+  if (!box) return Promise.resolve();
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const target = Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight));
+  if (reduced || duration <= 0) {
+    box.scrollTop = target;
+    return Promise.resolve();
+  }
+  const start = box.scrollTop;
+  const delta = target - start;
+  if (Math.abs(delta) < 1) return Promise.resolve();
+  // native smooth ni bekor qilish uchun vaqt belgisi
+  box._smoothUntil = Date.now() + duration + 80;
+  const t0 = performance.now();
+  return new Promise(resolve => {
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      box.scrollTop = start + delta * _easeInOutCubic(p);
+      if (p < 1) requestAnimationFrame(step);
+      else resolve();
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/** Elementni viewport yoki eng yaqin scroll ota ichida markazga sekin olib kelish */
+export function smoothScrollIntoView(el, { block = 'center', duration = SMOOTH_MS } = {}) {
+  if (!el || !el.isConnected) return Promise.resolve();
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced || duration <= 0) {
+    try { el.scrollIntoView({ block, behavior: 'auto' }); } catch (_) {}
+    return Promise.resolve();
+  }
+  // Scroll ota: overflow auto/scroll bo'lgan eng yaqin ota (yoki window)
+  let box = el.parentElement;
+  while (box && box !== document.body && box !== document.documentElement) {
+    const st = getComputedStyle(box);
+    const oy = st.overflowY;
+    if ((oy === 'auto' || oy === 'scroll' || oy === 'overlay') && box.scrollHeight > box.clientHeight + 2) break;
+    box = box.parentElement;
+  }
+  if (!box || box === document.body || box === document.documentElement) {
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    let deltaY = 0;
+    if (block === 'center') deltaY = rect.top + rect.height / 2 - vh / 2;
+    else if (block === 'start') deltaY = rect.top - 12;
+    else if (block === 'end') deltaY = rect.bottom - vh + 12;
+    else deltaY = rect.top + rect.height / 2 - vh / 2;
+    const start = window.scrollY || document.documentElement.scrollTop || 0;
+    const target = start + deltaY;
+    const t0 = performance.now();
+    return new Promise(resolve => {
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / duration);
+        window.scrollTo(0, start + (target - start) * _easeInOutCubic(p));
+        if (p < 1) requestAnimationFrame(step);
+        else resolve();
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  const er = el.getBoundingClientRect();
+  const br = box.getBoundingClientRect();
+  let nextTop = box.scrollTop;
+  if (block === 'center') nextTop += (er.top - br.top) - (box.clientHeight - er.height) / 2;
+  else if (block === 'start') nextTop += (er.top - br.top) - 12;
+  else if (block === 'end') nextTop += (er.bottom - br.bottom) + 12;
+  else nextTop += (er.top - br.top) - (box.clientHeight - er.height) / 2;
+  return smoothScrollContainer(box, nextTop, duration);
+}
