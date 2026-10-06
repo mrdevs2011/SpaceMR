@@ -30,7 +30,8 @@ function fit() {
   const view = state.view || 'home';
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
   const isDesktop = window.matchMedia('(min-width: 1200px)').matches;
-  const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || exploreOpen;
+  rail()?.classList.toggle('rr-apps-mode', view === 'apps');
+  const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || view === 'apps' || exploreOpen;
   showRail(
     allowed &&
     isDesktop &&
@@ -76,7 +77,7 @@ export function onRouteChange() {
   fit();
   // Comments panel ochiq qolgan bo'lsa, view o'zgarganda yopamiz
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
-  if (!['home', 'profile', 'saved', 'notifs'].includes(state.view || '') && !exploreOpen) {
+  if (!['home', 'profile', 'saved', 'notifs', 'apps'].includes(state.view || '') && !exploreOpen) {
     const cmt = document.getElementById('rrCmtPanel');
     if (cmt && !cmt.hidden) {
       cmt.hidden = true;

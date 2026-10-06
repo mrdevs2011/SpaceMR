@@ -8,11 +8,12 @@
 import { sb, state } from '../core/config.js';
 import { esc, showConfirm } from '../core/utils.js';
 import { runApp } from './runner.js';
+import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome } from './panels.js';
 
 const $ = id => document.getElementById(id);
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{2,29}$/;
 const RESERVED = ['new', 'edit', 'mine', 'all', 'create', 'categories', 'category', 'admin', 'api', 'apps'];
-const LIST_COLS = 'id,slug,name,description,category_id,owner_id,logo,updated_at';
+const LIST_COLS = 'id,slug,name,description,category_id,owner_id,logo,created_at,updated_at';
 
 let cats = [], apps = [], owners = new Map();
 let loaded = false, loadErr = '', loading = null;
@@ -21,9 +22,8 @@ let runner = null, runnerId = '';   // { destroy, reload }, ishga tushgan ilova 
 
 const isAdmin = () => !!state.me?.isAdmin;
 const canEdit = ownerId => !!state.me && (ownerId === state.me.uid || isAdmin());
-const ownerName = id => owners.get(id) || '';
+const ownerName = id => (owners.get(id) || {}).username || '';
 const catById = id => cats.find(c => c.id === id);
-const safeLogo = l => (typeof l === 'string' && /^data:image\/(png|jpeg|svg\+xml|webp);base64,[A-Za-z0-9+/=]+$/.test(l)) ? l : '';
 const ico = (p, s = 20) => `<img src="./svg/${p}.svg" alt="" class="icon" width="${s}" height="${s}">`;
 const logoHtml = (a, cls) => {
   const l = safeLogo(a.logo);
@@ -48,8 +48,8 @@ async function load(force = false) {
       const ids = [...new Set([...cats, ...apps].map(x => x.owner_id).filter(Boolean))];
       owners = new Map();
       if (ids.length) {
-        const { data } = await sb.from('profiles').select('id,username').in('id', ids);
-        (data || []).forEach(p => owners.set(p.id, p.username));
+        const { data } = await sb.from('profiles').select('id,username,full_name,avatar').in('id', ids);
+        (data || []).forEach(p => owners.set(p.id, { username: p.username, fullName: p.full_name || '', avatar: p.avatar || '' }));
       }
       loaded = true;
     } catch (e) {
@@ -70,33 +70,25 @@ export function go(sub) {
 
 /* ── Chizish ────────────────────────────────────────────────────────── */
 
-function card(a) {
-  const c = catById(a.category_id);
-  const href = `/apps/${c ? c.slug : '_'}/${a.slug}`;
-  return `<a class="apc" href="${href}" data-go="${c ? esc(c.slug) + '/' + esc(a.slug) : ''}">
-    ${logoHtml(a, 'apc-logo')}
-    <span class="apc-meta"><b>${esc(a.name)}</b>${a.description ? `<small>${esc(a.description)}</small>` : ''}<code class="apc-slug">${c ? esc(c.slug) + '/' : ''}${esc(a.slug)}</code><em>@${esc(ownerName(a.owner_id) || '?')}</em></span>
-  </a>`;
+const wide = () => window.matchMedia('(min-width: 1200px)').matches;   // >=1200: o'ng panel (desktop), aks holda mobil maket
+let catFilter = '', rndId = '';
+const ctx = () => ({ cats, apps, owners, me: state.me, catById });
+const opts = () => ({ query, catFilter, rndId });
+
+function ensureRnd() { if (!apps.some(a => a.id === rndId)) rndId = pickRandom(ctx())?.id || ''; }
+
+/** Desktop: o'ng float panelga 5 ta kartani chizadi (boshqa sahifalarda tozalaydi) */
+function renderRail() {
+  $('rightRail')?.classList.toggle('rr-apps-mode', state.view === 'apps');
+  const box = $('rrApps');
+  if (!box) return;
+  box.innerHTML = (state.view === 'apps' && wide() && loaded) ? railHtml(ctx(), rndId) : '';
 }
 
-function listHtml() {
-  const q = query.trim().toLowerCase();
-  const match = a => !q || a.name.toLowerCase().includes(q) || a.slug.includes(q) || (a.description || '').toLowerCase().includes(q);
-  let out = '';
-  for (const c of cats) {
-    const all = apps.filter(a => a.category_id === c.id);
-    const catHit = q && (c.name.toLowerCase().includes(q) || c.slug.includes(q));
-    const list = catHit ? all : all.filter(match);
-    if (q && !list.length && !catHit) continue;
-    out += `<section class="aps-sec">
-      <a class="aps-sec-h" href="/apps/${esc(c.slug)}" data-go="${esc(c.slug)}"><span class="aps-sec-ic">${esc((c.name || '?')[0].toUpperCase())}</span><span class="aps-sec-n">${esc(c.name)}</span><em>${all.length} ta</em><i class="aps-sec-ch">›</i></a>
-      ${list.length ? `<div class="aps-grid">${list.map(card).join('')}</div>` : '<div class="aps-none">Hozircha ilova yo\'q</div>'}
-    </section>`;
-  }
-  return out || `<div class="aps-empty"><b>${q ? 'Hech narsa topilmadi' : 'Hali ilova yo\'q'}</b><span>${q ? 'Boshqa so\'z bilan qidiring' : 'Birinchi kategoriya va ilovani siz qo\'shing'}</span></div>`;
-}
+const listHtml = () => grouped(ctx(), opts(), wide() ? 'cards' : 'launcher');
 
 function homeHtml() {
+  if (!wide()) return mobileHome(ctx(), opts());
   return `<div class="aps">
     <div class="aps-head"><h2 class="aps-title">Ilovalar</h2>
       <div class="aps-head-btns">
@@ -104,13 +96,17 @@ function homeHtml() {
         <button type="button" class="aps-btn" data-act="new-app">+ Ilova</button>
       </div></div>
     <div class="aps-search"><input id="apsQ" type="search" placeholder="Ilova yoki kategoriya qidirish…" autocomplete="off" value="${esc(query)}"></div>
+    ${chips(ctx(), opts())}
     <div id="apsList">${listHtml()}</div></div>`;
 }
 
 function catHtml(c) {
   const list = apps.filter(a => a.category_id === c.id);
-  const own = canEdit(c.owner_id);
-  return `<div class="aps">
+  const own = canEdit(c.owner_id), cx = ctx();
+  const grid = !list.length ? '<div class="aps-empty"><b>Bu kategoriyada ilova yo\'q</b><span>"+ Ilova" bilan birinchisini qo\'shing</span></div>'
+    : wide() ? `<div class="aps-grid">${list.map(a => appCard(cx, a)).join('')}</div>`
+    : `<div class="apm-grid">${list.map(a => launchTile(cx, a)).join('')}</div>`;
+  return `<div class="aps${wide() ? '' : ' apm'}">
     <div class="aps-head">
       <button type="button" class="aps-back" data-go="" aria-label="Orqaga">${ico('nav/chevron-left', 22)}</button>
       <h2 class="aps-title">${esc(c.name)}</h2>
@@ -119,7 +115,7 @@ function catHtml(c) {
     <div class="aps-catbar"><span>/apps/${esc(c.slug)} · @${esc(ownerName(c.owner_id) || '?')}</span>
       ${own ? `<span class="aps-catbtns"><button type="button" class="aps-link" data-act="edit-cat" data-id="${esc(c.id)}">Tahrirlash</button><button type="button" class="aps-link danger" data-act="del-cat" data-id="${esc(c.id)}">O'chirish</button></span>` : ''}
     </div>
-    ${list.length ? `<div class="aps-grid">${list.map(card).join('')}</div>` : '<div class="aps-empty"><b>Bu kategoriyada ilova yo\'q</b><span>"+ Ilova" bilan birinchisini qo\'shing</span></div>'}
+    ${grid}
   </div>`;
 }
 
@@ -141,6 +137,7 @@ export async function render() {
   const cur = parts().join('/');
   if (cur !== p.join('/')) return render();   // yuklanish paytida manzil o'zgargan
   document.title = 'Ilovalar - SpaceMR';
+  ensureRnd(); renderRail();
   if (p.length === 0) { root.innerHTML = homeHtml(); return; }
   const c = cats.find(x => x.slug === p[0]);
   if (!c) { root.innerHTML = notFoundHtml('Kategoriya topilmadi'); return; }
@@ -387,23 +384,45 @@ function delCat(id) {
   }, 'Kategoriyani o\'chirish', 'O\'chirish');
 }
 
-function onClick(e) {
+/** Sahifa va o'ng panel uchun umumiy hodisa boshqaruvchisi (data-act / data-user / data-go) */
+function handle(e, scope) {
+  if (!scope) return false;
   const t = e.target;
   const act = t.closest('[data-act]');
-  if (act) {
+  if (act && scope.contains(act)) {
     const k = act.dataset.act;
-    if (k === 'new-app') return openAppForm(null, act.dataset.cat || '');
-    if (k === 'new-cat') return openCatForm(null, false);
-    if (k === 'edit-cat') return openCatForm(act.dataset.id);
-    if (k === 'del-cat') return delCat(act.dataset.id);
-    if (k === 'retry') { loaded = false; return render(); }
+    if (k === 'new-app') { openAppForm(null, act.dataset.cat || ''); return true; }
+    if (k === 'new-cat') { openCatForm(null, false); return true; }
+    if (k === 'edit-cat') { openCatForm(act.dataset.id); return true; }
+    if (k === 'del-cat') { delCat(act.dataset.id); return true; }
+    if (k === 'retry') { loaded = false; render(); return true; }
+    if (k === 'chip') { catFilter = act.dataset.cat || ''; render(); return true; }
+    if (k === 'rnd-next') { rndId = pickRandom(ctx(), rndId)?.id || ''; if (wide()) renderRail(); else render(); return true; }
+    if (k === 'rnd-open') { const a = apps.find(x => x.id === rndId); if (a) go(appPath(ctx(), a)); return true; }
+    if (k === 'rnd-go') { const a = pickRandom(ctx()); if (a) go(appPath(ctx(), a)); return true; }
   }
-  const go_ = t.closest('[data-go]');
-  if (go_ && $('appsView')?.contains(go_)) {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+  const u = t.closest('[data-user]');
+  if (u && scope.contains(u)) {
+    import('../profile/profile.js').then(m => m.openUserProfileModal?.(u.dataset.user)).catch(() => {});
+    return true;
+  }
+  const g = t.closest('[data-go]');
+  if (g && scope.contains(g)) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return false;
     e.preventDefault();
-    return go(go_.dataset.go);
+    go(g.dataset.go);
+    return true;
   }
+  return false;
+}
+
+const onClick = e => handle(e, $('appsView'));
+
+function onSearch(e) {
+  if (e.target.id !== 'apsQ') return;
+  query = e.target.value;
+  if (wide()) { const l = $('apsList'); if (l) l.innerHTML = listHtml(); return; }
+  render().then(() => { const i = $('apsQ'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
 }
 
 function onRunnerClick(e) {
@@ -421,7 +440,9 @@ export function mountApps() {
     bound = true;
     const root = $('appsView');
     root?.addEventListener('click', onClick);
-    root?.addEventListener('input', e => { if (e.target.id === 'apsQ') { query = e.target.value; const l = $('apsList'); if (l) l.innerHTML = listHtml(); } });
+    root?.addEventListener('input', onSearch);
+    $('rrApps')?.addEventListener('click', e => handle(e, $('rrApps')));
+    window.matchMedia('(min-width: 1200px)').addEventListener?.('change', () => { if (state.view === 'apps') render(); });
     document.addEventListener('click', onRunnerClick);
     window.addEventListener('apps:path', () => { if (state.view === 'apps') render(); });
   }
@@ -430,4 +451,6 @@ export function mountApps() {
 
 export function unmountApps() {
   closeRunner(); closeForm('appFormOverlay'); closeForm('appCatOverlay');
+  const box = $('rrApps'); if (box) box.innerHTML = '';
+  $('rightRail')?.classList.remove('rr-apps-mode');
 }
