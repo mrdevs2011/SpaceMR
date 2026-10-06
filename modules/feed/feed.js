@@ -9,10 +9,13 @@ import { getFileIcon } from '../core/file-icons.js';
 import './post-image-zoom.js';
 import { cachedMediaUrlSync, resolvePublicMedia } from '../core/store/media-cache.js';
 import { syncLike } from './like-sync.js';
-import { ensureVideoDuration } from '../core/video-policy.js';
+import { ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
 // Feed/upload native <video controls>: WebM duration Infinity → progress oxirida qotadi
 if (typeof window !== 'undefined') {
-  window.__fixVidDur = function (v) { try { ensureVideoDuration(v); } catch (_) {} };
+  window.__fixVidDur = function (v) {
+    try { ensureVideoDuration(v); } catch (_) {}
+    try { hardenVideoPlayback(v); } catch (_) {}
+  };
 }
 
 
@@ -69,7 +72,7 @@ export function buildMedia(p) {
   if (isImg)
     return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(p.mediaUrl)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   if (isVid)
-    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(p.mediaUrl)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
+    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(p.mediaUrl)}" controls playsinline preload="auto" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}">
     <div class="file-card-icon">${getFileIcon(p.fileName||'', p.mediaType||'')}</div>
     <div class="file-info"><div class="file-name">${esc(p.fileName||'File')}</div><div class="file-size">${p.fileSize ? fmtSz(p.fileSize) : ''}</div></div>

@@ -13,7 +13,7 @@
 
 export const MAX_VIDEO_MS = 60_000;
 export const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
-export const VIDEO_BITRATE = 4_500_000;
+export const VIDEO_BITRATE = 3_000_000;
 export const AUDIO_BITRATE = 128_000;
 export const VIDEO_W = 1920;
 export const VIDEO_H = 1080;
@@ -29,7 +29,14 @@ export function markVideoReady(file) {
 export function isVideoReady(file) { return !!file && _ready.has(file); }
 
 export function pickVideoMime() {
-  const cands = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+  // VP8 eng barqaror progressive o'ynash uchun; VP9 og'irroq (yarimdan keyin qotishi mumkin)
+  const cands = [
+    'video/webm;codecs=vp8,opus',
+    'video/webm;codecs=vp8',
+    'video/webm;codecs=vp9,opus',
+    'video/webm',
+    'video/mp4',
+  ];
   for (const m of cands) {
     if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.(m)) return m;
   }
@@ -125,23 +132,34 @@ async function _transcode(file, meta, onProgress) {
     v.currentTime = 0;
     v.muted = false;
     try { await v.play(); }
-    catch (_) { v.muted = true; await v.play(); } // autoplay bloklansa — ovozsiz davom
-    rec.start(1000);
+    catch (_) { v.muted = true; await v.play(); }
+    // 500ms timeslice — WebM cluster/keyframe tez-tez; seek va yarimdan keyin qotish kamayadi
+    rec.start(500);
 
-    const stop = () => { if (rec.state !== 'inactive') rec.stop(); };
+    let stopped = false;
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      try { if (rec.state !== 'inactive') rec.stop(); } catch (_) {}
+    };
     const t0 = performance.now();
-    timer = setInterval(() => {
+    // rAF — silliq kadr; setInterval FPS tashlab yuborishi mumkin edi
+    const tick = () => {
+      if (stopped) return;
       try { ctx.drawImage(v, 0, 0, w, h); } catch (_) {}
       const cur = v.currentTime;
       if (onProgress) onProgress(Math.min(1, cur / (total || 1)));
-      if (cur * 1000 >= MAX_VIDEO_MS) { truncated = true; stop(); }
-      else if (v.ended) stop();
-      else if (performance.now() - t0 > MAX_VIDEO_MS + 15000) { truncated = true; stop(); } // qotib qolsa
-    }, 1000 / VIDEO_FPS);
+      if (cur * 1000 >= MAX_VIDEO_MS) { truncated = true; stop(); return; }
+      if (v.ended) { stop(); return; }
+      if (performance.now() - t0 > MAX_VIDEO_MS + 15000) { truncated = true; stop(); return; }
+      timer = requestAnimationFrame(tick);
+    };
+    timer = requestAnimationFrame(tick);
     v.addEventListener('ended', stop, { once: true });
 
     await done;
-    clearInterval(timer); timer = null;
+    try { cancelAnimationFrame(timer); } catch (_) {}
+    timer = null;
     const blob = new Blob(chunks, { type: (rec.mimeType || mime || 'video/webm').split(';')[0] });
     if (!blob.size) throw new Error('Bo\'sh natija');
     if (blob.size > MAX_VIDEO_BYTES) throw new Error('Video 30 MB dan oshdi — qisqaroq video tanlang');
@@ -149,7 +167,7 @@ async function _transcode(file, meta, onProgress) {
     const outFile = new File([blob], `video_${Date.now()}.${ext}`, { type: blob.type });
     return { file: markVideoReady(outFile), truncated, width: w, height: h };
   } finally {
-    if (timer) clearInterval(timer);
+    if (timer) { try { cancelAnimationFrame(timer); } catch (_) { try { clearInterval(timer); } catch (_) {} } }
     try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (_) {}
     try { ac && ac.close(); } catch (_) {}
     dispose();
@@ -241,6 +259,12 @@ export function ensureVideoDuration(v) {
   const run = () => {
     if (v.dataset.durFixed === '1') return;
     if (isFinite(v.duration) && v.duration > 0) { v.dataset.durFixed = '1'; return; }
+    // Ijro paytida 1e101 seek — decoder qotadi; faqat pauzada tuzatamiz
+    if (!v.paused && !v.ended) {
+      const onPause = () => { v.removeEventListener('pause', onPause); run(); };
+      v.addEventListener('pause', onPause);
+      return;
+    }
     fixVideoDuration(v).then((d) => {
       if (d > 0) v.dataset.durFixed = '1';
       try { v.dispatchEvent(new Event('durationchange')); } catch (_) {}
@@ -248,6 +272,35 @@ export function ensureVideoDuration(v) {
   };
   if (v.readyState >= 1) run();
   else v.addEventListener('loadedmetadata', run, { once: true });
+}
+
+/** stalled/waiting — buffer to'lguncha kutib davom ettirish */
+export function hardenVideoPlayback(v) {
+  if (!v || v.dataset.playHardened === '1') return;
+  v.dataset.playHardened = '1';
+  let resumeT = 0;
+  const softResume = () => {
+    clearTimeout(resumeT);
+    resumeT = setTimeout(() => {
+      if (v.paused || v.ended) return;
+      try {
+        if (v.readyState < 2) {
+          const t = v.currentTime;
+          // kichik seek decoder ni uyg'otadi (WebM keyframe)
+          if (t > 0.15) {
+            v.currentTime = Math.max(0, t - 0.05);
+          }
+        }
+        v.play().catch(() => {});
+      } catch (_) {}
+    }, 280);
+  };
+  v.addEventListener('waiting', softResume);
+  v.addEventListener('stalled', softResume);
+  // Prefetch: metadata emas — avvalgi buffer
+  try {
+    if (v.preload === 'metadata' || !v.preload) v.preload = 'auto';
+  } catch (_) {}
 }
 
 export async function prepareVideo(file, { onProgress } = {}) {

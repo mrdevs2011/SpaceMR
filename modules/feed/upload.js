@@ -6,7 +6,7 @@ import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
 import { getFileTypeInfo } from '../core/file-icons.js';
-import { prepareVideo, ensureVideoDuration } from '../core/video-policy.js';
+import { prepareVideo, ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    FILE TYPE → SVG icon + label + accent color
