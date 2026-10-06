@@ -538,12 +538,31 @@ function _startPlayEq(audio, btn) {
 
     // Har audio element uchun MediaElementSource bir marta
     if (!audio.__cvmEqNode) {
-      const src = _eqCtx.createMediaElementSource(audio);
       const analyser = _eqCtx.createAnalyser();
       analyser.fftSize = 128;
       analyser.smoothingTimeConstant = 0.65;
-      src.connect(analyser);
-      analyser.connect(_eqCtx.destination); // ovoz chiqishi uchun majburiy
+      let src = null;
+      // MUHIM: ovozni WebAudio orqali YO'NALTIRMAYMIZ. Ba'zi qurilmalarda (interaktiv doska,
+      // ba'zi TV/Linux brauzerlar) WebAudio chiqishi jim bo'lib, <audio> esa ishlaydi —
+      // createMediaElementSource bilan ovoz butunlay yo'qolardi. captureStream() esa elementning
+      // o'z (native) chiqishiga tegmaydi: ovoz YouTube kabi ishonchli, EQ faqat "tinglaydi".
+      const cap = audio.captureStream || audio.mozCaptureStream;
+      if (typeof cap === 'function') {
+        const stream = cap.call(audio);
+        if (!stream || !stream.getAudioTracks().length) {
+          btn.classList.remove('cvm-play--eq'); _eqBtn = null; audio.__noEq = true;
+          return;
+        }
+        src = _eqCtx.createMediaStreamSource(stream);
+        src.connect(analyser);
+        const mute = _eqCtx.createGain(); mute.gain.value = 0;   // analyser ishlashi uchun graph'ga ulanadi, lekin eshitilmaydi
+        analyser.connect(mute); mute.connect(_eqCtx.destination);
+      } else {
+        // captureStream yo'q (Safari) — eski yo'l
+        src = _eqCtx.createMediaElementSource(audio);
+        src.connect(analyser);
+        analyser.connect(_eqCtx.destination);
+      }
       audio.__cvmEqNode = { src, analyser };
     }
     _eqAnalyser = audio.__cvmEqNode.analyser;
