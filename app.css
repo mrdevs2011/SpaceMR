@@ -5457,9 +5457,10 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
   box-shadow: var(--ag-specular), 0 2px 12px var(--pal-black);
   
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* 3-nuqta menyusi kesilmasin */
 }
 .ua-row:hover { background: var(--ag-row-hover); box-shadow: var(--ag-specular), var(--ag-shadow-hover); }
+.ua-row:has(.ua-more-menu:not([hidden])) { z-index: 40; }
 /* Modal overlay — solid panel */
 .ua-modal-overlay { background: var(--ag-overlay); }
 /* Modal card — solid panel */
@@ -6225,6 +6226,7 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 /* ── Admin users: 3-dots menu, hover tools, status borders ── */
 .ua-row {
   position: relative;
+  overflow: visible;
   border: 1px solid #2f3336;
   transition: border-color .2s ease, background .15s ease, opacity .2s ease;
 }
@@ -6274,11 +6276,16 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 .ua-more-btn:hover { background: rgba(231,233,234,0.1); color: var(--text); }
 
 .ua-more-menu {
-  position: absolute; top: calc(100% + 4px); right: 0; z-index: 60;
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 200;
   min-width: 168px; padding: 6px;
   background: #000; border: 1px solid var(--line, #2f3336);
   border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.55);
   display: flex; flex-direction: column; gap: 2px;
+  /* parent overflow:hidden bo'lsa ham menyu tashqariga chiqsin */
+  max-height: none; overflow: visible;
+}
+.ua-list, #actionsView .ua-list, #uaUsersList {
+  overflow: visible !important;
 }
 .ua-more-menu[hidden] { display: none !important; }
 .ua-menu-item {

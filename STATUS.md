@@ -273,3 +273,8 @@
 - **Reply quote → sekin smooth scroll + och ko'k flash** (`msg-reply-hl` 2.2s)
 - **Global sekin auto-smooth**: `smoothScrollContainer` / `smoothScrollIntoView` (~750ms ease-in-out) — chat pastga, reply, feed, notifs, voice
 - **Edit → chats list last_message**: migration `085_last_message_on_edit.sql` (remote push qilindi)
+
+---
+### 2026-10-06 20:48
+- **UI: chat attach prevyu Claude uslubida** — rasm/video kichik rounded thumb card; fayl nomi+hajm+ext badge kartochka
+- **Admin 3-nuqta menyu overflow** — `.ua-row` overflow:visible, menyu z-index 200
