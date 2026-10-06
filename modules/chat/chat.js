@@ -2109,6 +2109,16 @@ export function paintMessages(msgs, grp = null) {
   const _parts = msgs.map((m, idx) => {
     const mine = m.senderId === state.me?.uid;
     const time = fmtTime(m.createdAt);
+    const _leaveTxt = typeof m.text === 'string' && / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/.test(m.text) ? m.text : '';
+    if (_leaveTxt) {
+      const prevMsg0 = msgs[idx - 1];
+      const curDate0 = _toDateSafe(m.createdAt);
+      const prevDate0 = prevMsg0 ? _toDateSafe(prevMsg0.createdAt) : null;
+      const dateSep0 = curDate0 && (!prevDate0 || !_isSameDay(curDate0, prevDate0))
+        ? `<div class="chat-date-sep"><span>${_dateSepLabel(m.createdAt)}</span></div>` : '';
+      if (m.id) chatState._seenMsgIds.add(m.id);
+      return `${dateSep0}<div class="chat-msg chat-sys" data-id="${esc(m.id)}" data-sender="${esc(m.senderId || '')}"><span class="chat-sys-pill">${esc(_leaveTxt)}</span></div>`;
+    }
     let bubbleContent = '';
     let emoCls = '';
     let bubbleClassExtra = '';

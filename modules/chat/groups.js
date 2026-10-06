@@ -136,14 +136,59 @@ async function _removeMember(groupId, uid) {
   _loadGroups();
 }
 
+function _myNoticeName() {
+  return (state.me?.displayName || state.me?.username || 'User').trim() || 'User';
+}
+async function _postGroupNotice(groupId, text) {
+  if (!groupId || !state.me?.uid || !text) return;
+  const { error } = await sb.from('group_messages').insert({
+    group_id: groupId,
+    sender_id: state.me.uid,
+    type: 'text',
+    text,
+  });
+  if (error) console.warn('[group notice]', error.message);
+}
+async function _joinedNotices(groupId, uids) {
+  const ids = [...new Set((uids || []).filter(Boolean))];
+  if (!ids.length) return;
+  const map = await _profilesByIds(ids);
+  for (const uid of ids) {
+    const u = map[uid];
+    const name = (u?.fullName || u?.username || 'User').trim() || 'User';
+    await _postGroupNotice(groupId, name + ' joined the group');
+  }
+}
+
 export async function joinGroup(groupId) {
   if (!state.me?.uid || !groupId) return;
   await _addMembers(groupId, [state.me.uid]);
+  await _postGroupNotice(groupId, _myNoticeName() + ' joined the group');
 }
 
 export async function leaveGroup(groupId) {
   if (!state.me?.uid || !groupId) return;
-  await _removeMember(groupId, state.me.uid);
+  const { error } = await sb.rpc('leave_group', { p_group: groupId });
+  if (error) {
+    // RPC yo'q bo'lsa: avval xabar, keyin a'zolik (xabar a'zo bo'lib turib yoziladi)
+    const name = (state.me.displayName || state.me.username || 'User').trim() || 'User';
+    const note = await sb.from('group_messages').insert({
+      group_id: groupId,
+      sender_id: state.me.uid,
+      type: 'text',
+      text: name + ' left the group',
+    });
+    if (note.error && !/left the group/.test(note.error.message || '')) {
+      console.warn('[leave] notice:', note.error.message);
+    }
+    await _removeMember(groupId, state.me.uid);
+  }
+  delete _latestGroupMap[groupId];
+  if (_currentGroupId === groupId) {
+    _currentGroupId = null;
+    _currentGroupData = null;
+  }
+  await _loadGroups();
 }
 
 async function _updateGroup(groupId, patch) {
@@ -276,6 +321,39 @@ busOn('ginbox', (o) => {
 /* ─────────────────────────────────────────────────────────────────────
    OPEN GROUP/CHANNEL THREAD
    ───────────────────────────────────────────────────────────────────── */
+function _setGroupPeopleLabel(n) {
+  const el = document.getElementById('chatTypingStatus');
+  if (!el) return;
+  const count = Math.max(0, Number(n) || 0);
+  el.textContent = count + ' ta odam';
+  el.dataset.people = String(count);
+}
+
+async function _loadGroupPeople(groupId) {
+  const g = _latestGroupMap[groupId] || _currentGroupData;
+  if (!g) return [];
+  try {
+    const { data, error } = await sb.from('group_members')
+      .select('user_id, role').eq('group_id', groupId);
+    if (error || !data) return g.members || [];
+    const members = [];
+    const adminIds = [];
+    data.forEach(m => {
+      if (!m.user_id) return;
+      members.push(m.user_id);
+      if (m.role === 'owner' || m.role === 'admin') adminIds.push(m.user_id);
+    });
+    g.members = [...new Set(members)];
+    g.adminIds = [...new Set(adminIds)];
+    g.subscriberCount = g.members.length;
+    if (_currentGroupData && _currentGroupData.id === groupId) _currentGroupData = g;
+    _latestGroupMap[groupId] = g;
+    return g.members;
+  } catch (_) {
+    return g.members || [];
+  }
+}
+
 function _restoreInputRow() {
   // Join/Leave barni o'chirish
   document.getElementById('channelActionBar')?.remove();
@@ -308,26 +386,23 @@ function _applyGroupComposer(g) {
 
   if (!isMember) {
     if (row) row.style.display = 'none';
-    const bar = document.createElement('div');
+    const bar = document.createElement('button');
+    bar.type = 'button';
     bar.id = 'groupJoinBar';
     bar.className = 'group-join-bar';
-    bar.innerHTML = `
-      <button type="button" class="group-join-btn" id="groupJoinBtn">
-        <img src="./svg/extra/icon-886b6ae85bc6.svg" alt="" class="icon" width="18" height="18">
-        <span>Guruhga qo'shilish</span>
-      </button>`;
+    bar.textContent = "Qo'shilish";
     if (row && row.parentNode) row.parentNode.insertBefore(bar, row);
 
-    bar.querySelector('#groupJoinBtn')?.addEventListener('click', async () => {
-      const btn = bar.querySelector('#groupJoinBtn');
-      btn.disabled = true;
+    bar.addEventListener('click', async () => {
+      bar.disabled = true;
       try {
         await joinGroup(g.id);
         g.members = [...new Set([...(g.members || []), me])];
+        _setGroupPeopleLabel(g.members.length);
         toast("Guruhga qo'shildingiz", "success");
         _applyGroupComposer(g);
       } catch (err) {
-        btn.disabled = false;
+        bar.disabled = false;
         toast("Guruhga qo'shilishda xatolik", "error");
       }
     });
@@ -411,13 +486,12 @@ export async function openGroupThread(groupId) {
   badge.innerHTML = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="10" height="10">`;
   $('chatThreadAvi').appendChild(badge);
 
-  const memberCount = (groupData.members || []).length;
-  const subLabel = `${memberCount} ta a'zo`;
   $('chatThreadName').textContent = groupData.name || 'Guruh';
-
-  // Subtitle (typing slot reused)
-  const typingEl = $('chatTypingStatus');
-  if (typingEl) typingEl.textContent = subLabel;
+  _setGroupPeopleLabel((groupData.members || []).length);
+  _loadGroupPeople(groupId).then(members => {
+    if (_currentGroupId !== groupId) return;
+    _setGroupPeopleLabel(members.length);
+  });
 
   // Hide call buttons for groups/channels
   ['chatVoiceCallBtn','chatVideoCallBtn'].forEach(id => {
@@ -711,7 +785,7 @@ function _gPaintSub() {
     el.textContent = (names.length > 2 ? `${names.length} kishi` : names.join(', ')) + ' yozmoqda...';
     el.classList.add('online');
   } else {
-    el.textContent = `${(_currentGroupData.members || []).length} ta a'zo`;
+    el.textContent = `${(_currentGroupData.members || []).length} ta odam`;
     el.classList.remove('online');
   }
 }
@@ -988,10 +1062,16 @@ export async function openGroupInfo(groupId) {
   }
 
   if (cntEl) cntEl.textContent = members.length;
-  if (lblEl) lblEl.textContent = "a'zo";
+  if (lblEl) lblEl.textContent = 'odam';
+  _loadGroupPeople(groupId).then(ids => {
+    if (!document.getElementById('grpInfoOverlay')?.classList.contains('show')) return;
+    const fresh = _latestGroupMap[groupId];
+    if (cntEl) cntEl.textContent = (fresh?.members || ids).length;
+  });
 
   /* ── Buttons ── */
-  panel.querySelector('#grpInfoLeaveBtn').style.display      = isOwner ? 'none' : '';
+  const isMemberNow = (g.members || []).includes(state.me?.uid) || isOwner;
+  panel.querySelector('#grpInfoLeaveBtn').style.display      = (isOwner || !isMemberNow) ? 'none' : '';
   panel.querySelector('#grpInfoDeleteBtn').style.display     = isOwner ? '' : 'none';
   panel.querySelector('#grpInfoAddMemberBtn').style.display  = canManage ? '' : 'none';
   panel.querySelector('#grpInfoEditBtn').style.display       = canManage ? '' : 'none';
@@ -1000,7 +1080,7 @@ export async function openGroupInfo(groupId) {
   panel.querySelector('#grpInfoLeaveBtn').onclick = () => {
     showConfirm(`${typeLabel}dan chiqmoqchimisiz?`, async () => {
       try {
-        await _removeMember(groupId, state.me.uid);
+        await leaveGroup(groupId);
         panel.classList.remove('show');
         closeGroupThread();
         $('chatThreadModal').classList.remove('show');
@@ -1036,11 +1116,14 @@ export async function openGroupInfo(groupId) {
     const membersEl = panel.querySelector('#grpMembersList');
     if (membersEl) {
       membersEl.innerHTML = '<div class="gi-media-spin"><div class="spinner"></div></div>';
-      _profilesByIds(members)
+      const ids = await _loadGroupPeople(groupId);
+      const fresh = _latestGroupMap[groupId];
+      const showIds = (fresh && fresh.members && fresh.members.length) ? fresh.members : (ids.length ? ids : members);
+      if (cntEl) cntEl.textContent = showIds.length;
+      _profilesByIds(showIds)
         .then(pmap => {
-          const html = members.map(uid => {
-            const u = pmap[uid];
-            if (!u) return '';
+          const html = showIds.map(uid => {
+            const u = pmap[uid] || { fullName: 'Foydalanuvchi', avatar: '', uid };
             const av   = u.avatar || defAvi(u.fullName || 'U');
             const role = uid === g.ownerId ? 'Egasi' : (g.adminIds||[]).includes(uid) ? 'Admin' : '';
             const isSelf = uid === state.me?.uid;
@@ -1278,7 +1361,13 @@ export function openGroupEdit(groupId, g) {
     }
 
     try {
+      const who = _myNoticeName();
+      const notices = [];
+      if (name !== (g.name || '')) notices.push(who + ' changed the group name');
+      if (_grpEditPendingAviUrl && _grpEditPendingAviUrl !== (g.avatar || '')) notices.push(who + ' changed the group photo');
+      if ((updates.username || '') !== (g.username || '')) notices.push(who + ' changed the group username');
       await _updateGroup(groupId, updates);
+      for (const line of notices) await _postGroupNotice(groupId, line);
       panel.classList.remove('show');
       unlockScroll('grpEditOverlay');
       toast(`${typeLabel} yangilandi`, 'success');
@@ -1378,28 +1467,78 @@ export function openCreateForm(type) {
 }
 
 async function _loadUsersForPicker() {
-  try {
-    const rows = await fetchAllRows('profiles', '*', 'created_at');
-    return rows.map(mapProfile).filter(u => u.uid !== state.me?.uid && isActiveUser(u));
-  } catch(_) { return []; }
+  // Eski API: endi ham faqat kontaktlar (barcha foydalanuvchilar emas)
+  return _loadContactsForPicker();
 }
 
-// Guruhga a'zo qo'shish: faqat mening kontaktlarim (contacts jadvali — suhbat ochilganda yoziladi)
+/**
+ * Guruh a'zo picker: FAQAT mening kontaktlarim.
+ * contacts jadvali + (zaxira) DM chat sheriklari — hech qachon butun profiles emas.
+ */
 async function _loadContactsForPicker() {
+  const me = state.me?.uid;
+  if (!me) return [];
   try {
-    const [{ data, error }, users] = await Promise.all([
-      sb.from('contacts').select('contact_id').eq('owner_id', state.me.uid),
-      _loadUsersForPicker(),
-    ]);
-    if (error) throw error;
-    const ids = new Set((data || []).map(r => r.contact_id));
-    return users.filter(u => ids.has(u.uid));
-  } catch (_) { return []; }
+    const idSet = new Set();
+
+    // 1) contacts
+    const { data: crows, error: cErr } = await sb
+      .from('contacts')
+      .select('contact_id')
+      .eq('owner_id', me);
+    if (cErr) console.warn('[Groups] contacts:', cErr.message);
+    for (const r of crows || []) {
+      if (r.contact_id && r.contact_id !== me) idSet.add(r.contact_id);
+    }
+
+    // 2) Zaxira: ochilgan DM chat ishtirokchilari (kontakt yozilmagan bo'lsa ham)
+    if (idSet.size === 0) {
+      try {
+        const { data: mems } = await sb
+          .from('chat_members')
+          .select('chat_id')
+          .eq('user_id', me)
+          .limit(80);
+        const chatIds = [...new Set((mems || []).map(m => m.chat_id).filter(Boolean))];
+        if (chatIds.length) {
+          const { data: peers } = await sb
+            .from('chat_members')
+            .select('user_id')
+            .in('chat_id', chatIds)
+            .neq('user_id', me);
+          for (const p of peers || []) {
+            if (p.user_id) idSet.add(p.user_id);
+          }
+        }
+      } catch (e) {
+        console.warn('[Groups] chat peers fallback:', e?.message || e);
+      }
+    }
+
+    if (!idSet.size) return [];
+
+    const ids = [...idSet];
+    // Faqat shu ID lar — profiles ni butunlay yuklamaymiz
+    const { data: prows, error: pErr } = await sb
+      .from('profiles')
+      .select('id, username, full_name, avatar, approval, blocked, blocked_until')
+      .in('id', ids);
+    if (pErr) throw pErr;
+
+    return (prows || [])
+      .map(mapProfile)
+      .filter(u => u && u.uid !== me && isActiveUser(u))
+      .sort((a, b) => (a.fullName || a.username || '').localeCompare(b.fullName || b.username || '', 'uz'));
+  } catch (e) {
+    console.warn('[Groups] contacts picker:', e?.message || e);
+    return [];
+  }
 }
 
 function _renderMemberPicker(container, users) {
   if (!users.length) {
-    container.innerHTML = `<div class="grp-empty-users">Kontaktlaringiz yo'q — avval foydalanuvchi bilan suhbat oching</div>`;
+    container.innerHTML = `<div class="grp-empty-users">Kontaktlaringiz yo'q.
+Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
     return;
   }
   container.innerHTML = `
@@ -1544,7 +1683,9 @@ export async function submitCreateGroup() {
     // Add members to existing group
     if (!_selectedMembers.size) { toast('Kamida 1 ta a\'zo tanlang', 'error'); return; }
     try {
-      await _addMembers(addMode, Array.from(_selectedMembers));
+      const added = Array.from(_selectedMembers);
+      await _addMembers(addMode, added);
+      await _joinedNotices(addMode, added);
       overlay.classList.remove('show');
       overlay.dataset.addMode = '';
       // Reset hidden elements
