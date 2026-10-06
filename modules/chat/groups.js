@@ -824,7 +824,27 @@ async function paintGroupMessages(msgs, groupData) {
   const got = await _profilesByIds(missing);
   Object.assign(_senderCache, got);
   missing.forEach(u => { if (!_senderCache[u]) _senderCache[u] = { fullName: 'Foydalanuvchi', avatar: '' }; });
-  if (seq === _paintSeq && _currentGroupId && _gLoaded) chatUI.paintGroupThread(_gTicked(_gMsgs), _gNames());
+  if (seq === _paintSeq && _currentGroupId && _gLoaded) {
+    chatUI.paintGroupThread(_gTicked(_gMsgs), _gNames());
+    // Patch mavjud avatar <img> src (agar DOM saqlangan bo'lsa)
+    try {
+      const box = document.getElementById('chatThreadMessages');
+      if (box) {
+        box.querySelectorAll('.msg-avi-btn.grp-avi[data-uid]').forEach(btn => {
+          const u = btn.dataset.uid;
+          const pr = _senderCache[u];
+          if (!pr) return;
+          const im = btn.querySelector('img');
+          if (!im) return;
+          const next = pr.avatar || '';
+          if (next && im.getAttribute('src') !== next) {
+            im.src = next;
+            im.dataset.n = pr.fullName || im.dataset.n || '';
+          }
+        });
+      }
+    } catch (_) {}
+  }
 }
 
 /* ── "Yozmoqda..." (DM bilan bir xil, sarlavhada; guruhda kim yozayotgani) ── */

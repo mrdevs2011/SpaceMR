@@ -8545,10 +8545,27 @@ select.field option { background: #000000; color: var(--text); }
 .grp-invite-regen-btn .icon { display: block; }
 
 /* ── Guruh: yuboruvchi avatari (seriyaning birinchi xabarida) ─────────────────── */
-.chat-msg.theirs .msg-avi-btn.grp-avi {
-  display: block; width: 32px; height: 32px; margin: 0 8px 0 0; flex-shrink: 0;
-  align-self: flex-start; padding: 0; border: 0; border-radius: 50%; overflow: hidden;
-  background: var(--pal-gray-700); cursor: pointer; -webkit-tap-highlight-color: transparent;
+.chat-msg.theirs .msg-avi-btn.grp-avi,
+#chatThreadModal .chat-msg.theirs .msg-avi-btn.grp-avi {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px;
+  min-height: 32px;
+  margin: 0 8px 0 0;
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--pal-gray-700);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 .chat-msg.theirs .msg-avi-btn.grp-avi img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
 .chat-msg.theirs .msg-avi-btn.grp-avi:hover { box-shadow: none; opacity: .88; }
