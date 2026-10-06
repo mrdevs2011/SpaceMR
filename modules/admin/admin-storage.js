@@ -52,7 +52,7 @@ export async function renderStorageUsage(anchor) {
       clearInterval(_poll); _poll = null; return;
     }
     refreshStorageUsage();
-  }, 15000);
+  }, 5000);
 }
 
 export function removeStorageUsage() {

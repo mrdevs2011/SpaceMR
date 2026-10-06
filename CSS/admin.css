@@ -1479,3 +1479,11 @@ body.rr-admin-users .rr-users-admin .users-admin-list {
   cursor: default;
   transform: none;
 }
+
+/* 3-nuqta menyu hech qachon kesilmasin */
+#actionsView, #actionsView .ua-list, .ua-list, .rr-users-admin {
+  overflow: visible !important;
+}
+.ua-row, .ua-row-top, .ua-hover-tools, .ua-more-wrap {
+  overflow: visible !important;
+}

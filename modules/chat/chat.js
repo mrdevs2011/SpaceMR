@@ -2909,6 +2909,30 @@ initMsgMenu({
     const { data, error } = await sb.rpc('get_or_create_chat', { p_other: uid });
     return error ? null : data;
   },
+  // Tahrir: chats list prevyusini darhol yangila
+  onMessageEdited: (id, text) => {
+    const msgs = chatState._curMsgs || [];
+    const last = msgs[msgs.length - 1];
+    if (!last || String(last.id) !== String(id)) return;
+    const preview = String(text || '').slice(0, 120);
+    if (state.currentChatKind === 'group') {
+      try {
+        const gid = state.currentChatId || document.getElementById('chatThreadModal')?.dataset?.gid;
+        // groups map lastMessage
+        import('./groups.js').then(m => {
+          const g = m.getGroupRows?.().find(x => String(x.id) === String(gid));
+          if (g) { g.lastMessage = preview; }
+          if (state.view === 'chats') document.dispatchEvent(new CustomEvent('groupsUpdated'));
+        }).catch(() => {});
+      } catch (_) {}
+    } else {
+      const cm = chatState._latestChatMap?.[state.currentChatUid];
+      if (cm) {
+        cm.lastMessage = preview;
+        if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+      }
+    }
+  },
 });
 $('chatThreadModal').addEventListener('click', e => {
   if (e.target === $('chatThreadModal')) closeChatThread();

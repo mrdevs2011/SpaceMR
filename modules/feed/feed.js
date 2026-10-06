@@ -823,7 +823,11 @@ export async function doDelete(id) {
   }
   const { error } = await sb.from('posts').delete().eq('id', id);
   if (error) { toast("O'chirib bo'lmadi: " + error.message, 'error'); return; }
-  if (post?.mediaPath) sb.storage.from(MEDIA_BUCKET).remove([post.mediaPath]).catch(() => {});
+  if (post?.mediaPath) {
+    sb.storage.from(MEDIA_BUCKET).remove([post.mediaPath]).then(() => {
+      import('../admin/admin-storage.js').then(m => m.refreshStorageUsage?.()).catch(() => {});
+    }).catch(() => {});
+  }
   state.allPosts = state.allPosts.filter(p => p.id !== id);
   document.querySelector(`.post[data-id="${id}"]`)?.remove();
   document.querySelector(`.grid-cell[data-id="${id}"]`)?.remove();

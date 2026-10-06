@@ -595,8 +595,29 @@ function _render(wrap, users) {
       const menu = btn.parentElement?.querySelector('.ua-more-menu');
       if (!menu) return;
       const wasOpen = !menu.hidden;
-      wrap.querySelectorAll('.ua-more-menu').forEach(m => { m.hidden = true; });
-      menu.hidden = wasOpen;
+      wrap.querySelectorAll('.ua-more-menu').forEach(m => {
+        m.hidden = true;
+        m.style.position = '';
+        m.style.top = '';
+        m.style.left = '';
+        m.style.right = '';
+      });
+      if (wasOpen) return;
+      // overflow:hidden ota ichida kesilmasin — fixed joylashuv
+      menu.hidden = false;
+      const r = btn.getBoundingClientRect();
+      menu.style.position = 'fixed';
+      menu.style.zIndex = '5000';
+      menu.style.top = Math.min(r.bottom + 4, window.innerHeight - 8) + 'px';
+      menu.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+      menu.style.left = 'auto';
+      // pastga sig'masa tepaga och
+      requestAnimationFrame(() => {
+        const mr = menu.getBoundingClientRect();
+        if (mr.bottom > window.innerHeight - 8) {
+          menu.style.top = Math.max(8, r.top - mr.height - 4) + 'px';
+        }
+      });
     });
   });
   if (!wrap._uaMenuCloser) {

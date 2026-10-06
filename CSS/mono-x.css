@@ -8959,3 +8959,10 @@ select.field option { background: #000000; color: var(--text); }
   width: 22px; height: 22px; border-radius: 50%;
   background: rgba(0,0,0,0.55); color: #fff;
 }
+
+
+/* Qo'shilish tugmasi ochiq bo'lsa input qatori umuman ko'rinmasin */
+#chatThreadModal:has(#groupJoinBar) #chatThreadInputRow,
+#chatThreadModal:has(#groupJoinBar) .chat-thread-input-row {
+  display: none !important;
+}
