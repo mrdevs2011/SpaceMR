@@ -91,7 +91,7 @@ self.addEventListener('notificationclick', (event) => {
 
 /* ── Cache versiyasi ── */
 // Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
-const CACHE_VERSION  = 't-1791204465'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1791297600'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 const EMOJI_CACHE    = 'spacemr-emoji-v1';
@@ -232,8 +232,8 @@ async function _precacheAll() {
 }
 
 self.addEventListener('install', (event) => {
-  // skipWaiting AVTOMATIK emas — foydalanuvchi toast orqali tasdiqlaydi (yozayotganda majburan reload yo'q)
-  event.waitUntil(_precacheAll());
+  // Toast yo'q: yangi versiya o'zi qo'llanadi
+  event.waitUntil(_precacheAll().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {

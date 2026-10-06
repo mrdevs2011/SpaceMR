@@ -1245,27 +1245,6 @@ html[data-nf],html[data-nf] body{background:#000000}
   /* Service Worker — push + shell cache + yangilanish toasti */
   if ('serviceWorker' in navigator) {
     var _swRefreshing = false;
-    function _swToast(msg, actionLabel, onAction) {
-      try {
-        var el = document.getElementById('toast');
-        if (!el) { console.info('[sw]', msg); return; }
-        el.textContent = '';
-        el.className = 'toast-info show';
-        var span = document.createElement('span');
-        span.textContent = msg + ' ';
-        el.appendChild(span);
-        if (actionLabel && onAction) {
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = actionLabel;
-          btn.style.cssText = 'margin-left:8px;border:0;background:#1d9bf0;color:#fff;border-radius:999px;padding:4px 12px;font:inherit;cursor:pointer';
-          btn.onclick = function(e) { e.stopPropagation(); onAction(); };
-          el.appendChild(btn);
-        }
-        clearTimeout(window.__swToastT);
-        window.__swToastT = setTimeout(function() { el.classList.remove('show'); }, 12000);
-      } catch (_) { console.info('[sw]', msg); }
-    }
     function _promptUpdate(worker) {
       /* Yangilanish toast emas: qolib ketmasin. Kutayotgan versiya jim qo'llanadi. */
       try { worker.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
