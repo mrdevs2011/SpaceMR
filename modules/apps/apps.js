@@ -242,6 +242,68 @@ function catOptions(sel) {
   return cats.map(c => `<option value="${esc(c.id)}"${c.id === sel ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
 }
 
+/* Maxsus dropdown: native <select> o'rnida. Select yashirin holda qiymatni saqlaydi (o'qish/yozish eskicha ishlaydi) */
+const DD_CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+const DD_CHEV = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+function initDropdown(sel) {
+  if (!sel) return;
+  sel.hidden = true;
+  const dd = document.createElement('span');
+  dd.className = 'apf-dd';
+  dd.innerHTML = `<button type="button" class="apf-dd-btn" aria-haspopup="listbox" aria-expanded="false"><span class="apf-dd-val"></span>${DD_CHEV}</button><div class="apf-dd-list" role="listbox" hidden></div>`;
+  sel.after(dd);
+  const btn = dd.firstElementChild, list = btn.nextElementSibling, val = btn.firstElementChild;
+  let hi = -1;
+  const paint = () => {
+    const cur = sel.selectedIndex;
+    val.textContent = sel.options[cur]?.textContent || '';
+    list.innerHTML = [...sel.options].map((o, i) => `<div class="apf-dd-opt${i === cur ? ' sel' : ''}" role="option" aria-selected="${i === cur}" data-i="${i}"><span>${esc(o.textContent)}</span>${i === cur ? DD_CHECK : ''}</div>`).join('');
+  };
+  const mark = i => {
+    hi = i;
+    [...list.children].forEach((n, k) => n.classList.toggle('hi', k === i));
+    list.children[i]?.scrollIntoView({ block: 'nearest' });
+  };
+  const close = () => {
+    if (list.hidden) return;
+    list.hidden = true; dd.classList.remove('open', 'up'); btn.setAttribute('aria-expanded', 'false');
+  };
+  const open = () => {
+    paint();
+    list.hidden = false; dd.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+    const r = btn.getBoundingClientRect(), room = window.innerHeight - r.bottom;
+    dd.classList.toggle('up', room < 240 && r.top > room);
+    mark(sel.selectedIndex);
+  };
+  const pick = i => {
+    if (i < 0 || i >= sel.options.length) return;
+    const changed = sel.selectedIndex !== i;
+    sel.selectedIndex = i;
+    if (changed) sel.dispatchEvent(new Event('change', { bubbles: true }));
+    paint(); close(); btn.focus();
+  };
+  btn.addEventListener('click', () => (list.hidden ? open() : close()));
+  list.addEventListener('click', e => { const o = e.target.closest('.apf-dd-opt'); if (o) pick(+o.dataset.i); });
+  list.addEventListener('mousemove', e => { const o = e.target.closest('.apf-dd-opt'); if (o && +o.dataset.i !== hi) mark(+o.dataset.i); });
+  dd.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !list.hidden) { e.preventDefault(); e.stopPropagation(); close(); btn.focus(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (list.hidden) return open();
+      mark(Math.max(0, Math.min(sel.options.length - 1, hi + (e.key === 'ArrowDown' ? 1 : -1))));
+    } else if ((e.key === 'Enter' || e.key === ' ') && !list.hidden) { e.preventDefault(); pick(hi); }
+    else if (e.key === 'Tab') close();
+  });
+  const onDoc = e => {
+    if (!dd.isConnected) { document.removeEventListener('pointerdown', onDoc, true); return; }
+    if (!dd.contains(e.target)) close();
+  };
+  document.addEventListener('pointerdown', onDoc, true);
+  new MutationObserver(paint).observe(sel, { childList: true });   // "+ Yangi" kategoriya qo'shilganda ro'yxat yangilanadi
+  paint();
+}
+
 async function openAppForm(editId, presetCat) {
   closeForm('appFormOverlay');
   let a = null;
@@ -260,9 +322,9 @@ async function openAppForm(editId, presetCat) {
     <label class="apf-l">Unikal nom (URL)
       <span class="apf-slug"><i>/apps/…/</i><input id="afSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(a?.slug || '')}" placeholder="mygame"${a ? ' readonly aria-readonly="true" tabindex="-1"' : ''}></span>
       <span class="apf-hint" id="afSlugHint">${a ? 'Unikal nom keyin o\'zgarmaydi' : ''}</span></label>
-    <label class="apf-l">Kategoriya
+    <div class="apf-l">Kategoriya
       <span class="apf-row"><select id="afCat">${catOptions(a?.category_id || presetCat || cats[0].id)}</select>
-      <button type="button" class="aps-link" data-f="new-cat">+ Yangi</button></span></label>
+      <button type="button" class="aps-link" data-f="new-cat">+ Yangi</button></span></div>
     <label class="apf-l">Qisqa tavsif (ixtiyoriy)<input id="afDesc" maxlength="200" autocomplete="off" value="${esc(a?.description || '')}"></label>
     <div class="apf-l">Logo
       <span class="apf-row"><span class="apf-logo" id="afLogoPrev">${safeLogo(a?.logo) ? `<img src="${safeLogo(a.logo)}" alt="">` : '<i>▣</i>'}</span>
@@ -274,6 +336,7 @@ async function openAppForm(editId, presetCat) {
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
   </div>`;
   document.body.appendChild(ov);
+  initDropdown($('afCat'));
 
   let slugEdited = !!a;
   const nameI = $('afName'), slugI = $('afSlug'), hint = $('afSlugHint'), errEl = $('afErr');

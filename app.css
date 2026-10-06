@@ -15166,6 +15166,28 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
 html[data-theme] .apf-slug:has(input[readonly]) { cursor: not-allowed; background: #0a0a0a; }
 html[data-theme] .apf-slug:has(input[readonly]):focus-within { border-color: #2f3336; }
 html[data-theme] .apf .apf-slug input[readonly] { pointer-events: none; -webkit-user-select: none; user-select: none; }
+
+/* Maxsus dropdown (kategoriya): native ro'yxat o'rniga — qora fon, yumaloq, ko'k belgi */
+html[data-theme] .apf-dd { position: relative; display: block; flex: 1; min-width: 0; }
+html[data-theme] .apf .apf-dd-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; box-sizing: border-box; width: 100%; height: auto; min-height: 44px; margin: 0; padding: 0 14px; border: 1px solid #2f3336 !important; border-radius: 12px; background: #000 !important; color: #e7e9ea !important; box-shadow: none !important; font-family: inherit; font-size: 15px; font-weight: 400; line-height: 1.2; text-align: left; cursor: pointer; outline: none; transition: border-color .15s; }
+html[data-theme] .apf .apf-dd-btn:hover { border-color: #3f4448 !important; }
+html[data-theme] .apf .apf-dd-btn:focus-visible, html[data-theme] .apf .apf-dd.open .apf-dd-btn { border-color: #1d9bf0 !important; }
+.apf-dd-btn svg { flex: none; color: #71767b; transition: transform .18s; }
+.apf-dd.open .apf-dd-btn svg { transform: rotate(180deg); color: #1d9bf0; }
+.apf-dd-val { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apf-dd-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; max-height: 232px; overflow-y: auto; padding: 6px; border: 1px solid #2f3336; border-radius: 14px; background: #000; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75); animation: apf-dd-in .15s ease-out; scrollbar-width: thin; scrollbar-color: #2f3336 transparent; }
+.apf-dd-list[hidden] { display: none; }
+.apf-dd.up .apf-dd-list { top: auto; bottom: calc(100% + 6px); }
+.apf-dd-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 9px; color: #e7e9ea; font-size: 15px; font-weight: 400; line-height: 1.25; cursor: pointer; -webkit-user-select: none; user-select: none; }
+.apf-dd-opt span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apf-dd-opt svg { flex: none; }
+.apf-dd-opt.hi { background: #16181c; }
+.apf-dd-opt.sel { color: #1d9bf0; font-weight: 600; }
+@keyframes apf-dd-in { from { opacity: 0; transform: translateY(-4px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (max-width: 699px) {
+  html[data-theme] .apf .apf-dd-btn, .apf-dd-opt { font-size: 16px; }
+  .apf-dd-opt { padding: 12px; }
+}
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */
