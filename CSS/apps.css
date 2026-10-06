@@ -153,3 +153,40 @@
 .apm-auth-a img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #2f3336; display: block; }
 .apm-auth-a i { position: absolute; right: -4px; bottom: -2px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border: 2px solid #000; border-radius: 999px; background: #e7e9ea; color: #000; font: 800 11px/16px inherit; font-style: normal; text-align: center; }
 .apm-auth-n { max-width: 100%; font-size: 11.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ═══ Mobil sayqal (kategoriya sahifasi + launcher) ═══ */
+@media (max-width: 1199px) {
+  .apm { padding-left: 14px; padding-right: 14px; }
+  /* Sarlavha: yopishqoq, orqaga va "+ Ilova" qulay bosiladigan */
+  .apm > .aps-head { position: sticky; top: 0; z-index: 5; gap: 8px; padding: 10px 0 8px; background: rgba(0, 0, 0, 0.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .apm .aps-back { width: 40px; height: 40px; border: 1px solid #2f3336; }
+  .apm .aps-back:active { background: #16181c; }
+  .apm .aps-title { font-size: 22px; letter-spacing: -0.4px; }
+  .apm .aps-head-btns .aps-btn { height: 38px; padding: 0 16px; font-size: 14px; }
+  /* Kategoriya satri: slug chip + amallar chip tugmalar */
+  .apm .aps-catbar { margin: 0 0 16px; gap: 8px; }
+  .apm .aps-catbar > span:first-child { padding: 5px 11px; border-radius: 999px; background: #16181c; border: 1px solid #2f3336; color: #a0a5aa; font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .apm .aps-catbtns { gap: 8px; }
+  .apm .aps-catbtns .aps-link { padding: 6px 12px; border-radius: 999px; background: rgba(29, 155, 240, 0.12); font-size: 12.5px; }
+  .apm .aps-catbtns .aps-link.danger { background: rgba(244, 33, 46, 0.12); }
+  /* Ikonkalar to'ri: ilova kam bo'lsa ham cho'zilib ketmaydi, chapdan boshlanadi */
+  .apm-grid { grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 18px 6px; justify-items: center; }
+  .apm-grid .apm-tile { width: 100%; max-width: 92px; }
+  .apm-tile-logo { width: 64px; height: 64px; border-radius: 18px; box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.06); }
+  .apm-tile-n { font-size: 12px; line-height: 1.25; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+  .apm .aps-sec-h { margin-bottom: 14px; }
+  .apm .aps-empty { margin: 8px 0; padding: 40px 16px; border: 1px dashed #2f3336; border-radius: 18px; }
+  .apm .aps-search input { height: 44px; font-size: 16px; }
+  .apm .aps-chips { margin-left: -14px; margin-right: -14px; padding-left: 14px; padding-right: 14px; }
+}
+
+/* ═══ Runner sarlavhasi: ingichka, bir qator, ortiqcha narsasiz ═══ */
+.apr-bar { gap: 2px; padding: calc(env(safe-area-inset-top, 0px) + 2px) 6px 2px; min-height: 36px; border-bottom: 1px solid #16181c; }
+.apr-bar .apr-logo, .apr-title small { display: none; }
+.apr-title { flex-direction: row; align-items: center; padding: 0 4px; }
+.apr-title b { font-size: 13.5px; font-weight: 700; }
+.apr-ib { width: 32px; height: 32px; }
+.apr-ib svg, .apr-ib img { width: 18px; height: 18px; }
+/* Xavfsizlik eslatmasi: ochilganda bir qator ko'rinadi, 5 soniyadan keyin o'zi yo'qoladi */
+.apr-note { padding: 2px 10px; font-size: 10.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 20px; animation: apr-note-out .35s ease 5s forwards; }
+@keyframes apr-note-out { to { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; border-bottom-width: 0; } }
