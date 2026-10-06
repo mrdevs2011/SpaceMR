@@ -6904,8 +6904,8 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 .chat-msg .mr-chip { --chip-bg: #16181c; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid rgba(231, 233, 234, 0.24); border-radius: 14px; background: var(--chip-bg); color: #e7e9ea; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); -webkit-tap-highlight-color: transparent; transition: background .12s ease, transform .12s ease; }
 .chat-msg .mr-chip:hover { --chip-bg: #202327; }
 .chat-msg .mr-chip:active { transform: scale(.94); }
-.chat-msg .mr-chip.mine { --chip-bg: #2b2152; border-color: rgba(167, 139, 250, 0.75); color: #fff; }
-.chat-msg .mr-chip.mine:hover { --chip-bg: #382a6a; }
+.chat-msg .mr-chip.mine { --chip-bg: #2f3336; border-color: rgba(231, 233, 234, 0.7); color: #fff; }
+.chat-msg .mr-chip.mine:hover { --chip-bg: #3a3f43; }
 .chat-msg .mr-chip.few { padding: 0 3px 0 9px; }
 .chat-msg .mr-chip .mr-e { font-size: 16px; line-height: 1; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
 .chat-msg .mr-chip .mr-n { font-size: 13px; font-weight: 700; }
