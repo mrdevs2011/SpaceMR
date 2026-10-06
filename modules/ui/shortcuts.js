@@ -10,7 +10,8 @@
  *  /              — qidiruv
  */
 import { $, unlockScroll } from '../core/utils.js';
-import { state } from '../core/config.js';
+import { state, isUploading } from '../core/config.js';
+import { toast } from './toast.js';
 import { closeChatThread } from '../chat/chat.js';
 import { escLocals } from './esc-stack.js';
 
@@ -170,4 +171,22 @@ $('cmtModalInput')?.addEventListener('keydown', e => {
   if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return;
   e.preventDefault();
   $('cmtModalSend')?.click();
+});
+
+/* ── Upload paytida Ctrl+R / F5 / Cmd+R ni bloklash ─────────────────────── */
+document.addEventListener('keydown', e => {
+  if (!isUploading()) return;
+  const key = e.key;
+  const isF5 = key === 'F5';
+  const isReload = (e.ctrlKey || e.metaKey) && (key === 'r' || key === 'R');
+  if (!isF5 && !isReload) return;
+  e.preventDefault();
+  e.stopPropagation();
+  toast('Yuklanmoqda… Sahifani yangilamang', 'info', 2800);
+}, true);
+
+window.addEventListener('beforeunload', e => {
+  if (!isUploading()) return;
+  e.preventDefault();
+  e.returnValue = '';
 });

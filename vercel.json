@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node scripts/bump-sw.mjs && node scripts/build-env.mjs && node scripts/build-css.mjs",
+  "buildCommand": "node scripts/build-sw.mjs && node scripts/bump-sw.mjs && node scripts/build-env.mjs && node scripts/build-css.mjs",
   "outputDirectory": ".",
   "trailingSlash": false,
   "headers": [
@@ -42,7 +42,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, must-revalidate"
+          "value": "public, max-age=86400, must-revalidate"
         }
       ]
     },
@@ -70,6 +70,24 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=2592000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/modules/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
         }
       ]
     }

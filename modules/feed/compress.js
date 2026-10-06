@@ -5,9 +5,9 @@
    Xato bo'lsa originalni qaytaradi (hech qachon yuklashni buzmaydi).
    ═══════════════════════════════════════════════════════════════════════ */
 
-const IMG_MAX_DIM = 1600;   // eng uzun tomoni
-const IMG_QUALITY = 0.8;    // JPEG sifati
-const IMG_MIN_SAVE = 0.85;  // siqish 15% dan kam tejasa — original qoladi
+const IMG_MAX_DIM = 2560;   // eng uzun tomoni (sifat uchun)
+const IMG_QUALITY = 0.92;   // JPEG sifati (xiralik kamayadi)
+const IMG_MIN_SAVE = 0.92;  // siqish 8% dan kam tejasa — original qoladi
 
 /** Canvasda alpha kanali bor-yo'qligini tekshiradi (shaffof piksel bormi). */
 function _hasTransparency(ctx, w, h) {

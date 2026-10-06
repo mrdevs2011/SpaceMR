@@ -1,0 +1,231 @@
+/**
+ * sync.js — get_heads + delta (sync_chat/sync_group) + realtime bridge.
+ * Feature flag: localStorage ff_sync_v2=1 (default OFF — migratsiya kerak).
+ * RPC yo'q/xato → null qaytaradi, chaqiruvchi eski yo'lga tushadi.
+ */
+import { sb, mapMessage, state } from '../config.js';
+import { putThread, putChatsList, setUid, isStoreV2Enabled } from './store.js';
+import { canCache } from '../cache-policy.js';
+import { syncPath, measure } from '../perf.js';
+import { isSyncV2Enabled as _flagSync } from './flags.js';
+
+let _heads = null;
+let _headsAt = 0;
+const HEADS_TTL_MS = 15_000;
+const cursors = new Map(); // scope -> lastSeq  e.g. dm:uuid
+
+export function isSyncV2Enabled() {
+  try { return _flagSync(state.me?.uid); } catch { return _flagSync(); }
+}
+
+export function getCursor(scope) {
+  return cursors.get(scope) || 0;
+}
+
+export function setCursor(scope, seq) {
+  const n = Number(seq) || 0;
+  const prev = cursors.get(scope) || 0;
+  if (n > prev) cursors.set(scope, n);
+}
+
+/** @returns {Promise<object|null>} */
+export async function fetchHeads(force = false) {
+  if (!isSyncV2Enabled()) return null;
+  syncPath('get_heads');
+  if (!force && _heads && Date.now() - _headsAt < HEADS_TTL_MS) return _heads;
+  try {
+    const { data, error } = await sb.rpc('get_heads');
+    if (error) {
+      console.warn('[sync] get_heads', error.message);
+      return null;
+    }
+    _heads = data;
+    _headsAt = Date.now();
+    if (state.me?.uid) setUid(state.me.uid);
+    return data;
+  } catch (e) {
+    console.warn('[sync] get_heads', e?.message || e);
+    return null;
+  }
+}
+
+/**
+ * DM delta.
+ * @returns {Promise<{ msgs: any[], tombstones: any[], headSeq: number, reset: boolean, ok: boolean }|null>}
+ */
+export async function syncChat(chatId, afterSeq) {
+  if (!isSyncV2Enabled() || !chatId) return null;
+  syncPath('sync_chat');
+  const after = afterSeq != null ? afterSeq : getCursor('dm:' + chatId);
+  try {
+    const { data, error } = await sb.rpc('sync_chat', {
+      p_chat_id: chatId,
+      p_after_seq: after,
+      p_limit: 100,
+    });
+    if (error) {
+      console.warn('[sync] sync_chat', error.message);
+      return null;
+    }
+    if (!data) return null;
+    if (data.reset_required) {
+      cursors.delete('dm:' + chatId);
+      return { msgs: [], tombstones: [], headSeq: data.head_seq || 0, reset: true, ok: true };
+    }
+    const raw = Array.isArray(data.messages) ? data.messages : [];
+    const msgs = raw.map(mapMessage).filter(Boolean);
+    const tombs = Array.isArray(data.tombstones) ? data.tombstones : [];
+    const head = Number(data.head_seq) || 0;
+    // cursor: max seq in msgs or tombs
+    let maxSeq = after;
+    for (const m of msgs) if (m.seq != null && m.seq > maxSeq) maxSeq = m.seq;
+    for (const t of tombs) if (t.seq != null && t.seq > maxSeq) maxSeq = t.seq;
+    if (head > maxSeq) maxSeq = head;
+    setCursor('dm:' + chatId, maxSeq);
+    if (canCache('message') && msgs.length) putThread('dm', chatId, msgs);
+    return { msgs, tombstones: tombs, headSeq: head, reset: false, ok: true, hasMore: !!data.has_more };
+  } catch (e) {
+    console.warn('[sync] sync_chat', e?.message || e);
+    return null;
+  }
+}
+
+export async function syncGroup(groupId, afterSeq) {
+  if (!isSyncV2Enabled() || !groupId) return null;
+  const after = afterSeq != null ? afterSeq : getCursor('grp:' + groupId);
+  try {
+    const { data, error } = await sb.rpc('sync_group', {
+      p_group_id: groupId,
+      p_after_seq: after,
+      p_limit: 100,
+    });
+    if (error) {
+      console.warn('[sync] sync_group', error.message);
+      return null;
+    }
+    if (!data) return null;
+    if (data.reset_required) {
+      cursors.delete('grp:' + groupId);
+      return { msgs: [], tombstones: [], headSeq: data.head_seq || 0, reset: true, ok: true };
+    }
+    const raw = Array.isArray(data.messages) ? data.messages : [];
+    const msgs = raw.map(mapMessage).filter(Boolean);
+    const tombs = Array.isArray(data.tombstones) ? data.tombstones : [];
+    const head = Number(data.head_seq) || 0;
+    let maxSeq = after;
+    for (const m of msgs) if (m.seq != null && m.seq > maxSeq) maxSeq = m.seq;
+    for (const t of tombs) if (t.seq != null && t.seq > maxSeq) maxSeq = t.seq;
+    if (head > maxSeq) maxSeq = head;
+    setCursor('grp:' + groupId, maxSeq);
+    if (canCache('group_message') && msgs.length) putThread('group', groupId, msgs);
+    return { msgs, tombstones: tombs, headSeq: head, reset: false, ok: true, hasMore: !!data.has_more };
+  } catch (e) {
+    console.warn('[sync] sync_group', e?.message || e);
+    return null;
+  }
+}
+
+/**
+ * loadThread o'rniga ishlatish mumkin: kesh + delta yoki null (fallback).
+ * @returns {Promise<{ msgs: any[], from: 'sync'|'cache', tombstones: any[] }|null>}
+ */
+export async function loadThreadDelta(chatId, cachedMsgs) {
+  if (!isSyncV2Enabled()) return null;
+  const scope = 'dm:' + chatId;
+  let after = getCursor(scope);
+  if (!after && cachedMsgs?.length) {
+    for (const m of cachedMsgs) {
+      if (m.seq != null && m.seq > after) after = m.seq;
+    }
+  }
+  const res = await syncChat(chatId, after);
+  if (!res || !res.ok) return null;
+  if (res.reset) return { msgs: [], from: 'sync', tombstones: [], reset: true };
+
+  // Merge: cache base + delta
+  const byId = new Map();
+  for (const m of cachedMsgs || []) if (m?.id) byId.set(m.id, m);
+  for (const m of res.msgs) if (m?.id) byId.set(m.id, m);
+  for (const t of res.tombstones) {
+    if (t.message_id) byId.delete(t.message_id);
+  }
+  const msgs = [...byId.values()].sort((a, b) => {
+    const sa = a.seq != null ? a.seq : 0;
+    const sb_ = b.seq != null ? b.seq : 0;
+    if (sa && sb_ && sa !== sb_) return sa - sb_;
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+  return { msgs, from: 'sync', tombstones: res.tombstones, reset: false, headSeq: res.headSeq };
+}
+
+
+/**
+ * Guruh thread delta (loadMsgs uchun).
+ */
+export async function loadGroupDelta(groupId, cachedMsgs) {
+  if (!isSyncV2Enabled() || !groupId) return null;
+  const scope = 'grp:' + groupId;
+  let after = getCursor(scope);
+  if (!after && cachedMsgs?.length) {
+    for (const m of cachedMsgs) {
+      if (m.seq != null && m.seq > after) after = m.seq;
+    }
+  }
+  const res = await syncGroup(groupId, after);
+  if (!res || !res.ok) return null;
+  if (res.reset) return { msgs: [], from: 'sync', tombstones: [], reset: true };
+
+  const byId = new Map();
+  for (const m of cachedMsgs || []) if (m?.id) byId.set(m.id, m);
+  for (const m of res.msgs) if (m?.id) byId.set(m.id, m);
+  for (const t of res.tombstones) {
+    if (t.message_id) byId.delete(t.message_id);
+  }
+  const msgs = [...byId.values()].sort((a, b) => {
+    const sa = a.seq != null ? a.seq : 0;
+    const sb_ = b.seq != null ? b.seq : 0;
+    if (sa && sb_ && sa !== sb_) return sa - sb_;
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  });
+  return { msgs, from: 'sync', tombstones: res.tombstones, reset: false, headSeq: res.headSeq };
+}
+
+/** Tombstone realtime: message_tombstones INSERT */
+export function bindTombstoneChannel(chatId, onTombstone) {
+  if (!isSyncV2Enabled() || !chatId) return () => {};
+  const ch = sb.channel('tomb-dm-' + chatId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'message_tombstones',
+      filter: `chat_id=eq.${chatId}`,
+    }, (p) => {
+      const row = p.new;
+      if (row?.seq != null) setCursor('dm:' + chatId, row.seq);
+      try { onTombstone?.(row); } catch (_) {}
+    })
+    .subscribe();
+  return () => { try { sb.removeChannel(ch); } catch (_) {} };
+}
+
+export function bindGroupTombstoneChannel(groupId, onTombstone) {
+  if (!isSyncV2Enabled() || !groupId) return () => {};
+  const ch = sb.channel('tomb-grp-' + groupId)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'group_message_tombstones',
+      filter: `group_id=eq.${groupId}`,
+    }, (p) => {
+      const row = p.new;
+      if (row?.seq != null) setCursor('grp:' + groupId, row.seq);
+      try { onTombstone?.(row); } catch (_) {}
+    })
+    .subscribe();
+  return () => { try { sb.removeChannel(ch); } catch (_) {} };
+}
+
+export function invalidateHeads() {
+  _heads = null;
+  _headsAt = 0;
+}

@@ -13,15 +13,16 @@ import { initUrlRouter } from './url-router.js';
 import { initNavigation } from './ui/bar.js';
 import './explore.js';
 
-/* ── Splash: min 0.8s, max 12s; ma'lumot tayyor bo'lguncha kutadi ── */
+/* ── Splash: min 0.8s, max 2s; ma'lumot tayyor bo'lguncha kutadi ── */
 const _splashT0 = Date.now();
 const SPLASH_MIN_MS = 200;
-const SPLASH_MAX_MS = 12000;
+const SPLASH_MAX_MS = 2000;
 let _splashDone = false;
 
 export function hideSplash(reason) {
   if (_splashDone) return;
   _splashDone = true;
+  try { mark('splash-hide' + (reason ? ':' + reason : '')); } catch (_) {}
   const elapsed = Date.now() - _splashT0;
   const wait = Math.max(0, SPLASH_MIN_MS - elapsed);
   setTimeout(() => {
@@ -68,7 +69,7 @@ import('./chat/chats-x.js');
 
 /* ── iOS 27 Haptic — global touch feedback ── */
 import { haptic, addHapticTouch } from './core/utils.js';
-import { scheduleIdle } from './core/perf.js';
+import { scheduleIdle, mark } from './core/perf.js';
 import './ui/install-guide.js'; // yo'riqnoma (sozlamalar)
 
 (function initGlobalHaptics() {

@@ -1432,6 +1432,5 @@ window.addEventListener('pagehide', () => {
   try { _localStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
   try { _pc?.close(); } catch (_) {}
 });
-window.addEventListener('beforeunload', () => { if (_callId) _beaconEnd(_callId); });
 window.addEventListener('offline', () => _hardEnd('offline'));
 window.addEventListener('online', () => { flushPendingCallEnd(); });

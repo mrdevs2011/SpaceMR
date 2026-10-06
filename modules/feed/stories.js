@@ -6,6 +6,7 @@ import { sb, state, mapProfile, mediaPublicUrl } from '../core/config.js';
 import { $, esc, defAvi } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
+import { fixVideoDuration } from '../core/video-policy.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
 
@@ -892,8 +893,13 @@ async function showCurrent() {
   if (isVideo) {
     el.addEventListener('loadedmetadata', () => {
       if (token !== _showToken) return;
-      const d = el.duration;
-      if (isFinite(d) && d > 0) duration = Math.min(d, 60) * 1000;
+      const applyDur = (d) => {
+        if (isFinite(d) && d > 0) duration = Math.min(d, 60) * 1000;
+      };
+      applyDur(el.duration);
+      if (!isFinite(el.duration) || el.duration <= 0) {
+        fixVideoDuration(el).then(sec => { if (token === _showToken) applyDur(sec); });
+      }
     });
     el.addEventListener('ended', () => { if (token === _showToken) step(1); });
     const begin = () => {

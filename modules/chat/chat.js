@@ -624,6 +624,7 @@ import {
 } from '../core/config.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
+import { mark, armFlashDetector, syncPath } from '../core/perf.js';
 import { initMsgMenu, msgMenuAfterPaint, msgMenuReset, isEditing, commitEdit } from './msg-menu.js';
 import { dissolveMarks, markDissolve, playDeleteDissolve, dissolveGroupInfo } from '../ui/dissolve.js';
 import { rateOk }           from '../core/rate-limit.js';
@@ -643,6 +644,14 @@ import {
   cacheChatsList, getCachedChatsList, getCachedChatsListAgeMs,
   cacheThreadMessages, getCachedThreadMessages, invalidateChatsListCache
 } from '../core/local-cache.js';
+
+import {
+  isSyncV2Enabled, loadThreadDelta, bindTombstoneChannel, setCursor,
+} from '../core/store/sync.js';
+import {
+  paintGateKey, markCacheReady, markNetworkReady, tryOpenPaint, resetPaintGate,
+} from '../core/store/paint-gate.js';
+import { scheduleFlush as flushOutboxSoon } from '../core/store/outbox.js';
 import {
   getPins as _getPins,
   isPinned as _isPinned,
@@ -1420,7 +1429,7 @@ export async function openChatThread(uid) {
   const _chatMeta = chatState._latestChatMap?.[uid];
   const _cachedMsgs = (_cmLast && !(_chatMeta?.lastMessageAt && (ts(_cmLast.createdAt) || 0) < ts(_chatMeta.lastMessageAt) - 1500)) ? _cm : null;
   // Xabarlar so'rovi hoziroq ketadi (profil/kontakt so'rovlarini kutmasdan) — keyingi loadThread shu natijani oladi
-  let _earlyFetch = Promise.resolve(sb.from('messages').select('*')
+  let _earlyFetch = Promise.resolve(sb.from('messages').select('id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq')
     .eq('chat_id', chatId).order('created_at', { ascending: false }).limit(MSG_LIMIT)).catch(() => null);
   if (_cachedMsgs && _cachedMsgs.length) {
     paintMessages(_cachedMsgs);
@@ -1447,7 +1456,7 @@ export async function openChatThread(uid) {
     chatState._otherUserAvi = SAVED_AVATAR;
     chatState._otherUserUid = uid;
   } else try {
-    const { data: prow } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+    const { data: prow } = await sb.from('profiles').select('id, username, full_name, avatar, last_seen, approval, blocked').eq('id', uid).maybeSingle();
     if (_stale()) return; // boshqa chatga o'tilgan — sarlavhani buzmaymiz
     const ud = mapProfile(prow) || {};
     const av = ud.avatar || defAvi(ud.fullName || 'U');
@@ -1535,10 +1544,40 @@ export async function openChatThread(uid) {
   if (chatState._threadUnsub) { chatState._threadUnsub(); chatState._threadUnsub = null; }
 
   let _tDead = false, _tTimer = null, _tLoaded = false;
+  const _pgKey = paintGateKey('dm', chatId);
+  resetPaintGate(_pgKey);
+  if (_cachedMsgs && _cachedMsgs.length) markCacheReady(_pgKey);
+
   const loadThread = async () => {
+    // Phase 4: seq-delta (faqat ff_sync_v2=1 va migratsiya bor bo'lsa)
+    if (isSyncV2Enabled()) {
+      try {
+        const delta = await loadThreadDelta(chatId, _cachedMsgs || getCachedThreadMessages(chatId) || []);
+        if (_tDead || state.currentChatId !== chatId) return;
+        if (delta && !delta.reset) {
+          markNetworkReady(_pgKey);
+          tryOpenPaint(_pgKey);
+          syncPath('thread-delta-ok');
+          paintMessages(_rtMerge(delta.msgs.slice()));
+          _tLoaded = true;
+          cacheThreadMessages(chatId, delta.msgs);
+          _earlyFetch = null;
+          try {
+            mark('thread-painted');
+            const box = document.getElementById('chatThreadMessages');
+            if (box) armFlashDetector(box, 'dm-thread');
+          } catch (_) {}
+          return;
+        }
+        // reset_required → pastga tushib to'liq select
+      } catch (e) {
+        console.warn('[Chat] sync delta fallback', e?.message || e);
+      }
+    }
+
     let res = null;
     if (_earlyFetch) { res = await _earlyFetch; _earlyFetch = null; }   // birinchi marta — oldindan ketgan so'rov natijasi
-    if (!res || res.error) res = await sb.from('messages').select('*')
+    if (!res || res.error) res = await sb.from('messages').select('id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq')
       .eq('chat_id', chatId).order('created_at', { ascending: false }).limit(MSG_LIMIT);
     const { data, error } = res;
     if (_tDead || state.currentChatId !== chatId) return; // boshqa chat ochilgan — bu natija chizilmaydi
@@ -1552,18 +1591,33 @@ export async function openChatThread(uid) {
       return;
     }
     const msgs = (data || []).map(mapMessage).reverse();
+    markNetworkReady(_pgKey);
+    tryOpenPaint(_pgKey);
     paintMessages(_rtMerge(msgs.slice()));
     _tLoaded = true;
     cacheThreadMessages(chatId, msgs);
+    // cursor: agar seq bo'lsa
+    try {
+      let mx = 0;
+      for (const m of msgs) if (m.seq != null && m.seq > mx) mx = m.seq;
+      if (mx) setCursor('dm:' + chatId, mx);
+    } catch (_) {}
+    try {
+      mark('thread-painted');
+      const box = document.getElementById('chatThreadMessages');
+      if (box) armFlashDetector(box, 'dm-thread');
+    } catch (_) {}
     // Read: faqat ekranda ko'rinadigan xabarlar (paintMessages -> _observeMessagesForRead)
   };
   const schedThread = () => { clearTimeout(_tTimer); _tTimer = setTimeout(loadThread, 0); };
-  // Realtime payload'ni qayta yuklamasdan shu zahoti qo'llaymiz (INSERT/UPDATE/DELETE)
+  // Realtime: INSERT/UPDATE; DELETE — ff_sync_v2 da tombstone kanaliga o'tkazilgan (P8)
   const applyThreadPayload = (p) => {
     if (_tDead || state.currentChatId !== chatId) return;
     if (!_tLoaded) { schedThread(); return; }
     const ev = p.eventType;
     if (ev === 'DELETE') {
+      // Phase 5: sync v2 yoqilgan bo'lsa DELETE ni e'tiborsiz qoldiramiz (tombstone INSERT keladi)
+      if (isSyncV2Enabled()) return;
       const delId = p.old?.id;
       if (!delId) { schedThread(); return; }
       chatState._rtLocal.delete(delId);
@@ -1578,19 +1632,61 @@ export async function openChatThread(uid) {
     if (chatState._rtRead.has(m.id)) m.status = 'read';
     const list = chatState._curMsgs.slice();
     const i = list.findIndex(x => x.id === m.id);
-    if (i >= 0) list[i] = m;
+    if (i >= 0) {
+      // No-op UPDATE: faqat status/read_at o'zgargan va UI allaqachon shunday — qayta chizmaslik
+      const prev = list[i];
+      if (ev === 'UPDATE' && prev && prev.status === m.status && prev.text === m.text
+          && prev.editedAt === m.editedAt && (prev.readAt || null) === (m.readAt || null)) {
+        return;
+      }
+      list[i] = m;
+    }
     else if (ev === 'INSERT') list.push(m);
     else { schedThread(); return; }
+    if (m.seq != null) try { setCursor('dm:' + chatId, m.seq); } catch (_) {}
     paintMessages(list);
     cacheThreadMessages(chatId, list);
-    // Read: observer yangi xabarni ekranda ko'ringanda belgilaydi
   };
-  const mch = sb.channel('thread-' + chatId)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, applyThreadPayload)
-    .subscribe(st => { if (st === 'SUBSCRIBED') schedThread(); });
-  chatState._threadUnsub = () => { _tDead = true; clearTimeout(_tTimer); sb.removeChannel(mch); };
+  // P11: birinchi yuklash faqat loadThread(); SUBSCRIBED da faqat reconnect (gap) bo'lsa qayta so'raladi
+  let _tWasSub = false;
+  const mch = sb.channel('thread-' + chatId);
+  if (isSyncV2Enabled()) {
+    // DELETE emas — message_tombstones INSERT (Phase 5 / P8)
+    mch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, applyThreadPayload);
+    mch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, applyThreadPayload);
+  } else {
+    mch.on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `chat_id=eq.${chatId}` }, applyThreadPayload);
+  }
+  mch.subscribe(st => {
+      if (st === 'SUBSCRIBED') {
+        if (_tWasSub && _tLoaded) schedThread(); // reconnect / gap
+        _tWasSub = true;
+      }
+    });
+  // Phase 4: tombstone realtime (ff_sync_v2)
+  let _tombUnsub = null;
+  if (isSyncV2Enabled()) {
+    _tombUnsub = bindTombstoneChannel(chatId, (row) => {
+      if (_tDead || state.currentChatId !== chatId) return;
+      const delId = row?.message_id;
+      if (!delId) return;
+      chatState._rtLocal.delete(delId);
+      markDissolve([delId]);
+      const next = (chatState._curMsgs || []).filter(x => x.id !== delId);
+      paintMessages(next);
+      cacheThreadMessages(chatId, next);
+    });
+  }
+  chatState._threadUnsub = () => {
+    _tDead = true;
+    clearTimeout(_tTimer);
+    sb.removeChannel(mch);
+    try { _tombUnsub?.(); } catch (_) {}
+  };
+
   chatState._reloadThread = loadThread;
   loadThread();
+  try { flushOutboxSoon(800); } catch (_) {}
 }
 
 /* ── Read receipts: faqat ekranda KO'RINGAN xabarlar o'qilgan deb belgilanadi ── */

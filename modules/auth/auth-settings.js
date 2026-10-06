@@ -9,6 +9,7 @@ import { $, defAvi, lockScroll, unlockScroll, showConfirm } from '../core/utils.
 import { toast } from '../ui/toast.js';
 import { removePushToken, areNotificationsEnabled, setNotificationsEnabled } from '../push.js';
 import { clearAllCache, clearRuntimeCache, getCachedProfile } from '../core/local-cache.js';
+import { isEphemeralDevice, setEphemeralDevice, flagsSnapshot } from '../core/store/flags.js';
 
 /* ── Sozlamalar (Settings) sheet — bildirishnoma + hisobni o'chirish ── */
 
@@ -169,6 +170,43 @@ if (clearCacheBtn) {
 }
 
 /* Yordam tugmasi — manzil index.html dagi #helpBtn[data-href] da (Telegram t.me/... yoki mailto:...) */
+
+/* Phase 8: umumiy qurilma — diskda ma'lumot saqlanmasin */
+const ephemeralBtn = $('ephemeralDeviceBtn');
+if (ephemeralBtn) {
+  const _paintEph = () => {
+    const on = isEphemeralDevice();
+    ephemeralBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    ephemeralBtn.textContent = on ? "Diskda saqlash o'chirilgan" : 'Umumiy qurilma (diskda saqlama)';
+  };
+  _paintEph();
+  ephemeralBtn.onclick = async () => {
+    const next = !isEphemeralDevice();
+    setEphemeralDevice(next);
+    if (next) {
+      clearAllCache();
+      try { await clearRuntimeCache(); } catch (_) {}
+      toast("Bu qurilmada ma'lumot saqlanmaydi", 'success');
+    } else {
+      toast("Disk kesh yoqildi", 'success');
+    }
+    _paintEph();
+  };
+} else if (clearCacheBtn) {
+  // HTML tugma bo'lmasa: clearCacheBtn contextmenu / shift+click
+  clearCacheBtn.addEventListener('click', (e) => {
+    if (!e.shiftKey) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const next = !isEphemeralDevice();
+    setEphemeralDevice(next);
+    if (next) clearAllCache();
+    toast(next ? "Umumiy qurilma: diskda saqlanmaydi" : 'Disk kesh yoqildi', 'info');
+  }, true);
+}
+
+try { window.__spacemrFlags && (window.__spacemrFlags.snapshot = () => flagsSnapshot()); } catch (_) {}
+
 const helpBtn = $('helpBtn');
 if (helpBtn) {
   helpBtn.onclick = () => {

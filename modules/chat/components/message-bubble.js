@@ -2,6 +2,7 @@ import './chat-image-zoom.js';
 import { esc } from '../../core/utils.js';
 import { getChatFileIcon, callLogInfo, fmtCallDur } from '../chat-shared.js';
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
+import { ensureVideoDuration, fixVideoDuration } from '../../core/video-policy.js';
 
 /* Rasm nisbatini eslab qolish: qayta chizilganda (innerHTML) rasm yuklanmasdan oldin ham
    joyi band bo'lsin — chat sakramasin. Birinchi marta ko'rilganda nisbat noma'lum. */
@@ -30,8 +31,12 @@ window._chatVidMeta = function (v) {
   try {
     rememberImgRatio({ getAttribute: () => v.getAttribute('src').split('#')[0], naturalWidth: v.videoWidth, naturalHeight: v.videoHeight });
     if (v.videoWidth && v.videoHeight) v.style.aspectRatio = `${v.videoWidth}/${v.videoHeight}`;
+    ensureVideoDuration(v);
     const d = v.closest('.cfm-vid-wrap')?.querySelector('.cfm-vid-dur');
-    if (d && isFinite(v.duration)) d.textContent = fmtDur(v.duration);
+    if (d && isFinite(v.duration) && v.duration > 0) d.textContent = fmtDur(v.duration);
+    else if (d) {
+      fixVideoDuration(v).then(sec => { if (sec > 0) d.textContent = fmtDur(sec); });
+    }
   } catch (_) {}
   window._chatImgLoaded && window._chatImgLoaded(v);
 };
@@ -121,17 +126,25 @@ function _ensureVidBar(wrap, v) {
   const fsBtn = bar.querySelector('.cvb-fs');
   const prog = bar.querySelector('.cvb-progress');
 
+  // WebM (MediaRecorder) da duration Infinity bo'lishi mumkin — bir marta tuzatamiz
+  ensureVideoDuration(v);
+  let _knownDur = 0;
+  fixVideoDuration(v).then(sec => { if (sec > 0) { _knownDur = sec; sync(); } });
+
   const sync = () => {
-    const d = v.duration || 0, c = v.currentTime || 0;
-    const pct = d ? (c / d) * 100 : 0;
+    let d = v.duration;
+    if (!isFinite(d) || d <= 0) d = _knownDur;
+    if (!isFinite(d) || d <= 0) d = 0;
+    const c = isFinite(v.currentTime) ? v.currentTime : 0;
+    const pct = d > 0 ? Math.min(100, Math.max(0, (c / d) * 100)) : 0;
     fill.style.width = pct + '%';
     knob.style.left = pct + '%';
     curEl.textContent = _fmtVidTime(c);
     durEl.textContent = _fmtVidTime(d);
     try {
-      if (v.buffered?.length) {
+      if (v.buffered?.length && d > 0) {
         const end = v.buffered.end(v.buffered.length - 1);
-        buf.style.width = (d ? (end / d) * 100 : 0) + '%';
+        buf.style.width = Math.min(100, Math.max(0, (end / d) * 100)) + '%';
       }
     } catch (_) {}
     bar.classList.toggle('is-paused', v.paused);
@@ -170,7 +183,11 @@ function _ensureVidBar(wrap, v) {
     const r = prog.getBoundingClientRect();
     const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
     const ratio = Math.max(0, Math.min(1, x / r.width));
-    if (isFinite(v.duration)) v.currentTime = ratio * v.duration;
+    let d = v.duration;
+    if (!isFinite(d) || d <= 0) d = _knownDur;
+    if (isFinite(d) && d > 0) {
+      try { v.currentTime = ratio * d; } catch (_) {}
+    }
     sync();
   };
   prog.addEventListener('pointerdown', ev => {

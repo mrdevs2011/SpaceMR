@@ -4,7 +4,7 @@ import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from 
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
 import { startChatsWatcher, stopChatsWatcher, repaintNoticeBanner } from '../chat/chat.js';
-import { startBus, stopBus, busOn, trackPresence, untrackPresence } from '../core/rt-bus.js';
+import { startBus, stopBus, busOn, trackPresence, untrackPresence, isBusLive } from '../core/rt-bus.js';
 import { startCallWatcher, stopCallWatcher } from '../call/call.js';
 import { clearAllCache, cachePosts, getCachedPosts, clearRuntimeCache, getCachedProfile, cacheProfile } from '../core/local-cache.js';
 import { openAviCrop } from '../ui/avi-crop.js';
@@ -1043,28 +1043,41 @@ async function _enterApp(user) {
     listenPosts();
     if (!notificationsUserDisabled()) initPush();
     startBus();          // tezkor shina: like/izoh/post/presence/kirish qutisi
+    try {
+      import('../core/store/sync.js').then(m => {
+        if (m.isSyncV2Enabled?.()) m.fetchHeads?.(true);
+      }).catch(() => {});
+    } catch (_) {}
+    try {
+      import('../core/store/outbox.js').then(m => m.scheduleFlush?.(1000)).catch(() => {});
+    } catch (_) {}
     startChatsWatcher(); // ichida startGroupsWatcher ham
     startCallWatcher();
     maybeShowGuideCard(); // telefonda bir martalik "ilovani o'rnating" kartasi
 
-    // "Oxirgi faollik" — admin panelida ko'rsatish uchun
-    try {
-      await sb.from('profiles').update({
-        last_seen: new Date().toISOString(),
-        last_user_agent: navigator.userAgent || null,
-        last_platform: navigator.platform || null,
-      }).eq('id', user.uid);
-    } catch (_) { /* jim o'tkazib yuboramiz */ }
-
     startPresenceHeartbeat();
 
-    // Splash davomida ko'proq ma'lumot yuklash
+    // Splash davomida ko'proq ma'lumot yuklash (tarmoq — splashni kutdirishi mumkin, lekin last_seen endi fonda)
     try {
       await _preloadForSplash(user.uid);
     } catch (e) {
       console.warn('[Auth] preload:', e?.message || e);
     }
     try { (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-ready'); } catch (_) {}
+
+    // "Oxirgi faollik" — splash yopilgandan KEYIN fonda (P4). Boot yo'lini bloklamaydi.
+    try {
+      const uid = user.uid;
+      const ua = navigator.userAgent || null;
+      const plat = navigator.platform || null;
+      setTimeout(() => {
+        sb.from('profiles').update({
+          last_seen: new Date().toISOString(),
+          last_user_agent: ua,
+          last_platform: plat,
+        }).eq('id', uid).then(() => {}).catch(() => {});
+      }, 0);
+    } catch (_) {}
 
     // Stories bar birinchi yuklanishda ham chiqsin (router auth dan oldin ishlagan bo'lishi mumkin)
     try {
@@ -1171,8 +1184,13 @@ async function _preloadForSplash(uid) {
  * (utils.js) bilan "onlayn/oxirgi faollik"ni hisoblaydi.
  * Fon/yopiq oynada ham yuboriladi (brauzer taymerni sekinlatadi, lekin oyna baribir ochiq).
  ─────────────────────────────────────────────────────────────────────── */
-const HEARTBEAT_MS = 25 * 1000;
+const HEARTBEAT_MS = 25 * 1000;       // fallback (shina o'lik)
+const HEARTBEAT_LIVE_MS = 120 * 1000;  // presence tirik: last_seen kamroq yoziladi (Phase 5)
 let _heartbeatTimer = null;
+
+function _hbInterval() {
+  try { return isBusLive() ? HEARTBEAT_LIVE_MS : HEARTBEAT_MS; } catch { return HEARTBEAT_MS; }
+}
 
 let _accessTok = null;
 
@@ -1207,7 +1225,7 @@ function _flushLastSeenKeepalive() {
 function startPresenceHeartbeat() {
   if (_heartbeatTimer) return;
   _pingPresence(); // darhol bitta marta
-  _heartbeatTimer = setInterval(_pingPresence, HEARTBEAT_MS);
+  _heartbeatTimer = setInterval(_pingPresence, _hbInterval());
   document.addEventListener('visibilitychange', _onVisibilityChangeForPresence);
   window.addEventListener('pagehide', _onPageHidePresence);
 }
@@ -1229,9 +1247,8 @@ function _onVisibilityChangeForPresence() {
   if (document.visibilityState === 'visible') {
     _pingPresence();
     trackPresence();
-    if (!_heartbeatTimer) {
-      _heartbeatTimer = setInterval(_pingPresence, HEARTBEAT_MS);
-    }
+    if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
+    _heartbeatTimer = setInterval(_pingPresence, _hbInterval());
   } else {
     // Boshqa tab / minimallashtirish — darhol offline, "oxirgi faollik" aniq yoziladi
     untrackPresence();

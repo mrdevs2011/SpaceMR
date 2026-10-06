@@ -21,6 +21,7 @@
  */
 
 import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts } from '../core/config.js';
+import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta } from '../core/store/sync.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
@@ -469,7 +470,33 @@ export async function openGroupThread(groupId) {
   }).catch(() => {});
   const loadMsgs = async () => {
     const _readP = _gLoadReadMax(groupId);   // xabarlar bilan bir vaqtda so'raladi
-    const { data, error } = await sb.from('group_messages').select('*')
+
+    // Phase 4/8: seq-delta
+    if (isSyncV2Enabled()) {
+      try {
+        const delta = await loadGroupDelta(groupId, _gMsgs || []);
+        if (_gDead || _currentGroupId !== groupId) return;
+        if (delta && !delta.reset) {
+          let msgs = delta.msgs.slice();
+          if (_gPending.size) {
+            const have = new Set(msgs.map(m => m.id));
+            for (const [pid, pm] of _gPending) {
+              if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
+            }
+          }
+          await _readP;
+          if (_gDead || _currentGroupId !== groupId) return;
+          _gMsgs = msgs; _gLoaded = true;
+          paintGroupMessages(msgs, _currentGroupData || groupData);
+          if ((_latestGroupMap[groupId]?.unreadCount?.[state.me.uid] || 0) > 0) _resetGroupUnread(groupId);
+          return;
+        }
+      } catch (e) {
+        console.warn('[Groups] sync delta fallback', e?.message || e);
+      }
+    }
+
+    const { data, error } = await sb.from('group_messages').select('id, group_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, edited_at, created_at, reply_to, waveform, seq')
       .eq('group_id', groupId).order('created_at', { ascending: false }).limit(60);
     if (_gDead || _currentGroupId !== groupId) return;
     if (error) {
@@ -488,6 +515,11 @@ export async function openGroupThread(groupId) {
     await _readP;
     if (_gDead || _currentGroupId !== groupId) return;
     _gMsgs = msgs; _gLoaded = true;
+    try {
+      let mx = 0;
+      for (const m of msgs) if (m.seq != null && m.seq > mx) mx = m.seq;
+      if (mx) setCursor('grp:' + groupId, mx);
+    } catch (_) {}
     paintGroupMessages(msgs, _currentGroupData || groupData);
     // Thread ochiq turganda kelgan xabarlar o'qilmagan bo'lib qolmasin
     if ((_latestGroupMap[groupId]?.unreadCount?.[state.me.uid] || 0) > 0) _resetGroupUnread(groupId);
@@ -498,6 +530,7 @@ export async function openGroupThread(groupId) {
     if (_gDead || _currentGroupId !== groupId) return;
     if (!_gLoaded) { sched(); return; }
     if (p.eventType === 'DELETE') {
+      if (isSyncV2Enabled()) return; // Phase 5: tombstone kanal
       const did = p.old?.id;
       if (!did) { sched(); return; }
       _gPending.delete(did);
@@ -516,9 +549,16 @@ export async function openGroupThread(groupId) {
     paintGroupMessages(_gMsgs, _currentGroupData || groupData);
   };
   window.addEventListener('spacemr:resync', sched);   // ochiq guruh chati ham uyg'onganda yangilanadi
-  const gch = sb.channel('gthread-' + groupId)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, applyGroupPayload)
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `group_id=eq.${groupId}` }, (p) => {
+  // P11: birinchi yuklash faqat loadMsgs(); SUBSCRIBED da faqat reconnect bo'lsa qayta
+  let _gWasSub = false;
+  const gch = sb.channel('gthread-' + groupId);
+  if (isSyncV2Enabled()) {
+    gch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, applyGroupPayload);
+    gch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, applyGroupPayload);
+  } else {
+    gch.on('postgres_changes', { event: '*', schema: 'public', table: 'group_messages', filter: `group_id=eq.${groupId}` }, applyGroupPayload);
+  }
+  gch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `group_id=eq.${groupId}` }, (p) => {
       if (_gDead || _currentGroupId !== groupId || !_gLoaded) return;
       const r = p.new;
       if (!r || r.user_id === state.me?.uid || !r.last_read_at) return;
@@ -527,9 +567,27 @@ export async function openGroupThread(groupId) {
       _gReadMax = t;
       paintGroupMessages(_gMsgs, _currentGroupData || groupData);
     })
-    .subscribe(st => { if (st === 'SUBSCRIBED') sched(); });
-  _groupThreadUnsub = () => {
+    .subscribe(st => {
+      if (st === 'SUBSCRIBED') {
+        if (_gWasSub && _gLoaded) sched(); // reconnect / gap
+        _gWasSub = true;
+      }
+    });
+  let _gTombUnsub = null;
+  if (isSyncV2Enabled()) {
+    _gTombUnsub = bindGroupTombstoneChannel(groupId, (row) => {
+      if (_gDead || _currentGroupId !== groupId) return;
+      const did = row?.message_id;
+      if (!did) return;
+      _gPending.delete(did);
+      markDissolve([did]);
+      _gMsgs = _gMsgs.filter(x => x.id !== did);
+      paintGroupMessages(_gMsgs, _currentGroupData || groupData);
+    });
+  }
+    _groupThreadUnsub = () => {
     _gDead = true; clearTimeout(_gTimer); sb.removeChannel(gch);
+    try { _gTombUnsub?.(); } catch (_) {}
     window.removeEventListener('spacemr:resync', sched);
     if (_gRt) { _gRt.close(); _gRt = null; }
     if (_reloadGroupThread === loadMsgs) _reloadGroupThread = null;
@@ -1025,7 +1083,7 @@ export async function openGroupInfo(groupId) {
   if (mediaGrid) {
     mediaGrid.innerHTML = '<div class="gi-media-spin"><div class="spinner"></div></div>';
     try {
-      const { data: mrows, error: mErr } = await sb.from('group_messages').select('*')
+      const { data: mrows, error: mErr } = await sb.from('group_messages').select('id, group_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, edited_at, created_at, reply_to, waveform, seq')
         .eq('group_id', groupId).eq('type', 'file')
         .order('created_at', { ascending: false }).limit(60);
       if (mErr) throw mErr;

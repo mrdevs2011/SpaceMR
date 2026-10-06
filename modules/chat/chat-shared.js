@@ -7,7 +7,7 @@
  */
 
 import "./chat-pin.js";
-import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET } from '../core/config.js';
+import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { assertAllowedUpload } from '../core/upload-policy.js';
@@ -178,7 +178,9 @@ export async function uploadViaControllerProgress(file, folder, onProgress) {
   const path = `${state.me.uid}/${folder}/${Date.now()}_${(crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))}_${safeName}`;
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path}`;
 
+  beginUpload();
   return new Promise((resolve, reject) => {
+    const done = (fn) => (v) => { endUpload(); fn(v); };
     const xhr = new XMLHttpRequest();
     xhr.open('POST', uploadUrl);
     xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -189,13 +191,13 @@ export async function uploadViaControllerProgress(file, folder, onProgress) {
     xhr.upload.onprogress = e => {
       if (e.lengthComputable && onProgress) onProgress((e.loaded / e.total) * 100);
     };
-    const fallback = () => uploadViaController(file, folder)
-      .then(res => { if (onProgress) onProgress(100); resolve(res); })
-      .catch(reject);
+    const fallback = () => uploadViaController(file, folder, { track: false })
+      .then(res => { if (onProgress) onProgress(100); done(resolve)(res); })
+      .catch(done(reject));
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         if (onProgress) onProgress(100);
-        resolve({ path, url: mediaPublicUrl(path) });
+        done(resolve)({ path, url: mediaPublicUrl(path) });
       } else fallback();
     };
     xhr.onerror = fallback;

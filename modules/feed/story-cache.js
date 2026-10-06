@@ -139,6 +139,15 @@ export function cacheItem(item) {
                 createdAt: item.createdAt || null, expiresAt, storedAt: Date.now() });
       });
       _urls.set(item.id, URL.createObjectURL(blob));
+      // Phase 6: OPFS/media_index mirror (best-effort)
+      try {
+        const { putMedia } = await import('../core/store/media-cache.js');
+        putMedia(item.mediaPath || item.id, blob, {
+          path: item.mediaPath || null,
+          expiresAt: expiresAt,
+          type: item.mediaType || blob.type || '',
+        }).catch(() => {});
+      } catch (_) {}
       return true;
     } catch (_) { return false; }
     finally { clearTimeout(to); }

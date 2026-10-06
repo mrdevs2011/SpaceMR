@@ -5,7 +5,7 @@ import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.j
 import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
-import { prepareVideo } from '../core/video-policy.js';
+import { prepareVideo, ensureVideoDuration } from '../core/video-policy.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    FILE TYPE → SVG icon + label + accent color
@@ -215,7 +215,7 @@ export function pickFile(f) {
     return;
   }
   // Video hajmi oldindan kesilmaydi: 100000000 Mbps / juda yuqori fps bo'lsa ham
-  // prepareVideo uni 1 daqiqa / 720p / 30fps standartiga tushiradi.
+  // prepareVideo uni 1 daqiqa / 1080p / 30fps standartiga tushiradi.
   if (!video && f.size > MAX_FILE) {
     const limTxt = '49.9 MB';
     $('sizeWarn').textContent = `Fayl ${fmtSz(f.size)} — limit ${limTxt}`;
@@ -235,9 +235,9 @@ export function pickFile(f) {
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
     </button></div>`;
   } else if (video) {
-    $('previewArea').innerHTML = `<div class="preview-wrap"><video src="${esc(state._objUrl)}" controls playsinline muted style="width:100%;max-height:280px;background:#000;display:block"></video><button class="preview-clear" data-action="clear-file">
+    $('previewArea').innerHTML = `<div class="preview-wrap"><video src="${esc(state._objUrl)}" controls playsinline muted style="width:100%;max-height:280px;background:#000;display:block" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video><button class="preview-clear" data-action="clear-file">
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
-    </button><div class="fs-11px c-text3-theme" style="padding:6px 8px">Kamera standarti: 1 daqiqa · 720p · 30 fps</div></div>`;
+    </button><div class="fs-11px c-text3-theme" style="padding:6px 8px">Kamera standarti: 1 daqiqa · 1080p · 30 fps</div></div>`;
   } else {
     const info = getFileTypeInfo(f.name, f.type);
     $('previewArea').innerHTML = `<div class="preview-file">

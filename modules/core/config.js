@@ -137,24 +137,36 @@ export async function getMediaUrl(post) {
   return mediaPublicUrl(post.mediaPath);
 }
 
+/** Global upload lock — Ctrl+R / F5 ni bloklash uchun */
+let _uploadCount = 0;
+export function isUploading() { return _uploadCount > 0; }
+export function beginUpload() { _uploadCount++; }
+export function endUpload() { _uploadCount = Math.max(0, _uploadCount - 1); }
+
 /**
  * Faylni 'media' bucket'ga yuklash. Yo'l: {uid}/{folder}/{vaqt}_{nom}
  * (storage policy birinchi papka = auth.uid() bo'lishini talab qiladi)
+ * @param {{ track?: boolean }} [opts] track:false — ichki chaqiruv (progress fallback)
  */
-export async function uploadViaController(file, folder = 'posts') {
-  if (!state.me) throw new Error('Tizimga kirilmagan');
-  assertAllowedUpload(file, folder); // post/story video faqat video-policy standarti; avatar faqat rasm
-  const safeName = file.name.replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
-  const path = `${state.me.uid}/${folder}/${Date.now()}_${(crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))}_${safeName}`;
-  const { data, error } = await sb.storage.from(MEDIA_BUCKET).upload(path, file, {
-    contentType: file.type || 'application/octet-stream',
-    upsert: false,
-  });
-  if (error) { console.error('Storage:', error); throw error; }
-  return { path: data.path, url: mediaPublicUrl(data.path) };
+export async function uploadViaController(file, folder = 'posts', opts = {}) {
+  const track = opts.track !== false;
+  if (track) beginUpload();
+  try {
+    if (!state.me) throw new Error('Tizimga kirilmagan');
+    assertAllowedUpload(file, folder); // post/story video faqat video-policy standarti; avatar faqat rasm
+    const safeName = file.name.replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
+    const path = `${state.me.uid}/${folder}/${Date.now()}_${(crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))}_${safeName}`;
+    const { data, error } = await sb.storage.from(MEDIA_BUCKET).upload(path, file, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: false,
+    });
+    if (error) { console.error('Storage:', error); throw error; }
+    return { path: data.path, url: mediaPublicUrl(data.path) };
+  } finally {
+    if (track) endUpload();
+  }
 }
 
-/** Katta jadvalni sahifalab to'liq oladi (PostgREST 1000 qatordan ortiq bermaydi) */
 export async function fetchAllRows(table, columns = '*', orderCol = 'created_at') {
   const PAGE = 1000, out = [];
   for (let from = 0; ; from += PAGE) {
@@ -259,7 +271,9 @@ export function mapMessage(r) {
   if (!r) return null;
   return {
     id: r.id,
-    chatId: r.chat_id,
+    chatId: r.chat_id || r.group_id || null,
+    groupId: r.group_id || null,
+    seq: r.seq == null ? null : Number(r.seq),
     senderId: r.sender_id,
     type: r.type,
     text: r.text || '',

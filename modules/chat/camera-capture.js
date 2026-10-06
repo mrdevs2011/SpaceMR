@@ -11,7 +11,7 @@ import {
 let _open = false;
 
 const PHOTO_MAX_SIDE = 1920;
-const PHOTO_QUALITY = 0.85;
+const PHOTO_QUALITY = 0.92;
 
 const SVG = {
   close: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',

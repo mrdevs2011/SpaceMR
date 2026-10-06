@@ -4,8 +4,8 @@
  * Har qanday video (kamera orqali olinganmi, galereyadan yuklanganmi, 4K/240fps bo'lsa ham)
  * story va postga FAQAT shu standartga keltirilgandan keyin chiqadi:
  *   - davomiyligi 1 daqiqadan oshmaydi (uzunroq bo'lsa dastlabki 60 soniya olinadi)
- *   - eng ko'pi 1280x720 chegarasida (portret bo'lsa 720x1280), 30 fps
- *   - video 2.5 Mbps, audio 128 kbps
+ *   - eng ko'pi 1920x1080 chegarasida (portret bo'lsa 1080x1920), 30 fps
+ *   - video 4.5 Mbps, audio 128 kbps
  *   - fayl 30 MB dan oshmaydi
  * Kamera yozgan fayllar allaqachon shu standartda — markVideoReady() bilan belgilanadi
  * va qayta kodlanmaydi. Boshqa har qanday video prepareVideo() orqali qayta kodlanadi.
@@ -13,10 +13,10 @@
 
 export const MAX_VIDEO_MS = 60_000;
 export const MAX_VIDEO_BYTES = 30 * 1024 * 1024;
-export const VIDEO_BITRATE = 2_500_000;
+export const VIDEO_BITRATE = 4_500_000;
 export const AUDIO_BITRATE = 128_000;
-export const VIDEO_W = 1280;
-export const VIDEO_H = 720;
+export const VIDEO_W = 1920;
+export const VIDEO_H = 1080;
 export const VIDEO_FPS = 30;
 
 const _ready = new WeakSet();
@@ -161,6 +161,50 @@ async function _transcode(file, meta, onProgress) {
  * @returns {Promise<{file: File, truncated: boolean, width: number, height: number}>}
  * @throws Error (foydalanuvchiga ko'rsatiladigan matn bilan)
  */
+
+/**
+ * MediaRecorder WebM da duration ko\'pincha Infinity.
+ * Chrome texnikasi: currentTime ni juda katta qiymatga qo\'yib durationchange kutamiz,
+ * keyin boshiga qaytaramiz. Natija: progress/seek to\'g\'ri ishlaydi.
+ * @param {HTMLVideoElement} v
+ * @returns {Promise<number>} finite sekund yoki 0
+ */
+export function fixVideoDuration(v) {
+  if (!v) return Promise.resolve(0);
+  if (isFinite(v.duration) && v.duration > 0) return Promise.resolve(v.duration);
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (d) => {
+      if (done) return;
+      done = true;
+      v.removeEventListener('durationchange', onChange);
+      try { if (v.currentTime > 0.05) v.currentTime = 0; } catch (_) {}
+      resolve(isFinite(d) && d > 0 ? d : 0);
+    };
+    const onChange = () => {
+      if (isFinite(v.duration) && v.duration > 0) finish(v.duration);
+    };
+    v.addEventListener('durationchange', onChange);
+    try { v.currentTime = 1e101; } catch (_) { finish(v.duration); return; }
+    setTimeout(() => finish(v.duration), 2500);
+  });
+}
+
+/** Video elementga bir marta duration fix — progress oxirida qotib qolmasin. */
+export function ensureVideoDuration(v) {
+  if (!v || v.dataset.durFixed === '1') return;
+  const run = () => {
+    if (v.dataset.durFixed === '1') return;
+    if (isFinite(v.duration) && v.duration > 0) { v.dataset.durFixed = '1'; return; }
+    fixVideoDuration(v).then((d) => {
+      if (d > 0) v.dataset.durFixed = '1';
+      try { v.dispatchEvent(new Event('durationchange')); } catch (_) {}
+    });
+  };
+  if (v.readyState >= 1) run();
+  else v.addEventListener('loadedmetadata', run, { once: true });
+}
+
 export async function prepareVideo(file, { onProgress } = {}) {
   if (isVideoReady(file)) {
     return { file, truncated: false, width: null, height: null };
@@ -176,6 +220,6 @@ export async function prepareVideo(file, { onProgress } = {}) {
       && Math.max(meta.width, meta.height) <= VIDEO_W && Math.min(meta.width, meta.height) <= VIDEO_H;
     if (ok) return { file: markVideoReady(file), truncated: false, width: meta.width, height: meta.height };
     console.warn('[video] qayta kodlanmadi:', e?.message || e);
-    throw new Error(e?.message && /MB|oshdi/.test(e.message) ? e.message : "Videoni 1 daqiqa / 720p standartiga keltirib bo'lmadi");
+    throw new Error(e?.message && /MB|oshdi/.test(e.message) ? e.message : "Videoni 1 daqiqa / 1080p standartiga keltirib bo'lmadi");
   }
 }

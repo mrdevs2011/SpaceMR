@@ -1,14 +1,21 @@
 /**
- * Toast bildirishnomalari o'chirilgan: ilovada hech qanday ichki toast ko'rsatilmaydi.
- * `toast()` API'si saqlangan (200+ chaqiruv buzilmasin), lekin hech narsa chizmaydi.
- * Xatolar yo'qolib ketmasligi uchun faqat brauzer konsoliga yoziladi.
- */
-
-/**
+ * Toast bildirishnomalari — #toast elementi + CSS (layers.css / mono-x.css).
  * @param {string} msg
- * @param {'success'|'error'|'info'|''} [type]
- * @param {number} [dur]
+ * @param {'success'|'error'|'info'|'warning'|''} [type]
+ * @param {number} [dur] ms
  */
-export function toast(msg, type = '', dur = 2200) { // eslint-disable-line no-unused-vars
-  if (type === 'error') console.warn('[toast]', msg);
+let _toastTimer = null;
+
+export function toast(msg, type = '', dur = 2200) {
+  const el = document.getElementById('toast');
+  if (!el) {
+    if (type === 'error') console.warn('[toast]', msg);
+    return;
+  }
+  el.textContent = String(msg || '');
+  el.className = type ? `toast-${type} show` : 'show';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => {
+    el.classList.remove('show');
+  }, Math.max(800, dur | 0));
 }

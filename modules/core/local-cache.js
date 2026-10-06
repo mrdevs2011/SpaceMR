@@ -4,13 +4,18 @@
  * Hamma katta ma'lumot (chatlar ro'yxati, thread xabarlari, profil, postlar) IndexedDB'da saqlanadi.
  * localStorage'da faqat juda kichik narsalar qoladi (masalan "kirgan" belgisi, sozlama bayroqlari).
  *
- * Sinxron API (get*) saqlanib qoldi: modul yuklanganda IndexedDB bir marta xotiraga (mem) o'qib olinadi
- * (top-level await — importer'lar tayyor bo'lgach ishga tushadi), keyin o'qish sinxron, yozish esa
- * xotiraga darhol + IndexedDB'ga fonda (bitta tranzaksiyada) boradi.
+ * Sinxron API (get*): IDB fonda hydrate qilinadi (top-level await YO'Q — boot bloklanmaydi).
+ * whenReady() promise orqali kutish mumkin; tayyor bo'lguncha get* null/undefined qaytarishi mumkin.
+ * O'qish sinxron (mem), yozish xotiraga darhol + IDB'ga fonda.
  *
  * Eslatma: bu kesh faqat "barqaror" ma'lumot uchun. Tez o'zgaradigan narsa (oxirgi xabar, o'qilmagan soni)
  * ro'yxatga keshdan chizilmaydi — aks holda eski ma'lumot bir zum ko'rinib qoladi.
  */
+
+import { isStoreV2Enabled, putProfile, putPosts, putThread, putChatsList, clearStore, setUid as storeSetUid } from './store/store.js';
+import { isEphemeralDevice } from './store/flags.js';
+import { clearMediaCache } from './store/media-cache.js';
+import { cacheHit, cacheMiss } from './perf.js';
 
 const DB_NAME = 'spacemr_data';
 const DB_VER = 1;
@@ -74,7 +79,7 @@ try { addEventListener('pagehide', () => { if (_flushT) { clearTimeout(_flushT);
 function safeSet(key, value) {
   const rec = { v: _clone(value), t: Date.now() };
   mem.set(key, rec);
-  _queue(key, rec);
+  if (!isEphemeralDevice()) _queue(key, rec); // Phase 8: umumiy qurilma — diskka yozilmaydi
   return true;
 }
 function safeGet(key) {
@@ -84,6 +89,17 @@ function safeGet(key) {
 function safeRemove(key) {
   mem.delete(key);
   _queue(key, null);
+}
+
+/** Phase 2 shadow dual-write — UI hali local-cache o'qiydi */
+function _shadowWrite(kind, a, b) {
+  if (isEphemeralDevice() || !isStoreV2Enabled()) return;
+  try {
+    if (kind === 'profile') putProfile(a, b);
+    else if (kind === 'posts') putPosts(b);
+    else if (kind === 'thread') putThread('dm', a, b);
+    else if (kind === 'chats') { storeSetUid(a); putChatsList(b); }
+  } catch (_) {}
 }
 
 /* ── Thread ro'yxatini LRU tarzda cheklash (joy tejash) ─────────────── */
@@ -104,11 +120,15 @@ function _touchThreadIndex(chatId) {
    "eski content" bir zum ko'rinib qolishiga sabab bo'lardi. U har doim serverdan olinadi. */
 export function cacheChatsList(uid, users) {
   if (!uid || !users) return;
-  safeSet(`chats_${uid}`, { users, chatMap: {} });
+  const payload = { users, chatMap: {} };
+  safeSet(`chats_${uid}`, payload);
+  _shadowWrite('chats', uid, payload);
 }
 export function getCachedChatsList(uid) {
   if (!uid) return null;
-  return safeGet(`chats_${uid}`); // { users, chatMap } | null
+  const v = safeGet(`chats_${uid}`);
+  if (v) cacheHit('chats'); else cacheMiss('chats');
+  return v;
 }
 /** O'chirilgan/bloklangan userdan keyin joriy qurilmadagi keshni majburan eskirtirish. */
 export function invalidateChatsListCache(uid) {
@@ -125,32 +145,44 @@ export function getCachedChatsListAgeMs(uid) {
 /* ══ Chat thread xabarlari ═══════════════════════════════════════════ */
 export function cacheThreadMessages(chatId, msgs) {
   if (!chatId || !Array.isArray(msgs)) return;
-  safeSet(`thread_${chatId}`, msgs.filter(m => m && m.status !== 'sending').slice(-MAX_MSGS_PER_CHAT));
+  const list = msgs.filter(m => m && m.status !== 'sending').slice(-MAX_MSGS_PER_CHAT);
+  safeSet(`thread_${chatId}`, list);
   _touchThreadIndex(chatId);
+  _shadowWrite('thread', chatId, list);
 }
 export function getCachedThreadMessages(chatId) {
   if (!chatId) return null;
-  return safeGet(`thread_${chatId}`); // array | null
+  const v = safeGet(`thread_${chatId}`);
+  if (v) cacheHit('thread'); else cacheMiss('thread');
+  return v;
 }
 
 /* ══ Profil ma'lumotlari ═════════════════════════════════════════════ */
 export function cacheProfile(uid, data) {
   if (!uid || !data) return;
   safeSet(`profile_${uid}`, data);
+  _shadowWrite('profile', uid, data);
 }
 export function getCachedProfile(uid) {
   if (!uid) return null;
-  return safeGet(`profile_${uid}`);
+  const v = safeGet(`profile_${uid}`);
+  if (v) cacheHit('profile'); else cacheMiss('profile');
+  return v;
 }
 
 /* ══ Feed postlari (bosh sahifa) ═════════════════════════════════════ */
 export function cachePosts(uid, posts) {
   if (!uid || !Array.isArray(posts)) return;
-  safeSet(`posts_${uid}`, posts.slice(0, MAX_CACHED_POSTS));
+  const list = posts.slice(0, MAX_CACHED_POSTS);
+  safeSet(`posts_${uid}`, list);
+  try { storeSetUid(uid); } catch (_) {}
+  _shadowWrite('posts', uid, list);
 }
 export function getCachedPosts(uid) {
   if (!uid) return null;
-  return safeGet(`posts_${uid}`); // array | null
+  const v = safeGet(`posts_${uid}`);
+  if (v) cacheHit('posts'); else cacheMiss('posts');
+  return v;
 }
 
 /* ══ Tozalash (logout paytida chaqiriladi) ═══════════════════════════ */
@@ -160,6 +192,9 @@ export function clearAllCache() {
   _open().then(d => { d.transaction(STORE, 'readwrite').objectStore(STORE).clear(); }).catch(() => {});
   // Story keshi (ro'yxat + fayllar) ham — boshqa akkaunt oldingisining story'larini ko'rmasin
   import('../feed/story-cache.js').then(m => m.clearAll?.()).catch(() => {});
+  // Phase 2 store (I-8)
+  try { clearStore(); } catch (_) {}
+  try { clearMediaCache(); } catch (_) {}
   try { Object.keys(localStorage).filter(k => k.startsWith(LEGACY_PREFIX)).forEach(k => localStorage.removeItem(k)); } catch {}
 }
 
@@ -175,14 +210,20 @@ export async function clearRuntimeCache() {
   }
 }
 
-// 0% kesh kafolati: modul yuklanganda barcha Cache Storage'ni tozalash (IndexedDB'ga tegmaydi)
-try { clearRuntimeCache(); } catch (_) {}
-
 // Eski localStorage keshini (katta JSON) bir marta o'chiramiz — endi hammasi IndexedDB'da
 try { Object.keys(localStorage).filter(k => k.startsWith(LEGACY_PREFIX)).forEach(k => localStorage.removeItem(k)); } catch {}
 
-// IndexedDB'ni xotiraga o'qib olamiz (importer'lar tayyor bo'lgach ishlaydi); osilib qolsa — kutmaymiz
-await Promise.race([
+// IndexedDB fonda hydrate — boot yo'lida await yo'q (I-6)
+let _readyResolve;
+const _readyP = new Promise(r => { _readyResolve = r; });
+let _ready = false;
+export function whenReady() { return _readyP; }
+export function isCacheReady() { return _ready; }
+
+Promise.race([
   _hydrate().catch(() => {}),
   new Promise(r => setTimeout(r, HYDRATE_TIMEOUT_MS)),
-]);
+]).then(() => {
+  _ready = true;
+  _readyResolve();
+});

@@ -90,150 +90,192 @@ self.addEventListener('notificationclick', (event) => {
 
 
 /* ── Cache versiyasi ── */
-// Statik fayllarga o'zgartirish kiritsangiz, PWA o'zi eskisini yangilashi uchun
-// bu raqamni oshiring (v1 -> v2 -> v3 ...).
+// Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
 const CACHE_VERSION  = 't-1791204465'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
-let _emojiCache = null;   // kesh dastagi bir marta ochiladi (har so'rovda caches.open chaqirilmasin)
-const EMOJI_CACHE    = 'spacemr-emoji-v1';   /* emoji rasmlari (/emoji/*.webp) — deploy bilan tozalanmaydi, qayta yuklanmaydi */
+const EMOJI_CACHE    = 'spacemr-emoji-v1';
+let _emojiCache = null;
 
-// PWA birinchi o'rnatilganda oldindan yuklab, cache'ga solib qo'yiladigan
-// "ilova qobig'i" fayllari — tez ochilishi va OFFLINE'da ishlashi uchun.
-//
-// MUHIM: bu yerga ilovaning BARCHA modul fayllari kiritilishi shart —
-// aks holda foydalanuvchi hali ochmagan sahifaga (masalan chat) offline
-// paytida o'tsa, o'sha modul cache'da topilmay, import xatosi bilan
-// BUTUN ilova ishdan chiqadi (ES module import — bittasi qulasa, hammasi
-// qulaydi, chunki modullar bir-birini chain qilib import qiladi).
+// PRECACHE_URLS — scripts/build-sw.mjs avtomatik to'ldiradi (barcha modules/**/*.js).
+// BEGIN_PRECACHE
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/app.css',
+  '/app.js',
   '/manifest.json',
-  // Barcha JS modullari (modules/ papka tuzilmasi)
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/svg/logo.png',
+  '/svg/favicon.png',
   '/modules/admin/admin-badge.js',
+  '/modules/admin/admin-gate.js',
   '/modules/admin/admin-keys.js',
   '/modules/admin/admin-reset-password.js',
   '/modules/admin/admin-storage.js',
+  '/modules/admin/admin-wipe.js',
+  '/modules/apps/apps.js',
+  '/modules/apps/code-hl.js',
+  '/modules/apps/logo-extract.js',
+  '/modules/apps/panels.js',
+  '/modules/apps/runner.js',
   '/modules/auth/auth-pending.js',
   '/modules/auth/auth-recovery.js',
-  '/modules/auth/pwd-ui.js',
-  '/modules/ui/password-confirm.js',
-  '/modules/ui/install-guide.js',
   '/modules/auth/auth-reg-recovery.js',
   '/modules/auth/auth-settings.js',
   '/modules/auth/auth.js',
+  '/modules/auth/pwd-ui.js',
   '/modules/call/call.js',
+  '/modules/chat/attach-menu.js',
+  '/modules/chat/camera-access.js',
+  '/modules/chat/camera-capture.js',
+  '/modules/chat/chat-actions.js',
   '/modules/chat/chat-media.js',
-  '/modules/chat/chat-shared.js',
   '/modules/chat/chat-pin.js',
+  '/modules/chat/chat-shared.js',
+  '/modules/chat/chat-state.js',
   '/modules/chat/chat-storage.js',
   '/modules/chat/chat-voice-player.js',
   '/modules/chat/chat-voice-record.js',
   '/modules/chat/chat.js',
   '/modules/chat/chats-x.js',
+  '/modules/chat/components/chat-image-zoom.js',
+  '/modules/chat/components/message-bubble.js',
+  '/modules/chat/components/video-note.js',
   '/modules/chat/groups.js',
   '/modules/chat/msg-menu.js',
   '/modules/chat/msg-reactions.js',
   '/modules/chat/rt-chat.js',
   '/modules/core/config.js',
-  '/modules/core/file-icons.js',
   '/modules/core/env.js',
   '/modules/core/error-log.js',
+  '/modules/core/file-icons.js',
+  '/modules/core/icons.js',
+  '/modules/core/live.js',
   '/modules/core/local-cache.js',
   '/modules/core/no-autocomplete.js',
+  '/modules/core/perf.js',
+  '/modules/core/quota.js',
   '/modules/core/rate-limit.js',
   '/modules/core/rt-bus.js',
+  '/modules/core/scroll-jump-debug.js',
+  '/modules/core/upload-policy.js',
   '/modules/core/utils.js',
+  '/modules/core/video-policy.js',
   '/modules/explore.js',
   '/modules/feed/comments.js',
   '/modules/feed/compress.js',
   '/modules/feed/feed.js',
+  '/modules/feed/like-sync.js',
   '/modules/feed/stories.js',
+  '/modules/feed/story-cache.js',
   '/modules/feed/upload.js',
   '/modules/profile/profile.js',
   '/modules/profile/view-actions.js',
   '/modules/profile/view-apps.js',
-  '/modules/apps/apps.js',
-  '/modules/apps/panels.js',
-  '/modules/apps/logo-extract.js',
-  '/modules/apps/code-hl.js',
-  '/modules/apps/runner.js',
   '/modules/profile/view-chats.js',
   '/modules/profile/view-home.js',
   '/modules/profile/view-login.js',
+  '/modules/profile/view-notifs.js',
   '/modules/profile/view-profile.js',
+  '/modules/profile/view-saved.js',
   '/modules/profile/view-users.js',
   '/modules/push.js',
   '/modules/router.js',
-  '/modules/url-router.js',
   '/modules/script.js',
+  '/modules/ui/attach-menu.js',
   '/modules/ui/avi-crop.js',
   '/modules/ui/bar.js',
   '/modules/ui/dissolve.js',
   '/modules/ui/emoji-data.js',
+  '/modules/ui/emoji-img.js',
   '/modules/ui/emoji-only.js',
   '/modules/ui/emoji-picker.js',
   '/modules/ui/emoji-uz.js',
   '/modules/ui/esc-stack.js',
+  '/modules/ui/gif-panel.js',
+  '/modules/ui/install-guide.js',
+  '/modules/ui/notifs.js',
+  '/modules/ui/password-confirm.js',
   '/modules/ui/right-rail.js',
   '/modules/ui/shortcuts.js',
   '/modules/ui/sidebar.js',
   '/modules/ui/toast.js',
   '/modules/ui/ui.js',
-  '/modules/vendor/vendor-supabase.js',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/svg/logo.png',
-  '/svg/favicon.png',
+  '/modules/url-router.js',
+  '/modules/vendor/vendor-supabase.js'
 ];
+// END_PRECACHE
 
-// Qaysi so'rovlarga tegmaymiz: jonli backend (Supabase), tashqi CDN va /api/ —
-// ular hech qachon keshlanmaydi, to'g'ridan-to'g'ri tarmoqqa ketadi.
 function _isBypassed(url) {
   return (
     url.includes('supabase.co') ||
+    url.includes('/rest/v1/') ||
+    url.includes('/auth/v1/') ||
+    url.includes('/realtime/') ||
+    url.includes('/storage/v1/') ||
     url.includes('/api/') ||
     !url.startsWith(self.location.origin)
   );
 }
 
-// Statik resurs turini aniqlaymiz (CSS/JS/rasm/font) — bularga cache-first qo'llanadi
 function _isStaticAsset(request) {
-  const dest = request.destination; // 'style' | 'script' | 'image' | 'font' | ...
-  return dest === 'style' || dest === 'script' || dest === 'image' || dest === 'font';
+  const dest = request.destination;
+  return dest === 'style' || dest === 'script' || dest === 'image' || dest === 'font' || dest === 'worker';
 }
 
-/* ── CACHE-FIRST: Statik fayllar keshdan, API doim tarmoqdan ── */
+async function _precacheAll() {
+  const cache = await caches.open(STATIC_CACHE);
+  // addAll bitta xatoda hammasi yiqiladi — alohida add
+  await Promise.all(PRECACHE_URLS.map(u => cache.add(u).catch(() => {})));
+}
+
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => cache.addAll(PRECACHE_URLS).catch(() => {}))
-  );
+  // skipWaiting AVTOMATIK emas — foydalanuvchi toast orqali tasdiqlaydi (yozayotganda majburan reload yo'q)
+  event.waitUntil(_precacheAll());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      // Faqat eski versiya keshlarini tozalaymiz (joriy versiya saqlanadi)
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== EMOJI_CACHE).map(k => caches.delete(k))
+    );
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('message', (event) => {
+  const data = event.data;
+  const type = typeof data === 'string' ? data : data && data.type;
+  if (type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (type === 'KILL_SWITCH') {
+    event.waitUntil((async () => {
+      try { await self.registration.unregister(); } catch (_) {}
       const keys = await caches.keys();
-      await Promise.all(
-        keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== EMOJI_CACHE).map(k => caches.delete(k))
-      );
-      await clients.claim();
-    })()
-  );
+      await Promise.all(keys.map(k => caches.delete(k)));
+      const clientsList = await self.clients.matchAll({ type: 'window' });
+      clientsList.forEach(c => c.postMessage({ type: 'SW_KILLED' }));
+    })());
+  }
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
 
-  // Supabase API, tashqi URL'lar — doim tarmoqdan (keshlanmaydi)
   if (_isBypassed(url) || req.method !== 'GET') return;
 
-  // Emoji rasmlari — cache-first, alohida kesh. Faqat haqiqiy rasm keshlanadi (yo'q fayl uchun HTML qaytsa — yo'q)
+  // Range (video seek) — keshga yozilmasin, tarmoqqa o'tkazilsin (Safari 206)
+  if (req.headers.has('range')) {
+    event.respondWith(fetch(req).catch(() => caches.match(req)));
+    return;
+  }
+
+  // Emoji — cache-first, alohida kesh
   if (url.indexOf('/emoji/') > 0 && new URL(url).pathname.startsWith('/emoji/')) {
     event.respondWith(
       (_emojiCache || (_emojiCache = caches.open(EMOJI_CACHE))).then(async (c) => {
@@ -247,30 +289,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML navigatsiya — Network-First (yangi deploy da yangi HTML kelsin)
+  // HTML navigatsiya — stale-while-revalidate + offline fallback
   if (req.destination === 'document' || req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then(res => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(RUNTIME_CACHE).then(c => c.put(req, clone));
-        }
+    event.respondWith((async () => {
+      const cache = await caches.open(RUNTIME_CACHE);
+      const cached = await cache.match(req) || await caches.match('/index.html') || await caches.match('/');
+      const networkPromise = fetch(req).then(res => {
+        if (res && res.ok) cache.put(req, res.clone());
         return res;
-      }).catch(() => caches.match(req).then(r => r || caches.match('/index.html')))
-    );
+      }).catch(() => null);
+      if (cached) {
+        networkPromise.catch(() => {}); // fon yangilanish
+        return cached;
+      }
+      const res = await networkPromise;
+      return res || new Response('Offline', { status: 503, statusText: 'Offline' });
+    })());
     return;
   }
 
-  // JS / CSS — Network-First: refresh har doim oxirgi versiya. Offline da kesh.
+  // JS / CSS — cache-first (CACHE_VERSION o'zgaganda activate eski keshni tozalaydi)
+  // Ikkinchi ochilishda 0 KB shell uchun.
   if (req.destination === 'script' || req.destination === 'style') {
     event.respondWith(
-      fetch(req).then(res => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(STATIC_CACHE).then(c => c.put(req, clone));
+      caches.match(req).then(cached => {
+        if (cached) {
+          // fon revalidate (SWR)
+          fetch(req).then(res => {
+            if (res && res.ok) caches.open(STATIC_CACHE).then(c => c.put(req, res));
+          }).catch(() => {});
+          return cached;
         }
-        return res;
-      }).catch(() => caches.match(req))
+        return fetch(req).then(res => {
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(STATIC_CACHE).then(c => c.put(req, clone));
+          }
+          return res;
+        });
+      })
     );
     return;
   }
@@ -281,7 +338,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(req).then(cached => {
         if (cached) return cached;
         return fetch(req).then(res => {
-          if (res.ok) {
+          if (res && res.ok) {
             const clone = res.clone();
             caches.open(STATIC_CACHE).then(c => c.put(req, clone));
           }
@@ -289,7 +346,5 @@ self.addEventListener('fetch', (event) => {
         });
       })
     );
-    return;
   }
 });
-
