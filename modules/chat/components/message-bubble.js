@@ -129,14 +129,37 @@ function _ensureVidBar(wrap, v) {
   // WebM (MediaRecorder) da duration Infinity bo'lishi mumkin — bir marta tuzatamiz
   ensureVideoDuration(v);
   let _knownDur = 0;
-  fixVideoDuration(v).then(sec => { if (sec > 0) { _knownDur = sec; sync(); } });
+  // sync pastda e'lon qilinadi; fix tugagach qayta chaqiramiz
+  const _onDurFixed = (sec) => {
+    if (!(sec > 0)) return;
+    _knownDur = sec;
+    // Agar duration aniqlash seeki currentTime ni oxirida qoldirgan bo'lsa — boshiga
+    try {
+      if (v.paused && isFinite(v.currentTime) && sec > 1 && v.currentTime > sec * 0.95) {
+        v.currentTime = 0;
+      }
+    } catch (_) {}
+    sync();
+  };
+  fixVideoDuration(v).then(_onDurFixed);
 
   const sync = () => {
     let d = v.duration;
     if (!isFinite(d) || d <= 0) d = _knownDur;
     if (!isFinite(d) || d <= 0) d = 0;
-    const c = isFinite(v.currentTime) ? v.currentTime : 0;
-    const pct = d > 0 ? Math.min(100, Math.max(0, (c / d) * 100)) : 0;
+    let c = isFinite(v.currentTime) ? v.currentTime : 0;
+    // duration hali Infinity/0 bo'lsa progressni 0 da ushlab turamiz (100% ga sakramasin)
+    if (!(d > 0)) {
+      fill.style.width = '0%';
+      knob.style.left = '0%';
+      curEl.textContent = _fmtVidTime(c);
+      durEl.textContent = _fmtVidTime(0);
+      bar.classList.toggle('is-paused', v.paused);
+      bar.classList.toggle('is-muted', v.muted || v.volume === 0);
+      return;
+    }
+    if (c > d) c = d;
+    const pct = Math.min(100, Math.max(0, (c / d) * 100));
     fill.style.width = pct + '%';
     knob.style.left = pct + '%';
     curEl.textContent = _fmtVidTime(c);

@@ -6,6 +6,7 @@ import { sb, mapMessage } from '../core/config.js';
 import { esc, fmtSz, defAvi } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
+import { ensureVideoDuration } from '../core/video-policy.js';
 
 const IMG_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
 const AUD_EXT = ['mp3', 'm4a', 'wav', 'ogg', 'oga', 'aac', 'flac', 'opus', 'wma'];
@@ -273,6 +274,10 @@ function _openViewer(i) {
     ? `<video src="${esc(_url(m))}" controls autoplay playsinline></video>`
     : `<img src="${esc(_url(m))}" alt="">`;
   v.classList.add('show');
+  if (m.kind === 'video') {
+    const vid = v.querySelector('video');
+    if (vid) ensureVideoDuration(vid);
+  }
 }
 function _closeViewer() {
   if (!_viewer) return;

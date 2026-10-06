@@ -251,3 +251,12 @@
   - Sabab: barcha video kataklar birdaniga `src` + `preload=metadata` bilan yuklanardi → tarmoq tiqilib, kadr chiqmasdi.
   - Yechim: `data-cm-vsrc` + IntersectionObserver (rootMargin 120px) + max 3 concurrent metadata yuklash; faqat ko'rinadigan kataklar yuklanadi.
   - Fayl: `modules/chat/chat-media.js`
+
+---
+### 2026-10-06 20:35
+- **fix(video): progress bari doimo oxirida qotishi**
+  - Sabab: WebM (MediaRecorder) da `duration=Infinity`; aniqlash uchun `currentTime=1e101` qilinardi, lekin keyin boshiga qaytmasdan progress 100% da qolardi. Feed da `__fixVidDur` umuman e'lon qilinmagan edi.
+  - `fixVideoDuration`: pause → seek → duration → `seeked` bilan currentTime=0/saved → play restore.
+  - Chat bubble sync: duration noma'lum paytda fill=0%; fixed dan keyin oxirida qolgan currentTime ni 0 ga.
+  - Feed: `window.__fixVidDur = ensureVideoDuration`.
+  - chat-media viewer: open da ensureVideoDuration.

@@ -174,19 +174,64 @@ export function fixVideoDuration(v) {
   if (isFinite(v.duration) && v.duration > 0) return Promise.resolve(v.duration);
   return new Promise((resolve) => {
     let done = false;
+    const wasPaused = v.paused;
+    const savedTime = isFinite(v.currentTime) ? v.currentTime : 0;
+    try { if (!wasPaused) v.pause(); } catch (_) {}
+
     const finish = (d) => {
       if (done) return;
       done = true;
       v.removeEventListener('durationchange', onChange);
-      try { if (v.currentTime > 0.05) v.currentTime = 0; } catch (_) {}
-      resolve(isFinite(d) && d > 0 ? d : 0);
+      clearTimeout(timer);
+      const sec = isFinite(d) && d > 0 ? d : 0;
+      const target = (savedTime > 0.05 && sec > 0 && savedTime < sec) ? savedTime : 0;
+
+      const restorePlay = () => {
+        try { if (!wasPaused && sec > 0) v.play().catch(() => {}); } catch (_) {}
+        resolve(sec);
+      };
+
+      // 1e101 seek dan keyin currentTime oxirida qoladi — progress 100% da qotadi.
+      // seeked ni kutib boshiga (yoki oldingi vaqtga) qaytaramiz.
+      const resetTime = () => {
+        try {
+          if (Math.abs((v.currentTime || 0) - target) <= 0.08) {
+            restorePlay();
+            return;
+          }
+          let settled = false;
+          const onSeeked = () => {
+            if (settled) return;
+            settled = true;
+            v.removeEventListener('seeked', onSeeked);
+            restorePlay();
+          };
+          v.addEventListener('seeked', onSeeked);
+          v.currentTime = target;
+          setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            v.removeEventListener('seeked', onSeeked);
+            try { v.currentTime = target; } catch (_) {}
+            restorePlay();
+          }, 450);
+        } catch (_) {
+          restorePlay();
+        }
+      };
+      resetTime();
     };
+
     const onChange = () => {
       if (isFinite(v.duration) && v.duration > 0) finish(v.duration);
     };
     v.addEventListener('durationchange', onChange);
-    try { v.currentTime = 1e101; } catch (_) { finish(v.duration); return; }
-    setTimeout(() => finish(v.duration), 2500);
+    const timer = setTimeout(() => finish(v.duration), 2500);
+    try {
+      v.currentTime = 1e101;
+    } catch (_) {
+      finish(v.duration);
+    }
   });
 }
 

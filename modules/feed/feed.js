@@ -8,6 +8,11 @@ import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration } from '../core/video-policy.js';
+// Feed/upload native <video controls>: WebM duration Infinity → progress oxirida qotadi
+if (typeof window !== 'undefined') {
+  window.__fixVidDur = function (v) { try { ensureVideoDuration(v); } catch (_) {} };
+}
+
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
 
