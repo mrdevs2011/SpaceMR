@@ -8,6 +8,7 @@
 import { sb, state } from '../core/config.js';
 import { esc, showConfirm } from '../core/utils.js';
 import { runApp } from './runner.js';
+import { extractLogo } from './logo-extract.js';
 import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome } from './panels.js';
 
 const $ = id => document.getElementById(id);
@@ -208,27 +209,6 @@ function dbErr(e) {
   return m || 'Xatolik';
 }
 
-/** Logo faylni data URL ga aylantiradi: SVG o'z holida (<=60KB), PNG/JPG/WEBP 128x128 ga kichraytiriladi */
-async function fileToLogo(file) {
-  if (!file) return null;
-  if (file.type === 'image/svg+xml') {
-    if (file.size > 60 * 1024) throw new Error('SVG 60 KB dan kichik bo\'lsin');
-    const txt = await file.text();
-    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(txt)));
-  }
-  if (!/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error('Faqat SVG, PNG yoki JPG');
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Rasm o\'qilmadi')); i.src = url; });
-    const S = 128, cv = document.createElement('canvas'); cv.width = cv.height = S;
-    const ctx = cv.getContext('2d'), m = Math.min(img.width, img.height);
-    ctx.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, S, S);
-    let out = cv.toDataURL('image/png');
-    if (out.length > 110000) out = cv.toDataURL('image/jpeg', 0.85);
-    return out;
-  } finally { URL.revokeObjectURL(url); }
-}
-
 function catOptions(sel) {
   return cats.map(c => `<option value="${esc(c.id)}"${c.id === sel ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
 }
@@ -255,10 +235,9 @@ async function openAppForm(editId, presetCat) {
       <span class="apf-row"><select id="afCat">${catOptions(a?.category_id || presetCat || cats[0].id)}</select>
       <button type="button" class="aps-link" data-f="new-cat">+ Yangi</button></span></label>
     <label class="apf-l">Qisqa tavsif (ixtiyoriy)<input id="afDesc" maxlength="200" autocomplete="off" value="${esc(a?.description || '')}"></label>
-    <div class="apf-l">Logo (SVG, PNG yoki JPG)
+    <div class="apf-l">Logo
       <span class="apf-row"><span class="apf-logo" id="afLogoPrev">${safeLogo(a?.logo) ? `<img src="${safeLogo(a.logo)}" alt="">` : '<i>▣</i>'}</span>
-      <input id="afLogoFile" type="file" accept="image/svg+xml,image/png,image/jpeg,image/webp">
-      <button type="button" class="aps-link danger" data-f="logo-clear">Olib tashlash</button></span></div>
+      <span class="apf-hint" id="afLogoSrc">${a?.logo ? 'Saqlangan logo. Kod o\'zgarsa, qayta aniqlanadi' : 'HTML koddan avtomatik olinadi (favicon, logotip SVG, rasm yoki emoji)'}</span></span></div>
     <div class="apf-l">HTML kod
       <textarea id="afHtml" spellcheck="false" placeholder="<!doctype html>…">${esc(a?.html || '')}</textarea>
       <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 1 MB</span></span></div>
@@ -267,19 +246,30 @@ async function openAppForm(editId, presetCat) {
   </div>`;
   document.body.appendChild(ov);
 
-  let logo = a?.logo || null, logoDirty = false, slugEdited = !!a;
+  let slugEdited = !!a;
   const nameI = $('afName'), slugI = $('afSlug'), hint = $('afSlugHint'), errEl = $('afErr');
   const setErr = m => { errEl.textContent = m || ''; };
   nameI.addEventListener('input', () => { if (!slugEdited) { slugI.value = slugify(nameI.value); slugHint(hint, slugI.value, null); } });
   slugI.addEventListener('input', () => { slugEdited = true; slugI.value = slugI.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''); slugHint(hint, slugI.value, null); });
-  $('afLogoFile').addEventListener('change', async e => {
-    try { logo = await fileToLogo(e.target.files[0]); logoDirty = true; setErr(''); $('afLogoPrev').innerHTML = logo ? `<img src="${logo}" alt="">` : '<i>▣</i>'; }
-    catch (er) { setErr(er.message); e.target.value = ''; }
-  });
+  /* Logo koddan avtomatik: kod yoki nom o'zgarsa (kechiktirib) qayta aniqlanadi */
+  let logoTimer = 0, logoSeq = 0;
+  const setLogoPrev = (l, src) => {
+    $('afLogoPrev').innerHTML = l ? `<img src="${l}" alt="">` : '<i>▣</i>';
+    $('afLogoSrc').textContent = l ? 'Koddan olindi: ' + src : 'Kodda logo topilmadi, ilova nomining bosh harfi ko\'rsatiladi';
+  };
+  const refreshLogo = async () => {
+    const seq = ++logoSeq;
+    const r = await extractLogo($('afHtml').value, nameI.value);
+    if (seq !== logoSeq || !$('afLogoPrev')) return;
+    setLogoPrev(r ? r.logo : null, r?.source);
+  };
+  const schedLogo = () => { clearTimeout(logoTimer); logoTimer = setTimeout(refreshLogo, 450); };
+  $('afHtml').addEventListener('input', schedLogo);
+  nameI.addEventListener('input', schedLogo);
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     if (f.size > 1000000) { setErr('HTML 1 MB dan kichik bo\'lsin'); e.target.value = ''; return; }
-    $('afHtml').value = await f.text(); setErr('');
+    $('afHtml').value = await f.text(); setErr(''); refreshLogo();
     if (!nameI.value.trim()) { const t = /<title[^>]*>([^<]{1,40})/i.exec($('afHtml').value); if (t) { nameI.value = t[1].trim(); nameI.dispatchEvent(new Event('input')); } }
   });
 
@@ -287,7 +277,6 @@ async function openAppForm(editId, presetCat) {
     if (e.target === ov) return closeForm('appFormOverlay');
     const f = e.target.closest('[data-f]')?.dataset.f; if (!f) return;
     if (f === 'close') return closeForm('appFormOverlay');
-    if (f === 'logo-clear') { logo = null; logoDirty = true; $('afLogoPrev').innerHTML = '<i>▣</i>'; $('afLogoFile').value = ''; return; }
     if (f === 'new-cat') return openCatForm(null, false, id => { const s = $('afCat'); if (s) { s.innerHTML = catOptions(id); } });
     if (f !== 'save') return;
     const name = nameI.value.trim(), slug = slugI.value.trim(), desc = $('afDesc').value.trim(), html = $('afHtml').value, category_id = $('afCat').value;
@@ -296,10 +285,13 @@ async function openAppForm(editId, presetCat) {
     if (!html.trim()) return setErr('HTML kodni kiriting');
     if (new Blob([html]).size > 1000000) return setErr('HTML 1 MB dan oshmasin');
     const btn = $('afSave'); btn.disabled = true; setErr('');
+    /* Logo: koddan; topilmasa va kod o'zgarmagan bo'lsa eskisi qoladi */
+    const found = await extractLogo(html, name);
+    const logo = found ? found.logo : (a && a.html === html ? (a.logo || null) : null);
     let res;
     if (a) {
       const upd = { name, description: desc, category_id, html };
-      if (logoDirty) upd.logo = logo;
+      upd.logo = logo;
       res = await sb.from('apps').update(upd).eq('id', a.id).select('id').maybeSingle();
     } else {
       res = await sb.from('apps').insert({ slug, name, description: desc, category_id, owner_id: state.me.uid, html, logo }).select('id').maybeSingle();
