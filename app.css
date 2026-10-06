@@ -15188,6 +15188,9 @@ html[data-theme] .apf .apf-dd-btn:focus-visible, html[data-theme] .apf .apf-dd.o
   html[data-theme] .apf .apf-dd-btn, .apf-dd-opt { font-size: 16px; }
   .apf-dd-opt { padding: 12px; }
 }
+
+/* Tasdiqlash oynasi (o'chirish va h.k.) ilova runneri (1600) va forma (1700/1750) ustida ko'rinsin */
+html #confirmOverlay { z-index: 1800; }
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */
