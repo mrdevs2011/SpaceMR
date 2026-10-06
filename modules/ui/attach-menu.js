@@ -122,11 +122,16 @@ export function initAttachMenu({
     _menu = m;
   }
 
+  const isDesktop = () =>
+    window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    && window.matchMedia('(min-width: 900px)').matches;
+
   btn.addEventListener('click', async e => {
     e.preventDefault();
     e.stopPropagation();
     if (isBusy?.()) return;
     if (_menu) { closeAttachMenu(); return; }
+
     const dyn = (typeof getOptions === 'function' ? getOptions() : null) || {};
     const opts = {
       showCamera: dyn.showCamera ?? showCamera,
@@ -135,6 +140,21 @@ export function initAttachMenu({
       mediaAccept: dyn.mediaAccept ?? mediaAccept,
       _hasCam: false,
     };
+
+    // Desktop: menyu yo'q — to'g'ridan-to'g'ri fayl tanlash
+    if (isDesktop()) {
+      mediaInput.accept = opts.mediaAccept || mediaAccept;
+      if (opts.showFile !== false && fileInput) {
+        // Barcha fayllar (chat/post/story)
+        try { fileInput.click(); } catch (_) {}
+        return;
+      }
+      // faqat media (image/video)
+      mediaInput.click();
+      return;
+    }
+
+    // Mobil: Kamera / Fayl / Media menyusi
     if (opts.showCamera) opts._hasCam = await hasCameraDevice();
     openMenu(opts);
   });

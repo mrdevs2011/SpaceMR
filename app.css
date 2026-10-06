@@ -15390,6 +15390,20 @@ select.field option { background: #000000; color: var(--text); }
 .chat-msg.mine .mrq-text {
   color: rgba(255, 255, 255, 0.75);
 }
+
+
+/* Ticklar doim ko'rinsin (loading / 1 / 2) */
+#chatThreadModal .chat-msg.mine .msg-ticks,
+#chatThreadModal .chat-msg.mine .msg-ticks img.icon {
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  min-width: 12px;
+  min-height: 10px;
+}
+#chatThreadModal .chat-msg.mine .msg-ticks.sending {
+  opacity: 0.95 !important;
+}
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */

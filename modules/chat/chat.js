@@ -1838,16 +1838,14 @@ function _observeMessagesForRead() {
 }
 
 function renderTicks(status) {
-  // 'sending' = soat (faqat status==='sending' — DB/insert tasdiqlanmaguncha),
-  // 'read' = 2 ko'k chek, boshqa (sent/null) = 1 chek. Fake timeout yo'q.
+  // 'sending' = soat, 'read' = 2 chek, boshqa (sent/null/undefined) = 1 chek — har doim bor
   if (status === 'sending') {
     return `<img src="./svg/ui/ticks-b1f42f.svg" alt="" class="icon msg-ticks sending" width="14" height="14" data-t0="${Date.now()}" aria-label="Yuborilmoqda">`;
   }
   if (status === 'read') {
     return `<img src="./svg/ui/ticks-98b8af.svg" alt="" class="icon msg-ticks read" width="18" height="11" aria-label="O'qildi">`;
   }
-  // sent (yoki null/undefined — bazadan kelgan)
-  return `<img src="./svg/ui/ticks-c46cc2.svg" alt="" class="icon msg-ticks" width="12" height="10" aria-label="Yuborildi">`;
+  return `<img src="./svg/ui/ticks-c46cc2.svg" alt="" class="icon msg-ticks sent" width="12" height="10" aria-label="Yuborildi">`;
 }
 
 /** Faqat status/tick yangilash — to'liq paintMessages YO'Q (tezlik). */
@@ -1857,10 +1855,15 @@ export function updateMsgTicks(id, status) {
   if (!box) return;
   const el = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(String(id))}"]`);
   if (!el) return;
-  const meta = el.querySelector('.chat-msg-meta');
-  if (!meta) return;
+  let meta = el.querySelector('.chat-msg-meta');
+  if (!meta) {
+    const wrap = el.querySelector('.chat-bubble-wrap') || el.querySelector('.chat-bubble');
+    if (!wrap) return;
+    wrap.insertAdjacentHTML('beforeend', '<span class="chat-msg-meta"></span>');
+    meta = wrap.querySelector('.chat-msg-meta');
+  }
   let tick = meta.querySelector('.msg-ticks');
-  const html = renderTicks(status);
+  const html = renderTicks(status || 'sent');
   const _swapTick = () => {
     const cur = meta.querySelector('.msg-ticks');
     if (cur) {

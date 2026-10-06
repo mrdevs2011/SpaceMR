@@ -651,9 +651,16 @@ export async function openGroupThread(groupId) {
       const m = mapMessage(p.new);
       if (!m || !m.id) { sched(); return; }
       _gPending.delete(m.id);
-      const i = _gMsgs.findIndex(x => x.id === m.id);
-      if (i >= 0) { _gMsgs = _gMsgs.slice(); _gMsgs[i] = m; }
-      else if (p.eventType === 'INSERT') _gMsgs = [..._gMsgs, m];
+      const i = _gMsgs.findIndex(x => String(x.id) === String(m.id));
+      if (i >= 0) {
+        const prev = _gMsgs[i];
+        _gMsgs = _gMsgs.slice();
+        _gMsgs[i] = {
+          ...m,
+          replyTo: m.replyTo || prev.replyTo || null,
+          replyPreview: m.replyPreview || prev.replyPreview || null,
+        };
+      } else if (p.eventType === 'INSERT') _gMsgs = [..._gMsgs, m];
       else { sched(); return; }
       if ((_latestGroupMap[groupId]?.unreadCount?.[state.me.uid] || 0) > 0 || m.senderId !== state.me.uid) _resetGroupUnread(groupId);
     }
@@ -930,6 +937,9 @@ export async function sendGroupFile(file, caption = '') {
   if (!_currentGroupId || !state.me || !file) return;
   const groupId = _currentGroupId;
   const captionText = (typeof caption === 'string' ? caption : '').trim();
+  const _fReply = getReplying();
+  const _fReplyTo = _fReply?.id ? String(_fReply.id) : null;
+  if (_fReply) cancelReply(false);
   const id = _gUuid();
   const pendingId = id;
   _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
@@ -941,6 +951,7 @@ export async function sendGroupFile(file, caption = '') {
       media_path: result.path, media_type: file.type || null,
       file_name: file.name, file_size: file.size,
       text: captionText || null,
+      reply_to: _fReplyTo,
     });
     if (error) throw error;
     const previewText = fileMsgPreview({ caption: captionText, fileName: file.name });
@@ -948,6 +959,7 @@ export async function sendGroupFile(file, caption = '') {
       id, type: 'file', text: captionText || null,
       mediaPath: result.path, mediaType: file.type || null,
       fileName: file.name, fileSize: file.size,
+      replyTo: _fReplyTo,
     });
     groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id, text: previewText.slice(0, 120), ts: Date.now() });
     _reloadGroupThread && _reloadGroupThread();
@@ -966,16 +978,20 @@ export async function sendGroupVoice(blob, duration) {
   if (!rateOk('msg', 8, 10000)) return;
   const groupId = _currentGroupId;
   const groupData = _currentGroupData;
+  const _vReply = getReplying();
+  const _vReplyTo = _vReply?.id ? String(_vReply.id) : null;
+  if (_vReply) cancelReply(false);
   const mid = _gUuid();
   const nowMs = Date.now();
   const localUrl = URL.createObjectURL(blob);
   registerLocalVoiceUrl(mid, localUrl, voiceBarCount(duration));
   // Oddiy xabar kabi: darhol ro'yxatda (id bilan), repaint'da yo'qolmaydi, server xabari kelganda jimgina almashadi
   const localMsg = mapMessage({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'voice',
-    media_type: blob.type || null, duration: Math.round(duration || 0), created_at: new Date(nowMs).toISOString() });
+    media_type: blob.type || null, duration: Math.round(duration || 0), created_at: new Date(nowMs).toISOString(), reply_to: _vReplyTo });
   localMsg.mediaUrl = localUrl;
   localMsg._at = nowMs + 120000;
   localMsg.status = 'sending';
+  if (_vReply) localMsg.replyPreview = { name: _vReply.name, text: _vReply.preview, type: _vReply.type };
   _gPending.set(mid, localMsg);
   _gMsgs = [..._gMsgs, localMsg];
   paintGroupMessages(_gMsgs, groupData);
@@ -988,6 +1004,7 @@ export async function sendGroupVoice(blob, duration) {
       id: mid, group_id: groupId, sender_id: state.me.uid, type: 'voice',
       media_path: result.path, media_type: blob.type || null,
       duration: Math.round(duration || 0),
+      reply_to: _vReplyTo,
       ...(waveform ? { waveform } : {}),
     };
     let { error } = await sb.from('group_messages').insert(row);

@@ -231,6 +231,10 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
 
   chatUI.clearChatFile();
 
+  const _fReply = getReplying();
+  const _fReplyTo = _fReply?.id ? String(_fReply.id) : null;
+  if (_fReply) cancelReply(false);
+
   const id = _uuid();
   const nowMs = Date.now();
   const pendingId = id; // dedup uchun haqiqiy id
@@ -248,6 +252,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
       media_path: result.path, media_type: file.type || null,
       file_name: file.name, file_size: file.size,
       text: caption || null,
+      reply_to: _fReplyTo,
     });
     if (error) throw error;
     const previewText = fileMsgPreview({ caption, fileName: file.name });
@@ -257,6 +262,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
         id, type: 'file', text: caption || null,
         mediaPath: result.path, mediaType: file.type || null,
         fileName: file.name, fileSize: file.size,
+        replyTo: _fReplyTo,
       });
     }
     if (chatState._latestChatMap[otherUid]) {

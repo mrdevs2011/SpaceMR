@@ -126,11 +126,13 @@ export function humanMsgPreview(m) {
   if (m.type === 'voice') return 'Ovozli xabar';
   if (m.type === 'file') {
     const fn = m.fileName || m.file_name || '';
+    const mime = (m.mediaType || m.mime || m.media_type || '').toLowerCase();
     if (/^vnote_/i.test(fn)) return 'Dumaloq video';
-    if (/\.(mp4|webm|mov)(\?|$)/i.test(fn) || (m.mime || '').startsWith('video/')) return 'Video';
-    if (/\.(gif)(\?|$)/i.test(fn)) return 'GIF';
-    if (/\.(jpe?g|png|webp|heic)(\?|$)/i.test(fn) || (m.mime || '').startsWith('image/')) return 'Rasm';
-    return m.fileName || 'Fayl';
+    if (mime.startsWith('video/') || /\.(mp4|webm|mov|mkv)(\?|$)/i.test(fn)) return 'Video';
+    if (mime === 'image/gif' || /\.(gif)(\?|$)/i.test(fn)) return 'GIF';
+    if (mime.startsWith('image/') || /\.(jpe?g|png|webp|heic|avif)(\?|$)/i.test(fn)) return 'Rasm';
+    if (mime.startsWith('audio/')) return 'Audio';
+    return (m.fileName || fn || 'Fayl');
   }
   const raw = m.text || '';
   const nice = formatLastMessageText(raw, false);
