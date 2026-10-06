@@ -84,7 +84,7 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
     setActive(recent.length ? 'recent' : cats[0].id);
     if (onGif) {
       gifPanel = createGifPanel(pop.querySelector('.ep-view-gif'), g => {
-        if (_gifCmdOn || /^@gif\s/i.test(input.value || '')) {
+        if (_gifCmdOn || /^@gif\b/i.test(input.value || '')) {
           input.value = '';
           input.dispatchEvent(new Event('input', { bubbles: true }));
           _gifCmdOn = false;
@@ -352,42 +352,48 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
 
   /* Oldindan tayyorlash (ilova bo'sh turganda): emoji-data.js yuklanadi, panel yashirincha quriladi, birinchi sahifa sprite'i
      va "Oxirgilar" rasmlari keshlanadi — ochilganda "Yuklanmoqda…" ham, rasm kutish ham bo'lmaydi. */
-  /* Desktop: @gif <so'z> — panel ochiladi, qidiruv live; fokus chat inputda qoladi */
-  function isDesktop() {
-    return !isMobile() && !!window.matchMedia('(pointer: fine)').matches;
-  }
+  /* @gif [so'z] — panel ochiladi, qidiruv live; fokus chat inputda qoladi (mobil + desktop) */
   function syncGifCmd() {
-    if (!isDesktop() || !onGif) return;
+    if (!onGif) return;
     const val = input.value || '';
-    if (!/^@gif\s/i.test(val)) {
-      if (_gifCmdOn) _gifCmdOn = false;
+    // @gif yoki @gif so'z — bo'shliq ixtiyoriy (@gifdan keyin bo'sh joy bo'lmasa ham)
+    const m = val.match(/^@gif(?:\s(.*))?$/i);
+    if (!m) {
+      if (_gifCmdOn && !/^@gif/i.test(val)) _gifCmdOn = false;
       return;
     }
-    const q = val.replace(/^@gif\s*/i, '');
+    const q = (m[1] || '').trimStart();
     _gifCmdOn = true;
     (async () => {
-      if (!pop.classList.contains('show')) {
-        pinned = true;
-        await openPanel(false);
+      try {
+        // Panel hali qurilmagan bo'lsa — kutamiz (aks holda gifPanel null)
+        if (!built) await build();
+        if (!gifPanel) return;
+        if (!pop.classList.contains('show')) {
+          pinned = true;
+          await openPanel(false);
+        }
+        if (mode !== 'gif') {
+          mode = 'gif';
+          pop.classList.add('ep-gif');
+          try { localStorage.setItem('spacemr_picker_mode', 'gif'); } catch {}
+          pop.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === 'gif'));
+          const vg = pop.querySelector('.ep-view-gif');
+          const ve = pop.querySelector('.ep-view-emoji');
+          if (vg) vg.hidden = false;
+          if (ve) ve.hidden = true;
+        }
+        gifPanel.open?.();
+        // Har bir harfda qidiruv (debounce gif-panel ichida)
+        gifPanel.setQuery?.(q, { instant: q.length <= 1 });
+        // Fokus chat inputda qolsin
+        try { input.focus({ preventScroll: true }); } catch { try { input.focus(); } catch {} }
+      } catch (e) {
+        console.warn('[gif-cmd]', e);
       }
-      if (mode !== 'gif') {
-        // setMode fokus qilmasin — chat inputdan yozish davom etsin
-        mode = 'gif';
-        pop.classList.add('ep-gif');
-        try { localStorage.setItem('spacemr_picker_mode', 'gif'); } catch {}
-        pop.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === 'gif'));
-        const vg = pop.querySelector('.ep-view-gif');
-        const ve = pop.querySelector('.ep-view-emoji');
-        if (vg) vg.hidden = false;
-        if (ve) ve.hidden = true;
-        gifPanel?.open?.();
-      } else {
-        gifPanel?.open?.();
-      }
-      gifPanel?.setQuery?.(q, { instant: false });
     })();
   }
-  input.addEventListener('input', () => { if (isDesktop()) syncGifCmd(); });
+  input.addEventListener('input', () => { syncGifCmd(); });
 
   (window.requestIdleCallback || (f => setTimeout(f, 1500)))(() => {
     warmAtlas('smileys');

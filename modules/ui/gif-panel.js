@@ -96,11 +96,15 @@ export function createGifPanel(root, onPick) {
   function search() { seq++; busy = false; reset(); load(); }
   function applyQuery(raw, { instant = false } = {}) {
     const v = String(raw ?? '').trim();
-    if (v === q && items.size) return;
-    const run = () => { if (v === q && items.size) return; q = v; search(); };
+    if (v === q && items.size && loaded) return;
+    const run = () => {
+      if (v === q && items.size && loaded) return;
+      q = v;
+      search();
+    };
     clearTimeout(timer);
     if (instant) run();
-    else timer = setTimeout(run, 180); // tez live search
+    else timer = setTimeout(run, 120);
   }
   inp.addEventListener('input', () => applyQuery(inp.value));
   body.addEventListener('scroll', () => { if (body.scrollTop + body.clientHeight > body.scrollHeight - 240) load(); }, { passive: true });
