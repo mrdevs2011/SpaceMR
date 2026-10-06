@@ -121,6 +121,31 @@ export function isCmtOpen(postId) {
 /* URL (/p/<id>/comments) izohlar ochilishi/yopilishiga moslashsin */
 const _routeKick = () => { try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {} };
 
+/* Bir post bir nechta view'da bo'lishi mumkin (bosh sahifa lentasi yashirin turibdi, Saqlanganlar ochiq).
+ * Birinchi topilgani yashirin lentadagi nusxa bo'lib qolmasin — faqat KO'RINIB turganini olamiz. */
+function findVisiblePost(postId) {
+  const all = document.querySelectorAll(`.post[data-id="${postId}"]`);
+  for (const el of all) if (el.getClientRects().length > 0) return el;
+  return null;
+}
+
+/* Post lentada ko'rinmasa (masalan profil gridi → detail modal) — pastdan chiqadigan eski izohlar oynasi */
+async function openSheetCmt(postId) {
+  closeAllInline();
+  closeRailCmt();
+  state.cmtPostId = postId;
+  _mode = 'modal';
+  const m = $('cmtModal');
+  if (!m) return;
+  const inp = $('cmtModalInput');
+  if (inp) { inp.value = ''; inp.style.height = ''; syncSend(inp, $('cmtModalSend')); }
+  const list = $('cmtModalList');
+  if (list) list.innerHTML = loadingHtml();
+  m.classList.add('show');
+  _routeKick();
+  await loadComments(postId, 'cmtModalList');
+}
+
 /* ── Open: routes mobile → inline, desktop → right rail ───────────────── */
 export async function openCmtModal(postId) {
   // Hide old bottom-sheet modal always
@@ -136,8 +161,8 @@ export async function openCmtModal(postId) {
 
 /* ── Mobile: inline under post ────────────────────────────────────────── */
 async function openInlineCmt(postId) {
-  const post = document.querySelector(`.post[data-id="${postId}"]`);
-  if (!post) return;
+  const post = findVisiblePost(postId);
+  if (!post) return openSheetCmt(postId);
 
   // Toggle: same post already open → close
   const existing = post.querySelector('.post-cmt-panel');
