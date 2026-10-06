@@ -2447,6 +2447,13 @@ export function closeChatThread() {
 
 
 /* ── Chat file attach ──────────────────────────────────────────────────── */
+function _cfpRevoke() {
+  if (chatState._cfpObjectUrl) {
+    try { URL.revokeObjectURL(chatState._cfpObjectUrl); } catch (_) {}
+    chatState._cfpObjectUrl = null;
+  }
+}
+
 function setChatFile(file) {
   if (!isAllowedUpload(file)) {
     import('../ui/toast.js').then(m => m.toast(UPLOAD_DENIED_MSG, 'error'));
@@ -2457,18 +2464,55 @@ function setChatFile(file) {
     import('../ui/toast.js').then(m => m.toast('Fayl hajmi 50 MB dan oshmasligi kerak', 'error'));
     return;
   }
+  _cfpRevoke();
   chatState._chatSelFile = file;
-  $('cfpIcon').innerHTML = getChatFileIcon(file.name, file.type);
-  $('cfpName').textContent = file.name.length > 36 ? file.name.slice(0, 34) + '…' : file.name;
-  $('cfpSize').textContent = fmtSz(file.size);
-  $('chatFilePreview').classList.add('active');
+
+  const card = $('cfpCard');
+  const mediaEl = $('cfpMedia');
+  const fileEl = $('cfpFile');
+  const mime = (file.type || '').toLowerCase();
+  const isImg = mime.startsWith('image/');
+  const isVid = mime.startsWith('video/');
+  const isMedia = isImg || isVid;
+
+  if (card) card.classList.toggle('cfp-card--media', isMedia);
+  if (card) card.classList.toggle('cfp-card--file', !isMedia);
+
+  if (isMedia && mediaEl) {
+    const url = URL.createObjectURL(file);
+    chatState._cfpObjectUrl = url;
+    mediaEl.hidden = false;
+    if (fileEl) fileEl.hidden = true;
+    if (isImg) {
+      mediaEl.innerHTML = `<img src="${url}" alt="" class="cfp-thumb">`;
+    } else {
+      mediaEl.innerHTML = `<video src="${url}#t=0.1" class="cfp-thumb" muted playsinline preload="metadata"></video><span class="cfp-vid-badge" aria-hidden="true"></span>`;
+    }
+  } else {
+    if (mediaEl) { mediaEl.hidden = true; mediaEl.innerHTML = ''; }
+    if (fileEl) fileEl.hidden = false;
+    const name = file.name || 'Fayl';
+    const ext = (name.split('.').pop() || '').toUpperCase().slice(0, 5) || 'FILE';
+    if ($('cfpIcon')) $('cfpIcon').innerHTML = getChatFileIcon(name, file.type);
+    if ($('cfpName')) $('cfpName').textContent = name.length > 28 ? name.slice(0, 26) + '…' : name;
+    if ($('cfpSize')) $('cfpSize').textContent = fmtSz(file.size);
+    if ($('cfpBadge')) $('cfpBadge').textContent = ext;
+  }
+
+  $('chatFilePreview')?.classList.add('active');
   updateVoiceSendBtn();
 }
 
 export function clearChatFile() {
   chatState._chatSelFile = null;
-  $('chatFilePreview').classList.remove('active');
-  $('chatFileInput').value = '';
+  _cfpRevoke();
+  const mediaEl = $('cfpMedia');
+  if (mediaEl) { mediaEl.hidden = true; mediaEl.innerHTML = ''; }
+  const fileEl = $('cfpFile');
+  if (fileEl) fileEl.hidden = false;
+  $('cfpCard')?.classList.remove('cfp-card--media', 'cfp-card--file');
+  $('chatFilePreview')?.classList.remove('active');
+  if ($('chatFileInput')) $('chatFileInput').value = '';
   updateVoiceSendBtn();
 }
 

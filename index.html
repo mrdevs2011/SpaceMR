@@ -876,16 +876,20 @@ html[data-nf],html[data-nf] body{background:#000000}
   </button>
 
 
-  <!-- File preview in chat -->
+  <!-- File preview in chat (Claude-style card) -->
   <div class="chat-file-preview" id="chatFilePreview">
-    <div class="cfp-inner">
-      <div class="cfp-icon" id="cfpIcon"></div>
-      <div class="cfp-info">
-        <div class="cfp-name" id="cfpName"></div>
-        <div class="cfp-size" id="cfpSize"></div>
+    <div class="cfp-card" id="cfpCard">
+      <div class="cfp-media" id="cfpMedia" hidden></div>
+      <div class="cfp-file" id="cfpFile">
+        <div class="cfp-icon" id="cfpIcon"></div>
+        <div class="cfp-info">
+          <div class="cfp-name" id="cfpName"></div>
+          <div class="cfp-size" id="cfpSize"></div>
+        </div>
+        <div class="cfp-badge" id="cfpBadge"></div>
       </div>
-      <button class="cfp-remove" id="cfpRemove">
-        <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
+      <button type="button" class="cfp-remove" id="cfpRemove" aria-label="Olib tashlash">
+        <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
       </button>
     </div>
   </div>

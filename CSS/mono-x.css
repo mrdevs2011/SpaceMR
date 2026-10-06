@@ -8903,3 +8903,21 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal .chat-msg.mine .msg-ticks.sending {
   opacity: 0.95 !important;
 }
+
+
+/* ═══ Claude-style chat attach preview card ═══ */
+#chatThreadModal .chat-file-preview {
+  padding: 10px 12px 4px;
+  background: transparent;
+  border-top: none;
+}
+#chatThreadModal .cfp-card {
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+#chatThreadModal .cfp-name { color: #e8e8e8; }
+#chatThreadModal .cfp-size { color: #9a9a9a; }
+#chatThreadModal .cfp-remove {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); color: #fff;
+}
