@@ -33,7 +33,7 @@ async function _fetchUserPosts(uid, onlyPublic) {
 
 /* ── My profile ──────────────────────────────────────────────────────── */
 
-/* Profil postlari filter (Barchasi / Photos / Text / Music) */
+/* Profil postlari filter (Barchasi / Photos / Videos / Text / Music) */
 let _pgAllPosts = [];
 let _pgTab = 'all';
 let _pgTabsBound = false;
@@ -41,11 +41,13 @@ let _pgTabsBound = false;
 function _postKind(p) {
   const mt = (p.mediaType || '').toLowerCase();
   if (mt.startsWith('image')) return 'photos';
+  if (mt.startsWith('video')) return 'videos';
   if (mt.startsWith('audio') || mt.includes('mpeg') || mt.includes('mp3') || mt.includes('wav') || mt.includes('ogg')) return 'music';
   // ba'zi audio fayllar media_type bo'sh, fileName dan
   const fn = (p.fileName || p.mediaPath || '').toLowerCase();
   if (/\.(mp3|wav|ogg|m4a|aac|flac)(\?|$)/.test(fn)) return 'music';
   if (/\.(jpe?g|png|gif|webp|avif)(\?|$)/.test(fn)) return 'photos';
+  if (/\.(mp4|webm|mov|m4v|mkv|avi)(\?|$)/.test(fn)) return 'videos';
   if (p.mediaUrl && mt.startsWith('image')) return 'photos';
   if (!p.mediaUrl && !p.mediaPath) return 'text';
   // media bor lekin type noma'lum
@@ -247,7 +249,7 @@ export async function openDetail(id) {
     ${mediaHtml}
     ${p.text ? `<div class="dm-caption">${esc(p.text)}</div>` : ''}
     <div class="dm-stats">
-      <span class="dm-stat-item">${(likeFill && likeFill !== 'none')
+      <span class="dm-stat-item" id="dmStatLike">${(likeFill && likeFill !== 'none')
           ? '<img src="./svg/social/heart-filled.svg" alt="" class="icon" width="13" height="13">'
           : '<img src="./svg/social/heart.svg" alt="" class="icon" width="13" height="13">'} <span id="dmLikeCount">${p.likes||0}</span></span>
       <span class="dm-stat-item"><img src="./svg/extra/icon-838eb192325a.svg" alt="" class="icon" width="13" height="13"> ${cmtCount}</span>
@@ -279,10 +281,12 @@ export async function openDetail(id) {
   $('detailModal').onclick = e => { if (e.target === $('detailModal')) closeDetail(); };
   $('dmLikeBtn').onclick = async () => {
     await doLikeGen(id, $('dmLikeBtn'));
-    const { data: _pr } = await sb.from('posts').select('likes_count').eq('id', id).maybeSingle();
-    const n = _pr?.likes_count ?? 0;
-    $('dmLikeCount').textContent  = n;
-    $('dmLikeCount2').textContent = n;
+    // Son paintLike() da shu zahoti yangilandi (DB'dan o'qish — saqlash tugamasdan eski sonni qaytarardi)
+    const n = $('dmLikeCount2')?.textContent ?? '';
+    if ($('dmLikeCount')) $('dmLikeCount').textContent = n;
+    // Statistika qatoridagi kichik yurak ham tugma bilan bir xil holatda bo'lsin
+    const sh = document.querySelector('#dmStatLike img.icon');
+    if (sh) sh.setAttribute('src', state.myLikedPosts.has(id) ? './svg/social/heart-filled.svg' : './svg/social/heart.svg');
   };
   $('dmCmtBtn').onclick = () => { closeDetail(); import('../feed/comments.js').then(({ openCmtModal }) => openCmtModal(id)); };
   $('dmShareBtn')?.addEventListener('click', () => {
@@ -312,7 +316,7 @@ export async function doLikeGen(id, btn) {
 /* ── Other user's profile modal ──────────────────────────────────────── */
 
 /* ── Boshqa foydalanuvchi profili: tablar (Barchasi / Photos / Text / Musics) ── */
-const UP_TABS = [['all','Barchasi'],['photos','Rasmlar'],['text','Matnlar'],['music','Musiqa']];
+const UP_TABS = [['all','Barchasi'],['photos','Rasmlar'],['videos','Videolar'],['text','Matnlar'],['music','Musiqa']];
 let _upTab = 'all';
 
 function _upGridHtml(posts, uid, tab) {

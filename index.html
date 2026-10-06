@@ -69,9 +69,9 @@ html{color-scheme:dark;}
       if (!n) ok = true;
       else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications)$/.test(a);
       else if (a === 'profile' && b === 'settings') ok = (n === 2) || (n === 3 && /^(general|email|password)$/.test((s[2] || '').toLowerCase()));
-      else if (a === 'profile' && n === 2) ok = /^(photos|text|music)$/.test(b);
+      else if (a === 'profile' && n === 2) ok = /^(photos|videos|text|music)$/.test(b);
       else if (a === 'u' && n === 2) ok = true;
-      else if (a === 'u' && n === 3) ok = /^(photos|text|music)$/.test((s[2] || '').toLowerCase());
+      else if (a === 'u' && n === 3) ok = /^(photos|videos|text|music)$/.test((s[2] || '').toLowerCase());
       else if (a === 'p' && (n === 2 || (n === 3 && (s[2] || '').toLowerCase() === 'comments'))) ok = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s[1]);
       else if (a === 's' && n === 2) ok = true;
       else if (a === 'chats' && n === 2) ok = b === 'groupcreate';
@@ -368,6 +368,7 @@ html[data-nf],html[data-nf] body{background:#000000}
     <div class="profile-grid-hdr" id="profileGridTabs" role="tablist">
       <button type="button" class="profile-grid-tab active" data-pg-tab="all" role="tab" aria-selected="true">Barchasi</button>
       <button type="button" class="profile-grid-tab" data-pg-tab="photos" role="tab" aria-selected="false">Rasmlar</button>
+      <button type="button" class="profile-grid-tab" data-pg-tab="videos" role="tab" aria-selected="false">Videolar</button>
       <button type="button" class="profile-grid-tab" data-pg-tab="text" role="tab" aria-selected="false">Matnlar</button>
       <button type="button" class="profile-grid-tab" data-pg-tab="music" role="tab" aria-selected="false">Musiqa</button>
     </div>
