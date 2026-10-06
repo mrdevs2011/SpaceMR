@@ -523,7 +523,7 @@ function bindFeedEvents(feedEl) {
     const like = t.closest('.like-btn');
     if (like) { e.stopPropagation(); doLike(like.dataset.id, like); return; }
     const save = t.closest('.save-btn');
-    if (save) { e.stopPropagation(); doSave(save.dataset.id); return; }
+    if (save) { e.stopPropagation(); doSave(save.dataset.id, save); return; }
     const cmt = t.closest('.cmt-open-btn');
     if (cmt) {
       e.stopPropagation();
@@ -610,35 +610,59 @@ function paintSaveBtn(btn, on) {
   }
 }
 
-const _saveLocks = new Set();
-export async function doSave(postId) {
-  if (!state.me || _saveLocks.has(postId)) return;
-  _saveLocks.add(postId);
-  const wasSaved = state.mySavedPosts.has(postId);
-  const sync = on => document.querySelectorAll(`.save-btn[data-id="${postId}"]`).forEach(b => paintSaveBtn(b, on));
+/* Saqlash: UI shu zahoti (0ms) o'zgaradi, server bilan orqa fonda sinxronlanadi.
+   Haqiqat manbai — foydalanuvchi ko'rib turgan tugma holati (Set hali yuklanmagan bo'lishi mumkin).
+   Tez-tez bosilsa — faqat oxirgi istalgan holat serverga yoziladi. */
+const _saveWant = new Map();    // postId -> istalgan holat
+const _saveServer = new Map();  // postId -> serverda tasdiqlangan holat
+const _saveBusy = new Set();
 
-  if (wasSaved) state.mySavedPosts.delete(postId); else state.mySavedPosts.add(postId);
-  sync(!wasSaved);
-  if (wasSaved) {
-    const post = document.querySelector(`#savedFeed .post[data-id="${postId}"]`);
+export function doSave(postId, btn) {
+  if (!state.me) return;
+  const was = btn ? btn.classList.contains('saved') : state.mySavedPosts.has(postId);
+  const want = !was;
+  if (!_saveServer.has(postId)) _saveServer.set(postId, was);
+
+  if (want) state.mySavedPosts.add(postId); else state.mySavedPosts.delete(postId);
+  document.querySelectorAll('.save-btn[data-id="' + postId + '"]').forEach(b => paintSaveBtn(b, want));
+  if (btn) paintSaveBtn(btn, want);
+  if (!want) {
+    const post = document.querySelector('#savedFeed .post[data-id="' + postId + '"]');
     if (post) { post.remove(); window.dispatchEvent(new Event('spacemr:saved-changed')); }
   }
+  _saveWant.set(postId, want);
+  _flushSave(postId);
+}
 
+async function _flushSave(postId) {
+  if (_saveBusy.has(postId)) return;
+  _saveBusy.add(postId);
   try {
-    if (wasSaved) {
-      const { error } = await sb.from('saved_posts').delete().eq('post_id', postId).eq('user_id', state.me.uid);
-      if (error) throw error;
-    } else {
-      const { error } = await sb.from('saved_posts').insert({ post_id: postId, user_id: state.me.uid });
-      if (error && error.code !== '23505') throw error; // 23505 = allaqachon saqlangan
+    while (_saveWant.get(postId) !== _saveServer.get(postId)) {
+      const target = _saveWant.get(postId);
+      try {
+        if (target) {
+          const { error } = await sb.from('saved_posts').insert({ post_id: postId, user_id: state.me.uid });
+          if (error && error.code !== '23505') throw error; // 23505 = allaqachon saqlangan
+        } else {
+          const { error } = await sb.from('saved_posts').delete().eq('post_id', postId).eq('user_id', state.me.uid);
+          if (error) throw error;
+        }
+        _saveServer.set(postId, target);
+      } catch (err) {
+        console.warn('[Feed] Saqlash bajarilmadi:', err?.message);
+        const back = _saveServer.get(postId);
+        _saveWant.set(postId, back);
+        if (back) state.mySavedPosts.add(postId); else state.mySavedPosts.delete(postId);
+        document.querySelectorAll('.save-btn[data-id="' + postId + '"]').forEach(b => paintSaveBtn(b, back));
+        toast("Saqlab bo'lmadi", 'error');
+        break;
+      }
     }
-  } catch (err) {
-    console.warn('[Feed] Saqlash bajarilmadi:', err?.message);
-    if (wasSaved) state.mySavedPosts.add(postId); else state.mySavedPosts.delete(postId);
-    sync(wasSaved);
-    toast("Saqlab bo'lmadi", 'error');
   } finally {
-    _saveLocks.delete(postId);
+    _saveBusy.delete(postId);
+    _saveWant.delete(postId);
+    _saveServer.delete(postId);
   }
 }
 
