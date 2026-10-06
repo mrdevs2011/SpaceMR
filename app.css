@@ -6290,6 +6290,267 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 
 .rr-users-admin .ua-badge,
 .rr-users-admin .ua-status { display: none !important; }
+
+
+/* ═══ Admin pure black + custom filter dropdown + Tizim layout ═══ */
+#actionsView,
+#actionsView .adm-card,
+#admSystemCard,
+#admSystemMount {
+  background: #000 !important;
+}
+#admSystemMount {
+  padding: 12px 14px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  overflow: visible !important;
+}
+#admSystemCard {
+  overflow: visible !important;
+}
+
+/* Storage */
+.adm-storage,
+#actionsStorageInfo {
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  background: #000 !important;
+  border: 1px solid #2f3336 !important;
+  border-radius: 14px !important;
+  color: #e7e9ea !important;
+  font-size: 13px !important;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+.adm-st-label b { color: #fff; }
+.adm-st-warn { color: #f4212e; }
+.adm-st-track {
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 99px;
+  background: #16181c;
+  overflow: visible; /* fill ko'rinsin */
+  position: relative;
+}
+.adm-st-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: #71767b;
+  min-width: 2px;
+  transition: width .3s ease;
+}
+.adm-st-fill.is-warn { background: #f4212e; }
+
+/* Keys */
+.adm-keys {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.adm-keys-btn {
+  padding: 10px 16px !important;
+  border-radius: 999px !important;
+  border: 1px solid #2f3336 !important;
+  background: #000 !important;
+  color: #e7e9ea !important;
+  font: 600 13px var(--font) !important;
+  cursor: pointer;
+}
+.adm-keys-btn:hover { background: #0a0a0a !important; }
+.adm-keys-box { margin-top: 8px; font-size: 12.5px; color: #e7e9ea; }
+
+/* Wipe accordion */
+.adm-wipe {
+  margin: 0 !important;
+  background: #000 !important;
+  border: 1px solid #2f3336 !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+.adm-wipe-head {
+  background: #000 !important;
+  color: #e7e9ea !important;
+}
+.adm-wipe-head:hover { background: #0a0a0a !important; }
+.adm-wipe-body {
+  background: #000 !important;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 14px !important;
+  transition: max-height .32s cubic-bezier(0.22, 1, 0.36, 1), padding .28s ease;
+}
+.adm-wipe.open .adm-wipe-body {
+  max-height: 280px;
+  padding: 0 14px 14px !important;
+}
+.adm-wipe-btn {
+  background: #000 !important;
+  border: 1px solid #2f3336 !important;
+  color: #e7e9ea !important;
+}
+.adm-wipe-btn:hover { background: #0a0a0a !important; }
+
+/* Users rail — pure black */
+.rr-users-admin,
+.rr-users-admin .users-admin-hdr,
+.rr-users-admin .ua-search-input,
+.rr-users-admin .ua-row {
+  background: #000 !important;
+}
+.rr-users-admin .ua-search-input {
+  border: 1px solid #2f3336 !important;
+  color: #e7e9ea !important;
+}
+.rr-users-admin .ua-search-input::placeholder { color: #71767b; }
+
+/* Native select yashirish */
+.ua-status-filter--native {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+/* Custom dropdown */
+.ua-dd {
+  position: relative;
+  width: 100%;
+  z-index: 40;
+}
+.ua-dd-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #2f3336;
+  background: #000;
+  color: #e7e9ea;
+  font: 600 13px var(--font);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.ua-dd-btn:hover { background: #0a0a0a; }
+.ua-dd-chev {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform .25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ua-dd.is-shown .ua-dd-chev { transform: rotate(180deg); }
+
+.ua-dd-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 50;
+  background: #000;
+  border: 1px solid #2f3336;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transform-origin: top center;
+  transform: translateY(-8px) scaleY(0.92);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease;
+  overflow: hidden;
+}
+.ua-dd-menu[hidden] { display: none !important; }
+.ua-dd.is-open .ua-dd-menu[hidden] { display: flex !important; }
+.ua-dd.is-shown .ua-dd-menu {
+  transform: translateY(0) scaleY(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.ua-dd-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #e7e9ea;
+  font: 600 13px var(--font);
+  cursor: pointer;
+}
+.ua-dd-item:hover { background: rgba(231,233,234,0.08); }
+.ua-dd-item.is-active {
+  background: rgba(29, 155, 240, 0.18);
+  color: #1d9bf0;
+}
+
+/* Right-rail dropdown overflow — list pastga chiqsin */
+.rr-users-admin,
+.rr-users-admin .users-admin-hdr {
+  overflow: visible !important;
+}
+.rr-users-admin .ua-search-row {
+  overflow: visible !important;
+  position: relative;
+  z-index: 5;
+}
+/* List pastida scroll, hdr fixed */
+body.rr-admin-users #rrUsersAdmin {
+  overflow: visible !important;
+}
+body.rr-admin-users .rr-users-admin .users-admin-list {
+  overflow-y: auto;
+}
+
+
+/* Update All users — Tizim kartasi */
+.adm-force-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #000;
+  border: 1px solid #2f3336;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+.adm-force-text { min-width: 0; flex: 1; }
+.adm-force-title {
+  font: 800 14px/1.25 var(--font);
+  color: #e7e9ea;
+  letter-spacing: -0.01em;
+}
+.adm-force-hint {
+  margin-top: 4px;
+  font: 400 12px/1.4 var(--font);
+  color: #71767b;
+}
+.adm-force-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font: 700 13px/1 var(--font);
+  cursor: pointer;
+  color: #000;
+  background: #e7e9ea;
+  transition: background .15s ease, transform .12s ease, opacity .15s;
+}
+.adm-force-btn:hover { background: #fff; }
+.adm-force-btn:active { transform: scale(0.97); }
+.adm-force-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
 /* SSOT: X-theme + chat thread + nav + right-rail (oxirgi kaskad) */
 /* CSS/mono-x.css — mono, x-design. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── mono ─── */
@@ -15058,6 +15319,20 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal .chat-thread-input-row:has(.chat-thread-input:not([rows="1"])) {
   align-items: flex-end !important;
 }
+
+
+/* GIF chat: tez ko'rinish, layout sakramasın */
+.chat-gif {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  background: #0a0a0a;
+  content-visibility: auto;
+}
+.cfm-media-wrap--standalone {
+  min-height: 80px;
+}
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */
@@ -16071,9 +16346,21 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 
 
 
-.chat-msg.msg-collapsing {
-  overflow: hidden;
-  transition: height .2s cubic-bezier(.22, 1, .36, 1), margin-top .2s cubic-bezier(.22, 1, .36, 1), opacity .16s ease;
+.chat-msg.msg-collapsing,
+.chat-msg.is-deleting {
+  overflow: hidden !important;
+  pointer-events: none !important;
+  /* transition inline dissolve.js da — bu yerda zaxira */
+  transition:
+    height .38s cubic-bezier(0.22, 1, 0.36, 1),
+    max-height .38s cubic-bezier(0.22, 1, 0.36, 1),
+    min-height .38s cubic-bezier(0.22, 1, 0.36, 1),
+    margin .38s cubic-bezier(0.22, 1, 0.36, 1),
+    padding .38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity .28s ease;
+}
+.chat-msg.msg-dissolving {
+  will-change: height, opacity;
 }
 
 .chat-jump-bottom {
@@ -16092,26 +16379,32 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   padding: 0;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
-  /* Yashirin: pastda, smooth slide uchun display:none emas */
+  /* Faqat transform+opacity (layout yo'q) — ishonchli GPU slide */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(18px);
+  transform: translate3d(0, 20px, 0);
   transition:
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.24s ease,
-    visibility 0s linear 0.32s;
-  will-change: transform, opacity;
+    transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.22s linear,
+    visibility 0s linear 0.28s;
 }
 .chat-jump-bottom.show {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
   transition:
-    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.2s linear,
     visibility 0s linear 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-jump-bottom,
+  .chat-jump-bottom.show {
+    transition: opacity 0.12s linear, visibility 0s linear 0.12s;
+    transform: none;
+  }
 }
 .chat-jump-bottom img { width: 20px; height: 20px; }
 

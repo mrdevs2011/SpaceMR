@@ -182,9 +182,21 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 
 
 
-.chat-msg.msg-collapsing {
-  overflow: hidden;
-  transition: height .2s cubic-bezier(.22, 1, .36, 1), margin-top .2s cubic-bezier(.22, 1, .36, 1), opacity .16s ease;
+.chat-msg.msg-collapsing,
+.chat-msg.is-deleting {
+  overflow: hidden !important;
+  pointer-events: none !important;
+  /* transition inline dissolve.js da — bu yerda zaxira */
+  transition:
+    height .38s cubic-bezier(0.22, 1, 0.36, 1),
+    max-height .38s cubic-bezier(0.22, 1, 0.36, 1),
+    min-height .38s cubic-bezier(0.22, 1, 0.36, 1),
+    margin .38s cubic-bezier(0.22, 1, 0.36, 1),
+    padding .38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity .28s ease;
+}
+.chat-msg.msg-dissolving {
+  will-change: height, opacity;
 }
 
 .chat-jump-bottom {
@@ -203,26 +215,32 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   padding: 0;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
-  /* Yashirin: pastda, smooth slide uchun display:none emas */
+  /* Faqat transform+opacity (layout yo'q) — ishonchli GPU slide */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(18px);
+  transform: translate3d(0, 20px, 0);
   transition:
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.24s ease,
-    visibility 0s linear 0.32s;
-  will-change: transform, opacity;
+    transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.22s linear,
+    visibility 0s linear 0.28s;
 }
 .chat-jump-bottom.show {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
   transition:
-    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.2s linear,
     visibility 0s linear 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-jump-bottom,
+  .chat-jump-bottom.show {
+    transition: opacity 0.12s linear, visibility 0s linear 0.12s;
+    transform: none;
+  }
 }
 .chat-jump-bottom img { width: 20px; height: 20px; }
 

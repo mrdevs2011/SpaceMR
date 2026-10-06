@@ -82,7 +82,7 @@ export function renderWipePanel(anchor, onDone) {
       <span class="adm-wipe-title">Storage tozalash</span>
       <img src="./svg/nav/chevron-down.svg" alt="" class="icon adm-wipe-chev" width="18" height="18">
     </button>
-    <div class="adm-wipe-body" id="actionsWipeBody" hidden>
+    <div class="adm-wipe-body" id="actionsWipeBody">
       <div class="adm-wipe-sub">Test ma'lumotlarini o'chirish. Har biri 3 marta tasdiq va admin parolini so'raydi.</div>
       <div class="adm-wipe-grid">
         ${Object.entries(SCOPES).map(([k, v]) => `<button type="button" class="adm-wipe-btn${k === 'all' ? ' is-all' : ''}" data-scope="${k}">${v.label}</button>`).join('')}
@@ -109,13 +109,15 @@ export function renderWipePanel(anchor, onDone) {
       }
       box.classList.toggle('open', willOpen);
       t.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-      box.querySelector('#actionsWipeBody').hidden = !willOpen;
       return;
     }
     const b = e.target.closest('[data-scope]');
     if (b) run(b.dataset.scope, onDone);
   });
-  anchor.insertAdjacentElement('afterend', box);
+  const mount = document.getElementById('admSystemMount');
+  if (mount) mount.appendChild(box);
+  else if (anchor?.parentNode) anchor.insertAdjacentElement('afterend', box);
+  else anchor?.appendChild?.(box);
 }
 
 export function removeWipePanel() {

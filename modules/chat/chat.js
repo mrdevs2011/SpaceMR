@@ -1945,23 +1945,12 @@ function _dissolveRestore(box, started) {
     playDeleteDissolve(rec.el, undefined, undefined, group)
       .catch(() => {})
       .finally(() => {
-        const el = rec.el;
-        const h = el.offsetHeight;
-        el.classList.add('msg-collapsing');
-        el.style.height = h + 'px';
-        el.style.marginTop = getComputedStyle(el).marginTop;
-        requestAnimationFrame(() => {
-          el.style.height = '0px';
-          el.style.marginTop = '0px';
-          el.style.opacity = '0';
-        });
-        setTimeout(() => {
-          chatState._dissolving.delete(rec.id);
-          try { el.remove(); } catch (_) {}
-          const box = document.getElementById('chatThreadMessages');
-          if (box && chatState._pinned) _smoothToBottom(box);
-          if (!chatState._dissolving.size && !chatState._curMsgs.length) paintMessages([]);
-        }, 210);
+        // Collapse allaqachon playDeleteDissolve ichida silliq bajarilgan — qayta animatsiya tiq-tiq qiladi
+        chatState._dissolving.delete(rec.id);
+        try { if (rec.el?.isConnected) rec.el.remove(); } catch (_) {}
+        const box = document.getElementById('chatThreadMessages');
+        if (box && chatState._pinned) _smoothToBottom(box);
+        if (!chatState._dissolving.size && !chatState._curMsgs.length) paintMessages([]);
       });
   });
 }
@@ -1977,7 +1966,25 @@ function _syncJumpBottom(box) {
   const btn = document.getElementById('chatJumpBottom');
   if (!btn || !box) return;
   const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
-  btn.classList.toggle('show', gap > 140);
+  // Gisterezis: show >160, hide <80 — tebranib class o'chmasin (transition uzilmasin)
+  const showing = btn.classList.contains('show');
+  const want = showing ? gap > 80 : gap > 160;
+  if (btn._jumpWant === want) return;
+  btn._jumpWant = want;
+  clearTimeout(btn._jumpT);
+  if (want) {
+    // Show darhol — transform transition ishlashi uchun
+    btn._jumpT = setTimeout(() => {
+      if (!btn._jumpWant) return;
+      btn.classList.add('show');
+    }, 0);
+  } else {
+    // Hide biroz kechiktiriladi (scroll tebranishida)
+    btn._jumpT = setTimeout(() => {
+      if (btn._jumpWant) return;
+      btn.classList.remove('show');
+    }, 100);
+  }
 }
 function _bindPinTracking(box) {
   if (box._pinBound) return;

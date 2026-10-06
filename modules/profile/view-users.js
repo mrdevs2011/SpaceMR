@@ -73,7 +73,6 @@ function _ensureSearchFilter() {
   const filterEl = $('uaStatusFilter');
   if (!searchEl || !filterEl) return;
 
-  // Panelga har safar kirishda qidiruv/filtr tozalanadi
   searchEl.value = '';
   filterEl.value = 'all';
   _searchQuery = '';
@@ -96,6 +95,99 @@ function _ensureSearchFilter() {
       _statusFilter = filterEl.value;
       _renderList();
     });
+  }
+  _ensureCustomFilter(filterEl);
+}
+
+/** Native <select> o'rniga smooth slide custom dropdown */
+function _ensureCustomFilter(selectEl) {
+  if (!selectEl || selectEl.dataset.customDd === '1') return;
+  selectEl.dataset.customDd = '1';
+  selectEl.classList.add('ua-status-filter--native');
+  selectEl.setAttribute('aria-hidden', 'true');
+  selectEl.tabIndex = -1;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'ua-dd';
+  wrap.innerHTML = `
+    <button type="button" class="ua-dd-btn" aria-haspopup="listbox" aria-expanded="false">
+      <span class="ua-dd-label"></span>
+      <svg class="ua-dd-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="ua-dd-menu" role="listbox" hidden></div>`;
+  selectEl.insertAdjacentElement('afterend', wrap);
+
+  const btn = wrap.querySelector('.ua-dd-btn');
+  const label = wrap.querySelector('.ua-dd-label');
+  const menu = wrap.querySelector('.ua-dd-menu');
+
+  function paintOptions() {
+    menu.innerHTML = '';
+    Array.from(selectEl.options).forEach(opt => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'ua-dd-item' + (opt.selected ? ' is-active' : '');
+      item.role = 'option';
+      item.dataset.value = opt.value;
+      item.textContent = opt.textContent;
+      item.setAttribute('aria-selected', opt.selected ? 'true' : 'false');
+      menu.appendChild(item);
+    });
+    const cur = selectEl.options[selectEl.selectedIndex];
+    label.textContent = cur ? cur.textContent : 'Barchasi';
+  }
+  paintOptions();
+
+  function open() {
+    menu.hidden = false;
+    wrap.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+    // reflow + slide
+    requestAnimationFrame(() => wrap.classList.add('is-shown'));
+  }
+  function close() {
+    wrap.classList.remove('is-shown');
+    btn.setAttribute('aria-expanded', 'false');
+    const fin = () => {
+      if (!wrap.classList.contains('is-shown')) {
+        menu.hidden = true;
+        wrap.classList.remove('is-open');
+      }
+    };
+    menu.addEventListener('transitionend', fin, { once: true });
+    setTimeout(fin, 280);
+  }
+  function toggle() {
+    if (wrap.classList.contains('is-open') && wrap.classList.contains('is-shown')) close();
+    else open();
+  }
+
+  btn.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  menu.addEventListener('click', e => {
+    const item = e.target.closest('.ua-dd-item');
+    if (!item) return;
+    e.stopPropagation();
+    selectEl.value = item.dataset.value;
+    selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+    paintOptions();
+    close();
+  });
+  if (!document._uaDdCloser) {
+    document._uaDdCloser = (e) => {
+      document.querySelectorAll('.ua-dd.is-open').forEach(w => {
+        if (w.contains(e.target)) return;
+        w.classList.remove('is-shown');
+        w.querySelector('.ua-dd-btn')?.setAttribute('aria-expanded', 'false');
+        setTimeout(() => {
+          if (!w.classList.contains('is-shown')) {
+            const m = w.querySelector('.ua-dd-menu');
+            if (m) m.hidden = true;
+            w.classList.remove('is-open');
+          }
+        }, 280);
+      });
+    };
+    document.addEventListener('click', document._uaDdCloser);
   }
 }
 

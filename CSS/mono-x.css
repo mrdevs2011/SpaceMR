@@ -8766,3 +8766,17 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal .chat-thread-input-row:has(.chat-thread-input:not([rows="1"])) {
   align-items: flex-end !important;
 }
+
+
+/* GIF chat: tez ko'rinish, layout sakramasın */
+.chat-gif {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  background: #0a0a0a;
+  content-visibility: auto;
+}
+.cfm-media-wrap--standalone {
+  min-height: 80px;
+}

@@ -38,8 +38,10 @@ export async function renderStorageUsage(anchor) {
   if (!box) {
     box = document.createElement('div');
     box.id = 'actionsStorageInfo';
-    box.style.cssText = 'margin:14px 18px;font-size:12.5px;color:var(--text3,#71767b);';
-    anchor.insertAdjacentElement('afterend', box);
+    box.className = 'adm-storage';
+    // Ichida: overflow clip bo'lmasin, layout tartibli
+    if (anchor.id === 'admSystemMount') anchor.appendChild(box);
+    else anchor.insertAdjacentElement('afterend', box);
   }
   box.textContent = 'Storage hisoblanmoqda…';
   await refreshStorageUsage();

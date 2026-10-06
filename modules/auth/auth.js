@@ -1072,6 +1072,11 @@ async function _enterApp(user) {
 
     startPresenceHeartbeat();
 
+    // Admin force-reload: online realtime + offline boot check
+    try {
+      import('../core/force-reload.js').then(m => m.startForceReloadWatcher?.()).catch(() => {});
+    } catch (_) {}
+
     // Splash davomida ko'proq ma'lumot yuklash (tarmoq — splashni kutdirishi mumkin, lekin last_seen endi fonda)
     try {
       await _preloadForSplash(user.uid);

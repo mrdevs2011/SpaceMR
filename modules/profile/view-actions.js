@@ -140,6 +140,7 @@ export async function initView() {
     st?.refreshStorageUsage?.() || (st?.removeStorageUsage(), st?.renderStorageUsage(sys));
   })).catch(() => {});
   import('../admin/admin-keys.js').then(m => m.renderKeysCheck(sys)).catch(() => {});
+  import('../admin/admin-force-reload.js').then(m => m.renderForceReloadBtn(sys)).catch(() => {});
 
   _initialized = true;
 }

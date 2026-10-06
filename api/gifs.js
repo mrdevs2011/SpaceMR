@@ -2,13 +2,13 @@
 // KLIPY_KEY faqat serverda (Vercel env) — brauzerga tushmaydi. Faqat tizimga kirgan foydalanuvchiga.
 // GET /api/gifs?q=<so'z>&page=1  (q bo'sh bo'lsa — trendlar)
 const PER_PAGE = 24;
-const CACHE_MS = 5 * 60e3;       // test rejimida soatiga 100 so'rov — bir xil so'rovlar 5 daqiqa keshlanadi
+const CACHE_MS = 15 * 60e3; // tezroq takroriy ochilish       // test rejimida soatiga 100 so'rov — bir xil so'rovlar 5 daqiqa keshlanadi
 const cache = new Map();
 
 const pick = (f) => f && f.url ? { u: f.url, w: f.width | 0, h: f.height | 0 } : null;
 
 export default async function handler(req, res) {
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'private, max-age=60');
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
 
   const key = process.env.KLIPY_KEY;

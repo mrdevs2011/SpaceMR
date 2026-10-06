@@ -473,7 +473,7 @@ export function generateGifBubble({ gif, m, time, mine, renderTicks, dm = false 
     bubbleClassExtra: dm ? ' bubble-media-only bubble-media-dm' : ' bubble-media-only',
     metaOutside: false,
     bubbleContent: `<div class="cfm-media-wrap cfm-media-wrap--standalone${dm ? ' cfm-media-dm' : ''}">
-        <img class="cfm-img-preview chat-gif" src="${esc(gif.u)}" alt="GIF" loading="lazy" decoding="async" draggable="false"${ar}>
+        <img class="cfm-img-preview chat-gif" src="${esc(gif.u)}" alt="GIF" loading="eager" decoding="async" fetchpriority="high" draggable="false"${ar}>
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
           ${mine ? renderTicks(m.status) : ''}

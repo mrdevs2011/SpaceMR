@@ -518,38 +518,64 @@ export async function playDeleteDissolve(card, clickX, clickY, group) {
     await __dissolveFloatFallback(card);
   }
 
-  // Classic list collapse — row closes, siblings ease up into the gap
+  // List collapse — Web Animations API (CSS transition jangi yo'q, ishonchli)
   return new Promise((resolve) => {
-    if (!card.isConnected) {
-      resolve();
-      return;
-    }
-    card.style.visibility = "hidden";
-    // Qotirilgan balandlikdan silliq 0 ga (visibility:hidden dan keyin getBoundingClientRect 0 bo'ladi)
-    const h = lockH || startRect.height;
-    card.style.maxHeight = h + "px";
-    card.style.height = h + "px";
-    card.style.minHeight = h + "px";
-    void card.offsetHeight; // reflow
-    card.classList.add("is-deleting");
-    // is-deleting max-height:0 — height ham 0 ga tushsin
-    card.style.height = "0";
-    card.style.minHeight = "0";
-    let settled = false;
     const done = () => {
-      if (settled) return;
-      settled = true;
-      if (card.parentNode) card.remove();
+      try { if (card?.parentNode) card.remove(); } catch (_) {}
       resolve();
     };
-    const onEnd = (e) => {
-      if (!e || e.target !== card) return;
-      if (e.propertyName === "max-height" || e.propertyName === "max-width") {
-        card.removeEventListener("transitionend", onEnd);
-        done();
-      }
+    if (!card || !card.isConnected) { done(); return; }
+
+    card.style.visibility = "hidden";
+    const h = Math.max(1, lockH || startRect.height || 1);
+    const cs = getComputedStyle(card);
+    const from = {
+      height: h + "px",
+      maxHeight: h + "px",
+      minHeight: h + "px",
+      marginTop: cs.marginTop,
+      marginBottom: cs.marginBottom,
+      paddingTop: cs.paddingTop,
+      paddingBottom: cs.paddingBottom,
+      opacity: "1",
     };
-    card.addEventListener("transitionend", onEnd);
-    setTimeout(done, 480);
+    const to = {
+      height: "0px",
+      maxHeight: "0px",
+      minHeight: "0px",
+      marginTop: "0px",
+      marginBottom: "0px",
+      paddingTop: "0px",
+      paddingBottom: "0px",
+      opacity: "0",
+    };
+
+    card.style.boxSizing = "border-box";
+    card.style.overflow = "hidden";
+    card.style.pointerEvents = "none";
+    Object.assign(card.style, from);
+    void card.offsetHeight;
+
+    if (typeof card.animate === "function") {
+      try {
+        const anim = card.animate([from, to], {
+          duration: 360,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "forwards",
+        });
+        anim.onfinish = () => { try { anim.commitStyles?.(); } catch (_) {} done(); };
+        anim.oncancel = () => done();
+        setTimeout(done, 420);
+        return;
+      } catch (_) { /* fallback below */ }
+    }
+
+    // Eski brauzer: oddiy CSS
+    card.style.transition =
+      "height .36s cubic-bezier(0.22, 1, 0.36, 1), margin .36s cubic-bezier(0.22, 1, 0.36, 1), padding .36s cubic-bezier(0.22, 1, 0.36, 1), opacity .24s ease";
+    requestAnimationFrame(() => {
+      Object.assign(card.style, to);
+    });
+    setTimeout(done, 400);
   });
 }

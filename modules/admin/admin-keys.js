@@ -156,15 +156,17 @@ export async function renderKeysCheck(anchor) {
   if (!anchor || document.getElementById('actionsKeysCheck')) return;
   const wrap = document.createElement('div');
   wrap.id = 'actionsKeysCheck';
-  wrap.style.cssText = 'margin:14px 18px;font-size:12.5px;';
+  wrap.className = 'adm-keys';
   const btn = document.createElement('button');
   btn.type = 'button';
+  btn.className = 'adm-keys-btn';
   const setBtn = txt => { btn.replaceChildren(_row('key', txt)); };
   setBtn('Kalitlarni tekshirish');
-  btn.style.cssText = 'padding:8px 14px;border-radius: 28px;border:1px solid var(--line,rgba(113, 118, 123, 0.2));background:transparent;color:inherit;font-size:13px;cursor:pointer';
   const box = document.createElement('div');
+  box.className = 'adm-keys-box';
   wrap.append(btn, box);
-  anchor.insertAdjacentElement('afterend', wrap);
+  if (anchor.id === 'admSystemMount') anchor.appendChild(wrap);
+  else anchor.insertAdjacentElement('afterend', wrap);
 
   btn.addEventListener('click', async () => {
     btn.disabled = true; btn.textContent = 'Tekshirilmoqda…'; box.textContent = '';

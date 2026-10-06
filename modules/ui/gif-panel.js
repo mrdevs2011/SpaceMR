@@ -58,7 +58,7 @@ export function createGifPanel(root, onPick) {
     if (!list.length) { recentBox.hidden = true; recentGrid.innerHTML = ''; return; }
     recentBox.hidden = false;
     recentGrid.innerHTML = list.map(g =>
-      `<button type="button" class="gp-item gp-recent-item" data-u="${esc(g.u)}" data-w="${g.w || 1}" data-h="${g.h || 1}" title="${g.n} marta"><img src="${esc(g.u)}" alt="" loading="lazy" decoding="async"></button>`
+      `<button type="button" class="gp-item gp-recent-item" data-u="${esc(g.u)}" data-w="${g.w || 1}" data-h="${g.h || 1}" title="${g.n} marta"><img src="${esc(g.u)}" alt="" loading="eager" decoding="async" fetchpriority="high"></button>`
     ).join('');
   }
   function reset() { cols.forEach(c => { c.innerHTML = ''; }); heights = [0, 0, 0]; items.clear(); next = 1; page = 1; body.scrollTop = 0; say(''); paintRecent(); }
@@ -69,16 +69,19 @@ export function createGifPanel(root, onPick) {
       const i = heights.indexOf(Math.min(...heights));
       heights[i] += (g.sm.h || 1) / (g.sm.w || 1);
       cols[i].insertAdjacentHTML('beforeend',
-        `<button type="button" class="gp-item" data-id="${esc(g.id)}" title="${esc(g.t)}" style="aspect-ratio:${g.sm.w || 1}/${g.sm.h || 1}"><img src="${esc(g.sm.u)}" alt="" loading="lazy" decoding="async"></button>`);
+        `<button type="button" class="gp-item" data-id="${esc(g.id)}" title="${esc(g.t)}" style="aspect-ratio:${g.sm.w || 1}/${g.sm.h || 1}"><img src="${esc(g.sm.u)}" alt="" loading="eager" decoding="async"></button>`);
     }
   }
+  // Bo'sh qidiruv: kundalik mashhur reaction/emoji GIF lar
+  const POPULAR_Q = 'reaction';
   async function load() {
     if (busy || !next) return;
     busy = true; const my = seq; page = next;
-    if (page === 1) say('Yuklanmoqda…');
+    if (page === 1) say(''); // loading yozuvini ko'rsatmaymiz — tezroq tuyuladi
     try {
       const { data: { session } } = await sb.auth.getSession();
-      const r = await fetch(`/api/gifs?page=${page}&q=${encodeURIComponent(q)}`, { headers: { Authorization: 'Bearer ' + (session?.access_token || '') } });
+      const qq = q || (page === 1 ? POPULAR_Q : '');
+      const r = await fetch(`/api/gifs?page=${page}&q=${encodeURIComponent(qq)}`, { headers: { Authorization: 'Bearer ' + (session?.access_token || '') } });
       if (my !== seq) return;
       if (!r.ok) throw new Error(r.status);
       const j = await r.json();
@@ -102,17 +105,22 @@ export function createGifPanel(root, onPick) {
       const picked = { u: recent.dataset.u, w: Number(recent.dataset.w) || 1, h: Number(recent.dataset.h) || 1 };
       bumpGif(picked);
       paintRecent();
-      onPick(picked);
+      onPick(picked); // sinxron — hech qanday await
       return;
     }
     const b = e.target.closest('.gp-item');
     if (!b) return;
     const g = items.get(b.dataset.id);
-    if (g && isGifUrl(g.md.u)) {
-      const picked = { u: g.md.u, w: g.md.w, h: g.md.h };
+    if (!g) return;
+    // Panelda allaqachon yuklangan sm URL tezroq; md sifatliroq — ikkalasi ham Klipy
+    const src = (g.md && isGifUrl(g.md.u) ? g.md : g.sm);
+    if (src && isGifUrl(src.u)) {
+      const picked = { u: src.u, w: src.w || g.sm?.w || 1, h: src.h || g.sm?.h || 1 };
       bumpGif(picked);
-      onPick(picked);
+      onPick(picked); // darhol yuborish
     }
   });
-  return { open() { paintRecent(); if (!loaded) { loaded = true; load(); } }, focusSearch: () => inp.focus() };
+  // Oldindan yuklash — panel ochilganda kutmaslik
+  try { load(); loaded = true; } catch (_) {}
+  return { open() { paintRecent(); if (!loaded) { loaded = true; load(); } else if (!items.size) load(); }, focusSearch: () => inp.focus() };
 }
