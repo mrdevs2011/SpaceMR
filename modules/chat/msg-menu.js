@@ -613,7 +613,7 @@ function paintSel(keepEmpty) {
 async function forward(ids, fromSel = false) {
   const list = (api.getMsgs() || []).filter(m => ids.includes(m.id));
   if (!list.length) return;
-  const users = await api.getUsers().catch(() => []) || [];
+  const users = await (api.getContactUsers || api.getUsers)().catch(() => []) || [];
   if (!fwdEl) {
     fwdEl = document.createElement('div');
     fwdEl.id = 'msgFwd';

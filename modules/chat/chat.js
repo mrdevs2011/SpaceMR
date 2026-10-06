@@ -2530,6 +2530,20 @@ initMsgMenu({
   },
   syncInput: updateVoiceSendBtn,
   getUsers: async () => (chatState._usersCache && chatState._usersCache.length) ? chatState._usersCache : await _fetchChatUsers(),
+  /* Uzatish uchun — faqat mening kontaktlarim (admin hammani ko'radi; 'admin' akkaunti doim bor) */
+  getContactUsers: async () => {
+    const all = (chatState._usersCache && chatState._usersCache.length) ? chatState._usersCache : await _fetchChatUsers();
+    if (isAdmin()) return all;
+    let ids = chatState._myContacts;
+    if (!ids || !ids.size) {
+      try {
+        const { data } = await sb.from('contacts').select('contact_id').eq('owner_id', state.me.uid);
+        ids = new Set((data || []).map(r => r.contact_id));
+        chatState._myContacts = ids;
+      } catch (_) { ids = ids || new Set(); }
+    }
+    return all.filter(u => ids.has(u.uid) || u.username === 'admin');
+  },
   chatIdFor: async uid => {
     const cached = chatState._latestChatMap[uid]?.id;
     if (cached && _UUID_RE.test(cached)) return cached;
