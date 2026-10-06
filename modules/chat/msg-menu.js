@@ -816,6 +816,7 @@ export function initMsgMenu(opts) {
       const keep = e.target.closest?.(TAP_KEEP);
       if (keep && box.contains(keep)) return; // play tugmasi, havola, rasm...
       if (e.target.closest?.('.chat-msg.emoji-only.emo-1 .chat-bubble-text')) return; // bitta emoji — faqat animatsiya
+      if (e.target.closest?.('.chat-bubble')?.querySelector('.chat-call-msg')) return; // qo'ng'iroq bubble — bosilsa qayta qo'ng'iroq (call.js), menyu emas (uzoq bosish — menyu)
       e.stopPropagation(); e.preventDefault();
       openMenu(r, null, null);
       return;

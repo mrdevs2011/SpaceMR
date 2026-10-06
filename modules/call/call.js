@@ -1196,6 +1196,16 @@ export function stopCallWatcher() {
    bilan yoqiladi (pastga q.). */
 document.getElementById('chatVoiceCallBtn')?.addEventListener('click', () => initiateCall(false));
 
+/* Chatdagi har qanday qo'ng'iroq bubble'iga (kiruvchi/chiquvchi/o'tkazib yuborilgan/bekor qilingan) bosilsa —
+   shu suhbatdoshga qayta qo'ng'iroq. Tanlash rejimida ishlamaydi; uzoq bosish — odatdagi xabar menyusi. */
+document.addEventListener('click', (e) => {
+  const bub = e.target.closest?.('.chat-bubble');
+  if (!bub?.querySelector('.chat-call-msg')) return;
+  const box = bub.closest('#chatThreadMessages');
+  if (!box || box.classList.contains('msg-selecting')) return;
+  initiateCall(false);
+});
+
 /* ── Active call controls ── */
 document.getElementById('callEndBtn')?.addEventListener('click', async () => {
   // Tovush DARHOL — user gesture ichida (await dan OLDIN), aks holda mobil ovozsiz qoladi
