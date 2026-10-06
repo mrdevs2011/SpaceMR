@@ -237,7 +237,8 @@ html[data-theme] .apf ::placeholder { color: #536471; opacity: 1; }
 html[data-theme] .apf-slug { display: flex; align-items: center; gap: 0; border: 1px solid #2f3336; border-radius: 12px; background: #000; transition: border-color .15s; }
 html[data-theme] .apf-slug:focus-within { border-color: #1d9bf0; }
 html[data-theme] .apf-slug i { padding-left: 14px; font-size: 14px; font-weight: 600; color: #536471; }
-html[data-theme] .apf .apf-slug input { border: 0 !important; background: transparent !important; padding-left: 2px !important; min-height: 42px; }
+/* Slug ichidagi input: ramkasiz (tashqi .apf-slug ramkasi bor) — umumiy input qoidasidan kuchliroq */
+html[data-theme] .apf .apf-slug input:not([type=file]):not([type=checkbox]) { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; padding-left: 2px !important; min-height: 42px; }
 html[data-theme] .apf .apf-slug input[readonly] { opacity: .55; }
 html[data-theme] .apf-hint { font-size: 12px; font-weight: 400; }
 /* Kategoriya + "+ Yangi" */
@@ -267,4 +268,26 @@ html[data-theme] .apf-hint.bad:empty { display: none; }
   html[data-theme] .apf-actions .aps-btn { flex: 1; height: 44px; justify-content: center; }
   html[data-theme] .apf textarea { min-height: 180px; }
   html[data-theme] .apf :is(input:not([type=file]), select, textarea) { font-size: 16px !important; }
+}
+
+/* HTML kod maydoni: doim 10 qator + rangli kod.
+   Textarea shaffof matn bilan yuqorida, bo'yalgan <pre> uning ostida — font/padding bir xil. */
+html[data-theme] .apf-code { --cb-fs: 12.5px; --cb-lh: 19px; position: relative; box-sizing: border-box; height: calc(var(--cb-lh) * 10 + 26px); border: 1px solid #2f3336; border-radius: 14px; background: #000; overflow: hidden; transition: border-color .15s; }
+html[data-theme] .apf-code:focus-within { border-color: #1d9bf0; }
+html[data-theme] .apf-code .apf-hl, html[data-theme] .apf div.apf-code textarea.apf-ta { position: absolute; inset: 0; box-sizing: border-box !important; width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0; padding: 12px 14px !important; border: 0 !important; border-radius: 0 !important; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; letter-spacing: 0; white-space: pre !important; tab-size: 2; word-spacing: 0; }
+html[data-theme] .apf-code .apf-hl { overflow: hidden; pointer-events: none; color: #e7e9ea; background: transparent; }
+html[data-theme] .apf-code .apf-hl code { font: inherit; white-space: inherit; }
+html[data-theme] .apf div.apf-code textarea.apf-ta { z-index: 1; overflow: auto; resize: none !important; background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent; caret-color: #e7e9ea; outline: none; scrollbar-width: thin; scrollbar-color: #2f3336 transparent; }
+html[data-theme] .apf div.apf-code textarea.apf-ta::selection { background: rgba(29, 155, 240, 0.35); -webkit-text-fill-color: transparent; }
+html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-fill-color: #536471; color: #536471; }
+.apf-hl .hl-c, .apf-hl .hl-d, .apf-hl .hl-p { color: #8b949e; }
+.apf-hl .hl-t { color: #7ee787; }
+.apf-hl .hl-a { color: #79c0ff; }
+.apf-hl .hl-s { color: #a5d6ff; }
+.apf-hl .hl-n { color: #ffa657; }
+.apf-hl .hl-k { color: #ff7b72; }
+.apf-hl .hl-f { color: #d2a8ff; }
+.apf-hl .hl-sel { color: #7ee787; }
+@media (max-width: 699px) {
+  html[data-theme] .apf-code { --cb-fs: 16px; --cb-lh: 22px; }
 }

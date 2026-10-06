@@ -9,6 +9,7 @@ import { sb, state } from '../core/config.js';
 import { esc, showConfirm } from '../core/utils.js';
 import { runApp } from './runner.js';
 import { extractLogo } from './logo-extract.js';
+import { highlight } from './code-hl.js';
 import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome } from './panels.js';
 
 const $ = id => document.getElementById(id);
@@ -239,7 +240,7 @@ async function openAppForm(editId, presetCat) {
       <span class="apf-row"><span class="apf-logo" id="afLogoPrev">${safeLogo(a?.logo) ? `<img src="${safeLogo(a.logo)}" alt="">` : '<i>▣</i>'}</span>
       <span class="apf-hint" id="afLogoSrc">${a?.logo ? 'Saqlangan logo. Kod o\'zgarsa, qayta aniqlanadi' : 'HTML koddan avtomatik olinadi (favicon, logotip SVG, rasm yoki emoji)'}</span></span></div>
     <div class="apf-l">HTML kod
-      <textarea id="afHtml" spellcheck="false" placeholder="<!doctype html>…">${esc(a?.html || '')}</textarea>
+      <div class="apf-code"><pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre><textarea id="afHtml" class="apf-ta" rows="10" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="<!doctype html>…">${esc(a?.html || '')}</textarea></div>
       <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 1 MB</span></span></div>
     <div class="apf-hint bad" id="afErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
@@ -264,12 +265,21 @@ async function openAppForm(editId, presetCat) {
     setLogoPrev(r ? r.logo : null, r?.source);
   };
   const schedLogo = () => { clearTimeout(logoTimer); logoTimer = setTimeout(refreshLogo, 450); };
+  /* Kod maydoni: doim 10 qator (ichida skroll) + rangli kod (textarea ostida bo'yalgan qatlam) */
+  const ta = $('afHtml'), hl = $('afHl');
+  const syncCode = () => { const p = hl.parentNode; p.scrollTop = ta.scrollTop; p.scrollLeft = ta.scrollLeft; };
+  let hlRaf = 0;
+  const paintNow = () => { if (!$('afHl')) return; const v = ta.value; hl.innerHTML = (v.length > 250000 ? esc(v) : highlight(v)) + '\n'; syncCode(); };
+  const paintCode = () => { cancelAnimationFrame(hlRaf); if (ta.value.length < 60000) paintNow(); else hlRaf = requestAnimationFrame(paintNow); };
+  ta.addEventListener('input', paintCode);
+  ta.addEventListener('scroll', syncCode);
+  paintNow();
   $('afHtml').addEventListener('input', schedLogo);
   nameI.addEventListener('input', schedLogo);
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     if (f.size > 1000000) { setErr('HTML 1 MB dan kichik bo\'lsin'); e.target.value = ''; return; }
-    $('afHtml').value = await f.text(); setErr(''); refreshLogo();
+    $('afHtml').value = await f.text(); paintNow(); setErr(''); refreshLogo();
     if (!nameI.value.trim()) { const t = /<title[^>]*>([^<]{1,40})/i.exec($('afHtml').value); if (t) { nameI.value = t[1].trim(); nameI.dispatchEvent(new Event('input')); } }
   });
 

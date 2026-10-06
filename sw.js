@@ -158,6 +158,7 @@ const PRECACHE_URLS = [
   '/modules/apps/apps.js',
   '/modules/apps/panels.js',
   '/modules/apps/logo-extract.js',
+  '/modules/apps/code-hl.js',
   '/modules/apps/runner.js',
   '/modules/profile/view-chats.js',
   '/modules/profile/view-home.js',
