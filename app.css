@@ -2823,7 +2823,8 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 }
 .grp-picker-search { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 14px; }
 .grp-picker-search::placeholder { color: var(--text3); }
-.grp-picker-list { max-height: 200px; overflow-y: auto; border-radius: var(--radius); border: 0.5px solid var(--line, var(--pal-gray-800)); }
+.grp-picker-list { max-height: min(280px, 45vh); min-height: 120px; overflow-y: auto; border-radius: var(--radius); border: 0.5px solid var(--line, var(--pal-gray-800)); }
+.grp-picker-empty { padding: 24px 16px; text-align: center; color: var(--text3); font-size: 13px; }
 .grp-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; border-bottom: 0.5px solid var(--line, var(--pal-gray-900));  }
 .grp-picker-row:last-child { border-bottom: none; }
 .grp-picker-row:hover { background: var(--bg4, var(--pal-gray-900)); }

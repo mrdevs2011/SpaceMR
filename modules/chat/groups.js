@@ -1588,32 +1588,66 @@ function _renderMemberPicker(container, users) {
 Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
     return;
   }
+  // Input bir marta yaratiladi — qidiruvda qayta yaratilmasin (focus yo'qolmasin, titramasin)
   container.innerHTML = `
     <div class="grp-picker-search-wrap">
       <img src="./svg/extra/icon-34d2886eafb1.svg" alt="" class="icon" width="14" height="14">
-      <input class="grp-picker-search" id="grpPickerSearch" placeholder="Ism yoki username..." autocomplete="off">
+      <input class="grp-picker-search" id="grpPickerSearch" placeholder="Ism yoki username..." autocomplete="off" spellcheck="false">
     </div>
     <div class="grp-picker-list" id="grpPickerList"></div>
     <div class="grp-sel-count" id="grpSelCount">0 ta tanlangan</div>
   `;
-  _renderPickerRows(users, container.querySelector('#grpPickerList'));
+  const listEl = container.querySelector('#grpPickerList');
+  const searchEl = container.querySelector('#grpPickerSearch');
+  _renderPickerRows(users, listEl);
 
-  container.querySelector('#grpPickerSearch').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase();
-    const filtered = q ? users.filter(u =>
-      (u.fullName||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q)
-    ) : users;
-    _renderPickerRows(filtered, container.querySelector('#grpPickerList'));
+  // Event delegation — har filterda listener qayta bog'lanmasin
+  if (!listEl._pickerClickBound) {
+    listEl._pickerClickBound = true;
+    listEl.addEventListener('click', e => {
+      const row = e.target.closest?.('.grp-picker-row');
+      if (!row || !listEl.contains(row)) return;
+      const uid = row.dataset.uid;
+      if (!uid) return;
+      if (_selectedMembers.has(uid)) _selectedMembers.delete(uid);
+      else _selectedMembers.add(uid);
+      row.classList.toggle('selected', _selectedMembers.has(uid));
+      row.querySelector('.grp-picker-check')?.classList.toggle('on', _selectedMembers.has(uid));
+      const cnt = document.getElementById('grpSelCount');
+      if (cnt) cnt.textContent = `${_selectedMembers.size} ta tanlangan`;
+    });
+  }
+
+  let _qTimer = 0;
+  let _lastQ = '';
+  searchEl.addEventListener('input', () => {
+    clearTimeout(_qTimer);
+    _qTimer = setTimeout(() => {
+      const q = (searchEl.value || '').trim().toLowerCase();
+      if (q === _lastQ) return;
+      _lastQ = q;
+      const filtered = q ? users.filter(u =>
+        (u.fullName || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q)
+      ) : users;
+      _renderPickerRows(filtered, listEl, q);
+    }, 120);
   });
 }
 
-function _renderPickerRows(users, listEl) {
+function _renderPickerRows(users, listEl, q = '') {
   if (!listEl) return;
+  if (!users.length) {
+    listEl.innerHTML = '<div class="grp-picker-empty">' + (q ? 'Hech kim topilmadi' : "Ro'yxat bo'sh") + '</div>';
+    return;
+  }
+  // Avvalgi scroll joyini saqlash
+  const prevTop = listEl.scrollTop;
   listEl.innerHTML = users.map(u => {
     const av   = u.avatar || defAvi(u.fullName || 'U');
     const sel  = _selectedMembers.has(u.uid);
     return `<div class="grp-picker-row ${sel ? 'selected' : ''}" data-uid="${u.uid}">
-      <div class="grp-picker-avi"><img src="${esc(av)}" onerror="this.style.display='none'"></div>
+      <div class="grp-picker-avi"><img src="${esc(av)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'"></div>
       <div class="grp-picker-info">
         <div class="grp-picker-name">${esc(u.fullName||'Foydalanuvchi')}</div>
         ${u.username ? `<div class="grp-picker-user">@${esc(u.username)}</div>` : ''}
@@ -1623,17 +1657,7 @@ function _renderPickerRows(users, listEl) {
       </div>
     </div>`;
   }).join('');
-  listEl.querySelectorAll('.grp-picker-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const uid = row.dataset.uid;
-      if (_selectedMembers.has(uid)) _selectedMembers.delete(uid);
-      else _selectedMembers.add(uid);
-      row.classList.toggle('selected');
-      row.querySelector('.grp-picker-check').classList.toggle('on');
-      const cnt = document.getElementById('grpSelCount');
-      if (cnt) cnt.textContent = `${_selectedMembers.size} ta tanlangan`;
-    });
-  });
+  listEl.scrollTop = prevTop;
 }
 
 /* ─────────────────────────────────────────────────────────────────────
