@@ -193,8 +193,8 @@ async function openRunner(a, c) {
       <button type="button" class="apr-ib" data-act="run-back" aria-label="Orqaga">${ico('nav/chevron-left', 22)}</button>
       ${logoHtml(a, 'apr-logo')}
       <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.slug)}/${esc(a.slug)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
-      <button type="button" class="apr-ib" data-act="run-code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>
       <button type="button" class="apr-ib" data-act="run-reload" aria-label="Qayta yuklash" title="Qayta yuklash">${ico('action/refresh', 20)}</button>
+      <button type="button" class="apr-ib" data-act="run-code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}
     </div>

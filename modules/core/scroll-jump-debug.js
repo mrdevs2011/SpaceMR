@@ -1,6 +1,6 @@
 /* scroll-jump-debug.js — "pastga scroll qilsam o'zi tepaga chiqib ketadi" sababini topish uchun.
  * Faqat yoqilganda ishlaydi: manzilga ?dbgscroll=1 qo'shing (o'chirish: ?dbgscroll=0).
- * Sakrash (>200px tepaga, ~0 gacha) aniqlansa — ekranda va console'da: kim scrollTo chaqirdi
+ * Sakrash (>200px tepaga, ~0 gacha) aniqlansa — faqat console'da (ekranga chiqmaydi; window.__scrollJumps ham bor): kim scrollTo chaqirdi
  * yoki qaysi DOM bo'laklari o'zgardi, sahifa balandligi qanday o'zgardi. */
 (function () {
   try {
@@ -42,10 +42,6 @@
   if (document.body) startMo(); else document.addEventListener('DOMContentLoaded', startMo);
 
   let prevY = window.scrollY, prevH = document.documentElement.scrollHeight, hist = [];
-  const box = document.createElement('pre');
-  box.style.cssText = 'position:fixed;left:6px;right:6px;bottom:70px;z-index:2147483647;max-height:45vh;overflow:auto;margin:0;padding:8px;background:rgba(0,0,0,.92);color:#7dff9b;border:1px solid #2f3336;border-radius:10px;font:11px/1.35 monospace;white-space:pre-wrap;display:none;pointer-events:none';
-  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(box));
-  let hideT = 0;
 
   window.addEventListener('scroll', () => {
     const y = window.scrollY, h = document.documentElement.scrollHeight, t = now();
@@ -61,8 +57,6 @@
       ].join('\n');
       (window.__scrollJumps = window.__scrollJumps || []).push(info);
       console.warn('[scroll-jump]\n' + info);
-      box.textContent = info; box.style.display = 'block';
-      clearTimeout(hideT); hideT = setTimeout(() => { box.style.display = 'none'; }, 20000);
     }
     prevY = y; prevH = h;
   }, { passive: true });
