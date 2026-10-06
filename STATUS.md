@@ -244,3 +244,10 @@
   - Bir martalik backfill ham ishga tushdi (mavjud noto'g'ri sonlar tozalandi).
   - Realtime: mavjud `chat_members` / `group_members` watcher UPDATE ni ushlab badge va ro'yxatni darhol yangilaydi.
 - Keyingi: git commit + push (migration allaqachon remote DB ga push qilindi).
+
+---
+### 2026-10-06 20:32
+- **fix(chat-media): grid video preview sekin/bo'sh**
+  - Sabab: barcha video kataklar birdaniga `src` + `preload=metadata` bilan yuklanardi → tarmoq tiqilib, kadr chiqmasdi.
+  - Yechim: `data-cm-vsrc` + IntersectionObserver (rootMargin 120px) + max 3 concurrent metadata yuklash; faqat ko'rinadigan kataklar yuklanadi.
+  - Fayl: `modules/chat/chat-media.js`

@@ -78,6 +78,9 @@ function _deactivate() {
   _token++;
   _stopAudio();
   _closeViewer();
+  if (_vidObs) { try { _vidObs.disconnect(); } catch (_) {} _vidObs = null; }
+  _vidQueue.length = 0;
+  _vidActive = 0;
 }
 
 /* ── Chizish ────────────────────────────────────────────────────────── */
@@ -113,9 +116,11 @@ function _paintTabs() {
 }
 
 const _BROKEN = `this.onerror=null;this.style.display='none';this.parentNode.classList.add('cm-broken')`;
+/* Video grid: src ni darhol bermaymiz — IntersectionObserver + concurrent limit.
+   Aks holda 4–20 ta video bir vaqtda metadata so'raydi, sekin/bo'sh katak chiqadi. */
 const _cellMedia = (m, i) => m.kind === 'video'
-  ? `<div class="up-grid-cell up-grid-cell--media up-grid-cell--video" data-cm-open="${i}"><video class="w-full h-full object-cover" src="${esc(_url(m))}#t=0.1" preload="metadata" muted playsinline disablePictureInPicture onerror="${_BROKEN}"></video><span class="cm-vbadge" aria-hidden="true"></span></div>`
-  : `<div class="up-grid-cell up-grid-cell--media" data-cm-open="${i}"><img class="w-full h-full object-cover" src="${esc(_url(m))}" alt="" decoding="async" onerror="${_BROKEN}"></div>`;
+  ? `<div class="up-grid-cell up-grid-cell--media up-grid-cell--video" data-cm-open="${i}"><video class="w-full h-full object-cover" data-cm-vsrc="${esc(_url(m))}" preload="none" muted playsinline disablePictureInPicture></video><span class="cm-vbadge" aria-hidden="true"></span></div>`
+  : `<div class="up-grid-cell up-grid-cell--media" data-cm-open="${i}"><img class="w-full h-full object-cover" src="${esc(_url(m))}" alt="" loading="lazy" decoding="async" onerror="${_BROKEN}"></div>`;
 
 function _rowsAudio() {
   return _data.audio.map((m, i) => `
@@ -136,6 +141,10 @@ function _rowsFiles() {
 function _paintContent() {
   const box = document.getElementById('cmContent');
   if (!box) return;
+  // Avvalgi lazy video kuzatuvchini tozalash
+  if (_vidObs) { try { _vidObs.disconnect(); } catch (_) {} _vidObs = null; }
+  _vidQueue.length = 0;
+  _vidActive = 0;
   const empty = t => `<div class="up-grid-empty"><div class="up-grid-empty-title">${t}</div></div>`;
   const grid = (html, uniform) => `<div class="up-grid${uniform ? ' up-grid--uniform' : ''}" id="upGrid">${html}</div>`;
   const media = _data.media.map((m, i) => ({ m, i }));
@@ -156,6 +165,64 @@ function _paintContent() {
     box.innerHTML = parts.length ? parts.join('') : empty('Hali hech narsa ulashilmagan');
     _syncAudioUI();
   }
+  _observeVideoThumbs(box);
+}
+
+/* ── Video grid lazy thumbnail ─────────────────────────────────────── */
+let _vidObs = null;
+const _vidQueue = [];
+let _vidActive = 0;
+const VID_MAX_CONCURRENT = 3;
+
+function _vidKick() {
+  while (_vidActive < VID_MAX_CONCURRENT && _vidQueue.length) {
+    const v = _vidQueue.shift();
+    if (!v || !v.isConnected) continue;
+    const src = v.dataset.cmVsrc;
+    if (!src || v.dataset.cmLoaded === '1') continue;
+    v.dataset.cmLoaded = '1';
+    _vidActive++;
+    const done = () => {
+      _vidActive = Math.max(0, _vidActive - 1);
+      _vidKick();
+    };
+    const fail = () => {
+      try {
+        v.style.display = 'none';
+        v.parentNode?.classList.add('cm-broken');
+      } catch (_) {}
+      done();
+    };
+    v.addEventListener('loadeddata', done, { once: true });
+    v.addEventListener('error', fail, { once: true });
+    // #t=0.1 — birinchi kadr (ba'zi brauzerlar fragmentni e'tiborsiz qoldiradi, baribir metadata yetarli)
+    v.preload = 'metadata';
+    v.src = src + (src.includes('#') ? '' : '#t=0.1');
+    try { v.load(); } catch (_) { fail(); }
+  }
+}
+
+function _observeVideoThumbs(root) {
+  if (!root) return;
+  if (_vidObs) { try { _vidObs.disconnect(); } catch (_) {} }
+  const vids = root.querySelectorAll('video[data-cm-vsrc]');
+  if (!vids.length) return;
+  if (!('IntersectionObserver' in window)) {
+    vids.forEach(v => _vidQueue.push(v));
+    _vidKick();
+    return;
+  }
+  _vidObs = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const v = e.target;
+      _vidObs.unobserve(v);
+      if (v.dataset.cmLoaded === '1') continue;
+      _vidQueue.push(v);
+    }
+    _vidKick();
+  }, { root: null, rootMargin: '120px 0px', threshold: 0.01 });
+  vids.forEach(v => _vidObs.observe(v));
 }
 
 /* ── Musiqa ─────────────────────────────────────────────────────────── */
