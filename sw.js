@@ -31,9 +31,13 @@ self.addEventListener('push', (event) => {
       if (wins.some((c) => c.visibilityState === 'visible')) return;
     }
 
+    // Xom JSON xizmat xabarlari (qo'ng'iroq yozuvi va h.k.) uchun bildirishnoma umuman ko'rsatilmaydi
+    if (!isCall && /^\s*\{\s*"__callLog"/.test(String(data.body || ''))) return;
+
+    const icon = (typeof data.icon === 'string' && data.icon.startsWith('https://')) ? data.icon : '/icons/icon-192.png';
     await self.registration.showNotification(data.title || 'SpaceMR', {
       body:  friendlyBody(data),
-      icon:  '/icons/icon-192.png',
+      icon,
       badge: '/icons/icon-192.png',
       image: data.image || undefined,   // ulashilgan postning rasmi (bo'lsa)
       lang:  'uz',

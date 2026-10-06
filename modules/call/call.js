@@ -561,7 +561,15 @@ function _avatarHTML(name, photoUrl) {
   return `<span class="call-avi-initial">${letter}</span>`;
 }
 
-function _showActiveCallModal(otherName, otherAvi, isVideo) {
+/* Telegram uslubi: suhbatdosh rasmi xira fon bo'lib turadi (rasm bo'lmasa — gradient) */
+function _setCallBg(el, url) {
+  if (!el) return;
+  const u = typeof url === 'string' && /^https?:/i.test(url) ? url.replace(/["'()\\\s]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase()) : '';
+  if (u) { el.style.setProperty('--call-bg', `url("${u}")`); el.classList.add('has-bg'); }
+  else   { el.style.removeProperty('--call-bg'); el.classList.remove('has-bg'); }
+}
+
+function _showActiveCallModal(otherName, otherAvi, isVideo, statusText) {
   const modal = document.getElementById('callActiveModal');
   const nameEl = document.getElementById('callActiveName');
   const aviEl  = document.getElementById('callActiveAvi');
@@ -570,8 +578,10 @@ function _showActiveCallModal(otherName, otherAvi, isVideo) {
 
   if (nameEl)   nameEl.textContent = otherName || 'Foydalanuvchi';
   if (aviEl)    aviEl.innerHTML = _avatarHTML(otherName, otherAvi);
-  if (statusEl) statusEl.textContent = 'Qo\'ng\'iroq qilinmoqda...';
+  if (statusEl) statusEl.textContent = statusText || 'Chaqirilmoqda…';
   if (timerEl)  timerEl.textContent  = '00:00';
+  _setCallBg(modal, otherAvi);
+  modal?.classList.remove('connected');
 
   // Endi barcha qo'ng'iroqlar OVOZLI boshlanadi (Telegram uslubi — hdr'da
   // bitta tugma bor); video faqat qo'ng'iroq ichida kamera tugmasi bilan
@@ -584,7 +594,7 @@ function _showActiveCallModal(otherName, otherAvi, isVideo) {
 }
 
 function _hideActiveCallModal() {
-  document.getElementById('callActiveModal')?.classList.remove('show', 'video-mode');
+  document.getElementById('callActiveModal')?.classList.remove('show', 'video-mode', 'connected');
 }
 
 /* ── JIRINGLASH VAQTI — BITTA joyda. Shu vaqt ichida javob bo'lmasa qo'ng'iroq avtomatik tugaydi
@@ -703,6 +713,7 @@ function _createPC() {
       _startMicPulse(_localStream);
       const statusEl = document.getElementById('callStatus');
       if (statusEl) statusEl.textContent = 'Ulandi';
+      document.getElementById('callActiveModal')?.classList.add('connected');
       _startCallTimer();
     }
   };
@@ -1003,7 +1014,7 @@ async function _acceptIncomingCall(callData, callId) {
     callerAvi  = d.avatar   || '';
   } catch (e) { console.warn('[call]', e?.message || e); }
 
-  _showActiveCallModal(callerName, callerAvi, _callIsVideo);
+  _showActiveCallModal(callerName, callerAvi, _callIsVideo, 'Ulanmoqda…');
 
   _createPC();
   _localStream.getTracks().forEach(t => _pc.addTrack(t, _localStream));
@@ -1114,6 +1125,7 @@ async function _handleIncomingRow(data) {
   if (nameEl) nameEl.textContent = callerName;
   if (typeEl) typeEl.textContent = data.type === 'video' ? "Video qo'ng'iroq" : "Ovozli qo'ng'iroq";
   if (aviEl)  aviEl.innerHTML = _avatarHTML(callerName, callerAvi);
+  _setCallBg(modal, callerAvi);
 
   modal?.classList.add('show');
   _startRingtone();

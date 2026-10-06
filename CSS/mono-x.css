@@ -3665,8 +3665,8 @@ textarea:not(:focus) {
   contain-intrinsic-size: none;
 }
 
-/* Desktop: settings page back/chevron button not needed — panel closes by clicking outside */
-@media (min-width: 1100px) {
+/* Desktop (>=1200, o'ng panel): back/chevron kerak emas. Mobil/planshet (<1200) — to'liq ekran, chevron KO'RINADI */
+@media (min-width: 1200px) {
   #settingsOverlay .settings-back,
   #settingsOverlay.show .settings-back {
     display: none !important;

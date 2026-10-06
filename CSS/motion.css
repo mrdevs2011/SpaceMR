@@ -52,3 +52,107 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 1; pointer-events: auto; }
   @starting-style { #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 0; } }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CALL UI — Telegram uslubi (kiruvchi + faol qo'ng'iroq)
+   Xira avatar fon, katta avatar + pulsatsiya, ism → holat → taymer, shisha tugmalar.
+   --call-bg call.js (_setCallBg) orqali qo'yiladi.
+   ═══════════════════════════════════════════════════════════════════════ */
+#incomingCallModal,
+#callActiveModal {
+  background: linear-gradient(165deg, #3a6df0 0%, #5b4fd6 48%, #2a2f6b 100%);
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+}
+#incomingCallModal::before,
+#callActiveModal::before {
+  content: ''; display: block;
+  position: absolute; inset: -70px; z-index: -2;
+  background-size: cover; background-position: center;
+  pointer-events: none;
+}
+#incomingCallModal.has-bg::before,
+#callActiveModal.has-bg::before {
+  background-image: var(--call-bg);
+  filter: blur(48px) saturate(1.5) brightness(.55);
+}
+#incomingCallModal::after,
+#callActiveModal::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.32) 100%);
+}
+#callActiveModal.video-mode { background: #000; }
+#callActiveModal.video-mode::before,
+#callActiveModal.video-mode::after { display: none; }
+
+/* Avatar */
+.incoming-call-avi-wrap { width: 148px; height: 148px; }
+.incoming-call-ring-anim { width: 148px; height: 148px; }
+.incoming-call-ring-anim span { border: 2px solid rgba(255,255,255,.35); }
+.incoming-call-avi,
+.call-voice-avi {
+  width: 148px; height: 148px;
+  background: rgba(255,255,255,.16);
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+}
+.incoming-call-avi .call-avi-initial,
+.call-voice-avi .call-avi-initial { font-size: 60px; background: rgba(255,255,255,.18); color: #fff; }
+
+/* Matnlar */
+.incoming-call-subtitle { color: rgba(255,255,255,.7); font-size: 13px; letter-spacing: .06em; text-transform: none; font-weight: 500; }
+.incoming-call-name,
+.call-voice-name { color: #fff; font-size: 30px; font-weight: 600; text-shadow: 0 1px 8px rgba(0,0,0,.25); }
+.incoming-call-type { color: rgba(255,255,255,.78); font-size: 16px; }
+.inc-call-label,
+.call-ctrl-label { color: rgba(255,255,255,.88); font-size: 12.5px; font-weight: 500; }
+
+/* Faol qo'ng'iroq: avatar+ism tepada, holat/taymer ismning tagida, tugmalar pastda */
+#callActiveModal:not(.video-mode) {
+  justify-content: flex-start;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
+}
+#callActiveModal:not(.video-mode) .call-stage { flex: 0 0 auto; min-height: 0; }
+#callActiveModal:not(.video-mode) .call-voice-wrap { position: relative; inset: auto; gap: 18px; }
+#callActiveModal.video-mode .call-stage { position: absolute; inset: 0; flex: none; }
+.call-status,
+.call-timer {
+  color: rgba(255,255,255,.82);
+  font-size: 17px; font-weight: 400; letter-spacing: 0;
+  margin: 6px 0 0;
+}
+.call-timer { display: none; font-variant-numeric: tabular-nums; }
+#callActiveModal.connected .call-timer { display: block; }
+#callActiveModal.connected .call-status { display: none; }
+#callActiveModal:not(.video-mode) .call-active-btns { margin-top: auto; gap: 22px; }
+
+/* Jiringlayotganda (ulanmaguncha) avatar atrofida pulsatsiya */
+#callActiveModal:not(.connected) .call-voice-avi { animation: callAviPulse 2s ease-out infinite; }
+@keyframes callAviPulse {
+  0%   { box-shadow: 0 8px 32px rgba(0,0,0,.35), 0 0 0 0 rgba(255,255,255,.35); }
+  100% { box-shadow: 0 8px 32px rgba(0,0,0,.35), 0 0 0 38px rgba(255,255,255,0); }
+}
+
+/* Tugmalar: shisha doiralar. Tartib: Karnay · Video · Mikrofon · Tugatish */
+#callSwitchCol  { order: 0; }
+#callSpeakerCol { order: 1; }
+#callCamCol     { order: 2; }
+#callMicCol     { order: 3; }
+#callEndCol     { order: 4; }
+#callActiveModal .call-ctrl-btn {
+  width: 64px; height: 64px;
+  background: rgba(255,255,255,.18);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  color: #fff;
+}
+#callActiveModal .call-ctrl-btn:hover { background: rgba(255,255,255,.26); }
+#callActiveModal .call-ctrl-btn.muted { background: #fff; color: #000; }
+#callActiveModal .call-ctrl-btn.active { background: rgba(255,255,255,.3); color: #fff; }
+#callActiveModal .call-ctrl-btn.end-btn { width: 64px; height: 64px; background: #ff3b30; box-shadow: 0 6px 20px rgba(255,59,48,.45); }
+#callActiveModal.video-mode .call-ctrl-btn { width: 44px; height: 44px; }
+#callActiveModal.video-mode .call-ctrl-btn.end-btn { width: 50px; height: 50px; }
+.inc-call-btn { width: 68px; height: 68px; }
+.inc-call-btn.reject { background: #ff3b30; box-shadow: 0 6px 22px rgba(255,59,48,.45); }
+.inc-call-btn.accept { background: #34c759; box-shadow: 0 6px 22px rgba(52,199,89,.45); }
+.incoming-call-btns { max-width: 300px; }

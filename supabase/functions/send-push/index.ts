@@ -72,16 +72,23 @@ Deno.serve(async (req) => {
   let urgency: "high" | "normal" = "normal";
 
   const { data: sender } = await sb.from("profiles")
-    .select("full_name").eq("id", r.sender_id ?? r.caller_id).maybeSingle();
+    .select("full_name, avatar").eq("id", r.sender_id ?? r.caller_id).maybeSingle();
   const senderName = sender?.full_name || "SpaceMR";
+  const iconOf = (u: unknown) => (typeof u === "string" && u.startsWith("https://") ? u : undefined);
+  const senderIcon = iconOf(sender?.avatar);
+
+  // Qo'ng'iroq yozuvi ({"__callLog":...}) — alohida bildirishnoma kerak emas (qo'ng'iroqning o'zi allaqachon bildirilgan)
+  if ((table === "messages" || table === "group_messages") && String(r.text ?? "").includes('"__callLog"')) {
+    return ok("skip call log");
+  }
 
   if (table === "messages") {
     const { data } = await sb.from("chat_members").select("user_id")
       .eq("chat_id", r.chat_id).neq("user_id", r.sender_id);
     recipients = (data ?? []).map((m) => m.user_id);
-    payload = { type: "message", title: senderName, body: preview(r), image: shareImage(r), chatId: r.chat_id, fromUid: r.sender_id };
+    payload = { type: "message", title: senderName, body: preview(r), icon: senderIcon, image: shareImage(r), chatId: r.chat_id, fromUid: r.sender_id };
   } else if (table === "group_messages") {
-    const { data: g } = await sb.from("groups").select("name, type").eq("id", r.group_id).maybeSingle();
+    const { data: g } = await sb.from("groups").select("name, type, avatar").eq("id", r.group_id).maybeSingle();
     const { data } = await sb.from("group_members").select("user_id")
       .eq("group_id", r.group_id).neq("user_id", r.sender_id);
     recipients = (data ?? []).map((m) => m.user_id);
@@ -90,6 +97,7 @@ Deno.serve(async (req) => {
       type: "group",
       title: g?.name || "Guruh",
       body: isChannel ? preview(r) : `${senderName}: ${preview(r)}`,
+      icon: iconOf(g?.avatar) ?? senderIcon,
       image: shareImage(r),
       groupId: r.group_id,
       fromUid: r.sender_id,
@@ -97,7 +105,7 @@ Deno.serve(async (req) => {
   } else if (table === "calls") {
     if (r.status !== "ringing") return ok("skip");
     recipients = [r.callee_id];
-    payload = { type: "call", title: senderName, body: "📞 Qo'ng'iroq qilmoqda...", fromUid: r.caller_id, callId: r.id };
+    payload = { type: "call", title: senderName, body: "📞 Qo'ng'iroq qilmoqda...", icon: senderIcon, fromUid: r.caller_id, callId: r.id };
     ttl = 30; urgency = "high";
   } else {
     return ok("skip");
