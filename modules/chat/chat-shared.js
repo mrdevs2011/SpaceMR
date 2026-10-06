@@ -6,6 +6,7 @@
  * DM-maxsus yoki guruh-maxsus biznes-logika bu yerga kiritilmaydi.
  */
 
+import "./chat-pin.js";
 import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
 import { toast } from '../ui/toast.js';

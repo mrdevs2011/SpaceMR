@@ -120,6 +120,7 @@ const PRECACHE_URLS = [
   '/modules/call/call.js',
   '/modules/chat/chat-media.js',
   '/modules/chat/chat-shared.js',
+  '/modules/chat/chat-pin.js',
   '/modules/chat/chat-storage.js',
   '/modules/chat/chat-voice-player.js',
   '/modules/chat/chat-voice-record.js',
