@@ -6,6 +6,7 @@ import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
 import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
+import './post-image-zoom.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration } from '../core/video-policy.js';
 // Feed/upload native <video controls>: WebM duration Infinity → progress oxirida qotadi
@@ -60,9 +61,13 @@ export function buildMedia(p) {
   const ratio = (p.mediaWidth && p.mediaHeight)
     ? ` style="aspect-ratio:${p.mediaWidth}/${p.mediaHeight}"`
     : '';
-  if (p.mediaType?.startsWith('image'))
-    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio}><img src="${esc(p.mediaUrl)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
-  if (p.mediaType?.startsWith('video'))
+  const mt = (p.mediaType || '').toLowerCase();
+  const urlL = String(p.mediaUrl || '').toLowerCase();
+  const isImg = mt.startsWith('image') || /\.(jpe?g|png|gif|webp|avif|heic|bmp)(\?|$)/i.test(urlL);
+  const isVid = mt.startsWith('video') || /\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(urlL);
+  if (isImg)
+    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(p.mediaUrl)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
+  if (isVid)
     return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(p.mediaUrl)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}">
     <div class="file-card-icon">${getFileIcon(p.fileName||'', p.mediaType||'')}</div>
@@ -520,11 +525,16 @@ function bindFeedEvents(feedEl) {
   _feedBoundEls.add(feedEl);
   feedEl.addEventListener('click', async (e) => {
     const t = e.target;
-    // Post rasm → lightbox (pinch zoom)
+    // Post rasm → lightbox (chatdagi kabi zoom)
     const media = t.closest('.post-media');
-    if (media && media.dataset.type === 'image') {
-      const url = media.dataset.url || media.querySelector('img')?.src;
-      if (url) { e.stopPropagation(); openZoom(url, 'image'); return; }
+    if (media && (media.dataset.type === 'image' || media.querySelector('img'))) {
+      const url = media.dataset.url || media.querySelector('img')?.currentSrc || media.querySelector('img')?.src;
+      if (url && !t.closest('video, a, button')) {
+        e.preventDefault();
+        e.stopPropagation();
+        openZoom(url, 'image');
+        return;
+      }
     }
     const like = t.closest('.like-btn');
     if (like) { e.stopPropagation(); doLike(like.dataset.id, like); return; }

@@ -976,6 +976,9 @@
 #zoomModal.zoom-image .zoom-x { display: none !important; }
 #zoomModal.zoom-avatar .zoom-x { display: none !important; }
 .post-media { cursor: zoom-in; }
+.post-media[data-type="image"] { cursor: zoom-in; }
+.post-media[data-type="image"]:hover { filter: brightness(1.03); }
+.post-media[data-type="video"] { cursor: default; }
 .post-media img { pointer-events: none; } /* click .post-media ga tushadi */
 
 .zoom-x {
