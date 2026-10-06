@@ -92,7 +92,7 @@ a { color: var(--link); }
 .empty-cta, .empty-cta * { color: var(--pal-white); }
 .toast-progress, .toast-progress * { color: var(--pal-white); }
 .nav-badge, .nav-badge * { color: var(--pal-white); }
-.upload-float-bar, .upload-float-bar * { color: var(--pal-white); }
+/* upload-float colors: features.css (light/dark) */
 .ufb-fill.indeterminate, .ufb-fill.indeterminate * { color: var(--pal-white); }
 .cc-btn--apply, .cc-btn--apply * { color: var(--pal-white); }
 .bc-send-btn, .bc-send-btn * { color: var(--pal-white); }

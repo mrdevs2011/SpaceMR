@@ -303,59 +303,76 @@ async function _prepareUploadFile(file, label) {
 function floatBarShow(kind) {
   const bar = $('uploadFloatBar');
   if (!bar) return;
-  const label = kind === 'story' ? 'Story yuklanmoqda'
-    : kind === 'post' ? 'Post yuklanmoqda'
-    : 'Yuklanmoqda';
-  $('ufbName').textContent = label;
-  const fill = $('ufbFill');
-  if (fill) { fill.style.width = '0%'; fill.classList.remove('indeterminate'); }
-  $('ufbPct').textContent = '0%';
-  const icon = bar.querySelector('.ufb-icon');
-  if (icon) {
-    icon.classList.remove('done', 'fail');
-    icon.innerHTML = '<img src="./svg/action/arrow-up.svg" alt="" class="icon" width="14" height="14">';
+  const label = kind === 'story' ? 'Story'
+    : kind === 'post' ? 'Post'
+    : 'Yuklash';
+  const nameEl = $('ufbName');
+  if (nameEl) nameEl.textContent = label;
+  const ring = $('ufbRing');
+  if (ring) {
+    ring.classList.remove('indeterminate', 'done', 'fail');
+    ring.setAttribute('stroke-dasharray', '0 100');
+    ring.style.stroke = '';
   }
+  const pctEl = $('ufbPct');
+  if (pctEl) pctEl.textContent = '0%';
   bar.classList.remove('d-none');
   bar.style.display = 'flex';
 }
 
 function floatBarUpdate(pct) {
-  const fill = $('ufbFill');
+  const ring = $('ufbRing');
   const pctEl = $('ufbPct');
-  if (!fill) return;
-  if (pct >= 95) {
-    fill.classList.add('indeterminate');
+  if (!ring) return;
+  const p = Math.max(0, Math.min(100, pct));
+  if (p >= 95) {
+    ring.classList.add('indeterminate');
+    ring.setAttribute('stroke-dasharray', '30 100');
     if (pctEl) pctEl.textContent = '…';
   } else {
-    fill.classList.remove('indeterminate');
-    fill.style.width = pct + '%';
-    if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+    ring.classList.remove('indeterminate');
+    ring.setAttribute('stroke-dasharray', Math.round(p) + ' 100');
+    if (pctEl) pctEl.textContent = Math.round(p) + '%';
   }
 }
 
 function floatBarDone(success) {
-  const bar  = $('uploadFloatBar');
-  const icon = bar?.querySelector('.ufb-icon');
-  const fill = $('ufbFill');
+  const bar = $('uploadFloatBar');
   if (!bar) return;
-  fill?.classList.remove('indeterminate');
-  if (fill) fill.style.width = '100%';
-  $('ufbPct').textContent = success ? '✓' : '!';
-  $('ufbName').textContent = success ? 'Tayyor' : 'Xato';
-  if (icon) {
-    icon.classList.remove('done', 'fail');
-    icon.classList.add(success ? 'done' : 'fail');
-    icon.innerHTML = success
-      ? '<img src="./svg/ui/check.svg" alt="" class="icon" width="14" height="14">'
-      : '<img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">';
+  const ring = $('ufbRing');
+  if (ring) {
+    ring.classList.remove('indeterminate');
+    ring.setAttribute('stroke-dasharray', '100 100');
+    ring.style.stroke = success ? '#00ba7c' : '#f4212e';
   }
-  setTimeout(() => {
-    if (bar) { bar.style.display = 'none'; bar.classList.add('d-none'); }
-    if (icon) {
-      icon.classList.remove('done', 'fail');
-      icon.innerHTML = '<img src="./svg/action/arrow-up.svg" alt="" class="icon" width="14" height="14">';
-    }
-  }, 1800);
+  const pctEl = $('ufbPct');
+  if (pctEl) pctEl.textContent = success ? '✓' : '!';
+  setTimeout(() => { floatBarHide(); }, 1400);
+}
+
+function floatBarHide() {
+  const bar = $('uploadFloatBar');
+  if (!bar) return;
+  bar.style.display = 'none';
+  bar.classList.add('d-none');
+  const ring = $('ufbRing');
+  if (ring) {
+    ring.classList.remove('indeterminate');
+    ring.setAttribute('stroke-dasharray', '0 100');
+    ring.style.stroke = '';
+  }
+  const pctEl = $('ufbPct');
+  if (pctEl) pctEl.textContent = '0%';
+}
+
+// X — float barni yopish (upload fonida davom etishi mumkin)
+{
+  const btn = $('ufbClose');
+  if (btn) btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    floatBarHide();
+  });
 }
 
 /* ── Yuklash / Post ───────────────────────────────────────────────────── */

@@ -350,7 +350,7 @@ function ensureDom() {
         _holdTimer = setTimeout(() => {
           _isHolding = true;
           _startHold(zone);
-        }, 140);
+        }, 500);
       });
 
       v.addEventListener('pointermove', e => {

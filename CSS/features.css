@@ -261,28 +261,99 @@
 /* Feed Subscribe Button */
 /* ═══════════════════════════════════════════════ FLOATING UPLOAD PROGRESS BAR ══════════════════════════════... */
 .upload-float-bar {
-  /* Har qanday device: viewport bottom-center float */
+  /* Kichik kvadrat — pastki o'ng, xalaqit bermaydi */
   position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px) + var(--content-bottom, var(--nav, 0px)));
-  transform: translateX(-50%);
+  left: auto;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px) + var(--content-bottom, var(--nav, 0px)));
+  transform: none;
   margin: 0;
-  background: #000000;
-  border: 1px solid rgba(231, 233, 234, 0.1);
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  padding: 8px 6px 6px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
-  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+[data-theme="dark"] .upload-float-bar {
+  background: #16181c;
+  border-color: rgba(231, 233, 234, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+.ufb-ring-wrap {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  position: relative;
+}
+.ufb-ring {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform: rotate(-90deg);
+}
+.ufb-ring-bg {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .ufb-ring-bg {
+  stroke: rgba(231, 233, 234, 0.12);
+}
+.ufb-ring-fg {
+  stroke: #00ba7c;
+  transition: stroke-dasharray 0.2s ease;
+}
+.ufb-ring-fg.indeterminate {
+  animation: ufb-spin 0.9s linear infinite;
+  stroke-dasharray: 30 100;
+}
+@keyframes ufb-spin {
+  to { transform: rotate(360deg); }
+}
+.ufb-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: #0f1419;
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  max-width: 100%;
+  overflow: hidden;
+}
+[data-theme="dark"] .ufb-pct { color: #e7e9ea; }
+.ufb-name { display: none !important; }
+.ufb-close {
+  pointer-events: auto;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
-  gap: 12px;
-  z-index: 9999;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-  min-width: 220px;
-  width: max-content;
-  max-width: min(320px, calc(100vw - 32px));
-  box-sizing: border-box;
-  pointer-events: none; /* scrollni to'smasin */
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+  -webkit-tap-highlight-color: transparent;
 }
+.ufb-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.12); }
+[data-theme="dark"] .ufb-close { background: rgba(231, 233, 234, 0.1); }
+.ufb-close .icon { display: block; opacity: 0.85; }
 .ufb-icon {
   width: 32px; height: 32px; border-radius: 50%;
   background: rgba(231, 233, 234, 0.1);

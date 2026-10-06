@@ -1159,15 +1159,19 @@ html[data-nf],html[data-nf] body{background:#000000}
 <div id="toast"></div>
 
 <!-- FLOATING UPLOAD PROGRESS -->
-<div id="uploadFloatBar" class="upload-float-bar d-none">
-  <div class="ufb-icon">
-    <img src="./svg/action/arrow-up.svg" alt="" class="icon" width="14" height="14">
-  </div>
-  <div class="ufb-body">
-    <div class="ufb-name" id="ufbName">Yuklanmoqda...</div>
-    <div class="ufb-track"><div class="ufb-fill" id="ufbFill"></div></div>
+<div id="uploadFloatBar" class="upload-float-bar d-none" role="status" aria-live="polite">
+  <button type="button" class="ufb-close" id="ufbClose" aria-label="Yopish" title="Yopish">
+    <img src="./svg/action/close.svg" alt="" class="icon" width="10" height="10">
+  </button>
+  <div class="ufb-ring-wrap">
+    <svg class="ufb-ring" viewBox="0 0 36 36" aria-hidden="true">
+      <circle class="ufb-ring-bg" cx="18" cy="18" r="15" fill="none" stroke-width="3"/>
+      <circle class="ufb-ring-fg" id="ufbRing" cx="18" cy="18" r="15" fill="none" stroke-width="3"
+        stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+    </svg>
   </div>
   <div class="ufb-pct" id="ufbPct">0%</div>
+  <div class="ufb-name d-none" id="ufbName">Yuklanmoqda...</div>
 </div>
 
 <script type="module">
@@ -1248,6 +1252,18 @@ html[data-nf],html[data-nf] body{background:#000000}
         } catch (_) {}
       });
     }
+    /** Faqat F5 / Ctrl+R (navigation type=reload) da toast; SPA/background update da chiqmasin */
+    function _isPageReload() {
+      try {
+        var nav = performance.getEntriesByType && performance.getEntriesByType('navigation');
+        if (nav && nav[0] && nav[0].type === 'reload') return true;
+      } catch (_) {}
+      try {
+        // eski Safari / fallback
+        if (performance.navigation && performance.navigation.type === 1) return true;
+      } catch (_) {}
+      return false;
+    }
     navigator.serviceWorker.addEventListener('controllerchange', function() {
       if (_swRefreshing) return;
       _swRefreshing = true;
@@ -1262,15 +1278,16 @@ html[data-nf],html[data-nf] body{background:#000000}
       return navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
     }).then(function(reg) {
       if (!reg) return;
-      if (reg.waiting) _promptUpdate(reg.waiting);
+      // Toast FAQAT sahifa reload (F5/Ctrl+R) da — waiting SW bo'lsa
+      if (_isPageReload() && reg.waiting) _promptUpdate(reg.waiting);
+      // Background update: faqat yuklab oladi, toast ko'rsatmaydi
       reg.addEventListener('updatefound', function() {
         var nw = reg.installing;
         if (!nw) return;
-        nw.addEventListener('statechange', function() {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) _promptUpdate(nw);
-        });
+        // statechange kuzatiladi lekin toast yo'q — keyingi F5 da chiqadi
+        nw.addEventListener('statechange', function() {});
       });
-      // Davriy yangilanish tekshiruvi (1 soat)
+      // Davriy yangilanish tekshiruvi (1 soat) — toast yo'q, faqat SW yangilanadi
       setInterval(function() { try { reg.update(); } catch (_) {} }, 3600000);
     }).catch(function() {});
   }

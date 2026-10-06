@@ -61,6 +61,7 @@ initNavigation();
 
 /* ── Lazy-import modules ─────────────────────────────────────────────── */
 import('./feed/upload.js');
+import('./core/video-hold-speed.js');
 import('./ui/shortcuts.js');
 import('./ui/sidebar.js');
 import('./ui/notifs.js');

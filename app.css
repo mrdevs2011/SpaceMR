@@ -634,28 +634,99 @@ body { min-height: 100vh; min-height: 100dvh; background: #000000; overscroll-be
 /* Feed Subscribe Button */
 /* ═══════════════════════════════════════════════ FLOATING UPLOAD PROGRESS BAR ══════════════════════════════... */
 .upload-float-bar {
-  /* Har qanday device: viewport bottom-center float */
+  /* Kichik kvadrat — pastki o'ng, xalaqit bermaydi */
   position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px) + var(--content-bottom, var(--nav, 0px)));
-  transform: translateX(-50%);
+  left: auto;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px) + var(--content-bottom, var(--nav, 0px)));
+  transform: none;
   margin: 0;
-  background: #000000;
-  border: 1px solid rgba(231, 233, 234, 0.1);
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  padding: 8px 6px 6px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
-  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+[data-theme="dark"] .upload-float-bar {
+  background: #16181c;
+  border-color: rgba(231, 233, 234, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+.ufb-ring-wrap {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  position: relative;
+}
+.ufb-ring {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform: rotate(-90deg);
+}
+.ufb-ring-bg {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+[data-theme="dark"] .ufb-ring-bg {
+  stroke: rgba(231, 233, 234, 0.12);
+}
+.ufb-ring-fg {
+  stroke: #00ba7c;
+  transition: stroke-dasharray 0.2s ease;
+}
+.ufb-ring-fg.indeterminate {
+  animation: ufb-spin 0.9s linear infinite;
+  stroke-dasharray: 30 100;
+}
+@keyframes ufb-spin {
+  to { transform: rotate(360deg); }
+}
+.ufb-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: #0f1419;
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  max-width: 100%;
+  overflow: hidden;
+}
+[data-theme="dark"] .ufb-pct { color: #e7e9ea; }
+.ufb-name { display: none !important; }
+.ufb-close {
+  pointer-events: auto;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
-  gap: 12px;
-  z-index: 9999;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-  min-width: 220px;
-  width: max-content;
-  max-width: min(320px, calc(100vw - 32px));
-  box-sizing: border-box;
-  pointer-events: none; /* scrollni to'smasin */
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+  -webkit-tap-highlight-color: transparent;
 }
+.ufb-close:hover { opacity: 1; background: rgba(0, 0, 0, 0.12); }
+[data-theme="dark"] .ufb-close { background: rgba(231, 233, 234, 0.1); }
+.ufb-close .icon { display: block; opacity: 0.85; }
 .ufb-icon {
   width: 32px; height: 32px; border-radius: 50%;
   background: rgba(231, 233, 234, 0.1);
@@ -4124,14 +4195,7 @@ svg { color: inherit; }
   body { background: var(--pal-white); color: var(--pal-black); }
   .post { break-inside: avoid; page-break-inside: avoid; }
 }
-/* Upload float bar: har qanday device — faqat viewport bottom-center (sidebar offset yo'q) */
-@media (min-width: 1100px) {
-  .upload-float-bar {
-    left: 50%;
-    margin-left: 0;
-    transform: translateX(-50%);
-  }
-}
+/* Upload float bar: pastki o'ng (features.css) — markazlashmasin */
 /* ═══════════════════════════════════════════════════════════════════════ YAKUNIY POLISH — flat (X.com uslubi... */
 /* .app-hdr glow/shimmer bloki o'chirildi — CSS/00-components.core.css allaqachon flat .app-hdr'ni belgilaydi.... */
 /* header icon buttons — flat, oddiy hover */
@@ -4337,7 +4401,7 @@ svg { color: inherit; }
 [data-theme="dark"] .theme-btn { color: var(--text2); }
 [data-theme="dark"] .theme-btn:hover { background: var(--pal-gray-900); color: var(--text); }
 /* ══════════════════════════════════════════ 27. FLOATING UPLOAD BAR — Pill ═════════════════════════════════... */
-[data-theme="dark"] .upload-float-bar { background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8); }
+/* upload-float dark: features.css */
 [data-theme="dark"] .upload-drop { background: var(--pal-black); border: 1px dashed var(--pal-gray-900); }
 [data-theme="dark"] .upload-drop:hover { border-color: var(--pal-white); background: var(--pal-black); }
 [data-theme="dark"] .upload-drop.drag-over { border-color: var(--blue); background: var(--pal-gray-900); box-shadow: 0 0 0 3px var(--pal-gray-900), inset 0 1px 0 var(--pal-gray-900); }
@@ -4433,7 +4497,7 @@ svg { color: inherit; }
 .search-overlay-box, [data-theme="dark"] .search-overlay-box { border: none; box-shadow: none; }
 .search-overlay-close, [data-theme="dark"] .search-overlay-close { border: none; box-shadow: none; }
 /* Upload float bar */
-.upload-float-bar, [data-theme="dark"] .upload-float-bar { border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8); }
+/* upload-float shadow: features.css */
 /* Upload drop zone — border/hover feedback owned by nav.css, no override here */
 /* Empty state icons */
 .feed-empty-icon, .empty-icon, .empty-search-icon, [data-theme="dark"] .feed-empty-icon, [data-theme="dark"] .empty-icon, [data-theme="dark"] .empty-search-icon { border: none; box-shadow: none; }
@@ -5795,7 +5859,7 @@ a { color: var(--link); }
 .empty-cta, .empty-cta * { color: var(--pal-white); }
 .toast-progress, .toast-progress * { color: var(--pal-white); }
 .nav-badge, .nav-badge * { color: var(--pal-white); }
-.upload-float-bar, .upload-float-bar * { color: var(--pal-white); }
+/* upload-float colors: features.css (light/dark) */
 .ufb-fill.indeterminate, .ufb-fill.indeterminate * { color: var(--pal-white); }
 .cc-btn--apply, .cc-btn--apply * { color: var(--pal-white); }
 .bc-send-btn, .bc-send-btn * { color: var(--pal-white); }
