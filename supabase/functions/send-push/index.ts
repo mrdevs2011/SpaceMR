@@ -13,6 +13,10 @@ webpush.setVapidDetails(
   Deno.env.get("VAPID_SECRET_KEY")!,
 );
 
+// Asosiy domen. Foydalanuvchida shu domendan obuna bo'lsa, eski/qo'shimcha domenlarga (mrspace, mrgram ...) yuborilmaydi —
+// aks holda bitta xabar har domen uchun alohida bildirishnoma bo'lib, 3 marta keladi.
+const CANON_ORIGIN = (Deno.env.get("PUSH_CANONICAL_ORIGIN") ?? "https://spacemr.vercel.app").replace(/\/$/, "");
+
 const ok = (b = "ok") => new Response(b, { status: 200 });
 
 /** bo'sh joylarni yig'ib, uzun matnni "…" bilan qisqartiradi */
@@ -113,7 +117,9 @@ Deno.serve(async (req) => {
 
   if (!recipients.length) return ok("no recipients");
 
-  const { data: rows } = await sb.from("push_tokens").select("token").in("user_id", recipients);
+  const { data: all } = await sb.from("push_tokens").select("token, user_id, origin").in("user_id", recipients);
+  const canonUsers = new Set((all ?? []).filter((t) => t.origin === CANON_ORIGIN).map((t) => t.user_id));
+  const rows = (all ?? []).filter((t) => !canonUsers.has(t.user_id) || t.origin === CANON_ORIGIN);
   const msg = JSON.stringify(payload);
   const dead: string[] = [];
 

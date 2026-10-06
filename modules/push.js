@@ -114,6 +114,7 @@ export async function initPush() {
     const { error } = await sb.rpc('register_push_token', {
       p_token: JSON.stringify(sub.toJSON()),
       p_platform: _platform(),
+      p_origin: location.origin,
     });
     if (error) throw error;
 
