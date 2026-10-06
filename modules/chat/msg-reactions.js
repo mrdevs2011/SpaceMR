@@ -198,7 +198,7 @@ export const HOVER_SET = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '�
 const QK = 'spacemr_react_quick';
 const canHover = () => !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
 let hb = null, hp = null, hRow = null, hideT = 0, openT = 0, dwellT = 0, dwellRow = null;
-const DWELL_MS = 2000;   // xabar ustida shuncha turilgandan keyin tezkor reaksiya tugmasi chiqadi
+const DWELL_MS = 1000;   // xabar ustida shuncha turilgandan keyin tezkor reaksiya tugmasi chiqadi
 const quick = () => { try { const q = localStorage.getItem(QK); if (q && HOVER_SET.includes(q)) return q; } catch (_) {} return HOVER_SET[0]; };
 const setQuick = e => { try { localStorage.setItem(QK, e); } catch (_) {} };
 const mineOn = row => !!byMsg.get(row?.dataset?.msgId)?.get(me());
