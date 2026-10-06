@@ -156,3 +156,9 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 .inc-call-btn.reject { background: #ff3b30; box-shadow: 0 6px 22px rgba(255,59,48,.45); }
 .inc-call-btn.accept { background: #34c759; box-shadow: 0 6px 22px rgba(52,199,89,.45); }
 .incoming-call-btns { max-width: 300px; }
+
+/* Sozlamalar (mobil/planshet <1200px): to'liq ekran sahifa — ilova headeri (z-index 200) uning o'z sarlavhasini
+   (orqaga chevron) yopib qo'yardi. Sozlamalar ochiq turganda ilova headeri yashiriladi. Desktop (>=1200) da panel o'ng rail ichida. */
+@media (max-width: 1199.98px) {
+  body:has(#settingsOverlay.show) #appHdr { display: none !important; }
+}

@@ -8742,6 +8742,13 @@ button:focus-visible,
 .emj,
 .chat-msg.emoji-only .chat-bubble-text { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
+/* Emoji rasmlari (Noto WebP, modules/ui/emoji-img.js). em bilan o'lchanadi — har joyning font-size'iga moslashadi.
+   pointer-events:none: bosish/uzoq bosish ota elementga (tugma, xabar) o'tadi, "rasmni saqlash" menyusi chiqmaydi. */
+.emo-img { display: inline-block; width: 1.18em; height: 1.18em; vertical-align: -0.24em; object-fit: contain; pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-user-select: none; }
+.ep-e .emo-img, .mc-r .emo-img, .hp-e .emo-img, #msgHoverReact .emo-img, .mr-e .emo-img, .sl-react .emo-img { display: block; margin: auto; vertical-align: middle; }
+.mr-e { display: inline-flex; align-items: center; }
+.chat-msg.emoji-only .emo-img { width: 1.1em; height: 1.1em; vertical-align: middle; }
+
 /* ═══════════════════════════════════════════════════════════════════════
    SEMANTIC COLOR THEME: Black/White + Blue (actions) + Red (danger/like)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -14964,3 +14971,9 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 .inc-call-btn.reject { background: #ff3b30; box-shadow: 0 6px 22px rgba(255,59,48,.45); }
 .inc-call-btn.accept { background: #34c759; box-shadow: 0 6px 22px rgba(52,199,89,.45); }
 .incoming-call-btns { max-width: 300px; }
+
+/* Sozlamalar (mobil/planshet <1200px): to'liq ekran sahifa — ilova headeri (z-index 200) uning o'z sarlavhasini
+   (orqaga chevron) yopib qo'yardi. Sozlamalar ochiq turganda ilova headeri yashiriladi. Desktop (>=1200) da panel o'ng rail ichida. */
+@media (max-width: 1199.98px) {
+  body:has(#settingsOverlay.show) #appHdr { display: none !important; }
+}
