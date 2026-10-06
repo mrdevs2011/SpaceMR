@@ -188,7 +188,7 @@ function loadRecent() {
   }
   box.innerHTML = posts.map(p => {
     const name = p.userFullName || 'Kimdir';
-    const text = (p.text || '').trim().replace(/\s+/g, ' ').slice(0, 60) || (p.mediaType ? 'Media' : 'Post');
+    const text = (p.text || '').trim().replace(/\s+/g, ' ').slice(0, 60) || (p.mediaType ? 'Media' : 'Yozuv');
     const uid = p.userId || '';
     const av = state._userCache?.[uid]?.avatar || '';
     return `<button type="button" class="rr-row" data-rr-post="${esc(p.id)}" data-rr-user="${esc(uid)}">

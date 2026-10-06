@@ -153,10 +153,10 @@ function _setComposerMode(mode) {
   _composerMode = mode;
   const story = mode === 'story';
   const cap = $('captionInput');
-  cap.placeholder = story ? "Story 24 soat davomida ko'rinadi. Izoh yozing (ixtiyoriy)…" : _POST_PLACEHOLDER;
+  cap.placeholder = story ? "Hikoya 24 soat davomida ko'rinadi. Izoh yozing (ixtiyoriy)…" : _POST_PLACEHOLDER;
   if (story) cap.maxLength = STORY_CAPTION_MAX; else cap.removeAttribute('maxlength');
   $('fileInput').accept = story ? 'image/*,video/*' : (ALLOWED_UPLOAD_ACCEPT || '');
-  $('uploadDrop').setAttribute('aria-label', story ? 'Story uchun rasm yoki video tanlash' : "Rasm, video yoki fayl qo'shish");
+  $('uploadDrop').setAttribute('aria-label', story ? 'Hikoya uchun rasm yoki video tanlash' : "Rasm, video yoki fayl qo'shish");
 }
 
 /* ── Button enable/disable check ────────────────────────────────────── */
@@ -177,7 +177,7 @@ export function resetUpload() {
   $('previewArea').innerHTML = '';
   $('captionInput').value = '';
   $('uploadBtn').disabled = true;
-  $('uploadBtn').textContent = 'Post';
+  $('uploadBtn').textContent = 'Joylash';
   $('sizeWarn').textContent = '';
   hideProgress();
 }
@@ -307,8 +307,8 @@ async function _prepareUploadFile(file, label) {
 function floatBarShow(kind) {
   const bar = $('uploadFloatBar');
   if (!bar) return;
-  const label = kind === 'story' ? 'Story'
-    : kind === 'post' ? 'Post'
+  const label = kind === 'story' ? 'Hikoya'
+    : kind === 'post' ? 'Joylash'
     : 'Yuklash';
   const nameEl = $('ufbName');
   if (nameEl) nameEl.textContent = label;
@@ -467,12 +467,12 @@ async function submitStory() {
   } catch (err) {
     clearInterval(simInterval);
     floatBarDone(false);
-    toast('Story yuklanmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
+    toast('Hikoya yuklanmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
     if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
     import('./stories.js').then(m => m.loadStories()).catch(() => {});
   } finally {
     $('uploadBtn').disabled = false;
-    $('uploadBtn').textContent = 'Post';
+    $('uploadBtn').textContent = 'Joylash';
   }
 }
 
@@ -604,7 +604,7 @@ export async function submitPost() {
     if (localBlob) try { URL.revokeObjectURL(localBlob); } catch (_) {}
   } finally {
     $('uploadBtn').disabled = false;
-    $('uploadBtn').textContent = 'Post';
+    $('uploadBtn').textContent = 'Joylash';
   }
 }
 
@@ -640,7 +640,7 @@ export function openStoryComposer() {
   lockScroll('uploadOverlay');
   resetUpload();
   _setComposerMode('story');
-  $('uploadBtn').textContent = 'Story';
+  $('uploadBtn').textContent = 'Hikoya';
   loadComposerAvi();
 }
 $('createBtn').onclick     = openComposer;
@@ -775,7 +775,7 @@ async function _submitHomePost() {
   try {
     await submitPost();
   } finally {
-    if (hbtn) hbtn.textContent = 'Post';
+    if (hbtn) hbtn.textContent = 'Joylash';
     _syncHomeUi();
   }
 }

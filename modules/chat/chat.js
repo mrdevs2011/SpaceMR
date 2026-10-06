@@ -2210,7 +2210,19 @@ export function paintMessages(msgs, grp = null) {
   const _parts = msgs.map((m, idx) => {
     const mine = m.senderId === state.me?.uid;
     const time = fmtTime(m.createdAt);
-    const _leaveTxt = typeof m.text === 'string' && / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/.test(m.text) ? m.text : '';
+    let _leaveTxt = '';
+    if (typeof m.text === 'string') {
+      const _sysEn = / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/;
+      const _sysUz = / (guruhga qo'shildi|guruhdan chiqdi|guruh nomini o'zgartirdi|guruh rasmini o'zgartirdi|guruh usernameini o'zgartirdi)$/;
+      if (_sysEn.test(m.text) || _sysUz.test(m.text)) {
+        _leaveTxt = m.text
+          .replace(/ joined the group$/, " guruhga qo'shildi")
+          .replace(/ left the group$/, ' guruhdan chiqdi')
+          .replace(/ changed the group photo$/, " guruh rasmini o'zgartirdi")
+          .replace(/ changed the group username$/, " guruh usernameini o'zgartirdi")
+          .replace(/ changed the group name$/, " guruh nomini o'zgartirdi");
+      }
+    }
     if (_leaveTxt) {
       const prevMsg0 = msgs[idx - 1];
       const curDate0 = _toDateSafe(m.createdAt);

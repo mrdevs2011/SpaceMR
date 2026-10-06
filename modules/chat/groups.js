@@ -171,14 +171,14 @@ async function _joinedNotices(groupId, uids) {
   for (const uid of ids) {
     const u = map[uid];
     const name = (u?.fullName || u?.username || 'User').trim() || 'User';
-    await _postGroupNotice(groupId, name + ' joined the group');
+    await _postGroupNotice(groupId, name + ' guruhga qo\'shildi');
   }
 }
 
 export async function joinGroup(groupId) {
   if (!state.me?.uid || !groupId) return;
   await _addMembers(groupId, [state.me.uid]);
-  await _postGroupNotice(groupId, _myNoticeName() + ' joined the group');
+  await _postGroupNotice(groupId, _myNoticeName() + ' guruhga qo\'shildi');
   _pushGroupMeta(groupId, { count: ((_latestGroupMap[groupId]?.members || []).length || 0) + 1 });
 }
 
@@ -192,9 +192,9 @@ export async function leaveGroup(groupId) {
       group_id: groupId,
       sender_id: state.me.uid,
       type: 'text',
-      text: name + ' left the group',
+      text: name + ' guruhdan chiqdi',
     });
-    if (note.error && !/left the group/.test(note.error.message || '')) {
+    if (note.error && !/left the group|guruhdan chiqdi/.test(note.error.message || '')) {
       console.warn('[leave] notice:', note.error.message);
     }
     await _removeMember(groupId, state.me.uid);
@@ -296,7 +296,7 @@ function _gIncoming(groupId, m) {
   if (!m?.id || _currentGroupId !== groupId || !_gLoaded) return;
   if (_gPending.has(m.id) || _gMsgs.some(x => x.id === m.id)) return;
   if (m.from === state.me?.uid && !m.notice) return;
-  const notice = m.notice || / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/.test(m.text || '');
+  const notice = m.notice || / (joined the group|left the group|changed the group photo|changed the group username|changed the group name|guruhga qo'shildi|guruhdan chiqdi|guruh nomini o'zgartirdi|guruh rasmini o'zgartirdi|guruh usernameini o'zgartirdi)$/.test(m.text || '');
   if (!notice && !(_currentGroupData?.members || []).includes(m.from) && m.from !== state.me?.uid) return;
   const now = Date.now();
   const type = m.type || 'text';
@@ -896,7 +896,7 @@ export async function sendGroupMessage(opts) {
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
-    ? (userText ? userText : `Post: ${postShare.authorName || 'Post'}`)
+    ? (userText ? userText : `Yozuv: ${postShare.authorName || 'Yozuv'}`)
     : (gifText != null ? 'GIF' : userText.slice(0, 120));
 
   const groupId = _currentGroupId;
@@ -1426,9 +1426,9 @@ export function openGroupEdit(groupId, g) {
     try {
       const who = _myNoticeName();
       const notices = [];
-      if (name !== (g.name || '')) notices.push(who + ' changed the group name');
-      if (_grpEditPendingAviUrl && _grpEditPendingAviUrl !== (g.avatar || '')) notices.push(who + ' changed the group photo');
-      if ((updates.username || '') !== (g.username || '')) notices.push(who + ' changed the group username');
+      if (name !== (g.name || '')) notices.push(who + ' guruh nomini o\'zgartirdi');
+      if (_grpEditPendingAviUrl && _grpEditPendingAviUrl !== (g.avatar || '')) notices.push(who + ' guruh rasmini o\'zgartirdi');
+      if ((updates.username || '') !== (g.username || '')) notices.push(who + ' guruh usernameini o\'zgartirdi');
       await _updateGroup(groupId, updates);
       for (const line of notices) await _postGroupNotice(groupId, line);
       _pushGroupMeta(groupId, {

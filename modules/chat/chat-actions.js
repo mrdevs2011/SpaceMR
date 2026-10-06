@@ -46,7 +46,7 @@ export async function sendChatMessage(opts) {
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
-    ? (userText ? userText : `Post: ${postShare.authorName || 'Post'}`)
+    ? (userText ? userText : `Yozuv: ${postShare.authorName || 'Yozuv'}`)
     : (gifText != null ? 'GIF' : userText.slice(0, 120));
 
   // 1) Optimistik: o'z xabarimiz shu zahoti ekranda (DB javobini kutmaymiz)

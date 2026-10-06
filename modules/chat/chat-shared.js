@@ -106,8 +106,8 @@ export function formatLastMessageText(raw, mine = false) {
   const ps = parsePostShare(raw);
   if (ps) {
     if (ps.comment && String(ps.comment).trim()) return String(ps.comment).trim();
-    const name = ps.post?.authorName ? String(ps.post.authorName) : 'Post';
-    return `Post: ${name}`;
+    const name = ps.post?.authorName ? String(ps.post.authorName) : 'Yozuv';
+    return `Yozuv: ${name}`;
   }
   const t = String(raw).trim();
   // JSON / ichki format — foydalanuvchiga ko'rsatilmasin
