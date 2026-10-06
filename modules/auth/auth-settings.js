@@ -191,12 +191,11 @@ if (fullAppReloadBtn) {
       console.warn('[fullReload]', e);
     }
     // Cache-bust: brauzer hammasi yangidan so'rasin; SW endi yo'q
+    // Butun ilova: root + cache-bust (joriy /profile va h.k. da qolmasin)
     try {
-      const u = new URL(location.href);
-      u.searchParams.set('_full', String(Date.now()));
-      location.replace(u.pathname + u.search + (u.hash || ''));
+      location.replace('/?_full=' + String(Date.now()));
     } catch (_) {
-      location.reload();
+      location.href = '/?_full=' + String(Date.now());
     }
   };
 }

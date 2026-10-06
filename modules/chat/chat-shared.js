@@ -97,6 +97,7 @@ export function parseGif(raw) {
   return null;
 }
 
+/** Chat prevyusi: hech qachon JSON/URL ko'rsatilmasin */
 export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
   if (parseGif(raw)) return 'GIF';
@@ -104,13 +105,40 @@ export function formatLastMessageText(raw, mine = false) {
   if (cl) return callLogInfo(cl, mine).title;
   const ps = parsePostShare(raw);
   if (ps) {
-    if (ps.comment && ps.comment.trim()) {
-      return ps.comment.trim();
-    }
-    const name = ps.post?.authorName ? `${ps.post.authorName}` : 'Post';
+    if (ps.comment && String(ps.comment).trim()) return String(ps.comment).trim();
+    const name = ps.post?.authorName ? String(ps.post.authorName) : 'Post';
     return `Post: ${name}`;
   }
+  const t = String(raw).trim();
+  // JSON / ichki format — foydalanuvchiga ko'rsatilmasin
+  if (t.startsWith('{') && (t.includes('"__gif"') || t.includes('"__postShare"') || t.includes('"__callLog"'))) {
+    return 'Xabar';
+  }
+  // Yalang'och media URL
+  if (/^https?:\/\/\S+\.(gif|webp|mp4|webm|mov)(\?\S*)?$/i.test(t)) return 'Media';
+  if (/^https?:\/\/static\.klipy\.com\//i.test(t)) return 'GIF';
   return raw;
+}
+
+/** Reply / quote / list: type + text + fileName asosida odam o'qiydigan matn */
+export function humanMsgPreview(m) {
+  if (!m) return 'Xabar';
+  if (m.type === 'voice') return 'Ovozli xabar';
+  if (m.type === 'file') {
+    const fn = m.fileName || m.file_name || '';
+    if (/^vnote_/i.test(fn)) return 'Dumaloq video';
+    if (/\.(mp4|webm|mov)(\?|$)/i.test(fn) || (m.mime || '').startsWith('video/')) return 'Video';
+    if (/\.(gif)(\?|$)/i.test(fn)) return 'GIF';
+    if (/\.(jpe?g|png|webp|heic)(\?|$)/i.test(fn) || (m.mime || '').startsWith('image/')) return 'Rasm';
+    return m.fileName || 'Fayl';
+  }
+  const raw = m.text || '';
+  const nice = formatLastMessageText(raw, false);
+  if (nice && nice !== raw) return nice;
+  const t = String(raw).replace(/\s+/g, ' ').trim();
+  if (!t) return 'Xabar';
+  if (t.startsWith('{') && t.includes('"__')) return 'Xabar';
+  return t.slice(0, 140);
 }
 
 /* ── Pending upload bubble (umumiy thread DOM) ─────────────────────────── */

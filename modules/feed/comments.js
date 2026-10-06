@@ -370,8 +370,9 @@ function _paintCmts(postId, listId, cmts, aMap) {
       }
     }));
 
-    // Pastda bo'lsa — pastda qoladi (yangi izoh); yuqorida o'qiyotgan bo'lsa — joyi sakramaydi
-    list.scrollTop = _wasBottom ? list.scrollHeight : _prevTop;
+    // Eng yangi yuqorida: tepada bo'lsa tepada qoladi; pastga o'qiyotgan joyini saqlaydi
+    const _wasTop = !_hadRows || _prevTop < 48;
+    list.scrollTop = _wasTop ? 0 : _prevTop;
 }
 
 async function loadComments(postId, listId) {
@@ -384,14 +385,14 @@ async function loadComments(postId, listId) {
 
   try {
     const { data: _cRows, error: _cErr } = await sb.from('comments').select('*')
-      .eq('post_id', postId).order('created_at', { ascending: true });
+      .eq('post_id', postId).order('created_at', { ascending: false });
     if (_cErr) throw _cErr;
     const cmts = (_cRows || []).map(r => ({
       id: r.id, userId: r.user_id, userName: r.user_name, text: r.text, createdAt: r.created_at,
     }));
 
     for (const pc of _pendingCmts.values()) {
-      if (pc.postId === postId && !cmts.some(x => String(x.id) === String(pc.row.id))) cmts.push(pc.row);
+      if (pc.postId === postId && !cmts.some(x => String(x.id) === String(pc.row.id))) cmts.unshift(pc.row);
     }
 
     const ccSpanFeed = document.getElementById(`cc-${postId}`);
@@ -433,7 +434,7 @@ busOn('cmt', o => {
   if (!l || !l.isConnected || l.getClientRects().length === 0) return;
   if (o.op === 'add' && o.row?.id) {
     if (c.cmts.some(x => String(x.id) === String(o.row.id))) return;
-    c.cmts = [...c.cmts, o.row];
+    c.cmts = [o.row, ...c.cmts];
     if (o.avatar) c.aMap = { ...c.aMap, [o.row.userId]: o.avatar };
     else if (!c.aMap[o.row.userId]) c.aMap = { ...c.aMap, [o.row.userId]: defAvi(o.row.userName) };
   } else if (o.op === 'del') {
@@ -510,7 +511,7 @@ async function sendComment(mode) {
   const base = (_cmtCache && _cmtCache.postId === postId) ? _cmtCache : null;
   if (base) {
     av = state._userCache?.[uid]?.avatar || base.aMap[uid] || av;
-    const cmts = [...base.cmts, mine];
+    const cmts = [mine, ...base.cmts];  // eng yangi yuqorida
     _cmtCache = { postId, listId, cmts, aMap: { ...base.aMap, [uid]: av } };
     _paintCmts(postId, listId, cmts, _cmtCache.aMap);
     _cmtCount(postId, cmts.length);

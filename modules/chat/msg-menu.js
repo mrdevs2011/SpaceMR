@@ -10,6 +10,7 @@ import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
 import { emojiImg } from '../ui/emoji-img.js';
+import { humanMsgPreview } from './chat-shared.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -472,10 +473,7 @@ function startReply(m) {
   const name = isMine(m)
     ? 'Siz'
     : (api?.getSenderName?.(m.senderId) || $('chatThreadName')?.textContent || 'Foydalanuvchi');
-  let preview = '';
-  if (m.type === 'voice') preview = 'Ovozli xabar';
-  else if (m.type === 'file') preview = m.fileName || 'Fayl';
-  else preview = (m.text || '').replace(/\s+/g, ' ').trim().slice(0, 140);
+  let preview = humanMsgPreview(m);
   if (!preview) preview = 'Xabar';
   replying = { id: m.id, senderId: m.senderId, name, preview, type: m.type || 'text' };
   $('chatReplyName').textContent = name;
@@ -962,6 +960,22 @@ export function initMsgMenu(opts) {
   });
   window.addEventListener('resize', () => { if (menu?.contains(document.activeElement)) return; closeMenu(); });
   $('chatReplyClose')?.addEventListener('click', () => { if (editing) cancelEdit(true); else cancelReply(true); });
+
+  // Klaviatura: Delete / Backspace — faqat o'z xabarlari tanlanganda (menyu Trash kabi)
+  if (!box._delKeyWired) {
+    box._delKeyWired = true;
+    window.addEventListener('keydown', e => {
+      if (!selMode || !sel.size) return;
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      const ids = [...sel];
+      if (!ids.every(id => isMine(msgOf(id)))) return; // boshqaniki aralashsa — ishlamaydi
+      e.preventDefault();
+      e.stopPropagation();
+      remove(ids);
+    }, true);
+  }
 }
 
 /** paintMessages() dan keyin chaqiriladi — tanlov/ochiq menyu holatini yangi DOM'ga qaytaradi */

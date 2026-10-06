@@ -40,12 +40,11 @@ export async function executeHardFullReload() {
     console.warn('[force-reload]', e);
   }
 
+  // Butun ilova root dan — joriy /profile va boshqa path da qolmasin
   try {
-    const u = new URL(location.href);
-    u.searchParams.set('_full', String(Date.now()));
-    location.replace(u.pathname + u.search + (u.hash || ''));
+    location.replace('/?_full=' + String(Date.now()));
   } catch (_) {
-    location.reload();
+    location.href = '/?_full=' + String(Date.now());
   }
 }
 

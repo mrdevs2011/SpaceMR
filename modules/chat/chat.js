@@ -726,6 +726,7 @@ import {
   parseGif,
   parseCallLog,
   formatLastMessageText,
+  humanMsgPreview,
   _showPendingBubble,
   _updatePendingProgress,
   _removePendingBubble,
@@ -2135,16 +2136,16 @@ function _replyQuoteHtml(m, msgs, grp) {
     const orig = (msgs || []).find(x => x.id === rid);
     if (orig) {
       name = name || (orig.senderId === state.me?.uid ? 'Siz' : (grp?.names?.[orig.senderId]?.fullName || $('chatThreadName')?.textContent || 'Foydalanuvchi'));
-      if (orig.type === 'voice') preview = preview || 'Ovozli xabar';
-      else if (orig.type === 'file') preview = preview || (orig.fileName || 'Fayl');
-      else preview = preview || (orig.text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+      preview = preview || humanMsgPreview(orig);
       rtype = rtype || orig.type;
     } else {
       name = name || 'Xabar';
       preview = preview || 'O‘chirilgan xabar';
     }
   }
-  if (!preview) preview = 'Xabar';
+  // Hech qachon JSON/URL
+  preview = formatLastMessageText(preview) || preview;
+  if (!preview || (preview.startsWith('{') && preview.includes('"__'))) preview = 'Xabar';
   return `<div class="msg-reply-quote" data-reply-to="${esc(rid)}">
     <div class="mrq-bar"></div>
     <div class="mrq-body">
@@ -2816,7 +2817,7 @@ initMsgMenu({
       // DM: chatlar ro'yxatidagi oxirgi xabar prevyusi ham o'chirilgan xabarda qolmasin
       const cm = chatState._latestChatMap?.[state.currentChatUid], last = next[next.length - 1];
       if (cm) {
-        cm.lastMessage = last ? (last.type === 'voice' ? 'Ovozli xabar' : last.type === 'file' ? fileMsgPreview({ caption: last.text, fileName: last.fileName, icons: false }) : (last.text || '')).slice(0, 120) : '';
+        cm.lastMessage = last ? humanMsgPreview(last).slice(0, 120) : '';
         cm.lastSenderId = last ? last.senderId : null;
       }
     }

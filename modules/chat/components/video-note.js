@@ -17,8 +17,8 @@ export function videoNoteSec(name) {
 /* Fayl-xabar prevyusi (chatlar ro'yxati / inbox). icons=true: prefix bilan */
 export function fileMsgPreview({ caption = '', fileName = '', icons = true } = {}) {
   const note = isVideoNote(fileName);
-  if (icons) return caption ? caption : note ? 'Video xabar' : (fileName || 'Fayl');
-  return caption || (note ? 'Video xabar' : fileName) || 'Fayl';
+  if (icons) return caption ? caption : note ? 'Dumaloq video' : (fileName || 'Fayl');
+  return caption || (note ? 'Dumaloq video' : fileName) || 'Fayl';
 }
 
 /* Rolik pufagining ichi. url — allaqachon `"` dan tozalangan; ticks — tayyor HTML; ttl — ' title="..."' */

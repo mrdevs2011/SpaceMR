@@ -7,7 +7,14 @@
  *  Enter          — kirish/ro'yxat, profil tahriri, guruh formalari, tasdiq oynasida asosiy amal
  *  Enter          — izoh inputida izohni yuboradi
  *  N              — yangi post (composer)
- *  /              — qidiruv
+ *  /              — qidiruv (Kashf)
+ *  H              — Bosh sahifa
+ *  C              — Suhbatlar
+ *  P              — Profil
+ *  Ctrl/Cmd+K     — Qidiruv
+ *  Ctrl/Cmd+,     — Sozlamalar
+ *  Ctrl/Cmd+1/2/3 — Home / Chats / Profile
+ *  Delete         — tanlangan o'z xabarlarini o'chirish (chat)
  */
 import { $, unlockScroll } from '../core/utils.js';
 import { state, isUploading } from '../core/config.js';
@@ -82,8 +89,32 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
-  if (!state.me?.uid || anyOpen()) return;
+  // Ctrl/Cmd+raqam/harf navigatsiya (inputda emas)
+  const mod = e.ctrlKey || e.metaKey;
+  if (e.altKey) return;
+  if (isTyping(e.target) && !(mod && (e.key === 'Enter'))) return;
+  if (!state.me?.uid) return;
+
+  // Navigatsiya (overlay ochiq bo'lsa ham ishlashi mumkin — faqat typing bo'lmasa)
+  if (mod && !isTyping(e.target)) {
+    const k = e.key.toLowerCase();
+    if (k === 'k') { // Qidiruv / Kashf
+      e.preventDefault();
+      if (!isOpen($('searchOverlay'))) $('hdrSearchBtn')?.click() || import('./ui.js').then(m => m.openSearchOverlay?.());
+      return;
+    }
+    if (k === ',') { // Sozlamalar
+      e.preventDefault();
+      $('settingsBtn')?.click() || $('rrSettingsBtn')?.click();
+      return;
+    }
+    if (k === '1') { e.preventDefault(); import('../router.js').then(m => m.navigateTo('home')); return; }
+    if (k === '2') { e.preventDefault(); import('../router.js').then(m => m.navigateTo('chats')); return; }
+    if (k === '3') { e.preventDefault(); import('../router.js').then(m => m.navigateTo('profile')); return; }
+  }
+
+  if (mod || isTyping(e.target)) return;
+  if (anyOpen()) return;
 
   if (e.key === 'n' || e.key === 'N') {
     e.preventDefault();
@@ -91,6 +122,15 @@ document.addEventListener('keydown', e => {
   } else if (e.key === '/') {
     e.preventDefault();
     $('hdrSearchBtn')?.click();
+  } else if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    import('../router.js').then(m => m.navigateTo('chats'));
+  } else if (e.key === 'h' || e.key === 'H') {
+    e.preventDefault();
+    import('../router.js').then(m => m.navigateTo('home'));
+  } else if (e.key === 'p' || e.key === 'P') {
+    e.preventDefault();
+    import('../router.js').then(m => m.navigateTo('profile'));
   }
 });
 
