@@ -1151,7 +1151,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgCtx .mc-r-scroll::-webkit-scrollbar { display: none; }
 #msgCtx .mc-r-scroll .mc-r { flex: 0 0 40px; min-width: 40px; }
 #msgCtx .mc-r { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent; }
-#msgCtx .mc-r:hover, #msgCtx .mc-r:focus-visible { background: var(--pal-white-08); transform: scale(1.16); outline: none; }
+#msgCtx .mc-r:hover, #msgCtx .mc-r:focus-visible { background: var(--pal-white-08); transform: scale(1.08); outline: none; }
 #msgCtx .mc-r.on { background: rgba(231, 233, 234, 0.18); }
 #msgCtx .mc-r-more { flex: 0 0 30px; width: 30px; height: 30px; margin-left: 2px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--pal-white-08); color: var(--pal-gray-500); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 #msgCtx .mc-r-more:hover { background: rgba(231, 233, 234, 0.18); color: var(--text, #e7e9ea); }
@@ -1182,21 +1182,14 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgHoverPick .hp-list { display: flex; flex-direction: column-reverse; align-items: center; gap: 4px; padding: 0; max-height: 196px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; scroll-snap-type: y mandatory; }
 #msgHoverPick .hp-list::-webkit-scrollbar { display: none; }
 #msgHoverPick .hp-e { flex: none; scroll-snap-align: start; width: 34px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; font-size: 22px; line-height: 1; overflow: visible; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .1s ease, background .1s ease; }
-#msgHoverPick .hp-e:hover { background: var(--pal-white-08); transform: scale(1.18); }
+#msgHoverPick .hp-e:hover { background: var(--pal-white-08); transform: scale(1.08); }
 #msgHoverPick .hp-e.on { background: rgba(231, 233, 234, 0.2); }
 @keyframes hrPop { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.06); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes hpIn { from { opacity: 0; transform: translateY(10px) scale(.7); } to { opacity: 1; transform: none; } }
 @keyframes hpPanelIn { from { opacity: 0; transform: translateY(10px) scale(.92); } to { opacity: 1; transform: none; } }
-#msgHoverPick.show .hp-e { animation: hpIn .36s cubic-bezier(.22, 1, .36, 1) backwards; animation-delay: calc(var(--i, 0) * 34ms); }
-/* Reaksiya qo'shilganda: chip sakrab chiqadi + emoji uchib chiqib, zarralar sochiladi */
-@keyframes mrChipPop { 0% { transform: scale(.3) rotate(-20deg); opacity: 0; } 55% { transform: scale(1.35) rotate(9deg); opacity: 1; } 80% { transform: scale(.94) rotate(-3deg); } 100% { transform: scale(1) rotate(0); } }
-.chat-msg .mr-chip.pop { animation: mrChipPop .55s cubic-bezier(.34, 1.56, .64, 1); }
-.mr-burst { position: fixed; z-index: 600; width: 0; height: 0; pointer-events: none; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
-.mr-burst > span { position: absolute; left: 0; top: 0; line-height: 1; will-change: transform, opacity; }
-.mr-burst-big { font-size: 30px; animation: mrBurstBig .95s cubic-bezier(.2, .8, .3, 1) forwards; }
-.mr-burst-p { font-size: 13px; opacity: 0; animation: mrBurstP .8s cubic-bezier(.2, .8, .3, 1) var(--dl, 0ms) forwards; }
-@keyframes mrBurstBig { 0% { transform: translate(-50%, -50%) scale(.3); opacity: 0; } 22% { transform: translate(-50%, -90%) scale(1.9); opacity: 1; } 100% { transform: translate(-50%, -300%) scale(1.2); opacity: 0; } }
-@keyframes mrBurstP { 0% { transform: translate(-50%, -50%) scale(.3); opacity: 1; } 100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); opacity: 0; } }
+/* Reaksiya qo'shilganda: klassik, yumshoq paydo bo'lish (sakrash/aylanish/zarralarsiz) */
+@keyframes mrChipPop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+.chat-msg .mr-chip.pop { animation: mrChipPop .18s ease-out; }
 @media (prefers-reduced-motion: reduce) { .chat-msg .mr-chip.pop, #msgHoverPick.show .hp-e { animation: none; } }
 
 /* Xabar tagidagi reaksiya chiplari — pufakdan BUTUNLAY pastda, alohida qatorda (Telegram uslubi), ko'zga tashlanib turadi */

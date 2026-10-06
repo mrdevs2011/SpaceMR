@@ -138,29 +138,9 @@ function paintMsg(id, force) {
     pops.delete(id);
     if (Date.now() - pp.t < 1500) {
       const chip = [...el.querySelectorAll('.mr-chip')].find(c => c.dataset.re === pp.e);
-      if (chip) { chip.classList.add('pop'); burst(chip, pp.e); }
+      if (chip) chip.classList.add('pop');
     }
   }
-}
-
-/** Yangi reaksiya: katta emoji uchib chiqadi + atrofga mayda zarralar sochiladi */
-function burst(chip, emoji) {
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-  const r = chip.getBoundingClientRect();
-  if (r.bottom < 0 || r.top > window.innerHeight) return;
-  const w = document.createElement('div');
-  w.className = 'mr-burst';
-  w.style.left = (r.left + 18) + 'px';
-  w.style.top = (r.top + r.height / 2) + 'px';
-  let h = `<span class="mr-burst-big">${esc(emoji)}</span>`;
-  const N = 8;
-  for (let i = 0; i < N; i++) {
-    const a = (Math.PI * 2 * i) / N + Math.random() * 0.5, d = 34 + Math.random() * 26;
-    h += `<span class="mr-burst-p" style="--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d - 14)}px;--dl:${Math.round(Math.random() * 80)}ms">${esc(emoji)}</span>`;
-  }
-  w.innerHTML = h;
-  document.body.appendChild(w);
-  setTimeout(() => w.remove(), 1100);
 }
 
 function paintAll(force) {
