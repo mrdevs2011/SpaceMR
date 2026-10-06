@@ -1251,12 +1251,8 @@ html[data-nf],html[data-nf] body{background:#000000}
       } catch (_) { console.info('[sw]', msg); }
     }
     function _promptUpdate(worker) {
-      _swToast('Yangi versiya tayyor', 'Yangilash', function() {
-        try {
-          // Yozayotganda majburan reload qilma — foydalanuvchi tugmani bosadi
-          worker.postMessage({ type: 'SKIP_WAITING' });
-        } catch (_) {}
-      });
+      /* Yangilanish toast emas: qolib ketmasin. Kutayotgan versiya jim qo'llanadi. */
+      try { worker.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
     }
     /** Faqat F5 / Ctrl+R (navigation type=reload) da toast; SPA/background update da chiqmasin */
     function _isPageReload() {

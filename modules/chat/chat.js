@@ -1945,9 +1945,23 @@ function _dissolveRestore(box, started) {
     playDeleteDissolve(rec.el, undefined, undefined, group)
       .catch(() => {})
       .finally(() => {
-        chatState._dissolving.delete(rec.id);
-        try { rec.el.remove(); } catch (_) {}
-        if (!chatState._dissolving.size && !chatState._curMsgs.length) paintMessages([]);
+        const el = rec.el;
+        const h = el.offsetHeight;
+        el.classList.add('msg-collapsing');
+        el.style.height = h + 'px';
+        el.style.marginTop = getComputedStyle(el).marginTop;
+        requestAnimationFrame(() => {
+          el.style.height = '0px';
+          el.style.marginTop = '0px';
+          el.style.opacity = '0';
+        });
+        setTimeout(() => {
+          chatState._dissolving.delete(rec.id);
+          try { el.remove(); } catch (_) {}
+          const box = document.getElementById('chatThreadMessages');
+          if (box && chatState._pinned) _smoothToBottom(box);
+          if (!chatState._dissolving.size && !chatState._curMsgs.length) paintMessages([]);
+        }, 340);
       });
   });
 }
@@ -1966,13 +1980,19 @@ function _bindPinTracking(box) {
     chatState._pinned = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
   }, { passive: true });
 }
+function _smoothToBottom(box) {
+  if (!box) return;
+  box._smoothUntil = Date.now() + 900;
+  const top = box.scrollHeight;
+  try { box.scrollTo({ top, behavior: 'smooth' }); }
+  catch (_) { box.scrollTop = top; }
+}
 window._chatImgLoaded = function (img) {
   try { rememberImgRatio(img); } catch (_) {}
   const box = document.getElementById('chatThreadMessages');
   if (!box || !chatState._pinned || !box.contains(img)) return;
-  // faqat haqiqatan pastda bo'lsak — aks holda o'qiyotganda sakramasin
   const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
-  if (gap < 160) box.scrollTop = box.scrollHeight;
+  if (gap < 160) _smoothToBottom(box);
 };
 
 /** Xabarlar DOM'ini kalit (xabar id) bo'yicha yamaydi: bir xil HTML — o'sha element qoladi */
@@ -2279,15 +2299,14 @@ export function paintMessages(msgs, grp = null) {
   const hasMyNew = _myNewMsg;
   if (isAtBottom || isInitialLoad || hasMyNew) {
     chatState._pinned = true;
-    if (!isInitialLoad && _anyNewMsg) {
-      // Pastda turgan bo'lsak: yangi xabar kelganda eng oxirgisigacha SILLIQ skroll (DM va guruhda bir xil)
-      box._smoothUntil = Date.now() + 700;
-      box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
-      requestAnimationFrame(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }));
-    } else {
+    if (isInitialLoad) {
       box.scrollTop = box.scrollHeight;
-      // Bitta rAF — layout keyin; ikkinchi setTimeout sakrash berardi
       requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+    } else if (_anyNewMsg || hasMyNew) {
+      // Men yozsam (yuqorida bo'lsam ham) va pastda yangi xabar kelsa — silliq pastga
+      _smoothToBottom(box);
+    } else if (box._smoothUntil && Date.now() < box._smoothUntil) {
+      _smoothToBottom(box);
     }
   }
 

@@ -785,3 +785,28 @@
   /* host bo'sh qolsa joy olmaydi */
   #actionsUsersHost:empty { display: none; }
 }
+
+
+/* Desktop admin: users FAQAT right-rail (JS ko'chiradi + CSS yashiradi) */
+@media (min-width: 1200px) {
+  body.rr-admin-users #actionsUsersHost,
+  body.rr-admin-users #actionsUsersHost[data-rr-moved] {
+    display: none !important;
+  }
+  body.rr-admin-users .right-rail > .rr-card,
+  body.rr-admin-users .right-rail > #rrApps {
+    display: none !important;
+  }
+  body.rr-admin-users #rrUsersAdmin,
+  .right-rail.rr-actions-mode #rrUsersAdmin {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    height: 100%;
+  }
+  body.rr-admin-users .right-rail.rr-actions-mode {
+    padding-top: 0;
+  }
+}

@@ -124,6 +124,15 @@ export async function initView() {
 
   _initBroadcast();
   await _initUsers();
+  // Desktop: users listni right-rail ga majburan ko'chir
+  try {
+    const rr = await import('../ui/right-rail.js');
+    const place = () => rr.placeUsersAdmin?.(true, 'actions');
+    place();
+    requestAnimationFrame(place);
+    setTimeout(place, 50);
+    setTimeout(place, 300);
+  } catch (_) {}
   const anchor = document.getElementById('actionsBroadcastSection');
   const st = await import('../admin/admin-storage.js').catch(() => null);
   st?.renderStorageUsage(anchor);
@@ -306,5 +315,8 @@ export function destroyView() {
   document.getElementById('actionsStorageInfo')?.remove();
   document.getElementById('actionsWipe')?.remove();
   document.getElementById('actionsView')?.classList.remove('adm-unlocked');
+  document.body.classList.remove('rr-admin-users');
+  // Users blockni mobil hostga qaytar
+  import('../ui/right-rail.js').then(m => m.placeUsersAdmin?.(false, 'home')).catch(() => {});
   import('../admin/admin-gate.js').then(m => m.closeAdminGate()).catch(() => {});
 }

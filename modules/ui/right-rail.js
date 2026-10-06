@@ -26,21 +26,28 @@ function showRail(on) {
 }
 
 /** Admin users list: desktop ≥1200 → right-rail; mobil → actionsView host */
-function placeUsersAdmin(isDesktop, view) {
+export function placeUsersAdmin(isDesktop, view) {
   const block = document.getElementById('usersAdminBlock');
   const mobileHost = document.getElementById('actionsUsersHost');
   const desktopHost = document.getElementById('rrUsersAdmin');
-  if (!block || !mobileHost || !desktopHost) return;
-  const adminActions = view === 'actions' && isDesktop && !!state.me?.uid;
+  const railEl = rail();
+  if (!block || !desktopHost) return;
+  const desk = isDesktop ?? window.matchMedia('(min-width: 1200px)').matches;
+  const v = view ?? (state.view || 'home');
+  const adminActions = v === 'actions' && desk && !!state.me?.uid;
   if (adminActions) {
     if (block.parentElement !== desktopHost) desktopHost.appendChild(block);
     desktopHost.hidden = false;
+    desktopHost.removeAttribute('hidden');
+    if (mobileHost) mobileHost.setAttribute('data-rr-moved', '1');
   } else {
-    if (block.parentElement !== mobileHost) mobileHost.appendChild(block);
+    if (mobileHost && block.parentElement !== mobileHost) mobileHost.appendChild(block);
     desktopHost.hidden = true;
+    desktopHost.setAttribute('hidden', '');
+    if (mobileHost) mobileHost.removeAttribute('data-rr-moved');
   }
-  // Oddiy kartalar: actions+desktop da yashirin (faqat users)
-  rail()?.classList.toggle('rr-actions-mode', adminActions);
+  railEl?.classList.toggle('rr-actions-mode', adminActions);
+  document.body.classList.toggle('rr-admin-users', adminActions);
 }
 
 function fit() {
