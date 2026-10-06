@@ -36,13 +36,12 @@ html{color-scheme:dark;}
     document.documentElement.style.colorScheme = 'dark';
     document.documentElement.style.background = '#000000';
   })();
-  /* Kirmagan foydalanuvchi: har qanday manzil darhol /login ga (ilova yuklanishini kutmasdan).
-     Asl manzil kirgandan keyin ochilishi uchun eslab qolinadi. */
+  /* Kirmagan foydalanuvchi: /login ga. Sessiya bor bo'lsa URL ni tekmang
+     (aks holda deploy/yangilanishda /login → /home flash bo'ladi). */
   (function(){
     try {
       var p = location.pathname.replace(/\/+$/, '') || '/';
       if (p === '/login') {
-        /* Server /login?next=/asl/yo'l ga yo'naltirgan bo'lsa — eslab qolib, URL ni tozalaymiz */
         var m = location.search.match(/[?&]next=([^&]+)/);
         if (m) {
           var n = ''; try { n = decodeURIComponent(m[1]); } catch (e) {}
@@ -51,7 +50,17 @@ html{color-scheme:dark;}
         }
         return;
       }
-      if (localStorage.getItem('spacemr-auth')) return;
+      /* Sessiya mavjudligi — bir necha kalit (eski mrspace + yangi spacemr) */
+      var hasAuth = !!(localStorage.getItem('spacemr-auth') || localStorage.getItem('mrspace-auth'));
+      if (!hasAuth) {
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i) || '';
+            if (/auth-token|supabase.auth|sb-.*-auth/i.test(k)) { hasAuth = true; break; }
+          }
+        } catch (e) {}
+      }
+      if (hasAuth) return;
       if (p !== '/' && p !== '/index.html') sessionStorage.setItem('spacemr_next_path', p);
       history.replaceState(null, '', '/login' + location.search + location.hash);
     } catch (_) {}
@@ -777,6 +786,13 @@ html[data-nf],html[data-nf] body{background:#000000}
         <div class="settings-row-hint">Bosh ekranga o'rnatish — tezroq ochiladi</div>
       </div>
       <button class="ig-open-btn" id="guideOpenBtn" type="button">Ilovani yuklash</button>
+    </div>
+    <div class="settings-row settings-row--update">
+      <div class="settings-row-text">
+        <div class="settings-row-title">Yangilash</div>
+        <div class="settings-row-hint">Barcha fayllarni to'liq qayta yuklash (kesh va SW dan mustaqil)</div>
+      </div>
+      <button class="ig-open-btn" id="fullAppReloadBtn" type="button">Yangilash</button>
     </div>
 
     <div class="settings-section-label">Boshqaruv va yordam</div>

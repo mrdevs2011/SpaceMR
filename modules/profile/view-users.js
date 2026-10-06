@@ -444,6 +444,17 @@ function _renderPendingMini(users) {
 }
 
 /* ── Render ─────────────────────────────────────────────────────────── */
+function _rowStatusClass(u) {
+  if (u.blocked === true) return 'ua-row--blocked';
+  if (u.approved === false || u.approved === 'rejected') return 'ua-row--pending';
+  return 'ua-row--approved';
+}
+
+function _needsApprove(u) {
+  if (u.blocked) return false;
+  return u.approved === false;
+}
+
 function _render(wrap, users) {
   if (!users.length) {
     wrap.innerHTML = '<p style="padding:24px;color:var(--text2)">Foydalanuvchilar yo\'q.</p>';
@@ -451,72 +462,126 @@ function _render(wrap, users) {
   }
 
   wrap.innerHTML = users.map(u => {
-    const name      = u.fullName || u.username || u.uid || u.id;
-    const uname     = u.username ? `@${u.username}` : '';
-    const uid       = u.uid || u.id;
+    const name = u.fullName || u.username || u.uid || u.id;
+    const uname = u.username ? `@${u.username}` : '';
+    const uid = u.uid || u.id;
     const isBlocked = u.blocked === true;
-    const created   = u.createdAt ? new Date(u.createdAt).toLocaleDateString('uz-UZ') : '';
     const blockedUntil = u.blockedUntil ? new Date(u.blockedUntil).toLocaleString('uz-UZ') : '';
-    const blockBtnLabel = isBlocked ? 'Blokdan chiqarish' : 'Bloklash';
-    const blockBtnClass = isBlocked ? 'ua-unblock-btn' : 'ua-block-btn';
+    const blockLabel = isBlocked ? 'Blokdan chiqarish' : 'Bloklash';
+    const st = _rowStatusClass(u);
+    const showApprove = _needsApprove(u);
 
     return `
-    <div class="ua-row${isBlocked ? ' ua-row--blocked' : ''}" data-uid="${uid}">
-      <div class="ua-info">
-        <span class="ua-name">${_esc(name)}</span>
-        ${uname ? `<span class="ua-uname">${_esc(uname)}</span>` : ''}
-        ${blockedUntil ? `<span class="ua-date">blok tugashi: ${blockedUntil}</span>` : ''}
-      </div>
-      <div class="ua-status">${_statusBadge(u)}</div>
-      <div class="ua-actions">
-        ${_approveBtn(u)}
-        ${_rejectBtn(u)}
-        <button class="${blockBtnClass}" data-uid="${uid}" data-name="${_esc(name)}" data-blocked="${isBlocked}">${blockBtnLabel}</button>
-        <button class="ua-reset-pwd-btn" data-uid="${uid}" data-name="${_esc(name)}" data-username="${_esc(u.username||'')}" data-recemail="${_esc(u.recovery_email||'')}">Parolni tiklash</button>
-        <button class="ua-delete-btn" data-uid="${uid}" data-name="${_esc(name)}">O'chirish</button>
+    <div class="ua-row ${st}" data-uid="${uid}">
+      <div class="ua-row-top">
+        <div class="ua-info">
+          <span class="ua-name">${_esc(name)}</span>
+          ${uname ? `<span class="ua-uname">${_esc(uname)}</span>` : ''}
+          ${blockedUntil ? `<span class="ua-date">blok: ${_esc(blockedUntil)}</span>` : ''}
+        </div>
+        <div class="ua-hover-tools">
+          ${showApprove ? `<button type="button" class="ua-approve-btn" data-uid="${uid}">Ruxsat berish</button>` : ''}
+          <div class="ua-more-wrap">
+            <button type="button" class="ua-more-btn" data-uid="${uid}" aria-label="Menyu" title="Menyu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+            </button>
+            <div class="ua-more-menu" hidden>
+              <button type="button" class="ua-menu-item ${isBlocked ? 'ua-unblock-btn' : 'ua-block-btn'}" data-uid="${uid}" data-name="${_esc(name)}" data-blocked="${isBlocked}">${blockLabel}</button>
+              <button type="button" class="ua-menu-item ua-reset-pwd-btn" data-uid="${uid}" data-name="${_esc(name)}" data-username="${_esc(u.username||'')}" data-recemail="${_esc(u.recovery_email||'')}">Parolni tiklash</button>
+              ${showApprove ? `<button type="button" class="ua-menu-item ua-reject-btn" data-uid="${uid}">Rad etish</button>` : ''}
+              <button type="button" class="ua-menu-item ua-menu-danger ua-delete-btn" data-uid="${uid}" data-name="${_esc(name)}">O'chirish</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
 
-  /* Approve */
+  wrap.querySelectorAll('.ua-more-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const menu = btn.parentElement?.querySelector('.ua-more-menu');
+      if (!menu) return;
+      const wasOpen = !menu.hidden;
+      wrap.querySelectorAll('.ua-more-menu').forEach(m => { m.hidden = true; });
+      menu.hidden = wasOpen;
+    });
+  });
+  if (!wrap._uaMenuCloser) {
+    wrap._uaMenuCloser = (e) => {
+      if (e.target.closest('.ua-more-wrap')) return;
+      wrap.querySelectorAll('.ua-more-menu').forEach(m => { m.hidden = true; });
+    };
+    document.addEventListener('click', wrap._uaMenuCloser);
+  }
+
   wrap.querySelectorAll('.ua-approve-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const uid = btn.dataset.uid;
-      const u = users.find(x => (x.uid || x.id) === uid);
-      await _doApprove(btn, uid, u?.fullName || u?.username || uid);
+      const row = btn.closest('.ua-row');
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        await _updateProfile(uid, { approval: 'approved' });
+        toast('Ruxsat berildi', 'success');
+        await _invalidateAndRefreshFeed(uid);
+        btn.classList.add('ua-approve-out');
+        setTimeout(() => {
+          btn.remove();
+          row?.classList.remove('ua-row--pending');
+          row?.classList.add('ua-row--approved');
+          row?.querySelector('.ua-reject-btn')?.remove();
+        }, 220);
+        const u = _lastUsers.find(x => (x.uid || x.id) === uid);
+        if (u) u.approved = true;
+      } catch (err) {
+        toast('Xatolik: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Ruxsat berish';
+      }
     });
   });
 
-  /* Reject */
   wrap.querySelectorAll('.ua-reject-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const uid = btn.dataset.uid;
-      const u = users.find(x => (x.uid || x.id) === uid);
-      await _doReject(btn, uid, u?.fullName || u?.username || uid);
+      const row = btn.closest('.ua-row');
+      btn.closest('.ua-more-menu')?.setAttribute('hidden', '');
+      try {
+        await _updateProfile(uid, { approval: 'rejected' });
+        toast('Rad etildi', 'info');
+        await _invalidateAndRefreshFeed(uid);
+        row?.querySelector('.ua-approve-btn')?.remove();
+        const u = _lastUsers.find(x => (x.uid || x.id) === uid);
+        if (u) u.approved = 'rejected';
+      } catch (err) {
+        toast('Xatolik: ' + err.message, 'error');
+      }
     });
   });
 
-  /* Block / Unblock */
   wrap.querySelectorAll('.ua-block-btn, .ua-unblock-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      const isBlocked = btn.dataset.blocked === 'true';
-      _openBlockModal(btn.dataset.uid, btn.dataset.name, isBlocked);
+      btn.closest('.ua-more-menu')?.setAttribute('hidden', '');
+      _openBlockModal(btn.dataset.uid, btn.dataset.name, btn.dataset.blocked === 'true');
     });
   });
 
-  /* Delete */
   wrap.querySelectorAll('.ua-delete-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
+      btn.closest('.ua-more-menu')?.setAttribute('hidden', '');
       _openDeleteModal(btn.dataset.uid, btn.dataset.name);
     });
   });
 
-  /* Parolni tiklash */
   wrap.querySelectorAll('.ua-reset-pwd-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
+      btn.closest('.ua-more-menu')?.setAttribute('hidden', '');
       adminResetPassword(btn.dataset.uid, btn.dataset.name, {
         username: btn.dataset.username,
         recoveryEmail: btn.dataset.recemail

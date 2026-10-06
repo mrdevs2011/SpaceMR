@@ -490,8 +490,13 @@ export async function applyPath(rawPath, { initial = false } = {}) {
     const here = location.pathname;
     const tail = location.search + location.hash;
 
+    /* Sessiya hali aniqlanmagan — URL ni tekmang (login flash oldini olish) */
+    if (_auth === 'unknown') {
+      return;
+    }
+
     /* Kirmagan foydalanuvchi: faqat /login */
-    if (_auth !== 'in') {
+    if (_auth === 'out') {
       if (route.kind !== 'login' && route.kind !== 'root' && route.kind !== 'notfound') {
         try { sessionStorage.setItem(NEXT_KEY, cleanPath(rawPath)); } catch (_) {}
       }
@@ -707,11 +712,24 @@ function detectAuth() {
   else if ($('authWrap')?.classList.contains('show') && !$('app')?.classList.contains('show')) next = 'out';
   if (next === _auth) return;
   const prev = _auth;
+  // unknown → out: faqat haqiqiy logout (oldin kirgan); boot paytida URL flash qilmaslik
+  if (next === 'out' && prev === 'unknown') {
+    _auth = 'out';
+    // URL ni hozircha saqlab qolamiz — applyPath faqat aniq 'out' da /login qiladi,
+    // lekin agar allaqachon /login bo'lmasa ham joriy path saqlanishi mumkin.
+    // Haqiqiy sessiyasiz foydalanuvchi uchun early HTML yoki _handleSession allaqachon /login qo'ygan.
+    if (cleanPath(location.pathname) === '/login' || cleanPath(location.pathname) === '/') {
+      applyPath(location.pathname, { initial: true });
+    } else if (!localStorage.getItem('spacemr-auth') && !localStorage.getItem('mrspace-auth')) {
+      applyPath(location.pathname, { initial: true });
+    }
+    // Aks holda: localStorage da sessiya bor, authWrap vaqtincha ochilgan bo'lishi mumkin — kutamiz
+    return;
+  }
   _auth = next;
   if (next === 'in') {
     _fromLogin = prev === 'out';
-    // Kirish tugadi — joriy yo'l (yoki saqlangan manzil) ga ko'ra holatni o'rnatamiz
-    applyPath(location.pathname, { initial: prev === 'unknown' });
+    applyPath(location.pathname, { initial: prev === 'unknown' || prev === 'out' });
   } else if (next === 'out') {
     if (prev === 'in') {
       history.replaceState({ i: 0, prev: null }, '', '/login');

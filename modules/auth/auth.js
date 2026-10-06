@@ -910,6 +910,13 @@ async function _handleSession(session) {
     const authWrap = $('authWrap');
     if (app) app.classList.remove('show');
     if (authWrap) authWrap.classList.add('show');
+    // Boot tugagach haqiqatan sessiya yo'q — URL /login (flash emas, yakuniy holat)
+    try {
+      if (_sessionBootDone) {
+        const p = (location.pathname || '').replace(/\/+$/, '') || '/';
+        if (p !== '/login') history.replaceState({ i: 0, prev: null }, '', '/login');
+      }
+    } catch (_) {}
     try { (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('no-session'); } catch (_) {}
     return;
   }
@@ -1002,17 +1009,25 @@ async function _handleSession(session) {
   _startRealtimeUserWatch(me);
 }
 
+/* Birinchi getSession tugamaguncha null sessiya login flash qilmasin */
+let _sessionBootDone = false;
+
 sb.auth.onAuthStateChange((event, session) => {
   if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
-  // Yangi kirishda (SIGNED_IN) darhol joriy parol vaqtini yangilash (eski ts tufayli soxta logout bo'lmasligi uchun)
   if (event === 'SIGNED_IN' && session?.user?.id) {
     _setLocalPwdTs(session.user.id, Date.now());
   }
-  // Callback ichida supabase chaqiruvlarini kutmaymiz (deadlock xavfi)
+  // Boot tugamaguncha SIGNED_OUT / null ni e'tiborsiz qoldiramiz
+  if (!_sessionBootDone && !session) return;
   setTimeout(() => { _handleSession(session); }, 0);
 });
-// INITIAL_SESSION hodisasi versiyaga bog'liq — kafolat uchun bir marta o'zimiz ham so'raymiz
-sb.auth.getSession().then(({ data }) => { _handleSession(data?.session || null); });
+sb.auth.getSession().then(({ data }) => {
+  _sessionBootDone = true;
+  _handleSession(data?.session || null);
+}).catch(() => {
+  _sessionBootDone = true;
+  _handleSession(null);
+});
 
 /* ── User cache invalidation helper ────────────────────────────────── */
 export function invalidateUserCache(uid) {

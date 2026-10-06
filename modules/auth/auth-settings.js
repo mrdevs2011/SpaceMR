@@ -169,6 +169,38 @@ if (clearCacheBtn) {
   };
 }
 
+/** To'liq qayta yuklash: SW unregister + Cache Storage tozalash + hard navigate.
+ *  SW update/waiting ga bog'liq emas — barcha shell/fayllar yangidan olinadi. */
+const fullAppReloadBtn = $('fullAppReloadBtn');
+if (fullAppReloadBtn) {
+  fullAppReloadBtn.onclick = async () => {
+    fullAppReloadBtn.disabled = true;
+    fullAppReloadBtn.textContent = 'Yuklanmoqda…';
+    try {
+      try { clearAllCache(); } catch (_) {}
+      try { await clearRuntimeCache(); } catch (_) {}
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch (e) {
+      console.warn('[fullReload]', e);
+    }
+    // Cache-bust: brauzer hammasi yangidan so'rasin; SW endi yo'q
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set('_full', String(Date.now()));
+      location.replace(u.pathname + u.search + (u.hash || ''));
+    } catch (_) {
+      location.reload();
+    }
+  };
+}
+
 /* Yordam tugmasi — manzil index.html dagi #helpBtn[data-href] da (Telegram t.me/... yoki mailto:...) */
 
 /* Phase 8: umumiy qurilma — diskda ma'lumot saqlanmasin */
