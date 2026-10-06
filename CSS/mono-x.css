@@ -1481,6 +1481,22 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   background: #000000 !important;
 }
 .home-composer-input::placeholder { color: var(--text3); }
+/* Post / story composer input — border-radius yo'q */
+.home-composer-input,
+.home-composer-input:focus,
+.home-composer-input:focus-visible,
+#uploadOverlay .composer-input,
+#uploadOverlay .composer-input:focus,
+#uploadOverlay .composer-input:focus-visible,
+#captionInput,
+#captionInput:focus,
+#captionInput:focus-visible {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 .home-composer-preview {
   position: relative;
   border-radius: var(--radius);

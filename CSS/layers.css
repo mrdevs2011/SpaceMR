@@ -872,12 +872,15 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 #uploadOverlay .composer-avi { width: 40px; height: 40px; border-radius: 999px; overflow: hidden; flex-shrink: 0; }
 #uploadOverlay .composer-avi img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #uploadOverlay .composer-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-#uploadOverlay .composer-input {
+#uploadOverlay .composer-input,
+#uploadOverlay #captionInput {
   width: 100%;
   min-height: 64px;
-  background: transparent;
-  border: none;
-  outline: none;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
   resize: none;
   color: var(--text);
   font-size: 16px;
@@ -885,6 +888,18 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
   line-height: 1.4;
   padding: 6px 0 8px;
   margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#uploadOverlay .composer-input:focus,
+#uploadOverlay .composer-input:focus-visible,
+#uploadOverlay #captionInput:focus,
+#uploadOverlay #captionInput:focus-visible {
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 #uploadOverlay .composer-input::placeholder { color: #71767b; }
 #uploadOverlay #previewArea { margin: 4px 0 8px; }
