@@ -11,15 +11,16 @@ import { rateOk } from '../core/rate-limit.js';
 import { fileMsgPreview } from './components/video-note.js';
 import { registerLocalVoiceUrl, voiceBarCount, getVoiceWaveform } from './chat-voice-player.js';
 
-export async function sendChatMessage() {
+export async function sendChatMessage(opts) {
+  const gifText = opts && typeof opts.text === 'string' ? opts.text : null;   // GIF: tayyor JSON matn (inputga tegilmaydi)
   // Route to group/channel send if in that mode
   if (state.currentChatKind && state.currentChatKind !== 'dm') {
-    return sendGroupMessage();
+    return sendGroupMessage(opts);
   }
-  if (isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
+  if (gifText == null && isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
   const inp  = $('chatThreadInput');
-  const userText = (inp?.value || '').trim();
-  const postShare = chatState._pendingPostShare;
+  const userText = gifText != null ? gifText : (inp?.value || '').trim();
+  const postShare = gifText != null ? null : chatState._pendingPostShare;
 
   if ((!userText && !postShare) || !state.currentChatId || !state.me) return;
   if (!rateOk('msg', 15, 60000)) return;
@@ -27,7 +28,7 @@ export async function sendChatMessage() {
   const chatId   = state.currentChatId;
   const otherUid = state.currentChatUid;
 
-  inp.value = '';
+  if (gifText == null) inp.value = '';
   if (postShare) {
     chatUI.clearPendingPostShare();
   } else {
@@ -46,7 +47,7 @@ export async function sendChatMessage() {
 
   const previewText = postShare
     ? (userText ? userText : `Post: ${postShare.authorName || 'Post'}`)
-    : userText.slice(0, 120);
+    : (gifText != null ? 'GIF' : userText.slice(0, 120));
 
   // 1) Optimistik: o'z xabarimiz shu zahoti ekranda (DB javobini kutmaymiz)
   const id = _uuid();
@@ -97,7 +98,7 @@ export async function sendChatMessage() {
     chatState._rtLocal.delete(id);
     if (chatState._rt && chatState._rtChatId === chatId) chatState._rt.retract(id);
     if (state.currentChatId === chatId) chatUI.paintMessages(chatState._curMsgs.filter(x => x.id !== id));
-    inp.value = userText; // qaytarib qo'yamiz, user qayta yuborishi uchun
+    if (gifText == null) inp.value = userText; // qaytarib qo'yamiz, user qayta yuborishi uchun
     if (postShare) chatUI.setPendingPostShare(postShare);
     chatUI.updateVoiceSendBtn();
   }

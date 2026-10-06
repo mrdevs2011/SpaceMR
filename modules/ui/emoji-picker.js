@@ -1,5 +1,6 @@
 import { onEsc } from './esc-stack.js';
 import { emojiImg, warmEmoji, warmAtlas, warmTyped } from './emoji-img.js';
+import { createGifPanel } from './gif-panel.js';
 /* emoji-picker.js — telefon klaviaturasi (Gboard) uslubidagi emoji paneli.
    Tepada: qidiruv tugmasi + kategoriya ikonlari (SVG). Pastda: "Oxirgilar" va kategoriyalar
    bo'yicha sahifalar: tablar orasida gorizontal surish, sahifa ichida vertikal skroll. Ma'lumot mahalliy (emoji-data.js), birinchi ochilganda yuklanadi. */
@@ -41,10 +42,10 @@ const btnHtml = (e, inner) => `<button type="button" class="ep-e" data-e="${esc(
 const gridImg = (list, lazy) => list.map(e => btnHtml(e, emojiImg(e, '2d', lazy))).join('');
 const gridAtlas = list => list.map(e => { const p = POS.get(e); return btnHtml(e, p ? `<i class="emo-s" data-a="${p.a}" style="--x:${p.x};--y:${p.y}"></i>` : emojiImg(e, '2d', true)); }).join('');
 
-export function initEmojiPicker({ btn, pop, input }) {
+export function initEmojiPicker({ btn, pop, input, onGif }) {
   if (!btn || !pop || !input) return;
   let built = false, cats = [], recent = loadRecent();
-  let tabs, body, searchRow, searchInp, tabRow;
+  let tabs, body, searchRow, searchInp, tabRow, gifPanel = null, mode = 'emoji';
 
   async function build() {
     if (built) return; built = true;
@@ -54,7 +55,8 @@ export function initEmojiPicker({ btn, pop, input }) {
     for (const c of cats) c.list.forEach(([e], i) => POS.set(e, { a: c.id, x: i % ATLAS_COLS, y: (i / ATLAS_COLS) | 0 }));
 
     const tabDefs = [{ id: 'recent' }, ...cats.map(c => ({ id: c.id, name: c.name }))];
-    pop.innerHTML = `
+    const modeBar = onGif ? '<div class="ep-mode"><button type="button" data-mode="gif">GIF</button><button type="button" data-mode="emoji">Emoji</button></div>' : '';
+    pop.innerHTML = `${modeBar}<div class="ep-view ep-view-gif" hidden></div><div class="ep-view ep-view-emoji">
       <div class="ep-top">
         <button type="button" class="ep-tab ep-search-btn" data-act="search" title="Qidirish">${ICONS.search}</button>
         <div class="ep-tabs">${tabDefs.map(t => `<button type="button" class="ep-tab" data-tab="${t.id}" title="${esc(t.name || 'Oxirgilar')}">${ICONS[t.id]}</button>`).join('')}</div>
@@ -69,7 +71,7 @@ export function initEmojiPicker({ btn, pop, input }) {
         <section data-sec="recent"><h4>Oxirgilar</h4><div class="ep-grid" data-grid="recent"></div></section>
         ${cats.map(c => `<section data-sec="${c.id}"><h4>${esc(c.name)}</h4><div class="ep-grid" style="--rows:${Math.ceil(c.list.length / ATLAS_COLS)}">${gridAtlas(c.list.map(x => x[0]))}</div></section>`).join('')}
         <section data-sec="results" hidden><h4>Natijalar</h4><div class="ep-grid" data-grid="results"></div></section>
-      </div>`;
+      </div></div>`;
     tabs = [...pop.querySelectorAll('[data-tab]')];
     body = pop.querySelector('.ep-body');
     searchRow = pop.querySelector('.ep-search');
@@ -80,6 +82,27 @@ export function initEmojiPicker({ btn, pop, input }) {
     initSwipe();
     searchInp.addEventListener('input', onSearch);
     setActive(recent.length ? 'recent' : cats[0].id);
+    if (onGif) {
+      gifPanel = createGifPanel(pop.querySelector('.ep-view-gif'), g => { onGif(g); closePanel(); });
+      let saved = 'emoji'; try { saved = localStorage.getItem('spacemr_picker_mode') === 'gif' ? 'gif' : 'emoji'; } catch {}
+      setMode(saved);
+    }
+  }
+
+  /* GIF / Emoji bo'limlari orasida almashish (oxirgi tanlov eslab qolinadi) */
+  function setMode(m) {
+    if (!gifPanel) m = 'emoji';
+    mode = m;
+    try { localStorage.setItem('spacemr_picker_mode', m); } catch {}
+    pop.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    pop.querySelector('.ep-view-gif').hidden = m !== 'gif';
+    pop.querySelector('.ep-view-emoji').hidden = m !== 'emoji';
+    if (m === 'gif') gifPanel.open();
+    else requestAnimationFrame(() => {
+      const on = tabs.find(t => t.classList.contains('on'));
+      const sec = on && body.querySelector(`[data-sec="${on.dataset.tab}"]`);
+      if (sec) body.scrollLeft = sec.offsetLeft;
+    });
   }
 
   function paintRecent() {
@@ -223,7 +246,7 @@ export function initEmojiPicker({ btn, pop, input }) {
     pinned = true;
     await openPanel(true);
   });
-  pop.addEventListener('mousedown', e => { if (!e.target.closest('.ep-search-inp')) e.preventDefault(); });
+  pop.addEventListener('mousedown', e => { if (!e.target.closest('.ep-search-inp, .gp-search-inp')) e.preventDefault(); });
 
   const wrap = btn.closest('.chat-emoji-wrap') || btn.parentElement;
   wrap.addEventListener('mouseenter', () => {
@@ -273,6 +296,7 @@ export function initEmojiPicker({ btn, pop, input }) {
   pop.addEventListener('mousedown', hideTip);
   pop.addEventListener('scroll', hideTip, true);
   pop.addEventListener('click', (e) => {
+    const md = e.target.closest('[data-mode]'); if (md) { setMode(md.dataset.mode); return; }
     const em = e.target.closest('.ep-e'); if (em) { insert(em.dataset.e); return; }
     const tab = e.target.closest('[data-tab]'); if (tab) { goTo(tab.dataset.tab); setActive(tab.dataset.tab); return; }
     const act = e.target.closest('[data-act]');

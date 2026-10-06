@@ -228,10 +228,11 @@ function menuHtml(m) {
   const hasText = !!(m.text || '').trim();
   let h = '';
   const isPostShare = m.text && m.text.includes('"__postShare"');
+  const isGif = !!(m.text && m.text.includes('"__gif"'));
   // Reply — har qanday oddiy xabar uchun (Telegram uslubida)
   if (!isCallMsg(m) && !(mine && m.status === 'sending')) h += it('reply', IC.reply, 'Javob');
-  if (hasText && isDM()) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
-  if (mine && m.type === 'text' && !isPostShare) h += it('edit', IC.edit, 'Tahrirlash');
+  if (hasText && isDM() && !isGif) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
+  if (mine && m.type === 'text' && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('link', IC.copy, 'Xabar havolasi');
   h += it('fwd', IC.fwd, 'Uzatish');
   if (canDel(m)) h += it('del', IC.del, 'O‘chirish', 'danger');
@@ -607,7 +608,7 @@ function paintSel(keepEmpty) {
   selBar.querySelector('[data-sb="del"]').hidden = !allMine || ![...sel].every(id => canDel(msgOf(id)));
   selBar.querySelector('[data-sb="copy"]').hidden = hasCall || !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
-  selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && one.text.includes('"__postShare"')));
+  selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
 }
 
 /* ── Uzatish (foydalanuvchi tanlash oynasi) ────────────────────────── */

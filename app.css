@@ -14330,6 +14330,28 @@ select.field option { background: #000000; color: var(--text); }
 .sw-reply-ic { position: fixed; z-index: 585; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(231, 233, 234, 0.14); color: #e7e9ea; opacity: 0; transform: scale(.5); pointer-events: none; transition: background .12s ease; }
 .sw-reply-ic.armed { background: rgba(231, 233, 234, 0.28); }
 .sw-reply-ic .icon { width: 18px; height: 18px; }
+
+/* ── GIF: xabar ichida + emoji panelidagi GIF/Emoji bo'limlari ── */
+.chat-bubble.bubble-gif { padding: 3px !important; max-width: min(260px, 70vw) !important; border-radius: 16px !important; }
+.chat-bubble.bubble-gif .chat-gif { display: block; width: 100%; height: auto; border-radius: 13px; background: #16181c; }
+.ep-mode { display: flex; flex-shrink: 0; border-bottom: 1px solid rgba(231, 233, 234, 0.1); }
+.ep-mode button { flex: 1; height: 38px; position: relative; background: none; border: 0; color: var(--text3); font: 500 14px/1 inherit; cursor: pointer; }
+.ep-mode button:hover { color: var(--text2); }
+.ep-mode button.on { color: var(--text); }
+.ep-mode button.on::after { content: ''; position: absolute; left: 30%; right: 30%; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
+.ep-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.gp-search { padding: 8px; flex-shrink: 0; }
+.gp-search-inp { display: block; width: 100%; box-sizing: border-box; height: 32px; padding: 0 14px; border-radius: 16px; background: #000; border: 1px solid rgba(231, 233, 234, 0.1); color: var(--text); font-size: 13px; outline: none; }
+.gp-search-inp::placeholder { color: var(--text3); }
+.gp-search-inp:focus { border-color: rgba(231, 233, 234, 0.2); }
+.gp-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 8px; scrollbar-width: none; overscroll-behavior: contain; }
+.gp-body::-webkit-scrollbar { display: none; }
+.gp-cols { display: flex; gap: 4px; align-items: flex-start; }
+.gp-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.gp-item { display: block; width: 100%; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: #16181c; cursor: pointer; }
+.gp-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gp-item:hover { filter: brightness(1.12); }
+.gp-msg { padding: 28px 12px; text-align: center; color: var(--text3); font-size: 13px; }
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */

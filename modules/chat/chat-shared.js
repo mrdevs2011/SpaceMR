@@ -83,8 +83,23 @@ export function callLogInfo(cl, mine) {
   return cl.ok ? { kind: 'in', title: "Kiruvchi qo'ng'iroq" } : { kind: 'miss', title: "O'tkazib yuborilgan qo'ng'iroq" };
 }
 
+/* ── GIF xabar: {"__gif":true,"u":url,"w":kenglik,"h":balandlik}. Faqat Klipy hostidan. ── */
+export function parseGif(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const t = raw.trim();
+  if (!t.startsWith('{') || !t.includes('"__gif"')) return null;
+  try {
+    const p = JSON.parse(t);
+    if (p && (p.__gif === true || p.__gif === 'true') && typeof p.u === 'string' && /^https:\/\/static\.klipy\.com\//.test(p.u)) {
+      return { u: p.u, w: Math.max(0, +p.w | 0), h: Math.max(0, +p.h | 0) };
+    }
+  } catch (_) {}
+  return null;
+}
+
 export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
+  if (parseGif(raw)) return 'GIF';
   const cl = parseCallLog(raw);
   if (cl) return callLogInfo(cl, mine).title;
   const ps = parsePostShare(raw);

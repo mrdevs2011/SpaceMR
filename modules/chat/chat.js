@@ -665,6 +665,7 @@ import {
   _isSameDay,
   _dateSepLabel,
   parsePostShare,
+  parseGif,
   parseCallLog,
   formatLastMessageText,
   _showPendingBubble,
@@ -2001,7 +2002,8 @@ export function paintMessages(msgs, grp = null) {
         metaOutside = false;
       } else {
         const postShare = parsePostShare(m.text);
-        const bData = generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
+        const gif = postShare ? null : parseGif(m.text);
+        const bData = generateTextBubble({ m, postShare, gif, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
         bubbleClassExtra = bData.bubbleClassExtra;
         bubbleContent = bData.bubbleContent;
         emoCls = bData.emoCls;
@@ -2620,7 +2622,11 @@ $('chatThreadInput').addEventListener('keydown', e => {
 /* ── Composer emoji tugmasi — matn maydoni ichida chapda (Telegram
  * uslubi). Kompakt quick-picker: keng tarqalgan emojilardan iborat
  * ro'yxat, bosilganda kursor turgan joyga qo'shiladi. ── */
-initEmojiPicker({ btn: $('chatEmojiBtn'), pop: $('chatEmojiQuickpick'), input: $('chatThreadInput') });
+initEmojiPicker({
+  btn: $('chatEmojiBtn'), pop: $('chatEmojiQuickpick'), input: $('chatThreadInput'),
+  /* GIF tanlandi — DM va guruhga bir xil oqim (matn maydoniga tegmaydi) */
+  onGif: g => sendChatMessage({ text: JSON.stringify({ __gif: true, u: g.u, w: g.w, h: g.h }) }),
+});
 
 // Mikrofon / Yuborish tugmasi — Telegram uslubidagi "Bosib turib gapirish" (Push-to-Talk)
 

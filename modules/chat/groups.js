@@ -672,17 +672,18 @@ export function reloadGroupThread() { _reloadGroupThread && _reloadGroupThread()
 /* ─────────────────────────────────────────────────────────────────────
    SEND MESSAGE TO GROUP / CHANNEL
    ───────────────────────────────────────────────────────────────────── */
-export async function sendGroupMessage() {
+export async function sendGroupMessage(opts) {
+  const gifText = opts && typeof opts.text === 'string' ? opts.text : null;   // GIF: tayyor JSON matn (inputga tegilmaydi)
   if (!_currentGroupId || !state.me) return;
-  if (isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
+  if (gifText == null && isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
   const inp  = $('chatThreadInput');
-  const userText = (inp?.value || '').trim();
-  const postShare = chatUI.getPendingPostShare ? chatUI.getPendingPostShare() : null;
+  const userText = gifText != null ? gifText : (inp?.value || '').trim();
+  const postShare = gifText != null ? null : (chatUI.getPendingPostShare ? chatUI.getPendingPostShare() : null);
 
   if (!userText && !postShare) return;
   if (!rateOk('msg', 8, 10000)) return;
 
-  inp.value = '';
+  if (gifText == null) inp.value = '';
   if (postShare && chatUI.clearPendingPostShare) {
     chatUI.clearPendingPostShare();
   } else {
@@ -700,7 +701,7 @@ export async function sendGroupMessage() {
 
   const previewText = postShare
     ? (userText ? userText : `Post: ${postShare.authorName || 'Post'}`)
-    : userText.slice(0, 120);
+    : (gifText != null ? 'GIF' : userText.slice(0, 120));
 
   const groupId = _currentGroupId;
   const groupData = _currentGroupData;
@@ -738,7 +739,7 @@ export async function sendGroupMessage() {
     _gRt?.retract(mid);
     _gMsgs = _gMsgs.filter(x => x.id !== mid);
     if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
-    inp.value = userText;
+    if (gifText == null) inp.value = userText;
     if (postShare) chatUI.setPendingPostShare?.(postShare);
     chatUI.updateVoiceSendBtn();
     return;

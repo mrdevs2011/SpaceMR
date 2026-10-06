@@ -434,7 +434,7 @@ if (!window.__chatCallBound) {
   }, true);
 }
 
-export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass }) {
+export function generateTextBubble({ m, postShare, gif, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass }) {
   let bubbleClassExtra = '';
   let bubbleContent = '';
   let emoCls = '';
@@ -442,6 +442,10 @@ export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmoji
   if (postShare) {
     bubbleClassExtra = ' bubble-post-card';
     bubbleContent = renderChatPostCard(postShare);
+  } else if (gif) {
+    const ar = gif.w && gif.h ? ` style="aspect-ratio:${gif.w}/${gif.h}"` : '';
+    bubbleClassExtra = ' bubble-gif';
+    bubbleContent = `<img class="chat-gif" src="${esc(gif.u)}" alt="GIF" loading="lazy" decoding="async" draggable="false"${ar}>`;
   } else {
     emoCls = emojiOnlyClass(m.text);   // 1–3 ta emoji (bubblesiz) bo'lsa — 3D rasm, aks holda 2D
     bubbleContent = `<div class="chat-bubble-text">${wrapEmojiNoSelect(renderMarkdown(m.text || ''), emoCls ? '3d' : '2d')}</div>`;
