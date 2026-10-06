@@ -849,6 +849,27 @@ export async function invalidateChatsUsersCache() {
 /** Boshqa foydalanuvchi ismi/username/avatarini o'zgartirsa — realtime yangilash
  * (suhbatlar ro'yxati, ochiq thread sarlavhasi, onlayn rail, localStorage keshi). */
 let _profLiveTimer = null;
+/* Ochiq thread'ni majburan yopamiz (guruh/user o'chirilganda) — chatlar ro'yxatiga qaytadi */
+function _forceCloseIf(isMatch, msg) {
+  const open = $('chatThreadModal')?.classList.contains('show');
+  if (!open || !isMatch()) return false;
+  try { document.getElementById('grpInfoOverlay')?.classList.remove('show'); } catch (_) {}
+  closeChatThread();
+  if (msg) toast(msg, 'info');
+  return true;
+}
+const _isDmOpen = () => !state.currentChatKind || state.currentChatKind === 'dm';
+
+/* User o'chirildi: ro'yxatdan olib tashlaymiz, u bilan ochiq DM bo'lsa — ro'yxatga chiqamiz */
+function _onProfileDeleted(uid) {
+  if (!uid) return;
+  if (chatState._usersCache) chatState._usersCache = chatState._usersCache.filter(u => u.uid !== uid);
+  try { delete chatState._latestChatMap[uid]; } catch (_) {}
+  try { chatState._myContacts?.delete(uid); } catch (_) {}
+  _forceCloseIf(() => _isDmOpen() && (chatState._otherUserUid === uid || state.currentChatUid === uid), "Foydalanuvchi o'chirildi");
+  if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+}
+
 function _onProfileLive(row) {
   const u = mapProfile(row);
   if (!u || !u.uid) return;
@@ -880,6 +901,7 @@ export function startChatsWatcher() {
   if (!chatState._profileLiveCh) {
     chatState._profileLiveCh = sb.channel('profiles-live-names')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, p => _onProfileLive(p.new))
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'profiles' }, p => _onProfileDeleted(p.old?.id))
       .subscribe();
   }
   // Also start groups watcher
@@ -990,7 +1012,12 @@ export function startChatsWatcher() {
     };
     const chBase = sb.channel('chats-watcher')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_notice' }, () => { chatState._loadNoticeFn?.(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, schedChats)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, p => {
+        if (p.eventType === 'DELETE' && p.old?.id && p.old.id === state.currentChatId) {
+          _forceCloseIf(_isDmOpen, "Suhbat o'chirildi");
+        }
+        schedChats();
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_members', filter: `user_id=eq.${state.me.uid}` }, p => {
         // faqat typing/last_seen o'zgargan bo'lsa ro'yxatni qayta yuklamaymiz
         if (p.eventType === 'UPDATE' && p.old && p.new.unread_count === p.old.unread_count) return;
@@ -1307,7 +1334,13 @@ const MSG_ANIM_MS = 250;
 
 export async function openChatThread(uid) {
   if (!uid || !state.me || uid === state.me.uid) return;
+  // Har ochilish o'z belgisiga ega: tez almashtirilganda eski chatning kechikkan javoblari yangi chatga chizilmasin
+  const _tok = chatState._openTok = (chatState._openTok || 0) + 1;
+  const _stale = () => chatState._openTok !== _tok;
+  // Oldingi chatning yuklanishi/obunasi SHU ZAHOTI o'chadi (avval u tarmoq so'rovlaridan keyin o'chardi)
+  if (chatState._threadUnsub) { chatState._threadUnsub(); chatState._threadUnsub = null; }
   await ensureChatsView();
+  if (_stale()) return;
   msgMenuReset();
 
   state.currentChatKind = 'dm';
@@ -1339,7 +1372,7 @@ export async function openChatThread(uid) {
       closeChatThread();
       return;
     }
-    if (state.currentChatUid !== uid) return; // shu orada boshqa chatga o'tilgan
+    if (state.currentChatUid !== uid || _stale()) return; // shu orada boshqa chatga o'tilgan
     chatId = data;
   }
   state.currentChatId = chatId;
@@ -1379,6 +1412,7 @@ export async function openChatThread(uid) {
   if (voiceCallBtn) voiceCallBtn.style.display = '';
   try {
     const { data: prow } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (_stale()) return; // boshqa chatga o'tilgan — sarlavhani buzmaymiz
     const ud = mapProfile(prow) || {};
     const av = ud.avatar || defAvi(ud.fullName || 'U');
     $('chatThreadName').textContent = ud.fullName || 'Foydalanuvchi';
@@ -1400,6 +1434,8 @@ export async function openChatThread(uid) {
     const pch = sb.channel('peer-' + uid)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${uid}` },
           p => _paintPeerStatus(ts(p.new?.last_seen)))
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'profiles' },
+          p => { if (p.old?.id === uid) _onProfileDeleted(uid); })
       .subscribe();
     chatState._peerUserUnsub = () => sb.removeChannel(pch);
   }
@@ -1457,13 +1493,14 @@ export async function openChatThread(uid) {
     console.warn('[Chat] Failed to save contacts:', err.message);
   }
 
+  if (_stale()) return; // kontakt saqlanguncha boshqa chat ochilgan — bu chat obuna/yuklashni boshlamaydi
   if (chatState._threadUnsub) { chatState._threadUnsub(); chatState._threadUnsub = null; }
 
   let _tDead = false, _tTimer = null, _tLoaded = false;
   const loadThread = async () => {
     const { data, error } = await sb.from('messages').select('*')
       .eq('chat_id', chatId).order('created_at', { ascending: false }).limit(MSG_LIMIT);
-    if (_tDead) return;
+    if (_tDead || state.currentChatId !== chatId) return; // boshqa chat ochilgan — bu natija chizilmaydi
     if (error) {
       console.warn('[Chat] Thread load error:', error.message);
       if (!(_cachedMsgs && _cachedMsgs.length)) {
@@ -2496,6 +2533,11 @@ export function _showOptimisticVoiceBubble(id, localUrl, duration) {
 
 /* ── Wire static DOM (modal already exists in index.html on page load) ── */
 $('chatThreadBack').onclick = closeChatThread;
+
+// Ochiq guruh o'chirildi (groups.js) — chatlar ro'yxatiga qaytamiz
+document.addEventListener('chat:group-deleted', () => {
+  _forceCloseIf(() => !_isDmOpen(), "Guruh o'chirildi");
+});
 
 // Xabar kontekst menyusi (o'ng tugma / mobilda bosib turish) — modules/msg-menu.js
 initMsgMenu({
