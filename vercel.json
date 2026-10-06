@@ -63,6 +63,15 @@
           "value": "public, max-age=86400, immutable"
         }
       ]
+    },
+    {
+      "source": "/emoji/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, immutable"
+        }
+      ]
     }
   ],
   "routes": [

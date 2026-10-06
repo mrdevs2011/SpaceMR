@@ -94,6 +94,8 @@ self.addEventListener('notificationclick', (event) => {
 const CACHE_VERSION  = 't-1791204465'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
+let _emojiCache = null;   // kesh dastagi bir marta ochiladi (har so'rovda caches.open chaqirilmasin)
+const EMOJI_CACHE    = 'spacemr-emoji-v1';   /* emoji rasmlari (/emoji/*.webp) — deploy bilan tozalanmaydi, qayta yuklanmaydi */
 
 // PWA birinchi o'rnatilganda oldindan yuklab, cache'ga solib qo'yiladigan
 // "ilova qobig'i" fayllari — tez ochilishi va OFFLINE'da ishlashi uchun.
@@ -210,7 +212,7 @@ self.addEventListener('activate', (event) => {
       // Faqat eski versiya keshlarini tozalaymiz (joriy versiya saqlanadi)
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE).map(k => caches.delete(k))
+        keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== EMOJI_CACHE).map(k => caches.delete(k))
       );
       await clients.claim();
     })()
@@ -223,6 +225,20 @@ self.addEventListener('fetch', (event) => {
 
   // Supabase API, tashqi URL'lar — doim tarmoqdan (keshlanmaydi)
   if (_isBypassed(url) || req.method !== 'GET') return;
+
+  // Emoji rasmlari — cache-first, alohida kesh. Faqat haqiqiy rasm keshlanadi (yo'q fayl uchun HTML qaytsa — yo'q)
+  if (url.indexOf('/emoji/') > 0 && new URL(url).pathname.startsWith('/emoji/')) {
+    event.respondWith(
+      (_emojiCache || (_emojiCache = caches.open(EMOJI_CACHE))).then(async (c) => {
+        const hit = await c.match(req);
+        if (hit) return hit;
+        const res = await fetch(req);
+        if (res.ok && (res.headers.get('content-type') || '').startsWith('image/')) c.put(req, res.clone());
+        return res;
+      })
+    );
+    return;
+  }
 
   // HTML navigatsiya — Network-First (yangi deploy da yangi HTML kelsin)
   if (req.destination === 'document' || req.mode === 'navigate') {

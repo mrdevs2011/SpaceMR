@@ -20,6 +20,9 @@ let _itemIdx = 0;     // guruh ichidagi story
 let _timer = null;
 let _progressRaf = null;
 let _startedAt = 0;
+let _elapsed = 0;     // story'da o'tgan vaqt (ms) — tezlik/orqaga o'tkazish uchun
+let _lastTs = 0;
+let _rate = 1;        // 1 = oddiy, 2 = 2x oldinga, -2 = 2x orqaga
 let _paused = false;
 let _pausedAt = 0;
 let _holdTimer = null;
@@ -285,6 +288,7 @@ function ensureDom() {
         </button>
       </div>
       <div class="sv-media" id="svMedia"></div>
+      <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
     `;
     document.body.appendChild(v);
   }
@@ -337,9 +341,13 @@ function ensureDom() {
         _startX = e.clientX;
         _startY = e.clientY;
         clearTimeout(_holdTimer);
+        // Bosilgan joy: chap 1/3 = 2x orqaga, o'ng 1/3 = 2x oldinga, o'rta = freeze
+        const hr = ($('svMedia') || v).getBoundingClientRect();
+        const hRatio = (e.clientX - hr.left) / (hr.width || 1);
+        const zone = hRatio < 0.33 ? 'left' : (hRatio > 0.66 ? 'right' : 'center');
         _holdTimer = setTimeout(() => {
           _isHolding = true;
-          freezeStory();
+          _startHold(zone);
         }, 140);
       });
 
@@ -353,7 +361,7 @@ function ensureDom() {
         clearTimeout(_holdTimer);
         if (_isHolding) {
           _isHolding = false;
-          unfreezeStory();
+          _endHold();
           return;
         }
         if (e.target.closest('#svClose') || e.target.closest('.sv-user')) return;
@@ -361,10 +369,11 @@ function ensureDom() {
         const mediaEl = $('svMedia') || v;
         const rect = mediaEl.getBoundingClientRect();
         const ratio = (e.clientX - rect.left) / (rect.width || 1);
+        // Tap: oldingi/keyingi bor bo'lsa o'tadi, yo'q bo'lsa hech narsa qilmaydi
         if (ratio < 0.40) {
-          step(-1);
+          step(-1, true);
         } else {
-          step(1);
+          step(1, true);
         }
       };
 
@@ -373,14 +382,14 @@ function ensureDom() {
         clearTimeout(_holdTimer);
         if (_isHolding) {
           _isHolding = false;
-          unfreezeStory();
+          _endHold();
         }
       });
       v.addEventListener('pointerleave', () => {
         clearTimeout(_holdTimer);
         if (_isHolding) {
           _isHolding = false;
-          unfreezeStory();
+          _endHold();
         }
       });
     }
@@ -389,8 +398,8 @@ function ensureDom() {
     onEsc(900, () => { const v = $('storyViewer'); if (!v || v.hidden) return false; closeViewer(); return true; });
     document.addEventListener('keydown', e => {
       if ($('storyViewer')?.hidden) return;
-      if (e.key === 'ArrowRight') step(1);
-      if (e.key === 'ArrowLeft') step(-1);
+      if (e.key === 'ArrowRight') step(1, true);
+      if (e.key === 'ArrowLeft') step(-1, true);
     });
   }
 }
@@ -663,6 +672,35 @@ function openViewer(groupIdx, itemIdx) {
 
 function _storyVideo() { return $('svMedia')?.querySelector('video') || null; }
 
+function _showRate(txt) {
+  const b = $('svRate');
+  if (!b) return;
+  if (txt) { b.textContent = txt; b.hidden = false; } else { b.hidden = true; }
+}
+
+/** 1 = oddiy, 2 = 2x oldinga, -2 = 2x orqaga (video orqaga o'ynamaydi — currentTime tick'da suriladi) */
+function setStoryRate(r) {
+  _rate = r;
+  const v = _storyVideo();
+  if (!v) return;
+  try {
+    if (r < 0) v.pause();
+    else { v.playbackRate = r; if (!_paused) v.play().catch(() => {}); }
+  } catch (_) {}
+}
+
+function _startHold(zone) {
+  if (zone === 'left')       { setStoryRate(-2); _showRate('◀◀ 2x'); }
+  else if (zone === 'right') { setStoryRate(2);  _showRate('2x ▶▶'); }
+  else                       { freezeStory(); }
+}
+
+function _endHold() {
+  setStoryRate(1);
+  _showRate('');
+  unfreezeStory();
+}
+
 function freezeStory() {
   if (_paused) return;
   _paused = true;
@@ -684,6 +722,8 @@ function closeViewer() {
   clearTimeout(_holdTimer);
   _isHolding = false;
   _paused = false;
+  _rate = 1;
+  _showRate('');
   _pausedAt = 0;
   clearTimeout(_timer);
   cancelAnimationFrame(_progressRaf);
@@ -719,6 +759,9 @@ async function showCurrent() {
   clearTimeout(_timer);
   cancelAnimationFrame(_progressRaf);
   _paused = false;
+  _rate = 1;
+  _elapsed = 0;
+  _showRate('');
 
   const g = _groups[_viewerIdx];
   if (!g || !g.items.length) { closeViewer(); return; }
@@ -780,12 +823,17 @@ async function showCurrent() {
     if (token !== _showToken) return;
     el.style.opacity = '1';
     _startedAt = performance.now();
+    _elapsed = 0; _rate = 1; _lastTs = performance.now();
     const tick = (now) => {
+      const dt = Math.max(0, Math.min(100, now - _lastTs)); // fon tab'dan qaytganda sakramasin
+      _lastTs = now;
       if (_paused) {
         _progressRaf = requestAnimationFrame(tick);
         return;
       }
-      const ratio = Math.min(1, (now - _startedAt) / duration);
+      _elapsed = Math.max(0, _elapsed + dt * _rate);   // _rate < 0 — orqaga (0 dan pastga tushmaydi)
+      if (isVideo && _rate < 0) { try { el.currentTime = Math.min(_elapsed, duration) / 1000; } catch (_) {} }
+      const ratio = Math.min(1, _elapsed / duration);
       buildProgress(n, _itemIdx, ratio);
       if (ratio >= 1) {
         try { el.pause && el.pause(); } catch (_) {}
@@ -839,7 +887,7 @@ async function markViewed(item) {
   if (g) g.hasUnseen = g.items.some(i => !i.seen);
 }
 
-function step(dir) {
+function step(dir, manual = false) {
   if (dir < 0) {
     // Chap tomonga bosilganda: agar oldingi story bo'lsa o'tadi
     if (_itemIdx > 0) {
@@ -860,8 +908,8 @@ function step(dir) {
       _viewerIdx++;
       _itemIdx = 0;
       showCurrent();
-    } else {
-      closeViewer();
+    } else if (!manual) {
+      closeViewer();   // vaqt tugab oxirgi story'dan keyin — yopiladi; qo'lda bosilganda — joyida qoladi
     }
   }
 }

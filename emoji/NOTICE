@@ -1,0 +1,4 @@
+Emoji rasmlari: Google Noto Emoji (https://github.com/googlefonts/noto-emoji), commit e20cbc2.
+2d/ — 2D/png/72, 3d/ — 3D/png/128; WebP (quality 90) ga o'tkazilgan, fayl nomi: kodpointlar kichik harf, '-' bilan, FE0F tashlangan.
+Davlat bayroqlari 2D to'plamda yo'q — 2d/ dagi bayroqlar 3D rasmdan 72px ga kichraytirilgan.
+Litsenziya: LICENSE-OFL (SIL OFL 1.1, repo ildizi / shriftlar) va LICENSE-Apache (Apache 2.0, 2D/svg). 3D/png uchun alohida litsenziya fayli yo'q.

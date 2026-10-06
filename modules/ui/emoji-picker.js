@@ -1,4 +1,5 @@
 import { onEsc } from './esc-stack.js';
+import { emojiImg, warmEmoji, warmAtlas, warmTyped } from './emoji-img.js';
 /* emoji-picker.js — telefon klaviaturasi (Gboard) uslubidagi emoji paneli.
    Tepada: qidiruv tugmasi + kategoriya ikonlari (SVG). Pastda: "Oxirgilar" va kategoriyalar
    bo'yicha sahifalar: tablar orasida gorizontal surish, sahifa ichida vertikal skroll. Ma'lumot mahalliy (emoji-data.js), birinchi ochilganda yuklanadi. */
@@ -32,7 +33,13 @@ function loadRecent() {
 }
 function saveRecent(list) { try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX))); } catch {} }
 
-const grid = list => list.map(e => `<button type="button" class="ep-e" data-e="${esc(e)}">${e}</button>`).join('');
+/* Kategoriya sahifalari — sprite (kategoriyaga 1 ta fayl: /emoji/atlas/<id>.webp, 16 ustun, katak 76px).
+   Oxirgilar va qidiruv natijalari — alohida rasmlar (ular kam). */
+const ATLAS_COLS = 16;
+const POS = new Map();   // emoji -> { a: kategoriya, x: ustun, y: qator } — build() da to'ldiriladi
+const btnHtml = (e, inner) => `<button type="button" class="ep-e" data-e="${esc(e)}" aria-label="${esc(e)}">${inner}</button>`;
+const gridImg = (list, lazy) => list.map(e => btnHtml(e, emojiImg(e, '2d', lazy))).join('');
+const gridAtlas = list => list.map(e => { const p = POS.get(e); return btnHtml(e, p ? `<i class="emo-s" data-a="${p.a}" style="--x:${p.x};--y:${p.y}"></i>` : emojiImg(e, '2d', true)); }).join('');
 
 export function initEmojiPicker({ btn, pop, input }) {
   if (!btn || !pop || !input) return;
@@ -44,6 +51,7 @@ export function initEmojiPicker({ btn, pop, input }) {
     pop.innerHTML = '<div class="ep-loading">Yuklanmoqda…</div>';
     try { ({ EMOJI_CATS: cats } = await import('./emoji-data.js')); }
     catch { pop.innerHTML = '<div class="ep-loading">Emoji yuklanmadi</div>'; built = false; return; }
+    for (const c of cats) c.list.forEach(([e], i) => POS.set(e, { a: c.id, x: i % ATLAS_COLS, y: (i / ATLAS_COLS) | 0 }));
 
     const tabDefs = [{ id: 'recent' }, ...cats.map(c => ({ id: c.id, name: c.name }))];
     pop.innerHTML = `
@@ -59,7 +67,7 @@ export function initEmojiPicker({ btn, pop, input }) {
       </div>
       <div class="ep-body">
         <section data-sec="recent"><h4>Oxirgilar</h4><div class="ep-grid" data-grid="recent"></div></section>
-        ${cats.map(c => `<section data-sec="${c.id}"><h4>${esc(c.name)}</h4><div class="ep-grid">${grid(c.list.map(x => x[0]))}</div></section>`).join('')}
+        ${cats.map(c => `<section data-sec="${c.id}"><h4>${esc(c.name)}</h4><div class="ep-grid" style="--rows:${Math.ceil(c.list.length / ATLAS_COLS)}">${gridAtlas(c.list.map(x => x[0]))}</div></section>`).join('')}
         <section data-sec="results" hidden><h4>Natijalar</h4><div class="ep-grid" data-grid="results"></div></section>
       </div>`;
     tabs = [...pop.querySelectorAll('[data-tab]')];
@@ -77,10 +85,17 @@ export function initEmojiPicker({ btn, pop, input }) {
   function paintRecent() {
     const sec = pop.querySelector('[data-sec="recent"]');
     sec.hidden = !recent.length;
-    sec.querySelector('.ep-grid').innerHTML = grid(recent);
+    sec.querySelector('.ep-grid').innerHTML = gridImg(recent, false);
     const t = pop.querySelector('[data-tab="recent"]'); if (t) t.hidden = !recent.length;
   }
+  /* Sprite faqat ko'rinayotgan sahifa va uning qo'shnilari uchun yuklanadi (CSS: section[data-ld]) — 9 ta atlas bir vaqtda emas */
+  function wake(id) {
+    const secs = [...body.querySelectorAll('section[data-sec]')];
+    const i = secs.findIndex(s => s.dataset.sec === id);
+    for (const k of [i - 1, i, i + 1]) secs[k]?.setAttribute('data-ld', '');
+  }
   function setActive(id) {
+    if (body) wake(id);
     tabs.forEach(t => t.classList.toggle('on', t.dataset.tab === id));
     const t = tabs.find(x => x.dataset.tab === id), row = t && t.parentElement;
     if (row && row.scrollWidth > row.clientWidth) {
@@ -155,7 +170,7 @@ export function initEmojiPicker({ btn, pop, input }) {
     for (const c of cats) for (const [e, kw] of c.list) if (words.every(w => kw.includes(w))) hits.push(e);
     others.forEach(s => { s.hidden = true; });
     res.hidden = false;
-    res.querySelector('.ep-grid').innerHTML = hits.length ? grid(hits.slice(0, 200)) : '<div class="ep-empty">Topilmadi</div>';
+    res.querySelector('.ep-grid').innerHTML = hits.length ? gridImg(hits.slice(0, 200), true) : '<div class="ep-empty">Topilmadi</div>';
     body.scrollLeft = 0; res.scrollTop = 0;
   }
   function toggleSearch(on) {
@@ -170,6 +185,7 @@ export function initEmojiPicker({ btn, pop, input }) {
     const caret = start + emoji.length;
     input.focus(); input.setSelectionRange(caret, caret);
     input.dispatchEvent(new Event('input', { bubbles: true }));
+    warmTyped(emoji);   // yuborilganda rasm (2D/3D) allaqachon keshda bo'lsin
     recent = [emoji, ...recent.filter(x => x !== emoji)].slice(0, RECENT_MAX);
     saveRecent(recent);
     if (searchRow?.hidden !== false) paintRecent();
@@ -270,4 +286,12 @@ export function initEmojiPicker({ btn, pop, input }) {
     closePanel();
   });
   onEsc(366, () => { if (!pop.classList.contains('show')) return false; closePanel(); return true; });
+
+  /* Oldindan tayyorlash (ilova bo'sh turganda): emoji-data.js yuklanadi, panel yashirincha quriladi, birinchi sahifa sprite'i
+     va "Oxirgilar" rasmlari keshlanadi — ochilganda "Yuklanmoqda…" ham, rasm kutish ham bo'lmaydi. */
+  (window.requestIdleCallback || (f => setTimeout(f, 1500)))(() => {
+    warmAtlas('smileys');
+    warmEmoji(recent, '2d');
+    build();
+  }, { timeout: 5000 });
 }

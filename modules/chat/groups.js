@@ -102,6 +102,8 @@ async function _loadGroups() {
   });
   ids.forEach(groupJoin);
   if (_currentGroupId && _latestGroupMap[_currentGroupId]) _currentGroupData = _latestGroupMap[_currentGroupId];
+  // Ochiq guruh ro'yxatdan yo'qoldi — o'chirilgan bo'lishi mumkin (realtime hodisa o'tib ketgan bo'lsa ham ushlaymiz)
+  if (_currentGroupId && !_latestGroupMap[_currentGroupId]) _verifyCurrentGroupExists(_currentGroupId);
   // Thread ochiq bo'lsa — admin sozlamani o'zgartirgan bo'lishi mumkin: input qatorini qayta hisoblaymiz
   if (_currentGroupId && _currentGroupData) _applyGroupComposer(_currentGroupData);
   // Notify chat.js list to repaint
@@ -142,7 +144,9 @@ async function _updateGroup(groupId, patch) {
   await _loadGroups();
 }
 
+let _gSelfDel = null;
 async function _deleteGroup(groupId) {
+  _gSelfDel = groupId; setTimeout(() => { if (_gSelfDel === groupId) _gSelfDel = null; }, 5000);
   const { data, error } = await sb.from('groups').delete().eq('id', groupId).select();
   if (error) throw error;
   if (!data || !data.length) throw new Error("Ruxsat yo'q");
@@ -182,6 +186,18 @@ const _groupsSched = () => { clearTimeout(_groupsTimer); _groupsTimer = setTimeo
 /* Uyg'onish / internet qaytishi: guruhlar ro'yxati qayta yuklanadi */
 window.addEventListener('spacemr:resync', () => { if (_groupsUnsub) _groupsSched(); });
 
+/** Ochiq guruh o'chirildi — chat.js thread'ni yopib, chatlar ro'yxatiga qaytaradi */
+function _notifyGroupGone(id) {
+  if (!id || _gSelfDel === id || _currentGroupId !== id) return;
+  document.dispatchEvent(new CustomEvent('chat:group-deleted', { detail: { id } }));
+}
+async function _verifyCurrentGroupExists(gid) {
+  try {
+    const { data, error } = await sb.from('groups').select('id').eq('id', gid).maybeSingle();
+    if (!error && !data) _notifyGroupGone(gid);
+  } catch (_) {}
+}
+
 /** Guruh o'zgarishlarini berilgan (hali subscribe qilinmagan) kanalga ulaydi. */
 export function bindGroupsRealtime(ch) {
   const me = state.me?.uid;
@@ -189,6 +205,7 @@ export function bindGroupsRealtime(ch) {
   return ch
     .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, p => {
       const id = p.new?.id || p.old?.id;
+      if (p.eventType === 'DELETE' && id && id === _currentGroupId) _notifyGroupGone(id);
       if (id && _latestGroupMap[id]) _groupsSched();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${me}` }, _groupsSched);

@@ -443,8 +443,8 @@ export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmoji
     bubbleClassExtra = ' bubble-post-card';
     bubbleContent = renderChatPostCard(postShare);
   } else {
-    bubbleContent = `<div class="chat-bubble-text">${wrapEmojiNoSelect(renderMarkdown(m.text || ''))}</div>`;
-    emoCls = emojiOnlyClass(m.text);
+    emoCls = emojiOnlyClass(m.text);   // 1–3 ta emoji (bubblesiz) bo'lsa — 3D rasm, aks holda 2D
+    bubbleContent = `<div class="chat-bubble-text">${wrapEmojiNoSelect(renderMarkdown(m.text || ''), emoCls ? '3d' : '2d')}</div>`;
   }
   return { bubbleClassExtra, bubbleContent, emoCls };
 }

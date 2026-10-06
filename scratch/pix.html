@@ -1,0 +1,18 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=/app.css>
+<body style="margin:0;background:#15181c">
+<div id=root style="position:absolute;left:0;top:0"></div>
+<script type=module>
+import { EMOJI_CATS } from '/modules/ui/emoji-data.js';
+import { emojiImg } from '/modules/ui/emoji-img.js';
+const tests=[['smileys','😂'],['smileys','🥰'],['people','👍'],['flags','🇺🇿'],['objects','🔥'],['symbols','❤️']];
+const root=document.getElementById('root'); let html='';
+tests.forEach(([cat,e],r)=>{
+  const c=EMOJI_CATS.find(x=>x.id===cat); const i=c.list.findIndex(x=>x[0]===e);
+  const rows=Math.ceil(c.list.length/16);
+  // chap: sprite (picker), o'ng: alohida rasm — bir xil font-size 22px, 40x40 katak
+  html+=`<section data-ld style="position:absolute;left:0;top:${r*40}px;width:40px;height:40px;font-size:22px"><div class=ep-grid style="--rows:${rows};display:block"><div class=ep-e style="width:40px;height:40px;aspect-ratio:auto"><i class="emo-s" data-a="${cat}" style="--x:${i%16};--y:${(i/16)|0}"></i></div></div></section>`;
+  html+=`<div style="position:absolute;left:40px;top:${r*40}px;width:40px;height:40px;font-size:22px;display:flex;align-items:center;justify-content:center">${emojiImg(e,'2d')}</div>`;
+});
+root.innerHTML=html;
+await new Promise(r=>setTimeout(r,2500)); document.title='ready';
+</script>

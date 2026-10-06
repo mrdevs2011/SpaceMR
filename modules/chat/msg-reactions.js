@@ -7,6 +7,7 @@
 import { sb, state } from '../core/config.js';
 import { esc, defAvi } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
+import { emojiImg, warmEmoji } from '../ui/emoji-img.js';
 
 export const QUICK = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁'];
 /** Reaksiyaga arziydigan tanlangan emojilar (menyu qatori + chevron paneli) */
@@ -110,7 +111,7 @@ function chipsHtml(m) {
     const tail = few
       ? `<span class="mr-avs">${uids.map(u => { const a = avatarOf(u); return `<img class="mr-av" src="${esc(a.avatar || defAvi(a.name))}" alt="" draggable="false">`; }).join('')}</span>`
       : `<span class="mr-n">${uids.length}</span>`;
-    return `<button type="button" class="mr-chip${mineE === e ? ' mine' : ''}${few ? ' few' : ''}" data-re="${esc(e)}"><span class="mr-e">${esc(e)}</span>${tail}</button>`;
+    return `<button type="button" class="mr-chip${mineE === e ? ' mine' : ''}${few ? ' few' : ''}" data-re="${esc(e)}"><span class="mr-e">${emojiImg(e)}</span>${tail}</button>`;
   }).join('');
 }
 
@@ -170,11 +171,13 @@ export async function reactToggle(msgId, emoji) {
 export function reactStripHtml(m) {
   sync();
   const mine = byMsg.get(m.id)?.get(me());
-  return `<div class="mc-react"><div class="mc-r-scroll">${REACTS.map(e => `<button type="button" class="mc-r${mine === e ? ' on' : ''}" data-r="${e}" aria-label="${e}">${e}</button>`).join('')}</div><button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
+  return `<div class="mc-react"><div class="mc-r-scroll">${REACTS.map(e => `<button type="button" class="mc-r${mine === e ? ' on' : ''}" data-r="${e}" aria-label="${e}">${emojiImg(e)}</button>`).join('')}</div><button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
 }
 
 /* ── Hover (faqat sichqonchali qurilma): xabar chetida bitta tezkor reaksiya; ustiga borilsa — vertikal scrollli ro'yxat (10 ta) ── */
 export const HOVER_SET = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😮', '😢', '🎉'];
+warmEmoji([...REACTS, ...HOVER_SET]);                 // reaksiya paneli/chiplari
+warmEmoji(REACTS.slice(0, 24), '3d');                   // tez-tez yuboriladigan yakka katta emojilar   // reaksiya paneli ochilganda rasmlar tayyor bo'lsin
 const QK = 'spacemr_react_quick';
 const canHover = () => !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
 let hb = null, hp = null, hRow = null, hideT = 0, openT = 0, dwellT = 0, dwellRow = null;
@@ -239,7 +242,7 @@ function showHover(row) {
   clearTimeout(hideT);
   if (hRow !== row) { hidePick(); hRow = row; }
   const q = quick();
-  hb.textContent = q;
+  hb.innerHTML = emojiImg(q);
   hb.classList.add('show');
   placeHover();
 }
@@ -249,7 +252,7 @@ function openPick() {
   const q = quick(), mineE = byMsg.get(hRow.dataset.msgId)?.get(me());
   // column-reverse: birinchi (tezkor) emoji pastda — tugma ustida; qolganlari tepaga scroll
   hp.firstChild.innerHTML = [q, ...HOVER_SET.filter(e => e !== q)]
-    .map((e, i) => `<button type="button" class="hp-e${mineE === e ? ' on' : ''}" data-e="${e}" aria-label="${e}" style="--i:${i}">${e}</button>`).join('');
+    .map((e, i) => `<button type="button" class="hp-e${mineE === e ? ' on' : ''}" data-e="${e}" aria-label="${e}" style="--i:${i}">${emojiImg(e)}</button>`).join('');
   const r = hb.getBoundingClientRect();
   // Bo'sh joyga BUTUN emoji sig'adigan qilib balandlik: 36px emoji + 4px oraliq (kesilib qolmasin)
   const room = r.bottom + 4 - minTop() - 18;

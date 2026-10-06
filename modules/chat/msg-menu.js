@@ -9,6 +9,7 @@ import { $, esc, defAvi, showConfirm, copyToClipboard } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
+import { emojiImg } from '../ui/emoji-img.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -192,7 +193,7 @@ function showSeenList(rowEl) {
   ensureSeenList();
   const rx = reactionsOf(rowEl._mid);   // kim qanday emoji bilan reaksiya bildirgan
   seenEl.innerHTML = `<div class="sl-scroll">${list.map(u =>
-    `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-name">${esc(u.name)}</span>${rx.get(u.uid) ? `<span class="sl-react">${esc(rx.get(u.uid))}</span>` : ''}${IC.seen}</button>`).join('')}</div>`;
+    `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-name">${esc(u.name)}</span>${rx.get(u.uid) ? `<span class="sl-react">${emojiImg(rx.get(u.uid))}</span>` : ''}${IC.seen}</button>`).join('')}</div>`;
   seenEl.style.visibility = 'hidden';
   seenEl.classList.add('show');
   const mr = menu.getBoundingClientRect(), rr = rowEl.getBoundingClientRect();

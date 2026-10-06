@@ -1,0 +1,17 @@
+<!doctype html><meta charset=utf-8><link rel=stylesheet href=/app.css>
+<body style="background:#000;color:#fff"><pre id=out>wait</pre>
+<script type=module>
+import { EMOJI_CATS } from '/modules/ui/emoji-data.js';
+import { emojiImg } from '/modules/ui/emoji-img.js';
+const out=[]; const all=EMOJI_CATS.flatMap(c=>c.list.map(x=>x[0]));
+out.push('emoji soni: '+all.length);
+const wrap=document.createElement('div'); wrap.style.cssText='width:360px;height:300px;overflow:hidden;position:fixed;left:0;top:0';
+const box=document.createElement('div'); box.className='ep-grid'; box.style.cssText='height:300px;overflow:auto'; wrap.appendChild(box); document.body.appendChild(wrap);
+function bench(name,fn){ box.innerHTML=''; const t0=performance.now(); box.innerHTML=fn(); const t1=performance.now(); void box.offsetHeight; const t2=performance.now(); out.push(name+': DOM yasash '+(t1-t0).toFixed(1)+' ms, joylash '+(t2-t1).toFixed(1)+' ms'); }
+bench('matn (eski, tizim emoji)', ()=> all.map(e=>`<button class="ep-e">${e}</button>`).join(''));
+bench('rasm lazy (hozirgi)', ()=> all.map(e=>`<button class="ep-e">${emojiImg(e,'2d',true)}</button>`).join(''));
+await new Promise(r=>setTimeout(r,2500));
+const rs=performance.getEntriesByType('resource').filter(r=>r.name.includes('/emoji/'));
+out.push('picker ochilgach yuklangan rasmlar: '+rs.length+' ta, '+(rs.reduce((a,r)=>a+(r.encodedBodySize||0),0)/1024).toFixed(0)+' KB');
+document.getElementById('out').textContent=out.join('\n');
+</script>

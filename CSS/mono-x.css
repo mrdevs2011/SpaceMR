@@ -3039,6 +3039,27 @@ button:focus-visible,
 .emj,
 .chat-msg.emoji-only .chat-bubble-text { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 
+/* Emoji rasmlari (Noto WebP, modules/ui/emoji-img.js). em bilan o'lchanadi — har joyning font-size'iga moslashadi.
+   pointer-events:none: bosish/uzoq bosish ota elementga (tugma, xabar) o'tadi, "rasmni saqlash" menyusi chiqmaydi. */
+.emo-img { display: inline-block; width: 1.18em; height: 1.18em; vertical-align: -0.24em; object-fit: contain; pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-user-select: none; }
+.ep-e .emo-img, .mc-r .emo-img, .hp-e .emo-img, #msgHoverReact .emo-img, .mr-e .emo-img, .sl-react .emo-img { display: block; margin: auto; vertical-align: middle; }
+.mr-e { display: inline-flex; align-items: center; }
+.chat-msg.emoji-only .emo-img { width: 1.1em; height: 1.1em; vertical-align: middle; }
+
+/* Picker sprite'lari: emoji/atlas/<kategoriya>.webp — 16 ustun, katak 76px (72px emoji + 2px shaffof chet).
+   Element = bitta katak (1.2456em = 76/72 * 1.18em), ko'rinadigan emoji = 1.18em (rasm bilan bir xil o'lcham).
+   Rasm faqat section[data-ld] (ko'rinayotgan sahifa va qo'shnilari) uchun yuklanadi. --rows: .ep-grid da (JS qo'yadi). */
+.emo-s { display: block; margin: auto; width: 1.2456em; height: 1.2456em; background-repeat: no-repeat; background-size: calc(16 * 1.2456em) calc(var(--rows, 1) * 1.2456em); background-position: calc(var(--x, 0) * -1.2456em) calc(var(--y, 0) * -1.2456em); pointer-events: none; user-select: none; -webkit-user-select: none; }
+.ep-body section[data-ld] .emo-s[data-a="smileys"] { background-image: url(/emoji/atlas/smileys.webp); }
+.ep-body section[data-ld] .emo-s[data-a="people"] { background-image: url(/emoji/atlas/people.webp); }
+.ep-body section[data-ld] .emo-s[data-a="animals"] { background-image: url(/emoji/atlas/animals.webp); }
+.ep-body section[data-ld] .emo-s[data-a="food"] { background-image: url(/emoji/atlas/food.webp); }
+.ep-body section[data-ld] .emo-s[data-a="activities"] { background-image: url(/emoji/atlas/activities.webp); }
+.ep-body section[data-ld] .emo-s[data-a="travel"] { background-image: url(/emoji/atlas/travel.webp); }
+.ep-body section[data-ld] .emo-s[data-a="objects"] { background-image: url(/emoji/atlas/objects.webp); }
+.ep-body section[data-ld] .emo-s[data-a="symbols"] { background-image: url(/emoji/atlas/symbols.webp); }
+.ep-body section[data-ld] .emo-s[data-a="flags"] { background-image: url(/emoji/atlas/flags.webp); }
+
 /* ═══════════════════════════════════════════════════════════════════════
    SEMANTIC COLOR THEME: Black/White + Blue (actions) + Red (danger/like)
    ═══════════════════════════════════════════════════════════════════════ */

@@ -1,5 +1,6 @@
 /* emoji-only.js — xabar faqat emojidan iborat bo'lsa, chat.js/groups.js `.chat-msg` ga qo'shadigan klass.
    1 ta emoji eng katta, 2 va 3 ta — kichikroq (bubblesiz); 4+ — oddiy bubble (CSS: .emo-1..emo-3). */
+import { emojiImg } from './emoji-img.js';
 const SEG = (typeof Intl !== 'undefined' && Intl.Segmenter) ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
 const EMO = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[#*0-9]\uFE0F?\u20E3)/u;
 
@@ -60,6 +61,7 @@ initEmojiTap();
 /* Xabar HTML'idagi emojilarni <span class="emj"> ichiga o'raydi — CSS user-select:none
    (chat/guruhda emoji belgilanmaydi). Teglar ichiga tegilmaydi. */
 const EMJ_RE = /(<[^>]*>)|((?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[#*0-9]\uFE0F?\u20E3)(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*)/gu;
-export function wrapEmojiNoSelect(html) {
-  return String(html || '').replace(EMJ_RE, (m, tag, emo) => tag ? tag : `<span class="emj">${emo}</span>`);
+/* kind: '2d' (oddiy) yoki '3d' (faqat bubblesiz katta emoji-only xabarlar) — rasm emoji-img.js'dan */
+export function wrapEmojiNoSelect(html, kind = '2d') {
+  return String(html || '').replace(EMJ_RE, (m, tag, emo) => tag ? tag : `<span class="emj">${emojiImg(emo, kind)}</span>`);
 }
