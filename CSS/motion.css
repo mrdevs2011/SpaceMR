@@ -204,3 +204,23 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   overflow: hidden;
   transition: height .32s cubic-bezier(.32, .72, 0, 1), margin-top .32s cubic-bezier(.32, .72, 0, 1), opacity .28s ease;
 }
+
+.chat-jump-bottom {
+  position: absolute;
+  right: 14px;
+  bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  z-index: 8;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #2f3336;
+  background: #000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+}
+.chat-jump-bottom.show { display: flex; }
+.chat-jump-bottom img { width: 20px; height: 20px; }

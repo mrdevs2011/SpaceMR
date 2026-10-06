@@ -1973,12 +1973,28 @@ function _isFreshMsg(m) {
 /* Sana yordamchilari: chat-shared.js */
 
 /** Foydalanuvchi chat pastida "yopishib" turganini kuzatadi (rasm kech yuklansa ham pastda qolsin) */
+function _syncJumpBottom(box) {
+  const btn = document.getElementById('chatJumpBottom');
+  if (!btn || !box) return;
+  const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
+  btn.classList.toggle('show', gap > 140);
+}
 function _bindPinTracking(box) {
   if (box._pinBound) return;
   box._pinBound = true;
   box.addEventListener('scroll', () => {
     chatState._pinned = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
+    _syncJumpBottom(box);
   }, { passive: true });
+  const btn = document.getElementById('chatJumpBottom');
+  if (btn && !btn._wired) {
+    btn._wired = true;
+    btn.addEventListener('click', () => {
+      chatState._pinned = true;
+      _smoothToBottom(box);
+      btn.classList.remove('show');
+    });
+  }
 }
 function _smoothToBottom(box) {
   if (!box) return;
@@ -2309,6 +2325,7 @@ export function paintMessages(msgs, grp = null) {
       _smoothToBottom(box);
     }
   }
+  _syncJumpBottom(box);
 
   // "theirs" xabarlaridagi avatar bosilganda profil ochamiz
   box.querySelectorAll('.grp-sender-name[data-uid]').forEach(el => {
