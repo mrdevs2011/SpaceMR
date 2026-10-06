@@ -75,7 +75,7 @@ function card(a) {
   const href = `/apps/${c ? c.slug : '_'}/${a.slug}`;
   return `<a class="apc" href="${href}" data-go="${c ? esc(c.slug) + '/' + esc(a.slug) : ''}">
     ${logoHtml(a, 'apc-logo')}
-    <span class="apc-meta"><b>${esc(a.name)}</b>${a.description ? `<small>${esc(a.description)}</small>` : ''}<em>@${esc(ownerName(a.owner_id) || '?')}</em></span>
+    <span class="apc-meta"><b>${esc(a.name)}</b>${a.description ? `<small>${esc(a.description)}</small>` : ''}<code class="apc-slug">${c ? esc(c.slug) + '/' : ''}${esc(a.slug)}</code><em>@${esc(ownerName(a.owner_id) || '?')}</em></span>
   </a>`;
 }
 
@@ -89,7 +89,7 @@ function listHtml() {
     const list = catHit ? all : all.filter(match);
     if (q && !list.length && !catHit) continue;
     out += `<section class="aps-sec">
-      <a class="aps-sec-h" href="/apps/${esc(c.slug)}" data-go="${esc(c.slug)}"><span>${esc(c.name)}</span><em>${all.length} ta</em></a>
+      <a class="aps-sec-h" href="/apps/${esc(c.slug)}" data-go="${esc(c.slug)}"><span class="aps-sec-ic">${esc((c.name || '?')[0].toUpperCase())}</span><span class="aps-sec-n">${esc(c.name)}</span><em>${all.length} ta</em><i class="aps-sec-ch">›</i></a>
       ${list.length ? `<div class="aps-grid">${list.map(card).join('')}</div>` : '<div class="aps-none">Hozircha ilova yo\'q</div>'}
     </section>`;
   }
@@ -167,7 +167,7 @@ async function openRunner(a, c) {
   el.innerHTML = `<div class="apr-bar">
       <button type="button" class="apr-ib" data-act="run-back" aria-label="Orqaga">${ico('nav/chevron-left', 22)}</button>
       ${logoHtml(a, 'apr-logo')}
-      <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.name)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
+      <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.slug)}/${esc(a.slug)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
       <button type="button" class="apr-ib" data-act="run-reload" aria-label="Qayta yuklash" title="Qayta yuklash">${ico('action/refresh', 20)}</button>
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}

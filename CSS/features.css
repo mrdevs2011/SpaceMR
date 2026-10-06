@@ -1033,7 +1033,7 @@
   }
   .nav-btn[data-v]:hover::after, .nav-center-btn:hover::after, .sb-mute-btn:hover::after { opacity: 1; }
   .nav-center-btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: var(--pal-legacy-3a3a3f); border-radius: 50% 50% 0 0; pointer-events: none; }
-  #homeView, #followingView, #reelsView, #profileView, #chatsView, #actionsView, #savedView { margin-left: var(--sidebar); position: relative; z-index: 1; }
+  #homeView, #followingView, #reelsView, #profileView, #chatsView, #actionsView, #savedView, #appsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
   .view.on { padding-top: 16px; padding-bottom: 24px; }
   .feed { margin: 0 auto; padding: 0 16px; }
   .post { border: 0.5px solid var(--glass-border); background: var(--glass); margin-bottom: 16px; padding: 14px; box-shadow: var(--specular-top), var(--liquid-shadow-sm); }

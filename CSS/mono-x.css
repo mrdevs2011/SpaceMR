@@ -122,7 +122,7 @@ a { color: var(--link); }
 /* Desktop/planshet: markaz ustun */
 @media (min-width: 1100px) {
   :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #savedView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
+  #homeView.on, #followingView.on, #savedView.on, #appsView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
   .feed, #followingView .feed { max-width: var(--center-w); padding: 0; min-height: 100dvh; }
 }
 /* Keng ekran (≥1260px): sidebar + markaz + o'ng ustun, butun guruh markazda */
@@ -135,7 +135,7 @@ a { color: var(--link); }
 /* Mobile header YOQILDI — logo + saved + notif + search + avi */
 .app-hdr { display: flex !important; }
 .app-hdr.search-open { display: none !important; }
-#homeView.on, #followingView.on, #savedView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
+#homeView.on, #followingView.on, #savedView.on, #appsView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
 .post, [data-theme] .post {
   --post-px: 16px;
   --post-avi: 40px;
@@ -664,7 +664,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
 .right-rail { display: none; }
 @media (min-width: 1200px) {
   :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #profileView.on, #savedView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
+  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
   .feed, #followingView .feed { max-width: var(--center-w); width: 100%; margin: 0; }
   [data-theme] .search-overlay, [data-theme="dark"] .search-overlay, .search-overlay {
     left: var(--content-left, var(--sidebar, 260px));
@@ -5671,7 +5671,7 @@ a.cfm-name--link:hover {
     border-bottom: 1px solid rgba(231, 233, 234, 0.1) !important;
     z-index: 80;
   }
-  #homeView.on, #followingView.on, #savedView.on,
+  #homeView.on, #followingView.on, #savedView.on, #appsView.on,
   #chatsView.on, #profileView.on, #actionsView.on {
     padding-top: var(--hdr, 52px) !important;
   }
@@ -7671,7 +7671,7 @@ header.app-hdr.force-hide,
 }
 #homeView.on,
 #followingView.on,
-#savedView.on,
+#savedView.on, #appsView.on,
 #chatsView.on,
 #profileView.on {
   padding-top: 52px !important;
@@ -7721,7 +7721,7 @@ header.app-hdr.force-hide,
   }
   #homeView.on,
   #followingView.on,
-  #savedView.on,
+  #savedView.on, #appsView.on,
   #chatsView.on,
   #profileView.on,
   #actionsView.on {
@@ -7902,7 +7902,7 @@ body::-webkit-scrollbar,
   }
   #homeView.on,
   #followingView.on,
-  #savedView.on,
+  #savedView.on, #appsView.on,
   #chatsView.on,
   #profileView.on,
   #actionsView.on {
@@ -8007,7 +8007,7 @@ body::-webkit-scrollbar,
   #appHdr .hdr-avi-btn { margin: 0 !important; }
   #homeView.on,
   #followingView.on,
-  #savedView.on,
+  #savedView.on, #appsView.on,
   #chatsView.on,
   #profileView.on,
   #actionsView.on,

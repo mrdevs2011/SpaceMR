@@ -1,6 +1,5 @@
 /* ── Ilovalar (/apps): ro'yxat, kartalar, runner, formalar ─────────────── */
-#appsView.on { padding-left: 16px; padding-right: 16px; }
-.aps { max-width: 980px; margin: 0 auto; padding-bottom: 80px; color: var(--pal-white, #e7e9ea); }
+.aps { max-width: 980px; margin: 0 auto; padding: 0 16px 80px; box-sizing: border-box; color: var(--pal-white, #e7e9ea); }
 .aps-head { display: flex; align-items: center; gap: 10px; padding: 14px 0 10px; }
 .aps-title { margin: 0; flex: 1; min-width: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aps-back { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
@@ -16,9 +15,13 @@
 .aps-search input { width: 100%; box-sizing: border-box; height: 40px; padding: 0 14px; border: 1px solid #2f3336; border-radius: 999px; background: #16181c; color: inherit; font: 14px/1 inherit; outline: none; }
 .aps-search input:focus { border-color: #1d9bf0; }
 .aps-sec { margin: 0 0 22px; }
-.aps-sec-h { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: inherit; text-decoration: none; font-size: 16px; font-weight: 800; }
-.aps-sec-h em { font-style: normal; font-size: 12px; font-weight: 600; color: #71767b; }
-.aps-sec-h:hover span { text-decoration: underline; }
+.aps-sec { margin: 0 0 26px; }
+.aps-sec-h { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; box-sizing: border-box; margin: 0 0 12px; padding: 6px 14px 6px 6px; border: 1px solid #2f3336; border-radius: 999px; background: #000; color: #e7e9ea !important; text-decoration: none !important; font-size: 15px; font-weight: 800; letter-spacing: -0.2px; transition: background .15s, border-color .15s; }
+.aps-sec-h:hover { background: #16181c; border-color: #3a3f43; }
+.aps-sec-ic { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #e7e9ea; color: #000; font-size: 14px; font-weight: 800; }
+.aps-sec-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aps-sec-h em { flex: none; font-style: normal; font-size: 11.5px; font-weight: 700; color: #a0a5aa; padding: 2px 8px; border-radius: 999px; background: #16181c; }
+.aps-sec-ch { flex: none; font-style: normal; font-size: 18px; line-height: 1; color: #71767b; margin-left: -2px; }
 .aps-none { font-size: 13px; color: #71767b; padding: 6px 2px; }
 .aps-catbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; font-size: 12.5px; color: #71767b; flex-wrap: wrap; }
 .aps-catbtns { display: inline-flex; gap: 14px; }
@@ -29,7 +32,7 @@
 .apc-logo img, .apr-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .apc-logo-ph { font-size: 22px; font-weight: 800; color: #1d9bf0; }
 .apc-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.apc-meta b { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apc-meta b { color: #e7e9ea !important; font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .apc-meta small { font-size: 12.5px; color: #a0a5aa; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .apc-meta em { font-style: normal; font-size: 11.5px; color: #71767b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aps-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 16px; text-align: center; color: #71767b; font-size: 13.5px; }
@@ -52,14 +55,14 @@
 .apr-frame { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
 
 /* Formalar */
-.apf-ov { position: fixed; inset: 0; z-index: 1700; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(0, 0, 0, 0.65); }
+.apf-ov { position: fixed; inset: 0; z-index: 1700; display: flex; align-items: center; justify-content: center; padding: 12px; background: #000; }
 #appCatOverlay { z-index: 1750; }
-.apf { width: 100%; max-width: 560px; max-height: 92dvh; overflow: auto; padding: 16px; border: 1px solid #2f3336; border-radius: 18px; background: #16181c; color: #e7e9ea; display: flex; flex-direction: column; gap: 12px; }
+.apf { width: 100%; max-width: 560px; max-height: 92dvh; overflow: auto; padding: 16px; border: 1px solid #2f3336; border-radius: 18px; background: #000; color: #e7e9ea; display: flex; flex-direction: column; gap: 12px; }
 .apf-h { display: flex; align-items: center; justify-content: space-between; font-size: 17px; }
 .apf-x { border: 0; background: transparent; color: #a0a5aa; font-size: 16px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; }
 .apf-x:hover { background: rgba(231, 233, 234, 0.1); }
 .apf-l { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: #a0a5aa; }
-.apf input:not([type=file]), .apf select, .apf textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #2f3336; border-radius: 12px; background: #000; color: #e7e9ea; font: 14px/1.3 inherit; outline: none; }
+.apf input:not([type=file]), .apf select, .apf textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #2f3336; border-radius: 12px; background: #000 !important; color: #e7e9ea; font: 14px/1.3 inherit; outline: none; }
 .apf input:focus, .apf select:focus, .apf textarea:focus { border-color: #1d9bf0; }
 .apf input[readonly] { opacity: .6; }
 .apf textarea { min-height: 220px; resize: vertical; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; tab-size: 2; }
@@ -67,7 +70,7 @@
 .apf-slug i { font-style: normal; color: #71767b; white-space: nowrap; font-size: 13px; }
 .apf-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 400; }
 .apf-row select { flex: 1; min-width: 0; }
-.apf-logo { flex: none; width: 52px; height: 52px; border-radius: 13px; background: #202327; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; color: #71767b; font-size: 20px; }
+.apf-logo { flex: none; width: 52px; height: 52px; border-radius: 13px; background: #000; border: 1px solid #2f3336; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; color: #71767b; font-size: 20px; }
 .apf-logo img { width: 100%; height: 100%; object-fit: cover; }
 .apf-logo i { font-style: normal; }
 .apf-hint { font-size: 11.5px; font-weight: 400; color: #71767b; }
@@ -79,3 +82,7 @@
   nav.bot-nav .nav-apps { display: none !important; }
 }
 @media (min-width: 1100px) { #hdrAppsBtn { display: none !important; } }
+
+.apf select option { background: #000; color: #e7e9ea; }
+
+.apc-slug { align-self: flex-start; max-width: 100%; margin: 1px 0; padding: 1px 7px; border-radius: 999px; background: #000; border: 1px solid #2f3336; color: #a0a5aa; font: 600 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
