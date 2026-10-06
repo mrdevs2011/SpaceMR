@@ -233,3 +233,14 @@
 - Guruh: yuboruvchi avatari seriyaning 1-xabarida (bosilsa /u/<user>); 1v1 chatdan profil -> /chats/u/<user>/profile; o'z xabarimga menyuda "kimlar ko'rdi" (hover/tap ro'yxat, max 5 + scroll).
 - Migration 062_group_read_receipts.sql Supabase SQL editor'da ishga tushirilishi KERAK (aks holda "kimlar ko'rdi" ko'rinmaydi).
 - Smoke 14/14, app.css yig'ilgan. Keyingi: 062 ni run qilish, brauzerda ko'zdan tekshirish, push.
+
+---
+### 2026-10-06 20:28
+- **Root-fix: o'chirilgan xabarlar tufayli qolib ketgan unread badge (+N)**
+  - Muammo: admin/moderator yoki o'zi xabarlarni o'chirganda `unread_count` kamaytirilmasdi → ro'yxatda +6 deb turardi, chatga kirganda xabarlar yo'q.
+  - Yechim: migration `084_recalc_unread_on_delete.sql` — DELETE trigger (statement-level):
+    - DM: qolgan `messages` da `status != 'read'` va `sender != me` soni.
+    - Guruh: qolgan `group_messages` da `created_at > last_read_at` va `sender != me` soni.
+  - Bir martalik backfill ham ishga tushdi (mavjud noto'g'ri sonlar tozalandi).
+  - Realtime: mavjud `chat_members` / `group_members` watcher UPDATE ni ushlab badge va ro'yxatni darhol yangilaydi.
+- Keyingi: git commit + push (migration allaqachon remote DB ga push qilindi).
