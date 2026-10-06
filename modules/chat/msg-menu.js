@@ -723,6 +723,54 @@ function endDrag() {
 /* ── Hodisalar ─────────────────────────────────────────────────────── */
 function cancelLp() { clearTimeout(lpTimer); lpTimer = null; lp = null; }
 
+/* ── Surib javob berish (swipe-to-reply): xabarni yon tomonga surilsa — javob rejimi ──
+   Telegram uslubi: qator barmoq bilan siljiydi, chetda "javob" belgisi paydo bo'ladi; yetarlicha
+   surilib qo'yib yuborilsa — startReply(). Faqat sensorli qurilmada (sichqonchada matn belgilash bilan
+   to'qnashmasligi uchun). Vertikal scroll va bosib-turib belgilash (long-press) bilan aralashmaydi. */
+const SW_START = 14, SW_TRIGGER = 56, SW_MAX = 86, SW_EDGE = 24;
+let sw = null, swIc = null;
+function swEligible(row, x) {
+  if (selMode || !row?.dataset?.msgId) return false;
+  if (x < SW_EDGE || x > innerWidth - SW_EDGE) return false;   // tizim "orqaga" imo-ishorasi
+  const m = msgOf(row.dataset.msgId);
+  return !!m && !isCallMsg(m) && !(isMine(m) && m.status === 'sending');
+}
+function swIcon() {
+  if (swIc) return swIc;
+  swIc = document.createElement('div');
+  swIc.className = 'sw-reply-ic';
+  swIc.innerHTML = IC.reply;
+  document.body.appendChild(swIc);
+  return swIc;
+}
+function swUpdate(dx) {
+  if (!sw) return;
+  sw.dx = dx;
+  const tx = Math.sign(dx) * Math.min(SW_MAX, Math.abs(dx) * 0.7);
+  sw.row.style.transform = `translateX(${tx.toFixed(1)}px)`;
+  const ic = swIcon(), r = sw.row.getBoundingClientRect(), br = box.getBoundingClientRect();
+  const p = Math.min(1, Math.abs(dx) / SW_TRIGGER);
+  // Belgi — xabar surilgan tomonning ORQA tomonida (oldin ochilgan joyda)
+  ic.style.top = (r.top + r.height / 2 - 17) + 'px';
+  ic.style.left = dx < 0 ? (br.right - 44) + 'px' : (br.left + 10) + 'px';
+  ic.style.opacity = String(p);
+  ic.style.transform = `scale(${(0.5 + 0.5 * p).toFixed(2)})`;
+  ic.classList.toggle('armed', p >= 1);
+  if (p >= 1 && !sw.armed) { sw.armed = true; try { navigator.vibrate?.(8); } catch (_) {} }
+  else if (p < 1) sw.armed = false;
+}
+function swEnd(commit) {
+  const s0 = sw; sw = null;
+  if (!s0?.on) return;
+  const row = s0.row;
+  row.style.transition = 'transform .24s cubic-bezier(.22, 1, .36, 1)';
+  row.style.transform = '';
+  setTimeout(() => { row.style.transition = ''; }, 260);
+  if (swIc) { swIc.style.opacity = '0'; swIc.style.transform = 'scale(.5)'; swIc.classList.remove('armed'); }
+  suppressUntil = Date.now() + 400;   // qo'yib yuborilgandan keyingi "click" ni yutamiz
+  if (commit && row.isConnected) { const m = msgOf(row.dataset.msgId); if (m) startReply(m); }
+}
+
 export function initMsgMenu(opts) {
   api = opts;
   box = opts.box;
@@ -741,10 +789,11 @@ export function initMsgMenu(opts) {
 
   // Mobil: bosib turish -> belgilash, suring -> oradagilar ham belgilanadi
   box.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) return;
+    if (e.touches.length !== 1) { sw = null; return; }
     const t = e.touches[0];
     const row = rowAtPoint(e.target, t.clientY);
     if (!row) return;
+    sw = (swEligible(row, t.clientX) && !e.target.closest?.('.cvm-track, input, audio, video, [data-seek]')) ? { row, x: t.clientX, y: t.clientY, dx: 0, on: false, armed: false } : null;
     cancelLp();
     lp = { row, x: t.clientX, y: t.clientY };
     lpTimer = setTimeout(() => {
@@ -766,11 +815,24 @@ export function initMsgMenu(opts) {
   box.addEventListener('touchmove', e => {
     const t = e.touches[0];
     if (drag) { e.preventDefault(); updateDrag(t.clientY); return; } // surish paytida ro'yxat o'zi siljimasin
+    if (sw) {
+      const dx = t.clientX - sw.x, dy = t.clientY - sw.y;
+      if (!sw.on) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) sw = null;                       // vertikal scroll
+        else if (Math.abs(dx) > SW_START && Math.abs(dx) > Math.abs(dy) * 1.6) {                // gorizontal surish boshlandi
+          sw.on = true; cancelLp(); sw.row.style.transition = 'none';
+        }
+      }
+      if (sw?.on) { e.preventDefault(); swUpdate(dx); return; }
+    }
     if (!lp) return;
     if (Math.abs(t.clientX - lp.x) > 10 || Math.abs(t.clientY - lp.y) > 10) cancelLp();
   }, { passive: false });
   // Bosib turib qo'yib yuborilganda brauzer "click" yuborishi mumkin (play tugmasi, havola...) — uni yutamiz
-  const endTouch = () => { cancelLp(); endDrag(); if (lpOpened) { lpOpened = false; suppressUntil = Date.now() + 400; } };
+  const endTouch = (e) => {
+    if (sw) swEnd(e?.type === 'touchend' && sw.on && Math.abs(sw.dx) >= SW_TRIGGER);
+    cancelLp(); endDrag(); if (lpOpened) { lpOpened = false; suppressUntil = Date.now() + 400; }
+  };
   box.addEventListener('touchend', endTouch, { passive: true });
   box.addEventListener('touchcancel', endTouch, { passive: true });
 

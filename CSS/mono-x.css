@@ -8600,3 +8600,9 @@ select.field option { background: #000000; color: var(--text); }
 #cmContent .cm-vbadge::before { content: ''; margin-left: 2px; border-style: solid; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent #fff; }
 #cmContent .cm-broken .cm-vbadge { display: none; }
 #cmViewer video { max-width: 100%; max-height: 100%; outline: none; }
+
+
+/* Surib javob berish (swipe-to-reply): chetda chiqadigan "javob" belgisi */
+.sw-reply-ic { position: fixed; z-index: 585; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(231, 233, 234, 0.14); color: #e7e9ea; opacity: 0; transform: scale(.5); pointer-events: none; transition: background .12s ease; }
+.sw-reply-ic.armed { background: rgba(231, 233, 234, 0.28); }
+.sw-reply-ic .icon { width: 18px; height: 18px; }
