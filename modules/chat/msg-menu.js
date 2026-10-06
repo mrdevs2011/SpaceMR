@@ -131,7 +131,7 @@ async function fetchReaders(gid, createdAt) {
   }
   return rows
     .sort((a, b) => Date.parse(a.last_read_at) - Date.parse(b.last_read_at))
-    .map(r => ({ uid: r.user_id, ..._rdProf.get(r.user_id) }));
+    .map(r => ({ uid: r.user_id, readAt: r.last_read_at, ..._rdProf.get(r.user_id) }));
 }
 
 async function loadReaders(m) {
@@ -150,7 +150,7 @@ async function loadReaders(m) {
         (data || []).forEach(p => _rdProf.set(p.id, { name: p.full_name || p.username || 'Foydalanuvchi', avatar: p.avatar || '' }));
         need.forEach(u => { if (!_rdProf.has(u)) _rdProf.set(u, { name: 'Foydalanuvchi', avatar: '' }); });
       }
-      extra.forEach(u => list.push({ uid: u, ..._rdProf.get(u) }));
+      extra.forEach(u => list.push({ uid: u, readAt: null, ..._rdProf.get(u) }));
     }
     if (seq !== readersSeq || openId !== m.id || !list.length) return;
     paintReaders(list, m.id);
@@ -193,8 +193,10 @@ function showSeenList(rowEl) {
   clearTimeout(seenHideT);
   ensureSeenList();
   const rx = reactionsOf(rowEl._mid);   // kim qanday emoji bilan reaksiya bildirgan
-  seenEl.innerHTML = `<div class="sl-scroll">${list.map(u =>
-    `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-name">${esc(u.name)}</span>${rx.get(u.uid) ? `<span class="sl-react">${emojiImg(rx.get(u.uid))}</span>` : ''}${IC.seen}</button>`).join('')}</div>`;
+  seenEl.innerHTML = `<div class="sl-scroll">${list.map(u => {
+    const tm = u.readAt ? when(u.readAt) : '';
+    return `<button type="button" class="sl-item" data-uid="${esc(u.uid)}">${rdAvi(u, 'sl-avi')}<span class="sl-meta"><span class="sl-name">${esc(u.name)}</span>${tm ? `<span class="sl-time">${esc(tm)}</span>` : ''}</span>${rx.get(u.uid) ? `<span class="sl-react">${emojiImg(rx.get(u.uid))}</span>` : ''}${IC.seen}</button>`;
+  }).join('')}</div>`;
   seenEl.style.visibility = 'hidden';
   seenEl.classList.add('show');
   const mr = menu.getBoundingClientRect(), rr = rowEl.getBoundingClientRect();
