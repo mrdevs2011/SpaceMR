@@ -1,7 +1,7 @@
 /* motion.css — ilova bo'ylab umumiy "Telegram" silliqligi. Eng oxirgi qatlam (mono-x, video-note, chat-attach dan keyin).
    Faqat harakat: rang/shakl o'zgarmaydi. Eski brauzerlarda (allow-discrete / @starting-style yo'q) hammasi avvalgidek, animatsiyasiz ishlaydi.
    prefers-reduced-motion: reduce bo'lsa animatsiyalar umuman yoqilmaydi. */
-:root { --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-io: cubic-bezier(.4, 0, .2, 1); --dur-1: .22s; --dur-2: .42s; --dur-3: .56s; }
+:root { --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-io: cubic-bezier(.4, 0, .2, 1); --dur-1: .12s; --dur-2: .2s; --dur-3: .26s; }
 
 /* Teginish: 300ms kechikish va kulrang "flash" yo'q */
 button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -25,7 +25,7 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   #chatThreadModal, #userProfileModal, #grpInfoOverlay {
     opacity: 1; transform: translateX(100%);
     pointer-events: none;
-    transition: transform .38s cubic-bezier(.32, .72, 0, 1), display .38s allow-discrete;
+    transition: transform .24s cubic-bezier(.22, 1, .36, 1), display .24s allow-discrete;
   }
   #chatThreadModal.show, #userProfileModal.show, #grpInfoOverlay.show {
     transform: none; pointer-events: auto;
@@ -37,13 +37,13 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   /* 5. Pastki varaq: fon xiralashadi, varaq pastdan ko'tariladi va pastga tushadi */
   .overlay, #detailModal {
     opacity: 0; pointer-events: none;
-    transition: opacity .32s ease, display .32s allow-discrete;
+    transition: opacity .18s ease, display .18s allow-discrete;
   }
   .overlay.show, #detailModal.show { opacity: 1; pointer-events: auto; }
   @starting-style { .overlay.show, #detailModal.show { opacity: 0; } }
   .overlay:not(#confirmOverlay) .sheet, #detailModal #detailContent {
     transform: translateY(110%);
-    transition: transform .4s cubic-bezier(.32, .72, 0, 1);
+    transition: transform .24s cubic-bezier(.22, 1, .36, 1);
   }
   .overlay.show:not(#confirmOverlay) .sheet, #detailModal.show #detailContent { transform: none; }
   @starting-style {
@@ -53,7 +53,7 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   /* 6. Rasm/video: yumshoq fade + biroz yaqinlashish */
   #zoomModal, #chatLightbox, #cmViewer, #msgFwd {
     opacity: 0; transform: scale(.96); pointer-events: none;
-    transition: opacity .28s ease, transform .28s cubic-bezier(.32, .72, 0, 1), display .28s allow-discrete;
+    transition: opacity .18s ease, transform .22s cubic-bezier(.22, 1, .36, 1), display .18s allow-discrete;
   }
   #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 1; transform: none; pointer-events: auto; }
   @starting-style { #zoomModal.show, #chatLightbox.show, #cmViewer.show, #msgFwd.show { opacity: 0; transform: scale(.96); } }
@@ -181,28 +181,10 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 }
 
 
-/* Umumiy yumshoqlik: bosish, soya, ochilish — butun ilova */
-@media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; }
-  button, a, [role="button"], .chat-row, .post, .sheet, .nav-btn {
-    transition: transform var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
-  }
-  button:active, [role="button"]:active, .chat-row:active, .nav-btn:active {
-    transform: scale(.98);
-  }
-  .view.on { animation: mViewInSoft var(--dur-3) var(--ease-out); }
-  @keyframes mViewInSoft {
-    from { opacity: 0; transform: translateY(10px) scale(.985); }
-    to { opacity: 1; transform: none; }
-  }
-  .sheet, #detailContent, .chat-header-dropdown, .chat-ctx-menu {
-    box-shadow: 0 18px 50px rgba(0, 0, 0, .28);
-  }
-}
 
 .chat-msg.msg-collapsing {
   overflow: hidden;
-  transition: height .32s cubic-bezier(.32, .72, 0, 1), margin-top .32s cubic-bezier(.32, .72, 0, 1), opacity .28s ease;
+  transition: height .2s cubic-bezier(.22, 1, .36, 1), margin-top .2s cubic-bezier(.22, 1, .36, 1), opacity .16s ease;
 }
 
 .chat-jump-bottom {
@@ -224,3 +206,13 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 }
 .chat-jump-bottom.show { display: flex; }
 .chat-jump-bottom img { width: 20px; height: 20px; }
+
+/* Yengil chizish: ekrandan tashqari qator GPU ga tushmaydi */
+.post, .chat-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 92px;
+}
+.chat-thread-messages, .chats-list, #feedList, .feed {
+  contain: layout style;
+}
+img, video { decoding: async; }

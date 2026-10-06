@@ -405,11 +405,17 @@ html[data-nf],html[data-nf] body{background:#000000}
 
   <!-- ACTIONS VIEW — admin uchun: statistika + users birlashtirilgan -->
   <div class="view" id="actionsView">
-    <!-- Kutayotgan foydalanuvchilar (tezkor tasdiqlash) — asosiy panel -->
-    <div class="actions-divider">
-      <span class="actions-divider-label">Kutayotgan foydalanuvchilar</span>
+    <div class="adm-page-hdr">
+      <div class="adm-page-title">Boshqaruv</div>
+      <div class="adm-page-sub">Admin panel · tizim va e'lonlar</div>
     </div>
-    <div id="actionsPendingSection"></div>
+    <!-- Kutayotgan foydalanuvchilar (tezkor tasdiqlash) — asosiy panel -->
+    <section class="adm-card" id="admPendingCard">
+      <div class="adm-card-head">
+        <span class="adm-card-title">Kutayotgan foydalanuvchilar</span>
+      </div>
+      <div id="actionsPendingSection"></div>
+    </section>
     <!-- Users list: mobil = shu yerda; desktop ≥1200 = right-rail -->
     <div id="actionsUsersHost">
       <div id="usersAdminBlock">
@@ -431,11 +437,18 @@ html[data-nf],html[data-nf] body{background:#000000}
         </div>
       </div>
     </div>
-    <!-- Broadcast divider -->
-    <div class="actions-divider">
-      <span class="actions-divider-label">Broadcast</span>
-    </div>
-    <div id="actionsBroadcastSection"></div>
+    <section class="adm-card" id="admBroadcastCard">
+      <div class="adm-card-head">
+        <span class="adm-card-title">E'lon (Broadcast)</span>
+      </div>
+      <div id="actionsBroadcastSection"></div>
+    </section>
+    <section class="adm-card" id="admSystemCard">
+      <div class="adm-card-head">
+        <span class="adm-card-title">Tizim</span>
+      </div>
+      <div id="admSystemMount"></div>
+    </section>
   </div>
 
   <!-- BOTTOM NAV / DESKTOP SIDEBAR -->

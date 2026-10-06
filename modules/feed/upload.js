@@ -828,7 +828,9 @@ function _bindHomeComposer() {
 
   _fillHomeComposerAvi();
   _syncHomeUi();
-  setInterval(_fillHomeComposerAvi, 1500);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') _fillHomeComposerAvi();
+  });
 }
 _bindHomeComposer();
 

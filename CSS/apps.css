@@ -158,7 +158,7 @@
 @media (max-width: 1199px) {
   .apm { padding-left: 14px; padding-right: 14px; }
   /* Sarlavha: yopishqoq, orqaga va "+ Ilova" qulay bosiladigan */
-  .apm > .aps-head { position: sticky; top: 0; z-index: 5; gap: 8px; padding: 10px 0 8px; background: rgba(0, 0, 0, 0.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .apm > .aps-head { position: sticky; top: 0; z-index: 5; gap: 8px; padding: 10px 0 8px; background: rgba(0, 0, 0, 0.92); background: #000; }
   .apm .aps-back { width: 40px; height: 40px; border: 1px solid #2f3336; }
   .apm .aps-back:active { background: #16181c; }
   .apm .aps-title { font-size: 22px; letter-spacing: -0.4px; }
@@ -194,7 +194,7 @@
 /* ═══ Desktop markaz: kategoriya va ro'yxat sayqali ═══ */
 @media (min-width: 1200px) {
   .aps:not(.apm) { padding: 0 4px 80px; }
-  .aps:not(.apm) .aps-head { position: sticky; top: 0; z-index: 5; gap: 10px; padding: 14px 0 10px; background: rgba(0, 0, 0, 0.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .aps:not(.apm) .aps-head { position: sticky; top: 0; z-index: 5; gap: 10px; padding: 14px 0 10px; background: rgba(0, 0, 0, 0.92); background: #000; }
   .aps:not(.apm) .aps-back { width: 38px; height: 38px; border: 1px solid #2f3336; }
   .aps:not(.apm) .aps-title { font-size: 22px; letter-spacing: -0.4px; }
   .aps:not(.apm) .aps-head-btns .aps-btn { height: 36px; padding: 0 16px; font-size: 14px; }
@@ -221,7 +221,7 @@
 }
 
 /* ═══ Formalar (ilova / kategoriya): mobil = pastdan sheet, desktop = markazda modal ═══ */
-html[data-theme] .apf-ov { background: rgba(0, 0, 0, 0.78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+html[data-theme] .apf-ov { background: rgba(0, 0, 0, 0.78); background: rgba(0,0,0,.9); }
 html[data-theme] .apf { max-width: 580px; gap: 14px; padding: 16px; border-color: #2f3336; border-radius: var(--radius); box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6); }
 /* Sticky sarlavha va amallar paneli (ichki scroll'da ham ko'rinib turadi) */
 html[data-theme] .apf-h { position: sticky; top: -16px; z-index: 3; margin: -16px -16px 0; padding: 14px 16px 10px; background: #000; border-bottom: 1px solid #16181c; border-radius: var(--radius) var(--radius) 0 0; font-size: 18px; }

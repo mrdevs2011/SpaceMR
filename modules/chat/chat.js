@@ -1961,7 +1961,7 @@ function _dissolveRestore(box, started) {
           const box = document.getElementById('chatThreadMessages');
           if (box && chatState._pinned) _smoothToBottom(box);
           if (!chatState._dissolving.size && !chatState._curMsgs.length) paintMessages([]);
-        }, 340);
+        }, 210);
       });
   });
 }

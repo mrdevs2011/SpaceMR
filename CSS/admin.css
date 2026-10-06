@@ -759,27 +759,107 @@
   padding: 8px 4px 24px;
   -webkit-overflow-scrolling: touch;
 }
+/* Right-rail users: vertikal karta (tor panel) */
 .rr-users-admin .ua-row {
-  margin: 4px 4px;
-  padding: 10px 10px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  margin: 6px 8px !important;
+  padding: 12px !important;
+  box-sizing: border-box;
+}
+.rr-users-admin .ua-info {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  flex: none !important;
+}
+.rr-users-admin .ua-name {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  writing-mode: horizontal-tb !important;
+  word-break: normal !important;
+}
+.rr-users-admin .ua-uname {
+  display: block !important;
+  width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 12px !important;
+  color: var(--text3) !important;
+}
+.rr-users-admin .ua-date {
+  font-size: 11px !important;
+  color: var(--text3) !important;
+}
+.rr-users-admin .ua-status {
+  margin: 0 !important;
+  width: 100%;
 }
 .rr-users-admin .ua-actions {
-  flex-direction: column;
-  gap: 6px;
-  margin-right: 0;
-  width: 100%;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  flex-direction: unset !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  width: 100% !important;
 }
 .rr-users-admin .ua-actions button {
-  width: 100%;
-  text-align: center;
+  width: 100% !important;
+  min-width: 0 !important;
+  text-align: center !important;
+  padding: 7px 8px !important;
+  font-size: 12px !important;
+  border-radius: 10px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 .rr-users-admin .ua-delete-btn {
-  position: static;
-  transform: none;
-  opacity: 1;
-  width: 100%;
-  height: auto;
-  margin-top: 4px;
+  position: static !important;
+  transform: none !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  grid-column: 1 / -1;
+  right: auto !important;
+  top: auto !important;
+  color: var(--red, #f4212e) !important;
+  background: color-mix(in srgb, var(--red, #f4212e) 12%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--red, #f4212e) 30%, transparent) !important;
+}
+.rr-users-admin .ua-block-btn {
+  background: color-mix(in srgb, var(--red, #f4212e) 12%, transparent) !important;
+  color: var(--red, #f4212e) !important;
+  border: 1px solid color-mix(in srgb, var(--red, #f4212e) 30%, transparent) !important;
+}
+.rr-users-admin .ua-reset-pwd-btn {
+  background: var(--bg3, #1e2024) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+}
+.rr-users-admin .ua-approve-btn {
+  background: var(--green, #00ba7c) !important;
+  color: #fff !important;
+  border: none !important;
+}
+.rr-users-admin .ua-reject-btn {
+  background: color-mix(in srgb, var(--red, #f4212e) 12%, transparent) !important;
+  color: var(--red, #f4212e) !important;
 }
 @media (min-width: 1200px) {
   /* host bo'sh qolsa joy olmaydi */
@@ -808,5 +888,213 @@
   }
   body.rr-admin-users .right-rail.rr-actions-mode {
     padding-top: 0;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   ADMIN PANEL — dashboard UI (center) + no scroll on desktop
+   ═══════════════════════════════════════════════════════════════ */
+.adm-page-hdr {
+  padding: 8px 16px 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.adm-page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--text);
+  line-height: 1.2;
+}
+.adm-page-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text3);
+}
+
+.adm-card {
+  margin: 12px 12px 0;
+  background: var(--bg2, #16181c);
+  border: 1px solid var(--line, #2f3336);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.adm-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 0;
+}
+.adm-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Eski dividerlarni card ichida yashirish */
+#actionsView .actions-divider { display: none !important; }
+
+/* Pending / broadcast ichidagi marginlarni cardga moslash */
+#admPendingCard #actionsPendingSection .pmini-wrap { margin: 10px 12px 12px; }
+#admBroadcastCard #actionsBroadcastSection .bc-wrap {
+  margin: 10px 12px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+#admBroadcastCard .bc-current-wrap {
+  margin: 0 12px 12px;
+}
+
+/* Tizim kartasi */
+#admSystemCard #admSystemMount {
+  padding: 8px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#actionsStorageInfo {
+  margin: 0 !important;
+  padding: 12px 14px;
+  background: var(--bg3, #1e2024);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 13px !important;
+  color: var(--text2) !important;
+  line-height: 1.45;
+}
+#actionsStorageInfo b { color: var(--text); }
+
+.adm-wipe {
+  margin: 0 !important;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg3, #1e2024);
+}
+.adm-wipe-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: 600 13px var(--font);
+  cursor: pointer;
+}
+.adm-wipe-head:hover { background: rgba(231,233,234,0.04); }
+.adm-wipe.open .adm-wipe-chev { transform: rotate(180deg); }
+.adm-wipe-chev { transition: transform .2s ease; opacity: 0.7; }
+.adm-wipe-body { padding: 0 14px 14px; }
+.adm-wipe-sub { font-size: 12px; color: var(--text3); margin-bottom: 10px; line-height: 1.4; }
+.adm-wipe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.adm-wipe-btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  color: var(--text);
+  font: 600 12.5px var(--font);
+  cursor: pointer;
+}
+.adm-wipe-btn:hover { border-color: var(--text3); }
+.adm-wipe-btn.is-all {
+  grid-column: 1 / -1;
+  background: color-mix(in srgb, var(--red, #f4212e) 12%, transparent);
+  color: var(--red, #f4212e);
+  border-color: color-mix(in srgb, var(--red, #f4212e) 35%, transparent);
+}
+
+/* Broadcast inputs */
+#actionsView .bc-input, #actionsView .bc-select {
+  background: var(--bg3) !important;
+  border-radius: 12px !important;
+}
+#actionsView .bc-send-btn {
+  background: var(--blue) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 9px 16px !important;
+}
+
+/* ── Desktop ≥1200: center NO page scroll; only right-rail users scroll ── */
+@media (min-width: 1200px) {
+  #actionsView.on {
+    position: fixed !important;
+    top: 12px;
+    bottom: 12px;
+    left: var(--content-left, var(--sidebar, 260px));
+    width: var(--center-w, 600px);
+    max-width: var(--center-w, 600px);
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column;
+    box-sizing: border-box;
+    background: #000 !important;
+    border: 1px solid var(--line, #2f3336);
+    border-radius: var(--radius, 16px);
+    z-index: 30;
+  }
+  /* Center ichida faqat kompakt kontent — scroll kerak emas */
+  #actionsView.on .adm-page-hdr {
+    flex-shrink: 0;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  #actionsView.on .adm-card {
+    margin: 12px 14px 0;
+    flex-shrink: 0;
+  }
+  #actionsView.on #admSystemCard {
+    margin-bottom: 14px;
+    overflow-y: auto;
+    max-height: none;
+  }
+  /* Agar juda baland bo'lsa — center ichida yumshoq scroll (kam hollarda) */
+  #actionsView.on {
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  /* Users host markazda yo'q */
+  body.rr-admin-users #actionsView.on #actionsUsersHost {
+    display: none !important;
+  }
+  /* Right-rail users to'liq balandlik + scroll */
+  body.rr-admin-users .right-rail.rr-actions-mode {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 12px;
+  }
+  body.rr-admin-users #rrUsersAdmin {
+    flex: 1;
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  body.rr-admin-users .rr-users-admin .users-admin-list {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  body.rr-admin-users .rr-users-admin .users-admin-hdr {
+    padding: 14px 14px 12px;
+  }
+  body.rr-admin-users .rr-users-admin .users-admin-hdr h2 {
+    font-size: 18px;
+    font-weight: 800;
   }
 }
