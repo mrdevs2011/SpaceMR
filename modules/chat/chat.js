@@ -1202,8 +1202,8 @@ export function repaintNoticeBanner() { _repaintNoticeBanner(); }
 
 /* ── Append group/channel rows to chats list ─────────────────────────── */
 async function _appendGroupRows(root, term = '') {
-  // Remove old group section if any
-  root.querySelector('.grp-rows-section')?.remove();
+  // Eski guruh bo'limlarini HAMMASINI olib tashla (race: 2 ta "Guruhlar" chiqmasin)
+  root.querySelectorAll('.grp-rows-section').forEach(el => el.remove());
 
   let groups = getGroupRows();
   if (term) {
@@ -1213,12 +1213,19 @@ async function _appendGroupRows(root, term = '') {
     );
     try {
       const remote = await searchGroups(term);
-      const map = new Map(local.map(g => [g.id, g]));
-      (remote || []).forEach(g => map.set(g.id, g));
+      const map = new Map();
+      local.forEach(g => map.set(String(g.id), g));
+      (remote || []).forEach(g => map.set(String(g.id), g));
       groups = Array.from(map.values());
     } catch (_) {
       groups = local;
     }
+  }
+  // id bo'yicha yakuniy dedupe
+  {
+    const map = new Map();
+    groups.forEach(g => { if (g?.id != null) map.set(String(g.id), g); });
+    groups = Array.from(map.values());
   }
   if (!groups.length) return;
 
@@ -1231,6 +1238,8 @@ async function _appendGroupRows(root, term = '') {
     return (a.g.name || '').localeCompare(b.g.name || '');
   });
 
+  // Stale async natijani tashlab yuborish
+  const gen = (root._grpPaintGen = (root._grpPaintGen || 0) + 1);
   const section = document.createElement('div');
   section.className = 'grp-rows-section';
 
@@ -1265,6 +1274,8 @@ async function _appendGroupRows(root, term = '') {
       </div>`;
     }).join('');
 
+  if (root._grpPaintGen !== gen) return; // yangiroq paint bor
+  root.querySelectorAll('.grp-rows-section').forEach(el => el.remove());
   root.appendChild(section);
 
   section.querySelectorAll('.chat-row[data-gid]').forEach(row => {
@@ -1309,7 +1320,8 @@ function paintChatsList(users, chatMap) {
   if (savedU.uid && (!term || SAVED_NAME.toLowerCase().includes(term) || 'saved'.includes(term))) filtered = [savedU, ...filtered];
   _paintUserRows(filtered, !!term);
   _repaintNoticeBanner();
-  _appendGroupRows(root, term);
+  // guruh qatori async — race da ikki "Guruhlar" chiqmasin
+  void _appendGroupRows(root, term);
 }
 
 /* ── Other user avatar cache for DM messages ─────────────────────────── */

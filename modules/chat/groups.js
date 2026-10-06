@@ -422,13 +422,20 @@ function _applyGroupComposer(g) {
   const resetBtn = id => { const el = $(id); if (el) { el.style.opacity = ''; el.style.pointerEvents = ''; } };
 
   if (!isMember) {
-    if (row) row.style.display = 'none';
+    // Input o'rnida: qatorni yashirish + o'sha joyda Qo'shilish
+    const inputRow = document.getElementById('chatThreadInputRow') || row;
+    if (inputRow) inputRow.style.display = 'none';
+    if (row && row !== inputRow) row.style.display = 'none';
     const bar = document.createElement('button');
     bar.type = 'button';
     bar.id = 'groupJoinBar';
     bar.className = 'group-join-bar';
     bar.textContent = "Qo'shilish";
-    if (row && row.parentNode) row.parentNode.insertBefore(bar, row);
+    const parent = inputRow?.parentNode || row?.parentNode;
+    if (parent) {
+      if (inputRow) parent.insertBefore(bar, inputRow);
+      else parent.appendChild(bar);
+    }
 
     bar.addEventListener('click', async () => {
       bar.disabled = true;
@@ -447,7 +454,9 @@ function _applyGroupComposer(g) {
   }
 
   if (can) {
-    if (row) row.style.display = '';
+    const inputRow = document.getElementById('chatThreadInputRow') || row;
+    if (inputRow) inputRow.style.display = '';
+    if (row && row !== inputRow) row.style.display = '';
     if (inp) { inp.disabled = false; inp.placeholder = 'Xabar yozing...'; }
     resetBtn('chatAttachBtn'); resetBtn('chatVoiceBtn');
     return;

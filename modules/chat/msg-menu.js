@@ -440,27 +440,39 @@ function remove(ids) {
     if (typeof api.applyLocalDelete === 'function') api.applyLocalDelete(own);
     else api.reload?.();
 
-    // 2) Haqiqiy o'chirish orqa fonda (+ media best-effort Storage API)
+    // 2) Avval Storage dan media, keyin DB qator — fayl butunlay o'chirilsin
     const idList = own.slice();
-    const paths = idList.map(id => msgOf(id)?.mediaPath).filter(Boolean);
-    if (paths.length) {
-      sb.storage.from('media').remove(paths).then(({ error: se }) => {
-        if (se) console.warn('[MsgMenu] storage remove:', se.message);
-      }).catch(e => console.warn('[MsgMenu] storage remove:', e?.message || e));
-    }
-    sb.from(tbl()).delete().in('id', idList).then(({ error }) => {
-      if (error) {
-        unmarkDissolve(idList);
-        console.warn('[MsgMenu] delete:', error.message);
-        toast('O‘chirilmadi', 'error');
-        api.reload?.(); // ro'yxatni tiklash
+    const paths = [...new Set(idList.map(id => msgOf(id)?.mediaPath).filter(Boolean))];
+    (async () => {
+      if (paths.length) {
+        try {
+          const { error: se } = await sb.storage.from('media').remove(paths);
+          if (se) console.warn('[MsgMenu] storage remove:', se.message);
+        } catch (e) {
+          console.warn('[MsgMenu] storage remove:', e?.message || e);
+        }
       }
-    }).catch(e => {
-      unmarkDissolve(idList);
-      console.warn('[MsgMenu] delete:', e?.message || e);
-      toast('O‘chirilmadi', 'error');
-      api.reload?.();
-    });
+      try {
+        const { error } = await sb.from(tbl()).delete().in('id', idList);
+        if (error) {
+          unmarkDissolve(idList);
+          console.warn('[MsgMenu] delete:', error.message);
+          toast('O‘chirilmadi', 'error');
+          api.reload?.();
+        } else {
+          // Admin storage ko'rsatkichini yangilash (agar ochiq bo'lsa)
+          try {
+            const { refreshStorageUsage } = await import('../admin/admin-storage.js');
+            refreshStorageUsage?.();
+          } catch (_) {}
+        }
+      } catch (e) {
+        unmarkDissolve(idList);
+        console.warn('[MsgMenu] delete:', e?.message || e);
+        toast('O‘chirilmadi', 'error');
+        api.reload?.();
+      }
+    })();
   }, 'O‘chirish', 'O‘chirish');
 }
 
@@ -528,6 +540,10 @@ export async function commitEdit(rawText) {
   const { error } = await sb.from(tbl())
     .update({ text, edited_at: new Date().toISOString() }).eq('id', ed.id);
   if (error) { console.warn('[MsgMenu] edit:', error.message); toast('Tahrirlanmadi', 'error'); return true; }
+  // Chats list last_message ni darhol yangila (DB trigger + client)
+  try {
+    if (typeof api.onMessageEdited === 'function') api.onMessageEdited(ed.id, text);
+  } catch (_) {}
   cancelEdit(true);
   api.reload();
   return true;
