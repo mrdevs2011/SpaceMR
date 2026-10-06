@@ -74,7 +74,11 @@ function _queue(key, rec) {
   if (!_flushT) _flushT = setTimeout(_flush, 50);
 }
 // Sahifa yopilayotganda navbatdagi yozuvlar ketib qolsin
-try { addEventListener('pagehide', () => { if (_flushT) { clearTimeout(_flushT); _flush(); } }); } catch (_) {}
+try {
+  const _flushNow = () => { if (_flushT) { clearTimeout(_flushT); _flush(); } else _flush(); };
+  addEventListener('pagehide', _flushNow);
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _flushNow(); });
+} catch (_) {}
 
 function safeSet(key, value) {
   const rec = { v: _clone(value), t: Date.now() };

@@ -91,7 +91,7 @@ self.addEventListener('notificationclick', (event) => {
 
 /* ── Cache versiyasi ── */
 // Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
-const CACHE_VERSION  = 't-1791303220519'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1791303437580'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 const EMOJI_CACHE    = 'spacemr-emoji-v1';
@@ -255,6 +255,11 @@ self.addEventListener('activate', (event) => {
       keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== EMOJI_CACHE).map(k => caches.delete(k))
     );
     await self.clients.claim();
+    // Mijozlarga yangi versiya — bir marta reload (controllerchange bilan birga)
+    try {
+      const clientsList = await self.clients.matchAll({ type: 'window' });
+      clientsList.forEach(c => c.postMessage({ type: 'SW_ACTIVATED', version: CACHE_VERSION }));
+    } catch (_) {}
   })());
 });
 
@@ -276,23 +281,27 @@ self.addEventListener('message', (event) => {
 });
 
 async function _matchCache(req) {
-  // Query (?v=) farq qilsa ham topilsin
   return (await caches.match(req, { ignoreSearch: true })) || (await caches.match(req));
 }
 
-async function _putStatic(req, res) {
+async function _putIn(cacheName, req, res) {
   if (!res || !res.ok) return;
   try {
-    const c = await caches.open(STATIC_CACHE);
-    await c.put(req, res.clone());
+    const c = await caches.open(cacheName);
+    // Path kalit — query params match ni buzmasin
+    let key = req;
+    if (typeof req !== 'string') {
+      try { key = new URL(req.url).pathname || req; } catch (_) { key = req; }
+    }
+    await c.put(key, res.clone());
   } catch (_) {}
 }
 
-async function _networkFirst(req, fallbackUrls) {
+async function _networkFirst(req, cacheName, fallbackUrls) {
   try {
     const res = await fetch(req);
     if (res && res.ok) {
-      await _putStatic(req, res);
+      await _putIn(cacheName, req, res);
       return res;
     }
   } catch (_) {}
@@ -305,16 +314,20 @@ async function _networkFirst(req, fallbackUrls) {
   return new Response('Offline', { status: 503, statusText: 'Offline' });
 }
 
-async function _cacheFirstSWR(req) {
+async function _cacheFirstSWR(req, cacheName) {
   const cached = await _matchCache(req);
   if (cached) {
-    // Fon yangilash — keyingi ochilishda yangi versiya
-    fetch(req).then(res => { if (res && res.ok) _putStatic(req, res); }).catch(() => {});
+    // Fon yangilash — SW CACHE_VERSION o'zgaganda eski cache o'chadi
+    fetch(req).then(res => { if (res && res.ok) _putIn(cacheName, req, res); }).catch(() => {});
     return cached;
   }
-  const res = await fetch(req);
-  if (res && res.ok) await _putStatic(req, res);
-  return res;
+  try {
+    const res = await fetch(req);
+    if (res && res.ok) await _putIn(cacheName, req, res);
+    return res;
+  } catch (e) {
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
 }
 
 self.addEventListener('fetch', (event) => {
@@ -323,7 +336,6 @@ self.addEventListener('fetch', (event) => {
 
   if (_isBypassed(url) || req.method !== 'GET') return;
 
-  // Range (video seek) — keshga yozilmasin
   if (req.headers.has('range')) {
     event.respondWith(fetch(req).catch(() => _matchCache(req)));
     return;
@@ -332,38 +344,46 @@ self.addEventListener('fetch', (event) => {
   let path = '';
   try { path = new URL(url).pathname; } catch (_) { return; }
 
-  // Emoji — cache-first, alohida kesh
+  // Emoji — alohida kesh
   if (path.startsWith('/emoji/')) {
     event.respondWith(
       (_emojiCache || (_emojiCache = caches.open(EMOJI_CACHE))).then(async (c) => {
         const hit = await c.match(req) || await c.match(req, { ignoreSearch: true });
         if (hit) return hit;
         const res = await fetch(req);
-        if (res.ok && (res.headers.get('content-type') || '').startsWith('image/')) c.put(req, res.clone());
+        if (res.ok && (res.headers.get('content-type') || '').startsWith('image/')) {
+          try { c.put(req, res.clone()); } catch (_) {}
+        }
         return res;
       })
     );
     return;
   }
 
-  // HTML / app shell — NETWORK-FIRST (deploy dan keyin eski shell qolmasin)
+  // HTML navigatsiya — network-first (index no-cache), offline fallback
   const isNav = req.destination === 'document' || req.mode === 'navigate';
-  const isShell = path === '/' || path === '/index.html' || path === '/app.js' || path === '/app.css' || path === '/sw.js';
-  if (isNav || isShell) {
-    event.respondWith(_networkFirst(req, isNav ? ['/index.html', '/'] : []));
+  if (isNav || path === '/' || path === '/index.html') {
+    event.respondWith(_networkFirst(req, RUNTIME_CACHE, ['/index.html', '/']));
     return;
   }
 
-  // JS / CSS (modules ham) — destination bo'sh bo'lsa ham path bo'yicha
+  // sw.js — har doim tarmoq (update tekshiruvi)
+  if (path === '/sw.js') {
+    event.respondWith(fetch(req).catch(() => _matchCache(req)));
+    return;
+  }
+
+  // Barcha JS/CSS — BIR XIL strategiya: cache-first + SWR
+  // (shell va modules aralashmasin — SW versiya o'zgaganda cache tozalanadi)
   const isCode = req.destination === 'script' || req.destination === 'style'
     || path.endsWith('.js') || path.endsWith('.css') || path.endsWith('.mjs');
   if (isCode) {
-    event.respondWith(_cacheFirstSWR(req));
+    event.respondWith(_cacheFirstSWR(req, STATIC_CACHE));
     return;
   }
 
-  // Rasm / font — cache-first
+  // Rasm / font
   if (_isStaticAsset(req) || /\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf)$/i.test(path)) {
-    event.respondWith(_cacheFirstSWR(req));
+    event.respondWith(_cacheFirstSWR(req, STATIC_CACHE));
   }
 });

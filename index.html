@@ -1284,6 +1284,14 @@ html[data-nf],html[data-nf] body{background:#000000}
       } catch (_) {}
       return false;
     }
+    navigator.serviceWorker.addEventListener('message', function(ev) {
+      try {
+        if (ev.data && ev.data.type === 'SW_ACTIVATED') {
+          // controllerchange ham reload qiladi — bu yerda faqat flag
+          sessionStorage.setItem('spacemr_sw_ver', String(ev.data.version || ''));
+        }
+      } catch (_) {}
+    });
     navigator.serviceWorker.addEventListener('controllerchange', function() {
       if (_swRefreshing) return;
       // Full reload / force-reload dan keyin qo'shimcha refresh bo'lmasin
