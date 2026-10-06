@@ -209,6 +209,42 @@ let _callConnected     = false; // ulanish effektlari (beep/timer) faqat 1 marta
 let _lastRenegoOfferTs  = 0;
 let _lastRenegoAnswerTs = 0;
 
+/* ─── WebAudio → <audio> ko'prigi ───────────────────────────────────────
+ * Ba'zi qurilmalarda (interaktiv doska, ba'zi TV/Linux brauzerlar) AudioContext.destination jim,
+ * lekin <audio>/<video> (YouTube kabi) ishlaydi. Shuning uchun jiringlar/beep'lar ctx.destination'ga
+ * emas, MediaStreamDestination → yashirin <audio> orqali chiqariladi (native chiqish yo'li).
+ * Element play() bloklansa yoki qo'llab-quvvatlanmasa — avtomatik ctx.destination'ga qaytadi. */
+const _audBus = new WeakMap();
+function _audOut(ctx) {
+  const ex = _audBus.get(ctx);
+  if (ex) return ex;
+  const bus = ctx.createGain();
+  _audBus.set(ctx, bus);
+  let direct = true;
+  try {
+    if (typeof ctx.createMediaStreamDestination === 'function' && typeof HTMLAudioElement !== 'undefined' && 'srcObject' in HTMLAudioElement.prototype) {
+      const dest = ctx.createMediaStreamDestination();
+      const el = document.createElement('audio');
+      el.setAttribute('playsinline', '');
+      el.style.display = 'none';
+      el.srcObject = dest.stream;
+      (document.body || document.documentElement).appendChild(el);
+      bus.connect(dest);
+      direct = false;
+      const fallback = () => { try { bus.disconnect(); } catch (_) {} try { bus.connect(ctx.destination); } catch (_) {} };
+      try {
+        const pr = el.play();
+        if (pr && typeof pr.catch === 'function') pr.catch(fallback);
+      } catch (_) { fallback(); }
+      ctx.addEventListener('statechange', () => {
+        if (ctx.state === 'closed') { try { el.pause(); el.srcObject = null; el.remove(); } catch (_) {} }
+      });
+    }
+  } catch (_) { direct = true; }
+  if (direct) { try { bus.disconnect(); } catch (_) {} bus.connect(ctx.destination); }
+  return bus;
+}
+
 /* ─── RINGBACK TONE ─────────────────────────────────────────────────── */
 let _ringbackCtx  = null;
 let _ringbackLoop = null;
@@ -221,7 +257,7 @@ function _playRingback() {
       if (!_ringbackCtx) return;
       const osc  = _ringbackCtx.createOscillator();
       const gain = _ringbackCtx.createGain();
-      osc.connect(gain); gain.connect(_ringbackCtx.destination);
+      osc.connect(gain); gain.connect(_audOut(_ringbackCtx));
       osc.type = 'sine'; osc.frequency.value = 425;
       gain.gain.setValueAtTime(0, _ringbackCtx.currentTime);
       gain.gain.linearRampToValueAtTime(0.18, _ringbackCtx.currentTime + 0.02);
@@ -260,7 +296,7 @@ function _startRingtone() {
     ];
     function _marimba(freq, t) {
       const g = _ringCtx.createGain();
-      g.connect(_ringCtx.destination);
+      g.connect(_audOut(_ringCtx));
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(0.2, t + 0.006);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
@@ -309,14 +345,14 @@ function _playConnectBeep() {
     const ctx  = new (window.AudioContext || window.webkitAudioContext)();
     const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
+    osc.connect(gain); gain.connect(_audOut(ctx));
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, ctx.currentTime);
     osc.frequency.linearRampToValueAtTime(1100, ctx.currentTime + 0.12);
     gain.gain.setValueAtTime(0.22, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.28);
     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
-    osc.onended = () => { try { ctx.close(); } catch(_){} };
+    osc.onended = () => { setTimeout(() => { try { ctx.close(); } catch(_){} }, 600); };
   } catch (_) {}
 }
 
@@ -351,7 +387,7 @@ function _playCallEndSound(kind = 'local') {
           g.gain.setValueAtTime(0.0001, t0 + start);
           g.gain.exponentialRampToValueAtTime(Math.max(0.001, vol), t0 + start + 0.025);
           g.gain.exponentialRampToValueAtTime(0.0001, t0 + start + dur);
-          o.connect(g); g.connect(ctx.destination);
+          o.connect(g); g.connect(_audOut(ctx));
           o.start(t0 + start);
           o.stop(t0 + start + dur + 0.05);
         };
