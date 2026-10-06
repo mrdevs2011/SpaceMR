@@ -593,6 +593,18 @@ export function ensureSavedLoaded() {
   return _savedLoad;
 }
 
+/* Ikonkalarni oldindan yuklaymiz: bosilganda src almashishi tarmoq/dekodni kutmasin (0ms, titroqsiz) */
+const _PRELOAD_ICONS = ['heart', 'heart-filled', 'bookmark-outline', 'bookmark-filled'];
+const _preloaded = [];
+try {
+  _PRELOAD_ICONS.forEach(n => {
+    const im = new Image();
+    im.decoding = 'sync';
+    im.src = './svg/social/' + n + '.svg';
+    _preloaded.push(im);
+  });
+} catch (_) {}
+
 function paintSaveBtn(btn, on) {
   btn.classList.toggle('saved', on);
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
