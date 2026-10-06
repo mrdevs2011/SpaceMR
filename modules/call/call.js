@@ -873,7 +873,7 @@ async function initiateCall(isVideo) {
 
 async function _initiateCallImpl(isVideo) {
   const uid = state.currentChatUid;
-  if (!uid || !state.me) return;
+  if (!uid || !state.me || uid === state.me.uid) return;
   // Ikki marta bosish / parallel tab — bitta faol qo'ng'iroq
   if (_pc || _callId || _ending) {
     toast("Allaqachon qo'ng'iroqdasiz", 'error');

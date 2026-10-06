@@ -8653,3 +8653,9 @@ select.field option { background: #000000; color: var(--text); }
 #chatThreadModal .chat-emoji-quickpick.show { transition: transform .3s cubic-bezier(.22, .8, .25, 1), clip-path .3s cubic-bezier(.22, .8, .25, 1), visibility 0s, height .32s cubic-bezier(.22, .8, .25, 1); }
 #chatThreadModal .chat-emoji-quickpick.ep-gif { height: min(calc(var(--ep-h) * 2), calc(100dvh - 150px)); }
 @media (prefers-reduced-motion: reduce) { #chatThreadModal .chat-emoji-quickpick, #chatThreadModal .chat-emoji-quickpick.show { transition: none; } }
+
+/* ── Saqlangan xabarlar (o'zim bilan chat): qo'ng'iroq va menyu yo'q ── */
+#chatThreadModal.is-saved #chatVoiceCallBtn,
+#chatThreadModal.is-saved #chatVideoCallBtn,
+#chatThreadModal.is-saved #chatHeaderMenuBtn { display: none !important; }
+.chat-row-saved .chat-avi img { border-radius: 50%; object-fit: cover; background: transparent; }

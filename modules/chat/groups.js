@@ -361,6 +361,7 @@ export async function searchGroups(term) {
 }
 
 export async function openGroupThread(groupId) {
+  document.getElementById('chatThreadModal')?.classList.remove('is-saved');
   let groupData = _latestGroupMap[groupId];
   if (!groupData && state.me && groupId) {
     try {

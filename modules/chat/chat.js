@@ -23,8 +23,15 @@ const LONGPRESS_GUARD_MS = 300;  // long-press tugagandan keyin touchend guard v
 /* ── Pins / recent / deleted — modules/chat-storage.js ────────────────── */
 // _getPins, _isPinned, _togglePin, _getRecents, ... import orqali (pastga qarang)
 
+/* Saqlangan xabarlar — har bir foydalanuvchining o'zi bilan chati (chats.user_a = user_b = men).
+ * O'chirib/yashirib bo'lmaydi, har doim ro'yxat tepasida, URL: /chats/saved-messages */
+const SAVED_NAME = 'Saqlangan xabarlar';
+const SAVED_AVATAR = './svg/extra/saved-messages.svg';
+const _isSavedUid = (uid) => !!uid && !!state.me && uid === state.me.uid;
+
 function _deleteChatForMe(uid) {
   if (!state.me?.uid || !uid) return;
+  if (_isSavedUid(uid)) return; // Saqlangan xabarlarni o'chirib bo'lmaydi
   markChatDeletedLocal(uid);
   delete chatState._latestChatMap[uid];
   const pins = _getPins();
@@ -334,6 +341,7 @@ function _attachChatRowContextMenu(row) {
 
 function _openChatContextMenu(row) {
   document.getElementById('chatCtxOverlay')?.remove();
+  if (row.dataset.saved) return; // Saqlangan xabarlar: qadash ham, o'chirish ham yo'q
 
   const isGroup = !!row.dataset.gid;
   const id = isGroup ? row.dataset.gid : row.dataset.uid;
@@ -526,8 +534,10 @@ function _paintUserRows(users, animate = false) {
     }
     return;
   }
-  const rows = users.map(u => ({ u, c: chatMap[u.uid] || null, pinned: _isPinned('dm', u.uid) }));
+  const rows = users.map(u => ({ u, c: chatMap[u.uid] || null, pinned: !u.isSaved && _isPinned('dm', u.uid) }));
   rows.sort((a, b) => {
+    // 0. Saqlangan xabarlar doim eng tepada
+    if (!!a.u.isSaved !== !!b.u.isSaved) return a.u.isSaved ? -1 : 1;
     // 1. Pinned users first
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     // 2. Latest message first
@@ -540,25 +550,26 @@ function _paintUserRows(users, animate = false) {
   const html = rows.map(({ u, c, pinned }, idx) => {
     const av = u.avatar || defAvi(u.fullName || 'U');
     const isContact = chatState._myContacts.has(u.uid);
-    const online = isUidOnline(u.uid, isOnline(u.lastSeenAt));
+    const isSaved = !!u.isSaved;
+    const online = !isSaved && isUidOnline(u.uid, isOnline(u.lastSeenAt));
     const isAdminUser = u.username === 'admin';
     const rawPreview = c?.lastMessage || '';
     const formattedLastMsg = formatLastMessageText(rawPreview, c?.lastSenderId === state.me?.uid);
     const preview = (c && rawPreview)
-      ? `${c.lastSenderId === state.me.uid ? 'You: ' : ''}${esc(formattedLastMsg.slice(0, 46))}`
-      : isAdminUser ? "Admin bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
+      ? `${(!isSaved && c.lastSenderId === state.me.uid) ? 'You: ' : ''}${esc(formattedLastMsg.slice(0, 46))}`
+      : isSaved ? 'Xabarlarni shu yerga saqlang' : isAdminUser ? "Admin bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
     const time   = (c?.lastMessageAt && rawPreview) ? fmt(c.lastMessageAt) : '';
     const unread = c?.unreadCount?.[state.me.uid] || 0;
     const badgeTxt = unread > 99 ? '+99' : '+' + unread;
     const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
     const animStyle = '';
-    return `<div class="chat-row${unread ? ' unread' : ''}${animate ? ' chat-row-anim' : ''}" data-uid="${u.uid}" ${animStyle}>
+    return `<div class="chat-row${unread ? ' unread' : ''}${animate ? ' chat-row-anim' : ''}${isSaved ? ' chat-row-saved' : ''}" data-uid="${u.uid}"${isSaved ? ' data-saved="1"' : ''} ${animStyle}>
       <div class="chat-avi">
         <img src="${esc(av)}" onerror="this.style.display='none'">
         ${online ? '<span class="presence-dot" title="onlayn"></span>' : ''}
       </div>
       <div class="chat-row-body">
-        <div class="chat-row-name">${esc(u.fullName || (u.username ? '@' + u.username : 'Foydalanuvchi'))}${u.username && u.fullName ? ` <span style="font-size:12px;font-weight:400;color:var(--text3)">@${esc(u.username)}</span>` : ''}</div>
+        <div class="chat-row-name">${esc(u.fullName || (u.username ? '@' + u.username : 'Foydalanuvchi'))}${!isSaved && u.username && u.fullName ? ` <span style="font-size:12px;font-weight:400;color:var(--text3)">@${esc(u.username)}</span>` : ''}</div>
         <div class="chat-row-preview${c ? '' : ' chat-row-empty'}">${preview}</div>
       </div>
       <div class="chat-row-right">
@@ -571,11 +582,11 @@ function _paintUserRows(users, animate = false) {
   rowsWrap.innerHTML = html;
   _injectPresenceCSS();
   rowsWrap.querySelectorAll('.chat-row').forEach(row => {
-    _attachChatRowContextMenu(row);
+    if (!row.dataset.saved) _attachChatRowContextMenu(row);
     row.addEventListener('click', () => {
       const uid = row.dataset.uid;
       const u = users.find(x => x.uid === uid);
-      if (u) {
+      if (u && !u.isSaved) {
         _saveRecent({ type: 'user', id: u.uid, name: u.fullName || u.username, username: u.username, avatar: u.avatar });
       }
       openChatThread(uid);
@@ -994,7 +1005,7 @@ export function startChatsWatcher() {
       let total = 0;
       (data || []).forEach(r => {
         const c = mapChat(r);
-        const otherUid = c.participants.find(p => p !== me);
+        const otherUid = c.participants.find(p => p !== me) || (c.participants.every(p => p === me) ? me : null);
         if (otherUid) chatMap[otherUid] = c;
         total += c.unreadCount[me] || 0;
       });
@@ -1241,6 +1252,8 @@ function paintChatsList(users, chatMap) {
   } else {
     filtered = users.filter(u => _shouldShowInChatsList(u, chatMap));
   }
+  const savedU = { uid: state.me?.uid, fullName: SAVED_NAME, username: '', avatar: SAVED_AVATAR, isSaved: true };
+  if (savedU.uid && (!term || SAVED_NAME.toLowerCase().includes(term) || 'saved'.includes(term))) filtered = [savedU, ...filtered];
   _paintUserRows(filtered, !!term);
   _repaintNoticeBanner();
   _appendGroupRows(root, term);
@@ -1263,6 +1276,7 @@ function paintChatsList(users, chatMap) {
 
 
 function _paintPeerStatus(lastSeenAt) {
+  if (_isSavedUid(state.currentChatUid)) return; // Saqlangan xabarlarda onlayn/oxirgi ko'rilgan holat yo'q
   chatState._peerLastSeenAt = lastSeenAt;
   const el = $('chatTypingStatus');
   if (!el) return;
@@ -1334,7 +1348,8 @@ document.addEventListener('presenceChanged', () => {
 const MSG_ANIM_MS = 250;
 
 export async function openChatThread(uid) {
-  if (!uid || !state.me || uid === state.me.uid) return;
+  if (!uid || !state.me) return;
+  const isSaved = _isSavedUid(uid);
   // Har ochilish o'z belgisiga ega: tez almashtirilganda eski chatning kechikkan javoblari yangi chatga chizilmasin
   const _tok = chatState._openTok = (chatState._openTok || 0) + 1;
   const _stale = () => chatState._openTok !== _tok;
@@ -1353,6 +1368,7 @@ export async function openChatThread(uid) {
 
   _injectPresenceCSS();
   $('chatThreadModal').classList.add('show');
+  $('chatThreadModal').classList.toggle('is-saved', isSaved);
   $('chatThreadName').textContent   = '...';
   $('chatThreadAvi').innerHTML      = '';
 
@@ -1411,7 +1427,14 @@ export async function openChatThread(uid) {
   if (videoBtn) videoBtn.style.display = '';
   const voiceCallBtn = $('chatVoiceCallBtn');
   if (voiceCallBtn) voiceCallBtn.style.display = '';
-  try {
+  if (isSaved) {
+    $('chatThreadName').textContent = SAVED_NAME;
+    $('chatThreadAvi').innerHTML = `<img src="${SAVED_AVATAR}" alt="">`;
+    const _st = $('chatTypingStatus'); if (_st) { _st.textContent = ''; _st.classList.remove('online'); }
+    chatState._peerLastSeenAt = null;
+    chatState._otherUserAvi = SAVED_AVATAR;
+    chatState._otherUserUid = uid;
+  } else try {
     const { data: prow } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
     if (_stale()) return; // boshqa chatga o'tilgan — sarlavhani buzmaymiz
     const ud = mapProfile(prow) || {};
@@ -1431,7 +1454,7 @@ export async function openChatThread(uid) {
   // Onlayn holatni real vaqtda kuzatib turish — peer user hujjatidagi
   // `lastSeenAt` heartbeat orqali yangilanganda darhol sarlavhada ko'rinsin.
   if (chatState._peerUserUnsub) { chatState._peerUserUnsub(); chatState._peerUserUnsub = null; }
-  {
+  if (!isSaved) {
     const pch = sb.channel('peer-' + uid)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${uid}` },
           p => _paintPeerStatus(ts(p.new?.last_seen)))
@@ -1443,13 +1466,13 @@ export async function openChatThread(uid) {
   // "Onlayn"dan "N daqiqa oldin"ga o'tishini ko'rsatish uchun har 20s da
   // matnni qayta hisoblaymiz (server yozuvi o'zgarmasa ham vaqt o'tadi).
   if (chatState._peerStatusTick) clearInterval(chatState._peerStatusTick);
-  chatState._peerStatusTick = setInterval(() => _paintPeerStatus(chatState._peerLastSeenAt), PEER_STATUS_MS);
+  if (!isSaved) chatState._peerStatusTick = setInterval(() => _paintPeerStatus(chatState._peerLastSeenAt), PEER_STATUS_MS);
 
   // "Yozmoqda..." — realtime broadcast (typing_until ustuni yo'q)
   chatState._peerTyping = false;
   chatState._iAmTyping = false;
   if (chatState._chatDocUnsub) { chatState._chatDocUnsub(); chatState._chatDocUnsub = null; }
-  {
+  if (!isSaved) {
     let tTimer = null;
     chatState._onPeerTyping = (v) => {
       clearTimeout(tTimer);
@@ -1476,13 +1499,15 @@ export async function openChatThread(uid) {
   if (chatState._rt) { chatState._rt.close(); chatState._rt = null; }
   chatState._rtLocal.clear(); chatState._rtRead.clear();
   chatState._rtChatId = chatId;
-  chatState._rt = openRt(chatId, uid, { onMsg: _rtIncoming, onRead: _rtReadAck, onRetract: _rtRetract, onTyping: (v) => chatState._onPeerTyping(v), onEmo: (id, k) => playRemoteEmoji(id, k) });
-  inboxWarm(uid);
+  if (!isSaved) {
+    chatState._rt = openRt(chatId, uid, { onMsg: _rtIncoming, onRead: _rtReadAck, onRetract: _rtRetract, onTyping: (v) => chatState._onPeerTyping(v), onEmo: (id, k) => playRemoteEmoji(id, k) });
+    inboxWarm(uid);
+  }
 
   // unread_count endi faqat ekranda ko'rilgan xabarlar bo'yicha kamayadi (IntersectionObserver)
 
-  // Kontaktlarni saqlash — xato bo'lsa chat ochilishga ta'sir qilmaydi.
-  try {
+  // Kontaktlarni saqlash — xato bo'lsa chat ochilishga ta'sir qilmaydi (o'zim bilan chat kontakt emas).
+  if (!isSaved) try {
     const od = (chatState._usersCache || []).find(u => u.uid === uid) || {};
     const { error: cErr } = await sb.from('contacts').upsert(
       { owner_id: state.me.uid, contact_id: uid, full_name: od.fullName || '', avatar: od.avatar || '' },
@@ -2155,6 +2180,7 @@ export function resetSeenMsgs(key) {
  */
 /* ── Yopish chat thread ───────────────────────────────────────────────── */
 export function closeChatThread() {
+  $('chatThreadModal')?.classList.remove('is-saved');
   try { forceStopVoiceRecording(); } catch (err) {}
   _teardownReadObserver();
   chatState._locallyReadIds.clear();

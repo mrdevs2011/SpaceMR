@@ -5,6 +5,7 @@
  *   /home                  bosh sahifa (sayt ochilganda doim shu)
  *   /chats                 suhbatlar
  *   /chats/u/<username>    shaxsiy chat
+ *   /chats/saved-messages  Saqlangan xabarlar (o'zim bilan chat; o'chirib bo'lmaydi)
  *   /chats/g/<ref>         guruh chati: ref = group username | id | 64-xonali maxfiy taklif kodi
  *                          (a'zo bo'lmagan ochiq guruhga / taklif kodi bilan avtomatik qo'shiladi)
  *   Eski ?g= ?u= ?join= ?join_group= havolalari ishlamaydi -> 404.
@@ -109,6 +110,9 @@ export function parsePath(rawPath) {
   }
   if (a === 'u' && seg.length === 2 && seg[1]) {
     return { kind: 'userprofile', ref: seg[1] };
+  }
+  if (a === 'chats' && seg.length === 2 && b === 'saved-messages') {
+    return { kind: 'thread', thread: 'dm', ref: '', saved: true, base: 'chats' };
   }
   if (a === 'chats' && seg.length === 2 && b === 'groupcreate') {
     return { kind: 'overlay', overlay: 'groupcreate', base: 'chats' };
@@ -256,6 +260,7 @@ function computeUrl() {
 
   if (threadOpen()) {
     const modal = $('chatThreadModal');
+    if (state.currentChatKind === 'dm' && state.currentChatUid && state.me && state.currentChatUid === state.me.uid) return '/chats/saved-messages';
     if (state.currentChatKind === 'dm' && state.currentChatUid) {
       const t = dmToken(state.currentChatUid);
       return t ? `/chats/u/${encodeURIComponent(t)}` : null;
@@ -346,6 +351,7 @@ const TITLES = {
   '/login': 'Kirish', '/home': 'Bosh sahifa', '/chats': 'Suhbatlar', '/profile': 'Profil',
   '/settings': 'Sozlamalar', '/profile/settings': 'Sozlamalar', '/profile/settings/general': 'Sozlamalar', '/profile/settings/email': 'Sozlamalar', '/profile/settings/password': 'Sozlamalar', '/explore': 'Kashf', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
   '/chats/groupcreate': 'Yangi guruh',
+  '/chats/saved-messages': 'Saqlangan xabarlar',
 };
 function updateTitle(path) {
   const t = TITLES[path] || (path.startsWith('/chats/') ? 'Suhbatlar' : (path.startsWith('/u/') ? 'Profil' : (path.startsWith('/p/') ? 'Post' : (path.startsWith('/s/') ? 'Hikoya' : (path.startsWith('/profile/') ? 'Profil' : null)))));
@@ -622,10 +628,10 @@ export async function applyPath(rawPath, { initial = false } = {}) {
     if (route.kind === 'thread') {
       let ok = false, peerUid = null;
       if (route.thread === 'dm') {
-        const uid = await uidByUsername(route.ref);
+        const uid = route.saved ? state.me.uid : await uidByUsername(route.ref);
         peerUid = uid;
         if (!uid) return missing();
-        if (uid === state.me.uid) {
+        if (uid === state.me.uid && !route.saved) {
           // O'ziga chat yo'q — o'z profiliga o'tamiz (havola hamma uchun ochiladi)
           history.replaceState({ i: 0, prev: null }, '', '/profile' + tail);
           return applyPath('/profile');
