@@ -302,7 +302,7 @@ function _toggleProfileSearch() {
       'margin:8px 16px 4px', 'padding:9px 14px',
       'background:var(--bg4,rgba(231, 233, 234, 0.05))',
       'border:1.5px solid var(--line,rgba(231, 233, 234, 0.1))',
-      'border-radius: 16px',
+      'border-radius: 28px',
     ].join(';');
     wrap.innerHTML = `
       <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="14" height="14" style="flex-shrink:0;opacity:.5">

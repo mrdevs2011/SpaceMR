@@ -36,7 +36,7 @@ function _injectCSS() {
   margin: 0 16px 8px;
   background: var(--bg2);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 28px;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -49,7 +49,7 @@ function _injectCSS() {
   flex: 1; min-width: 0;
   background: var(--bg3);
   border: 1px solid var(--line2);
-  border-radius: 16px;
+  border-radius: 28px;
   color: var(--text);
   font-family: var(--font);
   font-size: 13px;
@@ -62,7 +62,7 @@ function _injectCSS() {
 .bc-select {
   background: var(--bg3);
   border: 1px solid var(--line2);
-  border-radius: 16px;
+  border-radius: 28px;
   color: var(--text2);
   font-family: var(--font);
   font-size: 12px;
@@ -75,7 +75,7 @@ function _injectCSS() {
   background: var(--blue);
   color: #e7e9ea;
   border: none;
-  border-radius: 16px;
+  border-radius: 28px;
   font-family: var(--font);
   font-size: 13px;
   font-weight: 600;
@@ -98,7 +98,7 @@ function _injectCSS() {
 .bc-empty {
   background: var(--bg2);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 28px;
   padding: 18px 16px;
   text-align: center;
   color: var(--text3);
@@ -179,7 +179,7 @@ function _initBroadcast() {
   margin: 0 16px 12px;
   background: color-mix(in srgb, var(--blue) 10%, var(--bg2));
   border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent);
-  border-radius: 16px;
+  border-radius: 28px;
   padding: 12px 14px;
   display: flex; flex-direction: column; gap: 8px;
 }
@@ -192,7 +192,7 @@ function _initBroadcast() {
   background: color-mix(in srgb, var(--red,#f4212e) 15%, transparent);
   color: var(--red,#f4212e);
   border: 1px solid color-mix(in srgb, var(--red,#f4212e) 35%, transparent);
-  border-radius: 16px;
+  border-radius: 28px;
   font-family: var(--font); font-size: 12px; font-weight: 600;
   padding: 6px 12px; cursor: pointer;
 

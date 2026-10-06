@@ -186,7 +186,7 @@ if (_perfOn && typeof PerformanceObserver !== 'undefined') {
     document.addEventListener('DOMContentLoaded', () => {
       const box = document.createElement('div');
       box.id = 'spacemr-perf-panel';
-      box.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:99999;max-width:280px;max-height:40vh;overflow:auto;background:rgba(0,0,0,.82);color:#8fe;font:11px/1.35 monospace;padding:8px 10px;border-radius: 16px;pointer-events:none';
+      box.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:99999;max-width:280px;max-height:40vh;overflow:auto;background:rgba(0,0,0,.82);color:#8fe;font:11px/1.35 monospace;padding:8px 10px;border-radius: 28px;pointer-events:none';
       const tick = () => {
         const lines = _marks.map(m => m.dt + 'ms  ' + m.name);
         const hits = Object.keys(_counters).filter(k => k.startsWith('cache-hit')).reduce((a, k) => a + _counters[k], 0);

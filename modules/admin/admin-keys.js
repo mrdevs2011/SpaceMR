@@ -161,7 +161,7 @@ export async function renderKeysCheck(anchor) {
   btn.type = 'button';
   const setBtn = txt => { btn.replaceChildren(_row('key', txt)); };
   setBtn('Kalitlarni tekshirish');
-  btn.style.cssText = 'padding:8px 14px;border-radius: 16px;border:1px solid var(--line,rgba(113, 118, 123, 0.2));background:transparent;color:inherit;font-size:13px;cursor:pointer';
+  btn.style.cssText = 'padding:8px 14px;border-radius: 28px;border:1px solid var(--line,rgba(113, 118, 123, 0.2));background:transparent;color:inherit;font-size:13px;cursor:pointer';
   const box = document.createElement('div');
   wrap.append(btn, box);
   anchor.insertAdjacentElement('afterend', wrap);

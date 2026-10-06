@@ -199,7 +199,7 @@ function _openBlockModal(uid, name, isBlocked) {
       </div>`;
     const _paintDur = () => document.querySelectorAll('#uaBlockDur .ua-dur-btn').forEach(b => {
       const on = b.dataset.dur === _blockDur;
-      b.style.cssText = 'flex:1;min-width:70px;padding:8px 10px;border-radius: 16px;cursor:pointer;font:inherit;font-size:13px;'
+      b.style.cssText = 'flex:1;min-width:70px;padding:8px 10px;border-radius: 28px;cursor:pointer;font:inherit;font-size:13px;'
         + 'border:1px solid ' + (on ? 'var(--blue)' : 'var(--line2)') + ';'
         + 'background:' + (on ? 'var(--blue)' : 'var(--bg3)') + ';color:' + (on ? '#e7e9ea' : 'var(--text2)') + ';';
       b.onclick = () => { _blockDur = b.dataset.dur; _paintDur(); };
@@ -370,18 +370,18 @@ function _ensurePendingMiniCSS() {
   s.textContent = `
 .pmini-wrap { margin: 0 16px 8px; display: flex; flex-direction: column; gap: 8px; }
 .pmini-empty {
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 16px;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 28px;
   padding: 16px; text-align: center; color: var(--text3); font-size: 13px;
 }
 .pmini-locked {
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 16px;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 28px;
   padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
   gap: 10px; cursor: pointer;
 }
 .pmini-locked-count { font-size: 13px; font-weight: 700; color: var(--text); }
 .pmini-locked-hint { font-size: 12px; color: var(--blue,#e7e9ea); font-weight: 600; white-space: nowrap; }
 .pmini-card {
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 16px;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 28px;
   padding: 12px; display: flex; align-items: center; gap: 10px;
 }
 .pmini-avi { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--bg3); }
@@ -395,7 +395,7 @@ function _ensurePendingMiniCSS() {
 .pmini-sub { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
 .pmini-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .pmini-approve-btn, .pmini-reject-btn {
-  border: none; border-radius: 16px; font-family: var(--font); font-size: 12px; font-weight: 600;
+  border: none; border-radius: 28px; font-family: var(--font); font-size: 12px; font-weight: 600;
   padding: 7px 11px; cursor: pointer;  white-space: nowrap;
 }
 .pmini-approve-btn { background: var(--green,#00ba7c); color: #e7e9ea; }

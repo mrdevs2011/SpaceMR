@@ -2,7 +2,7 @@
 /* CSS/tokens.css — tokens. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ═══════════════════════════════════════════════════════════ SpaceMR — tokens.css (DIET 4.2f: token e'lonlar... */
 :root {
-  --radius: 16px; /* SpaceMR standart yumshoq burchak */
+  --radius: 28px; /* SpaceMR standart yumshoq burchak */
   --pal-black: #000000;
   --pal-white: #e7e9ea;
   --pal-gray-900: #16181c;
