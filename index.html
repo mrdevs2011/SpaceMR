@@ -67,14 +67,15 @@ html{color-scheme:dark;}
       var s = p.split('/').filter(Boolean).map(function(x){ try { return decodeURIComponent(x); } catch (e) { return x; } });
       var a = (s[0] || '').toLowerCase(), b = (s[1] || '').toLowerCase(), n = s.length, ok = false;
       if (!n) ok = true;
-      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications)$/.test(a);
+      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications|apps)$/.test(a);
       else if (a === 'profile' && b === 'settings') ok = (n === 2) || (n === 3 && /^(general|email|password)$/.test((s[2] || '').toLowerCase()));
       else if (a === 'profile' && n === 2) ok = /^(photos|videos|text|music)$/.test(b);
       else if (a === 'u' && n === 2) ok = true;
       else if (a === 'u' && n === 3) ok = /^(photos|videos|text|music)$/.test((s[2] || '').toLowerCase());
       else if (a === 'p' && (n === 2 || (n === 3 && (s[2] || '').toLowerCase() === 'comments'))) ok = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s[1]);
       else if (a === 's' && n === 2) ok = true;
-      else if (a === 'chats' && n === 2) ok = b === 'groupcreate';
+      else if (a === 'apps' && (n === 2 || n === 3)) ok = s.slice(1).every(function(x){ return /^[a-z0-9][a-z0-9_-]{2,29}$/i.test(x); });
+      else if (a === 'chats' && n === 2) ok = b === 'groupcreate' || b === 'saved-messages';
       else if (a === 'chats' && n === 3) ok = (b === 'u' || b === 'g') && !!s[2];
       else if (a === 'chats' && n === 4) ok = (b === 'g' && !!s[2] && (s[3] || '').toLowerCase() === 'info') || (b === 'u' && !!s[2] && (s[3] || '').toLowerCase() === 'profile');
       if (/[?&](g|u|join|join_group)=/i.test(location.search)) ok = false; /* eski ?g= ?u= havolalar -> 404 */
