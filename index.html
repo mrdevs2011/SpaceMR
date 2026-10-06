@@ -83,6 +83,10 @@ html{color-scheme:dark;}
     } catch (_) {}
   })();
 </script>
+<!-- Story'lar: sayt ochilishi bilan, splash va auth'ni kutmasdan — IndexedDB keshdan o'qish + serverdan yangilash boshlanadi -->
+<script type="module">
+  try { if (localStorage.getItem('spacemr-auth')) import('./modules/feed/stories.js').then(function (m) { m.bootStories(); }).catch(function () {}); } catch (_) {}
+</script>
 <style>
 /* 404 — index.html ichida (redirectsiz). data-nf bo'lsa ilova yashiriladi, #nf404 ko'rinadi */
 #nf404{display:none;position:fixed;inset:0;z-index:2147483000;background:#000000;color:#e7e9ea;align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}

@@ -78,7 +78,15 @@ async function _profilesByIds(ids) {
 }
 
 /** Men a'zo bo'lgan guruh/kanallarni yuklab, ro'yxatni yangilaydi */
+/* Birinchi yuklash tugaganini bildiradi (chatlar ro'yxati eski/yarim ma'lumotni chizmasligi uchun) */
+let _gReadyRes = null;
+let _gReadyP = new Promise(r => { _gReadyRes = r; });
+export function groupsReady() { return _gReadyP; }
+
 async function _loadGroups() {
+  try { await _loadGroupsInner(); } finally { _gReadyRes?.(); }
+}
+async function _loadGroupsInner() {
   const me = state.me?.uid;
   if (!me) return;
   const { data: mine, error: e1 } = await sb.from('group_members').select('group_id').eq('user_id', me);
@@ -216,6 +224,7 @@ export function stopGroupsWatcher() {
   if (_groupThreadUnsub) { _groupThreadUnsub(); _groupThreadUnsub = null; }
   _latestGroupMap  = {};
   groupListItems   = [];
+  _gReadyP = new Promise(r => { _gReadyRes = r; });   // keyingi akkaunt/kirish uchun qayta
   _currentGroupId  = null;
   _currentGroupData = null;
 }
@@ -459,6 +468,7 @@ export async function openGroupThread(groupId) {
     if (_currentGroupId === groupId && _gLoaded) paintGroupMessages(_gMsgs, _currentGroupData);
   }).catch(() => {});
   const loadMsgs = async () => {
+    const _readP = _gLoadReadMax(groupId);   // xabarlar bilan bir vaqtda so'raladi
     const { data, error } = await sb.from('group_messages').select('*')
       .eq('group_id', groupId).order('created_at', { ascending: false }).limit(60);
     if (_gDead || _currentGroupId !== groupId) return;
@@ -475,7 +485,7 @@ export async function openGroupThread(groupId) {
         if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
       }
     }
-    await _gLoadReadMax(groupId);
+    await _readP;
     if (_gDead || _currentGroupId !== groupId) return;
     _gMsgs = msgs; _gLoaded = true;
     paintGroupMessages(msgs, _currentGroupData || groupData);

@@ -5,6 +5,7 @@
 import { sb, state, mapProfile, mediaPublicUrl } from '../core/config.js';
 import { $, esc, defAvi } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
+import { loadSnapshot, saveSnapshot, syncMedia, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
 
@@ -404,6 +405,15 @@ function ensureDom() {
   }
 }
 
+const _MON = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
+/** Story kelgan aniq vaqt (brauzer vaqt mintaqasida): "14:40" yoki boshqa kun bo'lsa "14:40, 12 avg" */
+function fmtClock(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  return d.toDateString() === new Date().toDateString() ? hm : `${hm}, ${d.getDate()} ${_MON[d.getMonth()]}`;
+}
+
 function fmtAgo(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -450,109 +460,138 @@ export function injectLocalStory(item) {
   renderBar();
 }
 
+/** Serverdan story guruhlarini oladi (DOM'siz) — loadStories() ham, sayt ochilishidagi erta yuklash ham shuni ishlatadi */
+async function fetchGroups(me) {
+  const nowIso = new Date().toISOString();
+  const selStories = cols => sb.from('stories').select(cols)
+    .gt('expires_at', nowIso)
+    .order('created_at', { ascending: true });
+  let { data: rows, error } = await selStories('id, user_id, media_path, media_type, caption, created_at, expires_at');
+  // caption ustuni hali yo'q bo'lsa (patch qo'llanmagan) — izohsiz yuklaymiz
+  if (error && /caption/i.test(error.message || '')) {
+    ({ data: rows, error } = await selStories('id, user_id, media_path, media_type, created_at, expires_at'));
+  }
+  if (error) throw error;
+
+  const stories = rows || [];
+  const uids = [...new Set(stories.map(s => s.user_id))];
+  if (me && !uids.includes(me)) uids.push(me);
+
+  // Profillar va ko'rilganlar — parallel
+  const profP = uids.length
+    ? sb.from('profiles').select('id, full_name, username, avatar').in('id', uids)
+    : Promise.resolve({ data: [] });
+  const viewP = (stories.length && me)
+    ? sb.from('story_views').select('story_id').eq('user_id', me).in('story_id', stories.map(s => s.id))
+    : Promise.resolve({ data: [] });
+  const [{ data: pr }, { data: vv }] = await Promise.all([profP, viewP]);
+  const pMap = Object.fromEntries((pr || []).map(mapProfile).map(p => [p.uid, p]));
+  const viewed = new Set((vv || []).map(v => v.story_id));
+
+  // Group by user
+  const byUser = new Map();
+  for (const s of stories) {
+    if (!byUser.has(s.user_id)) byUser.set(s.user_id, []);
+    byUser.get(s.user_id).push({
+      id: s.id,
+      mediaPath: s.media_path,
+      mediaType: s.media_type || 'image',
+      mediaUrl: mediaPublicUrl(s.media_path),
+      caption: s.caption || '',
+      createdAt: s.created_at,                                   // story bazaga tushgan vaqt (server)
+      expiresAt: storyExpiresAt(s.created_at, s.expires_at),     // created_at + 24 soat
+      seen: viewed.has(s.id),
+    });
+  }
+
+  const groups = [];
+  const myItems = byUser.get(me) || [];
+  const meP = pMap[me] || state._userCache?.[me] || {};
+  groups.push({
+    uid: me,
+    name: myName(meP),
+    avatar: meP.avatar || defAvi(meP.fullName || 'U'),
+    items: myItems,
+    hasUnseen: myItems.some(i => !i.seen),
+    isMe: true,
+  });
+
+  // Others: unseen first, then seen
+  const others = [...byUser.keys()].filter(u => u !== me).map(uid => {
+    const items = byUser.get(uid) || [];
+    const p = pMap[uid] || {};
+    return {
+      uid,
+      name: p.fullName || p.username || 'Foydalanuvchi',
+      avatar: p.avatar || defAvi(p.fullName || '?'),
+      items,
+      hasUnseen: items.some(i => !i.seen),
+      isMe: false,
+    };
+  });
+  others.sort((a, b) => (b.hasUnseen ? 1 : 0) - (a.hasUnseen ? 1 : 0));
+  groups.push(...others.filter(g => g.items.length > 0));
+  return groups;
+}
+
+/* ── Erta yuklash: sayt ochilishi bilan (splash boshlanishidan oldin, auth/DOM kutmasdan) ──
+   1) IndexedDB'dagi oxirgi story ro'yxati + birinchi fayllar blob URL'ga tayyorlanadi;
+   2) serverdan yangi ro'yxat fonda so'raladi. loadStories() keyin tayyor natijani oladi. */
+let _boot = null;   // { uid, t, snap: Promise, net: Promise<groups|null> }
+function _authUid() {
+  try { return JSON.parse(localStorage.getItem('spacemr-auth') || 'null')?.user?.id || null; } catch (_) { return null; }
+}
+export function bootStories() {
+  if (_boot) return;
+  const uid = _authUid();
+  if (!uid) return;
+  const net = fetchGroups(uid).then(g => { saveSnapshot(uid, g); syncMedia(g); return g; }).catch(() => null);
+  const snap = loadSnapshot(uid).then(async r => {
+    // Birinchi (ko'rilmagan oldin) fayllarni blob URL'ga tayyorlab qo'yamiz — viewer ochilganda darhol chiqadi
+    const items = (r?.groups || []).flatMap(g => g.items || []);
+    const first = [...items.filter(i => !i.seen), ...items.filter(i => i.seen)].slice(0, 10);
+    await Promise.all(first.map(i => cachedUrl(i.id)));
+    return r;
+  }).catch(() => null);
+  _boot = { uid, t: Date.now(), snap, net };
+}
+
 export async function loadStories() {
   ensureDom();
   const track = $('storiesTrack');
   if (!track || !state.me?.uid) return;
+  const me = state.me.uid;
 
-  /* Birinchi yuklashda: oxirgi ma'lum soniga teng skeleton (haqiqiy story-item bilan bir xil layout).
-     Qayta yuklashda mavjud story lar turadi — ularni skeletonga almashtirmaymiz (miltillamasin). */
   const _hasReal = () => !!track.querySelector('.story-item:not(.story-item--skel)');
-  if (!_hasReal()) renderSkeleton(_cachedStoryCount());
+
+  // Erta yuklash tayyor bo'lsa — o'shani olamiz (bir marta); bo'lmasa — yangi so'rov
+  let boot = _boot && _boot.uid === me && (Date.now() - _boot.t) < 60000 ? _boot : null;
+  _boot = null;
+  const net = boot ? boot.net.then(g => g || fetchGroups(me)) : fetchGroups(me);
+
+  /* Birinchi yuklashda: keshdagi ro'yxat DARHOL chiqadi (IndexedDB), keyin serverdan yangilanadi.
+     Kesh ham yo'q bo'lsa — skeleton (haqiqiy story-item bilan bir xil layout). */
+  if (!_hasReal()) {
+    const snap = await (boot?.snap || loadSnapshot(me));
+    if (!_hasReal()) {
+      if (snap?.groups?.length) { _groups = snap.groups; renderBar(); }
+      else renderSkeleton(_cachedStoryCount());
+    }
+  }
 
   try {
-    const nowIso = new Date().toISOString();
-    const selStories = cols => sb.from('stories').select(cols)
-      .gt('expires_at', nowIso)
-      .order('created_at', { ascending: true });
-    let { data: rows, error } = await selStories('id, user_id, media_path, media_type, caption, created_at, expires_at');
-    // caption ustuni hali yo'q bo'lsa (patch qo'llanmagan) — izohsiz yuklaymiz
-    if (error && /caption/i.test(error.message || '')) {
-      ({ data: rows, error } = await selStories('id, user_id, media_path, media_type, created_at, expires_at'));
-    }
-    if (error) throw error;
-
-    const stories = rows || [];
-    const uids = [...new Set(stories.map(s => s.user_id))];
-    if (state.me?.uid && !uids.includes(state.me.uid)) uids.push(state.me.uid);
-    /* Bugungi story egalari soni ma'lum bo'ldi (men + boshqalar) — skeleton sonini aniqlaymiz, profil/ko'rilganlar hali yuklanmoqda */
-    _saveStoryCount(uids.length);
-    if (!_hasReal()) renderSkeleton(uids.length);
-
-    let profiles = [];
-    if (uids.length) {
-      const { data: pr } = await sb.from('profiles')
-        .select('id, full_name, username, avatar')
-        .in('id', uids);
-      profiles = (pr || []).map(mapProfile);
-    }
-    const pMap = Object.fromEntries(profiles.map(p => [p.uid, p]));
-
-    // Viewed set
-    let viewed = new Set();
-    if (stories.length && state.me?.uid) {
-      const ids = stories.map(s => s.id);
-      const { data: vv } = await sb.from('story_views')
-        .select('story_id')
-        .eq('user_id', state.me.uid)
-        .in('story_id', ids);
-      (vv || []).forEach(v => viewed.add(v.story_id));
-    }
-
-    // Group by user
-    const byUser = new Map();
-    for (const s of stories) {
-      if (!byUser.has(s.user_id)) byUser.set(s.user_id, []);
-      byUser.get(s.user_id).push({
-        id: s.id,
-        mediaPath: s.media_path,
-        mediaType: s.media_type || 'image',
-        mediaUrl: mediaPublicUrl(s.media_path),
-        caption: s.caption || '',
-        createdAt: s.created_at,
-        seen: viewed.has(s.id),
-      });
-    }
-
-    const me = state.me.uid;
-    const groups = [];
-
-    // Own first
-    const myItems = byUser.get(me) || [];
-    const meP = pMap[me] || {};
-    groups.push({
-      uid: me,
-      name: myName(meP),
-      avatar: meP.avatar || defAvi(meP.fullName || 'U'),
-      items: myItems,
-      hasUnseen: myItems.some(i => !i.seen),
-      isMe: true,
-    });
-
-    // Others: unseen first, then seen
-    const others = [...byUser.keys()].filter(u => u !== me).map(uid => {
-      const items = byUser.get(uid) || [];
-      const p = pMap[uid] || {};
-      return {
-        uid,
-        name: p.fullName || p.username || 'Foydalanuvchi',
-        avatar: p.avatar || defAvi(p.fullName || '?'),
-        items,
-        hasUnseen: items.some(i => !i.seen),
-        isMe: false,
-      };
-    });
-    others.sort((a, b) => (b.hasUnseen ? 1 : 0) - (a.hasUnseen ? 1 : 0));
-    groups.push(...others.filter(g => g.items.length > 0));
-
+    const groups = await net;
     _groups = groups;
     renderBar();
+    // Keshni serverdagi ro'yxat bilan solishtirish: yangilari keshlanadi, eskilari/o'chirilganlari o'chadi
+    saveSnapshot(me, groups); syncMedia(groups);
   } catch (e) {
     console.warn('[stories]', e?.message || e);
+    if (_groups.length) { renderBar(); return; }   // internet yo'q — keshdagi ro'yxat turaveradi
     // Jadval yo'q bo'lsa ham "Sizning story" ko'rsatamiz
-    const meP = state._userCache?.[state.me.uid] || {};
+    const meP = state._userCache?.[me] || {};
     _groups = [{
-      uid: state.me.uid,
+      uid: me,
       name: myName(meP),
       avatar: meP.avatar || defAvi(meP.fullName || 'U'),
       items: [],
@@ -785,8 +824,9 @@ async function showCurrent() {
   }
 
   const item = g.items[_itemIdx];
+  if (isExpired(item)) { _itemIdx++; return showCurrent(); }   // 24 soat o'tgan — ko'rsatilmaydi
   $('svName').textContent = g.name;
-  $('svTime').textContent = fmtAgo(item.createdAt);
+  $('svTime').textContent = fmtAgo(item.createdAt) + ' · ' + fmtClock(item.createdAt);
   $('svAvi').innerHTML = `<img src="${esc(g.avatar)}" alt="" onerror="this.style.display='none'">`;
 
   const media = $('svMedia');
@@ -815,6 +855,11 @@ async function showCurrent() {
 
   // Mark viewed
   markViewed(item);
+
+  // Media manbasi: avval IndexedDB keshi (tarmoqsiz, tez); yo'q bo'lsa — URL, rasm bo'lsa fonda keshlanadi
+  let src = cachedUrlSync(item.id);
+  if (!src) { src = await cachedUrl(item.id); if (token !== _showToken) return; }
+  if (!src) { src = item.mediaUrl; if (!isVideo) cacheItem(item); }
 
   // Progress faqat media tayyor bo'lgandan KEYIN boshlanadi
   const n = g.items.length;
@@ -856,19 +901,20 @@ async function showCurrent() {
       startProgress();
     };
     el.onerror = startProgress;
-    el.src = item.mediaUrl;
+    el.src = src;
     if (el.readyState >= 1) begin();
     else el.addEventListener('loadeddata', begin, { once: true });
   } else {
     el.onload = startProgress;
     el.onerror = startProgress;
-    el.src = item.mediaUrl;
+    el.src = src;
   }
 
   // Keyingi story mediasini oldindan yuklab qo'yish
   const nextItem = g.items[_itemIdx + 1] || _groups[_viewerIdx + 1]?.items?.[0];
   if (nextItem?.mediaUrl && !String(nextItem.mediaType || '').startsWith('video')) {
-    const pre = new Image(); pre.src = nextItem.mediaUrl;
+    const pre = new Image(); pre.src = cachedUrlSync(nextItem.id) || nextItem.mediaUrl;
+    cacheItem(nextItem);
   }
 }
 
@@ -885,6 +931,7 @@ async function markViewed(item) {
   // Update hasUnseen on group
   const g = _groups[_viewerIdx];
   if (g) g.hasUnseen = g.items.some(i => !i.seen);
+  saveSnapshot(state.me.uid, _groups);
 }
 
 function step(dir, manual = false) {

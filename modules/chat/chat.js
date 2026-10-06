@@ -636,7 +636,7 @@ import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
   openGroupThread, closeGroupThread,
   sendGroupMessage, sendGroupFile, sendGroupVoice, groupTypingInput, reloadGroupThread,
-  injectGroupsDOM, openCreateChoice, getGroupRows,
+  injectGroupsDOM, openCreateChoice, getGroupRows, groupsReady,
   getCurrentGroupId, joinGroup, leaveGroup, searchGroups
 } from './groups.js';
 import {
@@ -929,8 +929,10 @@ export function startChatsWatcher() {
   if (chatState._chatsUnsub) return Promise.resolve();
   if (chatState._watcherPromise) return chatState._watcherPromise;
 
+  let _chatsReadyRes = null;
+  chatState._chatsReady = new Promise(r => { _chatsReadyRes = r; });
   chatState._watcherPromise = (async () => {
-    if (!state.me) return;
+    if (!state.me) { _chatsReadyRes(); return; }
 
     // Agar kesh 5 daqiqadan yangi bo'lsa — butun "users" kolleksiyasini
     // qayta tarmoqdan yuklamaymiz (bu og'ir so'rov, foydalanuvchilar
@@ -1000,7 +1002,7 @@ export function startChatsWatcher() {
         .select('*, chat_members(user_id, unread_count)')
         .or(`user_a.eq.${me},user_b.eq.${me}`);
       if (_chDead || !state.me) return;
-      if (error) { console.warn('[Chat] chats watcher error:', error.message); return; }
+      if (error) { console.warn('[Chat] chats watcher error:', error.message); _chatsReadyRes?.(); return; }
       const chatMap = {};
       let total = 0;
       (data || []).forEach(r => {
@@ -1010,6 +1012,8 @@ export function startChatsWatcher() {
         total += c.unreadCount[me] || 0;
       });
       chatState._latestChatMap = chatMap;
+      chatState._chatsFresh = true;      // serverdan tasdiqlangan (thread keshini tekshirishda ishlatiladi)
+      _chatsReadyRes?.();
       updateChatBadge(total);
       if (chatState._usersCache) cacheChatsList(state.me.uid, chatState._usersCache, chatMap);
       if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatMap);
@@ -1072,6 +1076,9 @@ export function stopChatsWatcher() {
   if (chatState._presenceRepaintTick) { clearInterval(chatState._presenceRepaintTick); chatState._presenceRepaintTick = null; }
   chatState._usersCache    = null;
   chatState._latestChatMap = {};
+  chatState._chatsFresh    = false;
+  chatState._chatsLoaded   = false;
+  chatState._chatsReady    = null;
   chatState._latestNotice  = null;
   chatState._myContacts    = new Set();
   chatState._watcherPromise = null;
@@ -1084,20 +1091,18 @@ export async function renderChatsList() {
   const root = $('chatsListWrap');
   if (!root || !state.me) return;
 
-  if (!chatState._usersCache) {
-    // Tarmoqni kutmasdan — keshdagi so'nggi ma'lumotni darhol ko'rsatamiz
-    const cached = getCachedChatsList(state.me.uid);
-    if (cached && cached.users && cached.users.length) {
-      chatState._usersCache    = cached.users;
-      chatState._latestChatMap = cached.chatMap || {};
-      paintChatsList(chatState._usersCache, chatState._latestChatMap);
-    } else {
-      root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
-    }
-  }
+  /* Ro'yxat BIRINCHI marta chizilganda serverdan tasdiqlangan ma'lumot (chatlar + guruhlar) kelguncha spinner:
+     keshdagi eski oxirgi xabar / o'chirilgan chat / eski o'qilmagan son bir zum ko'rinib qolmasin.
+     Watcher ilova ochilishida boshlangani uchun odatda bu allaqachon tayyor bo'ladi. */
+  if (!chatState._chatsLoaded) root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
 
   try {
     await startChatsWatcher();
+    await Promise.race([
+      Promise.all([chatState._chatsReady, groupsReady()]),
+      new Promise(r => setTimeout(r, 4000)),   // internet yo'q/sekin — cheksiz kutmaymiz
+    ]);
+    chatState._chatsLoaded = true;
 
     const hasUsers = !!(chatState._usersCache && chatState._usersCache.length);
     const hasGroups = !!(getGroupRows() && getGroupRows().length);
@@ -1408,8 +1413,15 @@ export async function openChatThread(uid) {
   // ko'rinadi), aks holda bar davom etib turadi.
   try { _syncMiniPlayer(); } catch (_) {}
 
-  // Tarmoqni kutmasdan — keshdagi so'nggi xabarlarni darhol ko'rsatamiz
-  const _cachedMsgs = getCachedThreadMessages(chatId);
+  // Keshdagi xabarlar faqat ISHONCHLI bo'lsa darhol chiziladi: chat ro'yxatidagi oxirgi xabar vaqti keshdagi
+  // oxirgi xabardan yangi bo'lsa — kesh eskirgan, uni ko'rsatmaymiz (yangi xabarlar "keyin tushib" qolmasin).
+  const _cm = getCachedThreadMessages(chatId);
+  const _cmLast = _cm && _cm.length ? _cm[_cm.length - 1] : null;
+  const _chatMeta = chatState._latestChatMap?.[uid];
+  const _cachedMsgs = (_cmLast && !(_chatMeta?.lastMessageAt && (ts(_cmLast.createdAt) || 0) < ts(_chatMeta.lastMessageAt) - 1500)) ? _cm : null;
+  // Xabarlar so'rovi hoziroq ketadi (profil/kontakt so'rovlarini kutmasdan) — keyingi loadThread shu natijani oladi
+  let _earlyFetch = Promise.resolve(sb.from('messages').select('*')
+    .eq('chat_id', chatId).order('created_at', { ascending: false }).limit(MSG_LIMIT)).catch(() => null);
   if (_cachedMsgs && _cachedMsgs.length) {
     paintMessages(_cachedMsgs);
   } else {
@@ -1524,8 +1536,11 @@ export async function openChatThread(uid) {
 
   let _tDead = false, _tTimer = null, _tLoaded = false;
   const loadThread = async () => {
-    const { data, error } = await sb.from('messages').select('*')
+    let res = null;
+    if (_earlyFetch) { res = await _earlyFetch; _earlyFetch = null; }   // birinchi marta — oldindan ketgan so'rov natijasi
+    if (!res || res.error) res = await sb.from('messages').select('*')
       .eq('chat_id', chatId).order('created_at', { ascending: false }).limit(MSG_LIMIT);
+    const { data, error } = res;
     if (_tDead || state.currentChatId !== chatId) return; // boshqa chat ochilgan — bu natija chizilmaydi
     if (error) {
       console.warn('[Chat] Thread load error:', error.message);
@@ -1554,6 +1569,7 @@ export async function openChatThread(uid) {
       chatState._rtLocal.delete(delId);
       markDissolve([delId]);
       paintMessages(chatState._curMsgs.filter(x => x.id !== delId));
+      cacheThreadMessages(chatId, chatState._curMsgs.filter(x => x.id !== delId));
       return;
     }
     const m = mapMessage(p.new);
@@ -1566,6 +1582,7 @@ export async function openChatThread(uid) {
     else if (ev === 'INSERT') list.push(m);
     else { schedThread(); return; }
     paintMessages(list);
+    cacheThreadMessages(chatId, list);
     // Read: observer yangi xabarni ekranda ko'ringanda belgilaydi
   };
   const mch = sb.channel('thread-' + chatId)
