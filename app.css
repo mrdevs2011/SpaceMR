@@ -6287,6 +6287,9 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 .rr-users-admin .ua-uname { font-size: 12px !important; color: var(--text3) !important; }
 .rr-users-admin .ua-actions,
 .rr-users-admin .ua-status { display: none !important; }
+
+.rr-users-admin .ua-badge,
+.rr-users-admin .ua-status { display: none !important; }
 /* SSOT: X-theme + chat thread + nav + right-rail (oxirgi kaskad) */
 /* CSS/mono-x.css — mono, x-design. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
 /* ─── mono ─── */
@@ -15008,6 +15011,53 @@ select.field option { background: #000000; color: var(--text); }
 .gp-recent-label { font-size: 12px; font-weight: 600; color: var(--text3); padding: 2px 2px 6px; }
 .gp-recent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
 .gp-recent-item { aspect-ratio: 1; }
+
+
+/* Chat input: barcha tugmalar vertikal teng (markaz) */
+#chatThreadModal .chat-thread-input-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px;
+}
+#chatThreadModal .chat-attach-btn,
+#chatThreadModal .chat-emoji-btn,
+#chatThreadModal .chat-voice-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  box-sizing: border-box !important;
+}
+#chatThreadModal .chat-emoji-wrap,
+#chatThreadModal .chat-voice-wrap {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+#chatThreadModal .chat-thread-input {
+  align-self: center !important;
+  margin: 0 !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  min-height: 36px !important;
+  line-height: 20px !important;
+}
+/* Ko'p qator bo'lganda tugmalar pastga (oxirgi qator) */
+#chatThreadModal .chat-thread-input-row:has(.chat-thread-input:not([rows="1"])) {
+  align-items: flex-end !important;
+}
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */
@@ -16036,14 +16086,33 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   border-radius: 50%;
   border: 1px solid #2f3336;
   background: #000;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  /* Yashirin: pastda, smooth slide uchun display:none emas */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(18px);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.24s ease,
+    visibility 0s linear 0.32s;
+  will-change: transform, opacity;
 }
-.chat-jump-bottom.show { display: flex; }
+.chat-jump-bottom.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition:
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease,
+    visibility 0s linear 0s;
+}
 .chat-jump-bottom img { width: 20px; height: 20px; }
 
 /* Yengil chizish: ekrandan tashqari qator GPU ga tushmaydi */

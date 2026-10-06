@@ -8719,3 +8719,50 @@ select.field option { background: #000000; color: var(--text); }
 .gp-recent-label { font-size: 12px; font-weight: 600; color: var(--text3); padding: 2px 2px 6px; }
 .gp-recent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
 .gp-recent-item { aspect-ratio: 1; }
+
+
+/* Chat input: barcha tugmalar vertikal teng (markaz) */
+#chatThreadModal .chat-thread-input-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px;
+}
+#chatThreadModal .chat-attach-btn,
+#chatThreadModal .chat-emoji-btn,
+#chatThreadModal .chat-voice-btn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  box-sizing: border-box !important;
+}
+#chatThreadModal .chat-emoji-wrap,
+#chatThreadModal .chat-voice-wrap {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  margin: 0 !important;
+}
+#chatThreadModal .chat-thread-input {
+  align-self: center !important;
+  margin: 0 !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  min-height: 36px !important;
+  line-height: 20px !important;
+}
+/* Ko'p qator bo'lganda tugmalar pastga (oxirgi qator) */
+#chatThreadModal .chat-thread-input-row:has(.chat-thread-input:not([rows="1"])) {
+  align-items: flex-end !important;
+}

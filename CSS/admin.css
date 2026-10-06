@@ -1208,3 +1208,6 @@
 .rr-users-admin .ua-uname { font-size: 12px !important; color: var(--text3) !important; }
 .rr-users-admin .ua-actions,
 .rr-users-admin .ua-status { display: none !important; }
+
+.rr-users-admin .ua-badge,
+.rr-users-admin .ua-status { display: none !important; }

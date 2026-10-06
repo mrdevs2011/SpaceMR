@@ -197,14 +197,33 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   border-radius: 50%;
   border: 1px solid #2f3336;
   background: #000;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  /* Yashirin: pastda, smooth slide uchun display:none emas */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(18px);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.24s ease,
+    visibility 0s linear 0.32s;
+  will-change: transform, opacity;
 }
-.chat-jump-bottom.show { display: flex; }
+.chat-jump-bottom.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition:
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease,
+    visibility 0s linear 0s;
+}
 .chat-jump-bottom img { width: 20px; height: 20px; }
 
 /* Yengil chizish: ekrandan tashqari qator GPU ga tushmaydi */
