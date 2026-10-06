@@ -680,7 +680,8 @@ import {
 } from './groups.js';
 import {
   cacheChatsList, getCachedChatsList, getCachedChatsListAgeMs,
-  cacheThreadMessages, getCachedThreadMessages, invalidateChatsListCache
+  cacheThreadMessages, getCachedThreadMessages, invalidateChatsListCache,
+  whenReady as whenLocalCacheReady,
 } from '../core/local-cache.js';
 
 import {
@@ -981,6 +982,9 @@ export function startChatsWatcher() {
   chatState._chatsReady = new Promise(r => { _chatsReadyRes = r; });
   chatState._watcherPromise = (async () => {
     if (!state.me) { _chatsReadyRes(); return; }
+
+    // IndexedDB hydrate tugaguncha kutamiz — aks holda kesh "yo'q" deb tarmoqqa ketadi
+    try { await whenLocalCacheReady(); } catch (_) {}
 
     // Agar kesh 5 daqiqadan yangi bo'lsa — butun "users" kolleksiyasini
     // qayta tarmoqdan yuklamaymiz (bu og'ir so'rov, foydalanuvchilar
@@ -1475,6 +1479,7 @@ export async function openChatThread(uid) {
 
   // Keshdagi xabarlar faqat ISHONCHLI bo'lsa darhol chiziladi: chat ro'yxatidagi oxirgi xabar vaqti keshdagi
   // oxirgi xabardan yangi bo'lsa — kesh eskirgan, uni ko'rsatmaymiz (yangi xabarlar "keyin tushib" qolmasin).
+  try { await whenLocalCacheReady(); } catch (_) {}
   const _cm = getCachedThreadMessages(chatId);
   const _cmLast = _cm && _cm.length ? _cm[_cm.length - 1] : null;
   const _chatMeta = chatState._latestChatMap?.[uid];

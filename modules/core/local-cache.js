@@ -220,10 +220,19 @@ let _ready = false;
 export function whenReady() { return _readyP; }
 export function isCacheReady() { return _ready; }
 
-Promise.race([
-  _hydrate().catch(() => {}),
-  new Promise(r => setTimeout(r, HYDRATE_TIMEOUT_MS)),
-]).then(() => {
-  _ready = true;
-  _readyResolve();
-});
+// Hydrate tugaguncha kutamiz; timeout faqat UI bloklamaslik uchun — lekin hydrate davom etadi
+(async () => {
+  let done = false;
+  const mark = () => {
+    if (done) return;
+    done = true;
+    _ready = true;
+    _readyResolve();
+  };
+  const t = setTimeout(mark, HYDRATE_TIMEOUT_MS);
+  try {
+    await _hydrate();
+  } catch (_) {}
+  clearTimeout(t);
+  mark();
+})();

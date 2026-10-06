@@ -91,7 +91,7 @@ self.addEventListener('notificationclick', (event) => {
 
 /* ── Cache versiyasi ── */
 // Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
-const CACHE_VERSION  = 't-1791297600'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1791303220519'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 const EMOJI_CACHE    = 'spacemr-emoji-v1';
@@ -110,6 +110,7 @@ const PRECACHE_URLS = [
   '/svg/logo.png',
   '/svg/favicon.png',
   '/modules/admin/admin-badge.js',
+  '/modules/admin/admin-force-reload.js',
   '/modules/admin/admin-gate.js',
   '/modules/admin/admin-keys.js',
   '/modules/admin/admin-reset-password.js',
@@ -147,10 +148,12 @@ const PRECACHE_URLS = [
   '/modules/chat/msg-menu.js',
   '/modules/chat/msg-reactions.js',
   '/modules/chat/rt-chat.js',
+  '/modules/core/cache-policy.js',
   '/modules/core/config.js',
   '/modules/core/env.js',
   '/modules/core/error-log.js',
   '/modules/core/file-icons.js',
+  '/modules/core/force-reload.js',
   '/modules/core/icons.js',
   '/modules/core/live.js',
   '/modules/core/local-cache.js',
@@ -160,8 +163,17 @@ const PRECACHE_URLS = [
   '/modules/core/rate-limit.js',
   '/modules/core/rt-bus.js',
   '/modules/core/scroll-jump-debug.js',
+  '/modules/core/store/db.js',
+  '/modules/core/store/flags.js',
+  '/modules/core/store/index.js',
+  '/modules/core/store/media-cache.js',
+  '/modules/core/store/outbox.js',
+  '/modules/core/store/paint-gate.js',
+  '/modules/core/store/store.js',
+  '/modules/core/store/sync.js',
   '/modules/core/upload-policy.js',
   '/modules/core/utils.js',
+  '/modules/core/video-hold-speed.js',
   '/modules/core/video-policy.js',
   '/modules/explore.js',
   '/modules/feed/comments.js',
@@ -263,23 +275,68 @@ self.addEventListener('message', (event) => {
   }
 });
 
+async function _matchCache(req) {
+  // Query (?v=) farq qilsa ham topilsin
+  return (await caches.match(req, { ignoreSearch: true })) || (await caches.match(req));
+}
+
+async function _putStatic(req, res) {
+  if (!res || !res.ok) return;
+  try {
+    const c = await caches.open(STATIC_CACHE);
+    await c.put(req, res.clone());
+  } catch (_) {}
+}
+
+async function _networkFirst(req, fallbackUrls) {
+  try {
+    const res = await fetch(req);
+    if (res && res.ok) {
+      await _putStatic(req, res);
+      return res;
+    }
+  } catch (_) {}
+  const hit = await _matchCache(req);
+  if (hit) return hit;
+  for (const u of (fallbackUrls || [])) {
+    const h = await caches.match(u);
+    if (h) return h;
+  }
+  return new Response('Offline', { status: 503, statusText: 'Offline' });
+}
+
+async function _cacheFirstSWR(req) {
+  const cached = await _matchCache(req);
+  if (cached) {
+    // Fon yangilash — keyingi ochilishda yangi versiya
+    fetch(req).then(res => { if (res && res.ok) _putStatic(req, res); }).catch(() => {});
+    return cached;
+  }
+  const res = await fetch(req);
+  if (res && res.ok) await _putStatic(req, res);
+  return res;
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
 
   if (_isBypassed(url) || req.method !== 'GET') return;
 
-  // Range (video seek) — keshga yozilmasin, tarmoqqa o'tkazilsin (Safari 206)
+  // Range (video seek) — keshga yozilmasin
   if (req.headers.has('range')) {
-    event.respondWith(fetch(req).catch(() => caches.match(req)));
+    event.respondWith(fetch(req).catch(() => _matchCache(req)));
     return;
   }
 
+  let path = '';
+  try { path = new URL(url).pathname; } catch (_) { return; }
+
   // Emoji — cache-first, alohida kesh
-  if (url.indexOf('/emoji/') > 0 && new URL(url).pathname.startsWith('/emoji/')) {
+  if (path.startsWith('/emoji/')) {
     event.respondWith(
       (_emojiCache || (_emojiCache = caches.open(EMOJI_CACHE))).then(async (c) => {
-        const hit = await c.match(req);
+        const hit = await c.match(req) || await c.match(req, { ignoreSearch: true });
         if (hit) return hit;
         const res = await fetch(req);
         if (res.ok && (res.headers.get('content-type') || '').startsWith('image/')) c.put(req, res.clone());
@@ -289,62 +346,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML navigatsiya — stale-while-revalidate + offline fallback
-  if (req.destination === 'document' || req.mode === 'navigate') {
-    event.respondWith((async () => {
-      const cache = await caches.open(RUNTIME_CACHE);
-      const cached = await cache.match(req) || await caches.match('/index.html') || await caches.match('/');
-      const networkPromise = fetch(req).then(res => {
-        if (res && res.ok) cache.put(req, res.clone());
-        return res;
-      }).catch(() => null);
-      if (cached) {
-        networkPromise.catch(() => {}); // fon yangilanish
-        return cached;
-      }
-      const res = await networkPromise;
-      return res || new Response('Offline', { status: 503, statusText: 'Offline' });
-    })());
+  // HTML / app shell — NETWORK-FIRST (deploy dan keyin eski shell qolmasin)
+  const isNav = req.destination === 'document' || req.mode === 'navigate';
+  const isShell = path === '/' || path === '/index.html' || path === '/app.js' || path === '/app.css' || path === '/sw.js';
+  if (isNav || isShell) {
+    event.respondWith(_networkFirst(req, isNav ? ['/index.html', '/'] : []));
     return;
   }
 
-  // JS / CSS — cache-first (CACHE_VERSION o'zgaganda activate eski keshni tozalaydi)
-  // Ikkinchi ochilishda 0 KB shell uchun.
-  if (req.destination === 'script' || req.destination === 'style') {
-    event.respondWith(
-      caches.match(req).then(cached => {
-        if (cached) {
-          // fon revalidate (SWR)
-          fetch(req).then(res => {
-            if (res && res.ok) caches.open(STATIC_CACHE).then(c => c.put(req, res));
-          }).catch(() => {});
-          return cached;
-        }
-        return fetch(req).then(res => {
-          if (res && res.ok) {
-            const clone = res.clone();
-            caches.open(STATIC_CACHE).then(c => c.put(req, clone));
-          }
-          return res;
-        });
-      })
-    );
+  // JS / CSS (modules ham) — destination bo'sh bo'lsa ham path bo'yicha
+  const isCode = req.destination === 'script' || req.destination === 'style'
+    || path.endsWith('.js') || path.endsWith('.css') || path.endsWith('.mjs');
+  if (isCode) {
+    event.respondWith(_cacheFirstSWR(req));
     return;
   }
 
   // Rasm / font — cache-first
-  if (_isStaticAsset(req)) {
-    event.respondWith(
-      caches.match(req).then(cached => {
-        if (cached) return cached;
-        return fetch(req).then(res => {
-          if (res && res.ok) {
-            const clone = res.clone();
-            caches.open(STATIC_CACHE).then(c => c.put(req, clone));
-          }
-          return res;
-        });
-      })
-    );
+  if (_isStaticAsset(req) || /\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf)$/i.test(path)) {
+    event.respondWith(_cacheFirstSWR(req));
   }
 });

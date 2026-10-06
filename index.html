@@ -1315,8 +1315,15 @@ html[data-nf],html[data-nf] body{background:#000000}
         // statechange kuzatiladi lekin toast yo'q — keyingi F5 da chiqadi
         nw.addEventListener('statechange', function() {});
       });
-      // Davriy yangilanish tekshiruvi (1 soat) — toast yo'q, faqat SW yangilanadi
-      setInterval(function() { try { reg.update(); } catch (_) {} }, 3600000);
+      // Davriy yangilanish + tab qaytganda tekshiruv
+      setInterval(function() { try { reg.update(); } catch (_) {} }, 30 * 60 * 1000);
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+          try { reg.update(); } catch (_) {}
+        }
+      });
+      // waiting SW bo'lsa — jim qo'llash (keyingi navigatsiyada yangi shell)
+      if (reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {} }
     }).catch(function() {});
   }
 </script>
