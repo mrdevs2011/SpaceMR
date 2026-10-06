@@ -190,3 +190,81 @@
 /* Xavfsizlik eslatmasi: ochilganda bir qator ko'rinadi, 5 soniyadan keyin o'zi yo'qoladi */
 .apr-note { padding: 2px 10px; font-size: 10.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 20px; animation: apr-note-out .35s ease 5s forwards; }
 @keyframes apr-note-out { to { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; border-bottom-width: 0; } }
+
+/* ═══ Desktop markaz: kategoriya va ro'yxat sayqali ═══ */
+@media (min-width: 1200px) {
+  .aps:not(.apm) { padding: 0 4px 80px; }
+  .aps:not(.apm) .aps-head { position: sticky; top: 0; z-index: 5; gap: 10px; padding: 14px 0 10px; background: rgba(0, 0, 0, 0.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .aps:not(.apm) .aps-back { width: 38px; height: 38px; border: 1px solid #2f3336; }
+  .aps:not(.apm) .aps-title { font-size: 22px; letter-spacing: -0.4px; }
+  .aps:not(.apm) .aps-head-btns .aps-btn { height: 36px; padding: 0 16px; font-size: 14px; }
+  /* Kategoriya satri: slug chip + amal tugmalari */
+  .aps:not(.apm) .aps-catbar { margin: 0 0 16px; gap: 8px; }
+  .aps:not(.apm) .aps-catbar > span:first-child { padding: 4px 11px; border-radius: 999px; background: #16181c; border: 1px solid #2f3336; color: #a0a5aa; font-size: 12px; }
+  .aps:not(.apm) .aps-catbtns { gap: 6px; }
+  .aps:not(.apm) .aps-catbtns .aps-link { padding: 5px 12px; border-radius: 999px; background: rgba(29, 155, 240, 0.12); font-size: 12.5px; transition: background .15s; }
+  .aps:not(.apm) .aps-catbtns .aps-link:hover { background: rgba(29, 155, 240, 0.22); }
+  .aps:not(.apm) .aps-catbtns .aps-link.danger { background: rgba(244, 33, 46, 0.12); }
+  .aps:not(.apm) .aps-catbtns .aps-link.danger:hover { background: rgba(244, 33, 46, 0.22); }
+  /* Kartalar: 2 ustun, logo tepada-chapda, matn tartibli, slug yashirin (manzil tepada ko'rinib turadi) */
+  .aps:not(.apm) .aps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .aps:not(.apm) .apc { align-items: flex-start; gap: 14px; padding: 14px; border-radius: 18px; transition: background .15s, border-color .15s, transform .15s; }
+  .aps:not(.apm) .apc:hover { transform: translateY(-1px); background: #1c1f23; border-color: #3a3f43; }
+  .aps:not(.apm) .apc-logo { width: 56px; height: 56px; border-radius: 15px; box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.06); }
+  .aps:not(.apm) .apc-meta { gap: 3px; flex: 1; }
+  .aps:not(.apm) .apc-meta b { font-size: 15.5px; }
+  .aps:not(.apm) .apc-meta small { line-height: 1.35; }
+  .aps:not(.apm) .apc-slug { display: none; }
+  .aps:not(.apm) .apc-meta em { margin-top: 2px; }
+  .aps:not(.apm) .aps-sec { margin-bottom: 28px; }
+  .aps:not(.apm) .aps-empty { padding: 56px 16px; border: 1px dashed #2f3336; border-radius: 18px; }
+}
+
+/* ═══ Formalar (ilova / kategoriya): mobil = pastdan sheet, desktop = markazda modal ═══ */
+html[data-theme] .apf-ov { background: rgba(0, 0, 0, 0.78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+html[data-theme] .apf { max-width: 580px; gap: 14px; padding: 16px; border-color: #2f3336; border-radius: 20px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6); }
+/* Sticky sarlavha va amallar paneli (ichki scroll'da ham ko'rinib turadi) */
+html[data-theme] .apf-h { position: sticky; top: -16px; z-index: 3; margin: -16px -16px 0; padding: 14px 16px 10px; background: #000; border-bottom: 1px solid #16181c; border-radius: 20px 20px 0 0; font-size: 18px; }
+html[data-theme] .apf-x { width: 36px; height: 36px; border: 1px solid #2f3336; font-size: 14px; color: #e7e9ea; }
+html[data-theme] .apf-actions { position: sticky; bottom: -16px; z-index: 3; margin: 0 -16px -16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to top, #000 78%, rgba(0, 0, 0, 0)); }
+html[data-theme] .apf-actions .aps-btn { height: 40px; padding: 0 22px; font-size: 14px; }
+/* Maydonlar: global input reset'ni bosib o'tamiz — ramka, ichki bo'shliq, balandlik bir xil */
+html[data-theme] .apf-l { gap: 7px; font-size: 13px; font-weight: 700; color: #a0a5aa; }
+html[data-theme] .apf :is(input:not([type=file]):not([type=checkbox]), select, textarea) { box-sizing: border-box !important; width: 100%; min-height: 44px; padding: 0 14px !important; border: 1px solid #2f3336 !important; border-radius: 12px !important; background: #000 !important; color: #e7e9ea !important; font-size: 15px !important; font-weight: 400; box-shadow: none !important; outline: none; transition: border-color .15s; }
+html[data-theme] .apf :is(input, select, textarea):focus { border-color: #1d9bf0 !important; }
+html[data-theme] .apf ::placeholder { color: #536471; opacity: 1; }
+/* Slug: prefiks maydon ichida */
+html[data-theme] .apf-slug { display: flex; align-items: center; gap: 0; border: 1px solid #2f3336; border-radius: 12px; background: #000; transition: border-color .15s; }
+html[data-theme] .apf-slug:focus-within { border-color: #1d9bf0; }
+html[data-theme] .apf-slug i { padding-left: 14px; font-size: 14px; font-weight: 600; color: #536471; }
+html[data-theme] .apf .apf-slug input { border: 0 !important; background: transparent !important; padding-left: 2px !important; min-height: 42px; }
+html[data-theme] .apf .apf-slug input[readonly] { opacity: .55; }
+html[data-theme] .apf-hint { font-size: 12px; font-weight: 400; }
+/* Kategoriya + "+ Yangi" */
+html[data-theme] .apf-row { gap: 10px; }
+html[data-theme] .apf-row select { flex: 1; min-width: 0; appearance: none; -webkit-appearance: none; padding-right: 36px !important; background: #000 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371767b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center !important; }
+html[data-theme] .apf-row .aps-link { padding: 0 12px; height: 34px; border-radius: 999px; background: rgba(29, 155, 240, 0.12); font-size: 13px; white-space: nowrap; }
+/* Logo: katta ko'rinish + chiroyli fayl tugmasi */
+html[data-theme] .apf-logo { width: 64px; height: 64px; border-radius: 16px; border-color: #2f3336; background: #16181c; }
+html[data-theme] .apf input[type=file] { flex: 1; min-width: 0; font-size: 13px; color: #a0a5aa; }
+html[data-theme] .apf input[type=file]::file-selector-button { margin-right: 10px; height: 34px; padding: 0 14px; border: 1px solid #2f3336; border-radius: 999px; background: #16181c; color: #e7e9ea; font: 600 13px/1 inherit; cursor: pointer; }
+html[data-theme] .apf input[type=file]::file-selector-button:hover { background: #1c1f23; }
+html[data-theme] .apf-row .aps-link.danger { background: rgba(244, 33, 46, 0.12); }
+/* HTML kod maydoni */
+html[data-theme] .apf textarea { min-height: 240px; padding: 12px 14px !important; font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; border-radius: 14px !important; }
+html[data-theme] .apf-hint.bad:empty { display: none; }
+/* Desktop: markazdagi modal */
+@media (min-width: 700px) {
+  html[data-theme] .apf { max-height: 90dvh; }
+}
+/* Mobil: pastdan chiquvchi sheet */
+@media (max-width: 699px) {
+  html[data-theme] .apf-ov { align-items: flex-end; padding: 0; }
+  html[data-theme] .apf { max-width: none; max-height: 94dvh; border-width: 1px 0 0; border-radius: 22px 22px 0 0; padding: 16px 16px 0; }
+  html[data-theme] .apf-h { top: -16px; margin: -16px -16px 0; padding-top: 16px; border-radius: 22px 22px 0 0; }
+  html[data-theme] .apf-h::before { content: ""; position: absolute; top: 6px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 4px; background: #2f3336; }
+  html[data-theme] .apf-actions { bottom: 0; margin: 0 -16px; }
+  html[data-theme] .apf-actions .aps-btn { flex: 1; height: 44px; justify-content: center; }
+  html[data-theme] .apf textarea { min-height: 180px; }
+  html[data-theme] .apf :is(input:not([type=file]), select, textarea) { font-size: 16px !important; }
+}

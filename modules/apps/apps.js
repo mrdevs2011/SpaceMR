@@ -21,7 +21,7 @@ let bound = false, query = '';
 let runner = null, runnerId = '';   // { destroy, reload }, ishga tushgan ilova id si
 
 const isAdmin = () => !!state.me?.isAdmin;
-const canEdit = ownerId => !!state.me && (ownerId === state.me.uid || isAdmin());
+const canEdit = ownerId => !!state.me && (ownerId === state.me.uid || isAdmin());   // yaratgan odam yoki admin
 const ownerName = id => (owners.get(id) || {}).username || '';
 const catById = id => cats.find(c => c.id === id);
 const ico = (p, s = 20) => `<img src="./svg/${p}.svg" alt="" class="icon" width="${s}" height="${s}">`;
