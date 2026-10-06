@@ -1265,7 +1265,8 @@ html[data-nf],html[data-nf] body{background:#000000}
 
 <script>
   /* Service Worker — push + shell cache + yangilanish toasti */
-  if ('serviceWorker' in navigator) {
+  try { if (location.search && /(?:^|[?&])_full=/.test(location.search)) { var _u = new URL(location.href); _u.searchParams.delete('_full'); var _q = _u.searchParams.toString(); history.replaceState(null, '', _u.pathname + (_q ? '?' + _q : '') + _u.hash); } } catch (_e) {}
+    if ('serviceWorker' in navigator) {
     var _swRefreshing = false;
     function _promptUpdate(worker) {
       /* Yangilanish toast emas: qolib ketmasin. Kutayotgan versiya jim qo'llanadi. */
@@ -1285,6 +1286,14 @@ html[data-nf],html[data-nf] body{background:#000000}
     }
     navigator.serviceWorker.addEventListener('controllerchange', function() {
       if (_swRefreshing) return;
+      // Full reload / force-reload dan keyin qo'shimcha refresh bo'lmasin
+      try {
+        if (sessionStorage.getItem('spacemr_skip_sw_reload') === '1') {
+          sessionStorage.removeItem('spacemr_skip_sw_reload');
+          return;
+        }
+        if (sessionStorage.getItem('spacemr_force_reload_busy') === '1') return;
+      } catch (_) {}
       _swRefreshing = true;
       location.reload();
     });

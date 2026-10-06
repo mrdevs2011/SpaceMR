@@ -11,12 +11,15 @@ const BUSY_KEY = 'spacemr_force_reload_busy';
 let _started = false;
 let _ch = null;
 
-/** Settings / admin bilan bir xil: SW + cache tozalash + hard navigate */
+/** Settings / admin bilan bir xil: SW + cache tozalash + hard navigate.
+ *  URL ga ?_full= QO'SHILMAYDI — sessionStorage flag + toza `/`. */
 export async function executeHardFullReload() {
   // Loop oldini olish (bir marta)
   try {
     if (sessionStorage.getItem(BUSY_KEY) === '1') return;
     sessionStorage.setItem(BUSY_KEY, '1');
+    // SW controllerchange → location.reload ni bloklash (shu sessiya)
+    sessionStorage.setItem('spacemr_skip_sw_reload', '1');
   } catch (_) {}
 
   try {
@@ -40,11 +43,11 @@ export async function executeHardFullReload() {
     console.warn('[force-reload]', e);
   }
 
-  // Butun ilova root dan — joriy /profile va boshqa path da qolmasin
+  // Toza root — query paramsiz
   try {
-    location.replace('/?_full=' + String(Date.now()));
+    location.replace('/');
   } catch (_) {
-    location.href = '/?_full=' + String(Date.now());
+    location.href = '/';
   }
 }
 
@@ -68,8 +71,20 @@ export function applyForceVersion(version) {
 
 /** Boot: offline userlar uchun */
 export async function checkForceReloadOnBoot() {
+  // URL dagi eski ?_full= ni jim tozalash (reload qilmasdan)
   try {
-    sessionStorage.removeItem(BUSY_KEY);
+    if (location.search && /(?:^|[?&])_full=/.test(location.search)) {
+      const u = new URL(location.href);
+      u.searchParams.delete('_full');
+      const q = u.searchParams.toString();
+      history.replaceState(null, '', u.pathname + (q ? '?' + q : '') + u.hash);
+    }
+  } catch (_) {}
+  // BUSY ni darhol olib tashlamaymiz — SW controllerchange qo'shimcha reload qilmasin
+  try {
+    setTimeout(() => {
+      try { sessionStorage.removeItem(BUSY_KEY); } catch (_) {}
+    }, 2500);
   } catch (_) {}
   try {
     const { data, error } = await sb
