@@ -434,7 +434,7 @@ if (!window.__chatCallBound) {
   }, true);
 }
 
-export function generateTextBubble({ m, postShare, gif, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass }) {
+export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass }) {
   let bubbleClassExtra = '';
   let bubbleContent = '';
   let emoCls = '';
@@ -442,15 +442,27 @@ export function generateTextBubble({ m, postShare, gif, renderChatPostCard, wrap
   if (postShare) {
     bubbleClassExtra = ' bubble-post-card';
     bubbleContent = renderChatPostCard(postShare);
-  } else if (gif) {
-    const ar = gif.w && gif.h ? ` style="aspect-ratio:${gif.w}/${gif.h}"` : '';
-    bubbleClassExtra = ' bubble-gif';
-    bubbleContent = `<img class="chat-gif" src="${esc(gif.u)}" alt="GIF" loading="lazy" decoding="async" draggable="false"${ar}>`;
   } else {
     emoCls = emojiOnlyClass(m.text);   // 1–3 ta emoji (bubblesiz) bo'lsa — 3D rasm, aks holda 2D
     bubbleContent = `<div class="chat-bubble-text">${wrapEmojiNoSelect(renderMarkdown(m.text || ''), emoCls ? '3d' : '2d')}</div>`;
   }
   return { bubbleClassExtra, bubbleContent, emoCls };
+}
+
+/** GIF xabar — rasm (media) pufagi bilan bir xil: fonsiz, vaqt rasm ustida (cfm-media-badge). dm=true: yupqa border. */
+export function generateGifBubble({ gif, m, time, mine, renderTicks, dm = false }) {
+  const ar = gif.w && gif.h ? ` style="aspect-ratio:${gif.w}/${gif.h}"` : '';
+  return {
+    bubbleClassExtra: dm ? ' bubble-media-only bubble-media-dm' : ' bubble-media-only',
+    metaOutside: false,
+    bubbleContent: `<div class="cfm-media-wrap cfm-media-wrap--standalone${dm ? ' cfm-media-dm' : ''}">
+        <img class="cfm-img-preview chat-gif" src="${esc(gif.u)}" alt="GIF" loading="lazy" decoding="async" draggable="false"${ar}>
+        <span class="chat-msg-meta cfm-media-badge">
+          ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
+          ${mine ? renderTicks(m.status) : ''}
+        </span>
+      </div>`,
+  };
 }
 
 /** Outer bubble shell — DM va guruh uchun bir xil */

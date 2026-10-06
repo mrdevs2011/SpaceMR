@@ -93,6 +93,7 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
   function setMode(m) {
     if (!gifPanel) m = 'emoji';
     mode = m;
+    pop.classList.toggle('ep-gif', m === 'gif');   // GIF bo'limida panel 2x baland (CSS height transition — silliq)
     try { localStorage.setItem('spacemr_picker_mode', m); } catch {}
     pop.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
     pop.querySelector('.ep-view-gif').hidden = m !== 'gif';
@@ -231,7 +232,17 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
      Tugmani bosish yoki panel ichini bosish panelni "qotiradi" (tashqariga bosilgunча / Esc gacha ochiq turadi). */
   const canHover = () => !isMobile() && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   let pinned = false, hoverT = null, leaveT = null;
+  /* Panel suhbat oynasining BUTUN eni bo'ylab (chetdan chetgacha): input qatori torroq bo'lgani uchun uning ichidan chap/o'ng ofset hisoblanadi */
+  function fitWidth() {
+    const host = pop.offsetParent, modal = pop.closest('#chatThreadModal');
+    if (!host || !modal) return;
+    const h = host.getBoundingClientRect(), m = modal.getBoundingClientRect();
+    pop.style.left = (m.left - h.left) + 'px';
+    pop.style.right = (h.right - m.right) + 'px';
+  }
+  window.addEventListener('resize', () => { if (pop.classList.contains('show')) fitWidth(); });
   async function openPanel(focus) {
+    fitWidth();
     pop.classList.add('show');
     await build(); recent = loadRecent(); if (built && body) paintRecent();
     if (focus) dock(true);

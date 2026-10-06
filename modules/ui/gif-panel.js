@@ -9,21 +9,21 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 export function createGifPanel(root, onPick) {
   root.innerHTML = `
     <div class="gp-search"><input type="text" class="gp-search-inp" placeholder="GIF qidirish" autocomplete="off" spellcheck="false"></div>
-    <div class="gp-body"><div class="gp-cols"><div class="gp-col"></div><div class="gp-col"></div></div><div class="gp-msg" hidden></div></div>`;
+    <div class="gp-body"><div class="gp-cols"><div class="gp-col"></div><div class="gp-col"></div><div class="gp-col"></div></div><div class="gp-msg" hidden></div></div>`;
   const inp = root.querySelector('.gp-search-inp');
   const body = root.querySelector('.gp-body');
   const cols = [...root.querySelectorAll('.gp-col')];
   const msg = root.querySelector('.gp-msg');
   const items = new Map();
-  let q = '', page = 1, next = 1, busy = false, loaded = false, seq = 0, timer = null, heights = [0, 0];
+  let q = '', page = 1, next = 1, busy = false, loaded = false, seq = 0, timer = null, heights = [0, 0, 0];
 
   const say = t => { msg.textContent = t || ''; msg.hidden = !t; };
-  function reset() { cols.forEach(c => { c.innerHTML = ''; }); heights = [0, 0]; items.clear(); next = 1; page = 1; body.scrollTop = 0; say(''); }
+  function reset() { cols.forEach(c => { c.innerHTML = ''; }); heights = [0, 0, 0]; items.clear(); next = 1; page = 1; body.scrollTop = 0; say(''); }
   function add(list) {
     for (const g of list) {
       if (items.has(g.id)) continue;
       items.set(g.id, g);
-      const i = heights[0] <= heights[1] ? 0 : 1;   // qisqaroq ustunga
+      const i = heights.indexOf(Math.min(...heights));   // eng qisqa ustunga
       heights[i] += (g.sm.h || 1) / (g.sm.w || 1);
       cols[i].insertAdjacentHTML('beforeend',
         `<button type="button" class="gp-item" data-id="${esc(g.id)}" title="${esc(g.t)}" style="aspect-ratio:${g.sm.w || 1}/${g.sm.h || 1}"><img src="${esc(g.sm.u)}" alt="" loading="lazy" decoding="async"></button>`);

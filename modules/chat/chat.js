@@ -619,7 +619,7 @@ import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
-import { generateVoiceBubble, generateFileBubble, generateTextBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
+import { generateVoiceBubble, generateFileBubble, generateTextBubble, generateGifBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
 import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
@@ -1776,7 +1776,7 @@ function _bindPinTracking(box) {
   if (box._pinBound) return;
   box._pinBound = true;
   box.addEventListener('scroll', () => {
-    chatState._pinned = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+    chatState._pinned = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
   }, { passive: true });
 }
 window._chatImgLoaded = function (img) {
@@ -1945,7 +1945,7 @@ export function paintMessages(msgs, grp = null) {
   const prevCount = box.querySelectorAll('.chat-msg').length;
   // Foydalanuvchi pastda (eng oxirgi xabarlarda) turganini tekshiramiz
   // threshold: pastdan 120px uzoqda bo'lsa "pastda" hisoblanadi
-  const isAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  const isAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
   const isInitialLoad = prevCount === 0;
   _bindPinTracking(box);
   const _baseline = !chatState._seenBaselineDone;   // shu chatning birinchi chizilishi — animatsiyasiz
@@ -1955,6 +1955,7 @@ export function paintMessages(msgs, grp = null) {
   // Yuqorida turgan bo'lsak: ko'rinib turgan birinchi xabarni "langar" qilib eslab qolamiz,
   // qayta chizilgach shu xabarni oldingi joyiga qaytaramiz (sakrash bo'lmasin)
   const _anchor = (!isAtBottom && !isInitialLoad) ? _captureMsgAnchor(box) : null;
+  let _anyNewMsg = false;  // shu chizishda yangi (ilgari chizilmagan) xabar — kelgan yoki o'zimniki — paydo bo'ldimi
   let _myNewMsg = false;   // shu chizishda MENING yangi (ilgari chizilmagan) xabarim paydo bo'ldimi
   const _parts = msgs.map((m, idx) => {
     const mine = m.senderId === state.me?.uid;
@@ -2003,10 +2004,12 @@ export function paintMessages(msgs, grp = null) {
       } else {
         const postShare = parsePostShare(m.text);
         const gif = postShare ? null : parseGif(m.text);
-        const bData = generateTextBubble({ m, postShare, gif, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
+        const bData = gif
+          ? generateGifBubble({ gif, m, time, mine, renderTicks, dm: !grp })
+          : generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
         bubbleClassExtra = bData.bubbleClassExtra;
         bubbleContent = bData.bubbleContent;
-        emoCls = bData.emoCls;
+        if (gif) metaOutside = false; else emoCls = bData.emoCls;
       }
     }
 
@@ -2019,7 +2022,7 @@ export function paintMessages(msgs, grp = null) {
       if (!chatState._seenMsgIds.has(m.id)) {
         chatState._seenMsgIds.add(m.id);
         // yangi xabar (kelgan ham, o'zimniki ham; id bir xil bo'lgani uchun optimistik->server almashinuvda qayta o'ynamaydi)
-        if (!_baseline && _isFreshMsg(m)) { chatState._msgAnimStart.set(m.id, _nowT); isNew = true; if (mine) _myNewMsg = true; }
+        if (!_baseline && _isFreshMsg(m)) { chatState._msgAnimStart.set(m.id, _nowT); isNew = true; _anyNewMsg = true; if (mine) _myNewMsg = true; }
       } else {
         // animatsiya payti repaint bo'lsa (status/tick) — to'xtab qolmasin, qolgan joyidan davom etsin
         const _t0 = chatState._msgAnimStart.get(m.id);
@@ -2079,9 +2082,16 @@ export function paintMessages(msgs, grp = null) {
   const hasMyNew = _myNewMsg;
   if (isAtBottom || isInitialLoad || hasMyNew) {
     chatState._pinned = true;
-    box.scrollTop = box.scrollHeight;
-    // Bitta rAF — layout keyin; ikkinchi setTimeout sakrash berardi
-    requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+    if (!isInitialLoad && _anyNewMsg) {
+      // Pastda turgan bo'lsak: yangi xabar kelganda eng oxirgisigacha SILLIQ skroll (DM va guruhda bir xil)
+      box._smoothUntil = Date.now() + 700;
+      box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+      requestAnimationFrame(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }));
+    } else {
+      box.scrollTop = box.scrollHeight;
+      // Bitta rAF — layout keyin; ikkinchi setTimeout sakrash berardi
+      requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+    }
   }
 
   // "theirs" xabarlaridagi avatar bosilganda profil ochamiz
