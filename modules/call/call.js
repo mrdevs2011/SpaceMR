@@ -684,7 +684,7 @@ function _createPC() {
 
     if (track.kind === 'video') {
       const rv = document.getElementById('callRemoteVideo');
-      if (rv) rv.srcObject = stream;
+      if (rv) { rv.srcObject = stream; setTimeout(() => _applySpeaker(_speakerOn), 300); }
 
       // Qarshi tomon video trackni enabled=false qilib qo'ysa (kamerani
       // o'chirsa), bu tomonda WebRTC spetsifikatsiyasiga ko'ra shu
@@ -1333,54 +1333,53 @@ document.getElementById('callSwitchCamBtn')?.addEventListener('click', _switchCa
 /* ── Speaker (earpiece ↔ dinamik) toggle ── */
 // _speakerOn = false → earpiece (quloqqa tutilsa eshitiladi, default)
 // _speakerOn = true  → dinamik (baland ovoz)
+// Yo'naltirish faqat setSinkId + alohida "speaker"/"earpiece" chiqish qurilmalari bo'lsa ishlaydi (Android Chrome).
+// iOS Safari / desktop'da bunday qurilma yo'q — tugma yashiriladi (ishlamaydigan tugma ko'rsatilmaydi).
 let _speakerOn = false;
+let _routes = null;   // { speaker, earpiece } | null — null: yo'naltirib bo'lmaydi
+
+const _sinkEls = () => ['callRemoteAudio', 'callRemoteVideo'].map(id => document.getElementById(id)).filter(Boolean);
+
+async function _probeAudioRoutes() {
+  let routes = null;
+  try {
+    const ra = document.getElementById('callRemoteAudio');
+    if (ra && typeof ra.setSinkId === 'function') {
+      const outs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audiooutput');
+      const speaker  = outs.find(d => /speaker/i.test(d.label));
+      const earpiece = outs.find(d => /earpiece|receiver/i.test(d.label));
+      if (speaker && earpiece && speaker.deviceId !== earpiece.deviceId) routes = { speaker: speaker.deviceId, earpiece: earpiece.deviceId };
+    }
+  } catch (_) {}
+  _routes = routes;
+  document.documentElement.classList.toggle('no-speaker-route', !routes);
+  return routes;
+}
 
 async function _applySpeaker(on) {
-  const ra = document.getElementById('callRemoteAudio');
-  if (!ra) return;
-
-  // setSinkId — Chrome/Edge Android da earpiece vs speaker
-  if (typeof ra.setSinkId === 'function') {
-    try {
-      if (on) {
-        // Barcha audio qurilmalarini olish va 'speaker' ni topish
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const speaker = devices.find(d =>
-          d.kind === 'audiooutput' &&
-          (d.label.toLowerCase().includes('speaker') ||
-           d.label.toLowerCase().includes('loud') ||
-           d.deviceId === 'speaker')
-        );
-        await ra.setSinkId(speaker?.deviceId || 'default');
-      } else {
-        // Earpiece — 'communications' device yoki bo'sh string
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const earpiece = devices.find(d =>
-          d.kind === 'audiooutput' &&
-          (d.label.toLowerCase().includes('earpiece') ||
-           d.label.toLowerCase().includes('ear') ||
-           d.deviceId === 'communications')
-        );
-        await ra.setSinkId(earpiece?.deviceId || 'communications');
-      }
-    } catch (err) {
-      console.warn('[Call] setSinkId failed:', err.message);
-      // Fallback: volume orqali farqlash
-      ra.volume = on ? 1.0 : 0.3;
-    }
-  } else {
-    // setSinkId qo'llab-quvvatlanmasa — volume bilan farqlaymiz
-    ra.volume = on ? 1.0 : 0.3;
-  }
+  const routes = _routes || await _probeAudioRoutes();
+  if (!routes) return;
+  const id = on ? routes.speaker : routes.earpiece;
+  await Promise.all(_sinkEls().map(el => el.setSinkId(id).catch(err => console.warn('[Call] setSinkId failed:', err.message))));
 }
+
+navigator.mediaDevices?.addEventListener?.('devicechange', () => { _probeAudioRoutes().then(() => _applySpeaker(_speakerOn)); });
 
 document.getElementById('callSpeakerBtn')?.addEventListener('click', async function () {
   _speakerOn = !_speakerOn;
-  await _applySpeaker(_speakerOn);
-  // muted emas — speaker off = earpiece (baribir eshitiladi, faqat past)
   this.classList.toggle('active', _speakerOn);
   this.title = _speakerOn ? 'Dinamik (yoqiq)' : 'Quloqcha rejimi';
+  await _applySpeaker(_speakerOn);
 });
+
+/* ── Kamera bor-yo'qligi: qurilmada videoinput bo'lmasa Video/Kamera tugmalari butunlay yashirinadi (CSS: .no-camera) ── */
+async function _probeCamera() {
+  let has = true;
+  try { has = (await navigator.mediaDevices.enumerateDevices()).some(d => d.kind === 'videoinput'); } catch (_) {}
+  document.documentElement.classList.toggle('no-camera', !has);
+}
+_probeCamera();
+navigator.mediaDevices?.addEventListener?.('devicechange', _probeCamera);
 
 // Qo'ng'iroq boshlanganida default = earpiece (past, quloqqa tutilsa eshitiladi)
 export function _resetSpeaker() {

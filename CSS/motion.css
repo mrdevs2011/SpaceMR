@@ -61,7 +61,7 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
    ═══════════════════════════════════════════════════════════════════════ */
 #incomingCallModal,
 #callActiveModal {
-  background: linear-gradient(165deg, #3a6df0 0%, #5b4fd6 48%, #2a2f6b 100%);
+  background: #000;
   overflow: hidden;
   isolation: isolate;
   color: #fff;
@@ -76,7 +76,7 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 #incomingCallModal.has-bg::before,
 #callActiveModal.has-bg::before {
   background-image: var(--call-bg);
-  filter: blur(48px) saturate(1.5) brightness(.55);
+  filter: blur(48px) saturate(1) brightness(.22);
 }
 #incomingCallModal::after,
 #callActiveModal::after {
@@ -142,13 +142,24 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 #callEndCol     { order: 4; }
 #callActiveModal .call-ctrl-btn {
   width: 64px; height: 64px;
-  background: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.14);
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   color: #fff;
 }
 #callActiveModal .call-ctrl-btn:hover { background: rgba(255,255,255,.26); }
-#callActiveModal .call-ctrl-btn.muted { background: #fff; color: #000; }
-#callActiveModal .call-ctrl-btn.active { background: rgba(255,255,255,.3); color: #fff; }
+#callActiveModal .call-ctrl-btn.muted,
+#callActiveModal .call-ctrl-btn.active { background: #fff; color: #000; }
+/* Ikonkalar <img> (oq SVG) — oq fonda ko'rinishi uchun qora qilinadi */
+#callActiveModal .call-ctrl-btn.muted img.icon,
+#callActiveModal .call-ctrl-btn.active img.icon { filter: brightness(0); }
+#callActiveModal .call-ctrl-btn.end-btn.active { background: #ff3b30; }
+/* Mikrofon o'chiq: ikonka ustidan chiziq */
+#callMicBtn { position: relative; }
+#callMicBtn.muted::after { content: ''; position: absolute; left: 50%; top: 50%; width: 28px; height: 2px; border-radius: 2px; background: #000; transform: translate(-50%, -50%) rotate(-45deg); }
+/* Qurilmada kamera yo'q — Video va Kamera almashtirish tugmalari umuman yo'q */
+.no-camera #callCamCol, .no-camera #callSwitchCol { display: none !important; }
+/* Karnay yo'naltirib bo'lmaydigan qurilma (iOS/desktop) — tugma yo'q */
+.no-speaker-route #callSpeakerCol { display: none !important; }
 #callActiveModal .call-ctrl-btn.end-btn { width: 64px; height: 64px; background: #ff3b30; box-shadow: 0 6px 20px rgba(255,59,48,.45); }
 #callActiveModal.video-mode .call-ctrl-btn { width: 44px; height: 44px; }
 #callActiveModal.video-mode .call-ctrl-btn.end-btn { width: 50px; height: 50px; }
