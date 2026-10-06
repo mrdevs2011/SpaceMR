@@ -817,7 +817,14 @@ function _disableLocalVideo() {
 }
 
 /* ── Qo'ng'iroq boshlash (caller) ── */
+let _dialing = false;
 async function initiateCall(isVideo) {
+  if (_dialing) return;           // tez-tez bosish — bitta chaqiruv
+  _dialing = true;
+  try { await _initiateCallImpl(isVideo); } finally { _dialing = false; }
+}
+
+async function _initiateCallImpl(isVideo) {
   const uid = state.currentChatUid;
   if (!uid || !state.me) return;
   // Ikki marta bosish / parallel tab — bitta faol qo'ng'iroq
@@ -825,12 +832,6 @@ async function initiateCall(isVideo) {
     toast("Allaqachon qo'ng'iroqdasiz", 'error');
     return;
   }
-
-  // O'zining eski 'ringing' ghostlarini yop (boshqa tab/PWA qoldirgan)
-  try {
-    await sb.from('calls').update({ status: 'ended' })
-      .eq('caller_id', state.me.uid).eq('status', 'ringing');
-  } catch (_) {}
 
   _callIsVideo = isVideo;
   _isCaller    = true;
@@ -843,14 +844,36 @@ async function initiateCall(isVideo) {
   const spBtn = document.getElementById('callSpeakerBtn');
   if (spBtn) { spBtn.classList.remove('active'); spBtn.title = 'Dinamik (ovoz)'; }
 
-  try {
-    _localStream = await navigator.mediaDevices.getUserMedia(
-      isVideo ? { audio: true, video: { facingMode: _facingMode } } : { audio: true }
-    );
-  } catch (err) {
-    toast('Mikrofon/kameraga ruxsat yo\'q: ' + err.message, 'error');
+  // 1) Mikrofon so'rovi user gesture ICHIDA, hech narsani kutmasdan boshlanadi (mobil brauzerlar uchun ham shart)
+  const micP = navigator.mediaDevices.getUserMedia(
+    isVideo ? { audio: true, video: { facingMode: _facingMode } } : { audio: true }
+  ).then(stream => ({ stream }), err => ({ err }));
+
+  // 2) Qo'ng'iroq oynasi SHU ZAHOTI (0ms): ism/avatar chat sarlavhasidan, aniqi orqa fonda keladi
+  const hdrName = document.getElementById('chatThreadName')?.textContent || 'Foydalanuvchi';
+  const hdrAvi  = document.querySelector('#chatThreadAvi img')?.getAttribute('src') || '';
+  _showActiveCallModal(hdrName, hdrAvi, isVideo);
+  _userInfo(uid).then(d => {
+    if (!d || _callPeerUid !== uid) return;
+    const nameEl = document.getElementById('callActiveName');
+    const aviEl  = document.getElementById('callActiveAvi');
+    const nm = d.fullName || hdrName;
+    if (nameEl) nameEl.textContent = nm;
+    if (aviEl)  aviEl.innerHTML = _avatarHTML(nm, d.avatar || hdrAvi);
+  }).catch(e => console.warn('[call]', e?.message || e));
+
+  // 3) O'zining eski 'ringing' ghostlarini yopish — parallel; yangi yozuvdan OLDIN tugashi kutiladi
+  const ghostP = Promise.resolve(
+    sb.from('calls').update({ status: 'ended' }).eq('caller_id', state.me.uid).eq('status', 'ringing')
+  ).then(() => {}, () => {});
+
+  const mic = await micP;
+  if (mic.err) {
+    toast('Mikrofon/kameraga ruxsat yo\'q: ' + mic.err.message, 'error');
+    _hideActiveCallModal();
     return;
   }
+  _localStream = mic.stream;
 
   // Local video preview
   if (isVideo) {
@@ -858,16 +881,6 @@ async function initiateCall(isVideo) {
     if (lv) lv.srcObject = _localStream;
   }
 
-  // Qabul qiluvchi ma'lumotlari
-  let otherName = document.getElementById('chatThreadName')?.textContent || 'Foydalanuvchi';
-  let otherAvi  = '';
-  try {
-    const d = await _userInfo(uid);
-    otherName = d.fullName || otherName;
-    otherAvi  = d.avatar   || '';
-  } catch (e) { console.warn('[call]', e?.message || e); }
-
-  _showActiveCallModal(otherName, otherAvi, isVideo);
   _playRingback();
 
   // PC yaratish va track qo'shish
@@ -880,6 +893,7 @@ async function initiateCall(isVideo) {
 
   // Supabase'da call yozuvi. id ni client beradi (insert...select RLS'dan o'tmasligi mumkin).
   const callId = crypto.randomUUID();
+  await ghostP;
   const { error: insErr } = await sb.from('calls').insert({
     id: callId,
     caller_id: state.me.uid,
