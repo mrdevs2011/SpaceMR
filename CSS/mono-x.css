@@ -26,8 +26,8 @@ body { font-family: var(--font); -webkit-font-smoothing: antialiased; }
 .btn-ghost:hover { background: var(--bg4); }
 .btn-danger:hover { background: var(--bg4); }
 /* 3. Maydonlar */
-.field, input:not([type="checkbox"]):not([type="radio"]), textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; }
-.field:focus, input:focus, textarea:focus { background: var(--bg); border-color: var(--link); box-shadow: none; border-radius: 12px; }
+.field, input:not([type="checkbox"]):not([type="radio"]), textarea { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
+.field:focus, input:focus, textarea:focus { background: var(--bg); border-color: var(--link); box-shadow: none; border-radius: var(--radius); }
 /* 4. Post: kartasiz qator + ingichka ajratgich (X uslubi) */
 .post, [data-theme="dark"] .post { background: transparent; border: none; border-bottom: 1px solid var(--line); border-radius: 0; }
 .post:hover { border-color: var(--line); }
@@ -43,11 +43,11 @@ body { font-family: var(--font); -webkit-font-smoothing: antialiased; }
 nav.bot-nav #createBtn.nav-center-btn { color: var(--bg); }
 nav.bot-nav .nav-btn:hover, nav.bot-nav .sb-account:hover { background: var(--bg4); }
 /* 6. Sheet / oynalar: yumshoq burchak, kuchli soya yo'q */
-.composer-sheet, .sheet, .modal-content { border-radius: 16px; background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
+.composer-sheet, .sheet, .modal-content { border-radius: var(--radius); background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
 /* 7. Scrollbar: deyarli ko'rinmas */
 * { scrollbar-width: thin; scrollbar-color: var(--bg5) transparent; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: var(--radius); }
 ::-webkit-scrollbar-track { background: transparent; }
 /* 8. Fokus halqasi: klaviatura uchun tinch ko'k */
 :focus-visible { outline: none; }
@@ -217,7 +217,7 @@ a { color: var(--link); }
   color: var(--text3);
   cursor: pointer;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -251,7 +251,7 @@ a { color: var(--link); }
   margin: 0 0 10px;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: #000000;
   position: relative;
@@ -358,7 +358,7 @@ nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg , nav
 /* Pastki nav (mobil + planshet): tugmalar 48x48 kvadrat + 24px radius = aniq doira (new post kabi) */
 @media (max-width: 1099px) {
   nav.bot-nav { box-sizing: border-box; gap: 0; }
-  nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { flex: 0 0 auto; width: 48px; height: 48px; min-height: 48px; border-radius: 24px; }
+  nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { flex: 0 0 auto; width: 48px; height: 48px; min-height: 48px; border-radius: var(--radius); }
   nav.bot-nav .nav-btn:hover, nav.bot-nav .nav-btn:active { background: var(--bg4); }
 }
 @media (max-width: 1099px) {
@@ -448,11 +448,11 @@ nav.bot-nav #createBtn.nav-center-btn:hover { background: var(--x-blue-hover); }
 #chatThreadModal .chat-thread-messages { background-image: none; }
 /* Chat pastki input: dark sahifaga mos — qator sahifa bilan bir xil qora, input esa yumshoq pill */
 #chatThreadModal .chat-thread-input-row, #chatThreadModal .chat-reply-bar { background: var(--c-bg-chat); border-top: 1px solid var(--c-divider); }
-#chatThreadModal .chat-thread-input { background: var(--bg3); border-radius: 22px; padding: 9px 16px; }
+#chatThreadModal .chat-thread-input { background: var(--bg3); border-radius: var(--radius); padding: 9px 16px; }
 #chatThreadModal .chat-thread-input:focus { background: var(--bg3); }
 #chatThreadModal .chat-bubble { font-size: 15px; line-height: 1.33; }
-#chatThreadModal .chat-msg.mine .chat-bubble { background: var(--bubble-mine); color: var(--pal-white); border-radius: 22px 22px 4px 22px; }
-#chatThreadModal .chat-msg.theirs .chat-bubble { background: var(--line); color: var(--text); border-radius: 22px 22px 22px 4px; }
+#chatThreadModal .chat-msg.mine .chat-bubble { background: var(--bubble-mine); color: var(--pal-white); border-radius: var(--radius) var(--radius) var(--radius) var(--radius); }
+#chatThreadModal .chat-msg.theirs .chat-bubble { background: var(--line); color: var(--text); border-radius: var(--radius) var(--radius) var(--radius) var(--radius); }
 #chatThreadModal .chat-msg.mine .chat-bubble a { color: var(--pal-white); text-decoration: underline; }
 #chatThreadModal .chat-msg.mine .cvm-play { background: var(--pal-white-25); }
 /* ═══════════════════════════════════════════════════════════════════════ X 1:1 — tuzatish (haqiqiy X bilan s... */
@@ -512,7 +512,7 @@ nav.bot-nav #createBtn.nav-center-btn *,
   overflow-y: auto;
   background: var(--bg);
   border: none;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 var(--radius) var(--radius);
   box-shadow: var(--pal-slate-20) 0 0 15px, rgba(113, 118, 123, 0.1) 0 0 3px 1px;
 }
 [data-theme] .search-suggestion-item { padding: 12px 16px; gap: 12px; border-radius: 0; }
@@ -587,7 +587,7 @@ nav.bot-nav #createBtn.nav-center-btn *,
   overflow-y: auto;
   background: var(--bg);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: rgba(113, 118, 123, 0.2) 0 0 15px, var(--pal-slate-20) 0 0 3px 1px;
 }
 /* Tarkib */
@@ -630,7 +630,7 @@ nav.bot-nav #createBtn.nav-center-btn *,
   display: block;
   width: 100%;
   box-sizing: border-box;
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 13px 16px;
   margin-bottom: 10px;
   font-size: 15px;
@@ -693,7 +693,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     z-index: 40;
     background: #000000;
     border: 1px solid var(--line, #2f3336);
-    border-radius: 16px;
+    border-radius: var(--radius);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     scrollbar-width: thin;
   }
@@ -727,10 +727,10 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     overflow-x: hidden;
     background: #000000;
     border: 1px solid var(--line, #2f3336);
-    border-radius: 16px;
+    border-radius: var(--radius);
     z-index: 40;
   }
-  #chatsView .chats-hdr { padding: 16px 16px 10px; gap: 8px; background: var(--pal-black); font-size: 20px; font-weight: 800; border-radius: 16px 16px 0 0; }
+  #chatsView .chats-hdr { padding: 16px 16px 10px; gap: 8px; background: var(--pal-black); font-size: 20px; font-weight: 800; border-radius: var(--radius) var(--radius) 0 0; }
   #chatsView .chats-filter-btn, #chatsView .chats-add-btn { height: 36px; }
   #chatsView .chats-add-btn { width: 36px; }
   #chatsView .ulist-search-wrap { margin: 2px 16px 12px; height: 42px; }
@@ -892,9 +892,9 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 /* Explore qidiruv: X (tozalash) input ICHIDA o'ngda; input kengroq, radius px da; eski yopish tugmasi yashirin
    (Escape/nav orqali yopish JS dan #searchOverlayClose.click() bilan ishlashda davom etadi) */
 [data-theme] .search-overlay .search-overlay-box .search-overlay-close { display: none; }
-[data-theme] .search-overlay .exp-pill input { height: 48px; padding: 0 48px 0 46px; border-radius: 24px; }
-[data-theme] .search-overlay .exp-pill input:focus, [data-theme] .search-overlay .exp-pill input:focus-visible { border-radius: 24px; }
-.search-clear-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: 16px; background: var(--pal-gray-500); color: var(--bg); cursor: pointer; z-index: 2; }
+[data-theme] .search-overlay .exp-pill input { height: 48px; padding: 0 48px 0 46px; border-radius: var(--radius); }
+[data-theme] .search-overlay .exp-pill input:focus, [data-theme] .search-overlay .exp-pill input:focus-visible { border-radius: var(--radius); }
+.search-clear-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border: none; border-radius: var(--radius); background: var(--pal-gray-500); color: var(--bg); cursor: pointer; z-index: 2; }
 .search-clear-btn:hover { opacity: .85; }
 [data-theme] .search-overlay .exp-pill input:placeholder-shown ~ .search-clear-btn { display: none; }
 
@@ -903,7 +903,7 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 
 /* Desktop: chat pastki input — yumaloq, silliq "suzuvchi" bar */
 @media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-input-row { margin: 8px 16px 16px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); border-radius: 28px; background: #000000; }
+  #chatThreadModal .chat-thread-input-row { margin: 8px 16px 16px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); border-radius: var(--radius); background: #000000; }
   #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
   #chatThreadModal .chat-thread-input:focus { background: transparent; }
 }
@@ -914,15 +914,15 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 
 /* Desktop: chat sarlavhasi — pastki input bilan bir xil yumaloq "suzuvchi" bar */
 @media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: 16px 16px 8px; padding: 8px 12px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: 28px; background: #000000; }
+  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: 16px 16px 8px; padding: 8px 12px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: var(--radius); background: #000000; }
   #chatThreadModal .chat-thread-messages { padding-top: 76px; }
 }
 
 /* Mobil: chat sarlavhasi va pastki input ham yumaloq "suzuvchi" bar (desktop bilan bir xil ko'rinish, kichikroq chetlar) */
 @media (max-width: 1099px) {
-  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: max(8px, env(safe-area-inset-top, 0px)) 8px 4px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: 26px; background: #000000; }
+  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: max(8px, env(safe-area-inset-top, 0px)) 8px 4px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: var(--radius); background: #000000; }
   #chatThreadModal .chat-thread-messages { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
-  #chatThreadModal .chat-thread-input-row { margin: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; border: 1px solid var(--pal-gray-800); border-radius: 26px; background: #000000; }
+  #chatThreadModal .chat-thread-input-row { margin: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; border: 1px solid var(--pal-gray-800); border-radius: var(--radius); background: #000000; }
   #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
   #chatThreadModal .chat-thread-input:focus { background: transparent; }
 }
@@ -1073,13 +1073,13 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 /* Emoji paneli: emojilar bir-biriga yaqin (ustun soni kenglikka qarab), qidiruv inputi #000 + ingichka border */
 .chat-emoji-quickpick .ep-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 0; }
-.chat-emoji-quickpick .ep-e { font-size: 22px; border-radius: 8px; }
+.chat-emoji-quickpick .ep-e { font-size: 22px; border-radius: var(--radius); }
 .chat-emoji-quickpick .ep-search-inp,
 .chat-emoji-quickpick .ep-search-inp:focus { background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: none; }
 .chat-emoji-quickpick .ep-search-inp:focus { border-color: rgba(231, 233, 234, 0.2); }
 
 /* Emoji nomi tooltipi (hover 3s) */
-.chat-emoji-quickpick .ep-tip { position: absolute; z-index: 10; pointer-events: none; white-space: nowrap; max-width: calc(100% - 8px); overflow: hidden; text-overflow: ellipsis; padding: 5px 10px; border-radius: 8px; background: #000000; border: 1px solid rgba(231, 233, 234, 0.2); color: var(--text, #e7e9ea); font-size: 12px; line-height: 1.3; }
+.chat-emoji-quickpick .ep-tip { position: absolute; z-index: 10; pointer-events: none; white-space: nowrap; max-width: calc(100% - 8px); overflow: hidden; text-overflow: ellipsis; padding: 5px 10px; border-radius: var(--radius); background: #000000; border: 1px solid rgba(231, 233, 234, 0.2); color: var(--text, #e7e9ea); font-size: 12px; line-height: 1.3; }
 
 /* ═══ Xabar kontekst menyusi (modules/msg-menu.js): o'ng tugma / mobilda bosib turish ═══ */
 
@@ -1091,10 +1091,10 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 .chat-msg-edited { font-size: 11px; opacity: .6; margin-right: 4px; }
 
-#msgCtx { position: fixed; z-index: 600; display: none; min-width: 220px; max-width: calc(100vw - 16px); padding: 6px; border-radius: 14px; background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#msgCtx { position: fixed; z-index: 600; display: none; min-width: 220px; max-width: calc(100vw - 16px); padding: 6px; border-radius: var(--radius); background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
 #msgCtx.show { display: block; animation: mcPop .14s ease-out; }
 @keyframes mcPop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
-#msgCtx .mc-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 9px; background: none; color: var(--text, #e7e9ea); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+#msgCtx .mc-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--radius); background: none; color: var(--text, #e7e9ea); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
 #msgCtx .mc-item svg , #msgCtx .mc-item img.icon { flex-shrink: 0; color: var(--pal-gray-500); }
 #msgCtx .mc-item:hover, #msgCtx .mc-item:focus-visible { background: var(--pal-white-08); outline: none; }
 #msgCtx .mc-item.danger, #msgCtx .mc-item.danger svg , #msgCtx .mc-item.danger, #msgCtx .mc-item.danger img.icon { color: var(--red); }
@@ -1109,7 +1109,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgCtx .mc-r-scroll { flex: 1 1 auto; min-width: 0; display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); }
 #msgCtx .mc-r-scroll::-webkit-scrollbar { display: none; }
 #msgCtx .mc-r-scroll .mc-r { flex: 0 0 40px; min-width: 40px; }
-#msgCtx .mc-r { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent; }
+#msgCtx .mc-r { flex: 1 1 0; min-width: 0; height: 38px; padding: 0; border: 0; border-radius: var(--radius); background: none; font-size: 22px; line-height: 1; text-align: center; cursor: pointer; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; transition: transform .12s ease, background .12s ease; -webkit-tap-highlight-color: transparent; }
 #msgCtx .mc-r:hover, #msgCtx .mc-r:focus-visible { background: var(--pal-white-08); transform: scale(1.08); outline: none; }
 #msgCtx .mc-r.on { background: rgba(231, 233, 234, 0.18); }
 #msgCtx .mc-r-more { flex: 0 0 30px; width: 30px; height: 30px; margin-left: 2px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--pal-white-08); color: var(--pal-gray-500); cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -1132,7 +1132,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgHoverReact.show { display: block; animation: hrPop .14s ease-out; }
 #msgHoverReact:hover { background: #1f2328; }
 #msgHoverReact.on { border-color: rgba(231, 233, 234, 0.5); }
-#msgHoverPick { position: fixed; z-index: 591; display: none; padding: 8px; overflow: hidden; border-radius: 22px; background: #000; border: 1px solid rgba(231, 233, 234, 0.16); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65); -webkit-user-select: none; user-select: none; }
+#msgHoverPick { position: fixed; z-index: 591; display: none; padding: 8px; overflow: hidden; border-radius: var(--radius); background: #000; border: 1px solid rgba(231, 233, 234, 0.16); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65); -webkit-user-select: none; user-select: none; }
 #msgHoverPick.show { display: block; animation: hpPanelIn .4s cubic-bezier(.22, 1, .36, 1); transform-origin: 50% 100%; }
 /* Tepa va pastida yumshoq soya (ro'yxat aylantirilganda emojilar silliq yo'qoladi) */
 #msgHoverPick::before, #msgHoverPick::after { content: ""; position: absolute; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none; }
@@ -1155,7 +1155,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 .chat-msg.has-reacts { flex-wrap: wrap; margin-bottom: 5px; }
 .chat-msg > .msg-reacts { flex: 0 0 100%; display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 0; }
 .chat-msg.mine > .msg-reacts { justify-content: flex-end; }
-.chat-msg .mr-chip { --chip-bg: #16181c; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid rgba(231, 233, 234, 0.24); border-radius: 14px; background: var(--chip-bg); color: #e7e9ea; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); -webkit-tap-highlight-color: transparent; transition: background .12s ease, transform .12s ease; }
+.chat-msg .mr-chip { --chip-bg: #16181c; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid rgba(231, 233, 234, 0.24); border-radius: var(--radius); background: var(--chip-bg); color: #e7e9ea; font: inherit; font-size: 13px; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); -webkit-tap-highlight-color: transparent; transition: background .12s ease, transform .12s ease; }
 .chat-msg .mr-chip:hover { --chip-bg: #202327; }
 .chat-msg .mr-chip:active { transform: scale(.94); }
 .chat-msg .mr-chip.mine { --chip-bg: #2f3336; border-color: rgba(231, 233, 234, 0.7); color: #fff; }
@@ -1189,7 +1189,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgSelBar { display: none; position: absolute; top: 0; left: 0; right: 0; z-index: 30; align-items: center; gap: 10px; box-sizing: border-box; padding: 8px 14px; padding-top: max(8px, env(safe-area-inset-top)); background: var(--bg); border-bottom: 1px solid var(--pal-gray-700); overflow-x: auto; scrollbar-width: none; }
 #msgSelBar::-webkit-scrollbar { display: none; }
 #chatThreadModal.msg-sel-on #msgSelBar { display: flex; }
-#msgSelBar .msb-btn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; height: 40px; padding: 0 18px; border: 0; border-radius: 10px; background: #2a67a8; color: #ffffff; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap; cursor: pointer; }
+#msgSelBar .msb-btn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; height: 40px; padding: 0 18px; border: 0; border-radius: var(--radius); background: #2a67a8; color: #ffffff; font: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; white-space: nowrap; cursor: pointer; }
 #msgSelBar .msb-btn:hover { background: #3375bb; }
 #msgSelBar .msb-btn[hidden] { display: none; }
 #msgSelBar .msb-n { font-weight: 500; opacity: 0.7; }
@@ -1200,13 +1200,13 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 /* Uzatish oynasi */
 #msgFwd { position: fixed; inset: 0; z-index: 620; display: none; align-items: center; justify-content: center; padding: 16px; background: var(--overlay); }
 #msgFwd.show { display: flex; }
-#msgFwd .mf-card { width: min(380px, 100%); max-height: min(520px, 80dvh); display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); }
+#msgFwd .mf-card { width: min(380px, 100%); max-height: min(520px, 80dvh); display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius); background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); }
 #msgFwd .mf-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 8px; font-size: 15px; font-weight: 600; color: var(--text); }
 #msgFwd .mf-close { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--pal-white-08); color: var(--text); cursor: pointer; }
-#msgFwd .mf-search { margin: 4px 12px 8px; padding: 10px 14px; border: 1px solid rgba(231, 233, 234, 0.1); border-radius: 20px; background: #000000; color: var(--text); font: inherit; font-size: 14px; outline: none; }
+#msgFwd .mf-search { margin: 4px 12px 8px; padding: 10px 14px; border: 1px solid rgba(231, 233, 234, 0.1); border-radius: var(--radius); background: #000000; color: var(--text); font: inherit; font-size: 14px; outline: none; }
 #msgFwd .mf-search:focus, #msgFwd .mf-search:focus-visible { border-color: var(--x-blue, var(--blue, var(--pal-white))); outline: none; box-shadow: none; }
 #msgFwd .mf-list { overflow-y: auto; padding: 0 6px 8px; }
-#msgFwd .mf-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; color: var(--text); font-size: 14px; cursor: pointer; }
+#msgFwd .mf-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: var(--radius); color: var(--text); font-size: 14px; cursor: pointer; }
 #msgFwd .mf-row:hover { background: var(--pal-white-08); }
 #msgFwd .mf-row img { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
 #msgFwd .mf-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1219,7 +1219,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #confirmOverlay .sheet {
   display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px;
   width: 100%; max-width: 340px; margin: 0; padding: 24px 20px 16px 24px;
-  background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); border-radius: 16px;
+  background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); border-radius: var(--radius);
   box-shadow: 0 16px 48px #000000; overflow: visible;
 }
 #confirmOverlay.show .sheet { animation: cfmIn .18s cubic-bezier(.2, .8, .2, 1); }
@@ -1227,7 +1227,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #confirmOverlay #confirmTitle { display: none; }
 #confirmOverlay #confirmMsg { flex: 0 0 100%; margin: 0 0 20px 0; text-align: left; font-size: 15px; line-height: 1.45; color: #e7e9ea; font-weight: 500; }
 #confirmOverlay #confirmOkBtn, #confirmOverlay #confirmCancelBtn {
-  width: auto; margin: 0; padding: 9px 18px; border: 0; border-radius: 10px;
+  width: auto; margin: 0; padding: 9px 18px; border: 0; border-radius: var(--radius);
   font-size: 14px; font-weight: 600; letter-spacing: .1px; cursor: pointer; transition: all .15s ease;
 }
 #confirmOverlay #confirmCancelBtn {
@@ -1464,7 +1464,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 .home-composer-input::placeholder { color: var(--text3); }
 .home-composer-preview {
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--line);
   max-width: 100%;
@@ -1934,7 +1934,7 @@ body #toast {
   z-index: 9999;
   max-width: min(420px, calc(100vw - 32px));
   padding: 12px 20px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0;
@@ -1952,10 +1952,10 @@ body #toast {
   visibility: visible !important;
   transform: translateX(-50%) translateY(0);
 }
-#toast.toast-success, [data-theme] #toast.toast-success { border-color: #2f3336 !important; }
-#toast.toast-error, [data-theme] #toast.toast-error { border-color: #2f3336 !important; }
-#toast.toast-info, [data-theme] #toast.toast-info { border-color: #2f3336 !important; }
-#toast.toast-warning, [data-theme] #toast.toast-warning { border-color: #2f3336 !important; }
+#toast.toast-error, [data-theme] #toast.toast-error { border-color: #f4212e !important; }
+#toast.toast-warning, [data-theme] #toast.toast-warning { border-color: #ffd400 !important; }
+#toast.toast-info, [data-theme] #toast.toast-info { border-color: #1d9bf0 !important; }
+#toast.toast-success, [data-theme] #toast.toast-success { border-color: #00ba7c !important; }
 @media (min-width: 1100px) {
   #toast { bottom: 28px; }
 }
@@ -2017,7 +2017,7 @@ body #toast {
     height: calc(100dvh - 24px) !important;
     background: #000000 !important;
     border: 1px solid var(--line, #2f3336) !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius)!important;
     box-shadow: none !important;
     z-index: 50 !important;
     display: flex !important;
@@ -2141,7 +2141,7 @@ body #toast {
 .pe-card-group {
   background: rgba(231, 233, 234, 0.05);
   border: 1px solid rgba(231, 233, 234, 0.05);
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -2178,7 +2178,7 @@ body #toast {
   color: #71767b;
   background: rgba(231, 233, 234, 0.05);
   padding: 2px 7px;
-  border-radius: 4px;
+  border-radius: var(--radius);
   margin-left: auto;
 }
 
@@ -2218,7 +2218,7 @@ body #toast {
   width: 100% !important;
   background: #000000 !important;
   border: 1px solid #2f3336 !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius)!important;
   color: #e7e9ea !important;
   font-size: 14px !important;
   padding: 10px 14px !important;
@@ -2306,7 +2306,7 @@ body #toast {
   transform: translateY(-50%);
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: none;
   background: transparent;
   color: #71767b;
@@ -2410,14 +2410,14 @@ body #toast {
   width: 3px;
   min-height: 38px;
   align-self: stretch;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--x-blue, var(--pal-white));
   flex-shrink: 0;
 }
 .cpab-thumb {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: #16181c;
   flex-shrink: 0;
@@ -2486,7 +2486,7 @@ body #toast {
 .chat-bubble.bubble-post-card {
   padding: 6px !important;
   max-width: min(340px, 86vw) !important;
-  border-radius: 18px !important;
+  border-radius: var(--radius)!important;
 }
 .chat-msg.mine .chat-bubble.bubble-post-card {
   background: #16181c !important;
@@ -2526,7 +2526,7 @@ body #toast {
   padding: 10px;
   background: rgba(231, 233, 234, 0.05);
   border: 1px solid rgba(231, 233, 234, 0.1);
-  border-radius: 12px;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
@@ -2598,7 +2598,7 @@ body #toast {
   width: 100%;
   height: 200px; /* qat'iy balandlik: rasm yuklanguncha joy band — scroll sakramasin */
   max-height: 200px;
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: #000000;
   border: 1px solid rgba(231, 233, 234, 0.1);
@@ -2626,7 +2626,7 @@ body #toast {
   padding: 7px 12px;
   background: rgba(231, 233, 234, 0.1);
   border: 1px solid rgba(231, 233, 234, 0.2);
-  border-radius: 8px;
+  border-radius: var(--radius);
   color: var(--x-blue, var(--pal-white));
   font-size: 12px;
   font-weight: 600;
@@ -2758,7 +2758,7 @@ button:focus-visible,
   margin: 6px 14px 10px; padding: 8px 12px 6px;
   background: var(--bg2);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 .chat-recents-hdr {
   display: flex; align-items: center; justify-content: space-between;
@@ -2772,7 +2772,7 @@ button:focus-visible,
 .chat-recents-clear-all:hover { text-decoration: underline; }
 .chat-recent-item {
   display: flex; align-items: center; gap: 10px; padding: 8px 6px;
-  border-radius: 10px; cursor: pointer; transition: background .12s;
+  border-radius: var(--radius); cursor: pointer; transition: background .12s;
 }
 .chat-recent-item:hover { background: var(--pal-white-06, rgba(231, 233, 234, 0.05)); }
 .chat-recent-avi { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--bg3); }
@@ -2795,7 +2795,7 @@ button:focus-visible,
 }
 .chat-ctx-menu {
   background: var(--bg2); border: 1px solid var(--line);
-  border-radius: 16px; padding: 6px; min-width: 230px; max-width: 90vw;
+  border-radius: var(--radius); padding: 6px; min-width: 230px; max-width: 90vw;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 .chat-ctx-title {
@@ -2805,7 +2805,7 @@ button:focus-visible,
 }
 .chat-ctx-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 11px 14px; background: none; border: none; border-radius: 10px;
+  padding: 11px 14px; background: none; border: none; border-radius: var(--radius);
   font-size: 14px; font-weight: 500; color: var(--text);
   cursor: pointer; text-align: left; transition: background .12s;
 }
@@ -2816,13 +2816,13 @@ button:focus-visible,
 .chat-header-dropdown {
   position: absolute; right: 12px; top: 54px; z-index: 1050;
   background: var(--bg2); border: 1px solid var(--line);
-  border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   padding: 6px; min-width: 190px;
 }
 .chat-header-dropdown-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 10px 14px; background: none; border: none;
-  border-radius: 8px; font-size: 13.5px; font-weight: 500;
+  border-radius: var(--radius); font-size: 13.5px; font-weight: 500;
   color: var(--text); cursor: pointer; text-align: left;
 }
 .chat-header-dropdown-item:hover { background: var(--pal-white-06, rgba(231, 233, 234, 0.05)); }
@@ -2856,7 +2856,7 @@ button:focus-visible,
   margin: 12px 16px 4px;
   background: #000000;
   border: 1px solid var(--line, #2f3336);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 11px 14px;
   font-size: 13px;
   color: var(--text, #e7e9ea);
@@ -3315,7 +3315,7 @@ button:focus-visible,
     height: calc(100dvh - 24px) !important;
     background: #000000 !important;
     border: 1px solid var(--line, #2f3336) !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius)!important;
     padding: 0 !important;
     margin: 0 !important;
     align-items: stretch !important;
@@ -3329,7 +3329,7 @@ button:focus-visible,
     width: 100% !important;
     height: 100% !important;
     max-height: 100% !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius)!important;
     box-shadow: none !important;
     margin: 0 !important;
     background: transparent !important;
@@ -3982,7 +3982,7 @@ input[type="file"] {
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 11px;
+  border-radius: var(--radius);
   font-size: 11.5px;
   font-weight: 700;
   display: flex;
@@ -4111,7 +4111,7 @@ input[type="file"] {
 .chat-bubble {
   position: relative;
   padding: 7px 12px 7px 12px;
-  border-radius: 18px;
+  border-radius: var(--radius);
   font-size: 14px;
   line-height: 1.45;
   word-break: break-word;
@@ -4256,7 +4256,7 @@ input[type="file"] {
   width: min(344px, calc(100vw - 24px));
   height: min(380px, 60vh);
   background: var(--bg);
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: 0 6px 24px var(--pal-black);
   overflow: hidden;
   z-index: 50;
@@ -4450,7 +4450,7 @@ input[type="file"] {
 .crb-line {
   width: 3px;
   min-height: 32px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   flex-shrink: 0;
 }
 
@@ -4495,7 +4495,7 @@ input[type="file"] {
 #chatContextMenu {
   position: fixed;
   display: none;
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 6px;
   min-width: 170px;
   box-shadow: 0 8px 30px var(--pal-black);
@@ -4577,7 +4577,7 @@ input[type="file"] {
   flex: 1;
   background: var(--bg4);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 7px 12px;
   font-size: 14px;
   color: var(--text);
@@ -4620,7 +4620,7 @@ input[type="file"] {
   display: inline-block;
   background: var(--bg4);
   border: 1px solid var(--line2, var(--line));
-  border-radius: 20px;
+  border-radius: var(--radius);
   padding: 3px 12px;
   font-size: 11.5px;
   font-weight: 600;
@@ -4684,18 +4684,18 @@ a.cfm-name--link:hover {
 }
 
 .cfm-media-wrap--standalone {
-  border-radius: 16px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
 .cfm-media-wrap--standalone .cfm-img-link,
 .cfm-media-wrap--standalone .cfm-img-preview {
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 .cfm-img-link {
   display: block;
-  border-radius: 14px;
+  border-radius: var(--radius);
   overflow: hidden;
   line-height: 0;
 }
@@ -4710,7 +4710,7 @@ a.cfm-name--link:hover {
   max-width: 280px;
   max-height: 340px;
   object-fit: cover;
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: transparent;
 }
 
@@ -4721,7 +4721,7 @@ a.cfm-name--link:hover {
   background: rgba(0, 0, 0, 0.5);
   color: #e7e9ea !important;
   padding: 2px 7px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 11px;
   line-height: 1.2;
   margin: 0 !important;
@@ -4751,7 +4751,7 @@ a.cfm-name--link:hover {
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-caption {
   padding: 0 !important;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: var(--radius);
   max-width: 280px;
 }
 
@@ -4794,7 +4794,7 @@ a.cfm-name--link:hover {
 }
 
 #chatThreadMessages.msg-selecting .chat-msg.mc-selected .cfm-media-wrap {
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 #chatThreadMessages.msg-selecting .chat-msg.mc-selected .cfm-media-wrap::after {
@@ -4890,7 +4890,7 @@ a.cfm-name--link:hover {
   width: 2.5px;
   height: 3px;
   min-height: 3px;
-  border-radius: 1.25px;
+  border-radius: var(--radius);
   background: #1d9bf0;
   flex-shrink: 0;
   transform-origin: center center;
@@ -5018,7 +5018,7 @@ a.cfm-name--link:hover {
 
 .chat-msg.mine .chat-bubble:has(.chat-img-msg), .chat-msg.theirs .chat-bubble:has(.chat-img-msg) {
   padding: 3px;
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 .chat-thread-input-row {
@@ -5033,7 +5033,7 @@ a.cfm-name--link:hover {
 .chat-thread-input {
   background: var(--bg3);
   border: none;
-  border-radius: 22px;
+  border-radius: var(--radius);
   padding: 10px 16px;
   font-size: 14px;
   color: var(--text);
@@ -5108,7 +5108,7 @@ a.cfm-name--link:hover {
 .chat-msg.mine .cvm-bar {
   width: 2px;
   min-height: 2.5px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--pal-white-42);
   transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -5165,7 +5165,7 @@ a.cfm-name--link:hover {
 .chat-msg.theirs .cvm-bar {
   width: 2px;
   min-height: 2.5px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--text3);
   opacity: 0.55;
   transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
@@ -5279,7 +5279,7 @@ a.cfm-name--link:hover {
   height: 9px;
   margin-left: -1.25px;
   margin-top: -4.5px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: currentColor;
   transform: rotate(calc(var(--i) * 360deg / var(--n))) translateY(-22px) scaleY(calc(0.4 + var(--h, 0) * 1.5));
   transform-origin: center center;
@@ -5476,7 +5476,7 @@ a.cfm-name--link:hover {
 }
 
 #chatThreadModal .chat-bubble {
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 7px 11px 8px;
 }
 
@@ -5768,7 +5768,7 @@ a.cfm-name--link:hover {
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 11px;
+  border-radius: var(--radius);
   font-size: 11.5px;
   font-weight: 700;
   display: flex;
@@ -5897,7 +5897,7 @@ a.cfm-name--link:hover {
 .chat-bubble {
   position: relative;
   padding: 7px 12px 7px 12px;
-  border-radius: 18px;
+  border-radius: var(--radius);
   font-size: 14px;
   line-height: 1.45;
   word-break: break-word;
@@ -6042,7 +6042,7 @@ a.cfm-name--link:hover {
   width: min(344px, calc(100vw - 24px));
   height: min(380px, 60vh);
   background: var(--bg);
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: 0 6px 24px var(--pal-black);
   overflow: hidden;
   z-index: 50;
@@ -6236,7 +6236,7 @@ a.cfm-name--link:hover {
 .crb-line {
   width: 3px;
   min-height: 32px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   flex-shrink: 0;
 }
 
@@ -6281,7 +6281,7 @@ a.cfm-name--link:hover {
 #chatContextMenu {
   position: fixed;
   display: none;
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 6px;
   min-width: 170px;
   box-shadow: 0 8px 30px var(--pal-black);
@@ -6363,7 +6363,7 @@ a.cfm-name--link:hover {
   flex: 1;
   background: var(--bg4);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
   padding: 7px 12px;
   font-size: 14px;
   color: var(--text);
@@ -6406,7 +6406,7 @@ a.cfm-name--link:hover {
   display: inline-block;
   background: var(--bg4);
   border: 1px solid var(--line2, var(--line));
-  border-radius: 20px;
+  border-radius: var(--radius);
   padding: 3px 12px;
   font-size: 11.5px;
   font-weight: 600;
@@ -6470,18 +6470,18 @@ a.cfm-name--link:hover {
 }
 
 .cfm-media-wrap--standalone {
-  border-radius: 16px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
 .cfm-media-wrap--standalone .cfm-img-link,
 .cfm-media-wrap--standalone .cfm-img-preview {
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 .cfm-img-link {
   display: block;
-  border-radius: 14px;
+  border-radius: var(--radius);
   overflow: hidden;
   line-height: 0;
 }
@@ -6496,7 +6496,7 @@ a.cfm-name--link:hover {
   max-width: 280px;
   max-height: 340px;
   object-fit: cover;
-  border-radius: 14px;
+  border-radius: var(--radius);
   background: transparent;
 }
 
@@ -6507,7 +6507,7 @@ a.cfm-name--link:hover {
   background: rgba(0, 0, 0, 0.5);
   color: #e7e9ea !important;
   padding: 2px 7px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 11px;
   line-height: 1.2;
   margin: 0 !important;
@@ -6537,7 +6537,7 @@ a.cfm-name--link:hover {
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-caption {
   padding: 0 !important;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: var(--radius);
   max-width: 280px;
 }
 
@@ -6580,7 +6580,7 @@ a.cfm-name--link:hover {
 }
 
 #chatThreadMessages.msg-selecting .chat-msg.mc-selected .cfm-media-wrap {
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 #chatThreadMessages.msg-selecting .chat-msg.mc-selected .cfm-media-wrap::after {
@@ -6676,7 +6676,7 @@ a.cfm-name--link:hover {
   width: 2.5px;
   height: 3px;
   min-height: 3px;
-  border-radius: 1.25px;
+  border-radius: var(--radius);
   background: #1d9bf0;
   flex-shrink: 0;
   transform-origin: center center;
@@ -6804,7 +6804,7 @@ a.cfm-name--link:hover {
 
 .chat-msg.mine .chat-bubble:has(.chat-img-msg), .chat-msg.theirs .chat-bubble:has(.chat-img-msg) {
   padding: 3px;
-  border-radius: 16px;
+  border-radius: var(--radius);
 }
 
 .chat-thread-input-row {
@@ -6819,7 +6819,7 @@ a.cfm-name--link:hover {
 .chat-thread-input {
   background: var(--bg3);
   border: none;
-  border-radius: 22px;
+  border-radius: var(--radius);
   padding: 10px 16px;
   font-size: 14px;
   color: var(--text);
@@ -6894,7 +6894,7 @@ a.cfm-name--link:hover {
 .chat-msg.mine .cvm-bar {
   width: 2px;
   min-height: 2.5px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--pal-white-42);
   transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -6951,7 +6951,7 @@ a.cfm-name--link:hover {
 .chat-msg.theirs .cvm-bar {
   width: 2px;
   min-height: 2.5px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: var(--text3);
   opacity: 0.55;
   transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
@@ -7065,7 +7065,7 @@ a.cfm-name--link:hover {
   height: 9px;
   margin-left: -1.25px;
   margin-top: -4.5px;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: currentColor;
   transform: rotate(calc(var(--i) * 360deg / var(--n))) translateY(-22px) scaleY(calc(0.4 + var(--h, 0) * 1.5));
   transform-origin: center center;
@@ -7229,7 +7229,7 @@ a.cfm-name--link:hover {
 }
 
 #chatThreadModal .chat-bubble {
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 7px 11px 8px;
 }
 
@@ -7760,7 +7760,7 @@ header.app-hdr.force-hide,
   padding: 6px !important;
   background: #000000 !important;
   border: 1px solid #2f3336 !important;
-  border-radius: 14px !important;
+  border-radius: var(--radius)!important;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5) !important;
   z-index: 20 !important;
 }
@@ -7773,7 +7773,7 @@ header.app-hdr.force-hide,
   min-height: 40px !important;
   padding: 10px 12px !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: var(--radius)!important;
   background: #000000 !important;
   color: #f4212e !important;
   font-size: 14px !important;
@@ -7828,7 +7828,7 @@ nav.bot-nav,
 @media (min-width: 1200px) {
   #settingsOverlay.show {
     border: 1px solid #2f3336 !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius)!important;
   }
 }
 
@@ -7852,7 +7852,7 @@ nav.bot-nav,
     max-width: none !important;
     height: 100% !important;
     border: none !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius)!important;
     box-shadow: none !important;
     z-index: 2 !important;
     background: #000000 !important;
@@ -7971,7 +7971,7 @@ body::-webkit-scrollbar,
 .nf-list { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px 24px; }
 .nf-row {
   display: flex; align-items: center; gap: 12px; width: 100%;
-  padding: 12px; border: none; border-radius: 14px;
+  padding: 12px; border: none; border-radius: var(--radius);
   background: transparent; color: var(--text); text-align: left; cursor: pointer;
 }
 .nf-row:hover { background: rgba(231, 233, 234, 0.05); }
@@ -8131,14 +8131,14 @@ body::-webkit-scrollbar,
 .adm-gate-card {
   width: 100%; max-width: 360px; box-sizing: border-box;
   padding: 28px 24px 24px;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
   display: flex; flex-direction: column; gap: 10px;
 }
 .adm-gate-title { font-size: 20px; line-height: 24px; font-weight: 800; color: var(--text); }
 .adm-gate-sub { font-size: 15px; line-height: 20px; color: var(--text3); margin-bottom: 6px; }
 .adm-gate-card .field {
   width: 100%; height: 48px; box-sizing: border-box; margin: 0;
-  padding: 0 14px; border-radius: 6px;
+  padding: 0 14px; border-radius: var(--radius);
   background: var(--bg); color: var(--text);
   border: 1px solid var(--line); font: 400 15px var(--font); outline: none;
 }
@@ -8156,7 +8156,7 @@ body::-webkit-scrollbar,
 .adm-gate-ok:disabled { opacity: .5; cursor: default; }
 
 /* Admin paneli: Storage tozalash — 4 tugma */
-.adm-wipe { margin: 14px 16px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; }
+.adm-wipe { margin: 14px 16px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); }
 .adm-wipe-title { font-size: 17px; font-weight: 800; color: var(--text); }
 .adm-wipe-sub { font-size: 13px; line-height: 18px; color: var(--text3); margin: 12px 0 12px; }
 .adm-wipe { position: relative; }
@@ -8217,18 +8217,18 @@ body::-webkit-scrollbar,
 .post-menu {
   position: fixed; z-index: 20000; min-width: 190px;
   background: var(--bg2, #16181c); border: 1px solid var(--line);
-  border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); padding: 6px;
+  border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); padding: 6px;
 }
 .post-menu-item {
   display: block; width: 100%; padding: 10px 14px; background: none; border: none;
-  border-radius: 8px; font: 500 14px var(--font); color: var(--text); text-align: left; cursor: pointer;
+  border-radius: var(--radius); font: 500 14px var(--font); color: var(--text); text-align: left; cursor: pointer;
 }
 .post-menu-item:hover { background: rgba(231, 233, 234, 0.08); }
 .post-menu-item.danger { color: var(--red); }
 .post-menu-item.danger:hover { background: rgba(244, 33, 46, 0.1); }
 :is(#app, #searchOverlay) .post > .post-main { grid-column: 2; grid-row: 2; min-width: 0; padding: 0; margin: 0; }
 :is(#app, #searchOverlay) .post .post-caption { font-size: 15px; line-height: 20px; color: var(--text); margin: 2px 0 0; padding: 0; word-wrap: break-word; }
-:is(#app, #searchOverlay) .post .post-media { margin: 12px 0 0; border-radius: 16px; border: 1px solid var(--line); overflow: hidden; }
+:is(#app, #searchOverlay) .post .post-media { margin: 12px 0 0; border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; }
 :is(#app, #searchOverlay) .post .post-actions {
   display: flex; align-items: center; justify-content: space-between;
   margin: 12px 0 0; padding: 0; height: 20px;
@@ -8354,7 +8354,7 @@ body::-webkit-scrollbar,
 #settingsOverlay input.field,
 #settingsOverlay textarea.field {
   background: transparent !important; color: var(--text) !important;
-  border: 1px solid var(--line) !important; border-radius: 4px !important;
+  border: 1px solid var(--line) !important; border-radius: var(--radius)!important;
   min-height: 56px; font-size: 17px !important; box-shadow: none !important;
 }
 #settingsOverlay .pe-textarea, #settingsOverlay textarea.field { min-height: 96px; }
@@ -8379,7 +8379,7 @@ input.field, textarea.field, select.field, textarea.ta,
   background: transparent !important;
   color: var(--text) !important;
   border: 1px solid var(--line) !important;
-  border-radius: 4px !important;
+  border-radius: var(--radius)!important;
   box-shadow: none !important;
   font-size: 17px;
 }
@@ -8404,15 +8404,15 @@ select.field option { background: #000000; color: var(--text); }
 /* ═══ Chat (DM) — X: yuborilgan ko'k pufak 24/24/4/24, kelgan #2f3336; yozish maydoni kulrang pill ═══ */
 #chatThreadModal .chat-msg.mine .chat-bubble {
   background: var(--x-blue) !important; color: #e7e9ea !important;
-  border-radius: 24px 24px 4px 24px !important; border: 0 !important; box-shadow: none !important;
+  border-radius: var(--radius) var(--radius) var(--radius) var(--radius)!important; border: 0 !important; box-shadow: none !important;
 }
 #chatThreadModal .chat-msg:not(.mine) .chat-bubble {
   background: #2f3336 !important; color: var(--text) !important;
-  border-radius: 24px 24px 24px 4px !important; border: 0 !important; box-shadow: none !important;
+  border-radius: var(--radius) var(--radius) var(--radius) var(--radius)!important; border: 0 !important; box-shadow: none !important;
 }
 #chatThreadModal .chat-bubble-text { font-size: 15px; line-height: 20px; }
 #chatThreadModal .chat-thread-input-row {
-  background: #202327 !important; border: 0 !important; border-radius: 16px !important;
+  background: #202327 !important; border: 0 !important; border-radius: var(--radius)!important;
   margin: 4px 12px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
   padding: 4px 8px !important; box-shadow: none !important; min-height: 48px;
 }
@@ -8434,7 +8434,7 @@ select.field option { background: #000000; color: var(--text); }
 /* ── Izoh havolasi bilan kelinganda: post kabi 5 soniya yonadi + pastida chiziq ── */
 .cmt-row.cmt-link-highlight {
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius);
   animation: postBlueGlow 5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 .cmt-row.cmt-link-highlight::after {
@@ -8492,15 +8492,15 @@ select.field option { background: #000000; color: var(--text); }
 /* ── Guruh: xabarimni kimlar ko'rdi (kontekst menyu pastida + hover ro'yxat) ───── */
 #msgCtx .mc-readers { min-height: 40px; padding: 8px 12px; font-size: 14px; }
 #msgCtx .mc-readers .mc-rd-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#msgCtx .mc-readers.has-list { cursor: default; border-radius: 9px; color: var(--text, #e7e9ea); }
+#msgCtx .mc-readers.has-list { cursor: default; border-radius: var(--radius); color: var(--text, #e7e9ea); }
 #msgCtx .mc-readers.has-list:hover { background: var(--pal-white-08); }
 #msgCtx .mc-rd-avi { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: block; }
 #msgCtx .mc-rd-stack { display: flex; flex-shrink: 0; }
 #msgCtx .mc-rd-stack .mc-rd-avi + .mc-rd-avi { margin-left: -7px; box-shadow: -1px 0 0 #000000; }
-#msgSeenList { position: fixed; z-index: 601; display: none; min-width: 200px; max-width: calc(100vw - 16px); padding: 6px; border-radius: 14px; background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; }
+#msgSeenList { position: fixed; z-index: 601; display: none; min-width: 200px; max-width: calc(100vw - 16px); padding: 6px; border-radius: var(--radius); background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; }
 #msgSeenList.show { display: block; animation: mcPop .12s ease-out; }
 #msgSeenList .sl-scroll { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
-#msgSeenList .sl-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--text, #e7e9ea); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+#msgSeenList .sl-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius); background: none; color: var(--text, #e7e9ea); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
 #msgSeenList .sl-item:hover { background: var(--pal-white-08); }
 #msgSeenList .sl-avi { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; display: block; }
 #msgSeenList .sl-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8510,10 +8510,10 @@ select.field option { background: #000000; color: var(--text); }
 /* ── Guruh: yuboruvchi sarlavhasi — ism + owner/admin nishoni; rasm (media-only) ustida kichik sarlavha-kartochka ───── */
 .grp-sender-name { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .grp-sender-name .grp-sn-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.grp-sender-name .grp-role { flex-shrink: 0; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; line-height: 16px; color: var(--x-blue, #1d9bf0); background: rgba(29, 155, 240, 0.15); }
+.grp-sender-name .grp-role { flex-shrink: 0; padding: 1px 8px; border-radius: var(--radius); font-size: 11px; font-weight: 500; line-height: 16px; color: var(--x-blue, #1d9bf0); background: rgba(29, 155, 240, 0.15); }
 .chat-bubble.bubble-media-only:has(> .chat-bubble-wrap > .grp-sender-name) .chat-bubble-wrap { display: flex; flex-direction: column; align-items: stretch; width: max-content; max-width: 280px; }
-.chat-bubble.bubble-media-only .grp-sender-name { margin: 0; padding: 7px 12px 6px; background: var(--pal-gray-800); border-radius: 16px 16px 0 0; }
-.chat-bubble.bubble-media-only .grp-sender-name + .cfm-media-wrap--standalone { border-radius: 0 0 16px 16px; }
+.chat-bubble.bubble-media-only .grp-sender-name { margin: 0; padding: 7px 12px 6px; background: var(--pal-gray-800); border-radius: var(--radius) var(--radius) 0 0; }
+.chat-bubble.bubble-media-only .grp-sender-name + .cfm-media-wrap--standalone { border-radius: 0 0 var(--radius) var(--radius); }
 
 /* ── Faqat 1–3 emoji (Telegram uslubi): bubble YO'Q (guruh va 1v1), vaqt — pastda kichik quyuq "pill" ───── */
 #chatThreadModal .chat-msg.emoji-only.mine .chat-bubble,
@@ -8527,26 +8527,26 @@ select.field option { background: #000000; color: var(--text); }
 .chat-msg.emoji-only .chat-bubble-wrap { display: flex; flex-direction: column; }
 .chat-msg.emoji-only.mine .chat-bubble-wrap { align-items: flex-end; }
 .chat-msg.emoji-only.theirs .chat-bubble-wrap { align-items: flex-start; }
-.chat-msg.emoji-only .chat-msg-meta { display: inline-flex; align-items: center; gap: 4px; float: none; width: fit-content; margin: 4px 0 0; padding: 2px 8px; border-radius: 10px; background: var(--pal-gray-800, #1c1f23); color: var(--pal-gray-400, #8b98a5); font-size: 12px; line-height: 16px; }
+.chat-msg.emoji-only .chat-msg-meta { display: inline-flex; align-items: center; gap: 4px; float: none; width: fit-content; margin: 4px 0 0; padding: 2px 8px; border-radius: var(--radius); background: var(--pal-gray-800, #1c1f23); color: var(--pal-gray-400, #8b98a5); font-size: 12px; line-height: 16px; }
 .chat-msg.emoji-only .chat-msg-meta .chat-msg-time { color: inherit; }
 .chat-msg.emoji-only .grp-sender-name { display: none; }
 
 
 /* ═══ Chatdagi video preview (message-bubble.js): birinchi kadr + play + davomiylik ═══ */
-.cfm-vid-box { position: relative; display: block; line-height: 0; border-radius: 16px; overflow: hidden; background: #000; }
+.cfm-vid-box { position: relative; display: block; line-height: 0; border-radius: var(--radius); overflow: hidden; background: #000; }
 .cfm-vid { display: block; width: 100%; max-width: 280px; max-height: 340px; aspect-ratio: 16 / 9; object-fit: cover; background: #000; border-radius: inherit; }
 .cfm-vid-wrap.playing .cfm-vid { object-fit: contain; }
 .cfm-vid-play { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .15s ease, opacity .15s ease; -webkit-tap-highlight-color: transparent; }
 .cfm-vid-wrap:hover .cfm-vid-play { transform: scale(1.1); }
-.cfm-vid-dur { position: absolute; left: 6px; top: 6px; padding: 2px 7px; border-radius: 12px; background: rgba(0, 0, 0, 0.55); color: #e7e9ea; font-size: 11px; line-height: 1.2; pointer-events: none; }
+.cfm-vid-dur { position: absolute; left: 6px; top: 6px; padding: 2px 7px; border-radius: var(--radius); background: rgba(0, 0, 0, 0.55); color: #e7e9ea; font-size: 11px; line-height: 1.2; pointer-events: none; }
 .cfm-vid-dur:empty { display: none; }
 .cfm-vid-wrap.playing .cfm-vid-play, .cfm-vid-wrap.playing .cfm-vid-dur, .cfm-vid-wrap.playing .cfm-media-badge { display: none; }
 .bubble-media-caption .cfm-vid-box, .bubble-media-caption .cfm-vid { max-width: 100%; border-radius: 0; }
 
 
 /* ═══ Chatdagi qo'ng'iroq yozuvi (Telegram uslubi): message-bubble.js → generateCallBubble ═══ */
-#chatThreadModal .chat-msg.mine .chat-bubble.bubble-call { background: #2b5278; border-radius: 18px; }
-#chatThreadModal .chat-msg.theirs .chat-bubble.bubble-call { background: #222c36; border-radius: 18px; }
+#chatThreadModal .chat-msg.mine .chat-bubble.bubble-call { background: #2b5278; border-radius: var(--radius); }
+#chatThreadModal .chat-msg.theirs .chat-bubble.bubble-call { background: #222c36; border-radius: var(--radius); }
 .chat-bubble:has(.chat-call-msg) { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: filter .12s ease; }
 .chat-bubble:has(.chat-call-msg):active { filter: brightness(.92); }
 .chat-call-msg { display: flex; align-items: center; gap: 22px; min-width: 210px; padding: 2px 2px; color: #fff; }
@@ -8561,11 +8561,11 @@ select.field option { background: #000000; color: var(--text); }
 
 
 /* ═══ 1v1 chat: rasm/video pufakka o'ralmaydi — faqat 1.5px border (pufak faqat guruhlarda) ═══ */
-.cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: 16px; overflow: hidden; }
+.cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: var(--radius); overflow: hidden; }
 .chat-msg.mine .cfm-media-dm { border-color: rgba(29, 155, 240, 0.55); }
 .cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview { border-radius: 0; }
 .cfm-cap-dm { margin-top: 4px; max-width: 280px; }
-.cfm-cap-dm .cfm-caption { padding: 7px 12px; border-radius: 18px; font-size: 14.5px; line-height: 1.4; word-break: break-word; }
+.cfm-cap-dm .cfm-caption { padding: 7px 12px; border-radius: var(--radius); font-size: 14.5px; line-height: 1.4; word-break: break-word; }
 .cfm-cap-dm .cfm-caption p { margin: 0; }
 #chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }
 #chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-bottom-left-radius: 5px; }
@@ -8633,17 +8633,17 @@ select.field option { background: #000000; color: var(--text); }
 .ep-mode button { flex: 1; height: 38px; position: relative; background: none; border: 0; color: var(--text3); font: 500 14px/1 inherit; cursor: pointer; }
 .ep-mode button:hover { color: var(--text2); }
 .ep-mode button.on { color: var(--text); }
-.ep-mode button.on::after { content: ''; position: absolute; left: 30%; right: 30%; bottom: -1px; height: 2px; border-radius: 2px; background: var(--text); }
+.ep-mode button.on::after { content: ''; position: absolute; left: 30%; right: 30%; bottom: -1px; height: 2px; border-radius: var(--radius); background: var(--text); }
 .ep-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .gp-search { padding: 8px; flex-shrink: 0; }
-.gp-search-inp { display: block; width: 100%; box-sizing: border-box; height: 32px; padding: 0 14px; border-radius: 16px; background: #000; border: 1px solid rgba(231, 233, 234, 0.1); color: var(--text); font-size: 13px; outline: none; }
+.gp-search-inp { display: block; width: 100%; box-sizing: border-box; height: 32px; padding: 0 14px; border-radius: var(--radius); background: #000; border: 1px solid rgba(231, 233, 234, 0.1); color: var(--text); font-size: 13px; outline: none; }
 .gp-search-inp::placeholder { color: var(--text3); }
 .gp-search-inp:focus { border-color: rgba(231, 233, 234, 0.2); }
 .gp-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 8px; scrollbar-width: none; overscroll-behavior: contain; }
 .gp-body::-webkit-scrollbar { display: none; }
 .gp-cols { display: flex; gap: 3px; align-items: flex-start; }
 .gp-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.gp-item { display: block; width: 100%; padding: 0; border: 0; border-radius: 6px; overflow: hidden; background: #16181c; cursor: pointer; }
+.gp-item { display: block; width: 100%; padding: 0; border: 0; border-radius: var(--radius); overflow: hidden; background: #16181c; cursor: pointer; }
 .gp-item img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .gp-item:hover { filter: brightness(1.12); }
 .gp-msg { padding: 28px 12px; text-align: center; color: var(--text3); font-size: 13px; }

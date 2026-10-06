@@ -21,7 +21,7 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 /* ═══════════════════════ AUTH SCREEN ═══════════════════════ */
 #authWrap { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
 #authWrap.show { display: flex; }
-.auth-card { width: 100%; max-width: 380px; background: var(--bg2); border: 1px solid var(--glass-border); border-radius: 24px; padding: 36px 30px; position: relative; overflow: hidden; box-shadow: 0 20px 50px var(--pal-black); }
+.auth-card { width: 100%; max-width: 380px; background: var(--bg2); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 36px 30px; position: relative; overflow: hidden; box-shadow: 0 20px 50px var(--pal-black); }
 /* Flat X-style — no top highlight line, no gradient blob */
 .auth-logo { display: flex; align-items: center; margin-bottom: 30px; }
 .auth-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: none; border: none; }
@@ -185,7 +185,7 @@ img.icon:not([width]) {
   background: rgba(231, 233, 234, 0.1);
   color: var(--text2, #e7e9ea);
   border: 1px solid rgba(231, 233, 234, 0.1);
-  border-radius: 10px;
+  border-radius: var(--radius);
   font-weight: 600;
   cursor: pointer;
 }

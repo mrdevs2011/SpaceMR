@@ -114,7 +114,7 @@ function ensureStoriesCss() {
   background-size: 200% 100%;
   animation: storySkel 1.3s ease-in-out infinite;
 }
-.story-skel-bar { display: inline-block; width: 44px; border-radius: 6px; }
+.story-skel-bar { display: inline-block; width: 44px; border-radius: 16px; }
 @keyframes storySkel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .story-ring--skel, .story-skel-bar { animation: none; } }
 .story-viewer {
@@ -137,14 +137,14 @@ function ensureStoriesCss() {
   z-index: 5;
 }
 .sv-seg {
-  flex: 1; height: 2.5px; border-radius: 2px;
+  flex: 1; height: 2.5px; border-radius: 16px;
   background: rgba(231, 233, 234, 0.2);
   overflow: hidden;
 }
 .sv-seg-fill {
   height: 100%; width: 0%;
   background: #e7e9ea;
-  border-radius: 2px;
+  border-radius: 16px;
 }
 
 .sv-top {
@@ -231,7 +231,7 @@ function ensureStoriesCss() {
     left: 50%; transform: translateX(-50%);
     width: min(420px, 92vw);
     height: 92%;
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     background: #000000;
   }
@@ -242,7 +242,7 @@ function ensureStoriesCss() {
   .sv-top {
     left: 50%; transform: translateX(-50%);
     width: min(420px, 92vw);
-    border-radius: 12px 12px 0 0;
+    border-radius: 16px 12px 0 0;
   }
   .sv-nav { width: 28%; }
   .sv-prev { left: calc(50% - min(210px, 46vw)); }

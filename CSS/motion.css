@@ -155,7 +155,7 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 #callActiveModal .call-ctrl-btn.end-btn.active { background: #ff3b30; }
 /* Mikrofon o'chiq: ikonka ustidan chiziq */
 #callMicBtn { position: relative; }
-#callMicBtn.muted::after { content: ''; position: absolute; left: 50%; top: 50%; width: 28px; height: 2px; border-radius: 2px; background: #000; transform: translate(-50%, -50%) rotate(-45deg); }
+#callMicBtn.muted::after { content: ''; position: absolute; left: 50%; top: 50%; width: 28px; height: 2px; border-radius: var(--radius); background: #000; transform: translate(-50%, -50%) rotate(-45deg); }
 /* Qurilmada kamera yo'q — Video va Kamera almashtirish tugmalari umuman yo'q */
 .no-camera #callCamCol, .no-camera #callSwitchCol { display: none !important; }
 /* Karnay yo'naltirib bo'lmaydigan qurilma (iOS/desktop) — tugma yo'q */

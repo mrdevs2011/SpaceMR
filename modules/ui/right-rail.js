@@ -25,12 +25,31 @@ function showRail(on) {
   else el.setAttribute('hidden', '');
 }
 
+/** Admin users list: desktop ≥1200 → right-rail; mobil → actionsView host */
+function placeUsersAdmin(isDesktop, view) {
+  const block = document.getElementById('usersAdminBlock');
+  const mobileHost = document.getElementById('actionsUsersHost');
+  const desktopHost = document.getElementById('rrUsersAdmin');
+  if (!block || !mobileHost || !desktopHost) return;
+  const adminActions = view === 'actions' && isDesktop && !!state.me?.uid;
+  if (adminActions) {
+    if (block.parentElement !== desktopHost) desktopHost.appendChild(block);
+    desktopHost.hidden = false;
+  } else {
+    if (block.parentElement !== mobileHost) mobileHost.appendChild(block);
+    desktopHost.hidden = true;
+  }
+  // Oddiy kartalar: actions+desktop da yashirin (faqat users)
+  rail()?.classList.toggle('rr-actions-mode', adminActions);
+}
+
 function fit() {
   // home, profile, saved, notifs va qidiruv (explore overlay) da — 3 ustun
   const view = state.view || 'home';
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
   const isDesktop = window.matchMedia('(min-width: 1200px)').matches;
   rail()?.classList.toggle('rr-apps-mode', view === 'apps');
+  placeUsersAdmin(isDesktop, view);
   const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || view === 'apps' || view === 'actions' || exploreOpen;
   showRail(
     allowed &&
@@ -181,6 +200,8 @@ async function refresh() {
   fit();
   if (!rail() || rail().hasAttribute('hidden')) return;
   if (cmtOpen()) return;
+  // Admin actions: right-rail faqat users list — onlayn/guruh/so'nggi kerak emas
+  if (rail()?.classList.contains('rr-actions-mode')) return;
   await loadOnline();
   loadGroups();
   loadRecent();

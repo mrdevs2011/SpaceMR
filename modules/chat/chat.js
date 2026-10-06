@@ -27,7 +27,7 @@ const LONGPRESS_GUARD_MS = 300;  // long-press tugagandan keyin touchend guard v
  * O'chirib/yashirib bo'lmaydi, har doim ro'yxat tepasida, URL: /chats/saved-messages */
 const SAVED_NAME = 'Saqlangan xabarlar';
 const SAVED_AVATAR = './svg/extra/saved-messages.svg';
-const _isSavedUid = (uid) => !!uid && !!state.me && uid === state.me.uid;
+const _isSavedUid = (uid) => !!uid && !!state.me && (uid === state.me.uid || uid === state.me.id);
 
 function _deleteChatForMe(uid) {
   if (!state.me?.uid || !uid) return;
@@ -437,8 +437,12 @@ export function initChatHeaderMenu() {
     const existing = document.getElementById('chatHeaderDropdown');
     if (existing) { existing.remove(); return; }
 
-    const isSaved = _isSavedUid(state.currentChatUid) || document.getElementById('chatThreadModal')?.classList.contains('is-saved');
-    const isGroup = !isSaved && (state.currentChatKind === 'group' || !!getCurrentGroupId() || !!document.getElementById('chatThreadModal')?.dataset?.gid);
+    const modal = document.getElementById('chatThreadModal');
+    const isSaved = _isSavedUid(state.currentChatUid)
+      || !!modal?.classList.contains('is-saved')
+      || (state.currentChatKind === 'dm' && !!state.me && (state.currentChatUid === state.me.uid || state.currentChatUid === state.me.id))
+      || (typeof location !== 'undefined' && /\/chats\/saved-messages\/?$/.test(location.pathname));
+    const isGroup = !isSaved && (state.currentChatKind === 'group' || !!getCurrentGroupId() || !!modal?.dataset?.gid);
     const drop = document.createElement('div');
     drop.id = 'chatHeaderDropdown';
     drop.className = 'chat-header-dropdown';
@@ -446,7 +450,7 @@ export function initChatHeaderMenu() {
     if (isSaved) {
       drop.innerHTML = `
         <button type="button" class="chat-header-dropdown-item danger" id="chmClearSaved">
-          <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
+          <img src="./svg/extra/icon-938ddddb771c.svg" alt="" class="icon" width="16" height="16">
           <span>Tarixni tozalash</span>
         </button>
       `;
@@ -474,10 +478,14 @@ export function initChatHeaderMenu() {
       drop.remove();
       const chatId = state.currentChatId;
       const uid = state.currentChatUid;
-      if (!chatId || !_isSavedUid(uid)) return;
-      if (!confirm("Saqlangan xabarlar tarixini tozalaysizmi?")) return;
+      // Saqlangan xabarlar: o'zim bilan chat — tarixni tozalash (suhbatdan chiqish emas)
+      if (!chatId) return;
+      if (!confirm("Saqlangan xabarlar tarixini tozalaysizmi? Barcha xabarlar o'chadi.")) return;
       try {
-        const { error } = await sb.from('messages').delete().eq('chat_id', chatId).eq('sender_id', state.me.uid);
+        const meId = state.me?.uid || state.me?.id;
+        let q = sb.from('messages').delete().eq('chat_id', chatId);
+        if (meId) q = q.eq('sender_id', meId);
+        const { error } = await q;
         if (error) throw error;
         chatState._curMsgs = [];
         paintMessages([]);

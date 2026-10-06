@@ -8,7 +8,7 @@
 /* Dark — glass element overrides */
 [data-theme="dark"] .post { background: var(--pal-gray-800); border: 0.5px solid var(--pal-gray-700); box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
 /* ═══════════════════════════════════════════ Theme Toggle Button ═══════════════════════════════════════════ */
-.theme-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 14px; background: var(--glass); color: var(--text2); cursor: pointer;  padding: 0; flex-shrink: 0; }
+.theme-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: var(--radius); background: var(--glass); color: var(--text2); cursor: pointer;  padding: 0; flex-shrink: 0; }
 .theme-btn:hover { background: var(--glass-mid); color: var(--text); box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
 .theme-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
 @media (min-width: 1100px) {
@@ -26,7 +26,7 @@
     font-size: 12px;
     font-weight: 500;
     padding: 5px 10px;
-    border-radius: 8px;
+    border-radius: var(--radius);
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
@@ -56,7 +56,7 @@ svg { color: inherit; }
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 1px;
   background: var(--green);
   -webkit-mask: linear-gradient(#e7e9ea 0 0) content-box, linear-gradient(#e7e9ea 0 0);
@@ -71,7 +71,7 @@ svg { color: inherit; }
 /* ═══════════════════════════════════════════ 3. NAVIGATION BAR — Active State Enhancement ══════════════════... */
 /* Nav button icon bounce on tap */
 .nav-btn:active, .nav-btn.on { position: relative; }
-.nav-btn.on::before { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: var(--blue); border-radius: 2px; box-shadow: 0 0 8px var(--blue); }
+.nav-btn.on::before { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: var(--blue); border-radius: var(--radius); box-shadow: 0 0 8px var(--blue); }
 /* Ripple effect on nav buttons */
 .nav-btn, .act-btn, .cmt-send { position: relative; overflow: hidden; }
 /* ═══════════════════════════════════════════ ACCESSIBILITY — Focus States ══════════════════════════════════... */
@@ -106,7 +106,7 @@ svg { color: inherit; }
 /* Danger button glow on hover */
 /* ═══════════════════════════════════════════ EMPTY STATES — Enhanced with CTA ══════════════════════════════... */
 .empty, .empty-search { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 48px 24px 56px; text-align: center; color: var(--text2); font-size: 14px; position: relative; }
-.empty--home { margin: 24px 12px; padding: 56px 28px 48px; border-radius: 20px; border: 1px solid var(--pal-white-06); background: linear-gradient(180deg, rgba(231, 233, 234, 0.05) 0%, rgba(231, 233, 234, 0.05) 100%); overflow: hidden; }
+.empty--home { margin: 24px 12px; padding: 56px 28px 48px; border-radius: var(--radius); border: 1px solid var(--pal-white-06); background: linear-gradient(180deg, rgba(231, 233, 234, 0.05) 0%, rgba(231, 233, 234, 0.05) 100%); overflow: hidden; }
 .empty-glow { position: absolute; top: -40%; left: 50%; transform: translateX(-50%); width: 280px; height: 180px; background: radial-gradient(ellipse, rgba(29, 155, 240, 0.1) 0%, transparent 70%); pointer-events: none; }
 .empty-icon, .empty-search-icon {
   width: 64px;
@@ -189,7 +189,7 @@ svg { color: inherit; }
 }
 /* ═══════════════════════════════════════════ 6. COMMENTS — Enhanced Interactions ═══════════════════════════... */
 /* Swipe to reply indicator (mobile) */
-.cmt-swipe-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: var(--blue-glow2); border-radius: 14px 0 0 14px; display: flex; align-items: center; justify-content: center; opacity: 0;  }
+.cmt-swipe-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: var(--blue-glow2); border-radius: var(--radius) 0 0 var(--radius); display: flex; align-items: center; justify-content: center; opacity: 0;  }
 .cmt-swipe-icon { width: 20px; height: 20px; color: var(--blue); }
 /* Long-press copy indicator */
 .cmt-copy-hint {
@@ -201,7 +201,7 @@ svg { color: inherit; }
   color: var(--text);
   font-size: 11px;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -226,7 +226,7 @@ svg { color: inherit; }
 .toast-icon.warning { color: var(--amber); }
 .toast-icon.info { color: var(--blue); }
 /* Toast progress (for uploads) */
-.toast-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--blue); border-radius: 0 0 50px 50px; transform-origin: left;  }
+.toast-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--blue); border-radius: 0 0 var(--radius) var(--radius); transform-origin: left;  }
 /* ═══════════════════════════════════════════ 11. ACCESSIBILITY — Additional Features ═══════════════════════... */
 /* High contrast mode */
 [data-contrast="high"] { --line: var(--pal-legacy-525257); --line2: #71767b; --line3: var(--pal-legacy-b5b5b7); --text: var(--pal-white); --text2: #e7e9ea; --text3: #e7e9ea; }
@@ -244,7 +244,7 @@ svg { color: inherit; }
   right: 0;
   background: var(--bg2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 8px;
   max-height: 320px;
   overflow-y: auto;
@@ -253,7 +253,7 @@ svg { color: inherit; }
   display: none;
 }
 .search-suggestions.show { display: block; }
-.search-suggestion-item { padding: 10px 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer;  }
+.search-suggestion-item { padding: 10px 12px; border-radius: var(--radius); display: flex; align-items: center; gap: 10px; cursor: pointer;  }
 .search-suggestion-item:hover { background: var(--bg3); }
 .search-suggestion-item.active { background: var(--blue-glow2); }
 .search-suggestion-icon { color: var(--text3); flex-shrink: 0; }
@@ -265,7 +265,7 @@ svg { color: inherit; }
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: var(--bg2);
-  border-radius: 50px;
+  border-radius: var(--radius);
   padding: 12px 24px;
   font-size: 13px;
   font-weight: 500;
@@ -288,7 +288,7 @@ svg { color: inherit; }
   height: 18px;
   padding: 0 5px;
   background: var(--blue);
-  border-radius: 9px;
+  border-radius: var(--radius);
   font-size: 10px;
   font-weight: 700;
   color: var(--pal-white);
@@ -318,7 +318,7 @@ svg { color: inherit; }
 @media (min-width: 1100px) {
   .feed { max-width: 580px; }
   #detailModal { align-items: center; justify-content: center; }
-  #detailContent { max-width: 600px; max-height: 90dvh; border-radius: 20px; margin: 20px; }
+  #detailContent { max-width: 600px; max-height: 90dvh; border-radius: var(--radius); margin: 20px; }
 }
 /* ═══════════════════════════════════════════ PRINT STYLES ═══════════════════════════════════════════ */
 @media print {
@@ -335,7 +335,7 @@ svg { color: inherit; }
 /* ═══════════════════════════════════════════════════════════════════════ YAKUNIY POLISH — flat (X.com uslubi... */
 /* .app-hdr glow/shimmer bloki o'chirildi — CSS/00-components.core.css allaqachon flat .app-hdr'ni belgilaydi.... */
 /* header icon buttons — flat, oddiy hover */
-.hdr-icon-btn { border-radius: 12px;  }
+.hdr-icon-btn { border-radius: var(--radius);  }
 .hdr-icon-btn:hover { background: var(--glass-mid); border: 0.5px solid var(--glass-border); color: var(--text); }
 .hdr-icon-btn:active { opacity: 0.7; }
 .nav-btn:hover { background: var(--glass-mid); border: 0.5px solid var(--glass-border); }
@@ -363,7 +363,7 @@ svg { color: inherit; }
 /* .nav-center-btn::before pulse-glow pseudo-element olib tashlandi */
 .nav-center-btn:hover { opacity: 0.85; }
 /* Create (+) tugma — oddiy plus, fon/soya/highlight yo'q (id → boshqa temalardan ustun) */
-#createBtn.nav-center-btn { background: transparent; box-shadow: none; border-radius: 12px; overflow: visible; }
+#createBtn.nav-center-btn { background: transparent; box-shadow: none; border-radius: var(--radius); overflow: visible; }
 #createBtn.nav-center-btn::before, #createBtn.nav-center-btn::after { display: none; }
 #createBtn.nav-center-btn:hover { background: transparent; box-shadow: none; opacity: .7; }
 #createBtn.nav-center-btn svg { stroke: var(--text); stroke-width: 2; width: 26px; height: 26px; }
@@ -473,7 +473,7 @@ svg { color: inherit; }
   border-color: var(--pal-white);
   box-shadow: inset 0 1px 0 var(--pal-gray-900), 0 0 0 3px var(--pal-gray-900);
   outline: none;
-  border-radius: 12px;
+  border-radius: var(--radius);
 }
 [data-theme="dark"] .field::placeholder, [data-theme="dark"] input::placeholder, [data-theme="dark"] textarea::placeholder { color: var(--text3); }
 /* ══════════════════════════════════════════ 10. AUTH CARD — Panel ══════════════════════════════════════════ */
@@ -521,12 +521,12 @@ svg { color: inherit; }
 /* ══════════════════════════════════════════ 20. SPLASH SCREEN — Panel ══════════════════════════════════════... */
 [data-theme="dark"] #splash { background: var(--pal-black); }
 [data-theme="dark"] .splash-wordmark { color: var(--text); }
-[data-theme="dark"] .splash-bar { background: var(--pal-gray-900); border-radius: 8px; overflow: hidden; }
+[data-theme="dark"] .splash-bar { background: var(--pal-gray-900); border-radius: var(--radius); overflow: hidden; }
 [data-theme="dark"] .splash-fill { background: var(--blue2); }
 /* ══════════════════════════════════════════ 23. SCROLL — Thin glass ══════════════════════════════════════════ */
 [data-theme="dark"] ::-webkit-scrollbar { width: 3px; height: 3px; }
 [data-theme="dark"] ::-webkit-scrollbar-track { background: transparent; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--pal-gray-900); border-radius: 3px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--pal-gray-900); border-radius: var(--radius); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--pal-gray-800); }
 /* ══════════════════════════════════════════ 24. SELECTION ══════════════════════════════════════════ */
 [data-theme="dark"] ::selection { background: #2f3336; color: var(--pal-white); }
@@ -770,7 +770,7 @@ svg { color: inherit; }
   padding: 12px;
   background: transparent;
   border: 0.5px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: var(--radius);
   color: var(--text2);
   font-size: 13px;
   font-family: var(--font);
@@ -785,7 +785,7 @@ svg { color: inherit; }
   padding: 12px;
   background: transparent;
   border: 0.5px solid var(--pal-gray-700);
-  border-radius: 12px;
+  border-radius: var(--radius);
   color: var(--red);
   font-size: 13px;
   font-family: var(--font);
@@ -839,10 +839,10 @@ svg { color: inherit; }
 .field:focus, input:focus, textarea:focus { outline: none; }
 input::placeholder, textarea::placeholder, .field::placeholder { color: var(--text3); }
 /* 5. Post card (base) */
-.post { background: var(--bg2, var(--glass)); border: 0.5px solid var(--glass-border); border-radius: 14px; box-shadow: none;  }
+.post { background: var(--bg2, var(--glass)); border: 0.5px solid var(--glass-border); border-radius: var(--radius); box-shadow: none;  }
 .post:hover { box-shadow: none; transform: none; }
 @media (min-width: 1100px) {
-  .post { border-radius: 16px; }
+  .post { border-radius: var(--radius); }
 }
 /* ─── post-composer ─── */
 /* ═══════════════════════════════════════════ POST COMPOSER — X.com uslubidagi post yaratish oynasi Faqat #up... */
@@ -856,7 +856,7 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
   overflow-y: auto;
   background: var(--pal-gray-900);
   border: 1px solid var(--pal-gray-700);
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: 0 8px 40px var(--pal-black-55);
   padding: 10px 16px max(14px, env(safe-area-inset-bottom));
   display: flex;
@@ -911,10 +911,10 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 #uploadOverlay .upload-drop.drag-over { background: #2f3336; transform: none; box-shadow: none; }
 @media (max-width: 480px) {
   #uploadOverlay { padding: 0; align-items: flex-end; }
-  #uploadOverlay .composer-sheet { max-width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0; border-bottom: none; }
+  #uploadOverlay .composer-sheet { max-width: 100%; max-height: 92dvh; border-radius: var(--radius) var(--radius) 0 0; border-bottom: none; }
 }
 /* Fayl sahifaga sudralganda — yengil ko'rsatkich */
-body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: 16px; background: rgba(231, 233, 234, 0.05); pointer-events: none; z-index: 9999; }
+body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: var(--radius); background: rgba(231, 233, 234, 0.05); pointer-events: none; z-index: 9999; }
 /* ─── card-sheets ─── */
 /* ═══════════════════════════════════════════ CARD SHEETS — guruh/kanal yaratish oynalari post composer bilan... */
 #grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay { background: #000000; align-items: center; justify-content: center; padding: 20px; }
@@ -926,7 +926,7 @@ body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2p
   overflow-y: auto;
   background: var(--pal-gray-900);
   border: 1px solid var(--pal-gray-700);
-  border-radius: 16px;
+  border-radius: var(--radius);
   box-shadow: 0 8px 40px var(--pal-black-55);
   padding: 16px;
 }
@@ -1015,7 +1015,7 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   z-index: 400;
   background: var(--bg, var(--pal-black));
   border: 0.5px solid var(--glass-border, var(--pal-gray-700));
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 6px 0;
   box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(231, 233, 234, 0.1);
 }
@@ -1033,7 +1033,7 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   padding: 6px 0;
   background: var(--bg, var(--pal-black));
   border: 0.5px solid var(--glass-border, var(--pal-gray-700));
-  border-radius: 14px;
+  border-radius: var(--radius);
   box-shadow: 0 0 12px var(--pal-white-12), 0 0 3px rgba(231, 233, 234, 0.1);
 }
 .chats-x-item { display: block; width: 100%; padding: 12px 18px; text-align: left; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: 15px; font-weight: 500; color: var(--text); }
@@ -1153,7 +1153,7 @@ body {
   background: var(--glass-mid);
   color: var(--text);
   padding: 10px 20px;
-  border-radius: 24px;
+  border-radius: var(--radius);
   font-size: 13px;
   font-weight: 500;
   z-index: 9999;
@@ -1181,7 +1181,7 @@ body {
   background: var(--pal-gray-700);
   color: var(--blue2);
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius);
   font-size: 11px;
   font-weight: 600;
   display: flex;

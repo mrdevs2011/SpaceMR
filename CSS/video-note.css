@@ -203,7 +203,7 @@ body.vn-rec .chat-record-bar.active {
 #vnotePreview .vnp-btn[hidden] { display: none; }
 
 #vnLockHint {
-  position: fixed; z-index: 9100; width: 36px; height: 64px; border-radius: 18px;
+  position: fixed; z-index: 9100; width: 36px; height: 64px; border-radius: var(--radius);
   display: none; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   background: rgba(32, 35, 39, 0.92); border: 1px solid rgba(231, 233, 234, 0.18); color: #e7e9ea;
   pointer-events: none; transform: translateY(calc(var(--lp, 0) * -22px));

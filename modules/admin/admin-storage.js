@@ -16,7 +16,7 @@ function _paint(box, used) {
   box.innerHTML =
     `<div>Storage: <b>${_fmt(used)}</b> / ${_fmt(LIMIT_BYTES)} (${pct}%)` +
     (warn ? ' — <span style="color:var(--red,#f4212e)">to\'lib qoldi, Pro\'ga o\'tishni o\'ylang</span>' : '') + '</div>' +
-    `<div style="height:4px;border-radius:4px;margin-top:6px;background:var(--line,rgba(113, 118, 123, 0.2));overflow:hidden">` +
+    `<div style="height:4px;border-radius: 16px;margin-top:6px;background:var(--line,rgba(113, 118, 123, 0.2));overflow:hidden">` +
     `<div style="height:100%;width:${pct}%;background:${warn ? 'var(--red,#f4212e)' : 'var(--text3,#71767b)'}"></div></div>`;
 }
 
