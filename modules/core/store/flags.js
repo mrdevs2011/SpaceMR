@@ -59,14 +59,15 @@ export function setRolloutPct(pct) {
   _set('ff_rollout_pct', String(Math.max(0, Math.min(100, pct | 0))));
 }
 
-/** Sync v2: aniq flag yoki rollout bucket */
+/** Sync v2: default ON (migratsiya 074–076). O'chirish: localStorage ff_sync_v2=0 */
 export function isSyncV2Enabled(uid) {
   if (isKillSwitch()) return false;
   const v = _ls('ff_sync_v2');
   if (v === '0') return false;
   if (v === '1') return true;
+  // Aniq o'chirilmagan bo'lsa — yoqilgan (RPC xato bo'lsa chat eski yo'lga tushadi)
   const pct = getRolloutPct();
-  if (pct <= 0) return false;
+  if (pct <= 0) return true; // default ON
   if (pct >= 100) return true;
   return uidBucket(uid) < pct;
 }

@@ -1143,10 +1143,22 @@ export async function renderChatsList() {
   const root = $('chatsListWrap');
   if (!root || !state.me) return;
 
-  /* Ro'yxat BIRINCHI marta chizilganda serverdan tasdiqlangan ma'lumot (chatlar + guruhlar) kelguncha spinner:
-     keshdagi eski oxirgi xabar / o'chirilgan chat / eski o'qilmagan son bir zum ko'rinib qolmasin.
-     Watcher ilova ochilishida boshlangani uchun odatda bu allaqachon tayyor bo'ladi. */
-  if (!chatState._chatsLoaded) root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+  /* Issiq ochilish: lokal kesh bor bo'lsa darhol chizamiz (0 KB), server fonida yangilanadi.
+     Kesh yo'q — spinner. */
+  if (!chatState._chatsLoaded) {
+    try {
+      await whenLocalCacheReady();
+      const cached = getCachedChatsList(state.me.uid);
+      if (cached?.users?.length) {
+        chatState._usersCache = cached.users;
+        paintChatsList(cached.users, chatState._latestChatMap || {});
+      } else {
+        root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+      }
+    } catch (_) {
+      root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+    }
+  }
 
   try {
     await startChatsWatcher();

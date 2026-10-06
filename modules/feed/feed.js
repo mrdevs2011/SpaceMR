@@ -7,6 +7,7 @@ import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
 import './post-image-zoom.js';
+import { cachedMediaUrlSync, resolvePublicMedia } from '../core/store/media-cache.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration } from '../core/video-policy.js';
 // Feed/upload native <video controls>: WebM duration Infinity → progress oxirida qotadi
@@ -1044,4 +1045,20 @@ export function setupPullToRefresh() {
 export function setupFeedScrollSensitivity() {
     // Native browser scroll intentionally used — no override needed.
     // Custom touchmove override was causing janky scroll on iOS/Android.
+}
+
+/* Post media → OPFS/IDB kesh (ikkinchi ko'rishda diskdan) */
+export function hydratePostMediaCache(root) {
+  if (!root || typeof IntersectionObserver === 'undefined') return;
+  const imgs = root.querySelectorAll('.post-media[data-type="image"] img');
+  imgs.forEach(img => {
+    const url = img.currentSrc || img.src;
+    if (!url || url.startsWith('blob:') || img.dataset.mcCached) return;
+    img.dataset.mcCached = '1';
+    resolvePublicMedia(url, { priority: 'low' }).then(blobUrl => {
+      if (blobUrl && blobUrl !== url && img.isConnected) {
+        // faqat bir xil kontent — src ni almashtirmaymiz (flash yo'q); keyingi ochilishda cachedMediaUrlSync
+      }
+    }).catch(() => {});
+  });
 }
