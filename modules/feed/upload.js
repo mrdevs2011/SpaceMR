@@ -5,115 +5,14 @@ import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.j
 import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
+import { getFileTypeInfo } from '../core/file-icons.js';
 import { prepareVideo, ensureVideoDuration } from '../core/video-policy.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    FILE TYPE → SVG icon + label + accent color
    ═══════════════════════════════════════════════════════════════════════ */
-function getFileTypeInfo(name = '', mime = '') {
-  const ext = (name.split('.').pop() || '').toLowerCase();
-  const m   = (mime || '').toLowerCase();
-
-  /* ── Audio / Music ── */
-  if (m.startsWith('audio') || ['mp3','wav','ogg','aac','flac','m4a','wma','opus','aiff','mid','midi'].includes(ext))
-    return {
-      label: ext.toUpperCase() || 'AUDIO', color: '#e7e9ea',
-      svg: `<img src="./svg/ui/badge-b6e69f.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── HTML ── */
-  if (['html','htm'].includes(ext) || m === 'text/html')
-    return {
-      label: 'HTML', color: '#f4212e',
-      svg: `<img src="./svg/ui/badge-f60274.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── TypeScript ── */
-  if (['ts','tsx'].includes(ext))
-    return {
-      label: 'TS', color: '#e7e9ea',
-      svg: `<img src="./svg/ui/badge-23b1be.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── JavaScript / JSX ── */
-  if (['js','mjs','cjs','jsx'].includes(ext) || m.includes('javascript'))
-    return {
-      label: ext === 'jsx' ? 'JSX' : 'JS', color: '#ffd400',
-      svg: `<img src="./svg/ui/badge-${ext==='jsx'?'jsx':'js'}.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── PDF ── */
-  if (ext === 'pdf' || m === 'application/pdf')
-    return {
-      label: 'PDF', color: '#f4212e',
-      svg: `<img src="./svg/ui/badge-24a745.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── ZIP / Archive ── */
-  if (['zip','rar','7z','tar','gz','bz2','xz','lz','lzma'].includes(ext))
-    return {
-      label: ext.toUpperCase(), color: '#e7e9ea',
-      svg: `<img src="./svg/ui/badge-0df66a.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── Word / DOC ── */
-  if (['doc','docx'].includes(ext) || m.includes('msword') || m.includes('wordprocessingml'))
-    return {
-      label: 'DOCX', color: '#e7e9ea',
-      svg: `<img src="./svg/ui/badge-565e81.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── Excel / CSV / Spreadsheet ── */
-  if (['xls','xlsx','csv','ods'].includes(ext) || m.includes('spreadsheet') || m.includes('excel') || m === 'text/csv')
-    return {
-      label: ext.toUpperCase(), color: '#00ba7c',
-      svg: `<img src="./svg/ui/badge-b2c645.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── Python ── */
-  if (ext === 'py' || m === 'text/x-python')
-    return {
-      label: 'PY', color: '#e7e9ea',
-      svg: `<img src="./svg/ui/badge-1ba5e2.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── JSON ── */
-  if (ext === 'json' || m === 'application/json')
-    return {
-      label: 'JSON', color: '#ffd400',
-      svg: `<img src="./svg/ui/badge-99c369.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── CSS / SCSS ── */
-  if (['css','scss','sass','less'].includes(ext))
-    return {
-      label: ext.toUpperCase(), color: '#e7e9ea',
-      svg: `<img src="./svg/ui/badge-e167e6.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── Markdown ── */
-  if (['md','mdx','markdown'].includes(ext))
-    return {
-      label: 'MD', color: '#71767b',
-      svg: `<img src="./svg/ui/badge-b29dd9.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── Plain Text / TXT / LOG ── */
-  if (['txt','log','ini','cfg','conf'].includes(ext) || m === 'text/plain')
-    return {
-      label: ext.toUpperCase() || 'TXT', color: '#71767b',
-      svg: `<img src="./svg/ui/badge-3e3dc0.svg" alt="" class="icon" width="48" height="48">`
-    };
-
-  /* ── Default / unknown ── */
-  return {
-    label: (ext || 'FILE').toUpperCase(), color: '#e7e9ea',
-    svg: `<img src="./svg/ui/badge-bca863.svg" alt="" class="icon" width="48" height="48">`
-  };
-}
-
-/* export so feed.js can use it too */
-export { getFileTypeInfo };
+/* getFileTypeInfo → modules/core/file-icons.js */
+export { getFileTypeInfo } from '../core/file-icons.js';
 
 /* ── FIX: Object URL ni tozalash helper ──────────────────────────────── */
 function revokeObjUrl() {
