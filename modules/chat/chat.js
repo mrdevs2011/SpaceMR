@@ -1684,7 +1684,7 @@ function renderTicks(status) {
   // 'sending' = soat (faqat status==='sending' — DB/insert tasdiqlanmaguncha),
   // 'read' = 2 ko'k chek, boshqa (sent/null) = 1 chek. Fake timeout yo'q.
   if (status === 'sending') {
-    return `<img src="./svg/ui/ticks-b1f42f.svg" alt="" class="icon msg-ticks sending" width="14" height="14" aria-label="Yuborilmoqda">`;
+    return `<img src="./svg/ui/ticks-b1f42f.svg" alt="" class="icon msg-ticks sending" width="14" height="14" data-t0="${Date.now()}" aria-label="Yuborilmoqda">`;
   }
   if (status === 'read') {
     return `<img src="./svg/ui/ticks-98b8af.svg" alt="" class="icon msg-ticks read" width="18" height="11" aria-label="O'qildi">`;
@@ -1704,13 +1704,24 @@ export function updateMsgTicks(id, status) {
   if (!meta) return;
   let tick = meta.querySelector('.msg-ticks');
   const html = renderTicks(status);
-  if (tick) {
-    const tmp = document.createElement('template');
-    tmp.innerHTML = html.trim();
-    const neu = tmp.content.firstChild;
-    if (neu) tick.replaceWith(neu);
+  const _swapTick = () => {
+    const cur = meta.querySelector('.msg-ticks');
+    if (cur) {
+      const tmp = document.createElement('template');
+      tmp.innerHTML = html.trim();
+      const neu = tmp.content.firstChild;
+      if (neu) cur.replaceWith(neu);
+    } else {
+      meta.insertAdjacentHTML('beforeend', html);
+    }
+  };
+  if (tick && tick.classList.contains('sending') && status !== 'sending') {
+    // Soat kamida ~450 ms ko'rinsin (tarmoq juda tez bo'lsa ham animatsiya sezilsin)
+    const t0 = Number(tick.dataset.t0) || Date.now();
+    const wait = Math.max(0, 450 - (Date.now() - t0));
+    if (wait > 0) setTimeout(_swapTick, wait); else _swapTick();
   } else {
-    meta.insertAdjacentHTML('beforeend', html);
+    _swapTick();
   }
   // local state sync
   const conf = chatState._rtLocal.get(id);

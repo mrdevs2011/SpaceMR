@@ -869,6 +869,40 @@ export function initMsgMenu(opts) {
   });
   document.addEventListener('mouseup', () => { clearTimeout(msTimer); ms = null; endDrag(); });
 
+  // Desktop: xabarni sichqoncha bilan yon tomonga surib qo'yib yuborilsa ham — javob rejimi (sensorli qurilmadagi kabi).
+  // Gorizontal surish boshlangach matn belgilash o'chadi; vertikal/diagonal surish va ikki marta bosish belgilashi oddiy ishlaydi.
+  const mouseSwEnd = (commit) => {
+    document.body.style.userSelect = '';
+    if (sw?.mouse) swEnd(commit);
+  };
+  box.addEventListener('mousedown', e => {
+    if (e.button !== 0 || coarse() || selMode) return;
+    if (e.target.closest('a,button,input,textarea,audio,video,[contenteditable],.cvm-track,[data-seek]')) return;
+    const row = rowOf(e.target);
+    if (!row || !swEligible(row, e.clientX)) return;
+    sw = { row, x: e.clientX, y: e.clientY, dx: 0, on: false, armed: false, mouse: true };
+  });
+  document.addEventListener('mousemove', e => {
+    if (!sw?.mouse) return;
+    if (!(e.buttons & 1)) { mouseSwEnd(false); sw = null; return; }
+    const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    if (!sw.on) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }                    // vertikal harakat
+      if (Math.abs(dx) > SW_START && Math.abs(dx) > Math.abs(dy) * 1.6) {                             // gorizontal surish boshlandi
+        sw.on = true; clearTimeout(msTimer); ms = null; sw.row.style.transition = 'none';
+        document.body.style.userSelect = 'none';
+        try { getSelection()?.removeAllRanges(); } catch (_) {}
+      }
+    }
+    if (sw?.on) { e.preventDefault(); swUpdate(dx); }
+  });
+  document.addEventListener('mouseup', () => {
+    if (!sw?.mouse) return;
+    const commit = sw.on && Math.abs(sw.dx) >= SW_TRIGGER;
+    mouseSwEnd(commit);
+    sw = null;
+  });
+
   // Bosib turgandan keyingi "click" (masalan play tugmasi) va tanlash rejimidagi bosishlar
   box.addEventListener('click', e => {
     if (Date.now() < suppressUntil) { e.stopPropagation(); e.preventDefault(); return; }
