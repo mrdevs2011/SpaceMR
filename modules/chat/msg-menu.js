@@ -35,7 +35,7 @@ const sel = new Set();
 
 const isDM = () => !state.currentChatKind || state.currentChatKind === 'dm';
 const tbl = () => isDM() ? 'messages' : 'group_messages';
-const msgOf = id => (api?.getMsgs() || []).find(m => m.id === id);
+const msgOf = id => (api?.getMsgs() || []).find(m => String(m.id) === String(id));
 const isMine = m => m && m.senderId === state.me?.uid;
 const isCallMsg = m => !!(m && m.text && m.text.includes('"__callLog"'));   // qo'ng'iroq yozuvi: faqat o'chirish / tanlash
 /* O'chirish huquqi: o'z xabarim YOKI moderator (sayt admini / shu guruhning owner-admini) — boshqaning xabarini ham.
@@ -789,6 +789,21 @@ export function initMsgMenu(opts) {
   if (!box || box.dataset.msgMenu) return;
   box.dataset.msgMenu = '1';
   reactInit(box);
+  // Reply quote bosilsa — asl xabarga scroll
+  box.addEventListener('click', e => {
+    const q = e.target.closest?.('.msg-reply-quote');
+    if (!q) return;
+    const id = q.getAttribute('data-reply-to');
+    if (!id) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(id)}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('mc-active');
+      setTimeout(() => el.classList.remove('mc-active'), 1200);
+    }
+  });
 
   // Desktop: o'ng tugma. Sensorli qurilmada brauzerning o'z menyusini bostiramiz (long-press o'zimiz ushlaymiz).
   box.addEventListener('contextmenu', e => {

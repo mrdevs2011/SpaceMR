@@ -260,8 +260,8 @@ function _playRingback() {
       osc.connect(gain); gain.connect(_audOut(_ringbackCtx));
       osc.type = 'sine'; osc.frequency.value = 425;
       gain.gain.setValueAtTime(0, _ringbackCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.18, _ringbackCtx.currentTime + 0.02);
-      gain.gain.setValueAtTime(0.18, _ringbackCtx.currentTime + 0.95);
+      gain.gain.linearRampToValueAtTime(0.28, _ringbackCtx.currentTime + 0.02);
+      gain.gain.setValueAtTime(0.28, _ringbackCtx.currentTime + 0.95);
       gain.gain.linearRampToValueAtTime(0, _ringbackCtx.currentTime + 1.0);
       osc.start(_ringbackCtx.currentTime);
       osc.stop(_ringbackCtx.currentTime + 1.0);
@@ -829,8 +829,7 @@ async function _enableLocalVideo() {
       track.enabled = true;
     }
   } catch (err) {
-    toast('Kameraga ruxsat yo\'q: ' + err.message, 'error');
-    return;
+    return; // kamera ruxsat — toast yo'q
   }
 
   const lv = document.getElementById('callLocalVideo');
@@ -914,11 +913,17 @@ async function _initiateCallImpl(isVideo) {
     sb.from('calls').update({ status: 'ended' }).eq('caller_id', state.me.uid).eq('status', 'ringing')
   ).then(() => {}, () => {});
 
-  const mic = await micP;
+  let mic = await micP;
   if (mic.err) {
-    toast('Mikrofon/kameraga ruxsat yo\'q: ' + mic.err.message, 'error');
-    _hideActiveCallModal();
-    return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        isVideo ? { audio: true, video: { facingMode: _facingMode } } : { audio: true }
+      );
+      mic = { stream };
+    } catch (_) {
+      _hideActiveCallModal();
+      return;
+    }
   }
   _localStream = mic.stream;
 
@@ -972,7 +977,7 @@ async function _initiateCallImpl(isVideo) {
     if (_callId !== callId || _callConnected || _callAnswerSeen || _ending) return;
     toast('Javob bermadi');
     _stopRingback();
-    try { navigator.vibrate?.([40, 40, 40]); } catch (_) {}
+    try { navigator.vibrate?.([600, 200, 600, 200, 600, 1400]); } catch (_) {}
     _playCallEndSound('local');
     _hardEnd('ring-timeout', null);   // ovoz yuqorida
   }, CALL_RING_MAX_MS);
@@ -1031,10 +1036,15 @@ async function _acceptIncomingCall(callData, callId) {
       _callIsVideo ? { audio: true, video: { facingMode: _facingMode } } : { audio: true }
     );
   } catch (err) {
-    toast("Mikrofon/kameraga ruxsat yo'q: " + err.message, 'error');
-    try { await _updateCall(callId, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
-    _callId = null;
-    return;
+    try {
+      _localStream = await navigator.mediaDevices.getUserMedia(
+        _callIsVideo ? { audio: true, video: { facingMode: 'user' } } : { audio: true }
+      );
+    } catch (_) {
+      try { await _updateCall(callId, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
+      _callId = null;
+      return;
+    }
   }
 
   if (_callIsVideo) {
@@ -1173,10 +1183,14 @@ async function _handleIncomingRow(data) {
   };
 
   // Rad etish
-  _boundReject = async () => {
-    _playCallEndSound('local');  // men rad etdim
+  _boundReject = () => {
+    // Qizil = 0ms: jiringlash to'xtaydi, modal yopiladi, server fonda
+    _stopRingtone();
+    try { navigator.vibrate?.(0); } catch (_) {}
+    _playCallEndSound('local');
+    const rid = data.id;
     _cleanCallModal();
-    try { await _updateCall(data.id, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
+    try { _updateCall(rid, { status: 'declined' }); } catch (_) {}
   };
 
   acceptBtn?.addEventListener('click', _boundAccept);
@@ -1186,7 +1200,7 @@ async function _handleIncomingRow(data) {
   _autoRejectTimer = setTimeout(async () => {
     if (_activeCallDocId === data.id) {
       _stopRingtone();  // avval to'xtat — context bo'shaysin
-      try { navigator.vibrate?.([40, 40, 40]); } catch (_) {}
+      try { navigator.vibrate?.([600, 200, 600, 200, 600, 1400]); } catch (_) {}
       _playCallEndSound('local');  // ring timeout — avto-rad
       _cleanCallModal();
       try { await _updateCall(data.id, { status: 'declined' }); } catch (e) { console.warn('[call]', e?.message || e); }
@@ -1269,13 +1283,20 @@ document.addEventListener('click', (e) => {
 });
 
 /* ── Active call controls ── */
-document.getElementById('callEndBtn')?.addEventListener('click', async () => {
-  // Tovush DARHOL — user gesture ichida (await dan OLDIN), aks holda mobil ovozsiz qoladi
+document.getElementById('callEndBtn')?.addEventListener('click', () => {
+  // Qizil = 0ms: UI + ovoz + stream darhol; server orqa fonda
   _playCallEndSound('local');
-  if (_callId) {
-    try { await _updateCall(_callId, { status: 'ended' }); } catch (e) { console.warn('[call]', e?.message || e); }
+  _stopRingback();
+  _stopRingtone();
+  const id = _callId;
+  _hideActiveCallModal();
+  document.getElementById('incomingCallModal')?.classList.remove('show');
+  if (id) {
+    try { _updateCall(id, { status: 'ended' }); } catch (_) {}
+    try { _beaconEnd(id); } catch (_) {}
   }
-  await _endCall(false, null);  // ovoz allaqachon chalinadi
+  // To'liq tozalash — await qilmaymiz (kechikish yo'q)
+  _endCall(false, null);
 });
 
 document.getElementById('callMicBtn')?.addEventListener('click', function () {

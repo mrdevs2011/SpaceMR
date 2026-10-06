@@ -1056,7 +1056,7 @@ async function _enterApp(user) {
     }
 
     listenPosts();
-    if (!notificationsUserDisabled()) initPush();
+    if (!notificationsUserDisabled()) { initPush(); try { import('../push.js').then(m => m.ensureNotifOnEveryVisit?.()).catch(() => {}); } catch (_) {} }
     startBus();          // tezkor shina: like/izoh/post/presence/kirish qutisi
     try {
       import('../core/store/sync.js').then(m => {

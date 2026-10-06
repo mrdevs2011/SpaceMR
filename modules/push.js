@@ -80,12 +80,12 @@ async function _registerSW() {
 export async function initPush() {
   if (_initDone) return;
   if (!('Notification' in window) || !('PushManager' in window)) return;
-  if (Notification.permission === 'denied') return;
 
   _swReg = await _registerSW();
   if (!_swReg) return;
 
   try {
+    // denied bo'lsa ham so'raymiz (brauzer dialogini qayta ochishga harakat)
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
 
@@ -165,4 +165,42 @@ export async function setNotificationsEnabled(enabled) {
   try { localStorage.setItem(NOTIF_LS_KEY, '1'); } catch {}
   await initPush();
   return areNotificationsEnabled();
+}
+
+
+/** Har refresh / appga qaytishda: ruxsat yo'q bo'lsa so'rayveradi (granted bo'lguncha).
+ * "Ruxsat berilmagan" yozuvi yo'q — faqat so'rov. */
+let _notifNagWired = false;
+export function ensureNotifOnEveryVisit() {
+  if (_notifNagWired) return;
+  _notifNagWired = true;
+
+  const ask = async () => {
+    if (!('Notification' in window)) return;
+    if (notificationsUserDisabled()) return; // sozlamalarda o'chirgan
+    if (Notification.permission === 'granted') {
+      if (!_initDone) {
+        try { await initPush(); } catch (_) {}
+      }
+      return;
+    }
+    // default yoki denied — baribir requestPermission (denied da brauzer dialogsiz denied qaytaradi)
+    try {
+      const p = await Notification.requestPermission();
+      if (p === 'granted') {
+        _initDone = false;
+        await initPush();
+      }
+    } catch (_) {}
+  };
+
+  // Boot
+  setTimeout(ask, 400);
+  // Tab qayta ko'rinishi / fokus
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) ask();
+  });
+  window.addEventListener('focus', ask);
+  // Sahifa pageshow (bfcache)
+  window.addEventListener('pageshow', ask);
 }

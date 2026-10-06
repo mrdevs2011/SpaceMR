@@ -17,15 +17,12 @@ function applyNotifToggleUI() {
   const toggle = $('notifToggle');
   const hint   = $('notifHint');
   if (!toggle) return;
-  const denied = ('Notification' in window) && Notification.permission === 'denied';
-  const on     = areNotificationsEnabled();
+  const on = areNotificationsEnabled();
   toggle.classList.toggle('on', on);
-  toggle.classList.toggle('disabled', denied);
+  toggle.classList.remove('disabled');
   toggle.setAttribute('aria-checked', String(on));
   if (hint) {
-    hint.textContent = denied
-      ? "Brauzer bildirishnomalarni bloklagan — brauzer sozlamalaridan yoqing"
-      : "Yangi xabar, izoh va qo'ng'iroqlar haqida xabar bering";
+    hint.textContent = "Yangi xabar, izoh va qo'ng'iroqlar haqida xabar bering";
   }
 }
 

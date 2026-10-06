@@ -15333,6 +15333,63 @@ select.field option { background: #000000; color: var(--text); }
 .cfm-media-wrap--standalone {
   min-height: 80px;
 }
+
+
+/* ── Reply quote (Telegram uslubi) ── */
+.msg-reply-quote {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.chat-msg.theirs .msg-reply-quote {
+  background: rgba(255, 255, 255, 0.06);
+}
+.chat-msg.mine .msg-reply-quote {
+  background: rgba(0, 0, 0, 0.22);
+}
+.mrq-bar {
+  width: 3px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: #1d9bf0;
+  align-self: stretch;
+  min-height: 28px;
+}
+.chat-msg.mine .mrq-bar {
+  background: rgba(255, 255, 255, 0.85);
+}
+.mrq-body {
+  min-width: 0;
+  flex: 1;
+}
+.mrq-name {
+  font: 700 12px/1.25 var(--font);
+  color: #1d9bf0;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-msg.mine .mrq-name {
+  color: rgba(255, 255, 255, 0.95);
+}
+.mrq-text {
+  font: 400 12px/1.3 var(--font);
+  color: rgba(231, 233, 234, 0.72);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-msg.mine .mrq-text {
+  color: rgba(255, 255, 255, 0.75);
+}
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
 /* ═══ Rolik (dumaloq video xabar): yozish tugmasi rejimi, ekran o'rtasidagi kamera, chatdagi doira ═══ */

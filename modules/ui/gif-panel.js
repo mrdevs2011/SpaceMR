@@ -94,10 +94,15 @@ export function createGifPanel(root, onPick) {
     if (my === seq && next && body.scrollHeight <= body.clientHeight + 40) load();
   }
   function search() { seq++; busy = false; reset(); load(); }
-  inp.addEventListener('input', () => {
+  function applyQuery(raw, { instant = false } = {}) {
+    const v = String(raw ?? '').trim();
+    if (v === q && items.size) return;
+    const run = () => { if (v === q && items.size) return; q = v; search(); };
     clearTimeout(timer);
-    timer = setTimeout(() => { const v = inp.value.trim(); if (v === q) return; q = v; search(); }, 350);
-  });
+    if (instant) run();
+    else timer = setTimeout(run, 180); // tez live search
+  }
+  inp.addEventListener('input', () => applyQuery(inp.value));
   body.addEventListener('scroll', () => { if (body.scrollTop + body.clientHeight > body.scrollHeight - 240) load(); }, { passive: true });
   root.addEventListener('click', e => {
     const recent = e.target.closest('.gp-recent-item');
@@ -122,5 +127,14 @@ export function createGifPanel(root, onPick) {
   });
   // Oldindan yuklash — panel ochilganda kutmaslik
   try { load(); loaded = true; } catch (_) {}
-  return { open() { paintRecent(); if (!loaded) { loaded = true; load(); } else if (!items.size) load(); }, focusSearch: () => inp.focus() };
+  return {
+    open() { paintRecent(); if (!loaded) { loaded = true; load(); } else if (!items.size) load(); },
+    focusSearch() { try { inp.focus({ preventScroll: true }); } catch { inp.focus(); } },
+    setQuery(raw, opts) {
+      const v = String(raw ?? '');
+      if (inp.value !== v) inp.value = v;
+      applyQuery(v, opts);
+    },
+    getQuery() { return inp.value; },
+  };
 }

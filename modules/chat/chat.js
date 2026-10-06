@@ -1672,13 +1672,18 @@ export async function openChatThread(uid) {
     const list = chatState._curMsgs.slice();
     const i = list.findIndex(x => x.id === m.id);
     if (i >= 0) {
-      // No-op UPDATE: faqat status/read_at o'zgargan va UI allaqachon shunday — qayta chizmaslik
       const prev = list[i];
       if (ev === 'UPDATE' && prev && prev.status === m.status && prev.text === m.text
-          && prev.editedAt === m.editedAt && (prev.readAt || null) === (m.readAt || null)) {
+          && prev.editedAt === m.editedAt && (prev.readAt || null) === (m.readAt || null)
+          && String(prev.replyTo || '') === String(m.replyTo || '')) {
         return;
       }
-      list[i] = m;
+      // replyPreview ni saqlab qolamiz (server mapMessage da yo'q)
+      list[i] = {
+        ...m,
+        replyTo: m.replyTo || prev.replyTo || null,
+        replyPreview: m.replyPreview || prev.replyPreview || null,
+      };
     }
     else if (ev === 'INSERT') list.push(m);
     else { schedThread(); return; }
@@ -2126,31 +2131,31 @@ function preloadRecentChatMedia(msgs) {
 
 /** Telegram-style reply quote inside bubble */
 function _replyQuoteHtml(m, msgs, grp) {
-  const rid = m.replyTo || m.reply_to;
+  const rid = m.replyTo || m.reply_to || null;
   if (!rid) return '';
-  // Prefer stored preview (optimistic), else look up in current list
+  const ridS = String(rid);
   let name = m.replyPreview?.name;
   let preview = m.replyPreview?.text;
   let rtype = m.replyPreview?.type;
   if (!name || !preview) {
-    const orig = (msgs || []).find(x => x.id === rid);
+    const orig = (msgs || []).find(x => String(x.id) === ridS);
     if (orig) {
       name = name || (orig.senderId === state.me?.uid ? 'Siz' : (grp?.names?.[orig.senderId]?.fullName || $('chatThreadName')?.textContent || 'Foydalanuvchi'));
       preview = preview || humanMsgPreview(orig);
       rtype = rtype || orig.type;
     } else {
       name = name || 'Xabar';
-      preview = preview || 'O‘chirilgan xabar';
+      preview = preview || 'Xabar';
     }
   }
-  // Hech qachon JSON/URL
-  preview = formatLastMessageText(preview) || preview;
-  if (!preview || (preview.startsWith('{') && preview.includes('"__'))) preview = 'Xabar';
-  return `<div class="msg-reply-quote" data-reply-to="${esc(rid)}">
+  preview = formatLastMessageText(preview) || preview || 'Xabar';
+  if (preview.startsWith('{') && preview.includes('"__')) preview = 'Xabar';
+  name = name || 'Xabar';
+  return `<div class="msg-reply-quote" data-reply-to="${esc(ridS)}" role="button" tabindex="0">
     <div class="mrq-bar"></div>
     <div class="mrq-body">
       <div class="mrq-name">${esc(name)}</div>
-      <div class="mrq-text">${esc(preview)}</div>
+      <div class="mrq-text">${esc(String(preview).slice(0, 160))}</div>
     </div>
   </div>`;
 }

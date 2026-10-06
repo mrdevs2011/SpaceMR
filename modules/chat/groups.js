@@ -876,7 +876,7 @@ export async function sendGroupMessage(opts) {
     : userText;
 
   const replyInfo = getReplying();
-  const replyToId = replyInfo?.id || null;
+  const replyToId = replyInfo?.id ? String(replyInfo.id) : null;
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare

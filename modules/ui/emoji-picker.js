@@ -44,7 +44,7 @@ const gridAtlas = list => list.map(e => { const p = POS.get(e); return btnHtml(e
 
 export function initEmojiPicker({ btn, pop, input, onGif }) {
   if (!btn || !pop || !input) return;
-  let built = false, cats = [], recent = loadRecent();
+  let built = false, cats = [], recent = loadRecent(), _gifCmdOn = false;
   let tabs, body, searchRow, searchInp, tabRow, gifPanel = null, mode = 'emoji';
 
   async function build() {
@@ -83,7 +83,14 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
     searchInp.addEventListener('input', onSearch);
     setActive(recent.length ? 'recent' : cats[0].id);
     if (onGif) {
-      gifPanel = createGifPanel(pop.querySelector('.ep-view-gif'), g => { onGif(g); closePanel(); });
+      gifPanel = createGifPanel(pop.querySelector('.ep-view-gif'), g => {
+        if (_gifCmdOn || /^@gif\s/i.test(input.value || '')) {
+          input.value = '';
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          _gifCmdOn = false;
+        }
+        onGif(g); closePanel();
+      });
       let saved = 'emoji'; try { saved = localStorage.getItem('spacemr_picker_mode') === 'gif' ? 'gif' : 'emoji'; } catch {}
       setMode(saved);
     }
@@ -98,12 +105,23 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
     pop.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
     pop.querySelector('.ep-view-gif').hidden = m !== 'gif';
     pop.querySelector('.ep-view-emoji').hidden = m !== 'emoji';
-    if (m === 'gif') gifPanel.open();
-    else requestAnimationFrame(() => {
-      const on = tabs.find(t => t.classList.contains('on'));
-      const sec = on && body.querySelector(`[data-sec="${on.dataset.tab}"]`);
-      if (sec) body.scrollLeft = sec.offsetLeft;
-    });
+    if (m === 'gif') {
+      gifPanel.open();
+      // Faqat panel ochiq + desktop: search fokus (idle build fokus o'g'irlamasin)
+      if (!isMobile() && pop.classList.contains('show') && !_gifCmdOn) {
+        requestAnimationFrame(() => gifPanel.focusSearch?.());
+      }
+    } else {
+      requestAnimationFrame(() => {
+        const on = tabs.find(t => t.classList.contains('on'));
+        const sec = on && body.querySelector(`[data-sec="${on.dataset.tab}"]`);
+        if (sec) body.scrollLeft = sec.offsetLeft;
+        if (!isMobile() && pop.classList.contains('show') && !_gifCmdOn) {
+          toggleSearch(true);
+          try { searchInp?.focus({ preventScroll: true }); } catch { searchInp?.focus(); }
+        }
+      });
+    }
   }
 
   function paintRecent() {
@@ -246,6 +264,16 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
     pop.classList.add('show');
     await build(); recent = loadRecent(); if (built && body) paintRecent();
     if (focus) dock(true);
+    // Desktop: klaviatura to'g'ridan-to'g'ri search ga
+    if (!isMobile() && focus) {
+      requestAnimationFrame(() => {
+        if (mode === 'gif') gifPanel?.focusSearch?.();
+        else {
+          toggleSearch(true);
+          try { searchInp?.focus({ preventScroll: true }); } catch { searchInp?.focus(); }
+        }
+      });
+    }
   }
 
   btn.addEventListener('click', async (e) => {
@@ -324,6 +352,43 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
 
   /* Oldindan tayyorlash (ilova bo'sh turganda): emoji-data.js yuklanadi, panel yashirincha quriladi, birinchi sahifa sprite'i
      va "Oxirgilar" rasmlari keshlanadi — ochilganda "Yuklanmoqda…" ham, rasm kutish ham bo'lmaydi. */
+  /* Desktop: @gif <so'z> — panel ochiladi, qidiruv live; fokus chat inputda qoladi */
+  function isDesktop() {
+    return !isMobile() && !!window.matchMedia('(pointer: fine)').matches;
+  }
+  function syncGifCmd() {
+    if (!isDesktop() || !onGif) return;
+    const val = input.value || '';
+    if (!/^@gif\s/i.test(val)) {
+      if (_gifCmdOn) _gifCmdOn = false;
+      return;
+    }
+    const q = val.replace(/^@gif\s*/i, '');
+    _gifCmdOn = true;
+    (async () => {
+      if (!pop.classList.contains('show')) {
+        pinned = true;
+        await openPanel(false);
+      }
+      if (mode !== 'gif') {
+        // setMode fokus qilmasin — chat inputdan yozish davom etsin
+        mode = 'gif';
+        pop.classList.add('ep-gif');
+        try { localStorage.setItem('spacemr_picker_mode', 'gif'); } catch {}
+        pop.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === 'gif'));
+        const vg = pop.querySelector('.ep-view-gif');
+        const ve = pop.querySelector('.ep-view-emoji');
+        if (vg) vg.hidden = false;
+        if (ve) ve.hidden = true;
+        gifPanel?.open?.();
+      } else {
+        gifPanel?.open?.();
+      }
+      gifPanel?.setQuery?.(q, { instant: false });
+    })();
+  }
+  input.addEventListener('input', () => { if (isDesktop()) syncGifCmd(); });
+
   (window.requestIdleCallback || (f => setTimeout(f, 1500)))(() => {
     warmAtlas('smileys');
     warmEmoji(recent, '2d');

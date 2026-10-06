@@ -42,7 +42,7 @@ export async function sendChatMessage(opts) {
     : userText;
 
   const replyInfo = getReplying();
-  const replyToId = replyInfo?.id || null;
+  const replyToId = replyInfo?.id ? String(replyInfo.id) : null;
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
@@ -136,11 +136,16 @@ export async function sendVoiceMessage(blob, duration) {
   const nowMs = Date.now();
   const localUrl = URL.createObjectURL(blob);
   registerLocalVoiceUrl(id, localUrl, voiceBarCount(duration));
+  const _vReply = getReplying();
+  const _vReplyTo = _vReply?.id ? String(_vReply.id) : null;
+  if (_vReply) cancelReply(false);
   const localMsg = {
     id, chatId, senderId: state.me.uid, type: 'voice', text: null,
     mediaPath: null, mediaUrl: localUrl, mediaType: blob.type || null, fileName: null, fileSize: null,
     duration: Math.round(duration || 0),
     status: 'sending', readAt: null, editedAt: null, createdAt: nowMs, _at: nowMs + 120000,
+    replyTo: _vReplyTo,
+    replyPreview: _vReply ? { name: _vReply.name, text: _vReply.preview, type: _vReply.type } : null,
   };
   chatState._rtLocal.set(id, localMsg);
   chatUI.paintMessages([...chatState._curMsgs, localMsg]);
@@ -156,6 +161,7 @@ export async function sendVoiceMessage(blob, duration) {
       id, chat_id: chatId, sender_id: state.me.uid, type: 'voice',
       media_path: result.path, media_type: blob.type || null,
       duration: Math.round(duration || 0),
+      reply_to: _vReplyTo,
       ...(waveform ? { waveform } : {}),
     };
     let { error } = await sb.from('messages').insert(row);
