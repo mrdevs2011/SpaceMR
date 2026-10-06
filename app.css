@@ -15459,11 +15459,15 @@ select.field option { background: #000000; color: var(--text); }
   font-weight: 500;
 }
 
-/* leave-notice */
+/* leave-notice / joined the group — doimo markazda */
+.chat-msg.chat-sys,
 .chat-sys {
-  display: flex;
-  justify-content: center;
-  margin: 8px 0;
+  display: flex !important;
+  justify-content: center !important;
+  align-self: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 8px 0 !important;
   pointer-events: none;
 }
 .chat-sys-pill {
