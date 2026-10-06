@@ -5371,18 +5371,35 @@ h1, h2, h3, .hdr-brand, .auth-brand, .splash-wordmark {
 #actionsView .ua-actions { margin-right: 48px; }
 #actionsView .ua-approve-btn, #actionsView .ua-reject-btn, #actionsView .ua-block-btn, #actionsView .ua-unblock-btn, #actionsView .ua-history-btn { padding: 9px 14px; font-size: 0.8rem; }
 /* ═══════════════════════════════════════════════════════════════════════ ACTIONS VIEW — DESKTOP (≥1024px) Ik... */
-@media (min-width: 1100px) {
-  #actionsView { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto 1fr; column-gap: 28px; padding: 28px 32px 28px 0; align-items: start; }
+/* ≥1100: admin kontent markazda; ≥1200 right-rail alohida (boshqa page kabi) */
+@media (min-width: 1100px) and (max-width: 1199px) {
+  #actionsView { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto 1fr; column-gap: 20px; padding: 20px 16px 20px 0; align-items: start; }
   #actionsView .users-admin-hdr { grid-column: 2; grid-row: 1; padding: 0 0 14px; border-bottom: 1px solid var(--line); }
   #actionsView #usersAdminList { grid-column: 2; grid-row: 2; padding: 10px 4px 24px 0; }
   #actionsView .actions-divider { display: none; }
-  #actionsView .ua-row { padding: 14px 16px;  }
+  #actionsView .ua-row { padding: 14px 16px; }
   #actionsView .ua-delete-btn { opacity: 0; }
   #actionsView .ua-row:hover .ua-delete-btn { opacity: 1; }
   #actionsView .ua-actions { flex-direction: column; gap: 6px; margin-right: 44px; }
 }
-@media (min-width: 1280px) {
-  #actionsView { grid-template-columns: minmax(0, 1fr) 440px; column-gap: 36px; padding: 32px 40px 32px 0; }
+@media (min-width: 1200px) {
+  #actionsView {
+    display: block;
+    padding: 12px 0 24px;
+    box-sizing: border-box;
+  }
+  #actionsView .users-admin-hdr {
+    padding: 0 16px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  #actionsView #usersAdminList {
+    padding: 10px 8px 24px;
+  }
+  #actionsView .actions-divider { display: flex; }
+  #actionsView .ua-row { padding: 14px 16px; }
+  #actionsView .ua-delete-btn { opacity: 0; }
+  #actionsView .ua-row:hover .ua-delete-btn { opacity: 1; }
+  #actionsView .ua-actions { flex-direction: row; flex-wrap: wrap; gap: 6px; margin-right: 44px; }
 }
 /* ═══════════════════════════════════════════════════════════════════════ ADMIN PANEL — SOLID UI ════════════... */
 /* Glass variables */
@@ -6431,7 +6448,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
 .right-rail { display: none; }
 @media (min-width: 1200px) {
   :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
+  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
   .feed, #followingView .feed { max-width: var(--center-w); width: 100%; margin: 0; }
   [data-theme] .search-overlay, [data-theme="dark"] .search-overlay, .search-overlay {
     left: var(--content-left, var(--sidebar, 260px));

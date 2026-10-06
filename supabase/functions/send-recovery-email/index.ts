@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import nodemailer from 'npm:nodemailer@6.9.9';
 
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://spacemr.vercel.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-  // 1. request_password_reset RPC ni chaqiramiz (vaqtinchalik parol o'rnatish)
+  // 1. request_password_reset RPC (kod yozadi; uid/email qaytarmaydi — 081)
   const { data: resData, error: resErr } = await admin.rpc('request_password_reset', {
     p_username: username,
     p_temp_password: temp_password,
@@ -39,13 +39,26 @@ Deno.serve(async (req) => {
   if (resErr) {
     return json({ error: resErr.message }, 400);
   }
-
-  const recoveryEmail = resData?.recovery_email;
-  const maskedEmail = resData?.masked_email;
-
-  if (!recoveryEmail) {
-    return json({ error: 'Zaxira email topilmadi' }, 400);
+  if (resData?.error === 'rate_limited') {
+    return json({ error: 'Juda ko'p urinish. 15 daqiqa kuting.' }, 429);
   }
+  if (!resData?.ok || resData?.sent === false) {
+    // uniform: foydalanuvchi/email yo'q — maxfiy
+    return json({ ok: true, masked_email: null, email_sent: false });
+  }
+
+  // 2) Email faqat service_role orqali (RPC endi recovery_email qaytarmaydi)
+  const uname = String(username).trim().toLowerCase();
+  const { data: prof, error: pErr } = await admin
+    .from('profiles')
+    .select('recovery_email')
+    .eq('username', uname)
+    .maybeSingle();
+  if (pErr || !prof?.recovery_email) {
+    return json({ ok: true, masked_email: resData?.masked_email || null, email_sent: false });
+  }
+  const recoveryEmail = prof.recovery_email as string;
+  const maskedEmail = (resData?.masked_email as string) || null;
 
   const emailSubject = `SpaceMR | Tasdiqlash kodi: ${temp_password}`;
   const logoUrl = 'https://spacemr.vercel.app/svg/SpaceMR-email.png';

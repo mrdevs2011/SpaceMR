@@ -664,7 +664,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
 .right-rail { display: none; }
 @media (min-width: 1200px) {
   :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
+  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
   .feed, #followingView .feed { max-width: var(--center-w); width: 100%; margin: 0; }
   [data-theme] .search-overlay, [data-theme="dark"] .search-overlay, .search-overlay {
     left: var(--content-left, var(--sidebar, 260px));

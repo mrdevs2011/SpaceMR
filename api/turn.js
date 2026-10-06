@@ -4,10 +4,22 @@
 const TTL = 86400;              // Cloudflare kredensiali 24 soat amal qiladi
 const CACHE_MS = 6 * 3600e3;    // serverda 6 soat keshlanadi (mijozga kamida ~18 soat qoladi)
 let cache = null;
+const rateByIp = new Map(); // ip -> { n, t0 }
+function rateOk(ip) {
+  const now = Date.now();
+  let e = rateByIp.get(ip);
+  if (!e || now - e.t0 > 60000) { e = { n: 0, t0: now }; rateByIp.set(ip, e); }
+  e.n++;
+  if (rateByIp.size > 2000) rateByIp.clear();
+  return e.n <= 30; // 30 req / min / IP
+}
+
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
+  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '?').split(',')[0].trim();
+  if (!rateOk(ip)) return res.status(429).json({ error: 'rate' });
 
   const keyId = process.env.TURN_KEY_ID;
   const token = process.env.TURN_KEY_API_TOKEN;
