@@ -2089,7 +2089,7 @@ function _renderPickerRows(users, listEl, q = '') {
           <img src="./svg/action/edit.svg" alt="" class="icon" width="14" height="14">
         </button>
         <button type="button" class="grp-write-btn ${!canW && sel ? 'is-on danger' : ''}" data-write-toggle="0" title="Yoza olmaydi" aria-label="Yoza olmaydi">
-          <img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14" onerror="this.style.display='none'">
+          <img src="./svg/action/edit-off.svg" alt="" class="icon" width="14" height="14">
         </button>
       </div>` : '';
     return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${canToggle && sel ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">

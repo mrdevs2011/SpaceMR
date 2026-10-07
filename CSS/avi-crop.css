@@ -64,7 +64,8 @@
   width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--x-blue, #1d9bf0); box-shadow: 0 0 0 4px rgba(29, 155, 240, 0.25);
 }
 .avi-crop-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(29, 155, 240, 0.45); }
-.avi-crop-actions { display: flex; flex-direction: column; gap: 8px; }
+.avi-crop-actions { display: flex; flex-direction: row; gap: 8px; }
+.avi-crop-actions > .avi-crop-upload, .avi-crop-actions > .avi-crop-cancel { flex: 1 1 0; min-width: 0; }
 .avi-crop-upload, .avi-crop-cancel {
   height: 40px; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer;
 }

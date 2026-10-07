@@ -4269,8 +4269,8 @@ textarea.pe-input-locked {
   flex-shrink: 0;
   margin-right: 4px;
 }
-#grpMemberPickerSection.perm-selected .grp-picker-row.selected .grp-picker-write-tools,
-body.grp-perm-selected .grp-picker-row.selected .grp-picker-write-tools {
+#grpMemberPickerSection.perm-selected .grp-picker-row .grp-picker-write-tools,
+body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   display: flex;
 }
 .grp-write-btn {
@@ -4284,21 +4284,24 @@ body.grp-perm-selected .grp-picker-row.selected .grp-picker-write-tools {
   justify-content: center;
   cursor: pointer;
   padding: 0;
-  opacity: 0.55;
-  transition: opacity .12s, background .12s, border-color .12s;
+  opacity: 0.35;
+  transition: opacity .12s, background .12s, border-color .12s, transform .08s;
 }
+.grp-write-btn:active { transform: scale(0.9); }
 .grp-write-btn:hover {
   opacity: 1;
   background: #16181c;
 }
 .grp-write-btn.is-on {
   opacity: 1;
-  border-color: #1d9bf0;
-  background: rgba(29,155,240,0.15);
+  border-color: #00ba7c;
+  background: rgba(0,186,124,0.35);
+  box-shadow: 0 0 0 2px rgba(0,186,124,0.25);
 }
 .grp-write-btn.is-on.danger {
   border-color: #f4212e;
-  background: rgba(244,33,46,0.12);
+  background: rgba(244,33,46,0.35);
+  box-shadow: 0 0 0 2px rgba(244,33,46,0.25);
 }
 .grp-picker-row.no-write {
   opacity: 0.72;
