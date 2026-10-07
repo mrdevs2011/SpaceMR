@@ -9057,3 +9057,17 @@ select.field option { background: #000000; color: var(--text); }
   padding-left: 42px !important;
   min-height: 56px !important;
 }
+
+/* A'zo qidiruv input — radius yo'q */
+#grpPickerSearch,
+.grp-picker-search,
+.grp-picker-search-wrap input {
+  border-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+.grp-picker-search-wrap {
+  border-radius: 14px !important;
+  overflow: hidden !important;
+}

@@ -565,13 +565,8 @@ export async function openGroupThread(groupId) {
   const av = groupData.avatar || defAvi(groupData.name || 'G');
   $('chatThreadAvi').innerHTML = `<img src="${esc(av)}" onerror="this.style.display='none'">`;
 
-  // Type badge on avi
-  let existingBadge = modal.querySelector('.grp-avi-badge');
-  if (existingBadge) existingBadge.remove();
-  const badge = document.createElement('div');
-  badge.className = 'grp-avi-badge grp-avi-badge--' + groupData.type;
-  badge.innerHTML = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="10" height="10">`;
-  $('chatThreadAvi').appendChild(badge);
+  // Guruh avatar ustidagi type badge olib tashlandi
+  modal.querySelectorAll('.grp-avi-badge').forEach(el => el.remove());
 
   $('chatThreadName').textContent = groupData.name || 'Guruh';
   _setGroupPeopleLabel((groupData.members || []).length);
@@ -1639,6 +1634,7 @@ export function openJoinGroupModal() {
 
 let _createType    = 'group';
 let _selectedMembers = new Set();
+let _existingMemberUids = new Set();
 /** msg_permission=selected: yozish mumkin bo'lgan uid lar */
 let _selectedWriters = new Set();
 let _pendingPhotoUrl = null;
@@ -1846,13 +1842,14 @@ function _bindMsgPermDropdown() {
   });
 }
 
-function _renderMemberPicker(container, users) {
+function _renderMemberPicker(container, users, opts = {}) {
+  const existing = opts.existingMembers || _existingMemberUids || new Set();
+  _existingMemberUids = existing;
   if (!users.length) {
     container.innerHTML = `<div class="grp-empty-users">Kontaktlaringiz yo'q.
 Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
     return;
   }
-  // Input bir marta yaratiladi — qidiruvda qayta yaratilmasin (focus yo'qolmasin, titramasin)
   container.innerHTML = `
     <div class="grp-picker-search-wrap">
       <img src="./svg/extra/icon-34d2886eafb1.svg" alt="" class="icon" width="14" height="14">
@@ -1889,12 +1886,15 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
       if (!row || !listEl.contains(row)) return;
       const uid = row.dataset.uid;
       if (!uid) return;
+      /* Allaqachon guruhda — o'zgartirib bo'lmaydi */
+      if (row.classList.contains('is-member') || (_existingMemberUids && _existingMemberUids.has(uid))) {
+        return;
+      }
       if (_selectedMembers.has(uid)) {
         _selectedMembers.delete(uid);
         _selectedWriters.delete(uid);
       } else {
         _selectedMembers.add(uid);
-        /* default: yozish mumkin */
         _selectedWriters.add(uid);
       }
       row.classList.toggle('selected', _selectedMembers.has(uid));
@@ -1936,9 +1936,10 @@ function _renderPickerRows(users, listEl, q = '') {
   const selectedMode = (document.getElementById('grpFormMsgPerm')?.value === 'selected');
   listEl.innerHTML = users.map(u => {
     const av   = u.avatar || defAvi(u.fullName || 'U');
-    const sel  = _selectedMembers.has(u.uid);
+    const isMem = !!( _existingMemberUids && _existingMemberUids.has(u.uid) );
+    const sel  = isMem || _selectedMembers.has(u.uid);
     const canW = _selectedWriters.has(u.uid);
-    const writeTools = selectedMode ? `
+    const writeTools = (selectedMode && sel && !isMem) ? `
       <div class="grp-picker-write-tools" title="Yozish ruxsati">
         <button type="button" class="grp-write-btn ${canW ? 'is-on' : ''}" data-write-toggle="1" title="Yoza oladi" aria-label="Yoza oladi">
           <img src="./svg/action/edit.svg" alt="" class="icon" width="14" height="14">
@@ -1947,7 +1948,7 @@ function _renderPickerRows(users, listEl, q = '') {
           <img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14" onerror="this.style.display='none'">
         </button>
       </div>` : '';
-    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${sel && selectedMode ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
+    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${!isMem && sel && selectedMode ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
       <div class="grp-picker-avi"><img src="${esc(av)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'"></div>
       <div class="grp-picker-info">
         <div class="grp-picker-name">${esc(u.fullName||'Foydalanuvchi')}</div>
@@ -2038,9 +2039,11 @@ export async function openMemberPicker(groupId, mode) {
   const pickerSection = overlay.querySelector('#grpMemberPickerSection');
   pickerSection.innerHTML = '<div class="spin-wrap pt-20px"><div class="spinner"></div></div>';
   const users = await _loadContactsForPicker();
-  const nonMembers = users.filter(u => !existingMembers.has(u.uid));
-  _usersForPicker = nonMembers;
-  _renderMemberPicker(pickerSection, nonMembers);
+  /* Barcha kontaktlar: guruhda borlari galochka + qayta tanlab bo'lmaydi */
+  _existingMemberUids = existingMembers;
+  _selectedMembers = new Set();
+  _usersForPicker = users;
+  _renderMemberPicker(pickerSection, users, { existingMembers });
 
   overlay.classList.add('show');
 }

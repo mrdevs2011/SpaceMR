@@ -1289,15 +1289,12 @@ async function _appendGroupRows(root, term = '') {
       const formattedLastMsg = formatLastMessageText(rawPreview);
       const preview  = rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh';
       const time     = (g.lastMessageAt && rawPreview) ? fmt(g.lastMessageAt) : '';
-      const typeIcon = `<img src="./svg/extra/icon-a4ea72a360cc.svg" alt="" class="icon" width="9" height="9">`;
-      const badgeClass = 'chat-row-grp-badge--group';
       const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
       const unameHtml = g.username ? `<span style="font-size:11.5px;color:var(--blue,#1d9bf0);font-weight:500;margin-left:6px;">@${esc(g.username)}</span>` : '';
 
       return `<div class="chat-row${unread ? ' unread' : ''}" data-gid="${g.id}">
         <div class="chat-avi">
           <img src="${esc(av)}" onerror="this.style.display='none'">
-          <div class="chat-row-grp-badge ${badgeClass}">${typeIcon}</div>
         </div>
         <div class="chat-row-body">
           <div class="chat-row-name">${esc(g.name || 'Guruh')}${unameHtml}</div>

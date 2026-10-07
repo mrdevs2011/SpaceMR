@@ -4212,7 +4212,9 @@ textarea.pe-input-locked {
   min-height: 44px;
   margin-bottom: 8px;
 }
-.grp-picker-search-wrap .grp-picker-search {
+.grp-picker-search-wrap .grp-picker-search,
+.grp-picker-search-wrap input.grp-picker-search,
+#grpPickerSearch {
   border: none !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -4221,7 +4223,21 @@ textarea.pe-input-locked {
   padding: 10px 0 !important;
   min-height: 0 !important;
   height: auto !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
+.grp-picker-row.is-member {
+  cursor: default;
+  opacity: 0.85;
+}
+.grp-picker-row.is-member .grp-picker-check.on {
+  background: #00ba7c;
+  border-color: #00ba7c;
+}
+.grp-picker-row.is-member:hover {
+  background: transparent;
+}
+
 .grp-picker-list {
   border-radius: 14px !important;
   border: 1px solid #2f3336 !important;
@@ -4274,4 +4290,10 @@ body.grp-perm-selected .grp-picker-row.selected .grp-picker-write-tools {
 .grp-picker-row.no-write .grp-picker-name {
   text-decoration: line-through;
   text-decoration-color: rgba(244,33,46,0.5);
+}
+
+/* Guruh avatar ustidagi type badge — o'chirilgan */
+.chat-row-grp-badge,
+.grp-avi-badge {
+  display: none !important;
 }
