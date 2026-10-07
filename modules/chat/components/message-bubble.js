@@ -2,7 +2,7 @@ import './chat-image-zoom.js';
 import { esc } from '../../core/utils.js';
 import { getChatFileIcon, callLogInfo, fmtCallDur } from '../chat-shared.js';
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
-import { ensureVideoDuration, fixVideoDuration } from '../../core/video-policy.js';
+import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
 
 /* Rasm nisbatini eslab qolish: qayta chizilganda (innerHTML) rasm yuklanmasdan oldin ham
    joyi band bo'lsin — chat sakramasin. Birinchi marta ko'rilganda nisbat noma'lum. */
@@ -61,6 +61,9 @@ function _playVidReliable(v) {
     v.setAttribute('playsinline', '');
     v.setAttribute('webkit-playsinline', '');
     v.playsInline = true;
+    // Ijro boshlanishida to'liq buffer — yarimdan keyin qotish kamayadi
+    try { v.preload = 'auto'; } catch (_) {}
+    try { hardenVideoPlayback(v); } catch (_) {}
   } catch (_) {}
   const go = () => v.play().catch(() => {
     // ba'zi mobil brauzerlar ovozli play ni bloklaydi — muted boshlab keyin ochamiz
@@ -293,6 +296,8 @@ if (!window.__chatNoteBound) {
     w.classList.add('playing');
     // Kechni oldini olish: avval buffer, keyin play
     try { v.muted = false; } catch (_) {}
+    try { v.preload = 'auto'; } catch (_) {}
+    try { hardenVideoPlayback(v); } catch (_) {}
     const tryPlay = () => v.play().catch(() => w.classList.remove('playing'));
     if (v.readyState >= 2) tryPlay();
     else {

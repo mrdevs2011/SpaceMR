@@ -929,8 +929,20 @@ async function _queryMicPermission() {
 }
 
 async function _requestMicStream() {
-  // Har safar yangidan so'raymiz — denied cache qilmaymiz
-  return navigator.mediaDevices.getUserMedia({ audio: true });
+  // Har safar yangidan so'raymiz — denied cache qilmaymiz.
+  // 1:1: sampleRate/channel ni majburlamaymiz (qurilma native); faqat echo/noise yumshoq.
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        // channelCount/sampleRate ideal — brauzer pastga tushirmasin deb majburiy emas
+      }
+    });
+  } catch (_) {
+    return navigator.mediaDevices.getUserMedia({ audio: true });
+  }
 }
 
 function _micErrorKind(err) { return mediaErrorKind(err); }   // umumiy: camera-access.js
@@ -953,7 +965,15 @@ function _deliverVoice(blob, duration) {
 }
 
 function _newSegmentRecorder(stream, mime) {
-  const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+  // 1:1 sifat: qayta siqish YO'Q, eng yuqori audioBitsPerSecond.
+  // MediaRecorder baribir container (webm/ogg) yozadi — lekin bitrate maksimal.
+  const opts = mime ? { mimeType: mime, audioBitsPerSecond: 256000 } : { audioBitsPerSecond: 256000 };
+  let rec;
+  try { rec = new MediaRecorder(stream, opts); }
+  catch (_) {
+    try { rec = new MediaRecorder(stream, mime ? { mimeType: mime } : {}); }
+    catch (_2) { rec = new MediaRecorder(stream); }
+  }
   const chunks = [];
   const t0 = performance.now();
   rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
@@ -965,9 +985,11 @@ function _newSegmentRecorder(stream, mime) {
     }
     if (!chunks.length) return;
     const duration = Math.max(1, Math.round((performance.now() - t0) / 1000));
+    // Blob ni hech qanday re-encode qilmasdan yuboramiz (1:1)
     _deliverVoice(new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' }), duration);
   };
-  rec.start();
+  // timeslice: bo'laklar yo'qolmasin, oxirgi sekundlar ham yozilsin
+  try { rec.start(250); } catch (_) { rec.start(); }
   return rec;
 }
 

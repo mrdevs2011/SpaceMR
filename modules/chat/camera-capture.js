@@ -40,8 +40,9 @@ async function _startAudio() {
 
 function _pickMime() {
   const cands = [
+    'video/webm;codecs=vp8,opus',  // progressive o'ynash — VP9 dan ishonchliroq
+    'video/webm;codecs=vp8',
     'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
     'video/webm',
     'video/mp4',
   ];

@@ -279,27 +279,33 @@ export function hardenVideoPlayback(v) {
   if (!v || v.dataset.playHardened === '1') return;
   v.dataset.playHardened = '1';
   let resumeT = 0;
+  let nudgeN = 0;
   const softResume = () => {
     clearTimeout(resumeT);
     resumeT = setTimeout(() => {
       if (v.paused || v.ended) return;
       try {
-        if (v.readyState < 2) {
-          const t = v.currentTime;
-          // kichik seek decoder ni uyg'otadi (WebM keyframe)
-          if (t > 0.15) {
-            v.currentTime = Math.max(0, t - 0.05);
+        // 1) avval oddiy play — seek decoder ni buzishi mumkin
+        const p = v.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+        // 2) hali ham readyState past va buffer yetmasa — kichik nudge (max 2 marta)
+        if (v.readyState < 2 && nudgeN < 2) {
+          nudgeN++;
+          const t = v.currentTime || 0;
+          if (t > 0.2) {
+            try { v.currentTime = Math.max(0, t - 0.04); } catch (_) {}
+            v.play().catch(() => {});
           }
         }
-        v.play().catch(() => {});
       } catch (_) {}
-    }, 280);
+    }, 200);
   };
   v.addEventListener('waiting', softResume);
   v.addEventListener('stalled', softResume);
-  // Prefetch: metadata emas — avvalgi buffer
+  v.addEventListener('playing', () => { nudgeN = 0; });
+  // Prefetch: metadata emas — to'liq buffer
   try {
-    if (v.preload === 'metadata' || !v.preload) v.preload = 'auto';
+    if (v.preload === 'metadata' || !v.preload || v.preload === 'none') v.preload = 'auto';
   } catch (_) {}
 }
 

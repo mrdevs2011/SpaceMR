@@ -418,7 +418,7 @@ function _stopActive() {
   _stopPlayEq();
   if (_activeAudio) {
     const a = _activeAudio;
-    a.onwaiting = a.onplaying = a.onpause = a.onended = a.onerror = null;
+    a.onwaiting = a.onstalled = a.onplaying = a.onpause = a.onended = a.onerror = null;
     try { a.pause(); } catch (_) {}
   }
   _resetActiveVisual();
@@ -695,9 +695,35 @@ window._chatPlayVoice = async function(btn) {
     return audio.play();
   };
 
-  audio.onwaiting = () => { if (_activeAudio !== audio) return; _activeLoading = true; _setBtnState(); };
+  let _voiceResumeT = 0, _voiceNudge = 0;
+  const _softResumeVoice = () => {
+    if (_activeAudio !== audio || audio.ended) return;
+    clearTimeout(_voiceResumeT);
+    _voiceResumeT = setTimeout(() => {
+      if (_activeAudio !== audio || audio.paused || audio.ended) return;
+      try {
+        audio.play().catch(() => {});
+        // Buffer qotib qolsa — kichik nudge (max 2)
+        if (audio.readyState < 2 && _voiceNudge < 2) {
+          _voiceNudge++;
+          const ct = audio.currentTime || 0;
+          if (ct > 0.15) {
+            try { audio.currentTime = Math.max(0, ct - 0.03); } catch (_) {}
+            audio.play().catch(() => {});
+          }
+        }
+      } catch (_) {}
+    }, 180);
+  };
+  audio.onwaiting = () => {
+    if (_activeAudio !== audio) return;
+    _activeLoading = true; _setBtnState();
+    _softResumeVoice();
+  };
+  audio.onstalled = () => { if (_activeAudio === audio) _softResumeVoice(); };
   audio.onplaying = () => {
     if (_activeAudio !== audio) return;
+    _voiceNudge = 0;
     _activeLoading = false; _setBtnState(); _syncMiniPlayer(); _startProgressLoop();
     if (!audio.__noEq) _startPlayEq(audio, _activeBtn);
   };
