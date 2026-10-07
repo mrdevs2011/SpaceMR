@@ -1,0 +1,56 @@
+/* avi-crop.css — profil rasmini kesish oynasi (#aviCropModal). Oldin umuman CSS yo'q edi: oyna sahifa oxirida ko'rinmay qolardi. */
+.avi-crop-overlay {
+  position: fixed; inset: 0; z-index: 10001;
+  align-items: center; justify-content: center;
+  padding: 16px; background: rgba(0, 0, 0, 0.72);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.avi-crop-card {
+  width: min(100%, 380px); max-height: 100%; overflow: auto;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px; box-sizing: border-box;
+  background: var(--bg, #000); color: var(--text, #e7e9ea);
+  border: 1px solid var(--bg5, #2f3336); border-radius: 16px;
+}
+.avi-crop-hdr { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.avi-crop-title { font-size: 17px; font-weight: 800; }
+.avi-crop-x {
+  width: 32px; height: 32px; display: grid; place-items: center; padding: 0;
+  background: transparent; border: 0; border-radius: 50%; color: inherit; cursor: pointer;
+}
+.avi-crop-x:hover { background: rgba(231, 233, 234, 0.1); }
+.avi-crop-stage {
+  position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden;
+  border-radius: 12px; background: #111; touch-action: none; cursor: grab; user-select: none;
+}
+.avi-crop-stage:active { cursor: grabbing; }
+.avi-crop-checkered {
+  position: absolute; inset: 0;
+  background: conic-gradient(#2a2d31 25%, #1a1c1f 0 50%, #2a2d31 0 75%, #1a1c1f 0) 0 0 / 16px 16px;
+}
+.avi-crop-img {
+  position: absolute; left: 50%; top: 50%; max-width: none; max-height: none;
+  transform: translate(-50%, -50%); pointer-events: none; user-select: none;
+}
+.avi-crop-mask { position: absolute; inset: 0; pointer-events: none; }
+.avi-crop-circle {
+  position: absolute; left: 50%; top: 50%; width: 78%; height: 78%;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.55); box-sizing: border-box;
+}
+.avi-crop-handle { display: none; }
+.avi-crop-hint { font-size: 12.5px; text-align: center; color: var(--text4, #71767b); }
+.avi-crop-zoom-row { display: flex; align-items: center; gap: 10px; }
+.avi-crop-zoom-btn {
+  width: 32px; height: 32px; flex: none; padding: 0; font-size: 20px; line-height: 1;
+  background: transparent; color: inherit; border: 1px solid #536471; border-radius: 50%; cursor: pointer;
+}
+.avi-crop-slider { flex: 1; min-width: 0; accent-color: var(--x-blue, #1d9bf0); }
+.avi-crop-actions { display: flex; flex-direction: column; gap: 8px; }
+.avi-crop-upload, .avi-crop-cancel {
+  height: 40px; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer;
+}
+.avi-crop-upload { background: var(--x-blue, #1d9bf0); color: #fff; border: 0; }
+.avi-crop-upload:disabled { opacity: 0.6; cursor: default; }
+.avi-crop-cancel { background: transparent; color: inherit; border: 1px solid #536471; }

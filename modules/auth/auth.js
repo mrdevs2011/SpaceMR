@@ -1962,7 +1962,8 @@ if (peAviChangeText && peAviInput) {
 if (peAviInput) {
   peAviInput.onchange = async ev => {
     const f = ev.target.files[0];
-    if (!f || !f.type.startsWith('image/')) return;
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { toast('Faqat rasm tanlang (JPG, PNG, WEBP)', 'error'); return; }
     if (f.size > 12*1024*1024) { toast("Rasm 12 MB dan kam bo'lishi kerak", 'error'); return; }
     // Crop / zoom oynasini ochamiz
     peAviInput.value = ''; // qayta tanlash uchun
