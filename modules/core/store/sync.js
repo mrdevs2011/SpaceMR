@@ -4,7 +4,7 @@
  * RPC yo'q/xato → null qaytaradi, chaqiruvchi eski yo'lga tushadi.
  */
 import { sb, mapMessage, state } from '../config.js';
-import { putThread, putChatsList, setUid, isStoreV2Enabled } from './store.js';
+import { putThread, putChatsList, setUid, isStoreV2Enabled, store } from './store.js';
 import { canCache } from '../cache-policy.js';
 import { syncPath, measure } from '../perf.js';
 import { isSyncV2Enabled as _flagSync } from './flags.js';
@@ -115,7 +115,7 @@ export async function syncGroup(groupId, afterSeq) {
     let maxSeq = after;
     for (const m of msgs) if (m.seq != null && m.seq > maxSeq) maxSeq = m.seq;
     for (const t of tombs) if (t.seq != null && t.seq > maxSeq) maxSeq = t.seq;
-    if (head > maxSeq) maxSeq = head;
+    if (head > maxSeq && !data.has_more) maxSeq = head;
     setCursor('grp:' + groupId, maxSeq);
     if (canCache('group_message') && msgs.length) putThread('group', groupId, msgs);
     return { msgs, tombstones: tombs, headSeq: head, reset: false, ok: true, hasMore: !!data.has_more };
@@ -223,6 +223,13 @@ export function bindGroupTombstoneChannel(groupId, onTombstone) {
     })
     .subscribe();
   return () => { try { sb.removeChannel(ch); } catch (_) {} };
+}
+
+/** Guruh o'chirilgan/chiqarilgan: lokal kursor va keshdagi xabarlarni butunlay tozalaydi */
+export function forgetGroup(groupId) {
+  if (!groupId) return;
+  cursors.delete('grp:' + groupId);
+  try { store.dispatch({ type: 'del', path: 'thread:' + 'grp:' + groupId, entity: 'group_message' }); } catch (_) {}
 }
 
 export function invalidateHeads() {

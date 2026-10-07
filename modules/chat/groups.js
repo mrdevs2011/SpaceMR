@@ -20,8 +20,8 @@
  *   }
  */
 
-import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts } from '../core/config.js';
-import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta } from '../core/store/sync.js';
+import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts, MEDIA_BUCKET } from '../core/config.js';
+import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
@@ -103,6 +103,7 @@ async function _loadGroupsInner() {
     if (error) { console.warn('[Groups] watcher error:', error.message); return; }
     rows = data || [];
   }
+  const _prevGroupIds = Object.keys(_latestGroupMap);
   _latestGroupMap = {};
   groupListItems = [];
   rows.forEach(r => {
@@ -113,6 +114,8 @@ async function _loadGroupsInner() {
     groupListItems.push(g);
   });
   ids.forEach(groupJoin);
+  // Ro'yxatdan yo'qolgan guruh (o'chirilgan / chiqarilgan): lokal kesh va kursor qolib ketmasin
+  _prevGroupIds.forEach(id => { if (!_latestGroupMap[id]) forgetGroup(id); });
   if (_currentGroupId && _latestGroupMap[_currentGroupId]) _currentGroupData = _latestGroupMap[_currentGroupId];
   // Ochiq guruh ro'yxatdan yo'qoldi — o'chirilgan bo'lishi mumkin (realtime hodisa o'tib ketgan bo'lsa ham ushlaymiz)
   if (_currentGroupId && !_latestGroupMap[_currentGroupId]) _verifyCurrentGroupExists(_currentGroupId);
@@ -240,9 +243,24 @@ async function _updateGroup(groupId, patch) {
 let _gSelfDel = null;
 async function _deleteGroup(groupId) {
   _gSelfDel = groupId; setTimeout(() => { if (_gSelfDel === groupId) _gSelfDel = null; }, 5000);
+  // Bazadagi qatorlar ON DELETE CASCADE bilan o'chadi; media fayllar storage'da qolmasligi uchun yo'llarini avval yig'amiz
+  let _paths = [];
+  try {
+    for (let from = 0; from < 20000; from += 1000) {
+      const { data: mm } = await sb.from('group_messages').select('media_path')
+        .eq('group_id', groupId).not('media_path', 'is', null).range(from, from + 999);
+      if (!mm || !mm.length) break;
+      _paths.push(...mm.map(x => x.media_path).filter(Boolean));
+      if (mm.length < 1000) break;
+    }
+  } catch (_) {}
   const { data, error } = await sb.from('groups').delete().eq('id', groupId).select();
   if (error) throw error;
   if (!data || !data.length) throw new Error("Ruxsat yo'q");
+  forgetGroup(groupId);
+  if (_paths.length) {
+    try { for (let i = 0; i < _paths.length; i += 100) await sb.storage.from(MEDIA_BUCKET).remove(_paths.slice(i, i + 100)); } catch (_) {}
+  }
   await _loadGroups();
 }
 
@@ -298,6 +316,7 @@ export function bindGroupsRealtime(ch) {
   return ch
     .on('postgres_changes', { event: '*', schema: 'public', table: 'groups' }, p => {
       const id = p.new?.id || p.old?.id;
+      if (p.eventType === 'DELETE' && id) forgetGroup(id);
       if (p.eventType === 'DELETE' && id && id === _currentGroupId) _notifyGroupGone(id);
       if (id && _latestGroupMap[id]) _groupsSched();
     })
@@ -542,6 +561,8 @@ export async function joinGroupByToken(raw) {
 }
 
 export async function openGroupThread(groupId) {
+  // Boshqa guruh/chat ochilganda eski guruh-info paneli yopilsin (router: avval thread, keyin info ochadi)
+  try { document.getElementById('grpInfoOverlay')?.classList.remove('show'); } catch (_) {}
   document.getElementById('chatThreadModal')?.classList.remove('is-saved');
   let groupData = _latestGroupMap[groupId];
   if (!groupData && state.me && groupId) {
@@ -638,8 +659,9 @@ export async function openGroupThread(groupId) {
   const loadMsgs = async () => {
     const _readP = _gLoadReadMax(groupId);   // xabarlar bilan bir vaqtda so'raladi
 
-    // Phase 4/8: seq-delta
-    if (isSyncV2Enabled()) {
+    // Phase 4/8: seq-delta. Faqat ekranda allaqachon xabarlar bo'lsa (resync/reconnect);
+    // yangi ochilganda (_gMsgs bo'sh) kursor eski bo'lib, delta bo'sh qaytadi -> "xabarlar yo'q" xatosi
+    if (isSyncV2Enabled() && _gMsgs.length) {
       try {
         const delta = await loadGroupDelta(groupId, _gMsgs || []);
         if (_gDead || _currentGroupId !== groupId) return;
