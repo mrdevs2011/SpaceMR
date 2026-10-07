@@ -165,45 +165,96 @@ function settingsPinned() { return document.body.classList.contains('desktop-set
 // true = so'nggi qidiruv tarmoq/server xatosi bilan tugadi (bu "topilmadi" EMAS — 404 ko'rsatilmaydi)
 let _lookupFailed = false;
 
-async function uidByUsername(username) {
+/** Tarmoq sekin/xato: 404 emas. Faqat muvaffaqiyatli bo'sh javob = haqiqatan yo'q. */
+async function withLookupRetry(fn, tries = 3) {
   _lookupFailed = false;
-  try {
-    const { data, error } = await sb.from('profiles').select('id, username').ilike('username', username).maybeSingle();
-    if (error) { _lookupFailed = true; return null; }
-    if (data?.id) { _unameCache.set(data.id, data.username); return data.id; }
-  } catch (_) { _lookupFailed = true; }
+  let lastFail = false;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fn();
+      // r: { ok:true, value } | { ok:false, network:true } | { ok:false, network:false }
+      if (r && r.ok) { _lookupFailed = false; return r.value; }
+      if (r && r.network) {
+        lastFail = true;
+        if (i < tries - 1) await new Promise(res => setTimeout(res, 350 * (i + 1)));
+        continue;
+      }
+      // aniq yo'q
+      _lookupFailed = false;
+      return null;
+    } catch (_) {
+      lastFail = true;
+      if (i < tries - 1) await new Promise(res => setTimeout(res, 350 * (i + 1)));
+    }
+  }
+  _lookupFailed = lastFail;
   return null;
 }
 
+async function uidByUsername(username) {
+  return withLookupRetry(async () => {
+    const { data, error } = await sb.from('profiles').select('id, username').ilike('username', username).maybeSingle();
+    if (error) return { ok: false, network: true };
+    if (data?.id) {
+      _unameCache.set(data.id, data.username);
+      return { ok: true, value: data.id };
+    }
+    return { ok: false, network: false };
+  });
+}
+
 async function groupIdByRef(ref) {
-  _lookupFailed = false;
-  try {
+  return withLookupRetry(async () => {
     if (UUID_RE.test(ref)) {
       const { data, error } = await sb.from('groups').select('id').eq('id', ref).maybeSingle();
-      if (error) { _lookupFailed = true; return null; }
-      return data?.id || null;
+      if (error) return { ok: false, network: true };
+      return data?.id ? { ok: true, value: data.id } : { ok: false, network: false };
     }
-    const { data, error } = await sb.from('groups').select('id').ilike('username', ref).maybeSingle();
-    if (error) { _lookupFailed = true; return null; }
-    return data?.id || null;
-  } catch (_) { _lookupFailed = true; return null; }
+    // Username (ommaviy)
+    {
+      const { data, error } = await sb.from('groups').select('id').ilike('username', ref).maybeSingle();
+      if (error) return { ok: false, network: true };
+      if (data?.id) return { ok: true, value: data.id };
+    }
+    // Invite kod (hex) — a'zo bo'lmasdan ham resolve
+    const code = String(ref || '').replace(/[^a-fA-F0-9]/g, '');
+    if (code.length >= 16) {
+      const { data, error } = await sb.from('groups').select('id').eq('invite_code', code.toLowerCase()).maybeSingle();
+      if (error) {
+        // RLS yoki ustun — RPC orqali
+        const { data: r, error: e2 } = await sb.rpc('resolve_group_invite', { p_token: ref });
+        if (e2) return { ok: false, network: true };
+        if (r?.success && r.group_id) return { ok: true, value: r.group_id };
+        return { ok: false, network: false };
+      }
+      if (data?.id) return { ok: true, value: data.id };
+      const { data: r2, error: e3 } = await sb.rpc('resolve_group_invite', { p_token: ref });
+      if (e3) return { ok: false, network: true };
+      if (r2?.success && r2.group_id) return { ok: true, value: r2.group_id };
+    }
+    return { ok: false, network: false };
+  });
 }
 
 /** 64-xonali maxfiy taklif kodi bilan guruhga qo'shiladi -> group id. */
 async function gidByInvite(token) {
-  _lookupFailed = false;
-  try {
+  return withLookupRetry(async () => {
     const { data, error } = await sb.rpc('join_group_by_token', { p_token: token });
-    if (error) { _lookupFailed = true; return null; }
+    if (error) return { ok: false, network: true };
     if (data && data.success && data.group_id) {
       import('./ui/toast.js').then(t => t.toast("Guruhga qo'shildingiz", 'success')).catch(() => {});
-      return data.group_id;
+      return { ok: true, value: data.group_id };
     }
-  } catch (_) { _lookupFailed = true; }
-  return null;
+    // success:false — haqiqatan yaroqsiz kod
+    return { ok: false, network: false };
+  });
 }
 
-/** Qidiruv natijasi bo'sh: haqiqatan yo'q -> 404; tarmoq xatosi -> bosh sahifa (avvalgidek). */
+/**
+ * Qidiruv natijasi:
+ *  - tarmoq xatosi (_lookupFailed) -> 404 EMAS, bosh sahifa / deny
+ *  - muvaffaqiyatli bo'sh -> 404
+ */
 function missing() { return _lookupFailed ? deny() : notFound(); }
 
 /** DM URL uchun username. Hali noma'lum bo'lsa null qaytaradi va fonda yuklaydi. */
@@ -473,17 +524,20 @@ function scrollToMsg(id) {
 }
 
 async function postExists(id) {
-  _lookupFailed = false;
-  try {
+  const v = await withLookupRetry(async () => {
     const { data, error } = await sb.from('posts').select('id').eq('id', id).maybeSingle();
-    if (error) { _lookupFailed = true; return false; }
-    return !!data;
-  } catch (_) { _lookupFailed = true; return false; }
+    if (error) return { ok: false, network: true };
+    return data ? { ok: true, value: true } : { ok: false, network: false };
+  });
+  return !!v;
 }
 
 /** URL ga qarab ilova holatini o'rnatadi. */
 export async function applyPath(rawPath, { initial = false } = {}) {
   document.documentElement.removeAttribute('data-nf');
+  // Chuqur havola (user/guruh/post) yuklanayotganda 404 chiqmasin — loading
+  const _deep = /\/(chats\/(u|g)\/|u\/|p\/|s\/)/i.test(String(rawPath || ''));
+  if (_deep) document.documentElement.setAttribute('data-route-loading', '1');
   _applying = true;
   _suppressUntil = Date.now() + 900;
   try {
@@ -662,8 +716,11 @@ export async function applyPath(rawPath, { initial = false } = {}) {
         }
         ok = threadOpen();
       } else {
-        const isInvite = HEX64_RE.test(route.ref);
-        const gid = isInvite ? await gidByInvite(route.ref) : await groupIdByRef(route.ref);
+        const ref = route.ref || '';
+        const isInvite = HEX64_RE.test(ref) || (/^[0-9a-f]{32,}$/i.test(ref) && !UUID_RE.test(ref));
+        // Avval resolve (tarmoq kutamiz), 404 faqat aniq yo'q bo'lsa
+        let gid = isInvite ? await gidByInvite(ref) : await groupIdByRef(ref);
+        if (!gid && !isInvite && /^[0-9a-f]{16,}$/i.test(ref)) gid = await gidByInvite(ref);
         if (!gid) return missing();
         if (!isInvite && !(await ensureGroupMember(gid))) return deny();
         if (getCurrentRoute() !== 'chats') navigateTo('chats', false);
@@ -698,6 +755,7 @@ export async function applyPath(rawPath, { initial = false } = {}) {
       return;
     }
   } finally {
+    try { document.documentElement.removeAttribute('data-route-loading'); } catch (_) {}
     _applying = false;
     _fromLogin = false;
     _suppressUntil = Date.now() + 150;
