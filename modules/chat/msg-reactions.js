@@ -8,7 +8,7 @@
 import { sb, state } from '../core/config.js';
 import { esc, defAvi } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
-import { emojiImg, warmEmoji, emojiPath, toKey } from '../ui/emoji-img.js';
+import { emojiImg, warmEmoji, emojiPath, toKey, keyToGlyph } from '../ui/emoji-img.js';
 
 export const QUICK = ['2764', '1f44d', '1f44e', '1f525', '1f970', '1f44f', '1f601'];   // kalitlar (hex) — kodda emoji belgisi yo'q
 /** Reaksiyaga arziydigan tanlangan emojilar (menyu qatori + chevron paneli) */
@@ -167,9 +167,13 @@ export async function reactToggle(msgId, emoji) {
   if (remove) drop({ message_id: msgId, user_id: uid }); else { put({ message_id: msgId, user_id: uid, emoji }); pops.set(msgId, { e: emoji, t: Date.now() }); }
   paintMsg(msgId);   // optimistik — darhol
   try {
-    const { error } = remove
+    const up = em => sb.from(TABLE).upsert({ message_id: msgId, thread_id: t.id, kind: t.kind, user_id: uid, emoji: em }, { onConflict: 'message_id,user_id' });
+    let { error } = remove
       ? await sb.from(TABLE).delete().eq('message_id', msgId).eq('user_id', uid)
-      : await sb.from(TABLE).upsert({ message_id: msgId, thread_id: t.id, kind: t.kind, user_id: uid, emoji }, { onConflict: 'message_id,user_id' });
+      : await up(emoji);
+    // 094 SQL hali yurgizilmagan bo'lsa eski cheklov (16 belgi) path'ni rad etadi — reaksiya yo'qolmasin: belgi bilan yozamiz.
+    // 094 dan keyin birinchi urinish o'tadi, bu tarmoq ishlamaydi.
+    if (error && !remove && error.code === '23514') ({ error } = await up(keyToGlyph(emoji)));
     if (error) { console.warn('[React]', error.message); rollback(); toast('Reaksiya yuborilmadi', 'error'); }
   } catch (e) { console.warn('[React]', e?.message || e); rollback(); toast('Reaksiya yuborilmadi', 'error'); }
 }

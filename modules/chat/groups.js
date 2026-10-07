@@ -26,6 +26,7 @@ import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlock
 import { toast }                                    from '../ui/toast.js';
 import { rateOk }                                   from '../core/rate-limit.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
+import { encodeForSend } from '../ui/emoji-img.js';
 import { registerLocalVoiceUrl, voiceBarCount, getVoiceWaveform } from './chat-voice-player.js';
 import { openRtGroup }                              from './rt-chat.js';
 import { fileMsgPreview }                           from './components/video-note.js';
@@ -943,9 +944,10 @@ export async function sendGroupMessage(opts) {
   }
   clearTimeout(_gTypTimer); _gSetTyping(false);
 
+  // Bazaga emoji RASM/BELGI emas, PATH yoziladi: [[emoji/2d/<kalit>.png]] (GIF/JSON xabarlarga tegilmaydi)
   const finalMsgText = postShare
-    ? JSON.stringify({ __postShare: true, post: postShare, comment: userText })
-    : userText;
+    ? JSON.stringify({ __postShare: true, post: postShare, comment: encodeForSend(userText) })
+    : (gifText != null ? userText : encodeForSend(userText));
 
   const replyInfo = getReplying();
   const replyToId = replyInfo?.id ? String(replyInfo.id) : null;
