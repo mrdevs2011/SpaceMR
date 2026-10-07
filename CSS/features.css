@@ -3680,17 +3680,58 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   height: 14px;
   opacity: 0.9;
 }
-.pe-phone-wrap .pe-phone-prefix {
-  left: 12px;
+/* Telefon: +998 chip + raqam input (ustma-ust tushmasin) */
+.pe-phone-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--line, rgba(255,255,255,0.12));
+  background: var(--bg3, rgba(255,255,255,0.06));
+}
+.pe-phone-cc {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px 0 14px;
+  font-size: 14px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  min-width: 2.6em;
+  color: var(--text2, #c0c0c0);
+  background: rgba(255,255,255,0.04);
+  border-right: 1px solid var(--line, rgba(255,255,255,0.1));
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
 }
-.pe-phone-input,
-.settings-body .pe-phone-input {
-  padding-left: 52px !important;
+.pe-phone-row .pe-phone-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding-left: 12px !important;
+  padding-right: 14px !important;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  font-size: 14px;
+}
+.pe-phone-row:focus-within {
+  border-color: var(--x-blue, #1d9bf0);
+}
+.pe-phone-row .pe-phone-input:focus {
+  outline: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.pe-phone-row.pe-phone-invalid {
+  border-color: var(--red, #f4212e);
 }
 .pe-field-error {
   font-size: 12px;

@@ -9010,3 +9010,24 @@ select.field option { background: #000000; color: var(--text); }
 .search-suggestions {
   overflow: hidden;
 }
+
+
+/* Telefon input — settings ichida to'g'ri ko'rinsin */
+#settingsOverlay .pe-phone-row {
+  background: var(--bg3, #16181c) !important;
+  border: 1px solid #2f3336 !important;
+  border-radius: 999px !important;
+}
+#settingsOverlay .pe-phone-row .pe-phone-input {
+  padding-left: 12px !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+#settingsOverlay .pe-phone-cc {
+  color: #71767b !important;
+  background: rgba(255,255,255,0.04) !important;
+  border-right-color: #2f3336 !important;
+}
+#settingsOverlay .pe-phone-row:focus-within {
+  border-color: var(--x-blue, #1d9bf0) !important;
+}
