@@ -1264,24 +1264,10 @@ export async function openGroupInfo(groupId) {
                 <div class="grp-member-name">${esc(u.fullName||'Foydalanuvchi')}</div>
                 ${role ? `<div class="grp-member-role">${role}</div>` : ''}
               </div>
-              ${(canManage && !isSelf && uid !== g.ownerId) ? `<button class="grp-member-kick" data-uid="${uid}" title="Chiqarish">
-                <img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14">
-              </button>` : ''}
+
             </div>`;
           }).join('');
           membersEl.innerHTML = html || '<div class="gi-empty">A\'zolar topilmadi</div>';
-          membersEl.querySelectorAll('.grp-member-kick').forEach(btn => {
-            btn.onclick = () => {
-              const uid = btn.dataset.uid;
-              showConfirm('Bu foydalanuvchini chiqarasizmi?', async () => {
-                try {
-                  await _removeMember(groupId, uid);
-                  toast("A'zo chiqarildi", 'success');
-                  openGroupInfo(groupId);
-                } catch(e) { toast('Xato yuz berdi', 'error'); }
-              }, 'Chiqarish', 'Chiqarish');
-            };
-          });
         }).catch(() => { if (membersEl) membersEl.innerHTML = ''; });
     }
   }
@@ -1420,6 +1406,7 @@ export async function openGroupEdit(groupId, g) {
   _editWriterMode = true;
   _selectedMembers = new Set();
   _wasPicked = new Set();
+  _removeSet = new Set();
   _selectedWriters = new Set();
   _editWritersBase = new Map();
   _pendingPhotoUrl = null;
@@ -1556,10 +1543,15 @@ async function _submitGroupEdit(groupId) {
       await _addMembers(groupId, added, perm === 'selected' ? new Set(_selectedWriters) : null);
       await _joinedNotices(groupId, added);
     }
+    /* Chiqariladigan a'zolar */
+    let removed = 0, removeFail = 0;
+    for (const uid of _removeSet) {
+      try { await _removeMember(groupId, uid); removed++; } catch (_) { removeFail++; }
+    }
     /* Mavjud a'zolarning yozish huquqi */
     if (perm === 'selected') {
       for (const [uid, was] of _editWritersBase) {
-        if (uid === g.ownerId) continue;
+        if (uid === g.ownerId || _removeSet.has(uid)) continue;
         const now = _selectedWriters.has(uid);
         if (now === was) continue;
         try { await sb.from('group_members').update({ can_write: now }).eq('group_id', groupId).eq('user_id', uid); } catch (_) {}
@@ -1571,12 +1563,12 @@ async function _submitGroupEdit(groupId) {
       name: updates.name,
       avatar: updates.avatar || g.avatar || '',
       username: updates.username || '',
-      count: (g.members || []).length + added.length,
+      count: (g.members || []).length + added.length - removed,
       lastMessage: notices[0] || '',
     });
     overlay.classList.remove('show');
     overlay.dataset.editMode = '';
-    toast('Guruh yangilandi', 'success');
+    toast(removeFail ? `Guruh yangilandi, ${removeFail} ta a'zoni chiqarib bo'lmadi` : 'Guruh yangilandi', removeFail ? 'error' : 'success');
     openGroupInfo(groupId);
   } catch (e) {
     toast('Xato: ' + e.message, 'error');
@@ -1770,6 +1762,7 @@ let _selectedMembers = new Set();
 let _existingMemberUids = new Set();
 /** msg_permission=selected: yozish mumkin bo'lgan uid lar */
 let _selectedWriters = new Set();
+let _removeSet = new Set();   /* sozlamalarda 'chiqariladi' deb belgilangan mavjud a'zolar */
 let _wasPicked = new Set();   /* tugma/qator orqali qo'lda tanlanganlar (qayta bosilsa bekor bo'ladi) */
 let _pendingPhotoUrl = null;
 let _usersForPicker = [];
@@ -1780,6 +1773,7 @@ export function openCreateForm(type) {
   _createType      = type;
   _selectedMembers = new Set();
   _wasPicked = new Set();
+  _removeSet = new Set();
   _pendingPhotoUrl = null;
   _usersForPicker  = [];
   _createIsPublic  = true;
@@ -1904,6 +1898,12 @@ async function _loadContactsForPicker() {
 }
 
 
+function _updateSelCount() {
+  const cnt = document.getElementById('grpSelCount');
+  if (!cnt) return;
+  cnt.textContent = `${_selectedMembers.size} ta tanlangan` + (_removeSet.size ? ` · ${_removeSet.size} ta chiqariladi` : '');
+}
+
 function _syncPickerWriteMode() {
   const listEl = document.getElementById('grpPickerList');
   const mode = document.getElementById('grpFormMsgPerm')?.value === 'selected';
@@ -2026,21 +2026,9 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
         if (isExisting && !_editWriterMode) return;
         if (!isExisting && !_selectedMembers.has(uid)) _selectedMembers.add(uid);
         const allow = writeBtn.getAttribute('data-write-toggle') === '1';
-        const isSel = isExisting || _selectedMembers.has(uid);
-        const curW = _selectedWriters.has(uid);
-        if (isExisting) {
-          /* Mavjud a'zo: faol tugmani qayta bossang qarama-qarshi holatga o'tadi */
-          if (allow === curW) { if (curW) _selectedWriters.delete(uid); else _selectedWriters.add(uid); }
-          else if (allow) _selectedWriters.add(uid); else _selectedWriters.delete(uid);
-        } else if (_selectedMembers.has(uid) && curW === allow && _wasPicked.has(uid)) {
-          /* Yangi a'zo: faol tugmani qayta bossang tanlov bekor bo'ladi */
-          _selectedMembers.delete(uid); _selectedWriters.delete(uid); _wasPicked.delete(uid);
-        } else {
-          _selectedMembers.add(uid); _wasPicked.add(uid);
-          if (allow) _selectedWriters.add(uid); else _selectedWriters.delete(uid);
-        }
-        const cnt0 = document.getElementById('grpSelCount');
-        if (cnt0) cnt0.textContent = `${_selectedMembers.size} ta tanlangan`;
+        if (!isExisting) { _selectedMembers.add(uid); _wasPicked.add(uid); }
+        if (allow) _selectedWriters.add(uid); else _selectedWriters.delete(uid);
+        _updateSelCount();
         _syncPickerWriteMode();
         return;
       }
@@ -2050,6 +2038,12 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
       if (!uid) return;
       /* Allaqachon guruhda — o'zgartirib bo'lmaydi */
       if (row.classList.contains('is-member') || (_existingMemberUids && _existingMemberUids.has(uid))) {
+        /* Sozlamalarda: mavjud a'zoni bosish = chiqarish uchun belgilash (qizil X), qayta bossang bekor */
+        if (_editWriterMode && uid !== _editOwnerId && uid !== state.me?.uid) {
+          if (_removeSet.has(uid)) _removeSet.delete(uid); else _removeSet.add(uid);
+          _updateSelCount();
+          _syncPickerWriteMode();
+        }
         return;
       }
       if (_selectedMembers.has(uid)) {
@@ -2066,8 +2060,7 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
       const canW = _selectedWriters.has(uid);
       row.classList.toggle('can-write', _selectedMembers.has(uid) && canW);
       row.classList.toggle('no-write', _selectedMembers.has(uid) && !canW);
-      const cnt = document.getElementById('grpSelCount');
-      if (cnt) cnt.textContent = `${_selectedMembers.size} ta tanlangan`;
+      _updateSelCount();
       _syncPickerWriteMode();
     });
   }
@@ -2103,25 +2096,23 @@ function _renderPickerRows(users, listEl, q = '') {
     const isMem = !!( _existingMemberUids && _existingMemberUids.has(u.uid) );
     const sel  = isMem || _selectedMembers.has(u.uid);
     const canW = _selectedWriters.has(u.uid);
-    const canToggle = selectedMode && u.uid !== _editOwnerId && (!isMem || _editWriterMode);
+    const rm = isMem && _editWriterMode && _removeSet.has(u.uid);
+    const canToggle = selectedMode && !rm && u.uid !== _editOwnerId && (!isMem || _editWriterMode);
     const writeTools = canToggle ? `
       <div class="grp-picker-write-tools" title="Yozish ruxsati">
-        <button type="button" class="grp-write-btn ${canW ? 'is-on' : ''}" data-write-toggle="1" title="Yoza oladi" aria-label="Yoza oladi">
-          <img src="./svg/action/msg-on.svg" alt="" class="icon" width="14" height="14">
-        </button>
-        <button type="button" class="grp-write-btn ${!canW && sel ? 'is-on danger' : ''}" data-write-toggle="0" title="Yoza olmaydi" aria-label="Yoza olmaydi">
-          <img src="./svg/action/msg-off.svg" alt="" class="icon" width="14" height="14">
+        <button type="button" class="grp-write-switch ${!sel ? 'is-idle' : (canW ? 'is-on' : 'is-off')}" data-write-toggle="${sel && canW ? '0' : '1'}" role="switch" aria-checked="${sel && canW ? 'true' : 'false'}" title="${sel && canW ? 'Yoza oladi — o\'chirish' : 'Yoza olmaydi — yoqish'}" aria-label="Yozish ruxsati">
+          <span class="grp-write-knob"></span>
         </button>
       </div>` : '';
-    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${canToggle && sel ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
+    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${rm ? 'to-remove' : ''} ${canToggle && sel ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
       <div class="grp-picker-avi"><img src="${esc(av)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'"></div>
       <div class="grp-picker-info">
         <div class="grp-picker-name">${esc(u.fullName||'Foydalanuvchi')}</div>
         ${u.username ? `<div class="grp-picker-user">@${esc(u.username)}</div>` : ''}
       </div>
       ${writeTools}
-      <div class="grp-picker-check ${sel ? 'on' : ''}">
-        <img src="./svg/ui/check.svg" alt="" class="icon" width="11" height="11">
+      <div class="grp-picker-check ${sel ? 'on' : ''} ${rm ? 'rm' : ''}">
+        <img src="${rm ? './svg/action/close.svg' : './svg/ui/check.svg'}" alt="" class="icon" width="11" height="11">
       </div>
     </div>`;
   }).join('');
@@ -2185,6 +2176,7 @@ export async function openMemberPicker(groupId, mode) {
   // Re-open create form overlay as add-member flow (reuse UI)
   _selectedMembers = new Set();
   _wasPicked = new Set();
+  _removeSet = new Set();
   const g = _latestGroupMap[groupId];
   const existingMembers = new Set(g?.members || []);
 
@@ -2212,6 +2204,7 @@ export async function openMemberPicker(groupId, mode) {
   _existingMemberUids = existingMembers;
   _selectedMembers = new Set();
   _wasPicked = new Set();
+  _removeSet = new Set();
   _usersForPicker = users;
   _renderMemberPicker(pickerSection, users, { existingMembers });
 
