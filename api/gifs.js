@@ -4,12 +4,23 @@
 const PER_PAGE = 24;
 const CACHE_MS = 15 * 60e3; // tezroq takroriy ochilish       // test rejimida soatiga 100 so'rov — bir xil so'rovlar 5 daqiqa keshlanadi
 const cache = new Map();
+const rateByIp = new Map(); // ip -> { n, t0 }
+function rateOk(ip) {
+  const now = Date.now();
+  let e = rateByIp.get(ip);
+  if (!e || now - e.t0 > 60000) { e = { n: 0, t0: now }; rateByIp.set(ip, e); }
+  e.n++;
+  if (rateByIp.size > 2000) rateByIp.clear();
+  return e.n <= 60; // 60 req / min / IP
+}
 
 const pick = (f) => f && f.url ? { u: f.url, w: f.width | 0, h: f.height | 0 } : null;
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, max-age=60');
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
+  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '?').split(',')[0].trim();
+  if (!rateOk(ip)) return res.status(429).json({ error: 'rate' });
 
   const key = process.env.KLIPY_KEY;
   if (!key) return res.status(503).json({ error: 'gif-not-configured' });

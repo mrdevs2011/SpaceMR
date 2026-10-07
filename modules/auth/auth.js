@@ -1670,7 +1670,7 @@ function renderWebsiteRows(values) {
       ? `<button type="button" class="pe-web-action-btn pe-web-add" data-web-add aria-label="URL qo'shish" title="Yana URL qo'shish">+</button>`
       : `<button type="button" class="pe-web-action-btn pe-web-remove" data-web-remove aria-label="URL o'chirish" title="O'chirish">−</button>`;
     return `<div class="pe-website-row">
-      <input class="field pe-input pe-website-input" type="url" inputmode="url" autocomplete="url" maxlength="200" placeholder="https://misol.uz" value="${String(v || '').replace(/"/g, '"')}">
+      <input class="field pe-input pe-website-input" type="url" inputmode="url" autocomplete="url" maxlength="200" placeholder="https://misol.uz" value="${esc(String(v || ''))}">
       ${btn}
     </div>`;
   }).join('');

@@ -138,8 +138,12 @@ async function _paintProfile(ud) {
     const _webs = (Array.isArray(ud.websites) && ud.websites.length) ? ud.websites : (ud.website ? [ud.website] : []);
     _webs.forEach((wurl) => {
       if (!wurl) return;
-      let href = wurl;
-      try { href = new URL(wurl).href; } catch (_) {}
+      let href = '';
+      try {
+        const u = new URL(wurl);
+        if (!/^https?:$/i.test(u.protocol)) return;
+        href = u.href;
+      } catch (_) { return; }
       let label = String(wurl).replace(/^https?:\/\//i, '').replace(/\/$/, '');
       parts.push(`<a class="profile-link profile-link-web" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></span><span>${esc(label)}</span></a>`);
     });
@@ -464,8 +468,12 @@ export async function renderUserProfileModal(uid) {
         const _webs2 = (Array.isArray(ud.websites) && ud.websites.length) ? ud.websites : (ud.website ? [ud.website] : []);
         _webs2.forEach((wurl) => {
           if (!wurl) return;
-          let href = wurl;
-          try { href = new URL(wurl).href; } catch (_) {}
+          let href = '';
+          try {
+            const u = new URL(wurl);
+            if (!/^https?:$/i.test(u.protocol)) return;
+            href = u.href;
+          } catch (_) { return; }
           let label = String(wurl).replace(/^https?:\/\//i, '').replace(/\/$/, '');
           bits.push(`<a class="profile-link profile-link-web" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><span>${esc(label)}</span></a>`);
         });
