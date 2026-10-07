@@ -1007,31 +1007,46 @@ export function startChatsWatcher() {
     // IndexedDB hydrate tugaguncha kutamiz — aks holda kesh "yo'q" deb tarmoqqa ketadi
     try { await whenLocalCacheReady(); } catch (_) {}
 
-    // Agar kesh 5 daqiqadan yangi bo'lsa — butun "users" kolleksiyasini
-    // qayta tarmoqdan yuklamaymiz (bu og'ir so'rov, foydalanuvchilar
-    // ko'payib borgan sari sekinlashadi). Kesh eskirgan/yo'q bo'lsagina
-    // yangilaymiz.
+    // Kesh: tez ochilish uchun. LEKIN har safar fonda serverdan yangilanadi —
+    // aks holda o'chirilgan/eski chatlar 5 daqiqa (yoki undan ko'p) qolib ketardi.
     const cacheAgeMs = getCachedChatsListAgeMs(state.me.uid);
-    const cacheIsFresh = cacheAgeMs !== null && cacheAgeMs < 5 * 60 * 1000;
+    const cacheIsFresh = cacheAgeMs !== null && cacheAgeMs < 60 * 1000; // 60s
 
-    if (cacheIsFresh) {
-      // chatState._usersCache hali o'rnatilmagan bo'lishi mumkin (masalan foydalanuvchi
-      // "Suhbatlar" bo'limini hali ochmagan bo'lsa) — shu holatda ham
-      // to'g'ridan-to'g'ri localStorage'dagi keshdan o'qib olamiz.
-      if (!chatState._usersCache || !chatState._usersCache.length) {
-        const cached = getCachedChatsList(state.me.uid);
-        chatState._usersCache = cached?.users || [];
-      }
-    }
-    // Agar kesh bo'sh bo'lsa (yangi hisob ochilganda) — baribir serverdan yuklaymiz
     if (!chatState._usersCache || !chatState._usersCache.length) {
+      const cached = getCachedChatsList(state.me.uid);
+      if (cached?.users?.length) chatState._usersCache = cached.users;
+    }
+
+    const _refreshUsersFromServer = async (awaitable) => {
       try {
-        chatState._usersCache = await _fetchChatUsers();
-        cacheChatsList(state.me.uid, chatState._usersCache, chatState._latestChatMap);
+        const users = await _fetchChatUsers();
+        const prevIds = new Set((chatState._usersCache || []).map(u => u.uid));
+        const nextIds = new Set(users.map(u => u.uid));
+        const changed = users.length !== (chatState._usersCache || []).length
+          || [...prevIds].some(id => !nextIds.has(id))
+          || [...nextIds].some(id => !prevIds.has(id));
+        chatState._usersCache = users;
+        cacheChatsList(state.me.uid, users);
+        if (changed && state.view === 'chats') {
+          paintChatsList(users, chatState._latestChatMap);
+        }
+        return users;
       } catch (err) {
         console.warn('[Chat] users fetch failed:', err.message);
         chatState._usersCache = chatState._usersCache || [];
+        return chatState._usersCache;
       }
+    };
+
+    if (!chatState._usersCache || !chatState._usersCache.length) {
+      // Kesh bo'sh — kutib yuklaymiz
+      await _refreshUsersFromServer(true);
+    } else if (!cacheIsFresh) {
+      // Eskirgan kesh — yangilashni kutamiz (eski ro'yxat uzoq qolmasin)
+      await _refreshUsersFromServer(true);
+    } else {
+      // Yangi kesh — darhol chizamiz, fonda baribir yangilaymiz
+      _refreshUsersFromServer(false);
     }
 
     // Kontaktlar listener — oddiy user uchun contacts subcollection.
@@ -1081,9 +1096,13 @@ export function startChatsWatcher() {
       (data || []).forEach(r => {
         const c = mapChat(r);
         const otherUid = c.participants.find(p => p !== me) || (c.participants.every(p => p === me) ? me : null);
-        if (otherUid) chatMap[otherUid] = c;
+        if (!otherUid) return;
+        // Lokal o'chirilgan suhbat — ro'yxatda ko'rinmasin (serverda chat qolgan bo'lsa ham)
+        if (_isChatDeleted(otherUid)) return;
+        chatMap[otherUid] = c;
         total += c.unreadCount[me] || 0;
       });
+      // To'liq almashtirish — eski xotiradagi chatlar qolib ketmasin
       chatState._latestChatMap = chatMap;
       chatState._chatsFresh = true;      // serverdan tasdiqlangan (thread keshini tekshirishda ishlatiladi)
       _chatsReadyRes?.();
@@ -1201,6 +1220,7 @@ export async function renderChatsList() {
       return;
     }
 
+    // Server chatMap kelgan — faqat shu asosida chizamiz (keshdagi "ghost" chatlar yo'qoladi)
     paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
     // Ro'yxat ochilganda darhol yangi last_seen — nuqtalar kesh bilan eskirmasin
     _refreshUsersPresence().then(changed => {
@@ -1419,6 +1439,8 @@ busOn('inbox', (o) => {
   const me = state.me?.uid;
   if (!me || !o || !o.from || o.from === me || typeof o.chatId !== 'string') return;
   if (state.currentChatId === o.chatId && $('chatThreadModal')?.classList.contains('show')) return; // ochiq thread p2p/DB orqali
+  // Yangi xabar kelganda lokal "o'chirilgan" belgisini olib tashlaymiz (suhbat qayta ochiladi)
+  try { clearChatDeletedLocal(o.from); } catch (_) {}
   const prev = chatState._latestChatMap[o.from];
   if (prev && prev.lastMessageId === o.id) return;
   const unread = { ...(prev?.unreadCount || {}) };
