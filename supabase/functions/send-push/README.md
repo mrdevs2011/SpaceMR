@@ -16,3 +16,11 @@ obunachilarga push yuboradi. Client tomoni: `modules/push.js` + `sw.js`.
    - jadvallar: `messages`, `group_messages`, `calls`
    - URL: `https://<PROJECT>.supabase.co/functions/v1/send-push`
    - Header: `x-webhook-secret: <PUSH_WEBHOOK_SECRET qiymati>`
+
+## Emoji (2026-10-07)
+Bildirishnoma matnini tizim chizadi va u PNG ko'rsata olmaydi, shuning uchun push'da emoji ko'rsatilmaydi:
+matn va sarlavhadan emoji (belgi ham, `[[emoji/2d/<kalit>.png]]` token ham) olib tashlanadi; xizmat yozuvlari
+("Ovozli xabar", "Fayl: ...", "Post: ...") belgisiz. Xabar FAQAT emoji bo'lsa — matn "Emoji", birinchi emoji PNG'i
+bildirishnoma rasmi (`image`) bo'ladi. Mantiq: `emoji-text.ts` (server) va `sw.js` `stripPushEmoji()` (klient, xuddi shu qoida).
+Sinov: `deno run --allow-env --allow-read --import-map=tests/push/import-map.json tests/push/send-push.test.ts`
+va `node tests/push/sw-push.test.mjs`. Deploy: `supabase functions deploy send-push --no-verify-jwt` (SW esa Vercel bilan o'zi yangilanadi).

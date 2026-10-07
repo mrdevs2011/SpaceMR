@@ -2,6 +2,7 @@
 // Database Webhook (INSERT) shu funksiyani chaqiradi. Sozlash: README.md
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { cleanPushText, emojiImageUrl } from "./emoji-text.ts";
 
 const sb = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -36,22 +37,42 @@ function parseShare(raw: unknown): any | null {
 }
 
 /** Bildirishnoma matni: xom JSON hech qachon ko'rinmaydi */
-function preview(r: any): string {
-  if (r.type === "voice") return "🎤 Ovozli xabar";
-  if (r.type === "file") return `📎 ${clip(String(r.file_name || "Fayl"), 60)}`;
+function previewRaw(r: any): string {
+  if (r.type === "voice") return "Ovozli xabar";
+  if (r.type === "file") return r.file_name ? `Fayl: ${clip(String(r.file_name), 60)}` : "Fayl";
   const share = parseShare(r.text);
   if (share) {
     const c = String(share.comment ?? "").trim();
-    return c ? `📌 ${clip(c)}` : `📌 Post: ${share.post?.authorName || "ulashilgan post"}`;
+    return c ? `Post: ${clip(c)}` : `Post: ${share.post?.authorName || "ulashilgan post"}`;
   }
   const t = String(r.text ?? "");
   // Qo'ng'iroq yozuvi ({"__callLog":true,"s":"ok"|"no"}) — chaqiruvchi yuboradi, qabul qiluvchiga: kiruvchi / o'tkazib yuborilgan
   if (t.includes('"__callLog"')) {
-    try { return JSON.parse(t).s === "ok" ? "📞 Qo'ng'iroq" : "📞 O'tkazib yuborilgan qo'ng'iroq"; } catch { /* pastga */ }
+    try { return JSON.parse(t).s === "ok" ? "Qo'ng'iroq" : "O'tkazib yuborilgan qo'ng'iroq"; } catch { /* pastga */ }
   }
   // Kutilmagan xom JSON (boshqa maxsus xabar) — chiroyli umumiy matn
-  if (t.trim().startsWith('{"__')) return "💬 Yangi xabar";
+  if (t.trim().startsWith('{"__')) return "Yangi xabar";
   return clip(t);
+}
+
+/** Bildirishnoma matni: emoji (belgi va [[emoji/..png]] token) hech qachon ko'rinmaydi. Faqat emoji bo'lsa — "Emoji". */
+function preview(r: any): string {
+  const c = cleanPushText(previewRaw(r));
+  return c.text || (c.hadEmoji ? "Emoji" : "Yangi xabar");
+}
+
+/** Sarlavha (ism / guruh nomi) dagi emoji ham olib tashlanadi */
+function plain(s: unknown, fallback: string): string {
+  return cleanPushText(s).text || fallback;
+}
+
+/** Xabar FAQAT emoji'dan iborat bo'lsa — birinchi emoji PNG'i bildirishnoma rasmi bo'ladi */
+function emojiImage(r: any): string | undefined {
+  if (r.type === "voice" || r.type === "file") return undefined;
+  const t = String(r.text ?? "");
+  if (t.trim().startsWith("{")) return undefined;
+  const c = cleanPushText(t);
+  return !c.text && c.hadEmoji ? emojiImageUrl(CANON_ORIGIN, c.key) : undefined;
 }
 
 /** Ulashilgan postda rasm bo'lsa — bildirishnomada ko'rsatiladi (faqat https) */
@@ -77,7 +98,7 @@ Deno.serve(async (req) => {
 
   const { data: sender } = await sb.from("profiles")
     .select("full_name, avatar").eq("id", r.sender_id ?? r.caller_id).maybeSingle();
-  const senderName = sender?.full_name || "SpaceMR";
+  const senderName = plain(sender?.full_name, "SpaceMR");
   const iconOf = (u: unknown) => (typeof u === "string" && u.startsWith("https://") ? u : undefined);
   const senderIcon = iconOf(sender?.avatar);
 
@@ -90,7 +111,7 @@ Deno.serve(async (req) => {
     const { data } = await sb.from("chat_members").select("user_id")
       .eq("chat_id", r.chat_id).neq("user_id", r.sender_id);
     recipients = (data ?? []).map((m) => m.user_id);
-    payload = { type: "message", title: senderName, body: preview(r), icon: senderIcon, image: shareImage(r), chatId: r.chat_id, fromUid: r.sender_id };
+    payload = { type: "message", title: senderName, body: preview(r), icon: senderIcon, image: shareImage(r) ?? emojiImage(r), chatId: r.chat_id, fromUid: r.sender_id };
   } else if (table === "group_messages") {
     const { data: g } = await sb.from("groups").select("name, type, avatar").eq("id", r.group_id).maybeSingle();
     const { data } = await sb.from("group_members").select("user_id")
@@ -99,17 +120,17 @@ Deno.serve(async (req) => {
     const isChannel = g?.type === "channel";
     payload = {
       type: "group",
-      title: g?.name || "Guruh",
+      title: plain(g?.name, "Guruh"),
       body: isChannel ? preview(r) : `${senderName}: ${preview(r)}`,
       icon: iconOf(g?.avatar) ?? senderIcon,
-      image: shareImage(r),
+      image: shareImage(r) ?? emojiImage(r),
       groupId: r.group_id,
       fromUid: r.sender_id,
     };
   } else if (table === "calls") {
     if (r.status !== "ringing") return ok("skip");
     recipients = [r.callee_id];
-    payload = { type: "call", title: senderName, body: "📞 Qo'ng'iroq qilmoqda...", icon: senderIcon, fromUid: r.caller_id, callId: r.id };
+    payload = { type: "call", title: senderName, body: "Qo'ng'iroq qilmoqda...", icon: senderIcon, fromUid: r.caller_id, callId: r.id };
     ttl = 30; urgency = "high";
   } else {
     return ok("skip");
