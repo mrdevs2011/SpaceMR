@@ -32,14 +32,13 @@ export function isVideoFile(file) {
   return VIDEO_EXT.test(_n(file));
 }
 
-export 
-function isSvgFile(file) {
+export function isSvgFile(file) {
   if (!file) return false;
   const t = _t(file);
   if (t === 'image/svg+xml' || t === 'image/svg') return true;
   return /\.svg$/i.test(_n(file));
 }
-function isImageFile(file) {
+export function isImageFile(file) {
   if (!file) return false;
   const t = _t(file);
   if (isSvgFile(file)) return false;

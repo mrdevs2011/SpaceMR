@@ -774,6 +774,9 @@ function _bindHomeComposer() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') _fillHomeComposerAvi();
   });
+  /* Modul yuklanganda state.me hali yo'q bo'ladi (avatar bo'sh qolardi) — kirish tugagach va profil yangilanganda qayta chizamiz */
+  document.addEventListener('meUpdated', () => { _homeAviSig = ''; _fillHomeComposerAvi(); });
+  document.addEventListener('profilesPreloaded', () => _fillHomeComposerAvi());
 }
 _bindHomeComposer();
 

@@ -109,6 +109,9 @@ export function startForceReloadWatcher() {
   if (_started) return;
   _started = true;
 
+  // Yangi deploy bo'lsa ochiq turgan userlar avtomatik yangilanadi (sw.js versiyasi bo'yicha)
+  import('./auto-update.js').then(m => m.startAutoUpdateWatcher()).catch(() => {});
+
   // Boot check (async)
   checkForceReloadOnBoot();
 
