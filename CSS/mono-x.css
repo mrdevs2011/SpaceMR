@@ -9081,5 +9081,11 @@ select.field option { background: #000000; color: var(--text); }
   box-shadow: 0 16px 48px #000000; overflow: visible;
 }
 #pwConfirmOverlay.show .sheet { animation: cfmIn .18s cubic-bezier(.2, .8, .2, 1); }
-#pwConfirmOverlay .btn-danger, #pwConfirmOverlay .btn-ghost { width: 100%; margin: 6px 0 0; }
 @media (prefers-reduced-motion: reduce) { #pwConfirmOverlay.show .sheet { animation: none; } }
+
+/* Juft tugmalar (Bekor qilish | Tasdiq) — modallarda bir qatorda, teng kenglikda */
+.modal-btn-row { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; }
+.modal-btn-row > button {
+  flex: 1 1 0; width: auto !important; min-width: 0; margin: 0 !important; padding: 12px 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px; text-align: center; line-height: 1.2;
+}

@@ -2619,11 +2619,13 @@ export function injectGroupsDOM() {
           </div>
         </div>
 
-        <button class="btn-primary" id="grpEditSaveBtn">
-          <img src="./svg/action/save.svg" alt="" class="icon" width="15" height="15">
-          Saqlash
-        </button>
-        <button class="btn-ghost" id="grpEditCancelBtn">Bekor qilish</button>
+        <div class="modal-btn-row">
+          <button class="btn-ghost" id="grpEditCancelBtn">Bekor qilish</button>
+          <button class="btn-primary" id="grpEditSaveBtn">
+            <img src="./svg/action/save.svg" alt="" class="icon" width="15" height="15">
+            Saqlash
+          </button>
+        </div>
       </div>
     </div>
   `);

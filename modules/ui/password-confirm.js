@@ -19,8 +19,10 @@ export function askPassword({
       <div class="fs-14px c-text2-theme mb-20px tac"></div>
       <input class="field" type="password" id="pwcInp" placeholder="Joriy parol" autocomplete="current-password">
       <div class="fs-13px c-red-theme" id="pwcErr" style="min-height:18px;margin:6px 0"></div>
-      <button class="btn-danger" id="pwcOk"></button>
-      <button class="btn-ghost" id="pwcCancel">Bekor qilish</button>
+      <div class="modal-btn-row">
+        <button class="btn-ghost" id="pwcCancel">Bekor qilish</button>
+        <button class="btn-danger" id="pwcOk"></button>
+      </div>
     </div>`;
     ov.querySelector('.sheet-title').textContent = title;
     ov.querySelector('.tac').textContent = sub;

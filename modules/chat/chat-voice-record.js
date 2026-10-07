@@ -842,8 +842,10 @@ function _ensureMicPermUi() {
         <p id="micPermMsg" class="mic-perm-msg">Ovozli xabar yuborish uchun mikrofonga ruxsat bering.</p>
         <p id="micPermHint" class="mic-perm-hint" hidden></p>
       </div>
-      <button type="button" class="btn-primary" id="micPermAllowBtn">Ruxsat berish</button>
-      <button type="button" class="btn-ghost" id="micPermCancelBtn">Bekor qilish</button>
+      <div class="modal-btn-row">
+        <button type="button" class="btn-ghost" id="micPermCancelBtn">Bekor qilish</button>
+        <button type="button" class="btn-primary" id="micPermAllowBtn">Ruxsat berish</button>
+      </div>
     </div>`;
   document.body.appendChild(ov);
   return ov;
