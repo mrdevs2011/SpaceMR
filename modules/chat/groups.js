@@ -1295,7 +1295,7 @@ export async function openGroupInfo(groupId) {
           const mime = (m.mediaType || '').toLowerCase();
           const ext  = (m.fileName || '').toLowerCase().split('.').pop();
           return mime.startsWith('image') ||
-                 ['jpg','jpeg','png','gif','webp','avif','svg'].includes(ext);
+                 ['jpg','jpeg','png','gif','webp','avif'].includes(ext);
         });
 
       if (mediaStat) mediaStat.style.display = mediaMsgs.length ? '' : 'none';

@@ -31,7 +31,8 @@ export async function compressImage(file) {
   try {
     if (!file || !file.type.startsWith('image/')) return file;
     // GIF (animatsiya) va SVG ni tegma
-    if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+    if (file.type === 'image/gif') return file;
+    if (file.type === 'image/svg+xml') throw new Error('SVG yuklash mumkin emas');
 
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, IMG_MAX_DIM / Math.max(bitmap.width, bitmap.height));

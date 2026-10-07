@@ -8,7 +8,7 @@ import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { ensureVideoDuration } from '../core/video-policy.js';
 
-const IMG_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
+const IMG_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
 const AUD_EXT = ['mp3', 'm4a', 'wav', 'ogg', 'oga', 'aac', 'flac', 'opus', 'wma'];
 const VID_EXT = ['mp4', 'webm', 'mov', 'm4v', 'mkv', 'ogv', '3gp'];
 const LIMIT = 300;

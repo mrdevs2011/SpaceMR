@@ -2136,7 +2136,7 @@ function _isChatImageMsg(m) {
   const mime = (m.mediaType || '').toLowerCase();
   if (mime.startsWith('image/')) return true;
   const ext = (m.fileName || '').toLowerCase().split('.').pop() || '';
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'heic', 'heif'].includes(ext);
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif'].includes(ext);
 }
 
 function preloadRecentChatMedia(msgs) {
@@ -2291,7 +2291,7 @@ export function paintMessages(msgs, grp = null) {
       const safeUrl = (m.mediaUrl || '').replace(/"/g, '&quot;');
       const _ext = (m.fileName || '').toLowerCase().split('.').pop() || '';
       const _mime = (m.mediaType || '').toLowerCase();
-      const _isImage = _mime.startsWith('image') || ['jpg','jpeg','png','gif','webp','svg','avif'].includes(_ext);
+      const _isImage = _mime.startsWith('image') || ['jpg','jpeg','png','gif','webp','avif'].includes(_ext);
       const hasCaption = !!(m.text && m.text.trim());
       const captionHtml = hasCaption ? `<div class="chat-bubble-text cfm-caption">${renderMarkdown(m.text)}</div>` : '';
       
