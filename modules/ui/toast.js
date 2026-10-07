@@ -6,10 +6,12 @@
  *  3) Juda tez
  *  4) Sessiya yopildi (parol boshqa qurilmada)
  *  5) Amal bajarilmadi
+ *  6) Siz admin tomonidan ruxsatga ega emassiz (guruhda yozish huquqi yo'q)
  */
 let _toastTimer = null;
 
 const KEEP = [
+  { re: /admin tomonidan ruxsat/i, text: 'Siz admin tomonidan ruxsatga ega emassiz', type: 'warning' },
   { re: /boshqa qurilmada|vaqtinchalik kod/i, text: "Parolingiz boshqa qurilmada o'zgartirildi. Qayta kiring", type: 'warning' },
   { re: /ruxsat|mikrofon|kameraga/i, text: 'Ruxsat berilmadi', type: 'info' },
   { re: /juda tez/i, text: 'Juda tez yuboryapsiz. Biroz kuting', type: 'warning' },

@@ -98,7 +98,7 @@ async function _loadGroupsInner() {
   let rows = [];
   if (ids.length) {
     const { data, error } = await sb.from('groups')
-      .select('*, group_members(user_id, role, unread_count)').in('id', ids);
+      .select('*, group_members(user_id, role, unread_count, can_write)').in('id', ids);
     if (state.me?.uid !== me) return;
     if (error) { console.warn('[Groups] watcher error:', error.message); return; }
     rows = data || [];
@@ -107,6 +107,8 @@ async function _loadGroupsInner() {
   groupListItems = [];
   rows.forEach(r => {
     const g = mapGroup(r);
+    g.canWrite = ((r.group_members || []).find(m => m.user_id === me)?.can_write) !== false;
+    g._canWriteAt = Date.now();
     _latestGroupMap[g.id] = g;
     groupListItems.push(g);
   });
@@ -503,7 +505,7 @@ export async function searchGroups(term) {
     if (!clean) return [];
     // Faqat OMMAVIY guruhlar nom/username bo'yicha; maxfiy hech qachon chiqmaydi
     const { data, error } = await sb.from('groups')
-      .select('*, group_members(user_id, role, unread_count)')
+      .select('*, group_members(user_id, role, unread_count, can_write)')
       .eq('is_private', false)
       .or(`username.ilike.%${clean}%,name.ilike.%${clean}%`)
       .limit(20);
@@ -545,9 +547,11 @@ export async function openGroupThread(groupId) {
   if (!groupData && state.me && groupId) {
     try {
       const { data, error } = await sb.from('groups')
-        .select('*, group_members(user_id, role, unread_count)').eq('id', groupId).maybeSingle();
+        .select('*, group_members(user_id, role, unread_count, can_write)').eq('id', groupId).maybeSingle();
       if (data && !error) {
         groupData = mapGroup(data);
+        groupData.canWrite = ((data.group_members || []).find(m => m.user_id === state.me.uid)?.can_write) !== false;
+        groupData._canWriteAt = Date.now();
         _latestGroupMap[groupId] = groupData;
       }
     } catch (_) {}
@@ -931,10 +935,30 @@ export function reloadGroupThread() { _reloadGroupThread && _reloadGroupThread()
 /* ─────────────────────────────────────────────────────────────────────
    SEND MESSAGE TO GROUP / CHANNEL
    ───────────────────────────────────────────────────────────────────── */
+/** Yozish huquqi: egasi/admin — doim; 'admins' — yo'q; 'selected' — faqat can_write=true. Yo'q bo'lsa toast. */
+async function _guardWrite() {
+  const g = _currentGroupData || _latestGroupMap[_currentGroupId];
+  const me = state.me?.uid;
+  if (!g || !me) return true;
+  if (g.ownerId === me || (g.adminIds || []).includes(me)) return true;
+  const perm = g.msgPermission || 'all';
+  if (perm === 'all') return true;
+  if (perm === 'selected' && Date.now() - (g._canWriteAt || 0) > 4000) {
+    try {
+      const { data } = await sb.from('group_members').select('can_write').eq('group_id', g.id).eq('user_id', me).maybeSingle();
+      if (data) { g.canWrite = data.can_write !== false; g._canWriteAt = Date.now(); }
+    } catch (_) {}
+  }
+  const ok = perm === 'selected' ? g.canWrite !== false : false;
+  if (!ok) toast('Siz admin tomonidan ruxsatga ega emassiz', 'warning');
+  return ok;
+}
+
 export async function sendGroupMessage(opts) {
   const gifText = opts && typeof opts.text === 'string' ? opts.text : null;   // GIF: tayyor JSON matn (inputga tegilmaydi)
   if (!_currentGroupId || !state.me) return;
   if (gifText == null && isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
+  if (!(await _guardWrite())) return;
   const inp  = $('chatThreadInput');
   const userText = gifText != null ? gifText : (inp?.value || '').trim();
   const postShare = gifText != null ? null : (chatUI.getPendingPostShare ? chatUI.getPendingPostShare() : null);
@@ -1008,6 +1032,7 @@ export async function sendGroupMessage(opts) {
 
 export async function sendGroupFile(file, caption = '') {
   if (!_currentGroupId || !state.me || !file) return;
+  if (!(await _guardWrite())) return;
   const groupId = _currentGroupId;
   const captionText = (typeof caption === 'string' ? caption : '').trim();
   const _fReply = getReplying();
@@ -1048,6 +1073,7 @@ export async function sendGroupFile(file, caption = '') {
 /** Ovozli xabar (DM bilan bir xil oqim). Bazada `group_messages.duration` va type='voice' kerak: supabase/unfulfilled/016_group-voice.sql */
 export async function sendGroupVoice(blob, duration) {
   if (!_currentGroupId || !state.me || !blob) return;
+  if (!(await _guardWrite())) return;
   if (!rateOk('msg', 8, 10000)) return;
   const groupId = _currentGroupId;
   const groupData = _currentGroupData;
