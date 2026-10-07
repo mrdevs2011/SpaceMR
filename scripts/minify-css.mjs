@@ -12,6 +12,9 @@ let css = readFileSync(file, 'utf8');
 const before = Buffer.byteLength(css);
 
 css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+/* Faqat XAVFSIZ siqish: izohlar, ortiqcha bo'shliq/yangi qator (bitta bo'shliqqa), { } ; , atrofidagi bo'shliq, ";}" -> "}".
+ * Hech qachon: ']' / ')' dan keyingi bo'shliq (descendant selektor: [data-theme="dark"] #x), ':' atrofi (".a :hover"),
+ * '+' / '-' atrofi (calc(1px + 2px)), satr (string) ichi — bularga tegilmaydi. */
 let out = '';
 let i = 0;
 while (i < css.length) {
@@ -29,17 +32,16 @@ while (i < css.length) {
     continue;
   }
   if (/\s/.test(c)) {
+    while (i < css.length && /\s/.test(css[i])) i++;
     const prev = out[out.length - 1] || '';
-    const next = css.slice(i).match(/^\s*/)[0];
-    i += next.length;
     const n = css[i] || '';
-    if (prev && n && /[\w%#.@*-]/.test(prev) && /[\w%#.@*-]/.test(n)) out += ' ';
+    if (prev && n && !'{};,'.includes(prev) && !'{};,}'.includes(n)) out += ' ';
     continue;
   }
+  if (c === '}' && out.endsWith(';')) out = out.slice(0, -1);
   out += c;
   i++;
 }
-out = out.replace(/;\s*}/g, '}').replace(/\s*{\s*/g, '{').replace(/\s*}\s*/g, '}').replace(/\s*;\s*/g, ';').replace(/\s*:\s*/g, ':').replace(/\s*,\s*/g, ',');
 
 writeFileSync(file, out);
 const after = Buffer.byteLength(out);
