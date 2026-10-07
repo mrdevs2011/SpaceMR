@@ -80,7 +80,7 @@ export async function syncChat(chatId, afterSeq) {
     let maxSeq = after;
     for (const m of msgs) if (m.seq != null && m.seq > maxSeq) maxSeq = m.seq;
     for (const t of tombs) if (t.seq != null && t.seq > maxSeq) maxSeq = t.seq;
-    if (head > maxSeq) maxSeq = head;
+    if (head > maxSeq && !data.has_more) maxSeq = head;
     setCursor('dm:' + chatId, maxSeq);
     if (canCache('message') && msgs.length) putThread('dm', chatId, msgs);
     return { msgs, tombstones: tombs, headSeq: head, reset: false, ok: true, hasMore: !!data.has_more };
@@ -132,21 +132,42 @@ export async function syncGroup(groupId, afterSeq) {
 export async function loadThreadDelta(chatId, cachedMsgs) {
   if (!isSyncV2Enabled()) return null;
   const scope = 'dm:' + chatId;
-  let after = getCursor(scope);
-  if (!after && cachedMsgs?.length) {
-    for (const m of cachedMsgs) {
-      if (m.seq != null && m.seq > after) after = m.seq;
-    }
+  // Delta HAR DOIM asosdagi (ekranda/keshda bor) eng katta seq'dan boshlanadi.
+  // Jonli kursor asosdan oldinda bo'lishi mumkin (realtime/boshqa yo'l bilan surilgan) —
+  // shunda orasidagi xabarlar na asosda, na deltada bo'lib, ro'yxatdan "tushib qolardi".
+  let baseMax = 0;
+  for (const m of cachedMsgs || []) {
+    if (m && m.seq != null && m.seq > baseMax) baseMax = m.seq;
   }
-  const res = await syncChat(chatId, after);
+  const cur = getCursor(scope) || 0;
+  let after = baseMax > 0 ? Math.min(baseMax, cur || baseMax) : cur;
+  if (baseMax > 0 && cur > baseMax) after = baseMax;
+
+  let res = await syncChat(chatId, after);
   if (!res || !res.ok) return null;
   if (res.reset) return { msgs: [], from: 'sync', tombstones: [], reset: true };
+  const allMsgs = res.msgs.slice();
+  const allTombs = res.tombstones.slice();
+  let headSeq = res.headSeq;
+  // has_more bo'lsa — qolgan sahifalarni ham olamiz (kursor faqat to'liq tugagach head ga suriladi)
+  for (let i = 0; res && res.hasMore && i < 10; i++) {
+    let last = after;
+    for (const m of res.msgs) if (m.seq != null && m.seq > last) last = m.seq;
+    for (const t of res.tombstones) if (t.seq != null && t.seq > last) last = t.seq;
+    if (last <= after) break;
+    after = last;
+    res = await syncChat(chatId, after);
+    if (!res || !res.ok || res.reset) break;
+    allMsgs.push(...res.msgs);
+    allTombs.push(...res.tombstones);
+    headSeq = res.headSeq;
+  }
 
-  // Merge: cache base + delta
+  // Merge: asos + delta
   const byId = new Map();
   for (const m of cachedMsgs || []) if (m?.id) byId.set(m.id, m);
-  for (const m of res.msgs) if (m?.id) byId.set(m.id, m);
-  for (const t of res.tombstones) {
+  for (const m of allMsgs) if (m?.id) byId.set(m.id, m);
+  for (const t of allTombs) {
     if (t.message_id) byId.delete(t.message_id);
   }
   const msgs = [...byId.values()].sort((a, b) => {
@@ -155,7 +176,7 @@ export async function loadThreadDelta(chatId, cachedMsgs) {
     if (sa && sb_ && sa !== sb_) return sa - sb_;
     return (a.createdAt || 0) - (b.createdAt || 0);
   });
-  return { msgs, from: 'sync', tombstones: res.tombstones, reset: false, headSeq: res.headSeq };
+  return { msgs, from: 'sync', tombstones: allTombs, reset: false, headSeq };
 }
 
 
@@ -165,12 +186,11 @@ export async function loadThreadDelta(chatId, cachedMsgs) {
 export async function loadGroupDelta(groupId, cachedMsgs) {
   if (!isSyncV2Enabled() || !groupId) return null;
   const scope = 'grp:' + groupId;
-  let after = getCursor(scope);
-  if (!after && cachedMsgs?.length) {
-    for (const m of cachedMsgs) {
-      if (m.seq != null && m.seq > after) after = m.seq;
-    }
-  }
+  // Asosdagi eng katta seq'dan boshlaymiz: jonli kursor asosdan oldinda bo'lsa orada xabar tushib qolmasin
+  let baseMax = 0;
+  for (const m of cachedMsgs || []) if (m && m.seq != null && m.seq > baseMax) baseMax = m.seq;
+  const cur = getCursor(scope) || 0;
+  let after = baseMax > 0 ? Math.min(baseMax, cur || baseMax) : cur;
   const res = await syncGroup(groupId, after);
   if (!res || !res.ok) return null;
   if (res.reset) return { msgs: [], from: 'sync', tombstones: [], reset: true };

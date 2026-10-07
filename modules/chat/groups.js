@@ -675,6 +675,21 @@ export async function openGroupThread(groupId) {
           }
           await _readP;
           if (_gDead || _currentGroupId !== groupId) return;
+          // So'rov paytida realtime orqali kelib ekranda turgan xabarlar yo'qolmasin
+          {
+            const _have = new Set(msgs.map(m => m.id));
+            const _dead = new Set((delta.tombstones || []).map(t => t?.message_id).filter(Boolean));
+            let _extra = false;
+            for (const m of (_gMsgs || [])) {
+              if (!m?.id || _have.has(m.id) || _dead.has(m.id) || _gPending.has(m.id) || String(m.id).startsWith('tmp') || m.status === 'sending') continue;
+              msgs.push(m); _have.add(m.id); _extra = true;
+            }
+            if (_extra) msgs.sort((a, b) => {
+              const sa = a.seq != null ? a.seq : 0, sb_ = b.seq != null ? b.seq : 0;
+              if (sa && sb_ && sa !== sb_) return sa - sb_;
+              return (a.createdAt || 0) - (b.createdAt || 0);
+            });
+          }
           _gMsgs = msgs; _gLoaded = true;
           paintGroupMessages(msgs, _currentGroupData || groupData);
           if ((_latestGroupMap[groupId]?.unreadCount?.[state.me.uid] || 0) > 0) _resetGroupUnread(groupId);

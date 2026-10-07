@@ -1636,19 +1636,53 @@ export async function openChatThread(uid) {
   resetPaintGate(_pgKey);
   if (_cachedMsgs && _cachedMsgs.length) markCacheReady(_pgKey);
 
+  let _loadSeq = 0;
+  const _cmpMsg = (a, b) => {
+    const sa = a.seq != null ? a.seq : 0, sb_ = b.seq != null ? b.seq : 0;
+    if (sa && sb_ && sa !== sb_) return sa - sb_;
+    return (a.createdAt || 0) - (b.createdAt || 0);
+  };
+  // So'rov kutilayotgan paytda realtime orqali kelgan (ekranda turgan) xabarlarni natijaga qaytarib qo'shamiz:
+  // aks holda eski snapshot ustiga chizilib, ular jim yo'qolardi.
+  const _mergeLive = (list, tombs, minTs) => {
+    const have = new Set(list.map(m => m.id));
+    const dead = new Set((tombs || []).map(t => t?.message_id).filter(Boolean));
+    let extra = false;
+    for (const m of (chatState._curMsgs || [])) {
+      if (!m?.id || have.has(m.id) || dead.has(m.id)) continue;
+      if (m.chatId && m.chatId !== chatId) continue;
+      if (chatState._rtLocal.has(m.id) || String(m.id).startsWith('tmp') || m.status === 'sending') continue;
+      if (minTs && (m.createdAt || 0) < minTs) continue;
+      list.push(m); have.add(m.id); extra = true;
+    }
+    if (extra) list.sort(_cmpMsg);
+    return list;
+  };
   const loadThread = async () => {
+    const _mySeq = ++_loadSeq;
     // Phase 4: seq-delta (faqat ff_sync_v2=1 va migratsiya bor bo'lsa)
     if (isSyncV2Enabled()) {
       try {
-        const delta = await loadThreadDelta(chatId, _cachedMsgs || getCachedThreadMessages(chatId) || []);
-        if (_tDead || state.currentChatId !== chatId) return;
+        // Asos: keshdagi + hozir ekranda turgan (jonli) xabarlar birlashmasi — eski _cachedMsgs emas.
+        // Aks holda chat ochilgandan keyin kelgan xabarlar asosda bo'lmay, keshga ham yozilmay yo'qolardi.
+        const _baseMap = new Map();
+        for (const m of (_cachedMsgs || getCachedThreadMessages(chatId) || [])) if (m?.id) _baseMap.set(m.id, m);
+        for (const m of (getCachedThreadMessages(chatId) || [])) if (m?.id) _baseMap.set(m.id, m);
+        for (const m of (chatState._curMsgs || [])) {
+          if (!m?.id || (m.chatId && m.chatId !== chatId)) continue;
+          if (chatState._rtLocal.has(m.id) || String(m.id).startsWith('tmp') || m.status === 'sending') continue;
+          _baseMap.set(m.id, m);
+        }
+        const delta = await loadThreadDelta(chatId, [..._baseMap.values()]);
+        if (_tDead || state.currentChatId !== chatId || _mySeq !== _loadSeq) return;
         if (delta && !delta.reset) {
+          const _dm = _mergeLive(delta.msgs.slice(), delta.tombstones);
           markNetworkReady(_pgKey);
           tryOpenPaint(_pgKey);
           syncPath('thread-delta-ok');
-          paintMessages(_rtMerge(delta.msgs.slice()));
+          paintMessages(_rtMerge(_dm.slice()));
           _tLoaded = true;
-          cacheThreadMessages(chatId, delta.msgs);
+          cacheThreadMessages(chatId, _dm);
           _earlyFetch = null;
           try {
             mark('thread-painted');
@@ -1668,7 +1702,7 @@ export async function openChatThread(uid) {
     if (!res || res.error) res = await sb.from('messages').select('id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq')
       .eq('chat_id', chatId).order('created_at', { ascending: false }).limit(MSG_LIMIT);
     const { data, error } = res;
-    if (_tDead || state.currentChatId !== chatId) return; // boshqa chat ochilgan — bu natija chizilmaydi
+    if (_tDead || state.currentChatId !== chatId || _mySeq !== _loadSeq) return; // boshqa chat ochilgan / yangiroq so'rov ketgan — bu natija chizilmaydi
     if (error) {
       console.warn('[Chat] Thread load error:', error.message);
       if (!(_cachedMsgs && _cachedMsgs.length)) {
@@ -1679,6 +1713,7 @@ export async function openChatThread(uid) {
       return;
     }
     const msgs = (data || []).map(mapMessage).reverse();
+    _mergeLive(msgs, null, msgs.length ? (msgs[0].createdAt || 0) : 0);
     markNetworkReady(_pgKey);
     tryOpenPaint(_pgKey);
     paintMessages(_rtMerge(msgs.slice()));
