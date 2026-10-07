@@ -2,16 +2,17 @@
    - Kontekst menyu tepasida tezkor reaksiyalar qatori + chevron (msg-menu.js shuni chizadi)
    - Chevron bosilsa menyu ichida belgilangan balandlikdagi emoji paneli ochiladi (scroll + qidiruv)
    - Reaksiyalar xabar pufakchasi tagida chip bo'lib ko'rinadi (bosilsa — o'zimning reaksiyam almashadi/olinadi)
-   - Saqlash: public.message_reactions (063 SQL), bir foydalanuvchi — bir xabarga bitta reaksiya.
+   - Saqlash: public.message_reactions (063 + 094 SQL), bir foydalanuvchi — bir xabarga bitta reaksiya.
+     emoji ustuniga rasm EMAS, faqat PATH yoziladi ("emoji/2d/1f525.png"); ko'rsatishda <img> real vaqtda chiziladi.
    - Jonli: postgres_changes (thread_id bo'yicha). DOM: paintMessages() dan keyin reactAfterPaint() chiplarni qayta qo'yadi. */
 import { sb, state } from '../core/config.js';
 import { esc, defAvi } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
-import { emojiImg, warmEmoji } from '../ui/emoji-img.js';
+import { emojiImg, warmEmoji, emojiPath, toKey } from '../ui/emoji-img.js';
 
-export const QUICK = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁'];
+export const QUICK = ['2764', '1f44d', '1f44e', '1f525', '1f970', '1f44f', '1f601'];   // kalitlar (hex) — kodda emoji belgisi yo'q
 /** Reaksiyaga arziydigan tanlangan emojilar (menyu qatori + chevron paneli) */
-export const REACTS = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😂', '🤣', '😮', '😢', '😭', '😡', '🤯', '😱', '🤔', '🤩', '😍', '😎', '🥳', '🎉', '💯', '🙏', '👌', '💪', '🤝', '👀', '💔', '❤️‍🔥', '😴', '🤡', '🥴', '🫡', '🏆', '⚡', '🍾'];
+export const REACTS = ['2764', '1f44d', '1f44e', '1f525', '1f970', '1f44f', '1f601', '1f602', '1f923', '1f62e', '1f622', '1f62d', '1f621', '1f92f', '1f631', '1f914', '1f929', '1f60d', '1f60e', '1f973', '1f389', '1f4af', '1f64f', '1f44c', '1f4aa', '1f91d', '1f440', '1f494', '2764-200d-1f525', '1f634', '1f921', '1f974', '1fae1', '1f3c6', '26a1', '1f37e'];
 const TABLE = 'message_reactions';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CHEV = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
@@ -21,6 +22,8 @@ const byMsg = new Map();   // msgId -> Map(uid -> emoji)
 const pops = new Map();    // msgId -> { e, t } — yangi qo'shilgan reaksiya (animatsiya uchun)
 const prof = new Map();    // uid -> { name, avatar } (keshda yo'q bo'lsa)
 const me = () => state.me?.uid;
+/* Bazadagi qiymat HAR DOIM path: "emoji/2d/<kalit>.png". Eski qatorlardagi belgi ham path'ga o'giriladi; yaroqsiz qiymat '' bo'ladi. */
+const norm = e => emojiPath(e);
 
 function threadNow() {
   const dm = !state.currentChatKind || state.currentChatKind === 'dm';
@@ -29,9 +32,11 @@ function threadNow() {
 }
 
 const put = r => {
+  const e = norm(r.emoji);
+  if (!e) return;
   let m = byMsg.get(r.message_id);
   if (!m) byMsg.set(r.message_id, m = new Map());
-  m.set(r.user_id, r.emoji);
+  m.set(r.user_id, e);
 };
 const drop = r => {
   const m = byMsg.get(r.message_id);
@@ -68,7 +73,7 @@ function sync() {
       if (my !== seq) return;
       const row = p.eventType === 'DELETE' ? p.old : p.new;
       if (!row?.message_id) return;
-      if (p.eventType !== 'DELETE' && row.user_id !== me() && byMsg.get(row.message_id)?.get(row.user_id) !== row.emoji) pops.set(row.message_id, { e: row.emoji, t: Date.now() });
+      if (p.eventType !== 'DELETE' && row.user_id !== me() && norm(row.emoji) && byMsg.get(row.message_id)?.get(row.user_id) !== norm(row.emoji)) pops.set(row.message_id, { e: norm(row.emoji), t: Date.now() });
       if (p.eventType === 'DELETE') drop(row); else put(row);
       paintMsg(row.message_id);
     })
@@ -151,6 +156,8 @@ function paintAll(force) {
 
 /* ── Amal ──────────────────────────────────────────────────────────── */
 export async function reactToggle(msgId, emoji) {
+  emoji = norm(emoji);   // bazaga faqat path boradi (rasm emas, belgi ham emas)
+  if (!emoji) return;
   sync();
   const t = cur, uid = me();
   if (!t || !uid || !msgId) return;
@@ -171,19 +178,18 @@ export async function reactToggle(msgId, emoji) {
 export function reactStripHtml(m) {
   sync();
   const mine = byMsg.get(m.id)?.get(me());
-  return `<div class="mc-react"><div class="mc-r-scroll">${REACTS.map(e => `<button type="button" class="mc-r${mine === e ? ' on' : ''}" data-r="${e}" aria-label="${e}">${emojiImg(e)}</button>`).join('')}</div><button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
+  return `<div class="mc-react"><div class="mc-r-scroll">${REACTS.map(e => `<button type="button" class="mc-r${mine === norm(e) ? ' on' : ''}" data-r="${norm(e)}" aria-label="Reaksiya">${emojiImg(e)}</button>`).join('')}</div><button type="button" class="mc-r-more" data-rmore aria-label="Ko‘proq reaksiya" aria-expanded="false">${CHEV}</button></div>`;
 }
 
 /* ── Hover (faqat sichqonchali qurilma): xabar chetida bitta tezkor reaksiya; ustiga borilsa — vertikal scrollli ro'yxat (10 ta) ── */
-export const HOVER_SET = ['❤️', '👍', '👎', '🔥', '🥰', '👏', '😁', '😮', '😢', '🎉'];
+export const HOVER_SET = ['2764', '1f44d', '1f44e', '1f525', '1f970', '1f44f', '1f601', '1f62e', '1f622', '1f389'];
 warmEmoji([...REACTS, ...HOVER_SET]);                 // reaksiya paneli/chiplari
-warmEmoji(REACTS.slice(0, 24), '3d');                   // tez-tez yuboriladigan yakka katta emojilar   // reaksiya paneli ochilganda rasmlar tayyor bo'lsin
 const QK = 'spacemr_react_quick';
 const canHover = () => !!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
 let hb = null, hp = null, hRow = null, hideT = 0, openT = 0, dwellT = 0, dwellRow = null;
 const DWELL_MS = 1000;   // xabar ustida shuncha turilgandan keyin tezkor reaksiya tugmasi chiqadi
-const quick = () => { try { const q = localStorage.getItem(QK); if (q && HOVER_SET.includes(q)) return q; } catch (_) {} return HOVER_SET[0]; };
-const setQuick = e => { try { localStorage.setItem(QK, e); } catch (_) {} };
+const quick = () => { try { const q = toKey(localStorage.getItem(QK)); if (q && HOVER_SET.includes(q)) return q; } catch (_) {} return HOVER_SET[0]; };   // eski belgi saqlangan bo'lsa ham kalitga o'giriladi
+const setQuick = e => { try { localStorage.setItem(QK, toKey(e)); } catch (_) {} };
 const mineOn = row => !!byMsg.get(row?.dataset?.msgId)?.get(me());
 // Chat sarlavhasi (suzuvchi) tagiga panel kirib ketmasin: pastroq chegara
 const minTop = () => {
@@ -252,7 +258,7 @@ function openPick() {
   const q = quick(), mineE = byMsg.get(hRow.dataset.msgId)?.get(me());
   // column-reverse: birinchi (tezkor) emoji pastda — tugma ustida; qolganlari tepaga scroll
   hp.firstChild.innerHTML = [q, ...HOVER_SET.filter(e => e !== q)]
-    .map((e, i) => `<button type="button" class="hp-e${mineE === e ? ' on' : ''}" data-e="${e}" aria-label="${e}" style="--i:${i}">${emojiImg(e)}</button>`).join('');
+    .map((e, i) => `<button type="button" class="hp-e${mineE === norm(e) ? ' on' : ''}" data-e="${norm(e)}" aria-label="Reaksiya" style="--i:${i}">${emojiImg(e)}</button>`).join('');
   const r = hb.getBoundingClientRect();
   // Bo'sh joyga BUTUN emoji sig'adigan qilib balandlik: 36px emoji + 4px oraliq (kesilib qolmasin)
   const room = r.bottom + 4 - minTop() - 18;
