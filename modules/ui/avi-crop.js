@@ -63,14 +63,28 @@ function _setScale(s) {
   _applyTransform();
 }
 
+/* Barmoq (touch), sichqoncha va touchpad: 1 ta ko'rsatkich — surish; 2 ta barmoq — chimchilab kattalashtirish.
+   Touchpad: ikki barmoq scroll / chimchilash (ctrl+wheel) = zoom. Sichqoncha g'ildiragi = zoom. */
+const _ptrs = new Map();   // aktiv barmoqlar/sichqoncha (pinch uchun)
+let _pinchD = 0;
+const _pdist = () => { const [a, b] = [..._ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+
 function _onPointerDown(e) {
-  _dragging = true;
-  _lastX = e.clientX;
-  _lastY = e.clientY;
+  _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  if (_ptrs.size === 2) { _dragging = false; _pinchD = _pdist(); }
+  else { _dragging = true; _lastX = e.clientX; _lastY = e.clientY; }
   e.preventDefault();
 }
 function _onPointerMove(e) {
+  if (!_ptrs.has(e.pointerId)) return;
+  _ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (_ptrs.size >= 2) {            // ikki barmoq — pinch zoom
+    const d = _pdist();
+    if (_pinchD > 0 && d > 0) _setScale(_scale * (d / _pinchD));
+    _pinchD = d;
+    return;
+  }
   if (!_dragging) return;
   const dx = e.clientX - _lastX;
   const dy = e.clientY - _lastY;
@@ -81,12 +95,33 @@ function _onPointerMove(e) {
   _clampPan();
   _applyTransform();
 }
-function _onPointerUp() { _dragging = false; }
+function _onPointerUp(e) {
+  _ptrs.delete(e.pointerId);
+  _pinchD = 0;
+  if (_ptrs.size === 1) {           // pinchdan keyin qolgan barmoq bilan siljitishni davom ettirish
+    const r = [..._ptrs.values()][0];
+    _dragging = true; _lastX = r.x; _lastY = r.y;
+  } else _dragging = false;
+}
 
+/** g'ildirak / touchpad (ikki barmoq scroll va pinch = ctrl+wheel) — yumshoq, delta'ga mutanosib zoom */
 function _onWheel(e) {
   e.preventDefault();
-  const delta = e.deltaY > 0 ? -0.08 : 0.08;
-  _setScale(_scale * (1 + delta));
+  let dy = e.deltaY;
+  if (e.deltaMode === 1) dy *= 16;
+  else if (e.deltaMode === 2) dy *= 100;
+  dy = Math.max(-120, Math.min(120, dy));
+  _setScale(_scale * Math.exp(-dy * (e.ctrlKey ? 0.012 : 0.0018)));
+}
+
+/** Esc — oynani yopadi (boshqa Esc handlerlarga yetkazmaydi) */
+function _onKey(e) {
+  if (e.key !== 'Escape') return;
+  const modal = $('aviCropModal');
+  if (!modal || modal.style.display === 'none') return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  _close(null);
 }
 
 function _bindOnce() {
@@ -99,9 +134,12 @@ function _bindOnce() {
     stage.addEventListener('pointerup', _onPointerUp);
     stage.addEventListener('pointercancel', _onPointerUp);
     stage.addEventListener('wheel', _onWheel, { passive: false });
+    stage.addEventListener('lostpointercapture', _onPointerUp);
   }
+  window.addEventListener('keydown', _onKey, true);
   const slider = $('aviCropZoom');
   if (slider) {
+    slider.addEventListener('wheel', _onWheel, { passive: false });
     slider.addEventListener('input', () => {
       const pct = Number(slider.value) || 100;
       _setScale(_minScale * (pct / 100));
@@ -123,6 +161,7 @@ function _close(result) {
   if (modal) modal.style.display = 'none';
   if (_objectUrl) { URL.revokeObjectURL(_objectUrl); _objectUrl = null; }
   _img = null;
+  _ptrs.clear(); _dragging = false; _pinchD = 0;
   const r = _resolve;
   _resolve = null;
   if (r) r(result);

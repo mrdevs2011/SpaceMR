@@ -2,16 +2,18 @@
 .avi-crop-overlay {
   position: fixed; inset: 0; z-index: 10001;
   align-items: center; justify-content: center;
-  padding: 16px; background: rgba(0, 0, 0, 0.72);
+  padding: 16px; background: rgba(0, 0, 0, 0.72); overflow: hidden; overscroll-behavior: contain;
   -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
 }
 .avi-crop-card {
-  width: min(100%, 380px); max-height: 100%; overflow: auto;
+  width: min(100%, 380px); max-height: 100%; overflow-x: hidden; overflow-y: auto;
+  overscroll-behavior: contain; scrollbar-width: none;
   display: flex; flex-direction: column; gap: 12px;
   padding: 16px; box-sizing: border-box;
   background: var(--bg, #000); color: var(--text, #e7e9ea);
   border: 1px solid var(--bg5, #2f3336); border-radius: 16px;
 }
+.avi-crop-card::-webkit-scrollbar { display: none; }
 .avi-crop-hdr { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .avi-crop-title { font-size: 17px; font-weight: 800; }
 .avi-crop-x {
@@ -43,10 +45,25 @@
 .avi-crop-hint { font-size: 12.5px; text-align: center; color: var(--text4, #71767b); }
 .avi-crop-zoom-row { display: flex; align-items: center; gap: 10px; }
 .avi-crop-zoom-btn {
+  touch-action: manipulation;
   width: 32px; height: 32px; flex: none; padding: 0; font-size: 20px; line-height: 1;
   background: transparent; color: inherit; border: 1px solid #536471; border-radius: 50%; cursor: pointer;
 }
-.avi-crop-slider { flex: 1; min-width: 0; accent-color: var(--x-blue, #1d9bf0); }
+.avi-crop-slider {
+  flex: 1; min-width: 0; height: 32px; margin: 0; padding: 0; background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none; touch-action: none; -webkit-tap-highlight-color: transparent;
+}
+.avi-crop-slider:focus { outline: none; }
+.avi-crop-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: #536471; }
+.avi-crop-slider::-moz-range-track { height: 4px; border-radius: 2px; background: #536471; }
+.avi-crop-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 24px; height: 24px; margin-top: -10px;
+  border-radius: 50%; border: 0; background: var(--x-blue, #1d9bf0); box-shadow: 0 0 0 4px rgba(29, 155, 240, 0.25);
+}
+.avi-crop-slider::-moz-range-thumb {
+  width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--x-blue, #1d9bf0); box-shadow: 0 0 0 4px rgba(29, 155, 240, 0.25);
+}
+.avi-crop-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(29, 155, 240, 0.45); }
 .avi-crop-actions { display: flex; flex-direction: column; gap: 8px; }
 .avi-crop-upload, .avi-crop-cancel {
   height: 40px; border-radius: 999px; font: inherit; font-weight: 700; cursor: pointer;
