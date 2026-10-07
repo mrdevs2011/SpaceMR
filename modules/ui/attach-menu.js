@@ -18,6 +18,32 @@ export function closeAttachMenu() {
   _menu?.remove(); _menu = null;
 }
 
+/** display:none dagi input.click() iOS/Android da ishlamasligi mumkin — offscreen usul */
+function _unveilInput(inp) {
+  if (!inp) return;
+  try {
+    inp.classList.remove('d-none');
+    inp.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0.01;overflow:hidden;z-index:99999;border:0;padding:0;margin:0;';
+  } catch (_) {}
+}
+
+function _safeClickInput(inp) {
+  if (!inp) return false;
+  _unveilInput(inp);
+  try {
+    inp.click();
+    return true;
+  } catch (_) {
+    try {
+      // ba'zi brauzerlar: MouseEvent kerak
+      inp.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+      return true;
+    } catch (_2) {
+      return false;
+    }
+  }
+}
+
 /**
  * @param {object} opts
  * @param {HTMLElement} opts.btn — skrepka / attach tugmasi (yoki drop zona)
@@ -44,10 +70,14 @@ export function initAttachMenu({
 }) {
   if (!btn || typeof onPick !== 'function') return;
 
+  // fileInput ham d-none bo'lishi mumkin — ochishdan oldin unveil
+  if (fileInput) _unveilInput(fileInput);
+
   const mediaInput = document.createElement('input');
   mediaInput.type = 'file';
   mediaInput.accept = mediaAccept;
-  mediaInput.style.display = 'none';
+  mediaInput.setAttribute('aria-hidden', 'true');
+  _unveilInput(mediaInput);
   (fileInput?.parentNode || btn.parentNode || document.body).appendChild(mediaInput);
   mediaInput.addEventListener('change', () => {
     const f = mediaInput.files?.[0];
@@ -55,16 +85,15 @@ export function initAttachMenu({
     if (f) onPick(f);
   });
 
-  // fileInput change — agar tashqi ham bog'langan bo'lsa double-fire bo'lmasin;
-  // caller o'zi listen qilishi mumkin, bu yerda faqat click ochamiz
-
   const actions = {
     camera: async () => { const f = await openCameraCapture(); if (f) onPick(f); },
     file: () => {
       if (!fileInput) return;
-      fileInput.click();
+      _safeClickInput(fileInput);
     },
-    media: () => mediaInput.click(),
+    media: () => {
+      _safeClickInput(mediaInput);
+    },
   };
 
   function openMenu(opts) {
@@ -75,9 +104,8 @@ export function initAttachMenu({
     if (opts.showFile !== false && fileInput) items.push(['file', 'Fayl']);
     if (opts.showMedia !== false) items.push(['media', 'Media']);
     if (!items.length) {
-      // fallback: to'g'ridan-to'g'ri media
       mediaInput.accept = opts.mediaAccept || mediaAccept;
-      mediaInput.click();
+      _safeClickInput(mediaInput);
       return;
     }
     mediaInput.accept = opts.mediaAccept || mediaAccept;
@@ -92,7 +120,6 @@ export function initAttachMenu({
     const r = btn.getBoundingClientRect();
     const mw = m.offsetWidth, mh = m.offsetHeight;
     let left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8));
-    // pastga yoki tepaga joylash
     const spaceBelow = window.innerHeight - r.bottom;
     if (spaceBelow >= mh + 12) {
       m.style.top = (r.bottom + 8) + 'px';
@@ -102,15 +129,46 @@ export function initAttachMenu({
       m.style.top = 'auto';
     }
     m.style.left = left + 'px';
-    m.addEventListener('click', e => {
-      const it = e.target.closest('.am-item');
+
+    // MUHIM: file/media dialog foydalanuvchi gesture ichida ochilishi shart.
+    // pointerdown (capture) da ochamiz — click da kech qolishi mumkin (menyu yopilgach gesture yo'qoladi).
+    const runItem = (k) => {
+      if (!k || !actions[k]) return;
+      if (k === 'file' || k === 'media') {
+        // Avval dialog, keyin menyuni yopish — gesture saqlanadi
+        actions[k]();
+        // biroz kechiktirib yopish: ba'zi mobil brauzerlar dialog oldidan DOM o'zgarishini yoqtirmaydi
+        setTimeout(() => closeAttachMenu(), 0);
+      } else {
+        closeAttachMenu();
+        actions[k]();
+      }
+    };
+
+    m.addEventListener('pointerdown', e => {
+      const it = e.target.closest?.('.am-item');
       if (!it) return;
-      const k = it.dataset.k;
-      closeAttachMenu();
-      actions[k]?.();
+      e.preventDefault();
+      e.stopPropagation();
+      runItem(it.dataset.k);
+    }, true);
+
+    // Klaviatura / accessibility
+    m.addEventListener('click', e => {
+      const it = e.target.closest?.('.am-item');
+      if (!it) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // pointerdown allaqachon ishlagan bo'lsa — menu yo'q
+      if (!_menu) return;
+      runItem(it.dataset.k);
     });
-    const onDown = e => { if (!m.contains(e.target) && !btn.contains(e.target)) closeAttachMenu(); };
+
+    const onDown = e => {
+      if (!m.contains(e.target) && !btn.contains(e.target)) closeAttachMenu();
+    };
     const onKey = e => { if (e.key === 'Escape') closeAttachMenu(); };
+    // pointerdown capture — lekin menu ichidagi event stop qilingan
     document.addEventListener('pointerdown', onDown, true);
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('resize', closeAttachMenu);
@@ -145,12 +203,10 @@ export function initAttachMenu({
     if (isDesktop()) {
       mediaInput.accept = opts.mediaAccept || mediaAccept;
       if (opts.showFile !== false && fileInput) {
-        // Barcha fayllar (chat/post/story)
-        try { fileInput.click(); } catch (_) {}
+        _safeClickInput(fileInput);
         return;
       }
-      // faqat media (image/video)
-      mediaInput.click();
+      _safeClickInput(mediaInput);
       return;
     }
 
