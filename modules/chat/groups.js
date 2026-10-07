@@ -1373,151 +1373,216 @@ export async function checkGroupUsernameAvailable(rawUsername, currentGroupId = 
   return { ok: true, username: clean };
 }
 
-let _editingGroupId = null;
-let _grpEditPendingAviUrl = null;
-let _editIsPublic = true;
-let _editPendingInviteCode = null;
+/* ─────────────────────────────────────────────────────────────────────
+   GURUHNI TAHRIRLASH — "Yangi guruh" formasining o'zi (#grpCreateFormOverlay)
+   edit rejimida ochiladi: avatar, nom, tur (ommaviy/maxfiy), username/havola,
+   tavsif, yozish huquqi va a'zolar tanlovi — yaratishdagi bilan bir xil.
+   ───────────────────────────────────────────────────────────────────── */
+let _editGroupData = null;
+let _editWriterMode = false;          // mavjud a'zolar uchun ham yozish huquqi tugmalari
+let _editOwnerId = null;
+let _editWritersBase = new Map();     // uid -> can_write (ochilgandagi holat)
 
-export function openGroupEdit(groupId, g) {
-  const panel = document.getElementById('grpEditOverlay');
-  if (!panel) return;
+const _MSG_PERM_LABELS = {
+  all: "Xabar yuborish: barcha a'zolar",
+  admins: "Xabar yuborish: faqat adminlar (kanal kabi)",
+  selected: "Xabar yuborish: faqat tanlanganlar",
+};
 
-  _editingGroupId = groupId;
-  _grpEditPendingAviUrl = null;
-  _editIsPublic = !g.isPrivate;
-  _editPendingInviteCode = g.inviteCode || generate64HexToken();
+function _setInviteTools(overlay, on) {
+  const c = overlay.querySelector('#grpCreateCopyInviteBtn');
+  const r = overlay.querySelector('#grpCreateRegenInviteBtn');
+  if (c) c.style.display = on ? '' : 'none';
+  if (r) r.style.display = on ? '' : 'none';
+}
 
-  const typeLabel = 'Guruh';
-  panel.querySelector('#grpEditTitle').textContent = `${typeLabel}ni sozlash`;
-  panel.querySelector('#grpEditNameLabel').textContent = `${typeLabel} nomi *`;
-  panel.querySelector('#grpEditName').value = g.name || '';
-  panel.querySelector('#grpEditDesc').value = g.description || '';
+function _setMsgPermUI(overlay, v) {
+  if (!_MSG_PERM_LABELS[v]) v = 'all';
+  const hidden = overlay.querySelector('#grpFormMsgPerm');
+  if (hidden) hidden.value = v;
+  const wrap = overlay.querySelector('#grpFormMsgPermWrap');
+  if (wrap) wrap.dataset.value = v;
+  const label = overlay.querySelector('#grpFormMsgPermLabel');
+  if (label) label.textContent = _MSG_PERM_LABELS[v];
+  overlay.querySelectorAll('.grp-msg-perm-item').forEach(el => el.classList.toggle('is-active', el.dataset.perm === v));
+  document.body.classList.toggle('grp-perm-selected', v === 'selected');
+  overlay.querySelector('#grpMemberPickerSection')?.classList.toggle('perm-selected', v === 'selected');
+  wrap?.classList.toggle('is-selected-mode', v === 'selected');
+}
 
-  const pubBtn = panel.querySelector('#grpEditPublicBtn');
-  const privBtn = panel.querySelector('#grpEditPrivateBtn');
-  const pubSec = panel.querySelector('#grpEditPublicSection');
-  const privSec = panel.querySelector('#grpEditPrivateSection');
-  const tokenEl = panel.querySelector('#grpEditInviteToken');
-  const uInp = panel.querySelector('#grpEditUsername');
-  if (uInp) uInp.value = g.username || '';
+export async function openGroupEdit(groupId, g) {
+  const overlay = document.getElementById('grpCreateFormOverlay');
+  if (!overlay) return;
 
-  const updateEditPrivacyUI = () => {
-    if (_editIsPublic) {
-      pubBtn?.classList.add('active');
-      privBtn?.classList.remove('active');
-      if (pubSec) pubSec.style.display = '';
-      if (privSec) privSec.style.display = 'none';
-    } else {
-      privBtn?.classList.add('active');
-      pubBtn?.classList.remove('active');
-      if (pubSec) pubSec.style.display = 'none';
-      if (privSec) privSec.style.display = '';
-      if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_editPendingInviteCode}`;
-    }
+  _createType = 'group';
+  _editGroupData = g;
+  _editOwnerId = g.ownerId || null;
+  _editWriterMode = true;
+  _selectedMembers = new Set();
+  _selectedWriters = new Set();
+  _editWritersBase = new Map();
+  _pendingPhotoUrl = null;
+  _usersForPicker = [];
+  _createIsPublic = !g.isPrivate;
+  _pendingInviteCode = g.inviteCode || generate64HexToken();
+  _existingMemberUids = new Set(g.members || []);
+
+  overlay.dataset.addMode = '';
+  overlay.dataset.editMode = groupId;
+
+  overlay.querySelector('.grp-form-title').textContent = 'Guruhni sozlash';
+  overlay.querySelector('#grpFormDescWrap').style.display = '';
+  overlay.querySelector('#grpFormPrivacyWrap').style.display = '';
+  overlay.querySelector('.grp-form-avi-wrap').style.display = '';
+  overlay.querySelector('#grpFormName').style.display = '';
+  overlay.querySelector('#grpFormCreateBtn').textContent = 'Saqlash';
+  overlay.querySelector('#grpFormCreateBtn').disabled = false;
+
+  overlay.querySelector('#grpFormName').value = g.name || '';
+  overlay.querySelector('#grpFormDesc').value = g.description || '';
+  overlay.querySelector('#grpFormUsername').value = g.username || '';
+  overlay.querySelector('.grp-form-desc-hint').textContent = '';
+
+  /* Ommaviy / maxfiy */
+  const pubBtn = overlay.querySelector('#grpCreatePublicBtn');
+  const privBtn = overlay.querySelector('#grpCreatePrivateBtn');
+  const pubSec = overlay.querySelector('#grpCreatePublicSection');
+  const privSec = overlay.querySelector('#grpCreatePrivateSection');
+  const tokenEl = overlay.querySelector('#grpCreateInviteToken');
+  const paintPrivacy = () => {
+    pubBtn?.classList.toggle('active', _createIsPublic);
+    privBtn?.classList.toggle('active', !_createIsPublic);
+    if (pubSec) pubSec.style.display = _createIsPublic ? '' : 'none';
+    if (privSec) privSec.style.display = _createIsPublic ? 'none' : '';
+    if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_pendingInviteCode}`;
   };
-  updateEditPrivacyUI();
+  paintPrivacy();
+  if (pubBtn) pubBtn.onclick = () => { _createIsPublic = true; paintPrivacy(); };
+  if (privBtn) privBtn.onclick = () => { _createIsPublic = false; paintPrivacy(); };
 
-  if (pubBtn) pubBtn.onclick = () => { _editIsPublic = true; updateEditPrivacyUI(); };
-  if (privBtn) privBtn.onclick = () => { _editIsPublic = false; updateEditPrivacyUI(); };
+  _setInviteTools(overlay, true);
+  const copyBtn = overlay.querySelector('#grpCreateCopyInviteBtn');
+  if (copyBtn) copyBtn.onclick = () => {
+    navigator.clipboard?.writeText(`${window.location.origin}/chats/g/${_pendingInviteCode}`);
+    toast('Taklif havolasi nusxalandi', 'success');
+  };
+  const regenBtn = overlay.querySelector('#grpCreateRegenInviteBtn');
+  if (regenBtn) regenBtn.onclick = () => {
+    _pendingInviteCode = generate64HexToken();
+    if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_pendingInviteCode}`;
+    toast('Yangi 64-xonali taklif havolasi yaratildi', 'info');
+  };
 
-  const copyBtn = panel.querySelector('#grpEditCopyInviteBtn');
-  if (copyBtn) {
-    copyBtn.onclick = () => {
-      const link = `${window.location.origin}/chats/g/${_editPendingInviteCode}`;
-      navigator.clipboard?.writeText(link);
-      toast('Taklif havolasi nusxalandi', 'success');
-    };
+  /* Yozish huquqi */
+  _setMsgPermUI(overlay, g.msgPermission || 'all');
+
+  /* Avatar */
+  const aviImg = overlay.querySelector('.grp-form-avi-img');
+  aviImg.src = g.avatar || defAvi(g.name || 'G');
+  aviImg.style.display = '';
+  overlay.querySelector('.grp-form-avi-placeholder').style.display = 'none';
+
+  /* A'zolar */
+  const pickerSection = overlay.querySelector('#grpMemberPickerSection');
+  pickerSection.innerHTML = '<div class="spin-wrap pt-20px"><div class="spinner"></div></div>';
+
+  overlay.classList.add('show');
+
+  const [users] = await Promise.all([
+    _loadContactsForPicker(),
+    (async () => {
+      try {
+        const { data } = await sb.from('group_members').select('user_id, can_write').eq('group_id', groupId);
+        for (const r of data || []) {
+          const w = r.can_write !== false;
+          _editWritersBase.set(r.user_id, w);
+          if (w) _selectedWriters.add(r.user_id);
+        }
+      } catch (_) {}
+      if (!_editWritersBase.size) {
+        for (const uid of _existingMemberUids) { _editWritersBase.set(uid, true); _selectedWriters.add(uid); }
+      }
+    })(),
+  ]);
+  if (overlay.dataset.editMode !== groupId) return; // shu orada yopilgan
+  _usersForPicker = users;
+  _renderMemberPicker(pickerSection, users, { existingMembers: _existingMemberUids });
+  _setMsgPermUI(overlay, overlay.querySelector('#grpFormMsgPerm').value);
+}
+
+async function _submitGroupEdit(groupId) {
+  const overlay = document.getElementById('grpCreateFormOverlay');
+  const g = _editGroupData || _latestGroupMap[groupId] || {};
+
+  const name = overlay.querySelector('#grpFormName').value.trim();
+  if (!name) { toast('Nom kiriting', 'error'); return; }
+  const desc = overlay.querySelector('#grpFormDesc').value.trim();
+  const permRaw = overlay.querySelector('#grpFormMsgPerm')?.value;
+  const perm = ['all', 'admins', 'selected'].includes(permRaw) ? permRaw : 'all';
+
+  const updates = { name, description: desc, msg_permission: perm };
+  if (_pendingPhotoUrl) updates.avatar = _pendingPhotoUrl;
+
+  if (_createIsPublic) {
+    const rawUser = overlay.querySelector('#grpFormUsername')?.value?.trim();
+    if (!rawUser) { toast('Ommaviy guruh uchun username kiriting', 'error'); return; }
+    const avail = await checkGroupUsernameAvailable(rawUser, groupId);
+    if (!avail.ok) { toast(avail.error || 'Bu nom allaqachon band', 'error'); return; }
+    updates.is_private = false;
+    updates.username = avail.username;
+    updates.invite_code = null;
+  } else {
+    updates.is_private = true;
+    updates.username = null;
+    updates.invite_code = _pendingInviteCode;
   }
 
-  const regenBtn = panel.querySelector('#grpEditRegenInviteBtn');
-  if (regenBtn) {
-    regenBtn.onclick = () => {
-      _editPendingInviteCode = generate64HexToken();
-      if (tokenEl) tokenEl.textContent = `${window.location.origin}/chats/g/${_editPendingInviteCode}`;
-      toast('Yangi 64-xonali taklif havolasi yaratildi', 'info');
-    };
-  }
+  const btn = overlay.querySelector('#grpFormCreateBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saqlanmoqda...';
+  try {
+    const who = _myNoticeName();
+    const notices = [];
+    if (name !== (g.name || '')) notices.push(who + ' guruh nomini o\'zgartirdi');
+    if (_pendingPhotoUrl && _pendingPhotoUrl !== (g.avatar || '')) notices.push(who + ' guruh rasmini o\'zgartirdi');
+    if ((updates.username || '') !== (g.username || '')) notices.push(who + ' guruh usernameini o\'zgartirdi');
 
-  // Avatar preview
-  const av = g.avatar || defAvi(g.name || 'G');
-  const aviEl = panel.querySelector('#grpEditAviImg');
-  aviEl.innerHTML = `<img src="${esc(av)}" onerror="this.style.display='none'">`;
+    await _updateGroup(groupId, updates);
 
-  panel.querySelector('#grpEditGroupFields').style.display = '';
-  panel.querySelector('#grpEditMsgPerm').value = g.msgPermission || 'all';
-
-  // Avatar file input
-  const aviBadge = panel.querySelector('#grpEditAviBadge');
-  const aviInput = panel.querySelector('#grpEditAviInput');
-  aviBadge.onclick = () => aviInput.click();
-  aviInput.onchange = async ev => {
-    const f = ev.target.files[0];
-    if (!f || !f.type.startsWith('image/')) return;
-    if (f.size > 5*1024*1024) { toast('Rasm 5 MB dan kam bo\'lishi kerak', 'error'); return; }
-    toast('Yuklanmoqda...', 'info');
-    try {
-      const result = await uploadViaController(f, 'group-avatars');
-      _grpEditPendingAviUrl = result.url;
-      aviEl.innerHTML = `<img src="${result.url}">`;
-      toast('Rasm tanlandi (Saqlash tugmasini bosing)', 'success');
-    } catch(e) { toast('Xato: ' + e.message, 'error'); }
-  };
-
-  // Save
-  panel.querySelector('#grpEditSaveBtn').onclick = async () => {
-    const name = panel.querySelector('#grpEditName').value.trim();
-    if (!name) { toast('Nom kiritilishi shart', 'error'); return; }
-    const desc = panel.querySelector('#grpEditDesc').value.trim();
-
-    const updates = { name, description: desc };
-    if (_grpEditPendingAviUrl) updates.avatar = _grpEditPendingAviUrl;
-    updates.msg_permission = panel.querySelector('#grpEditMsgPerm').value;
-
-    if (_editIsPublic) {
-      const rawUser = panel.querySelector('#grpEditUsername')?.value?.trim();
-      if (!rawUser) { toast('Ommaviy guruh uchun username kiriting', 'error'); return; }
-      const avail = await checkGroupUsernameAvailable(rawUser, groupId);
-      if (!avail.ok) { toast(avail.error || 'Bu nom allaqachon band', 'error'); return; }
-      updates.is_private = false;
-      updates.username = avail.username;
-      updates.invite_code = null;
-    } else {
-      updates.is_private = true;
-      updates.username = null;
-      updates.invite_code = _editPendingInviteCode;
+    /* Yangi tanlangan a'zolar */
+    const added = Array.from(_selectedMembers);
+    if (added.length) {
+      await _addMembers(groupId, added, perm === 'selected' ? new Set(_selectedWriters) : null);
+      await _joinedNotices(groupId, added);
+    }
+    /* Mavjud a'zolarning yozish huquqi */
+    if (perm === 'selected') {
+      for (const [uid, was] of _editWritersBase) {
+        if (uid === g.ownerId) continue;
+        const now = _selectedWriters.has(uid);
+        if (now === was) continue;
+        try { await sb.from('group_members').update({ can_write: now }).eq('group_id', groupId).eq('user_id', uid); } catch (_) {}
+      }
     }
 
-    try {
-      const who = _myNoticeName();
-      const notices = [];
-      if (name !== (g.name || '')) notices.push(who + ' guruh nomini o\'zgartirdi');
-      if (_grpEditPendingAviUrl && _grpEditPendingAviUrl !== (g.avatar || '')) notices.push(who + ' guruh rasmini o\'zgartirdi');
-      if ((updates.username || '') !== (g.username || '')) notices.push(who + ' guruh usernameini o\'zgartirdi');
-      await _updateGroup(groupId, updates);
-      for (const line of notices) await _postGroupNotice(groupId, line);
-      _pushGroupMeta(groupId, {
-        name: updates.name,
-        avatar: updates.avatar || g.avatar || '',
-        username: updates.username || '',
-        count: (g.members || []).length,
-        lastMessage: notices[0] || '',
-      });
-      panel.classList.remove('show');
-      unlockScroll('grpEditOverlay');
-      toast(`${typeLabel} yangilandi`, 'success');
-      openGroupInfo(groupId);
-    } catch(e) { toast('Xato: ' + e.message, 'error'); }
-  };
-
-  // Cancel
-  panel.querySelector('#grpEditCancelBtn').onclick = () => {
-    panel.classList.remove('show');
-    unlockScroll('grpEditOverlay');
+    for (const line of notices) await _postGroupNotice(groupId, line);
+    _pushGroupMeta(groupId, {
+      name: updates.name,
+      avatar: updates.avatar || g.avatar || '',
+      username: updates.username || '',
+      count: (g.members || []).length + added.length,
+      lastMessage: notices[0] || '',
+    });
+    overlay.classList.remove('show');
+    overlay.dataset.editMode = '';
+    toast('Guruh yangilandi', 'success');
     openGroupInfo(groupId);
-  };
-
-  panel.classList.add('show');
-  lockScroll('grpEditOverlay');
+  } catch (e) {
+    toast('Xato: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = overlay.dataset.editMode ? 'Saqlash' : 'Yaratish';
+  }
 }
 
 // Q: kanal turi yo'q — "+" to'g'ridan-to'g'ri guruh yaratish formasini ochadi
@@ -1716,9 +1781,16 @@ export function openCreateForm(type) {
   _usersForPicker  = [];
   _createIsPublic  = true;
   _pendingInviteCode = generate64HexToken();
+  _selectedWriters = new Set();
+  _existingMemberUids = new Set();
+  _editWriterMode = false;
+  _editOwnerId = null;
+  _editGroupData = null;
 
   const overlay = document.getElementById('grpCreateFormOverlay');
   if (!overlay) return;
+  overlay.dataset.editMode = '';
+  _setInviteTools(overlay, false);
 
   overlay.querySelector('.grp-form-title').textContent = 'Yangi guruh';
   overlay.querySelector('#grpFormDescWrap').style.display = '';
@@ -1941,12 +2013,16 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
         e.stopPropagation();
         const row = writeBtn.closest('.grp-picker-row');
         const uid = row?.dataset?.uid;
-        if (!uid || !_selectedMembers.has(uid)) return;
+        if (!uid) return;
+        const isExisting = _existingMemberUids.has(uid);
+        if (isExisting && !_editWriterMode) return;
+        if (!isExisting && !_selectedMembers.has(uid)) _selectedMembers.add(uid);
         const allow = writeBtn.getAttribute('data-write-toggle') === '1';
         if (allow) _selectedWriters.add(uid);
         else _selectedWriters.delete(uid);
-        row.classList.toggle('can-write', _selectedWriters.has(uid));
-        row.classList.toggle('no-write', !_selectedWriters.has(uid));
+        const cnt0 = document.getElementById('grpSelCount');
+        if (cnt0) cnt0.textContent = `${_selectedMembers.size} ta tanlangan`;
+        _syncPickerWriteMode();
         return;
       }
       const row = e.target.closest?.('.grp-picker-row');
@@ -2006,7 +2082,8 @@ function _renderPickerRows(users, listEl, q = '') {
     const isMem = !!( _existingMemberUids && _existingMemberUids.has(u.uid) );
     const sel  = isMem || _selectedMembers.has(u.uid);
     const canW = _selectedWriters.has(u.uid);
-    const writeTools = (selectedMode && sel && !isMem) ? `
+    const canToggle = selectedMode && u.uid !== _editOwnerId && (!isMem || _editWriterMode);
+    const writeTools = canToggle ? `
       <div class="grp-picker-write-tools" title="Yozish ruxsati">
         <button type="button" class="grp-write-btn ${canW ? 'is-on' : ''}" data-write-toggle="1" title="Yoza oladi" aria-label="Yoza oladi">
           <img src="./svg/action/edit.svg" alt="" class="icon" width="14" height="14">
@@ -2015,7 +2092,7 @@ function _renderPickerRows(users, listEl, q = '') {
           <img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14" onerror="this.style.display='none'">
         </button>
       </div>` : '';
-    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${!isMem && sel && selectedMode ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
+    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${canToggle && sel ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
       <div class="grp-picker-avi"><img src="${esc(av)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'"></div>
       <div class="grp-picker-info">
         <div class="grp-picker-name">${esc(u.fullName||'Foydalanuvchi')}</div>
@@ -2102,6 +2179,9 @@ export async function openMemberPicker(groupId, mode) {
   overlay.querySelector('#grpFormName').style.display = 'none';
   overlay.querySelector('#grpFormCreateBtn').textContent = "Qo'shish";
   overlay.dataset.addMode = groupId;
+  overlay.dataset.editMode = '';
+  _editWriterMode = false;
+  _editOwnerId = null;
 
   const pickerSection = overlay.querySelector('#grpMemberPickerSection');
   pickerSection.innerHTML = '<div class="spin-wrap pt-20px"><div class="spinner"></div></div>';
@@ -2121,6 +2201,9 @@ export async function openMemberPicker(groupId, mode) {
 export async function submitCreateGroup() {
   const overlay  = document.getElementById('grpCreateFormOverlay');
   const addMode  = overlay?.dataset?.addMode;
+  const editId   = overlay?.dataset?.editMode;
+
+  if (editId) { await _submitGroupEdit(editId); return; }
 
   if (addMode) {
     // Add members to existing group
@@ -2300,6 +2383,8 @@ export function injectGroupsDOM() {
           <div class="pe-field-label">Maxfiy taklif havolasi (64 xonali)</div>
           <div class="grp-invite-preview">
             <span class="grp-invite-token" id="grpCreateInviteToken"></span>
+            <button type="button" class="grp-invite-copy-btn" id="grpCreateCopyInviteBtn" style="display:none">Nusxa</button>
+            <button type="button" class="grp-invite-regen-btn" id="grpCreateRegenInviteBtn" style="display:none" title="Yangi havola yaratish" aria-label="Yangi havola yaratish"><img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14"></button>
           </div>
           <div class="grp-form-desc-hint">Faqat ushbu maxfiy havola orqali guruhga qo'shilish mumkin</div>
         </div>
@@ -2504,10 +2589,13 @@ export function injectGroupsDOM() {
   document.getElementById('grpFormAviWrap').onclick = pickGroupPhoto;
   document.getElementById('grpFormCreateBtn').onclick = submitCreateGroup;
   _bindMsgPermDropdown();
-  document.getElementById('grpFormCancelBtn').onclick = () => {
+  document.getElementById('grpFormCancelBtn').onclick = (ev) => {
     const ov = document.getElementById('grpCreateFormOverlay');
+    const editId = ov.dataset.editMode;
     ov.classList.remove('show');
     ov.dataset.addMode = '';
+    ov.dataset.editMode = '';
+    if (editId && ev && ev.isTrusted) openGroupInfo(editId);
     ov.querySelector('.grp-form-avi-wrap').style.display = '';
     ov.querySelector('#grpFormName').style.display = '';
     ov.querySelector('#grpFormCreateBtn').textContent = 'Yaratish';

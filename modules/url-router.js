@@ -286,7 +286,7 @@ function computeUrl() {
   if (_auth !== 'in') return null;
 
   const gc = $('grpCreateFormOverlay');
-  if (gc?.classList.contains('show') && !gc.dataset.addMode) return '/chats/groupcreate';
+  if (gc?.classList.contains('show') && !gc.dataset.addMode && !gc.dataset.editMode) return '/chats/groupcreate';
 
   const sv = $('storyViewer');
   if (sv && !sv.hidden && state.storyUid) {
@@ -424,7 +424,7 @@ function updateTitle(path) {
 function hasAnyOverlay() {
   return (hasShow('settingsOverlay') && !settingsPinned())
     || hasShow('uploadOverlay') || hasShow('searchOverlay', 'open')
-    || (hasShow('grpCreateFormOverlay') && !$('grpCreateFormOverlay').dataset.addMode);
+    || (hasShow('grpCreateFormOverlay') && !$('grpCreateFormOverlay').dataset.addMode && !$('grpCreateFormOverlay').dataset.editMode);
 }
 
 function closeEverythingExcept(keep) {

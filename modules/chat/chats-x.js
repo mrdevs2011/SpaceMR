@@ -29,7 +29,7 @@ if (view && wrap) {
   $('chatsXNew')?.addEventListener('click', () => {
     /* "Yangi guruh" formasi ochiq bo'lsa — avval yopamiz (URL ham /chats ga qaytadi) */
     const gc = $('grpCreateFormOverlay');
-    if (gc?.classList.contains('show') && !gc.dataset.addMode) $('grpFormCancelBtn')?.click();
+    if (gc?.classList.contains('show') && !gc.dataset.addMode && !gc.dataset.editMode) $('grpFormCancelBtn')?.click();
     $('chatSearchInput')?.focus();
   });
 
