@@ -4025,3 +4025,95 @@ textarea.pe-input-locked {
   pointer-events: none;
   filter: grayscale(0.4);
 }
+
+
+/* ── Veb-sayt qatorlari (+ / −) ── */
+.pe-website-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+.pe-website-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.pe-website-row .pe-website-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pe-web-action-btn {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #2f3336;
+  background: #000000;
+  color: #e7e9ea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .12s ease;
+  user-select: none;
+}
+.pe-web-action-btn:hover {
+  background: #16181c;
+  border-color: #536471;
+}
+.pe-web-action-btn:active {
+  transform: scale(0.92);
+}
+.pe-web-action-btn.pe-web-add {
+  color: #1d9bf0;
+  border-color: rgba(29, 155, 240, 0.45);
+  background: rgba(29, 155, 240, 0.08);
+  font-size: 26px;
+  font-weight: 300;
+}
+.pe-web-action-btn.pe-web-add:hover {
+  background: rgba(29, 155, 240, 0.18);
+  border-color: #1d9bf0;
+  color: #1d9bf0;
+}
+.pe-web-action-btn.pe-web-remove {
+  color: #f4212e;
+  border-color: rgba(244, 33, 46, 0.35);
+  background: rgba(244, 33, 46, 0.06);
+  font-size: 24px;
+  font-weight: 300;
+}
+.pe-web-action-btn.pe-web-remove:hover {
+  background: rgba(244, 33, 46, 0.14);
+  border-color: #f4212e;
+}
+.pe-website-row .pe-website-input:focus {
+  border-color: var(--x-blue, #1d9bf0);
+}
+#settingsOverlay .pe-web-action-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+}
+#settingsOverlay .pe-website-row .pe-website-input {
+  min-height: 56px;
+}
+
+
+/* Chat list: avatar → haqiqiy profil */
+.chat-avi-profile {
+  cursor: pointer;
+  position: relative;
+}
+.chat-avi-profile:hover {
+  opacity: 0.92;
+}
+.chat-avi-profile:hover img {
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.45);
+}

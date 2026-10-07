@@ -113,12 +113,14 @@ async function _paintProfile(ud) {
   const linksEl = $('profileLinks');
   if (linksEl) {
     const parts = [];
-    if (ud.website) {
-      let href = ud.website;
-      try { href = new URL(ud.website).href; } catch (_) {}
-      let label = ud.website.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+    const _webs = (Array.isArray(ud.websites) && ud.websites.length) ? ud.websites : (ud.website ? [ud.website] : []);
+    _webs.forEach((wurl) => {
+      if (!wurl) return;
+      let href = wurl;
+      try { href = new URL(wurl).href; } catch (_) {}
+      let label = String(wurl).replace(/^https?:\/\//i, '').replace(/\/$/, '');
       parts.push(`<a class="profile-link profile-link-web" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-ico" aria-hidden="true">🔗</span><span>${esc(label)}</span></a>`);
-    }
+    });
     if (ud.phone) {
       const tel = String(ud.phone).replace(/\s+/g, '');
       const digits = tel.replace(/\D/g, '');
@@ -437,12 +439,14 @@ export async function renderUserProfileModal(uid) {
       ${ud.bio ? `<div class="up-bio">${esc(ud.bio)}</div>` : ''}
       ${(() => {
         const bits = [];
-        if (ud.website) {
-          let href = ud.website;
-          try { href = new URL(ud.website).href; } catch (_) {}
-          let label = String(ud.website).replace(/^https?:\/\//i, '').replace(/\/$/, '');
+        const _webs2 = (Array.isArray(ud.websites) && ud.websites.length) ? ud.websites : (ud.website ? [ud.website] : []);
+        _webs2.forEach((wurl) => {
+          if (!wurl) return;
+          let href = wurl;
+          try { href = new URL(wurl).href; } catch (_) {}
+          let label = String(wurl).replace(/^https?:\/\//i, '').replace(/\/$/, '');
           bits.push(`<a class="profile-link profile-link-web" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><span>${esc(label)}</span></a>`);
-        }
+        });
         if (ud.phone) {
           const tel = String(ud.phone).replace(/\s+/g, '');
           const digits = tel.replace(/\D/g, '');

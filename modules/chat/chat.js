@@ -601,8 +601,9 @@ function _paintUserRows(users, animate = false) {
     const badgeTxt = unread > 99 ? '+99' : '+' + unread;
     const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
     const animStyle = '';
+    const unameAttr = (!isSaved && u.username) ? ` data-username="${esc(u.username)}"` : '';
     return `<div class="chat-row${unread ? ' unread' : ''}${animate ? ' chat-row-anim' : ''}${isSaved ? ' chat-row-saved' : ''}" data-uid="${u.uid}"${isSaved ? ' data-saved="1"' : ''} ${animStyle}>
-      <div class="chat-avi">
+      <div class="chat-avi chat-avi-profile"${unameAttr} data-uid="${u.uid}" role="link" title="Profil" tabindex="0">
         <img src="${esc(av)}" onerror="this.style.display='none'">
         ${online ? '<span class="presence-dot" title="onlayn"></span>' : ''}
       </div>
@@ -621,6 +622,26 @@ function _paintUserRows(users, animate = false) {
   _injectPresenceCSS();
   rowsWrap.querySelectorAll('.chat-row').forEach(row => {
     if (!row.dataset.saved) _attachChatRowContextMenu(row);
+    const avi = row.querySelector('.chat-avi-profile');
+    if (avi && !row.dataset.saved) {
+      const goProfile = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const uname = avi.getAttribute('data-username');
+        const uid = avi.getAttribute('data-uid') || row.dataset.uid;
+        if (uname) {
+          import('../url-router.js').then(m => m.applyPath('/u/' + encodeURIComponent(uname))).catch(() => {});
+          return;
+        }
+        if (uid) {
+          import('../profile/profile.js').then(m => m.openUserProfileModal(uid)).catch(() => {});
+        }
+      };
+      avi.addEventListener('click', goProfile);
+      avi.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') goProfile(e);
+      });
+    }
     row.addEventListener('click', () => {
       const uid = row.dataset.uid;
       const u = users.find(x => x.uid === uid);

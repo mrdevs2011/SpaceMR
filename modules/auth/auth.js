@@ -1618,6 +1618,106 @@ function normalizeWebsiteUrl(raw) {
   }
 }
 
+const WEBSITE_MAX = 5;
+
+function parseWebsitesFromProfile(d) {
+  if (Array.isArray(d?.websites) && d.websites.length) return d.websites.slice(0, WEBSITE_MAX);
+  const raw = d?.website;
+  if (!raw) return [''];
+  try {
+    if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+      const j = JSON.parse(raw);
+      if (Array.isArray(j) && j.length) return j.map(String).slice(0, WEBSITE_MAX);
+    }
+  } catch (_) {}
+  return [String(raw)];
+}
+
+function collectWebsiteInputs() {
+  const list = $('websiteList');
+  if (!list) return [];
+  return [...list.querySelectorAll('.pe-website-input')].map(el => el.value.trim());
+}
+
+function serializeWebsitesForDb(urls) {
+  const cleaned = [];
+  for (const raw of urls) {
+    if (!raw) continue;
+    const res = normalizeWebsiteUrl(raw);
+    if (!res.ok) return res;
+    if (res.url) cleaned.push(res.url);
+  }
+  // unique preserve order
+  const seen = new Set();
+  const uniq = [];
+  for (const u of cleaned) {
+    if (seen.has(u)) continue;
+    seen.add(u);
+    uniq.push(u);
+  }
+  if (!uniq.length) return { ok: true, value: null, list: [] };
+  if (uniq.length === 1) return { ok: true, value: uniq[0], list: uniq };
+  return { ok: true, value: JSON.stringify(uniq), list: uniq };
+}
+
+function renderWebsiteRows(values) {
+  const list = $('websiteList');
+  if (!list) return;
+  const vals = (values && values.length) ? values.slice(0, WEBSITE_MAX) : [''];
+  list.innerHTML = vals.map((v, i) => {
+    const isFirst = i === 0;
+    const btn = isFirst
+      ? `<button type="button" class="pe-web-action-btn pe-web-add" data-web-add aria-label="URL qo'shish" title="Yana URL qo'shish">+</button>`
+      : `<button type="button" class="pe-web-action-btn pe-web-remove" data-web-remove aria-label="URL o'chirish" title="O'chirish">−</button>`;
+    return `<div class="pe-website-row">
+      <input class="field pe-input pe-website-input" type="url" inputmode="url" autocomplete="url" maxlength="200" placeholder="https://misol.uz" value="${String(v || '').replace(/"/g, '"')}">
+      ${btn}
+    </div>`;
+  }).join('');
+  // lock state re-apply via disabled on inputs if accordion locked
+  const locked = list.closest('.pe-acc-locked');
+  if (locked) {
+    list.querySelectorAll('input, button').forEach(el => { el.disabled = true; });
+  }
+}
+
+function bindWebsiteListOnce() {
+  const list = $('websiteList');
+  if (!list || list.dataset.bound) return;
+  list.dataset.bound = '1';
+  list.addEventListener('click', (e) => {
+    const add = e.target.closest('[data-web-add]');
+    const rem = e.target.closest('[data-web-remove]');
+    if (add) {
+      e.preventDefault();
+      if (list.closest('.pe-acc-locked')) return;
+      const cur = collectWebsiteInputs();
+      if (cur.length >= WEBSITE_MAX) {
+        toast('Maksimal 5 ta veb-sayt', 'info');
+        return;
+      }
+      cur.push('');
+      renderWebsiteRows(cur);
+      const inputs = list.querySelectorAll('.pe-website-input');
+      inputs[inputs.length - 1]?.focus();
+      return;
+    }
+    if (rem) {
+      e.preventDefault();
+      if (list.closest('.pe-acc-locked')) return;
+      const row = rem.closest('.pe-website-row');
+      const rows = [...list.querySelectorAll('.pe-website-row')];
+      const idx = rows.indexOf(row);
+      const cur = collectWebsiteInputs();
+      if (idx >= 0) cur.splice(idx, 1);
+      if (!cur.length) cur.push('');
+      renderWebsiteRows(cur);
+    }
+  });
+}
+
+
+
 function initPhoneInputMask() {
   const inp = $('editPhone');
   if (!inp || inp.dataset.maskBound) return;
@@ -1700,7 +1800,7 @@ async function applySecurityLockUI() {
 
   // Barcha sezgir maydonlar
   const ids = [
-    'editName', 'editUsername', 'editBioInput', 'editWebsite', 'editPhone',
+    'editName', 'editUsername', 'editBioInput', 'editPhone',
     'editRecoveryEmail',
     'editOldPassword', 'editNewPassword', 'editNewPassword2',
   ];
@@ -1718,6 +1818,15 @@ async function applySecurityLockUI() {
   // Telefon qatori
   const phoneWrap = $('editPhoneWrap');
   if (phoneWrap) phoneWrap.classList.toggle('pe-locked', locked);
+
+  // Veb-sayt qatorlari
+  const webList = $('websiteList');
+  if (webList) {
+    webList.querySelectorAll('.pe-website-input, .pe-web-action-btn').forEach(el => {
+      el.disabled = locked;
+      el.classList.toggle('pe-input-locked', locked);
+    });
+  }
 
   document.querySelectorAll('.pe-pwd-toggle').forEach(btn => {
     btn.disabled = locked;
@@ -1795,8 +1904,8 @@ export async function populateProfileForm() {
   if (editUsername) editUsername.value = d.username || '';
   if (editRecoveryEmail) editRecoveryEmail.value = d.recoveryEmail || '';
 
-  const editWebsite = $('editWebsite');
-  if (editWebsite) editWebsite.value = d.website || '';
+  bindWebsiteListOnce();
+  renderWebsiteRows(parseWebsitesFromProfile(d));
 
   initPhoneInputMask();
   const editPhone = $('editPhone');
@@ -1919,7 +2028,7 @@ if (saveProfileBtn) {
         return;
       }
 
-      const webRes = normalizeWebsiteUrl($('editWebsite')?.value || '');
+      const webRes = serializeWebsitesForDb(collectWebsiteInputs());
       if (!webRes.ok) { toast(webRes.error, 'error'); return; }
 
       const phoneRes = validateUzPhoneLocal($('editPhone')?.value || '');
@@ -1934,7 +2043,7 @@ if (saveProfileBtn) {
         full_name: fn,
         bio:       $('editBioInput')?.value?.trim() || '',
         recovery_email: rawRecEmail || null,
-        website: webRes.url || null,
+        website: webRes.value,
         phone: phoneRes.e164 || null,
       };
 

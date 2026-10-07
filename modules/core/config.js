@@ -85,6 +85,23 @@ export async function mediaSignedUrl(path, expiresSec = 3600) {
 }
 
 /* ── Mapperlar (DB qatori → eski Firestore ko'rinishi) ──────────────── */
+
+function parseProfileWebsites(raw) {
+  if (!raw) return [];
+  try {
+    if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+      const j = JSON.parse(raw);
+      if (Array.isArray(j)) return j.map(s => String(s || '').trim()).filter(Boolean).slice(0, 5);
+    }
+  } catch (_) {}
+  const one = String(raw).trim();
+  return one ? [one] : [];
+}
+function parseProfileWebsitePrimary(raw) {
+  const list = parseProfileWebsites(raw);
+  return list[0] || '';
+}
+
 export function mapProfile(r) {
   if (!r) return null;
   return {
@@ -105,7 +122,8 @@ export function mapProfile(r) {
     mustChangePassword: r.must_change_password === true,
     passwordChangedAt: ts(r.password_changed_at),
     recoveryEmail: r.recovery_email || '',
-    website: r.website || '',
+    website: parseProfileWebsitePrimary(r.website),
+    websites: parseProfileWebsites(r.website),
     phone: r.phone || '',
     createdAt: ts(r.created_at),
   };

@@ -1,4 +1,5 @@
 import { busEmit } from '../core/rt-bus.js';
+import { getCachedProfile } from '../core/local-cache.js';
 import { sb, state, MAX_FILE, uploadViaController, mapPost } from '../core/config.js';
 import { compressImage } from './compress.js';
 import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.js';
@@ -515,13 +516,23 @@ function loadComposerAvi() {
   if (!box || !state.me) return;
   const name = state.me.displayName || state.me.username || 'U';
   const fb = defAvi(name);
+  let instant = '';
+  try {
+    const cached = getCachedProfile?.(state.me.uid);
+    if (cached?.avatar) instant = cached.avatar;
+  } catch (_) {}
+  if (!instant) instant = state.me.photoURL || '';
   const paint = (src) => {
-    box.innerHTML = `<img src="${esc(src || fb)}" alt="" onerror="this.onerror=null;this.src='${esc(fb)}'">`;
+    box.innerHTML = `<img src="${esc(src || fb)}" alt="" loading="eager" decoding="async" onerror="this.onerror=null;this.src='${esc(fb)}'">`;
   };
-  /* darhol: state'dagi rasm yoki default (DB javobini kutmaymiz) */
-  paint(state.me.photoURL);
+  paint(instant || fb);
   Promise.resolve(sb.from('profiles').select('full_name,avatar').eq('id', state.me.uid).maybeSingle())
-    .then(({ data }) => { if (data?.avatar && data.avatar !== state.me.photoURL) paint(data.avatar); })
+    .then(({ data }) => {
+      if (data?.avatar) {
+        try { state.me.photoURL = data.avatar; } catch (_) {}
+        paint(data.avatar);
+      }
+    })
     .catch(() => {});
 }
 
@@ -555,11 +566,31 @@ function _fillHomeComposerAvi() {
   const me = state.me;
   if (!me?.uid) return;
   const name = me.displayName || me.username || 'U';
-  const av = me.photoURL || defAvi(name);
+  const fb = defAvi(name);
+  /* 1) kesh 2) state 3) default — darhol, tarmoq kutmasdan */
+  let av = '';
+  try {
+    const cached = getCachedProfile?.(me.uid);
+    if (cached?.avatar) av = cached.avatar;
+  } catch (_) {}
+  if (!av) av = me.photoURL || '';
+  if (!av) av = fb;
   const sig = me.uid + '|' + av;
-  if (sig === _homeAviSig) return;
+  if (sig === _homeAviSig && box.querySelector('img')) return;
   _homeAviSig = sig;
-  box.innerHTML = `<img src="${esc(av)}" alt="" onerror="this.src='${esc(defAvi(name))}';this.onerror=null">`;
+  box.innerHTML = `<img src="${esc(av)}" alt="" loading="eager" decoding="async" onerror="this.onerror=null;this.src='${esc(fb)}'">`;
+  /* background: agar state bo'sh edi — DB dan bir marta yangilash */
+  if (!me.photoURL || av === fb) {
+    Promise.resolve(sb.from('profiles').select('avatar,full_name').eq('id', me.uid).maybeSingle())
+      .then(({ data }) => {
+        if (data?.avatar && data.avatar !== av) {
+          try { me.photoURL = data.avatar; } catch (_) {}
+          _homeAviSig = '';
+          _fillHomeComposerAvi();
+        }
+      })
+      .catch(() => {});
+  }
 }
 
 function _homeHasContent() {

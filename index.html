@@ -700,10 +700,12 @@ html[data-nf],html[data-nf] body{background:#000000}
           <label class="pe-input-label" for="editBioInput">Bio</label>
           <textarea class="ta pe-input pe-textarea" id="editBioInput" rows="3" placeholder="O'zingiz haqingizda qisqacha ma'lumot..."></textarea>
         </div>
-        <div class="pe-field-box">
-          <label class="pe-input-label" for="editWebsite">Veb-sayt <span class="pe-tag-optional" style="margin-left:6px">ixtiyoriy</span></label>
-          <input class="field pe-input" type="url" id="editWebsite" placeholder="https://misol.uz" autocomplete="url" inputmode="url" maxlength="200">
-          <div class="pe-field-note">Bitta veb-sayt URL (kelajakda ko'proq qo'shish mumkin)</div>
+        <div class="pe-field-box" id="websiteFieldBox">
+          <label class="pe-input-label">Veb-sayt <span class="pe-tag-optional" style="margin-left:6px">ixtiyoriy</span></label>
+          <div class="pe-website-list" id="websiteList">
+            <!-- qatorlar JS orqali -->
+          </div>
+          <div class="pe-field-note">Bir nechta havola qo'shishingiz mumkin (maks. 5)</div>
         </div>
         <div class="pe-field-box">
           <label class="pe-input-label" for="editPhone">Telefon raqam <span class="pe-tag-optional" style="margin-left:6px">ixtiyoriy</span></label>
