@@ -5,6 +5,24 @@
  * Android: sayt yopiq bo'lsa ham ishlaydi. Desktop: brauzer ochiq bo'lsa.
  */
 
+/** Push matnidan emoji olib tashlanadi (belgi ham, "[[emoji/2d/<kalit>.png]]" token ham): bildirishnomani tizim chizadi,
+ *  PNG ko'rsata olmaydi. key — birinchi emoji kaliti (faqat emoji bo'lsa u bildirishnoma RASMI bo'ladi).
+ *  Mantiq supabase/functions/send-push/emoji-text.ts bilan bir xil (ikki qavatli himoya: eski Edge Function bilan ham toza). */
+const PUSH_EMO_RE = new RegExp(
+  '\\[\\[emoji/2d/([0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*)\\.png\\]\\]|(' +
+  '(?![\\u00A9\\u00AE\\u2122](?!\\uFE0F))(?:\\p{Extended_Pictographic}|\\p{Regional_Indicator}{2}|[#*0-9]\\uFE0F?\\u20E3)' +
+  '(?:\\uFE0F|\\u200D\\p{Extended_Pictographic}|[\\u{1F3FB}-\\u{1F3FF}])*)', 'gu');
+function stripPushEmoji(raw) {
+  let key = '';
+  const s = String(raw == null ? '' : raw).replace(PUSH_EMO_RE, (_m, tok, glyph) => {
+    if (!key) {
+      key = tok || Array.from(glyph || '').map(ch => ch.codePointAt(0).toString(16)).filter(h => h !== 'fe0f').join('-');
+    }
+    return ' ';
+  });
+  return { text: s.replace(/[\uFE0F\u200D\u20E3\u{1F3FB}-\u{1F3FF}]/gu, '').replace(/\s+/g, ' ').trim(), key };
+}
+
 /** Bildirishnoma matnini chiroyli qiladi: xom JSON ({"__postShare":...}) hech qachon ko'rinmasin.
  *  Edge Function eski bo'lsa ham ishlaydi (ikki qavatli himoya). */
 function friendlyBody(data) {
@@ -14,7 +32,14 @@ function friendlyBody(data) {
   b = b.replace(/\{\s*"__gif"[\s\S]*$/, 'GIF');
   if (b.startsWith('{"__')) b = 'Yangi xabar';
   if (data.type === 'call' && b && !/^Qo'ng'iroq/.test(b)) b = "Qo'ng'iroq: " + b;
-  return b;
+  const c = stripPushEmoji(b);
+  return c.text || (c.key ? 'Emoji' : b);
+}
+
+/** Xabar faqat emoji bo'lsa — birinchi emoji PNG'i bildirishnoma rasmi (server rasm bermagan bo'lsa) */
+function emojiImageOf(data) {
+  const c = stripPushEmoji(data.body);
+  return (!c.text && c.key && /^[0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*$/.test(c.key)) ? (self.location.origin + '/emoji/2d/' + c.key + '.png') : undefined;
 }
 
 self.addEventListener('push', (event) => {
@@ -36,11 +61,12 @@ self.addEventListener('push', (event) => {
     if (!isCall && /^\s*\{\s*"__callLog"/.test(String(data.body || ''))) return;
 
     const icon = (typeof data.icon === 'string' && data.icon.startsWith('https://')) ? data.icon : '/icons/icon-192.png';
-    await self.registration.showNotification(data.title || 'SpaceMR', {
+    const image = (typeof data.image === 'string' && data.image.startsWith('https://')) ? data.image : emojiImageOf(data);
+    await self.registration.showNotification(stripPushEmoji(data.title).text || 'SpaceMR', {
       body:  friendlyBody(data),
       icon,
       badge: '/icons/icon-192.png',
-      image: data.image || undefined,   // ulashilgan postning rasmi (bo'lsa)
+      image,   // ulashilgan post rasmi yoki (faqat emoji xabarda) emoji PNG'i
       lang:  'uz',
       timestamp: Date.now(),
       tag:   isCall ? 'spacemr-call' : (data.chatId || data.groupId || data.fromUid || 'spacemr'),
