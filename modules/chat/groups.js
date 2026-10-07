@@ -480,15 +480,42 @@ export async function searchGroups(term) {
   try {
     const clean = term.replace(/^@/, '').trim();
     if (!clean) return [];
+    // Faqat OMMAVIY guruhlar nom/username bo'yicha; maxfiy hech qachon chiqmaydi
     const { data, error } = await sb.from('groups')
       .select('*, group_members(user_id, role, unread_count)')
+      .eq('is_private', false)
       .or(`username.ilike.%${clean}%,name.ilike.%${clean}%`)
       .limit(20);
     if (error || !data) return [];
-    const res = data.map(mapGroup);
+    const res = data.map(mapGroup).filter(g => !g.isPrivate);
     res.forEach(g => { _latestGroupMap[g.id] = g; });
     return res;
   } catch { return []; }
+}
+
+/** Invite URL / koddan guruh topish — faqat aniq kod (qisman qidiruv yo'q) */
+export async function resolveGroupInvite(raw) {
+  const token = String(raw || '').trim();
+  if (!token || token.length < 8) return { success: false, error: "Havola yoki kod kiriting" };
+  try {
+    const { data, error } = await sb.rpc('resolve_group_invite', { p_token: token });
+    if (error) return { success: false, error: error.message || 'Xatolik' };
+    return data || { success: false, error: 'Guruh topilmadi' };
+  } catch (e) {
+    return { success: false, error: e?.message || 'Xatolik' };
+  }
+}
+
+export async function joinGroupByToken(raw) {
+  const token = String(raw || '').trim();
+  if (!token) return { success: false, error: "Havola yoki kod kiriting" };
+  try {
+    const { data, error } = await sb.rpc('join_group_by_token', { p_token: token });
+    if (error) return { success: false, error: error.message || 'Xatolik' };
+    return data || { success: false, error: 'Guruh topilmadi' };
+  } catch (e) {
+    return { success: false, error: e?.message || 'Xatolik' };
+  }
 }
 
 export async function openGroupThread(groupId) {
@@ -1478,7 +1505,122 @@ export function openGroupEdit(groupId, g) {
 
 // Q: kanal turi yo'q — "+" to'g'ridan-to'g'ri guruh yaratish formasini ochadi
 export function openCreateChoice() {
-  openCreateForm('group');
+  // + tugmasi: dropdown — Guruh yaratish | Guruhga qo'shilish
+  let menu = document.getElementById('chatsAddMenu');
+  if (menu) { menu.remove(); return; }
+  const btn = document.getElementById('chatsAddBtn');
+  if (!btn) { openCreateForm('group'); return; }
+  menu = document.createElement('div');
+  menu.id = 'chatsAddMenu';
+  menu.className = 'chats-add-menu';
+  menu.innerHTML = `
+    <button type="button" class="chats-add-menu-item" data-act="create">
+      <span>Guruh yaratish</span>
+    </button>
+    <button type="button" class="chats-add-menu-item" data-act="join">
+      <span>Guruhga qo'shilish</span>
+    </button>`;
+  document.body.appendChild(menu);
+  const r = btn.getBoundingClientRect();
+  const mw = menu.offsetWidth || 200;
+  let left = r.right - mw;
+  if (left < 8) left = 8;
+  menu.style.left = left + 'px';
+  menu.style.top = (r.bottom + 6) + 'px';
+  const close = () => { menu.remove(); document.removeEventListener('click', onDoc, true); };
+  const onDoc = (e) => {
+    if (menu.contains(e.target) || btn.contains(e.target)) return;
+    close();
+  };
+  setTimeout(() => document.addEventListener('click', onDoc, true), 0);
+  menu.addEventListener('click', (e) => {
+    const it = e.target.closest('[data-act]');
+    if (!it) return;
+    close();
+    if (it.dataset.act === 'create') openCreateForm('group');
+    else if (it.dataset.act === 'join') openJoinGroupModal();
+  });
+}
+
+export function openJoinGroupModal() {
+  document.getElementById('grpJoinOverlay')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'grpJoinOverlay';
+  ov.className = 'grp-join-overlay';
+  ov.innerHTML = `
+    <div class="grp-join-card" role="dialog" aria-label="Guruhga qo'shilish">
+      <div class="grp-join-hdr">
+        <span class="grp-join-title">Guruhga qo'shilish</span>
+        <button type="button" class="grp-join-close" aria-label="Yopish">×</button>
+      </div>
+      <p class="grp-join-hint">Maxfiy guruh havolasini yoki kodini aniq kiriting. Nom bo'yicha qidirilmaydi.</p>
+      <input type="text" class="grp-join-input" id="grpJoinInput" placeholder="https://…/chats/g/… yoki kod" autocomplete="off" spellcheck="false">
+      <div class="grp-join-status" id="grpJoinStatus" hidden></div>
+      <div class="grp-join-preview" id="grpJoinPreview" hidden></div>
+      <button type="button" class="grp-join-submit" id="grpJoinSubmit" disabled>Qo'shilish</button>
+    </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('show'));
+  const inp = ov.querySelector('#grpJoinInput');
+  const st = ov.querySelector('#grpJoinStatus');
+  const prev = ov.querySelector('#grpJoinPreview');
+  const sub = ov.querySelector('#grpJoinSubmit');
+  let resolved = null;
+  let timer = null;
+  const close = () => { ov.classList.remove('show'); setTimeout(() => ov.remove(), 150); };
+  ov.querySelector('.grp-join-close').onclick = close;
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  const setStatus = (msg, ok) => {
+    st.hidden = !msg;
+    st.textContent = msg || '';
+    st.className = 'grp-join-status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+  };
+  const tryResolve = async () => {
+    const raw = (inp.value || '').trim();
+    resolved = null;
+    sub.disabled = true;
+    prev.hidden = true;
+    prev.innerHTML = '';
+    if (raw.length < 12) { setStatus(''); return; }
+    // Qisman qidiruv yo'q — faqat yetarli uzun aniq kod/URL
+    setStatus('Tekshirilmoqda…');
+    const r = await resolveGroupInvite(raw);
+    if ((inp.value || '').trim() !== raw) return;
+    if (!r?.success) {
+      setStatus(r?.error || 'Guruh topilmadi', false);
+      return;
+    }
+    resolved = r;
+    setStatus('');
+    prev.hidden = false;
+    prev.innerHTML = `<div class="grp-join-prev-name">${esc(r.name || 'Guruh')}</div>
+      <div class="grp-join-prev-meta">${r.is_private ? 'Maxfiy guruh' : 'Ommaviy guruh'}</div>`;
+    sub.disabled = false;
+  };
+  inp.addEventListener('input', () => {
+    clearTimeout(timer);
+    sub.disabled = true;
+    resolved = null;
+    prev.hidden = true;
+    const raw = (inp.value || '').trim();
+    if (raw.length < 12) { setStatus(''); return; }
+    timer = setTimeout(tryResolve, 400);
+  });
+  sub.addEventListener('click', async () => {
+    if (!resolved) return;
+    sub.disabled = true;
+    const r = await joinGroupByToken(inp.value.trim());
+    if (!r?.success) {
+      setStatus(r?.error || "Qo'shilish amalga oshmadi", false);
+      sub.disabled = false;
+      return;
+    }
+    toast("Guruhga qo'shildingiz", 'success');
+    close();
+    try { await _loadGroups(); } catch (_) {}
+    if (r.group_id) openGroupThread(r.group_id);
+  });
+  setTimeout(() => inp.focus(), 50);
 }
 
 let _createType    = 'group';
