@@ -10,7 +10,7 @@ import { esc, showConfirm } from '../core/utils.js';
 import { runApp } from './runner.js';
 import { extractLogo } from './logo-extract.js';
 import { highlight } from './code-hl.js';
-import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome } from './panels.js';
+import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome, tabletHome } from './panels.js';
 
 const $ = id => document.getElementById(id);
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{2,29}$/;
@@ -72,7 +72,9 @@ export function go(sub) {
 
 /* ── Chizish ────────────────────────────────────────────────────────── */
 
-const wide = () => window.matchMedia('(min-width: 1200px)').matches;   // >=1200: o'ng panel (desktop), aks holda mobil maket
+/** phone <760, tablet 760–1199, desktop >=1200 (o'ng panel) */
+export const layout = () => window.matchMedia('(min-width: 1200px)').matches ? 'desktop' : window.matchMedia('(min-width: 760px)').matches ? 'tablet' : 'phone';
+const wide = () => layout() === 'desktop';
 let catFilter = '', rndId = '';
 const ctx = () => ({ cats, apps, owners, me: state.me, catById });
 const opts = () => ({ query, catFilter, rndId });
@@ -87,10 +89,12 @@ function renderRail() {
   box.innerHTML = (state.view === 'apps' && wide() && loaded) ? railHtml(ctx(), rndId) : '';
 }
 
-const listHtml = () => grouped(ctx(), opts(), wide() ? 'cards' : 'launcher');
+const listHtml = () => grouped(ctx(), opts(), layout() === 'phone' ? 'launcher' : 'cards');
 
 function homeHtml() {
-  if (!wide()) return mobileHome(ctx(), opts());
+  const m = layout();
+  if (m === 'phone') return mobileHome(ctx(), opts());
+  if (m === 'tablet') return tabletHome(ctx(), opts());
   return `<div class="aps">
     <div class="aps-head"><h2 class="aps-title">Ilovalar</h2>
       <div class="aps-head-btns">
@@ -105,10 +109,11 @@ function homeHtml() {
 function catHtml(c) {
   const list = apps.filter(a => a.category_id === c.id);
   const own = canEdit(c.owner_id), cx = ctx();
+  const m = layout();
   const grid = !list.length ? '<div class="aps-empty"><b>Bu kategoriyada ilova yo\'q</b><span>"+ Ilova" bilan birinchisini qo\'shing</span></div>'
-    : wide() ? `<div class="aps-grid">${list.map(a => appCard(cx, a)).join('')}</div>`
-    : `<div class="apm-grid">${list.map(a => launchTile(cx, a)).join('')}</div>`;
-  return `<div class="aps${wide() ? '' : ' apm'}">
+    : m === 'phone' ? `<div class="apm-grid">${list.map(a => launchTile(cx, a)).join('')}</div>`
+    : `<div class="aps-grid">${list.map(a => appCard(cx, a)).join('')}</div>`;
+  return `<div class="aps${m === 'phone' ? ' apm' : m === 'tablet' ? ' apt' : ''}">
     <div class="aps-head">
       <button type="button" class="aps-back" data-go="" aria-label="Orqaga">${ico('nav/chevron-left', 22)}</button>
       <h2 class="aps-title">${esc(c.name)}</h2>
@@ -536,7 +541,9 @@ export function mountApps() {
     root?.addEventListener('click', onClick);
     root?.addEventListener('input', onSearch);
     $('rrApps')?.addEventListener('click', e => handle(e, $('rrApps')));
-    window.matchMedia('(min-width: 1200px)').addEventListener?.('change', () => { if (state.view === 'apps') render(); });
+    const onBp = () => { if (state.view === 'apps') render(); };
+    window.matchMedia('(min-width: 1200px)').addEventListener?.('change', onBp);
+    window.matchMedia('(min-width: 760px)').addEventListener?.('change', onBp);
     document.addEventListener('click', onRunnerClick);
     window.addEventListener('apps:path', () => { if (state.view === 'apps') render(); });
   }

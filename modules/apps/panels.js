@@ -123,7 +123,7 @@ export function mobileHome(c, o) {
         ${mine.map(a => launchTile(c, a)).join('')}
       </div></section>
     <section class="apm-sec">${secH('Yangi qo\'shilganlar')}
-      <div class="apm-row apm-row-cards">${nw.length ? nw.map(a => appCard(c, a)).join('') : '<div class="aps-none">Hozircha ilova yo\'q</div>'}</div></section>
+      <div class="apm-stack">${nw.length ? nw.map(a => appCard(c, a)).join('') : '<div class="aps-none">Hozircha ilova yo\'q</div>'}</div></section>
     <section class="apm-sec">${secH('Tasodifiy ilova')}
       ${rnd ? `<div class="apm-rnd"><button type="button" class="apm-rnd-main" data-go="${esc(appPath(c, rnd))}">${logoBox(rnd, 'apm-rnd-logo')}<span class="apm-rnd-t"><b>${esc(rnd.name)}</b><small>${esc(rnd.description || appPath(c, rnd))}</small></span></button>
         <button type="button" class="apm-ib" data-act="rnd-next" aria-label="Boshqasi">${DICE}</button></div>` : '<div class="aps-none">Ilova qo\'shilgach shu yerda chiqadi</div>'}</section>
@@ -137,4 +137,49 @@ export function mobileHome(c, o) {
     ${chips(c, o)}${dash}
     <section class="apm-sec">${(o.query || o.catFilter) ? '' : secH('Barcha ilovalar')}<div id="apsList">${grouped(c, o, 'launcher')}</div></section>
   </div>`;
+}
+
+/* ── PLANSHET: ikki ustun — markaz kartalar, o'ng yon panel sahifa ichida ── */
+export function tabletHome(c, o) {
+  const mine = myApps(c), nw = newest(c, 6), au = topAuthors(c, 8), rnd = c.apps.find(a => a.id === o.rndId);
+  const filtering = !!(o.query || o.catFilter);
+  const dash = filtering ? '' : `
+    <section class="apt-block">
+      ${secH('Mening ilovalarim', `<button type="button" class="aps-link" data-act="new-app">+ Yangi</button>`)}
+      <div class="apt-icons">
+        <button type="button" class="apm-tile apm-tile-add" data-act="new-app"><span class="apm-tile-logo">${PLUS}</span><span class="apm-tile-n">Qo'shish</span></button>
+        ${mine.slice(0, 8).map(a => launchTile(c, a)).join('') || '<div class="aps-none">Hali ilovangiz yo\'q — birinchisini qo\'shing</div>'}
+      </div></section>
+    <section class="apt-block">
+      ${secH("Yangi qo'shilganlar")}
+      <div class="apt-cards">${nw.length ? nw.map(a => appCard(c, a)).join('') : '<div class="aps-none">Hozircha ilova yo\'q</div>'}</div></section>`;
+  const side = filtering ? '' : `
+    <aside class="apt-side">
+      <section class="apt-card">
+        ${secH('Tasodifiy', `<button type="button" class="apm-ib" data-act="rnd-next" aria-label="Boshqasi">${DICE}</button>`)}
+        ${rnd ? `<button type="button" class="apt-rnd" data-go="${esc(appPath(c, rnd))}">${logoBox(rnd, 'apm-rnd-logo')}<span class="apm-rnd-t"><b>${esc(rnd.name)}</b><small>${esc(rnd.description || ('@' + ownerOf(c, rnd.owner_id)))}</small></span></button>` : '<div class="aps-none">Ilova qo\'shilgach shu yerda chiqadi</div>'}
+      </section>
+      <section class="apt-card">
+        ${secH('Kategoriyalar', `<button type="button" class="apm-ib" data-act="new-cat" aria-label="Yangi kategoriya">${PLUS}</button>`)}
+        <div class="apt-cats">${c.cats.length ? c.cats.map(k => `<button type="button" class="apt-cat" data-go="${esc(k.slug)}"><span class="rr-cat-ic">${esc((k.name || '?')[0].toUpperCase())}</span><span><b>${esc(k.name)}</b><small>/apps/${esc(k.slug)}</small></span><em>${c.apps.filter(a => a.category_id === k.id).length}</em></button>`).join('') : '<div class="aps-none">Hali kategoriya yo\'q</div>'}</div>
+      </section>
+      <section class="apt-card">
+        ${secH('Top mualliflar')}
+        <div class="apt-auths">${au.length ? au.map((x, i) => `<button type="button" class="apt-auth" data-user="${esc(x.id)}"><i>${i + 1}</i><img src="${aviOf(x.o)}" alt=""><span><b>${esc(x.o.fullName || x.o.username || 'Foydalanuvchi')}</b><small>@${esc(x.o.username || '?')}</small></span><em>${x.cnt}</em></button>`).join('') : '<div class="aps-none">Hozircha muallif yo\'q</div>'}</div>
+      </section>
+    </aside>`;
+  return `<div class="aps apt">
+    <div class="apt-head">
+      <div class="aps-head"><h2 class="aps-title">Ilovalar</h2>
+        <div class="aps-head-btns">
+          <button type="button" class="aps-btn ghost" data-act="new-cat">+ Kategoriya</button>
+          <button type="button" class="aps-btn" data-act="new-app">+ Ilova</button>
+        </div></div>
+      <div class="aps-search"><input id="apsQ" type="search" placeholder="Ilova yoki kategoriya qidirish…" autocomplete="off" value="${esc(o.query || '')}"></div>
+      ${chips(c, o)}
+    </div>
+    <div class="apt-layout">
+      <div class="apt-main">${dash}<section class="apt-block apt-all">${filtering ? '' : secH('Barcha ilovalar')}<div id="apsList">${grouped(c, o, 'cards')}</div></section></div>
+      ${side}
+    </div></div>`;
 }
