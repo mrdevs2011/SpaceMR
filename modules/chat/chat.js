@@ -422,7 +422,7 @@ function _openChatContextMenu(row) {
       await leaveGroup(id);
       toast("Guruhdan chiqdingiz", "info");
       paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
-    } catch { toast("Xatolik yuz berdi", "error"); }
+    } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
   });
 }
 
@@ -511,7 +511,7 @@ export function initChatHeaderMenu() {
         closeGroupThread();
         toast("Guruhdan chiqdingiz", "info");
         if (state.view === 'chats') renderChatsList();
-      } catch { toast("Xatolik yuz berdi", "error"); }
+      } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
     });
 
     drop.querySelector('#chmDeleteChat')?.addEventListener('click', (ev) => {

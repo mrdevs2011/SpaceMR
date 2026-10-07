@@ -200,6 +200,12 @@ export async function joinGroup(groupId) {
 export async function leaveGroup(groupId) {
   if (!state.me?.uid || !groupId) return;
   const { error } = await sb.rpc('leave_group', { p_group: groupId });
+  if (error && (error.code === '42501' || /egasi chiqa olmaydi|a'zo emassiz/i.test(error.message || ''))) {
+    // Egasi chiqa olmaydi / a'zo emas — bu RPC'ning yo'qligi emas, qayta urinish (fallback) kerak emas
+    const e = new Error(/egasi/i.test(error.message || '') ? "Egasi chiqa olmaydi — avval egalikni topshiring yoki o'chiring" : "Bu guruhda a'zo emassiz");
+    e.expected = true;
+    throw e;
+  }
   if (error) {
     // RPC yo'q bo'lsa: avval xabar, keyin a'zolik (xabar a'zo bo'lib turib yoziladi)
     const name = (state.me.displayName || state.me.username || 'User').trim() || 'User';
