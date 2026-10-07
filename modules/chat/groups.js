@@ -1419,6 +1419,7 @@ export async function openGroupEdit(groupId, g) {
   _editOwnerId = g.ownerId || null;
   _editWriterMode = true;
   _selectedMembers = new Set();
+  _wasPicked = new Set();
   _selectedWriters = new Set();
   _editWritersBase = new Map();
   _pendingPhotoUrl = null;
@@ -1769,6 +1770,7 @@ let _selectedMembers = new Set();
 let _existingMemberUids = new Set();
 /** msg_permission=selected: yozish mumkin bo'lgan uid lar */
 let _selectedWriters = new Set();
+let _wasPicked = new Set();   /* tugma/qator orqali qo'lda tanlanganlar (qayta bosilsa bekor bo'ladi) */
 let _pendingPhotoUrl = null;
 let _usersForPicker = [];
 let _createIsPublic = true;
@@ -1777,6 +1779,7 @@ let _pendingInviteCode = null;
 export function openCreateForm(type) {
   _createType      = type;
   _selectedMembers = new Set();
+  _wasPicked = new Set();
   _pendingPhotoUrl = null;
   _usersForPicker  = [];
   _createIsPublic  = true;
@@ -1919,9 +1922,14 @@ function _syncPickerWriteMode() {
       // tools yo'q — to'liq qayta render kerak; eng oson: trigger search input
     }
   });
-  // Qayta render: search orqali
-  const searchEl = document.getElementById('grpPickerSearch');
-  if (searchEl) searchEl.dispatchEvent(new Event('input'));
+  // Qayta render (qidiruv matni o'zgarmagan bo'lsa ham)
+  const sec = document.getElementById('grpMemberPickerSection');
+  const all = sec?._pickerUsers;
+  if (all) {
+    const q = (document.getElementById('grpPickerSearch')?.value || '').trim().toLowerCase();
+    const list = q ? all.filter(u => (u.fullName || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q)) : all;
+    _renderPickerRows(list, listEl, q);
+  }
 }
 
 function _bindMsgPermDropdown() {
@@ -2018,8 +2026,19 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
         if (isExisting && !_editWriterMode) return;
         if (!isExisting && !_selectedMembers.has(uid)) _selectedMembers.add(uid);
         const allow = writeBtn.getAttribute('data-write-toggle') === '1';
-        if (allow) _selectedWriters.add(uid);
-        else _selectedWriters.delete(uid);
+        const isSel = isExisting || _selectedMembers.has(uid);
+        const curW = _selectedWriters.has(uid);
+        if (isExisting) {
+          /* Mavjud a'zo: faol tugmani qayta bossang qarama-qarshi holatga o'tadi */
+          if (allow === curW) { if (curW) _selectedWriters.delete(uid); else _selectedWriters.add(uid); }
+          else if (allow) _selectedWriters.add(uid); else _selectedWriters.delete(uid);
+        } else if (_selectedMembers.has(uid) && curW === allow && _wasPicked.has(uid)) {
+          /* Yangi a'zo: faol tugmani qayta bossang tanlov bekor bo'ladi */
+          _selectedMembers.delete(uid); _selectedWriters.delete(uid); _wasPicked.delete(uid);
+        } else {
+          _selectedMembers.add(uid); _wasPicked.add(uid);
+          if (allow) _selectedWriters.add(uid); else _selectedWriters.delete(uid);
+        }
         const cnt0 = document.getElementById('grpSelCount');
         if (cnt0) cnt0.textContent = `${_selectedMembers.size} ta tanlangan`;
         _syncPickerWriteMode();
@@ -2036,9 +2055,11 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
       if (_selectedMembers.has(uid)) {
         _selectedMembers.delete(uid);
         _selectedWriters.delete(uid);
+        _wasPicked.delete(uid);
       } else {
         _selectedMembers.add(uid);
         _selectedWriters.add(uid);
+        _wasPicked.add(uid);
       }
       row.classList.toggle('selected', _selectedMembers.has(uid));
       row.querySelector('.grp-picker-check')?.classList.toggle('on', _selectedMembers.has(uid));
@@ -2086,10 +2107,10 @@ function _renderPickerRows(users, listEl, q = '') {
     const writeTools = canToggle ? `
       <div class="grp-picker-write-tools" title="Yozish ruxsati">
         <button type="button" class="grp-write-btn ${canW ? 'is-on' : ''}" data-write-toggle="1" title="Yoza oladi" aria-label="Yoza oladi">
-          <img src="./svg/action/edit.svg" alt="" class="icon" width="14" height="14">
+          <img src="./svg/action/msg-on.svg" alt="" class="icon" width="14" height="14">
         </button>
         <button type="button" class="grp-write-btn ${!canW && sel ? 'is-on danger' : ''}" data-write-toggle="0" title="Yoza olmaydi" aria-label="Yoza olmaydi">
-          <img src="./svg/action/edit-off.svg" alt="" class="icon" width="14" height="14">
+          <img src="./svg/action/msg-off.svg" alt="" class="icon" width="14" height="14">
         </button>
       </div>` : '';
     return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${isMem ? 'is-member' : ''} ${canToggle && sel ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
@@ -2163,6 +2184,7 @@ async function _submitAddUserByUsername() {
 export async function openMemberPicker(groupId, mode) {
   // Re-open create form overlay as add-member flow (reuse UI)
   _selectedMembers = new Set();
+  _wasPicked = new Set();
   const g = _latestGroupMap[groupId];
   const existingMembers = new Set(g?.members || []);
 
@@ -2189,6 +2211,7 @@ export async function openMemberPicker(groupId, mode) {
   /* Barcha kontaktlar: guruhda borlari galochka + qayta tanlab bo'lmaydi */
   _existingMemberUids = existingMembers;
   _selectedMembers = new Set();
+  _wasPicked = new Set();
   _usersForPicker = users;
   _renderMemberPicker(pickerSection, users, { existingMembers });
 
@@ -2384,7 +2407,7 @@ export function injectGroupsDOM() {
           <div class="grp-invite-preview">
             <span class="grp-invite-token" id="grpCreateInviteToken"></span>
             <button type="button" class="grp-invite-copy-btn" id="grpCreateCopyInviteBtn" style="display:none">Nusxa</button>
-            <button type="button" class="grp-invite-regen-btn" id="grpCreateRegenInviteBtn" style="display:none" title="Yangi havola yaratish" aria-label="Yangi havola yaratish"><img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14"></button>
+            <button type="button" class="grp-invite-regen-btn" id="grpCreateRegenInviteBtn" style="display:none" title="Yangi havola yaratish" aria-label="Yangi havola yaratish"><img src="./svg/action/refresh.svg" alt="" class="icon" width="14" height="14"></button>
           </div>
           <div class="grp-form-desc-hint">Faqat ushbu maxfiy havola orqali guruhga qo'shilish mumkin</div>
         </div>
@@ -2550,7 +2573,7 @@ export function injectGroupsDOM() {
             <div class="grp-invite-preview">
               <span class="grp-invite-token" id="grpEditInviteToken"></span>
               <button type="button" class="grp-invite-copy-btn" id="grpEditCopyInviteBtn">Nusxa</button>
-              <button type="button" class="grp-invite-regen-btn" id="grpEditRegenInviteBtn" title="Yangi havola yaratish" aria-label="Yangi havola yaratish"><img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14"></button>
+              <button type="button" class="grp-invite-regen-btn" id="grpEditRegenInviteBtn" title="Yangi havola yaratish" aria-label="Yangi havola yaratish"><img src="./svg/action/refresh.svg" alt="" class="icon" width="14" height="14"></button>
             </div>
             <div class="grp-form-desc-hint">Ushbu 64 xonali havola orqali a'zolar qo'shiladi</div>
           </div>
