@@ -150,7 +150,11 @@ if (authSwitchBtn) {
 function sbErrUz(err) {
   const msg = String(err?.message || '').toLowerCase();
   const code = err?.code || '';
-  if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+  // Bizning maxsus xabarlar (RPC null / noto'g'ri login)
+  if (msg.includes("login yoki parol") || msg.includes("foydalanuvchi nomi yoki parol")) {
+    return 'Foydalanuvchi nomi yoki parol xato';
+  }
+  if (msg.includes('invalid login credentials') || msg.includes('invalid credentials') || code === 'invalid_credentials') {
     return 'Foydalanuvchi nomi yoki parol xato';
   }
   if (msg.includes('already registered') || msg.includes('already been registered') || code === 'user_already_exists') {
@@ -159,14 +163,22 @@ function sbErrUz(err) {
   if (msg.includes('password should be at least') || code === 'weak_password') {
     return `Parol kamida 6 ta belgi bo'lishi kerak`;
   }
-  if (err?.status === 429 || msg.includes('rate limit') || msg.includes('too many')) {
+  if (err?.status === 429 || msg.includes('rate limit') || msg.includes('too many') || code === 'over_request_rate_limit') {
     return `Juda ko'p urinish. Biroz kuting`;
   }
-  if (msg.includes('failed to fetch') || msg.includes('network') || err?.name === 'AuthRetryableFetchError') {
+  if (msg.includes('failed to fetch') || msg.includes('network') || err?.name === 'AuthRetryableFetchError' || msg.includes('fetch failed')) {
     return `Internet aloqasi yo'q yoki serverga ulanish mumkin emas`;
   }
-  if (msg.includes('banned') || msg.includes('disabled')) {
+  if (msg.includes('email not confirmed') || msg.includes('not confirmed')) {
+    return 'Email hali tasdiqlanmagan';
+  }
+  if (msg.includes('banned') || msg.includes('disabled') || msg.includes('user_banned')) {
     return 'Bu hisob bloklangan';
+  }
+  // Noma'lum xato — foydalanuvchiga ham biroz aniqroq (debug uchun qisqa)
+  const short = String(err?.message || '').trim().slice(0, 80);
+  if (short && short.length > 3 && !/^[\[{]/.test(short)) {
+    return `Xatolik: ${short}`;
   }
   return `Xatolik yuz berdi. Qayta urinib ko'ring`;
 }
@@ -177,16 +189,18 @@ const _cleanUsername = u => String(u || '').trim().toLowerCase().replace(/[^a-z0
 /** Username → auth email. Faqat DB'dagi joriy username orqali (email_for_username).
  *  Eski username topilmasa null — login ishlamaydi (username o'zgargach). */
 async function _emailForLogin(cleaned) {
+  // 1) DB dagi haqiqiy email (username o'zgarganda ham to'g'ri)
   try {
     const { data, error } = await sb.rpc('email_for_username', { p_username: cleaned });
     if (error) throw error;
     if (data) return data;
+    // data=null: username yo'q YOKI rate-limit. Login baribir uriniladi —
+    // noto'g'ri email/parol Supabase tomonida rad etiladi (enumeration xavfi past).
   } catch (e) {
-    // Tarmoq xatosida oxirgi chora — taxmin (faqat RPC ishlamasa)
     console.warn('[auth] email_for_username:', e?.message || e);
-    return uToEmail(cleaned);
   }
-  return null; // username bazada yo'q
+  // 2) Fallback: ro'yxatdan o'tishdagi format (username@gmail.com)
+  return uToEmail(cleaned);
 }
 
 const authBtn = $('authBtn');
@@ -259,7 +273,13 @@ if (authBtn) {
           throw new Error("Login yoki parol noto'g'ri");
         }
         let authData, authError;
-        const res = await sb.auth.signInWithPassword({ email, password: p });
+        let res;
+        try {
+          res = await sb.auth.signInWithPassword({ email, password: p });
+        } catch (fetchErr) {
+          // Brauzer tarmoq xatosi (CORS/offline) — AuthRetryableFetchError
+          throw fetchErr;
+        }
         authData = res.data;
         authError = res.error;
 
