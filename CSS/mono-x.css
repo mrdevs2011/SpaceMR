@@ -3213,6 +3213,11 @@ button:focus-visible,
   border-color: var(--x-blue) !important;
   color: var(--pal-white) !important;
 }
+/* sozlamalarda chiqariladigan a'zo: qizil X */
+.grp-picker-check.on.rm {
+  background: #f4212e !important;
+  border-color: #f4212e !important;
+}
 
 /* chat-voice-btn: blue bg, white mic icon */
 .chat-voice-btn {

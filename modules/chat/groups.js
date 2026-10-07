@@ -1901,7 +1901,14 @@ async function _loadContactsForPicker() {
 function _updateSelCount() {
   const cnt = document.getElementById('grpSelCount');
   if (!cnt) return;
-  cnt.textContent = `${_selectedMembers.size} ta tanlangan` + (_removeSet.size ? ` · ${_removeSet.size} ta chiqariladi` : '');
+  if (_editWriterMode) {
+    const parts = [];
+    if (_selectedMembers.size) parts.push(`${_selectedMembers.size} ta qo'shiladi`);
+    if (_removeSet.size) parts.push(`${_removeSet.size} ta chiqariladi`);
+    cnt.textContent = parts.join(' · ');
+  } else {
+    cnt.textContent = `${_selectedMembers.size} ta tanlangan`;
+  }
 }
 
 function _syncPickerWriteMode() {
@@ -2109,6 +2116,7 @@ function _renderPickerRows(users, listEl, q = '') {
       <div class="grp-picker-info">
         <div class="grp-picker-name">${esc(u.fullName||'Foydalanuvchi')}</div>
         ${u.username ? `<div class="grp-picker-user">@${esc(u.username)}</div>` : ''}
+        ${rm ? '<div class="grp-picker-tag rm">chiqariladi</div>' : (_editWriterMode && !isMem && sel ? '<div class="grp-picker-tag add">qo\'shiladi</div>' : '')}
       </div>
       ${writeTools}
       <div class="grp-picker-check ${sel ? 'on' : ''} ${rm ? 'rm' : ''}">
