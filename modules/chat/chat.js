@@ -1448,6 +1448,8 @@ const MSG_ANIM_MS = 250;
 
 export async function openChatThread(uid) {
   if (!uid || !state.me) return;
+  // Boshqa chat ochilganda guruh-info paneli (markaz ustunni egallaydi) yopilsin — yangi chat uning orqasida qolib ketmasin
+  try { document.getElementById('grpInfoOverlay')?.classList.remove('show'); } catch (_) {}
   const isSaved = _isSavedUid(uid);
   // Har ochilish o'z belgisiga ega: tez almashtirilganda eski chatning kechikkan javoblari yangi chatga chizilmasin
   const _tok = chatState._openTok = (chatState._openTok || 0) + 1;

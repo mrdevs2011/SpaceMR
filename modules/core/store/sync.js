@@ -3,7 +3,7 @@
  * Feature flag: localStorage ff_sync_v2=1 (default OFF — migratsiya kerak).
  * RPC yo'q/xato → null qaytaradi, chaqiruvchi eski yo'lga tushadi.
  */
-import { sb, mapMessage, state } from '../config.js';
+import { sb, mapMessage, state, ts } from '../config.js';
 import { putThread, putChatsList, setUid, isStoreV2Enabled, store } from './store.js';
 import { canCache } from '../cache-policy.js';
 import { syncPath, measure } from '../perf.js';
@@ -181,6 +181,19 @@ export async function loadGroupDelta(groupId, cachedMsgs) {
   for (const t of res.tombstones) {
     if (t.message_id) byId.delete(t.message_id);
   }
+  // status='read' UPDATE seq oshirmaydi (074) — delta uni qaytarmaydi, keshdagi "yuborildi" galochkasi abadiy qolardi.
+  // Mening hali o'qilmagan xabarlarimning joriy holatini alohida so'raymiz.
+  try {
+    const me = state.me?.uid;
+    const pend = me ? [...byId.values()].filter(m => m && m.senderId === me && m.status !== 'read' && m.id && !String(m.id).startsWith('tmp') && m.seq != null).slice(-200).map(m => m.id) : [];
+    if (pend.length) {
+      const { data: st } = await sb.from('messages').select('id, status, read_at').in('id', pend);
+      for (const r of st || []) {
+        const cur = byId.get(r.id);
+        if (cur && r.status && r.status !== cur.status) byId.set(r.id, { ...cur, status: r.status, readAt: ts(r.read_at) });
+      }
+    }
+  } catch (_) {}
   const msgs = [...byId.values()].sort((a, b) => {
     const sa = a.seq != null ? a.seq : 0;
     const sb_ = b.seq != null ? b.seq : 0;

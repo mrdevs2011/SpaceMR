@@ -189,8 +189,6 @@ if (fullAppReloadBtn) {
   };
 }
 
-/* Yordam tugmasi — manzil index.html dagi #helpBtn[data-href] da (Telegram t.me/... yoki mailto:...) */
-
 /* Phase 8: umumiy qurilma — diskda ma'lumot saqlanmasin */
 const ephemeralBtn = $('ephemeralDeviceBtn');
 if (ephemeralBtn) {
@@ -215,15 +213,6 @@ if (ephemeralBtn) {
 }
 
 try { window.__spacemrFlags && (window.__spacemrFlags.snapshot = () => flagsSnapshot()); } catch (_) {}
-
-const helpBtn = $('helpBtn');
-if (helpBtn) {
-  helpBtn.onclick = () => {
-    const href = (helpBtn.dataset.href || '').trim();
-    if (!href) { toast('Yordam manzili hali sozlanmagan', 'error'); return; }
-    location.assign(href);
-  };
-}
 
 /* "..." menyusi — nozik/ko'rinmasroq joyda, tasodifan bosilib ketmasligi
  * uchun hisobni o'chirish shu menyu ichida yashiringan. */

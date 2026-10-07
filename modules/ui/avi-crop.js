@@ -213,6 +213,10 @@ async function _exportAndClose() {
     ctx.closePath();
     ctx.clip();
 
+    // Fon rangi yo'q (shaffof) rasmlar uchun avtomatik qora fon (#000)
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, OUT_SIZE, OUT_SIZE);
+
     ctx.drawImage(_img, sx, sy, sw, sh, 0, 0, OUT_SIZE, OUT_SIZE);
 
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 0.92));
