@@ -1,0 +1,367 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   profile-pro.css — O'z profili (#profileView) premium dizayni (2026-10-07)
+   Cover aurora • gradient halqali avatar • shisha stat kartalar • tugmalar • ikonli tablar
+   Faqat SVG (emoji yo'q). Kaskadda mono-x'dan KEYIN keladi.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#profileView {
+  --pf-a: #1d9bf0;
+  --pf-b: #7856ff;
+  --pf-c: #00d4ff;
+  --pf-d: #ff3d9a;
+  --pf-glass: rgba(255, 255, 255, 0.045);
+  --pf-glass-hi: rgba(255, 255, 255, 0.09);
+  --pf-stroke: rgba(255, 255, 255, 0.10);
+  --pf-cover-h: 156px;
+  --pf-avi: 104px;
+}
+
+#profileView .profile-hdr {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0 18px 18px;
+  background: transparent;
+  border-bottom: 0;
+  overflow: visible;
+}
+#profileView .profile-hdr::before,
+#profileView .profile-hdr::after { display: none; }
+
+/* Cover (aurora) */
+#profileView .pf-cover {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: var(--pf-cover-h);
+  overflow: hidden;
+  z-index: 0;
+  background:
+    radial-gradient(120% 140% at 0% 0%, #0b2a52 0%, transparent 55%),
+    radial-gradient(110% 130% at 100% 0%, #2a1160 0%, transparent 55%),
+    #05070c;
+  -webkit-mask-image: linear-gradient(#000 62%, transparent 100%);
+          mask-image: linear-gradient(#000 62%, transparent 100%);
+}
+#profileView .pf-orb { position: absolute; border-radius: 50%; filter: blur(34px); opacity: 0.85; will-change: transform; }
+#profileView .pf-orb-a { width: 190px; height: 190px; left: -40px; top: -70px;
+  background: radial-gradient(circle, var(--pf-a) 0%, transparent 70%);
+  animation: pfDriftA 14s ease-in-out infinite alternate; }
+#profileView .pf-orb-b { width: 220px; height: 220px; right: -50px; top: -90px;
+  background: radial-gradient(circle, var(--pf-b) 0%, transparent 70%);
+  animation: pfDriftB 17s ease-in-out infinite alternate; }
+#profileView .pf-orb-c { width: 150px; height: 150px; left: 42%; top: 20px;
+  background: radial-gradient(circle, var(--pf-c) 0%, transparent 70%);
+  opacity: 0.55;
+  animation: pfDriftC 20s ease-in-out infinite alternate; }
+#profileView .pf-mesh {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(70% 90% at 50% 0%, #000 0%, transparent 100%);
+          mask-image: radial-gradient(70% 90% at 50% 0%, #000 0%, transparent 100%);
+  opacity: 0.55;
+}
+@keyframes pfDriftA { to { transform: translate3d(70px, 34px, 0) scale(1.18); } }
+@keyframes pfDriftB { to { transform: translate3d(-80px, 40px, 0) scale(1.1); } }
+@keyframes pfDriftC { to { transform: translate3d(-60px, -18px, 0) scale(1.35); } }
+
+/* Avatar */
+#profileView .profile-avi-row { display: contents; }
+#profileView .profile-avi {
+  order: 1;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  width: var(--pf-avi);
+  height: var(--pf-avi);
+  margin: calc(var(--pf-cover-h) - var(--pf-avi) / 2 - 6px) 0 14px;
+  border-radius: 50%;
+  overflow: visible;
+  background: var(--bg, #000);
+  cursor: pointer;
+  transition: transform .35s cubic-bezier(.2, .9, .3, 1.2);
+}
+#profileView .profile-avi:hover { transform: scale(1.045) rotate(-1.5deg); }
+#profileView .profile-avi:active { transform: scale(0.97); }
+#profileView .profile-avi::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  z-index: -2;
+  background: conic-gradient(from 0deg, var(--pf-a), var(--pf-c), var(--pf-b), var(--pf-d), var(--pf-a));
+  animation: pfSpin 9s linear infinite;
+  filter: drop-shadow(0 0 14px rgba(29, 155, 240, 0.45));
+}
+#profileView .profile-avi::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  z-index: -1;
+  background: var(--bg, #000);
+}
+@keyframes pfSpin { to { transform: rotate(360deg); } }
+#profileView .profile-avi img:not(.icon) {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+#profileView .avi-edit-badge {
+  right: -2px; bottom: -2px;
+  width: 30px; height: 30px;
+  z-index: 3;
+  background: linear-gradient(135deg, var(--pf-a), var(--pf-b)) !important;
+  border: 3px solid var(--bg, #000) !important;
+  box-shadow: 0 6px 18px rgba(29, 155, 240, 0.4);
+}
+#profileView .avi-edit-badge img.icon { width: 13px; height: 13px; }
+
+/* Sozlamalar tugmasi — cover ustida shisha doira */
+#profileView .profile-gear-btn,
+#profileView #settingsBtn.profile-gear-btn {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 5;
+  width: 40px; height: 40px; min-width: 40px;
+  border-radius: 50% !important;
+  border: 1px solid var(--pf-stroke) !important;
+  background: rgba(12, 14, 20, 0.55) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+          backdrop-filter: blur(14px) saturate(160%);
+  transition: transform .25s ease, background .25s ease, border-color .25s ease;
+}
+#profileView .profile-gear-btn:hover,
+#profileView #settingsBtn.profile-gear-btn:hover {
+  background: rgba(29, 155, 240, 0.22) !important;
+  border-color: rgba(29, 155, 240, 0.55) !important;
+  transform: rotate(60deg);
+}
+#profileView .profile-gear-btn:active { transform: scale(0.92); }
+
+/* Ism / username / bio / linklar */
+#profileView .profile-info { order: 2; padding: 0; position: relative; z-index: 1; }
+#profileView .profile-name-row { display: flex; align-items: center; gap: 8px; }
+#profileView .profile-name {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  line-height: 1.12;
+  background: linear-gradient(180deg, #ffffff 30%, #9fb4c7 130%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+#profileView .profile-username {
+  display: inline-flex;
+  align-items: center;
+  margin: 8px 0 0;
+  padding: 4px 11px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #7cc4ff;
+  background: rgba(29, 155, 240, 0.12);
+  border: 1px solid rgba(29, 155, 240, 0.28);
+  border-radius: 999px;
+}
+#profileView .profile-bio {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(231, 233, 234, 0.92);
+  max-width: 62ch;
+  white-space: pre-line;
+}
+#profileView .profile-bio:empty { display: none; }
+
+#profileView .profile-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+#profileView .profile-links[hidden] { display: none; }
+#profileView .profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px 7px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #cfe8ff;
+  background: var(--pf-glass);
+  border: 1px solid var(--pf-stroke);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+#profileView .profile-link:hover {
+  background: rgba(29, 155, 240, 0.14);
+  border-color: rgba(29, 155, 240, 0.45);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+#profileView .profile-link span { max-width: 190px; }
+#profileView .profile-link-ico { display: inline-flex; width: 15px; height: 15px; color: var(--pf-a); flex-shrink: 0; }
+#profileView .profile-link-ico svg { width: 100%; height: 100%; display: block; }
+
+/* Stat kartalar */
+#profileView .profile-stats {
+  order: 3;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+  position: relative;
+  z-index: 1;
+}
+#profileView .stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 14px 16px 13px;
+  overflow: hidden;
+  background: var(--pf-glass);
+  border: 1px solid var(--pf-stroke);
+  border-radius: 18px;
+  text-align: left;
+  transition: transform .25s ease, border-color .25s ease, background .25s ease;
+}
+#profileView .stat::before {
+  content: '';
+  position: absolute;
+  right: -26px; top: -26px;
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--pf-a) 0%, transparent 70%);
+  opacity: 0.22;
+  transition: opacity .3s ease;
+}
+#profileView .stat + .stat::before { background: radial-gradient(circle, var(--pf-d) 0%, transparent 70%); }
+#profileView .stat:hover { transform: translateY(-2px); background: var(--pf-glass-hi); border-color: rgba(255,255,255,0.2); }
+#profileView .stat:hover::before { opacity: 0.42; }
+#profileView .stat-val { font-size: 28px; line-height: 1.05; font-weight: 800; letter-spacing: -0.8px; color: #fff; font-variant-numeric: tabular-nums; }
+#profileView .stat-lbl { font-size: 12.5px; font-weight: 600; line-height: 1.2; color: rgba(231, 233, 234, 0.55); text-transform: uppercase; letter-spacing: 0.6px; }
+
+/* Amal tugmalari */
+#profileView .pf-actions { order: 4; display: flex; gap: 10px; margin-top: 14px; position: relative; z-index: 1; }
+#profileView .pf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .25s ease;
+}
+#profileView .pf-btn svg { width: 17px; height: 17px; flex-shrink: 0; }
+#profileView .pf-btn:active { transform: scale(0.96); }
+#profileView .pf-btn-main {
+  flex: 1;
+  color: #04121f;
+  background: linear-gradient(135deg, #ffffff 0%, #cfe9ff 100%);
+  border: 0;
+  box-shadow: 0 8px 26px rgba(29, 155, 240, 0.28);
+}
+#profileView .pf-btn-main:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(29, 155, 240, 0.45); }
+#profileView .pf-btn-ghost { color: var(--text, #e7e9ea); background: var(--pf-glass); border: 1px solid var(--pf-stroke); }
+#profileView .pf-btn-ghost:hover { background: var(--pf-glass-hi); border-color: rgba(255,255,255,0.28); }
+#profileView .pf-btn-ghost.is-done { color: #5fe3a1; border-color: rgba(95, 227, 161, 0.5); }
+
+/* Tablar */
+#profileView .profile-grid-hdr {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+          backdrop-filter: blur(18px) saturate(170%);
+  border-top: 1px solid var(--pf-stroke);
+  border-bottom: 1px solid var(--pf-stroke);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#profileView .profile-grid-hdr::-webkit-scrollbar { display: none; }
+#profileView .profile-grid-tab {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(231, 233, 234, 0.55);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  position: relative;
+  transition: color .2s ease, background .25s ease;
+}
+#profileView .profile-grid-tab svg { width: 18px; height: 18px; flex-shrink: 0; transition: transform .25s ease; }
+#profileView .profile-grid-tab:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+#profileView .profile-grid-tab.active {
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(29, 155, 240, 0.28), rgba(120, 86, 255, 0.28));
+  box-shadow: inset 0 0 0 1px rgba(124, 196, 255, 0.4), 0 6px 20px rgba(29, 155, 240, 0.18);
+}
+#profileView .profile-grid-tab.active svg { transform: scale(1.12); color: #7cc4ff; }
+#profileView .profile-grid-tab.active::after { display: none; }
+
+@media (max-width: 560px) {
+  #profileView .profile-grid-tab { flex: 1 1 0; flex-direction: column; gap: 3px; height: 52px; padding: 0 4px; font-size: 11px; border-radius: 16px; }
+  #profileView .profile-grid-tab svg { width: 19px; height: 19px; }
+}
+
+/* Kontent */
+#profileView .profile-grid { margin-top: 6px; }
+#profileView .profile-grid--uniform { gap: 3px; padding: 0 3px; }
+#profileView .profile-grid--uniform .grid-cell { border-radius: 12px; }
+#profileView .profile-grid .grid-cell { transition: transform .25s ease, filter .25s ease; }
+#profileView .profile-grid--uniform .grid-cell:hover { transform: scale(0.985); }
+
+/* Kirish animatsiyasi */
+#profileView.on .profile-avi,
+#profileView.on .profile-info > *,
+#profileView.on .stat,
+#profileView.on .pf-actions { animation: pfRise .6s cubic-bezier(.2, .8, .2, 1) both; }
+#profileView.on .profile-info > :nth-child(2) { animation-delay: .06s; }
+#profileView.on .profile-info > :nth-child(3) { animation-delay: .1s; }
+#profileView.on .profile-info > :nth-child(4) { animation-delay: .14s; }
+#profileView.on .stat:nth-child(1) { animation-delay: .16s; }
+#profileView.on .stat:nth-child(2) { animation-delay: .22s; }
+#profileView.on .pf-actions { animation-delay: .28s; }
+@keyframes pfRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+@media (min-width: 1100px) {
+  #profileView { --pf-cover-h: 200px; --pf-avi: 132px; }
+  #profileView .profile-hdr { padding: 0 24px 22px; }
+  #profileView .profile-name { font-size: 32px; }
+  #profileView .stat-val { font-size: 32px; }
+  #profileView .profile-stats, #profileView .pf-actions { max-width: 420px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #profileView .pf-orb,
+  #profileView .profile-avi::before,
+  #profileView.on .profile-avi,
+  #profileView.on .profile-info > *,
+  #profileView.on .stat,
+  #profileView.on .pf-actions { animation: none; }
+}
