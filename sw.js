@@ -244,8 +244,9 @@ async function _precacheAll() {
 }
 
 self.addEventListener('install', (event) => {
-  // Toast yo'q: yangi versiya o'zi qo'llanadi
-  event.waitUntil(_precacheAll().then(() => self.skipWaiting()));
+  // skipWaiting YO'Q — aks holda controllerchange → location.reload loop
+  // Yangi SW faqat client SKIP_WAITING yuborganda (F5 yoki force-reload) faollashadi
+  event.waitUntil(_precacheAll());
 });
 
 self.addEventListener('activate', (event) => {

@@ -1311,46 +1311,36 @@ html[data-nf],html[data-nf] body{background:#000000}
   /* Service Worker — push + shell cache + yangilanish toasti */
   try { if (location.search && /(?:^|[?&])_full=/.test(location.search)) { var _u = new URL(location.href); _u.searchParams.delete('_full'); var _q = _u.searchParams.toString(); history.replaceState(null, '', _u.pathname + (_q ? '?' + _q : '') + _u.hash); } } catch (_e) {}
     if ('serviceWorker' in navigator) {
+    /* Auto-reload O'CHIRILGAN — URL / sahifa o'zini o'zi yangilamaydi.
+       Yangi SW faqat keyingi foydalanuvchi F5 da yoki force-reload da qo'llanadi. */
     var _swRefreshing = false;
-    /* Sahifa yuklanganda allaqachon controller bormi? Yo'q bo'lsa birinchi claim — reload KERAK EMAS */
     var _hadControllerOnLoad = !!navigator.serviceWorker.controller;
-    function _promptUpdate(worker) {
-      try { worker.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
-    }
-    function _isPageReload() {
-      try {
-        var nav = performance.getEntriesByType && performance.getEntriesByType('navigation');
-        if (nav && nav[0] && nav[0].type === 'reload') return true;
-      } catch (_) {}
-      try {
-        if (performance.navigation && performance.navigation.type === 1) return true;
-      } catch (_) {}
-      return false;
-    }
+
     navigator.serviceWorker.addEventListener('message', function(ev) {
       try {
         if (ev.data && ev.data.type === 'SW_ACTIVATED') {
           sessionStorage.setItem('spacemr_sw_ver', String(ev.data.version || ''));
         }
+        /* SW_KILLED (force-reload) — reload allaqachon force-reload.js da */
       } catch (_) {}
     });
+
+    /* controllerchange: FAQAT force-reload / skip flag bo'lmasa HAM reload qilmaymiz.
+       Bu o'z-o'zidan refresh loop ni 100% yo'qotadi. */
     navigator.serviceWorker.addEventListener('controllerchange', function() {
-      if (_swRefreshing) return;
       try {
         if (sessionStorage.getItem('spacemr_skip_sw_reload') === '1') {
           sessionStorage.removeItem('spacemr_skip_sw_reload');
+        }
+        if (sessionStorage.getItem('spacemr_force_reload_busy') === '1') {
+          /* force-reload o'zi navigate qiladi */
           return;
         }
-        if (sessionStorage.getItem('spacemr_force_reload_busy') === '1') return;
       } catch (_) {}
-      /* Birinchi marta SW nazoratga olindi — qo'shimcha reload qilma (URL o'chmasin) */
-      if (!_hadControllerOnLoad) {
-        _hadControllerOnLoad = true;
-        return;
-      }
-      _swRefreshing = true;
-      location.reload();
+      /* ODDIY HOLAT: reload YO'Q */
+      _hadControllerOnLoad = true;
     });
+
     navigator.serviceWorker.getRegistrations().then(function(regs) {
       return Promise.all(regs.map(function(r) {
         var url = (r.active && r.active.scriptURL) || (r.waiting && r.waiting.scriptURL) || (r.installing && r.installing.scriptURL) || '';
@@ -1360,20 +1350,12 @@ html[data-nf],html[data-nf] body{background:#000000}
       return navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
     }).then(function(reg) {
       if (!reg) return;
-      /* F5: waiting SW ni qo'lla, LEKIN controllerchange reload ni blokla — aks holda ikki marta refresh */
-      if (reg.waiting) {
-        try { sessionStorage.setItem('spacemr_skip_sw_reload', '1'); } catch (_) {}
-        _promptUpdate(reg.waiting);
-      }
+      /* Kutayotgan SW: jim qoldiramiz — keyingi F5 da brauzer o'zi yangilaydi.
+         SKIP_WAITING chaqirmaymiz → controllerchange → reload bo'lmaydi. */
       reg.addEventListener('updatefound', function() {
-        var nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', function() {
-          /* Fon yangilanish: installed → waiting. Qo'llashni keyingi F5 ga qoldiramiz.
-             (Hozir skipWaiting qilmasak, ortiqcha reload bo'lmaydi.) */
-        });
+        /* Faqat yuklab oladi, faollashtirmaydi */
       });
-      setInterval(function() { try { reg.update(); } catch (_) {} }, 30 * 60 * 1000);
+      setInterval(function() { try { reg.update(); } catch (_) {} }, 60 * 60 * 1000);
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible') {
           try { reg.update(); } catch (_) {}

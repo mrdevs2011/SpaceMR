@@ -2322,19 +2322,22 @@ body #toast {
 .settings-body .pe-field-prefix-wrap .pe-prefix,
 .pe-field-prefix-wrap .pe-prefix {
   position: absolute;
-  left: 14px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   color: #71767b;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
+  line-height: 1;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
+  width: 1.1em;
+  text-align: center;
 }
 
 .settings-body .pe-prefix-field,
 .pe-prefix-field {
-  padding-left: 32px !important;
+  padding-left: 42px !important;
 }
 
 .pe-field-note {
@@ -9011,35 +9014,46 @@ select.field option { background: #000000; color: var(--text); }
   overflow: hidden;
 }
 
-/* Telefon input — settings: qora, pastroq, shrift 15px, vertical center */
+/* Telefon = username height (56px), shrift 17px; @ joylashuvi */
 #settingsOverlay .pe-phone-row {
-  height: 40px !important;
+  min-height: 56px !important;
+  height: 56px !important;
   background: #000000 !important;
-  border: 1px solid #2f3336 !important;
+  border: 1px solid var(--line, #2f3336) !important;
   border-radius: 999px !important;
   align-items: center !important;
 }
 #settingsOverlay .pe-phone-cc {
-  height: 100% !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  color: #e7e9ea !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  color: #71767b !important;
   background: #000000 !important;
-  border-right: 1px solid #2f3336 !important;
-  padding: 0 14px !important;
+  border-right: 1px solid var(--line, #2f3336) !important;
+  padding: 0 16px !important;
   line-height: 1 !important;
 }
 #settingsOverlay .pe-phone-row .pe-phone-input {
   height: 100% !important;
   min-height: 0 !important;
-  padding: 0 14px 0 12px !important;
-  font-size: 15px !important;
-  line-height: 40px !important;
+  padding: 0 16px 0 14px !important;
+  font-size: 17px !important;
+  line-height: 56px !important;
   background: #000000 !important;
-  color: #e7e9ea !important;
+  color: var(--text, #e7e9ea) !important;
   border: 0 !important;
   border-radius: 0 !important;
 }
 #settingsOverlay .pe-phone-row:focus-within {
   border-color: var(--x-blue, #1d9bf0) !important;
+}
+#settingsOverlay .pe-field-prefix-wrap .pe-prefix {
+  left: 18px !important;
+  font-size: 17px !important;
+  font-weight: 600 !important;
+  color: #71767b !important;
+  line-height: 1 !important;
+}
+#settingsOverlay .pe-prefix-field {
+  padding-left: 42px !important;
+  min-height: 56px !important;
 }

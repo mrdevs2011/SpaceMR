@@ -43,11 +43,16 @@ export async function executeHardFullReload() {
     console.warn('[force-reload]', e);
   }
 
-  // Toza root — query paramsiz
+  // Joriy path ni saqlab hard navigate (query paramsiz) — URL yo'qolmasin
   try {
-    location.replace('/');
+    var path = '/';
+    try {
+      path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+      if (path === '/index.html') path = '/';
+    } catch (_) {}
+    location.replace(path);
   } catch (_) {
-    location.href = '/';
+    location.href = path || '/';
   }
 }
 

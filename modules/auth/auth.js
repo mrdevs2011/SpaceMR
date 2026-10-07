@@ -1725,9 +1725,19 @@ async function applySecurityLockUI() {
     btn.style.opacity = locked ? '0.4' : '';
   });
 
-  // Butun accordionlar (basic / email / password / devices)
+  // Butun accordionlar — locked: yopiq + ochilmaydi + kulrang
   document.querySelectorAll('[data-pe-acc="basic"], [data-pe-acc="email"], [data-pe-acc="password"], [data-pe-acc="devices"]').forEach(acc => {
     acc.classList.toggle('pe-acc-locked', locked);
+    const toggle = acc.querySelector('.pe-acc-toggle');
+    if (toggle) {
+      toggle.disabled = locked;
+      toggle.setAttribute('aria-disabled', locked ? 'true' : 'false');
+      toggle.title = locked ? msg : '';
+    }
+    if (locked) {
+      acc.classList.remove('open');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    }
   });
 
   // Avatar o'zgartirish

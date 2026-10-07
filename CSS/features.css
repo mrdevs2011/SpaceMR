@@ -3680,16 +3680,17 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   height: 14px;
   opacity: 0.9;
 }
-/* Telefon: +998 chip + raqam input */
+/* Telefon: username input bilan bir xil balandlik (56px) */
 .pe-phone-row {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 40px;
+  min-height: 56px;
+  height: 56px;
   gap: 0;
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid #2f3336;
+  border: 1px solid var(--line, #2f3336);
   background: #000000;
   box-sizing: border-box;
 }
@@ -3698,16 +3699,16 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  padding: 0 14px;
-  font-size: 15px;
-  font-weight: 700;
+  align-self: stretch;
+  padding: 0 16px;
+  font-size: 17px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   line-height: 1;
-  color: #e7e9ea;
+  color: #71767b;
   background: #000000;
-  border-right: 1px solid #2f3336;
+  border-right: 1px solid var(--line, #2f3336);
   user-select: none;
   pointer-events: none;
   white-space: nowrap;
@@ -3722,14 +3723,14 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   border-radius: 0 !important;
   background: #000000 !important;
   box-shadow: none !important;
-  padding: 0 14px 0 12px !important;
+  padding: 0 16px 0 14px !important;
   margin: 0 !important;
-  font-size: 15px !important;
-  font-weight: 500;
+  font-size: 17px !important;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.05em;
-  line-height: 40px !important;
-  color: #e7e9ea !important;
+  letter-spacing: 0.04em;
+  line-height: 56px !important;
+  color: var(--text, #e7e9ea) !important;
   outline: none !important;
 }
 .pe-phone-row .pe-phone-input::placeholder {
@@ -3749,6 +3750,31 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
 }
 .pe-phone-row.pe-phone-invalid {
   border-color: var(--red, #f4212e);
+}
+
+/* Username @ — chiroyli joylashuv */
+.pe-field-prefix-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.pe-field-prefix-wrap .pe-prefix {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #71767b;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+  width: 1.1em;
+  text-align: center;
+}
+.pe-prefix-field {
+  padding-left: 42px !important;
 }
 
 .devices-box {
@@ -3964,15 +3990,28 @@ textarea.pe-input-locked {
 }
 
 
-/* Butun accordion 1 soatlik blok */
-.pe-acc-locked .pe-acc-body {
-  opacity: 0.55;
-  filter: grayscale(0.25);
+/* Butun accordion 1 soatlik blok — o'zi gray, ochilmaydi */
+.pe-accordion.pe-acc-locked {
+  opacity: 0.5;
+  filter: grayscale(0.35);
   pointer-events: none;
   user-select: none;
+  cursor: not-allowed;
 }
-.pe-acc-locked .pe-group-title {
-  opacity: 0.75;
+.pe-accordion.pe-acc-locked .pe-acc-toggle,
+.pe-accordion.pe-acc-locked .pe-group-title {
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  opacity: 0.85;
+}
+.pe-accordion.pe-acc-locked .pe-acc-body {
+  display: none !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none;
+}
+.pe-accordion.pe-acc-locked .pe-acc-chevron {
+  opacity: 0.35;
 }
 .pe-phone-row.pe-locked {
   opacity: 0.55;

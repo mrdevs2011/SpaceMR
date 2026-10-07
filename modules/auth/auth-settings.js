@@ -118,6 +118,12 @@ if (settingsOverlay) {
     if (!btn || !root.contains(btn)) return;
     const acc = btn.closest('.pe-accordion');
     if (!acc) return;
+    // 1 soatlik xavfsizlik: locked accordion ochilmasin
+    if (acc.classList.contains('pe-acc-locked')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     const open = !acc.classList.contains('open');
     root.querySelectorAll('.pe-accordion').forEach((el) => {
       const on = open && el === acc;
