@@ -12,6 +12,7 @@ import { initRouter, navigateTo } from './router.js';
 import { initUrlRouter } from './url-router.js';
 import { initNavigation } from './ui/bar.js';
 import './explore.js';
+import './ui/emoji-dom.js';   // ekrandagi hamma emoji -> 2D PNG (post, izoh, story, bio, ism...)
 
 /* ── Splash: min 0.8s, max 2s; ma'lumot tayyor bo'lguncha kutadi ── */
 const _splashT0 = Date.now();

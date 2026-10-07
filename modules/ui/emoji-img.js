@@ -61,11 +61,14 @@ export function warmEmoji(list) {
   };
   (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(run, { timeout: 4000 });
 }
+/* Yuklanmagan (fayli yo'q) emoji kalitlari */
+export const failedKeys = new Set();
 /* Rasm topilmasa (juda yangi emoji) — kontent yo'qolmasin: belgi matn bo'lib qoladi */
 if (typeof document !== 'undefined') {
   document.addEventListener('error', (ev) => {
     const img = ev.target;
     if (!img || img.tagName !== 'IMG' || !img.classList.contains('emo-img')) return;
+    failedKeys.add(img.dataset.key);   // emoji-dom.js shu emojini qayta rasmga aylantirmasin (cheksiz sikl bo'lmasin)
     img.replaceWith(document.createTextNode(keyToGlyph(img.dataset.key)));
   }, true);
 }
@@ -81,6 +84,14 @@ const EMO_SEQ = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}{2}|[#*0-9]\
 /* YUBORISHDAN OLDIN: matndagi emoji belgilari -> [[emoji/2d/<kalit>.png]] (bazaga faqat path boradi) */
 export function encodeEmojiText(text) {
   return String(text ?? '').replace(EMO_SEQ, m => { const p = emojiPath(m); return p ? `[[${p}]]` : m; });
+}
+/* Bazaga yoziladigan xabar matni: emoji belgilari -> [[path]]. Baza cheklovi (messages/group_messages.text <= 5000 belgi):
+   tokenlar uzunroq bo'lgani uchun sig'masa — asl matn (belgi bilan) yuboriladi; ko'rsatishda baribir PNG chiziladi. */
+export const MSG_MAX = 5000;
+export function encodeForSend(text) {
+  const raw = String(text ?? '');
+  const enc = encodeEmojiText(raw);
+  return enc.length <= MSG_MAX ? enc : raw;
 }
 /* TAHRIRLASH (yozish maydoniga qaytarish): [[path]] -> belgi (maydon oddiy matn; yuborishda yana path bo'ladi) */
 export function decodeEmojiText(text) {

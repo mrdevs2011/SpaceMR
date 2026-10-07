@@ -8,6 +8,7 @@ import { inboxSend } from '../core/rt-bus.js';
 import { sendGroupMessage, sendGroupVoice, sendGroupFile } from './groups.js';
 import { commitEdit, isEditing, getReplying, cancelReply } from './msg-menu.js';
 import { rateOk } from '../core/rate-limit.js';
+import { encodeForSend } from '../ui/emoji-img.js';
 import { fileMsgPreview } from './components/video-note.js';
 import { registerLocalVoiceUrl, voiceBarCount, getVoiceWaveform } from './chat-voice-player.js';
 
@@ -37,9 +38,10 @@ export async function sendChatMessage(opts) {
   clearTimeout(chatState._typingTimeout);
   chatUI._setTyping(false);
 
+  // Bazaga emoji RASM/BELGI emas, PATH yoziladi: [[emoji/2d/<kalit>.png]] (GIF/JSON xabarlarga tegilmaydi)
   const finalMsgText = postShare
-    ? JSON.stringify({ __postShare: true, post: postShare, comment: userText })
-    : userText;
+    ? JSON.stringify({ __postShare: true, post: postShare, comment: encodeForSend(userText) })
+    : (gifText != null ? userText : encodeForSend(userText));
 
   const replyInfo = getReplying();
   const replyToId = replyInfo?.id ? String(replyInfo.id) : null;

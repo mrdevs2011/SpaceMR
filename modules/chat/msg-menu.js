@@ -9,7 +9,7 @@ import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView } fr
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
-import { emojiImg } from '../ui/emoji-img.js';
+import { emojiImg, encodeForSend, decodeEmojiText } from '../ui/emoji-img.js';
 import { humanMsgPreview } from './chat-shared.js';
 
 const LONG_MS = 420;
@@ -363,7 +363,7 @@ function run(act, id) {
         }
       } catch (_) {}
     }
-    copyToClipboard((m.text || '').trim());
+    copyToClipboard(decodeEmojiText(m.text || '').trim());   // [[path]] -> oddiy emoji belgisi (boshqa joyga qo'yish uchun)
     toast('Nusxalandi');
     return;
   }
@@ -512,7 +512,7 @@ export function cancelReply(clearInput = false) {
 function startEdit(m) {
   exitSelect();
   cancelReply(false);
-  editing = { id: m.id, text: m.text || '' };
+  editing = { id: m.id, text: decodeEmojiText(m.text || '') };   // yozish maydoni oddiy matn; yuborishda yana path bo'ladi
   const inp = $('chatThreadInput');
   inp.value = editing.text;
   api.syncInput();
@@ -536,9 +536,10 @@ export function cancelEdit(clearInput = true) {
 export async function commitEdit(rawText) {
   const ed = editing;
   if (!ed) return false;
-  const text = (rawText || '').trim();
-  if (!text) return true;
-  if (text === (ed.text || '').trim()) { cancelEdit(true); return true; }
+  const plain = (rawText || '').trim();
+  if (!plain) return true;
+  if (plain === (ed.text || '').trim()) { cancelEdit(true); return true; }
+  const text = encodeForSend(plain);
   const { error } = await sb.from(tbl())
     .update({ text, edited_at: new Date().toISOString() }).eq('id', ed.id);
   if (error) { console.warn('[MsgMenu] edit:', error.message); toast('Tahrirlanmadi', 'error'); return true; }
@@ -569,7 +570,7 @@ function ensureSelBar() {
     const ids = [...sel];
     if (b.dataset.sb === 'x') exitSelect();
     else if (b.dataset.sb === 'copy') {
-      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => (m.text || '').trim()).filter(Boolean).join('\n');
+      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => decodeEmojiText(m.text || '').trim()).filter(Boolean).join('\n');
       if (t) { copyToClipboard(t); toast('Nusxalandi'); } else toast('Nusxalanadigan matn yo‘q');
     }
     else if (b.dataset.sb === 'edit') { const m = msgOf(ids[0]); if (m) startEdit(m); }
