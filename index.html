@@ -382,6 +382,7 @@ html[data-nf],html[data-nf] body{background:#000000}
         </div>
         <div class="profile-username" id="profileUsername"></div>
         <div class="profile-bio"  id="profileBio"></div>
+        <div class="profile-links" id="profileLinks" hidden></div>
       </div>
     </div>
     <div class="profile-grid-hdr" id="profileGridTabs" role="tablist">
@@ -695,6 +696,20 @@ html[data-nf],html[data-nf] body{background:#000000}
           <label class="pe-input-label" for="editBioInput">Bio</label>
           <textarea class="ta pe-input pe-textarea" id="editBioInput" rows="3" placeholder="O'zingiz haqingizda qisqacha ma'lumot..."></textarea>
         </div>
+        <div class="pe-field-box">
+          <label class="pe-input-label" for="editWebsite">Veb-sayt <span class="pe-tag-optional" style="margin-left:6px">ixtiyoriy</span></label>
+          <input class="field pe-input" type="url" id="editWebsite" placeholder="https://misol.uz" autocomplete="url" inputmode="url" maxlength="200">
+          <div class="pe-field-note">Bitta veb-sayt URL (kelajakda ko'proq qo'shish mumkin)</div>
+        </div>
+        <div class="pe-field-box">
+          <label class="pe-input-label" for="editPhone">Telefon raqam <span class="pe-tag-optional" style="margin-left:6px">ixtiyoriy</span></label>
+          <div class="pe-field-prefix-wrap pe-phone-wrap">
+            <span class="pe-prefix pe-phone-prefix">+998</span>
+            <input class="field pe-prefix-field pe-input pe-phone-input" type="tel" id="editPhone" placeholder="-- --- -- --" autocomplete="tel-national" inputmode="numeric" maxlength="12" aria-describedby="editPhoneNote">
+          </div>
+          <div class="pe-field-note" id="editPhoneNote">Faqat O'zbekiston raqamlari. Format: XX XXX XX XX</div>
+          <div class="pe-field-error" id="editPhoneError" hidden></div>
+        </div>
       </div>
     </div>
 
@@ -768,6 +783,28 @@ html[data-nf],html[data-nf] body{background:#000000}
         <img src="./svg/action/save.svg" alt="" class="icon" width="15" height="15">
         Saqlash
       </button>
+    </div>
+
+    <!-- Ulangan qurilmalar (accordion, default yopiq) -->
+    <div class="pe-card-group pe-accordion" data-pe-acc="devices">
+      <button type="button" class="pe-group-title pe-acc-toggle" aria-expanded="false">
+        <span class="pe-acc-left">
+          <img src="./svg/call/phone.svg" alt="" class="icon" width="14" height="14">
+          Ulangan qurilmalar
+          <span class="dev-count-badge" id="devicesCount" hidden></span>
+        </span>
+        <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
+      </button>
+      <div class="pe-acc-body">
+        <div class="devices-box" id="devicesBox">
+          <div class="devices-list" id="devicesList"></div>
+          <div class="devices-empty" id="devicesEmpty" hidden>Faol qurilmalar yo'q</div>
+        </div>
+        <button type="button" class="btn-danger devices-revoke-all" id="revokeAllDevicesBtn">
+          Barcha qurilmalarni chiqarish
+        </button>
+        <div class="pe-field-note" style="margin-top:8px">Faqat boshqa qurilmalar chiqariladi. Joriy qurilma ochiq qoladi.</div>
+      </div>
     </div>
 
     <div class="settings-section-label">Bildirishnomalar</div>

@@ -109,6 +109,35 @@ async function _paintProfile(ud) {
 
   $('profileBio').textContent  = ud.bio || '';
 
+  // Website + telefon (tartibli linklar)
+  const linksEl = $('profileLinks');
+  if (linksEl) {
+    const parts = [];
+    if (ud.website) {
+      let href = ud.website;
+      try { href = new URL(ud.website).href; } catch (_) {}
+      let label = ud.website.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+      parts.push(`<a class="profile-link profile-link-web" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><span class="profile-link-ico" aria-hidden="true">🔗</span><span>${esc(label)}</span></a>`);
+    }
+    if (ud.phone) {
+      const tel = String(ud.phone).replace(/\s+/g, '');
+      const digits = tel.replace(/\D/g, '');
+      let pretty = tel;
+      if (digits.length === 12 && digits.startsWith('998')) {
+        const d = digits.slice(3);
+        pretty = '+998 ' + d.slice(0,2) + ' ' + d.slice(2,5) + ' ' + d.slice(5,7) + ' ' + d.slice(7,9);
+      }
+      parts.push(`<a class="profile-link profile-link-phone" href="tel:${esc(tel)}"><img src="./svg/call/phone.svg" alt="" class="icon profile-link-ico" width="14" height="14"><span>${esc(pretty)}</span></a>`);
+    }
+    if (parts.length) {
+      linksEl.innerHTML = parts.join('');
+      linksEl.hidden = false;
+    } else {
+      linksEl.innerHTML = '';
+      linksEl.hidden = true;
+    }
+  }
+
   const myP = await _fetchUserPosts(state.me.uid, false);
   $('statPosts').textContent     = myP.length;
   $('statLikes').textContent     = myP.reduce((s,p) => s+(p.likes||0), 0);
@@ -406,6 +435,26 @@ export async function renderUserProfileModal(uid) {
       <div class="up-name">${esc(ud.fullName||'Noma\'lum')}</div>
       ${ud.username ? `<div class="up-username">@${esc(ud.username)}</div>` : ''}
       ${ud.bio ? `<div class="up-bio">${esc(ud.bio)}</div>` : ''}
+      ${(() => {
+        const bits = [];
+        if (ud.website) {
+          let href = ud.website;
+          try { href = new URL(ud.website).href; } catch (_) {}
+          let label = String(ud.website).replace(/^https?:\/\//i, '').replace(/\/$/, '');
+          bits.push(`<a class="profile-link profile-link-web" href="${esc(href)}" target="_blank" rel="noopener noreferrer"><span>${esc(label)}</span></a>`);
+        }
+        if (ud.phone) {
+          const tel = String(ud.phone).replace(/\s+/g, '');
+          const digits = tel.replace(/\D/g, '');
+          let pretty = tel;
+          if (digits.length === 12 && digits.startsWith('998')) {
+            const d = digits.slice(3);
+            pretty = '+998 ' + d.slice(0,2) + ' ' + d.slice(2,5) + ' ' + d.slice(5,7) + ' ' + d.slice(7,9);
+          }
+          bits.push(`<a class="profile-link profile-link-phone" href="tel:${esc(tel)}"><span>${esc(pretty)}</span></a>`);
+        }
+        return bits.length ? `<div class="profile-links up-links">${bits.join('')}</div>` : '';
+      })()}
       <div class="up-stats">
         <div class="up-stat"><div class="up-stat-val">${userPublicPosts.length}</div><div class="up-stat-lbl">postlar</div></div>
         <div class="up-stat"><div class="up-stat-val">${totalLikes}</div><div class="up-stat-lbl">yoqtirishlar</div></div>

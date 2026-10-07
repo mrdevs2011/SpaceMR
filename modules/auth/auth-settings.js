@@ -10,6 +10,7 @@ import { toast } from '../ui/toast.js';
 import { removePushToken, areNotificationsEnabled, setNotificationsEnabled } from '../push.js';
 import { clearAllCache, clearRuntimeCache, getCachedProfile } from '../core/local-cache.js';
 import { isEphemeralDevice, setEphemeralDevice, flagsSnapshot } from '../core/store/flags.js';
+import { initDeviceSessionsUi, paintDevicesList } from './device-sessions.js';
 
 /* ── Sozlamalar (Settings) sheet — bildirishnoma + hisobni o'chirish ── */
 
@@ -294,5 +295,4 @@ if (deleteAccountBtn) {
   };
 }
 
-
-
+try { initDeviceSessionsUi(); } catch (_) {}

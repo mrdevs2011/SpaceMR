@@ -105,6 +105,8 @@ export function mapProfile(r) {
     mustChangePassword: r.must_change_password === true,
     passwordChangedAt: ts(r.password_changed_at),
     recoveryEmail: r.recovery_email || '',
+    website: r.website || '',
+    phone: r.phone || '',
     createdAt: ts(r.created_at),
   };
 }

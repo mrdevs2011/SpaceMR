@@ -3,6 +3,7 @@ import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, ve
 import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
+import { getDeviceId, registerDeviceSession, checkDeviceRevoked } from './device-sessions.js';
 import { startChatsWatcher, stopChatsWatcher, repaintNoticeBanner } from '../chat/chat.js';
 import { startBus, stopBus, busOn, trackPresence, untrackPresence, isBusLive } from '../core/rt-bus.js';
 import { startCallWatcher, stopCallWatcher } from '../call/call.js';
@@ -804,6 +805,15 @@ function _startRealtimeUserWatch(me) {
       toast('Parolingiz boshqa qurilmada o\'zgartirildi. Barcha sessiyalar yopildi', 'warning');
       await _forceSignOut();
     })
+    .on('broadcast', { event: 'session_revoked' }, async payload => {
+      const ids = payload?.payload?.deviceIds || [];
+      const mine = _getDeviceId();
+      if (ids.includes(mine)) {
+        console.warn('[Auth] Bu qurilma sessiyasi chiqarildi');
+        toast('Bu qurilma hisobdan chiqarildi', 'warning');
+        await _forceSignOut();
+      }
+    })
     .subscribe();
 
   // 2. Postgres changes: profiles qatori o'chirilganda (DELETE) yoki o'zgarganda
@@ -1071,6 +1081,17 @@ async function _enterApp(user) {
     maybeShowGuideCard(); // telefonda bir martalik "ilovani o'rnating" kartasi
 
     startPresenceHeartbeat();
+
+    // Ulangan qurilmalar: sessiya yozish + revoke tekshiruvi
+    try {
+      if (await checkDeviceRevoked()) {
+        toast('Bu qurilma hisobdan chiqarilgan', 'warning');
+        await _forceSignOut();
+        return;
+      }
+    } catch (_) {}
+    try { registerDeviceSession().catch(() => {}); } catch (_) {}
+
 
     // Admin force-reload: online realtime + offline boot check
     try {
@@ -1518,6 +1539,143 @@ export function listenPosts() {
 let _peAviPending = null;
 let _peOriginalUsername = '';
 
+
+/* ── O\'zbekiston telefon (+998) validatsiya ───────────────────────── */
+const UZ_PHONE_CODES = new Set([
+  '20','33','50','55','61','62','65','66','67','69',
+  '70','71','72','73','74','75','76','77','78','79',
+  '80','87','88','90','91','92','93','94','95','97','98','99',
+]);
+
+/** Faqat raqamlarni qoldiradi */
+function digitsOnly(s) {
+  return String(s || '').replace(/\D/g, '');
+}
+
+/** 9 ta raqamni "XX XXX XX XX" ko\'rinishiga formatlaydi */
+function formatUzPhoneLocal(digits) {
+  const d = digitsOnly(digits).slice(0, 9);
+  const p1 = d.slice(0, 2);
+  const p2 = d.slice(2, 5);
+  const p3 = d.slice(5, 7);
+  const p4 = d.slice(7, 9);
+  let out = p1;
+  if (p2) out += ' ' + p2;
+  if (p3) out += ' ' + p3;
+  if (p4) out += ' ' + p4;
+  return out;
+}
+
+/** Saqlangan qiymatdan lokal 9 raqamni ajratadi (+998XXXXXXXXX yoki XX XXX XX XX) */
+function extractUzLocalDigits(stored) {
+  let d = digitsOnly(stored);
+  if (d.startsWith('998') && d.length >= 12) d = d.slice(3);
+  return d.slice(0, 9);
+}
+
+/**
+ * Lokal 9 raqamni tekshiradi.
+ * @returns {{ ok: true, e164: string, display: string } | { ok: false, error: string }}
+ */
+function validateUzPhoneLocal(localDigits) {
+  const d = digitsOnly(localDigits);
+  if (!d) return { ok: true, e164: '', display: '' }; // bo\'sh — ixtiyoriy
+  if (d.length !== 9) {
+    return { ok: false, error: "Telefon 9 ta raqam bo\'lishi kerak (XX XXX XX XX)" };
+  }
+  const code = d.slice(0, 2);
+  if (!UZ_PHONE_CODES.has(code)) {
+    return { ok: false, error: `Operator kodi ${code} qo\'llab-quvvatlanmaydi` };
+  }
+  return {
+    ok: true,
+    e164: '+998' + d,
+    display: formatUzPhoneLocal(d),
+  };
+}
+
+function normalizeWebsiteUrl(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return { ok: true, url: '' };
+  let url = s;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  try {
+    const u = new URL(url);
+    if (!/^https?:$/i.test(u.protocol)) {
+      return { ok: false, error: 'Veb-sayt http yoki https bo\'lishi kerak' };
+    }
+    if (!u.hostname || !u.hostname.includes('.')) {
+      return { ok: false, error: 'Veb-sayt manzili noto\'g\'ri' };
+    }
+    if (url.length > 200) {
+      return { ok: false, error: 'Veb-sayt 200 belgidan oshmasligi kerak' };
+    }
+    return { ok: true, url: u.toString() };
+  } catch {
+    return { ok: false, error: 'Veb-sayt manzili noto\'g\'ri' };
+  }
+}
+
+function initPhoneInputMask() {
+  const inp = $('editPhone');
+  if (!inp || inp.dataset.maskBound) return;
+  inp.dataset.maskBound = '1';
+
+  const showErr = (msg) => {
+    const el = $('editPhoneError');
+    if (!el) return;
+    if (msg) {
+      el.hidden = false;
+      el.textContent = msg;
+    } else {
+      el.hidden = true;
+      el.textContent = '';
+    }
+  };
+
+  inp.addEventListener('keydown', (e) => {
+    // Ruxsat: navigation, backspace, delete, tab, ctrl/meta shortcuts
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const nav = ['Backspace','Delete','Tab','Escape','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+    if (nav.includes(e.key)) return;
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+    const cur = digitsOnly(inp.value);
+    if (cur.length >= 9) {
+      e.preventDefault(); // devorga urilgandek — 9 dan oshmaydi
+    }
+  });
+
+  inp.addEventListener('input', () => {
+    const d = digitsOnly(inp.value).slice(0, 9);
+    inp.value = formatUzPhoneLocal(d);
+    if (d.length === 0) {
+      showErr('');
+      return;
+    }
+    if (d.length >= 2 && !UZ_PHONE_CODES.has(d.slice(0, 2))) {
+      showErr(`Operator kodi ${d.slice(0, 2)} qo\'llab-quvvatlanmaydi`);
+    } else if (d.length === 9) {
+      const v = validateUzPhoneLocal(d);
+      showErr(v.ok ? '' : v.error);
+    } else {
+      showErr('');
+    }
+  });
+
+  inp.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+    let d = digitsOnly(text);
+    if (d.startsWith('998')) d = d.slice(3);
+    d = d.slice(0, 9);
+    inp.value = formatUzPhoneLocal(d);
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
 export async function populateProfileForm() {
   if (!state.me) return;
   let d = getCachedProfile(state.me.uid) || {};
@@ -1538,6 +1696,18 @@ export async function populateProfileForm() {
   if (editBioInput) editBioInput.value = d.bio || '';
   if (editUsername) editUsername.value = d.username || '';
   if (editRecoveryEmail) editRecoveryEmail.value = d.recoveryEmail || '';
+
+  const editWebsite = $('editWebsite');
+  if (editWebsite) editWebsite.value = d.website || '';
+
+  initPhoneInputMask();
+  const editPhone = $('editPhone');
+  if (editPhone) {
+    const local = extractUzLocalDigits(d.phone || '');
+    editPhone.value = local ? formatUzPhoneLocal(local) : '';
+    const errEl = $('editPhoneError');
+    if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
+  }
 
   _peAviPending = null;
   const peAviImg = $('peAviImg');
@@ -1642,10 +1812,23 @@ if (saveProfileBtn) {
         if (!okPwd) return;
       }
 
+      const webRes = normalizeWebsiteUrl($('editWebsite')?.value || '');
+      if (!webRes.ok) { toast(webRes.error, 'error'); return; }
+
+      const phoneRes = validateUzPhoneLocal($('editPhone')?.value || '');
+      if (!phoneRes.ok) {
+        toast(phoneRes.error, 'error');
+        const errEl = $('editPhoneError');
+        if (errEl) { errEl.hidden = false; errEl.textContent = phoneRes.error; }
+        return;
+      }
+
       const updates = {
         full_name: fn,
         bio:       $('editBioInput')?.value?.trim() || '',
         recovery_email: rawRecEmail || null,
+        website: webRes.url || null,
+        phone: phoneRes.e164 || null,
       };
 
       const rawUser = $('editUsername')?.value?.trim() || '';
