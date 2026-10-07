@@ -1,6 +1,5 @@
 /* attach-menu.js — umumiy skrepka menyusi: Kamera / Fayl / Media
-   Chat, post composer, story upload — hammasi shu modulni ishlatadi.
-   Kamera qurilmasi topilmasa "Kamera" bandi ko'rinmaydi. */
+   Chat, post, story. Media/Fayl: <label for=input> (mobil file dialog ishonchli). */
 import { hasCameraDevice } from '../chat/camera-access.js';
 import { openCameraCapture } from '../chat/camera-capture.js';
 
@@ -12,58 +11,58 @@ const ICONS = {
 };
 
 let _menu = null, _off = null;
+let _uid = 0;
 
 export function closeAttachMenu() {
   if (_off) { _off(); _off = null; }
   _menu?.remove(); _menu = null;
 }
 
-/** File picker uchun input — har doim body da, hech qachon display:none emas (iOS/Android). */
-function _makePickerInput(accept) {
+/** Ko'rinmas lekin mobil uchun yaroqli file input (display:none emas). */
+function _stylePicker(inp) {
+  inp.style.cssText = [
+    'position:fixed',
+    'right:0',
+    'bottom:0',
+    'width:48px',
+    'height:48px',
+    'opacity:0.01',
+    'overflow:hidden',
+    'z-index:2147483646',
+    'border:0',
+    'padding:0',
+    'margin:0',
+    'font-size:16px', // iOS zoom oldini olish
+  ].join(';');
+}
+
+function _makePicker(accept, onFile) {
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = accept || '';
+  inp.id = 'am-pick-' + (++_uid);
   inp.setAttribute('aria-hidden', 'true');
-  inp.tabIndex = -1;
-  // display:none / d-none / overlay ichida — mobil dialog ochilmaydi
-  inp.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0.001;overflow:hidden;z-index:2147483646;border:0;padding:0;margin:0;clip:rect(0,0,0,0);';
+  _stylePicker(inp);
   document.body.appendChild(inp);
+  inp.addEventListener('change', () => {
+    const f = inp.files?.[0];
+    inp.value = '';
+    if (f) onFile(f);
+  });
   return inp;
-}
-
-function _openPicker(inp) {
-  if (!inp) return false;
-  try {
-    // Ba'zi brauzerlar showPicker ni qo'llab-quvvatlaydi
-    if (typeof inp.showPicker === 'function') {
-      inp.showPicker();
-      return true;
-    }
-  } catch (_) {}
-  try {
-    inp.click();
-    return true;
-  } catch (_) {
-    try {
-      inp.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-      return true;
-    } catch (_2) {
-      return false;
-    }
-  }
 }
 
 /**
  * @param {object} opts
  * @param {HTMLElement} opts.btn
- * @param {HTMLInputElement} [opts.fileInput] — accept manbai / legacy change (ixtiyoriy)
+ * @param {HTMLInputElement} [opts.fileInput]
  * @param {() => boolean} [opts.isBusy]
  * @param {(file: File) => void} opts.onPick
  * @param {boolean} [opts.showCamera=true]
  * @param {boolean} [opts.showFile=true]
  * @param {boolean} [opts.showMedia=true]
  * @param {string} [opts.mediaAccept='image/*,video/*']
- * @param {string} [opts.fileAccept=''] — bo'sh = barcha fayllar
+ * @param {string} [opts.fileAccept='']
  * @param {() => object} [opts.getOptions]
  */
 export function initAttachMenu({
@@ -80,72 +79,58 @@ export function initAttachMenu({
 }) {
   if (!btn || typeof onPick !== 'function') return;
 
-  // Overlay / d-none ichidagi fileInput o'rniga body dagi mustaqil pickerlar
-  const mediaPicker = _makePickerInput(mediaAccept);
-  const filePicker = _makePickerInput(
-    fileAccept || (fileInput?.getAttribute('accept') || '') || ''
+  const mediaPicker = _makePicker(mediaAccept, onPick);
+  const filePicker = _makePicker(
+    fileAccept || fileInput?.getAttribute('accept') || '',
+    onPick
   );
-
-  mediaPicker.addEventListener('change', () => {
-    const f = mediaPicker.files?.[0];
-    mediaPicker.value = '';
-    if (f) onPick(f);
-  });
-  filePicker.addEventListener('change', () => {
-    const f = filePicker.files?.[0];
-    filePicker.value = '';
-    if (f) onPick(f);
-  });
-
-  // Legacy fileInput change ham ishlasin (agar tashqi kod bog'lagan bo'lsa) —
-  // lekin biz uni click qilmaymiz (overlay ichida ishonchsiz)
-
-  const actions = {
-    camera: async () => {
-      const f = await openCameraCapture();
-      if (f) onPick(f);
-    },
-    file: () => {
-      const dyn = (typeof getOptions === 'function' ? getOptions() : null) || {};
-      const acc = dyn.fileAccept ?? fileAccept ?? fileInput?.getAttribute('accept') ?? '';
-      filePicker.accept = acc || '';
-      _openPicker(filePicker);
-    },
-    media: () => {
-      const dyn = (typeof getOptions === 'function' ? getOptions() : null) || {};
-      mediaPicker.accept = dyn.mediaAccept ?? mediaAccept;
-      _openPicker(mediaPicker);
-    },
-  };
 
   function openMenu(opts) {
     closeAttachMenu();
+
     const cam = opts.showCamera !== false && opts._hasCam;
+    const wantFile = opts.showFile !== false;
+    const wantMedia = opts.showMedia !== false;
+
+    mediaPicker.accept = opts.mediaAccept || mediaAccept;
+    filePicker.accept = opts.fileAccept || fileAccept || fileInput?.getAttribute('accept') || '';
+
+    // Faqat bitta variant — to'g'ridan-to'g'ri label yo'q, lekin input click label bilan bir xil emas;
+    // shu holda yashirin label yaratamiz va dasturiy emas, user click kerak.
+    // Agar faqat 1 ta item bo'lsa ham menyu ko'rsatamiz (anigligi uchun).
+
     const items = [];
-    if (cam) items.push(['camera', 'Kamera']);
-    if (opts.showFile !== false) items.push(['file', 'Fayl']);
-    if (opts.showMedia !== false) items.push(['media', 'Media']);
+    if (cam) items.push({ k: 'camera', t: 'Kamera' });
+    if (wantFile) items.push({ k: 'file', t: 'Fayl', forId: filePicker.id });
+    if (wantMedia) items.push({ k: 'media', t: 'Media', forId: mediaPicker.id });
+
     if (!items.length) {
-      mediaPicker.accept = opts.mediaAccept || mediaAccept;
-      _openPicker(mediaPicker);
+      // Hech narsa yo'q — media ochishga urinish (edge)
+      try { mediaPicker.click(); } catch (_) {}
       return;
     }
 
     const m = document.createElement('div');
     m.className = 'attach-menu';
     m.setAttribute('role', 'menu');
-    // Overlay (z=200) va boshqa sheetlardan ustun
     m.style.zIndex = '100050';
-    m.innerHTML = items.map(([k, t]) =>
-      `<button type="button" class="am-item" role="menuitem" data-k="${k}">${ICONS[k]}<span>${t}</span></button>`
-    ).join('');
+
+    m.innerHTML = items.map(({ k, t, forId }) => {
+      if (forId) {
+        // LABEL — mobil Chrome/Safari file dialog uchun eng ishonchli
+        return `<label class="am-item" role="menuitem" data-k="${k}" for="${forId}">${ICONS[k]}<span>${t}</span></label>`;
+      }
+      return `<button type="button" class="am-item" role="menuitem" data-k="${k}">${ICONS[k]}<span>${t}</span></button>`;
+    }).join('');
+
+    // Overlay ichida bo'lsa ham body ga — lekin z-index yuqori
     document.body.appendChild(m);
 
     const r = btn.getBoundingClientRect();
-    const mw = m.offsetWidth, mh = m.offsetHeight;
+    const mw = m.offsetWidth || 180;
+    const mh = m.offsetHeight || 120;
     const left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8));
-    const spaceBelow = window.innerHeight - r.bottom;
-    if (spaceBelow >= mh + 12) {
+    if (window.innerHeight - r.bottom >= mh + 12) {
       m.style.top = (r.bottom + 8) + 'px';
       m.style.bottom = 'auto';
     } else {
@@ -154,46 +139,39 @@ export function initAttachMenu({
     }
     m.style.left = left + 'px';
 
-    let ran = false;
-    const runItem = (k) => {
-      if (!k || !actions[k] || ran) return;
-      ran = true;
-      // Fayl/media: dialogni gesture ichida ochamiz, menyuni KEYIN yopamiz
-      if (k === 'file' || k === 'media') {
-        actions[k]();
-        // preventDefault qilmaymiz — ba'zi brauzerlarda dialogni buzadi
-        requestAnimationFrame(() => closeAttachMenu());
-      } else {
+    // Kamera tugmasi
+    m.querySelectorAll('button.am-item[data-k="camera"]').forEach(el => {
+      el.addEventListener('click', async e => {
+        e.preventDefault();
+        e.stopPropagation();
         closeAttachMenu();
-        actions[k]();
-      }
-    };
-
-    // pointerup — preventDefault siz (file picker gesture uchun ishonchliroq)
-    m.addEventListener('pointerup', e => {
-      const it = e.target.closest?.('.am-item');
-      if (!it) return;
-      e.stopPropagation();
-      runItem(it.dataset.k);
-    });
-    m.addEventListener('click', e => {
-      const it = e.target.closest?.('.am-item');
-      if (!it) return;
-      e.preventDefault();
-      e.stopPropagation();
-      runItem(it.dataset.k);
+        try {
+          const f = await openCameraCapture();
+          if (f) onPick(f);
+        } catch (err) {
+          console.warn('[attach] camera', err);
+        }
+      });
     });
 
-    // Tashqariga bosilsa yopish — lekin item bosilishini kutib, bir tik kechiktiramiz
+    // Label bosilganda: file dialog ochiladi, keyin menyuni yopamiz
+    m.querySelectorAll('label.am-item').forEach(el => {
+      el.addEventListener('click', e => {
+        // default label→input ishlashi kerak — preventDefault QILMAYMIZ
+        e.stopPropagation();
+        // dialog ochilgach menyuni yopish
+        setTimeout(() => closeAttachMenu(), 300);
+      });
+    });
+
     const onDown = e => {
       if (m.contains(e.target) || btn.contains(e.target)) return;
+      // input o'zi (label orqali) — yopmaslik
+      if (e.target === mediaPicker || e.target === filePicker) return;
       closeAttachMenu();
     };
     const onKey = e => { if (e.key === 'Escape') closeAttachMenu(); };
-    // bubble phase — item pointerup avval ishlashi uchun capture=false
-    setTimeout(() => {
-      document.addEventListener('pointerdown', onDown, true);
-    }, 0);
+    setTimeout(() => document.addEventListener('pointerdown', onDown, true), 50);
     document.addEventListener('keydown', onKey, true);
     window.addEventListener('resize', closeAttachMenu);
     _off = () => {
@@ -224,22 +202,22 @@ export function initAttachMenu({
       _hasCam: false,
     };
 
+    // Desktop: to'g'ridan-to'g'ri media/file (menyu shart emas)
     if (isDesktop()) {
-      // Desktop: post/story — media yoki file (accept bo'yicha)
-      if (opts.showFile !== false && opts.showMedia === false) {
-        filePicker.accept = opts.fileAccept || fileInput?.getAttribute('accept') || '';
-        _openPicker(filePicker);
-      } else if (opts.showMedia !== false) {
+      if (opts.showMedia !== false) {
         mediaPicker.accept = opts.mediaAccept || mediaAccept;
-        _openPicker(mediaPicker);
-      } else {
-        filePicker.accept = opts.fileAccept || '';
-        _openPicker(filePicker);
+        mediaPicker.click();
+      } else if (opts.showFile !== false) {
+        filePicker.accept = opts.fileAccept || fileAccept || '';
+        filePicker.click();
       }
       return;
     }
 
-    if (opts.showCamera) opts._hasCam = await hasCameraDevice();
+    // Mobil: menyu. hasCameraDevice await — gesture uziladi, lekin KEYINGI bosish yangi gesture.
+    if (opts.showCamera) {
+      try { opts._hasCam = await hasCameraDevice(); } catch (_) { opts._hasCam = false; }
+    }
     openMenu(opts);
   });
 }
