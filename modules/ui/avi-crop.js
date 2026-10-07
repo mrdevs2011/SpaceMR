@@ -3,6 +3,8 @@
    Usage: openAviCrop(file).then(blob => ...) or null if cancelled
    ═══════════════════════════════════════════════════════════════════════ */
 
+import { lockScroll, unlockScroll } from '../core/utils.js';
+
 const OUT_SIZE = 512; // output square px
 
 let _img = null;
@@ -114,14 +116,13 @@ function _onWheel(e) {
   _setScale(_scale * Math.exp(-dy * (e.ctrlKey ? 0.012 : 0.0018)));
 }
 
-/** Esc — oynani yopadi (boshqa Esc handlerlarga yetkazmaydi) */
+/** Crop ochiq — orqa fon freeze: Esc oynani yopadi, qolgan barcha klaviatura/shortcutlar bloklanadi */
 function _onKey(e) {
-  if (e.key !== 'Escape') return;
   const modal = $('aviCropModal');
   if (!modal || modal.style.display === 'none') return;
-  e.preventDefault();
   e.stopImmediatePropagation();
-  _close(null);
+  if (e.key === 'Escape') { e.preventDefault(); _close(null); return; }
+  if (e.key !== 'Tab') e.preventDefault();
 }
 
 function _bindOnce() {
@@ -145,8 +146,6 @@ function _bindOnce() {
       _setScale(_minScale * (pct / 100));
     });
   }
-  $('aviCropZoomIn')?.addEventListener('click', () => _setScale(_scale * 1.12));
-  $('aviCropZoomOut')?.addEventListener('click', () => _setScale(_scale / 1.12));
   $('aviCropClose')?.addEventListener('click', () => _close(null));
   $('aviCropCancel')?.addEventListener('click', () => _close(null));
   $('aviCropUpload')?.addEventListener('click', () => _exportAndClose());
@@ -159,6 +158,7 @@ function _bindOnce() {
 function _close(result) {
   const modal = $('aviCropModal');
   if (modal) modal.style.display = 'none';
+  unlockScroll('aviCropModal');
   if (_objectUrl) { URL.revokeObjectURL(_objectUrl); _objectUrl = null; }
   _img = null;
   _ptrs.clear(); _dragging = false; _pinchD = 0;
@@ -261,6 +261,7 @@ export function openAviCrop(file) {
       _setScale(_minScale);
 
       modal.style.display = 'flex';
+      lockScroll('aviCropModal');
       // re-measure after display (layout)
       requestAnimationFrame(() => {
         const d2 = _circleD();
