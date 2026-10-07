@@ -3642,6 +3642,20 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
 }
 .grp-join-submit:disabled { opacity: 0.45; cursor: default; }
 
+/* Ommaviy guruh qidiruvi natijalari (nom / @username) */
+.grp-join-results { margin-top: 10px; max-height: min(320px, 46vh); overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.grp-join-results[hidden] { display: none; }
+.grp-join-row { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; }
+.grp-join-row:hover { background: rgba(231,233,234,0.06); }
+.grp-join-row-avi { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--bg4, #2f3336); flex: 0 0 auto; }
+.grp-join-row-body { flex: 1 1 auto; min-width: 0; }
+.grp-join-row-name { font-weight: 700; font-size: 15px; color: var(--text, #e7e9ea); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grp-join-row-meta { font-size: 12px; color: var(--text3, #71767b); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grp-join-row-btn { flex: 0 0 auto; padding: 7px 14px; border: 0; border-radius: 999px; background: var(--blue, #1d9bf0); color: #fff; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.grp-join-row-btn.is-open { background: var(--bg4, #2f3336); color: var(--text, #e7e9ea); }
+.grp-join-row-btn:disabled { opacity: 0.5; cursor: default; }
+.grp-join-submit[hidden] { display: none; }
+
 
 /* ── Profile website + phone links ── */
 .profile-links,

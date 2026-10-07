@@ -1564,11 +1564,12 @@ export function openJoinGroupModal() {
         <span class="grp-join-title">Guruhga qo'shilish</span>
         <button type="button" class="grp-join-close" aria-label="Yopish">×</button>
       </div>
-      <p class="grp-join-hint">Maxfiy guruh havolasini yoki kodini aniq kiriting. Nom bo'yicha qidirilmaydi.</p>
-      <input type="text" class="grp-join-input" id="grpJoinInput" placeholder="https://…/chats/g/… yoki kod" autocomplete="off" spellcheck="false">
+      <p class="grp-join-hint">Ommaviy guruhni nomi yoki @username bo'yicha qidiring. Maxfiy guruh uchun havola yoki kodni to'liq kiriting.</p>
+      <input type="text" class="grp-join-input" id="grpJoinInput" placeholder="Guruh nomi, @username, havola yoki kod" autocomplete="off" spellcheck="false">
       <div class="grp-join-status" id="grpJoinStatus" hidden></div>
+      <div class="grp-join-results" id="grpJoinResults" hidden></div>
       <div class="grp-join-preview" id="grpJoinPreview" hidden></div>
-      <button type="button" class="grp-join-submit" id="grpJoinSubmit" disabled>Qo'shilish</button>
+      <button type="button" class="grp-join-submit" id="grpJoinSubmit" disabled hidden>Qo'shilish</button>
     </div>`;
   document.body.appendChild(ov);
   requestAnimationFrame(() => ov.classList.add('show'));
@@ -1576,8 +1577,12 @@ export function openJoinGroupModal() {
   const st = ov.querySelector('#grpJoinStatus');
   const prev = ov.querySelector('#grpJoinPreview');
   const sub = ov.querySelector('#grpJoinSubmit');
+  const results = ov.querySelector('#grpJoinResults');
   let resolved = null;
   let timer = null;
+  let searchSeq = 0;
+  // Havola (http…, "/" bor) yoki uzun kod (hex) — maxfiy/aniq qo'shilish; qolgani — ommaviy guruhlarni nom/@username bo'yicha qidirish
+  const isTokenLike = raw => /^https?:\/\//i.test(raw) || raw.includes('/') || /^[a-f0-9]{32,}$/i.test(raw);
   const close = () => { ov.classList.remove('show'); setTimeout(() => ov.remove(), 150); };
   ov.querySelector('.grp-join-close').onclick = close;
   ov.addEventListener('click', e => { if (e.target === ov) close(); });
@@ -1586,10 +1591,55 @@ export function openJoinGroupModal() {
     st.textContent = msg || '';
     st.className = 'grp-join-status' + (ok === true ? ' ok' : ok === false ? ' err' : '');
   };
+  const renderResults = list => {
+    results.hidden = !list.length;
+    results.innerHTML = list.map(g => {
+      const joined = (g.members || []).includes(state.me?.uid);
+      const cnt = g.subscriberCount || (g.members || []).length || 0;
+      return `<div class="grp-join-row" data-gid="${esc(g.id)}">
+        <img class="grp-join-row-avi" src="${esc(g.avatar || defAvi(g.name || 'G'))}" alt="" onerror="this.style.visibility='hidden'">
+        <div class="grp-join-row-body">
+          <div class="grp-join-row-name">${esc(g.name || 'Guruh')}</div>
+          <div class="grp-join-row-meta">${g.username ? '@' + esc(g.username) + ' · ' : ''}${cnt} a'zo</div>
+        </div>
+        <button type="button" class="grp-join-row-btn${joined ? ' is-open' : ''}" data-act="${joined ? 'open' : 'join'}">${joined ? 'Ochish' : "Qo'shilish"}</button>
+      </div>`;
+    }).join('');
+    results._list = list;
+  };
+  const runSearch = async raw => {
+    const seq = ++searchSeq;
+    setStatus('Qidirilmoqda…');
+    const list = await searchGroups(raw);   // faqat OMMAVIY guruhlar (maxfiy hech qachon chiqmaydi)
+    if (seq !== searchSeq) return;
+    renderResults(list);
+    setStatus(list.length ? '' : 'Ommaviy guruh topilmadi', list.length ? undefined : false);
+  };
+  results.addEventListener('click', async e => {
+    const btn = e.target.closest('.grp-join-row-btn');
+    const row = e.target.closest('.grp-join-row');
+    if (!btn || !row) return;
+    const gid = row.dataset.gid;
+    if (btn.dataset.act === 'join') {
+      btn.disabled = true;
+      try {
+        await joinGroup(gid);
+        toast("Guruhga qo'shildingiz", 'success');
+      } catch (_) {
+        btn.disabled = false;
+        toast("Guruhga qo'shilishda xatolik", 'error');
+        return;
+      }
+      try { await _loadGroups(); } catch (_) {}
+    }
+    close();
+    openGroupThread(gid);
+  });
   const tryResolve = async () => {
     const raw = (inp.value || '').trim();
     resolved = null;
     sub.disabled = true;
+    sub.hidden = false;
     prev.hidden = true;
     prev.innerHTML = '';
     if (raw.length < 12) { setStatus(''); return; }
@@ -1610,12 +1660,21 @@ export function openJoinGroupModal() {
   };
   inp.addEventListener('input', () => {
     clearTimeout(timer);
+    searchSeq++;
     sub.disabled = true;
     resolved = null;
     prev.hidden = true;
+    renderResults([]);
     const raw = (inp.value || '').trim();
-    if (raw.length < 12) { setStatus(''); return; }
-    timer = setTimeout(tryResolve, 400);
+    if (isTokenLike(raw)) {
+      sub.hidden = false;
+      if (raw.length < 12) { setStatus(''); return; }
+      timer = setTimeout(tryResolve, 400);
+      return;
+    }
+    sub.hidden = true;
+    if (raw.replace(/^@/, '').length < 2) { setStatus(''); return; }
+    timer = setTimeout(() => runSearch(raw), 300);
   });
   sub.addEventListener('click', async () => {
     if (!resolved) return;
