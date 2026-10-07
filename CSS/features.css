@@ -4117,3 +4117,161 @@ textarea.pe-input-locked {
 .chat-avi-profile:hover img {
   box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.45);
 }
+
+
+/* ── Guruh: xabar yuborish dropdown ── */
+.grp-msg-perm {
+  position: relative;
+  margin-bottom: 12px;
+  z-index: 20;
+}
+.grp-msg-perm-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid #2f3336;
+  background: #000000;
+  color: #e7e9ea;
+  font: 600 14px/1.3 var(--font);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  transition: border-color .15s ease, background .15s ease;
+}
+.grp-msg-perm-btn:hover {
+  border-color: #536471;
+  background: #0a0a0a;
+}
+.grp-msg-perm.is-open .grp-msg-perm-btn {
+  border-color: #1d9bf0;
+}
+.grp-msg-perm-label {
+  flex: 1;
+  min-width: 0;
+}
+.grp-msg-perm-chev {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform .2s ease;
+}
+.grp-msg-perm.is-open .grp-msg-perm-chev {
+  transform: rotate(180deg);
+}
+.grp-msg-perm-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  padding: 6px;
+  background: #000000;
+  border: 1px solid #2f3336;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: uaMenuIn .16s ease;
+}
+.grp-msg-perm-menu[hidden] { display: none !important; }
+.grp-msg-perm-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #e7e9ea;
+  font: 600 13.5px/1.3 var(--font);
+  cursor: pointer;
+}
+.grp-msg-perm-item:hover {
+  background: rgba(231,233,234,0.08);
+}
+.grp-msg-perm-item.is-active {
+  background: rgba(29, 155, 240, 0.16);
+  color: #1d9bf0;
+}
+
+/* A'zolar qidiruv: radius faqat box da */
+.grp-picker-search-wrap {
+  border-radius: 14px !important;
+  overflow: hidden;
+  border: 1px solid #2f3336;
+  background: #000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  min-height: 44px;
+  margin-bottom: 8px;
+}
+.grp-picker-search-wrap .grp-picker-search {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 10px 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+.grp-picker-list {
+  border-radius: 14px !important;
+  border: 1px solid #2f3336 !important;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Yozish ruxsati (faqat tanlanganlar) */
+.grp-picker-write-tools {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+#grpMemberPickerSection.perm-selected .grp-picker-row.selected .grp-picker-write-tools,
+body.grp-perm-selected .grp-picker-row.selected .grp-picker-write-tools {
+  display: flex;
+}
+.grp-write-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #2f3336;
+  background: #0a0a0a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.55;
+  transition: opacity .12s, background .12s, border-color .12s;
+}
+.grp-write-btn:hover {
+  opacity: 1;
+  background: #16181c;
+}
+.grp-write-btn.is-on {
+  opacity: 1;
+  border-color: #1d9bf0;
+  background: rgba(29,155,240,0.15);
+}
+.grp-write-btn.is-on.danger {
+  border-color: #f4212e;
+  background: rgba(244,33,46,0.12);
+}
+.grp-picker-row.no-write {
+  opacity: 0.72;
+}
+.grp-picker-row.no-write .grp-picker-name {
+  text-decoration: line-through;
+  text-decoration-color: rgba(244,33,46,0.5);
+}

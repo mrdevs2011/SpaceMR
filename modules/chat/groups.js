@@ -120,11 +120,25 @@ async function _loadGroupsInner() {
   handleGroupDeepLinks();
 }
 
-async function _addMembers(groupId, uids) {
-  const rows = uids.map(uid => ({ group_id: groupId, user_id: uid, role: 'member' }));
+async function _addMembers(groupId, uids, writerSet = null) {
+  const rows = uids.map(uid => ({
+    group_id: groupId,
+    user_id: uid,
+    role: 'member',
+    can_write: writerSet ? writerSet.has(uid) : true,
+  }));
   const { error } = await sb.from('group_members')
     .upsert(rows, { onConflict: 'group_id,user_id', ignoreDuplicates: true });
   if (error) throw error;
+  // ignoreDuplicates may skip can_write — yangilash
+  if (writerSet) {
+    for (const uid of uids) {
+      try {
+        await sb.from('group_members').update({ can_write: writerSet.has(uid) })
+          .eq('group_id', groupId).eq('user_id', uid);
+      } catch (_) {}
+    }
+  }
   _loadGroups();
 }
 
@@ -1625,6 +1639,8 @@ export function openJoinGroupModal() {
 
 let _createType    = 'group';
 let _selectedMembers = new Set();
+/** msg_permission=selected: yozish mumkin bo'lgan uid lar */
+let _selectedWriters = new Set();
 let _pendingPhotoUrl = null;
 let _usersForPicker = [];
 let _createIsPublic = true;
@@ -1679,6 +1695,11 @@ export function openCreateForm(type) {
   overlay.querySelector('#grpFormDesc').value = '';
   overlay.querySelector('.grp-form-desc-hint').textContent = '';
   const _perm = overlay.querySelector('#grpFormMsgPerm');
+  if (_perm) _perm.value = 'all';
+  const _pl = overlay.querySelector('#grpFormMsgPermLabel');
+  if (_pl) _pl.textContent = "Xabar yuborish: barcha a'zolar";
+  document.body.classList.remove('grp-perm-selected');
+  overlay.querySelector('#grpMemberPickerSection')?.classList.remove('perm-selected');
   if (_perm) _perm.value = 'all';
 
   // Member picker section — channels can have members too (subscribers)
@@ -1744,6 +1765,87 @@ async function _loadContactsForPicker() {
   }
 }
 
+
+function _syncPickerWriteMode() {
+  const listEl = document.getElementById('grpPickerList');
+  const mode = document.getElementById('grpFormMsgPerm')?.value === 'selected';
+  document.getElementById('grpFormMsgPermWrap')?.classList.toggle('is-selected-mode', mode);
+  if (!listEl) return;
+  // qayta chizish uchun current users from rows data-uid — oddiy class sync
+  listEl.querySelectorAll('.grp-picker-row').forEach(row => {
+    const uid = row.dataset.uid;
+    const sel = _selectedMembers.has(uid);
+    if (!mode) {
+      row.querySelector('.grp-picker-write-tools')?.remove();
+      row.classList.remove('can-write', 'no-write');
+      return;
+    }
+    if (sel && !row.querySelector('.grp-picker-write-tools')) {
+      // tools yo'q — to'liq qayta render kerak; eng oson: trigger search input
+    }
+  });
+  // Qayta render: search orqali
+  const searchEl = document.getElementById('grpPickerSearch');
+  if (searchEl) searchEl.dispatchEvent(new Event('input'));
+}
+
+function _bindMsgPermDropdown() {
+  const wrap = document.getElementById('grpFormMsgPermWrap');
+  const btn = document.getElementById('grpFormMsgPermBtn');
+  const menu = document.getElementById('grpFormMsgPermMenu');
+  const hidden = document.getElementById('grpFormMsgPerm');
+  const label = document.getElementById('grpFormMsgPermLabel');
+  if (!wrap || !btn || wrap.dataset.bound) return;
+  wrap.dataset.bound = '1';
+  const LABELS = {
+    all: "Xabar yuborish: barcha a'zolar",
+    admins: "Xabar yuborish: faqat adminlar (kanal kabi)",
+    selected: "Xabar yuborish: faqat tanlanganlar",
+  };
+  const close = () => {
+    menu.hidden = true;
+    wrap.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+  };
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.hidden;
+    document.querySelectorAll('.grp-msg-perm-menu').forEach(m => { m.hidden = true; });
+    if (open) {
+      menu.hidden = false;
+      wrap.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
+    } else close();
+  });
+  menu.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-perm]');
+    if (!item) return;
+    const v = item.getAttribute('data-perm');
+    hidden.value = v;
+    wrap.dataset.value = v;
+    label.textContent = LABELS[v] || LABELS.all;
+    menu.querySelectorAll('.grp-msg-perm-item').forEach(el => el.classList.toggle('is-active', el === item));
+    close();
+    document.body.classList.toggle('grp-perm-selected', v === 'selected');
+    const sec = document.getElementById('grpMemberPickerSection');
+    sec?.classList.toggle('perm-selected', v === 'selected');
+    const listEl = document.getElementById('grpPickerList');
+    const allUsers = sec?._pickerUsers;
+    if (listEl && allUsers) {
+      const q = (document.getElementById('grpPickerSearch')?.value || '').trim().toLowerCase();
+      const filtered = q ? allUsers.filter(u =>
+        (u.fullName || '').toLowerCase().includes(q) ||
+        (u.username || '').toLowerCase().includes(q)
+      ) : allUsers;
+      _renderPickerRows(filtered, listEl, q);
+    }
+    // noop keep next line if any
+  });
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target)) close();
+  });
+}
+
 function _renderMemberPicker(container, users) {
   if (!users.length) {
     container.innerHTML = `<div class="grp-empty-users">Kontaktlaringiz yo'q.
@@ -1761,22 +1863,48 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
   `;
   const listEl = container.querySelector('#grpPickerList');
   const searchEl = container.querySelector('#grpPickerSearch');
+  container._pickerUsers = users;
   _renderPickerRows(users, listEl);
 
   // Event delegation — har filterda listener qayta bog'lanmasin
   if (!listEl._pickerClickBound) {
     listEl._pickerClickBound = true;
     listEl.addEventListener('click', e => {
+      /* Qalam / block — yozish ruxsati */
+      const writeBtn = e.target.closest?.('[data-write-toggle]');
+      if (writeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const row = writeBtn.closest('.grp-picker-row');
+        const uid = row?.dataset?.uid;
+        if (!uid || !_selectedMembers.has(uid)) return;
+        const allow = writeBtn.getAttribute('data-write-toggle') === '1';
+        if (allow) _selectedWriters.add(uid);
+        else _selectedWriters.delete(uid);
+        row.classList.toggle('can-write', _selectedWriters.has(uid));
+        row.classList.toggle('no-write', !_selectedWriters.has(uid));
+        return;
+      }
       const row = e.target.closest?.('.grp-picker-row');
       if (!row || !listEl.contains(row)) return;
       const uid = row.dataset.uid;
       if (!uid) return;
-      if (_selectedMembers.has(uid)) _selectedMembers.delete(uid);
-      else _selectedMembers.add(uid);
+      if (_selectedMembers.has(uid)) {
+        _selectedMembers.delete(uid);
+        _selectedWriters.delete(uid);
+      } else {
+        _selectedMembers.add(uid);
+        /* default: yozish mumkin */
+        _selectedWriters.add(uid);
+      }
       row.classList.toggle('selected', _selectedMembers.has(uid));
       row.querySelector('.grp-picker-check')?.classList.toggle('on', _selectedMembers.has(uid));
+      const canW = _selectedWriters.has(uid);
+      row.classList.toggle('can-write', _selectedMembers.has(uid) && canW);
+      row.classList.toggle('no-write', _selectedMembers.has(uid) && !canW);
       const cnt = document.getElementById('grpSelCount');
       if (cnt) cnt.textContent = `${_selectedMembers.size} ta tanlangan`;
+      _syncPickerWriteMode();
     });
   }
 
@@ -1805,15 +1933,27 @@ function _renderPickerRows(users, listEl, q = '') {
   }
   // Avvalgi scroll joyini saqlash
   const prevTop = listEl.scrollTop;
+  const selectedMode = (document.getElementById('grpFormMsgPerm')?.value === 'selected');
   listEl.innerHTML = users.map(u => {
     const av   = u.avatar || defAvi(u.fullName || 'U');
     const sel  = _selectedMembers.has(u.uid);
-    return `<div class="grp-picker-row ${sel ? 'selected' : ''}" data-uid="${u.uid}">
+    const canW = _selectedWriters.has(u.uid);
+    const writeTools = selectedMode ? `
+      <div class="grp-picker-write-tools" title="Yozish ruxsati">
+        <button type="button" class="grp-write-btn ${canW ? 'is-on' : ''}" data-write-toggle="1" title="Yoza oladi" aria-label="Yoza oladi">
+          <img src="./svg/action/edit.svg" alt="" class="icon" width="14" height="14">
+        </button>
+        <button type="button" class="grp-write-btn ${!canW && sel ? 'is-on danger' : ''}" data-write-toggle="0" title="Yoza olmaydi" aria-label="Yoza olmaydi">
+          <img src="./svg/action/revoke.svg" alt="" class="icon" width="14" height="14" onerror="this.style.display='none'">
+        </button>
+      </div>` : '';
+    return `<div class="grp-picker-row ${sel ? 'selected' : ''} ${sel && selectedMode ? (canW ? 'can-write' : 'no-write') : ''}" data-uid="${u.uid}">
       <div class="grp-picker-avi"><img src="${esc(av)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'"></div>
       <div class="grp-picker-info">
         <div class="grp-picker-name">${esc(u.fullName||'Foydalanuvchi')}</div>
         ${u.username ? `<div class="grp-picker-user">@${esc(u.username)}</div>` : ''}
       </div>
+      ${writeTools}
       <div class="grp-picker-check ${sel ? 'on' : ''}">
         <img src="./svg/ui/check.svg" alt="" class="icon" width="11" height="11">
       </div>
@@ -1959,7 +2099,8 @@ export async function submitCreateGroup() {
       name,
       avatar:      _pendingPhotoUrl || '',
       description: overlay.querySelector('#grpFormDesc')?.value?.trim() || '',
-      msg_permission: overlay.querySelector('#grpFormMsgPerm')?.value === 'admins' ? 'admins' : 'all',
+      msg_permission: (['all','admins','selected'].includes(overlay.querySelector('#grpFormMsgPerm')?.value)
+        ? overlay.querySelector('#grpFormMsgPerm').value : 'all'),
       owner_id:    state.me.uid,
       is_private:  !_createIsPublic,
       username:    groupUsername,
@@ -1968,7 +2109,11 @@ export async function submitCreateGroup() {
     if (gErr) throw gErr;
     // Egasi trigger orqali qo'shiladi; tanlangan a'zolarni qo'shamiz
     if (_selectedMembers.size) {
-      try { await _addMembers(newId, Array.from(_selectedMembers)); }
+      try {
+        const perm = overlay.querySelector('#grpFormMsgPerm')?.value || 'all';
+        const writers = perm === 'selected' ? new Set(_selectedWriters) : null;
+        await _addMembers(newId, Array.from(_selectedMembers), writers);
+      }
       catch (e) { console.warn('[Groups] a\'zolarni qo\'shib bo\'lmadi:', e.message); }
     }
     await _loadGroups();
@@ -2092,10 +2237,18 @@ export function injectGroupsDOM() {
         <!-- Tavsif + xabar yuborish huquqi (a'zo qo'shish rejimida yashiriladi) -->
         <div id="grpFormDescWrap">
           <textarea class="ta mb-12px" id="grpFormDesc" placeholder="Tavsif (ixtiyoriy)" rows="2" maxlength="300"></textarea>
-          <select class="field mb-12px" id="grpFormMsgPerm">
-            <option value="all">Xabar yuborish: barcha a'zolar</option>
-            <option value="admins">Xabar yuborish: faqat adminlar (kanal kabi)</option>
-          </select>
+          <div class="grp-msg-perm" id="grpFormMsgPermWrap" data-value="all">
+            <button type="button" class="grp-msg-perm-btn" id="grpFormMsgPermBtn" aria-expanded="false">
+              <span class="grp-msg-perm-label" id="grpFormMsgPermLabel">Xabar yuborish: barcha a'zolar</span>
+              <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon grp-msg-perm-chev" width="16" height="16">
+            </button>
+            <div class="grp-msg-perm-menu" id="grpFormMsgPermMenu" hidden>
+              <button type="button" class="grp-msg-perm-item is-active" data-perm="all">Xabar yuborish: barcha a'zolar</button>
+              <button type="button" class="grp-msg-perm-item" data-perm="admins">Xabar yuborish: faqat adminlar (kanal kabi)</button>
+              <button type="button" class="grp-msg-perm-item" data-perm="selected">Xabar yuborish: faqat tanlanganlar</button>
+            </div>
+            <input type="hidden" id="grpFormMsgPerm" value="all">
+          </div>
         </div>
 
         <div class="grp-form-desc-hint"></div>
@@ -2256,6 +2409,7 @@ export function injectGroupsDOM() {
             <select class="field" id="grpEditMsgPerm">
               <option value="all">Barcha a'zolar</option>
               <option value="admins">Faqat adminlar</option>
+              <option value="selected">Faqat tanlanganlar</option>
             </select>
           </div>
         </div>
@@ -2279,6 +2433,7 @@ export function injectGroupsDOM() {
      Ikkalasiga ham qo'yilsa file chooser ikki marta ochilib "user activation" xatosi chiqadi. */
   document.getElementById('grpFormAviWrap').onclick = pickGroupPhoto;
   document.getElementById('grpFormCreateBtn').onclick = submitCreateGroup;
+  _bindMsgPermDropdown();
   document.getElementById('grpFormCancelBtn').onclick = () => {
     const ov = document.getElementById('grpCreateFormOverlay');
     ov.classList.remove('show');
