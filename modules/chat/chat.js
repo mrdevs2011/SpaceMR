@@ -2373,6 +2373,7 @@ export function paintMessages(msgs, grp = null) {
     _dissolveRestore(box, _dsE);
     msgMenuAfterPaint();
     _observeMessagesForRead();
+  try { _hydrateChatPostCards($('chatThreadMessages')); } catch (_) {}
     return;
   }
 
@@ -2883,6 +2884,71 @@ function _updatePostCardsInDOM() {
   else if (_anch && _box) _restoreMsgAnchor(_box, _anch);
 }
 
+
+function requireMediaUrl() {
+  // config.js dagi mediaPublicUrl — circular import oldini olish uchun lazy
+  return { mediaPublicUrl: (path) => {
+    try {
+      if (!path) return '';
+      // sb global import orqali
+      return sb.storage.from('media').getPublicUrl(path).data.publicUrl || '';
+    } catch (_) { return ''; }
+  }};
+}
+
+/** Ulashilgan post kartalaridagi qora/bo'sh mediarni serverdan to'ldirish */
+async function _hydrateChatPostCards(root) {
+  const box = root || $('chatThreadMessages');
+  if (!box) return;
+  const cards = [...box.querySelectorAll('.chat-post-card[data-post-id]')];
+  for (const card of cards) {
+    if (card.dataset.cpcHydrated === '1') continue;
+    const mediaWrap = card.querySelector('[data-cpc-media]');
+    const postId = card.dataset.postId;
+    if (!postId) continue;
+    // Rasm allaqachon yuklangan va OK — o'tkazib yuboramiz
+    const img = mediaWrap?.querySelector('img');
+    if (img && img.complete && img.naturalWidth > 0 && !mediaWrap?.hasAttribute('data-need-hydrate')) {
+      card.dataset.cpcHydrated = '1';
+      continue;
+    }
+    const vid = mediaWrap?.querySelector('video');
+    if (vid && vid.readyState >= 1 && !mediaWrap?.hasAttribute('data-need-hydrate')) {
+      card.dataset.cpcHydrated = '1';
+      continue;
+    }
+    try {
+      const { data } = await sb.from('posts').select('id, media_path, media_type, text').eq('id', postId).maybeSingle();
+      if (!data) {
+        chatState._postExistenceMap.set(postId, false);
+        continue;
+      }
+      chatState._postExistenceMap.set(postId, true);
+      const url = data.media_path
+        ? (sb.storage.from('media').getPublicUrl(data.media_path).data.publicUrl || '')
+        : '';
+      const mt = String(data.media_type || '').toLowerCase();
+      if (!mediaWrap) continue;
+      mediaWrap.removeAttribute('data-need-hydrate');
+      mediaWrap.classList.remove('cpc-media-loading');
+      if (!url) { mediaWrap.innerHTML = ''; continue; }
+      if (mt.includes('video')) {
+        mediaWrap.className = 'cpc-media cpc-media-video';
+        mediaWrap.innerHTML = `<video src="${esc(url)}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>`;
+      } else if (mt.includes('audio') || mt === 'voice') {
+        mediaWrap.className = 'cpc-media cpc-media-audio';
+        mediaWrap.innerHTML = `<audio src="${esc(url)}" controls preload="metadata" controlslist="nodownload"></audio>`;
+      } else {
+        mediaWrap.className = 'cpc-media';
+        mediaWrap.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy">`;
+      }
+      card.dataset.cpcHydrated = '1';
+    } catch (e) {
+      console.warn('[cpc hydrate]', e?.message || e);
+    }
+  }
+}
+
 export function renderChatPostCard(ps) {
   const p = ps.post || {};
   const comment = (ps.comment || '').trim();
@@ -2890,8 +2956,17 @@ export function renderChatPostCard(ps) {
   const authorUser = p.authorUsername ? `@${esc(p.authorUsername)}` : '';
   const authorAvi = p.authorAvatar ? esc(p.authorAvatar) : '';
   const postText = (p.text || '').trim();
-  const mediaUrl = p.mediaUrl ? esc(p.mediaUrl) : '';
-  // ID'lar inline onclick JS satriga tushadi — faqat UUID/raqam belgilariga ruxsat (esc bu kontekstda yetarli emas)
+  let mediaUrl = (p.mediaUrl || '').trim();
+  const mediaPath = (p.mediaPath || '').trim();
+  // Path bor, URL yo'q — public URL yasaymiz
+  if (!mediaUrl && mediaPath) {
+    try {
+      const { mediaPublicUrl } = requireMediaUrl();
+      mediaUrl = mediaPublicUrl(mediaPath) || '';
+    } catch (_) {}
+  }
+  const mediaType = String(p.mediaType || '').toLowerCase();
+  // ID'lar inline onclick JS satriga tushadi — faqat UUID/raqam belgilariga ruxsat
   const postId = String(p.id || '').replace(/[^A-Za-z0-9_-]/g, '');
   const userId = String(p.userId || '').replace(/[^A-Za-z0-9_-]/g, '');
 
@@ -2899,11 +2974,29 @@ export function renderChatPostCard(ps) {
   const isUserDeleted = chatState._userExistenceMap.get(p.userId) === false;
 
   let mediaHtml = '';
-  if (mediaUrl && !isPostDeleted) {
-    mediaHtml = `
-      <div class="cpc-media">
-        <img src="${esc(mediaUrl)}" alt="Post media" loading="lazy">
+  if (!isPostDeleted && (mediaUrl || mediaPath || postId)) {
+    const safeUrl = esc(mediaUrl);
+    const isVid = mediaType.includes('video') || /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl);
+    const isAud = mediaType.includes('audio') || mediaType === 'voice' || /\.(mp3|m4a|ogg|wav|webm)(\?|$)/i.test(mediaUrl) && !isVid;
+    if (isVid && mediaUrl) {
+      mediaHtml = `
+      <div class="cpc-media cpc-media-video" data-cpc-media="1">
+        <video src="${safeUrl}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>
       </div>`;
+    } else if (isAud && mediaUrl) {
+      mediaHtml = `
+      <div class="cpc-media cpc-media-audio" data-cpc-media="1">
+        <audio src="${safeUrl}" controls preload="metadata" controlslist="nodownload"></audio>
+      </div>`;
+    } else if (mediaUrl) {
+      mediaHtml = `
+      <div class="cpc-media" data-cpc-media="1">
+        <img src="${safeUrl}" alt="" loading="lazy" onerror="this.closest('[data-cpc-media]')?.setAttribute('data-need-hydrate','1')">
+      </div>`;
+    } else {
+      // URL yo'q — hydrate qilamiz
+      mediaHtml = `<div class="cpc-media cpc-media-loading" data-cpc-media="1" data-need-hydrate="1"></div>`;
+    }
   }
 
   const commentHtml = comment ? `

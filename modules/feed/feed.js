@@ -361,17 +361,26 @@ export async function sharePostToChat(postId) {
   const postText = postEl?.querySelector('.post-caption')?.textContent || post?.text || '';
   const postMediaEl = postEl?.querySelector('.post-media');
   const mediaImg = postMediaEl?.querySelector('img')?.src || '';
-  const mediaUrl = post?.mediaUrl || mediaImg || '';
-  const mediaType = post?.mediaType || (mediaImg ? 'image' : null);
+  const mediaVid = postMediaEl?.querySelector('video')?.currentSrc || postMediaEl?.querySelector('video')?.src || '';
+  const mediaAud = postMediaEl?.querySelector('audio')?.currentSrc || postMediaEl?.querySelector('audio')?.src || '';
+  const mediaUrl = post?.mediaUrl || mediaImg || mediaVid || mediaAud || '';
+  const mediaPath = post?.mediaPath || '';
+  let mediaType = post?.mediaType || null;
+  if (!mediaType) {
+    if (mediaImg) mediaType = 'image';
+    else if (mediaVid) mediaType = 'video';
+    else if (mediaAud) mediaType = 'audio';
+  }
 
   const payload = {
     id: postId,
     userId: post?.userId || postEl?.querySelector('.user-avi-btn')?.dataset.uid || '',
-    authorName: authorName || 'Noma\'lum',
+    authorName: authorName || "Noma'lum",
     authorUsername: authorUsername || '',
     authorAvatar: authorAvatar || '',
     text: (post?.text || postText || '').trim(),
     mediaUrl: mediaUrl,
+    mediaPath: mediaPath,
     mediaType: mediaType,
     createdAt: post?.createdAt || Date.now()
   };
