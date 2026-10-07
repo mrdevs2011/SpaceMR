@@ -12,8 +12,9 @@ export function askPassword({
 } = {}) {
   return new Promise((resolve) => {
     const ov = document.createElement('div');
+    ov.id = 'pwConfirmOverlay';
     ov.className = 'overlay show';
-    ov.innerHTML = `<div class="sheet max-w-320px mx-auto">
+    ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">
       <div class="sheet-title"></div>
       <div class="fs-14px c-text2-theme mb-20px tac"></div>
       <input class="field" type="password" id="pwcInp" placeholder="Joriy parol" autocomplete="current-password">

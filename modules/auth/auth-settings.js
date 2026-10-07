@@ -157,22 +157,6 @@ if (notifToggle) {
   };
 }
 
-const clearCacheBtn = $('clearCacheBtn');
-if (clearCacheBtn) {
-  clearCacheBtn.onclick = async () => {
-    clearCacheBtn.disabled = true;
-    try {
-      clearAllCache();
-      await clearRuntimeCache();
-      toast('Kesh tozalandi', 'success');
-    } catch (e) {
-      toast('Xato: ' + e.message, 'error');
-    } finally {
-      clearCacheBtn.disabled = false;
-    }
-  };
-}
-
 /** To'liq qayta yuklash: SW unregister + Cache Storage tozalash + hard navigate.
  *  SW update/waiting ga bog'liq emas — barcha shell/fayllar yangidan olinadi. */
 const fullAppReloadBtn = $('fullAppReloadBtn');
@@ -228,17 +212,6 @@ if (ephemeralBtn) {
     }
     _paintEph();
   };
-} else if (clearCacheBtn) {
-  // HTML tugma bo'lmasa: clearCacheBtn contextmenu / shift+click
-  clearCacheBtn.addEventListener('click', (e) => {
-    if (!e.shiftKey) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    const next = !isEphemeralDevice();
-    setEphemeralDevice(next);
-    if (next) clearAllCache();
-    toast(next ? "Umumiy qurilma: diskda saqlanmaydi" : 'Disk kesh yoqildi', 'info');
-  }, true);
 }
 
 try { window.__spacemrFlags && (window.__spacemrFlags.snapshot = () => flagsSnapshot()); } catch (_) {}
