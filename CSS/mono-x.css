@@ -761,6 +761,8 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
   overflow: hidden;
 }
 .rr-card:last-child { border-bottom: none; }
+/* Kartalar qisilmasin: overflow:hidden bo'lgan flex-bola aks holda qisilib ichini KESIB qo'yadi (Guruhlar/So'nggi). Sig'masa panelning o'zi scroll bo'ladi. */
+.right-rail > .rr-card { flex: 0 0 auto; }
 .rr-title {
   margin: 0 0 4px;
   padding: 0 16px 8px;
