@@ -3680,30 +3680,34 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   height: 14px;
   opacity: 0.9;
 }
-/* Telefon: +998 chip + raqam input (ustma-ust tushmasin) */
+/* Telefon: +998 chip + raqam input */
 .pe-phone-row {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   width: 100%;
+  height: 40px;
   gap: 0;
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid var(--line, rgba(255,255,255,0.12));
-  background: var(--bg3, rgba(255,255,255,0.06));
+  border: 1px solid #2f3336;
+  background: #000000;
+  box-sizing: border-box;
 }
 .pe-phone-cc {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px 0 14px;
-  font-size: 14px;
+  height: 100%;
+  padding: 0 14px;
+  font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: var(--text2, #c0c0c0);
-  background: rgba(255,255,255,0.04);
-  border-right: 1px solid var(--line, rgba(255,255,255,0.1));
+  line-height: 1;
+  color: #e7e9ea;
+  background: #000000;
+  border-right: 1px solid #2f3336;
   user-select: none;
   pointer-events: none;
   white-space: nowrap;
@@ -3712,36 +3716,41 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
+  height: 100% !important;
+  min-height: 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: transparent !important;
+  background: #000000 !important;
   box-shadow: none !important;
-  padding-left: 12px !important;
-  padding-right: 14px !important;
+  padding: 0 14px 0 12px !important;
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
-  font-size: 14px;
+  letter-spacing: 0.05em;
+  line-height: 40px !important;
+  color: #e7e9ea !important;
+  outline: none !important;
+}
+.pe-phone-row .pe-phone-input::placeholder {
+  color: #71767b;
+  opacity: 1;
+  font-weight: 400;
+  letter-spacing: 0.04em;
 }
 .pe-phone-row:focus-within {
   border-color: var(--x-blue, #1d9bf0);
 }
 .pe-phone-row .pe-phone-input:focus {
   outline: none !important;
-  border-color: transparent !important;
+  border: 0 !important;
   box-shadow: none !important;
+  background: #000000 !important;
 }
 .pe-phone-row.pe-phone-invalid {
   border-color: var(--red, #f4212e);
 }
-.pe-field-error {
-  font-size: 12px;
-  color: var(--red, #f4212e);
-  margin-top: 4px;
-  line-height: 1.35;
-}
 
-
-/* ── Ulangan qurilmalar ── */
 .devices-box {
   max-height: calc(5 * 64px);
   overflow-y: auto;
@@ -3951,5 +3960,29 @@ textarea.pe-input-locked {
 .devices-revoke-all:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  filter: grayscale(0.4);
+}
+
+
+/* Butun accordion 1 soatlik blok */
+.pe-acc-locked .pe-acc-body {
+  opacity: 0.55;
+  filter: grayscale(0.25);
+  pointer-events: none;
+  user-select: none;
+}
+.pe-acc-locked .pe-group-title {
+  opacity: 0.75;
+}
+.pe-phone-row.pe-locked {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+  pointer-events: none;
+}
+.save-profile-btn.pe-input-locked,
+#saveProfileBtn.pe-input-locked {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
   filter: grayscale(0.4);
 }

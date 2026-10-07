@@ -1679,12 +1679,12 @@ function initPhoneInputMask() {
 }
 
 
-/** Yangi login (1 soat): username, zaxira email, parol, qurilmalar — kulrang, o'zgartirib bo'lmaydi */
+/** Yangi login (1 soat): Asosiy ma'lumotlar, email, parol, qurilmalar — hammasi kulrang */
 async function applySecurityLockUI() {
   const sec = await getSecurityLockRemaining();
   const locked = sec > 0;
   const msg = locked
-    ? `Yangi kirishdan keyin xavfsizlik bloki: ${formatLockRemaining(sec)} ichida username, zaxira email, parol va ulangan qurilmalarni o'zgartira olmaysiz.`
+    ? `Yangi kirishdan keyin xavfsizlik bloki: ${formatLockRemaining(sec)} ichida hech narsani o'zgartira olmaysiz (asosiy ma'lumotlar, email, parol, qurilmalar).`
     : '';
 
   const banner = $('securityLockBanner');
@@ -1698,47 +1698,68 @@ async function applySecurityLockUI() {
     }
   }
 
+  // Barcha sezgir maydonlar
   const ids = [
-    'editUsername', 'editRecoveryEmail',
+    'editName', 'editUsername', 'editBioInput', 'editWebsite', 'editPhone',
+    'editRecoveryEmail',
     'editOldPassword', 'editNewPassword', 'editNewPassword2',
   ];
   ids.forEach(id => {
     const el = $(id);
     if (!el) return;
     el.disabled = locked;
+    el.readOnly = locked;
     el.classList.toggle('pe-input-locked', locked);
     el.title = locked ? msg : '';
     const box = el.closest('.pe-field-box');
     if (box) box.classList.toggle('pe-locked', locked);
   });
+
+  // Telefon qatori
+  const phoneWrap = $('editPhoneWrap');
+  if (phoneWrap) phoneWrap.classList.toggle('pe-locked', locked);
+
   document.querySelectorAll('.pe-pwd-toggle').forEach(btn => {
     btn.disabled = locked;
     btn.style.pointerEvents = locked ? 'none' : '';
     btn.style.opacity = locked ? '0.4' : '';
   });
 
-  // Prefix wrap / field boxes
+  // Butun accordionlar (basic / email / password / devices)
+  document.querySelectorAll('[data-pe-acc="basic"], [data-pe-acc="email"], [data-pe-acc="password"], [data-pe-acc="devices"]').forEach(acc => {
+    acc.classList.toggle('pe-acc-locked', locked);
+  });
+
+  // Avatar o'zgartirish
+  ['peAviInput', 'peAviEditBadge', 'peAviRing', 'peAviChangeText'].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    if (id === 'peAviInput') el.disabled = locked;
+    el.style.pointerEvents = locked ? 'none' : '';
+    el.style.opacity = locked ? '0.55' : '';
+  });
+
+  // Saqlash tugmasi — asosiy o'zgarishlar bloklanganda ham ism o'zgarmasligi uchun
+  const saveBtn = $('saveProfileBtn');
+  if (saveBtn) {
+    saveBtn.disabled = locked;
+    saveBtn.classList.toggle('pe-input-locked', locked);
+    saveBtn.title = locked ? msg : '';
+  }
+
   document.querySelectorAll('[data-security-lock]').forEach(box => {
     box.classList.toggle('pe-locked', locked);
   });
 
-  // Password accordion note
+  const short = '1 soat ichida o\'zgartirib bo\'lmaydi';
+  const basicNote = $('basicLockNote');
+  if (basicNote) { basicNote.hidden = !locked; if (locked) basicNote.textContent = 'Asosiy ma\'lumotlar 1 soat ichida o\'zgartirilmaydi'; }
   const pwdNote = $('passwordLockNote');
-  if (pwdNote) {
-    pwdNote.hidden = !locked;
-    if (locked) pwdNote.textContent = msg;
-  }
-
+  if (pwdNote) { pwdNote.hidden = !locked; if (locked) pwdNote.textContent = short; }
   const userNote = $('usernameLockNote');
-  if (userNote) {
-    userNote.hidden = !locked;
-    if (locked) userNote.textContent = '1 soat ichida username o\'zgartirilmaydi';
-  }
+  if (userNote) { userNote.hidden = !locked; if (locked) userNote.textContent = short; }
   const emailNote = $('recoveryLockNote');
-  if (emailNote) {
-    emailNote.hidden = !locked;
-    if (locked) emailNote.textContent = '1 soat ichida zaxira email o\'zgartirilmaydi';
-  }
+  if (emailNote) { emailNote.hidden = !locked; if (locked) emailNote.textContent = short; }
 
   return { locked, sec, msg };
 }
@@ -1881,19 +1902,11 @@ if (saveProfileBtn) {
         if (!okPwd) return;
       }
 
-      // Xavfsizlik bloki (yangi login 1 soat)
+      // Xavfsizlik bloki (yangi login 1 soat) — asosiy ma'lumotlar ham yopiq
       const _lock = await applySecurityLockUI();
       if (_lock.locked) {
-        const rawUser0 = $('editUsername')?.value?.trim() || '';
-        const rawRec0 = $('editRecoveryEmail')?.value?.trim() || '';
-        const wantsPwd0 = !!( $('editOldPassword')?.value || $('editNewPassword')?.value || $('editNewPassword2')?.value );
-        const cached = getCachedProfile(state.me.uid) || {};
-        const userChanged = rawUser0 && rawUser0.toLowerCase().replace(/[^a-z0-9_]/g, '') !== (_peOriginalUsername || '');
-        const emailChanged = rawRec0.toLowerCase() !== String(state.me?.recoveryEmail || cached.recoveryEmail || '').toLowerCase();
-        if (userChanged || emailChanged || wantsPwd0) {
-          toast(_lock.msg || 'Yangi kirishdan keyin 1 soat kuting', 'error');
-          return;
-        }
+        toast(_lock.msg || "Yangi kirishdan keyin 1 soat kuting — hech narsani o'zgartira olmaysiz", 'error');
+        return;
       }
 
       const webRes = normalizeWebsiteUrl($('editWebsite')?.value || '');

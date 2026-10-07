@@ -408,6 +408,8 @@ if (recoverySubmitBtn) {
         $('aUsername').value = u;
         $('aPassword').value = newPwd;
         toast('Yangi parolingiz bilan "Kirish" tugmasini bosing', 'info');
+      } else {
+        try { await markPasswordLogin(); } catch (_) {}
       }
     } catch (err) {
       console.error('[reset_password_with_code] error:', err);

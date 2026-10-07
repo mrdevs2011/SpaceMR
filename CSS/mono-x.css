@@ -9011,22 +9011,34 @@ select.field option { background: #000000; color: var(--text); }
   overflow: hidden;
 }
 
-
-/* Telefon input — settings ichida to'g'ri ko'rinsin */
+/* Telefon input — settings: qora, pastroq, shrift 15px, vertical center */
 #settingsOverlay .pe-phone-row {
-  background: var(--bg3, #16181c) !important;
+  height: 40px !important;
+  background: #000000 !important;
   border: 1px solid #2f3336 !important;
   border-radius: 999px !important;
-}
-#settingsOverlay .pe-phone-row .pe-phone-input {
-  padding-left: 12px !important;
-  background: transparent !important;
-  border: 0 !important;
+  align-items: center !important;
 }
 #settingsOverlay .pe-phone-cc {
-  color: #71767b !important;
-  background: rgba(255,255,255,0.04) !important;
-  border-right-color: #2f3336 !important;
+  height: 100% !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #e7e9ea !important;
+  background: #000000 !important;
+  border-right: 1px solid #2f3336 !important;
+  padding: 0 14px !important;
+  line-height: 1 !important;
+}
+#settingsOverlay .pe-phone-row .pe-phone-input {
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 14px 0 12px !important;
+  font-size: 15px !important;
+  line-height: 40px !important;
+  background: #000000 !important;
+  color: #e7e9ea !important;
+  border: 0 !important;
+  border-radius: 0 !important;
 }
 #settingsOverlay .pe-phone-row:focus-within {
   border-color: var(--x-blue, #1d9bf0) !important;
