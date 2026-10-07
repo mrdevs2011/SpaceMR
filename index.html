@@ -670,6 +670,8 @@ html[data-nf],html[data-nf] body{background:#000000}
       </button>
     </div>
 
+    <div class="security-lock-banner" id="securityLockBanner" hidden></div>
+
     <!-- Asosiy ma'lumotlar (accordion) -->
     <div class="pe-card-group pe-accordion" data-pe-acc="basic">
       <button type="button" class="pe-group-title pe-acc-toggle" aria-expanded="false">
@@ -684,13 +686,14 @@ html[data-nf],html[data-nf] body{background:#000000}
           <label class="pe-input-label" for="editName">To'liq ism <span class="pe-req">*</span></label>
           <input class="field pe-input" type="text" id="editName" placeholder="To'liq ismingiz" autocomplete="name">
         </div>
-        <div class="pe-field-box">
+        <div class="pe-field-box" data-security-lock="1">
           <label class="pe-input-label" for="editUsername">Foydalanuvchi nomi</label>
           <div class="pe-field-prefix-wrap">
             <span class="pe-prefix">@</span>
             <input class="field pe-prefix-field pe-input" type="text" id="editUsername" maxlength="20" placeholder="username" autocomplete="username" autocapitalize="none">
           </div>
           <div class="pe-field-note">Kamida 2 ta belgi (harf, raqam va pastki chiziq)</div>
+          <div class="pe-field-note pe-lock-note" id="usernameLockNote" hidden></div>
         </div>
         <div class="pe-field-box">
           <label class="pe-input-label" for="editBioInput">Bio</label>
@@ -724,10 +727,11 @@ html[data-nf],html[data-nf] body{background:#000000}
         <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
       </button>
       <div class="pe-acc-body">
-        <div class="pe-field-box">
+        <div class="pe-field-box" data-security-lock="1">
           <label class="pe-input-label" for="editRecoveryEmail">Zaxira email manzili</label>
           <input class="field pe-input" type="email" id="editRecoveryEmail" placeholder="example@gmail.com" autocomplete="email">
           <div class="pe-field-note">Parolingizni unutganingizda 8 xonali tiklash kodi shu emailga yuboriladi.</div>
+          <div class="pe-field-note pe-lock-note" id="recoveryLockNote" hidden></div>
         </div>
       </div>
     </div>
@@ -744,6 +748,7 @@ html[data-nf],html[data-nf] body{background:#000000}
       </button>
       <div class="pe-acc-body">
         <div class="pe-security-desc">Faqat parolni yangilamoqchi bo'lsangiz quyidagi maydonlarni to'ldiring:</div>
+        <div class="pe-field-note pe-lock-note" id="passwordLockNote" hidden></div>
         <div class="pe-field-box">
           <label class="pe-input-label" for="editOldPassword">Joriy parol</label>
           <div class="pe-pwd-wrap">
@@ -796,6 +801,7 @@ html[data-nf],html[data-nf] body{background:#000000}
         <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
       </button>
       <div class="pe-acc-body">
+        <div class="pe-field-note pe-lock-note" id="devicesLockBanner" hidden></div>
         <div class="devices-box" id="devicesBox">
           <div class="devices-list" id="devicesList"></div>
           <div class="devices-empty" id="devicesEmpty" hidden>Faol qurilmalar yo'q</div>
@@ -1305,18 +1311,17 @@ html[data-nf],html[data-nf] body{background:#000000}
   try { if (location.search && /(?:^|[?&])_full=/.test(location.search)) { var _u = new URL(location.href); _u.searchParams.delete('_full'); var _q = _u.searchParams.toString(); history.replaceState(null, '', _u.pathname + (_q ? '?' + _q : '') + _u.hash); } } catch (_e) {}
     if ('serviceWorker' in navigator) {
     var _swRefreshing = false;
+    /* Sahifa yuklanganda allaqachon controller bormi? Yo'q bo'lsa birinchi claim — reload KERAK EMAS */
+    var _hadControllerOnLoad = !!navigator.serviceWorker.controller;
     function _promptUpdate(worker) {
-      /* Yangilanish toast emas: qolib ketmasin. Kutayotgan versiya jim qo'llanadi. */
       try { worker.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {}
     }
-    /** Faqat F5 / Ctrl+R (navigation type=reload) da toast; SPA/background update da chiqmasin */
     function _isPageReload() {
       try {
         var nav = performance.getEntriesByType && performance.getEntriesByType('navigation');
         if (nav && nav[0] && nav[0].type === 'reload') return true;
       } catch (_) {}
       try {
-        // eski Safari / fallback
         if (performance.navigation && performance.navigation.type === 1) return true;
       } catch (_) {}
       return false;
@@ -1324,14 +1329,12 @@ html[data-nf],html[data-nf] body{background:#000000}
     navigator.serviceWorker.addEventListener('message', function(ev) {
       try {
         if (ev.data && ev.data.type === 'SW_ACTIVATED') {
-          // controllerchange ham reload qiladi — bu yerda faqat flag
           sessionStorage.setItem('spacemr_sw_ver', String(ev.data.version || ''));
         }
       } catch (_) {}
     });
     navigator.serviceWorker.addEventListener('controllerchange', function() {
       if (_swRefreshing) return;
-      // Full reload / force-reload dan keyin qo'shimcha refresh bo'lmasin
       try {
         if (sessionStorage.getItem('spacemr_skip_sw_reload') === '1') {
           sessionStorage.removeItem('spacemr_skip_sw_reload');
@@ -1339,6 +1342,11 @@ html[data-nf],html[data-nf] body{background:#000000}
         }
         if (sessionStorage.getItem('spacemr_force_reload_busy') === '1') return;
       } catch (_) {}
+      /* Birinchi marta SW nazoratga olindi — qo'shimcha reload qilma (URL o'chmasin) */
+      if (!_hadControllerOnLoad) {
+        _hadControllerOnLoad = true;
+        return;
+      }
       _swRefreshing = true;
       location.reload();
     });
@@ -1351,24 +1359,25 @@ html[data-nf],html[data-nf] body{background:#000000}
       return navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
     }).then(function(reg) {
       if (!reg) return;
-      // Toast FAQAT sahifa reload (F5/Ctrl+R) da — waiting SW bo'lsa
-      if (_isPageReload() && reg.waiting) _promptUpdate(reg.waiting);
-      // Background update: faqat yuklab oladi, toast ko'rsatmaydi
+      /* F5: waiting SW ni qo'lla, LEKIN controllerchange reload ni blokla — aks holda ikki marta refresh */
+      if (reg.waiting) {
+        try { sessionStorage.setItem('spacemr_skip_sw_reload', '1'); } catch (_) {}
+        _promptUpdate(reg.waiting);
+      }
       reg.addEventListener('updatefound', function() {
         var nw = reg.installing;
         if (!nw) return;
-        // statechange kuzatiladi lekin toast yo'q — keyingi F5 da chiqadi
-        nw.addEventListener('statechange', function() {});
+        nw.addEventListener('statechange', function() {
+          /* Fon yangilanish: installed → waiting. Qo'llashni keyingi F5 ga qoldiramiz.
+             (Hozir skipWaiting qilmasak, ortiqcha reload bo'lmaydi.) */
+        });
       });
-      // Davriy yangilanish + tab qaytganda tekshiruv
       setInterval(function() { try { reg.update(); } catch (_) {} }, 30 * 60 * 1000);
       document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'visible') {
           try { reg.update(); } catch (_) {}
         }
       });
-      // waiting SW bo'lsa — jim qo'llash (keyingi navigatsiyada yangi shell)
-      if (reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (_) {} }
     }).catch(function() {});
   }
 </script>

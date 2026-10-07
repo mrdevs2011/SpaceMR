@@ -3711,6 +3711,10 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   margin-bottom: 10px;
   -webkit-overflow-scrolling: touch;
 }
+/* Menyular overflow ichida kesilmasin — fixed joylashuv JS orqali */
+.devices-box.dev-menu-open {
+  overflow: visible;
+}
 .devices-list { display: flex; flex-direction: column; }
 .devices-empty, .dev-loading {
   padding: 16px 14px;
@@ -3811,17 +3815,15 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
 }
 .dev-menu {
   display: none;
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
+  position: fixed;
   min-width: 180px;
   background: var(--bg3, #1a1a1a);
   border: 1px solid var(--border, rgba(255,255,255,0.12));
   border-radius: 12px;
   box-shadow: 0 8px 28px rgba(0,0,0,0.45);
-  z-index: 40;
+  z-index: 9999;
   padding: 6px;
-  overflow: hidden;
+  overflow: visible;
 }
 .dev-menu.show { display: block; }
 .dev-menu-item {
@@ -3868,4 +3870,45 @@ nav.bot-nav #createBtn.nav-center-btn img.icon,
   font-weight: 600;
   padding: 11px 14px;
   border-radius: 12px;
+}
+
+
+/* ── Xavfsizlik bloki (yangi login 1 soat) ── */
+.security-lock-banner {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(244, 33, 46, 0.1);
+  border: 1px solid rgba(244, 33, 46, 0.35);
+  color: #f4212e;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.pe-lock-note {
+  color: #f4212e !important;
+  font-weight: 600;
+}
+.pe-input-locked,
+input.pe-input-locked,
+textarea.pe-input-locked {
+  opacity: 0.55 !important;
+  filter: grayscale(0.35);
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+.pe-field-box.pe-locked,
+.pe-field-box.pe-locked .pe-field-prefix-wrap,
+.pe-field-box.pe-locked .pe-pwd-wrap {
+  opacity: 0.65;
+  filter: grayscale(0.2);
+}
+.pe-field-box.pe-locked .pe-input,
+.pe-field-box.pe-locked input {
+  cursor: not-allowed !important;
+}
+.devices-revoke-all:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
 }

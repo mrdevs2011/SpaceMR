@@ -21,6 +21,44 @@ export function getDeviceId() {
   return id;
 }
 
+/** Yangi parol-login dan keyin qolgan sekund (0 = ochiq) */
+export async function getSecurityLockRemaining() {
+  const deviceId = getDeviceId();
+  try {
+    const { data, error } = await sb.rpc('security_lock_remaining', { p_device_id: deviceId });
+    if (error) {
+      console.warn('[devices] lock:', error.message);
+      return 0;
+    }
+    return Math.max(0, Number(data) || 0);
+  } catch (_) {
+    return 0;
+  }
+}
+
+export async function markPasswordLogin() {
+  const deviceId = getDeviceId();
+  try {
+    const { error } = await sb.rpc('mark_my_device_password_login', { p_device_id: deviceId });
+    if (error) console.warn('[devices] mark login:', error.message);
+  } catch (e) {
+    console.warn('[devices] mark login err:', e?.message || e);
+  }
+}
+
+export function formatLockRemaining(sec) {
+  const s = Math.max(0, Math.floor(sec));
+  if (s <= 0) return '';
+  const m = Math.ceil(s / 60);
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    const rm = m % 60;
+    return rm ? `${h} soat ${rm} daqiqa` : `${h} soat`;
+  }
+  return `${m} daqiqa`;
+}
+
+
 function isPwa() {
   try {
     if (window.matchMedia('(display-mode: standalone)').matches) return true;
@@ -198,6 +236,7 @@ export async function revokeDevice(deviceId) {
   const { data, error } = await sb.rpc('revoke_my_device_sessions', {
     p_device_id: deviceId,
     p_all_others: false,
+    p_caller_device_id: getDeviceId(),
   });
   if (error) throw error;
   return data;
@@ -206,8 +245,9 @@ export async function revokeDevice(deviceId) {
 export async function revokeAllOtherDevices() {
   const mine = getDeviceId();
   const { data, error } = await sb.rpc('revoke_my_device_sessions', {
-    p_device_id: mine,
+    p_device_id: null,
     p_all_others: true,
+    p_caller_device_id: mine,
   });
   if (error) throw error;
   return data;
@@ -274,7 +314,13 @@ function deviceTitle(row) {
 let _menuOpenId = null;
 
 function closeDeviceMenus() {
-  document.querySelectorAll('.dev-menu.show').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.dev-menu.show').forEach(el => {
+    el.classList.remove('show');
+    el.style.left = '';
+    el.style.top = '';
+    el.style.right = '';
+  });
+  $('devicesBox')?.classList.remove('dev-menu-open');
   _menuOpenId = null;
 }
 
@@ -299,12 +345,39 @@ export async function paintDevicesList() {
   const list = $('devicesList');
   const empty = $('devicesEmpty');
   const countEl = $('devicesCount');
+  const lockBanner = $('devicesLockBanner');
+  const revokeAllBtn = $('revokeAllDevicesBtn');
   if (!list) return;
 
   list.innerHTML = '<div class="dev-loading">Yuklanmoqda…</div>';
   if (empty) empty.hidden = true;
 
   try {
+    const lockSec = await getSecurityLockRemaining();
+    if (lockBanner) {
+      if (lockSec > 0) {
+        lockBanner.hidden = false;
+        lockBanner.innerHTML = `Yangi kirishdan keyin xavfsizlik: <b>${formatLockRemaining(lockSec)}</b> ichida qurilmalar ro'yxati va boshqaruv yopiq.`;
+      } else {
+        lockBanner.hidden = true;
+        lockBanner.textContent = '';
+      }
+    }
+    if (revokeAllBtn) {
+      revokeAllBtn.disabled = lockSec > 0;
+      revokeAllBtn.title = lockSec > 0 ? 'Yangi kirishdan keyin ' + formatLockRemaining(lockSec) + ' kuting' : '';
+    }
+    if (lockSec > 0) {
+      list.innerHTML = '';
+      if (empty) {
+        empty.hidden = false;
+        empty.textContent = 'Ro\'yxat ' + formatLockRemaining(lockSec) + ' dan keyin ochiladi';
+      }
+      if (countEl) { countEl.textContent = ''; countEl.hidden = true; }
+      return;
+    }
+    if (empty) empty.textContent = "Faol qurilmalar yo'q";
+
     const rows = await listDeviceSessions();
     const mine = getDeviceId();
     if (countEl) {
@@ -366,7 +439,19 @@ function bindDevicesUi() {
       const open = menu?.classList.contains('show');
       closeDeviceMenus();
       if (!open && menu) {
+        const btnRect = more.getBoundingClientRect();
         menu.classList.add('show');
+        // fixed: list overflow ichida kesilmasin
+        const mw = Math.max(180, menu.offsetWidth || 180);
+        let left = btnRect.right - mw;
+        let top = btnRect.bottom + 4;
+        if (left < 8) left = 8;
+        if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+        if (top + 120 > window.innerHeight) top = Math.max(8, btnRect.top - 8 - 100);
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+        menu.style.right = 'auto';
+        $('devicesBox')?.classList.add('dev-menu-open');
         _menuOpenId = id;
       }
       return;

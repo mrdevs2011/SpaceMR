@@ -3,7 +3,7 @@ import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, ve
 import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
-import { getDeviceId, registerDeviceSession, checkDeviceRevoked } from './device-sessions.js';
+import { getDeviceId, registerDeviceSession, checkDeviceRevoked, markPasswordLogin, getSecurityLockRemaining, formatLockRemaining } from './device-sessions.js';
 import { startChatsWatcher, stopChatsWatcher, repaintNoticeBanner } from '../chat/chat.js';
 import { startBus, stopBus, busOn, trackPresence, untrackPresence, isBusLive } from '../core/rt-bus.js';
 import { startCallWatcher, stopCallWatcher } from '../call/call.js';
@@ -288,6 +288,8 @@ if (authBtn) {
         if (authData?.user?.id) {
           _setLocalPwdTs(authData.user.id, Date.now());
         }
+        // Yangi parol-login: 1 soatlik xavfsizlik bloki
+        try { await markPasswordLogin(); } catch (_) {}
         try {
           await sb.from('profiles').update({
             last_login: new Date().toISOString(),
@@ -1676,6 +1678,71 @@ function initPhoneInputMask() {
   });
 }
 
+
+/** Yangi login (1 soat): username, zaxira email, parol, qurilmalar — kulrang, o'zgartirib bo'lmaydi */
+async function applySecurityLockUI() {
+  const sec = await getSecurityLockRemaining();
+  const locked = sec > 0;
+  const msg = locked
+    ? `Yangi kirishdan keyin xavfsizlik bloki: ${formatLockRemaining(sec)} ichida username, zaxira email, parol va ulangan qurilmalarni o'zgartira olmaysiz.`
+    : '';
+
+  const banner = $('securityLockBanner');
+  if (banner) {
+    if (locked) {
+      banner.hidden = false;
+      banner.textContent = msg;
+    } else {
+      banner.hidden = true;
+      banner.textContent = '';
+    }
+  }
+
+  const ids = [
+    'editUsername', 'editRecoveryEmail',
+    'editOldPassword', 'editNewPassword', 'editNewPassword2',
+  ];
+  ids.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.disabled = locked;
+    el.classList.toggle('pe-input-locked', locked);
+    el.title = locked ? msg : '';
+    const box = el.closest('.pe-field-box');
+    if (box) box.classList.toggle('pe-locked', locked);
+  });
+  document.querySelectorAll('.pe-pwd-toggle').forEach(btn => {
+    btn.disabled = locked;
+    btn.style.pointerEvents = locked ? 'none' : '';
+    btn.style.opacity = locked ? '0.4' : '';
+  });
+
+  // Prefix wrap / field boxes
+  document.querySelectorAll('[data-security-lock]').forEach(box => {
+    box.classList.toggle('pe-locked', locked);
+  });
+
+  // Password accordion note
+  const pwdNote = $('passwordLockNote');
+  if (pwdNote) {
+    pwdNote.hidden = !locked;
+    if (locked) pwdNote.textContent = msg;
+  }
+
+  const userNote = $('usernameLockNote');
+  if (userNote) {
+    userNote.hidden = !locked;
+    if (locked) userNote.textContent = '1 soat ichida username o\'zgartirilmaydi';
+  }
+  const emailNote = $('recoveryLockNote');
+  if (emailNote) {
+    emailNote.hidden = !locked;
+    if (locked) emailNote.textContent = '1 soat ichida zaxira email o\'zgartirilmaydi';
+  }
+
+  return { locked, sec, msg };
+}
+
 export async function populateProfileForm() {
   if (!state.me) return;
   let d = getCachedProfile(state.me.uid) || {};
@@ -1732,6 +1799,8 @@ export async function populateProfileForm() {
     btn.setAttribute('aria-label', "Parolni ko'rsatish");
     btn.setAttribute('title', "Parolni ko'rsatish");
   });
+
+  try { await applySecurityLockUI(); } catch (_) {}
 }
 
 // Avatar tanlash hodisalari (bir martalik)
@@ -1812,6 +1881,21 @@ if (saveProfileBtn) {
         if (!okPwd) return;
       }
 
+      // Xavfsizlik bloki (yangi login 1 soat)
+      const _lock = await applySecurityLockUI();
+      if (_lock.locked) {
+        const rawUser0 = $('editUsername')?.value?.trim() || '';
+        const rawRec0 = $('editRecoveryEmail')?.value?.trim() || '';
+        const wantsPwd0 = !!( $('editOldPassword')?.value || $('editNewPassword')?.value || $('editNewPassword2')?.value );
+        const cached = getCachedProfile(state.me.uid) || {};
+        const userChanged = rawUser0 && rawUser0.toLowerCase().replace(/[^a-z0-9_]/g, '') !== (_peOriginalUsername || '');
+        const emailChanged = rawRec0.toLowerCase() !== String(state.me?.recoveryEmail || cached.recoveryEmail || '').toLowerCase();
+        if (userChanged || emailChanged || wantsPwd0) {
+          toast(_lock.msg || 'Yangi kirishdan keyin 1 soat kuting', 'error');
+          return;
+        }
+      }
+
       const webRes = normalizeWebsiteUrl($('editWebsite')?.value || '');
       if (!webRes.ok) { toast(webRes.error, 'error'); return; }
 
@@ -1839,7 +1923,7 @@ if (saveProfileBtn) {
         if (cleaned.length > 20) { toast("Username 20 ta belgidan oshmasligi kerak", 'error'); return; }
         if (cleaned !== _peOriginalUsername) {
           // Username o'zgarishi: auth email ham yangilanadi (eski login ishlamaydi)
-          const { data: uRes, error: uErr } = await sb.rpc('change_my_username', { p_new_username: cleaned });
+          const { data: uRes, error: uErr } = await sb.rpc('change_my_username', { p_new_username: cleaned, p_device_id: getDeviceId() });
           if (uErr) {
             const msg = uErr.message || '';
             if (/band/i.test(msg)) toast('Bu username band', 'error');
@@ -1872,6 +1956,7 @@ if (saveProfileBtn) {
         const { data: pRes, error: pErr } = await sb.rpc('change_my_password', {
           p_old_password: oldPwd,
           p_new_password: newPwd,
+          p_device_id: getDeviceId(),
         });
 
         if (pErr) {

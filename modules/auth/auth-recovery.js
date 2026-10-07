@@ -6,6 +6,7 @@ import { sb } from '../core/config.js';
 import { $, esc } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { bindEye, bindMeter, shake } from './pwd-ui.js';
+import { markPasswordLogin } from './device-sessions.js';
 
 const cleanUsername = u => String(u || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
