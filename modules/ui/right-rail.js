@@ -161,7 +161,8 @@ async function loadOnline() {
 function loadGroups() {
   const box = $('rrGroupsList');
   if (!box) return;
-  const items = (groupListItems || []).slice(0, MAX_GROUPS);
+  // Maxfiy guruhlar o'ng panelda ko'rinmaydi — faqat ommaviylar
+  const items = (groupListItems || []).filter(g => !g.isPrivate).slice(0, MAX_GROUPS);
   if (!items.length) {
     box.innerHTML = '<div class="rr-empty">Hali guruh yo‘q</div>';
     return;

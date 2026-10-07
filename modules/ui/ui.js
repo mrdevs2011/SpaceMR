@@ -212,6 +212,7 @@ async function fetchSuggestions(rawQuery) {
   try {
     const { data, error } = await sb.from('groups')
       .select('id,name,username,avatar')
+      .eq('is_private', false)   // maxfiy guruhlar qidiruvda chiqmaydi
       .or(`name.ilike.%${likeQ}%,username.ilike.%${likeQ}%`)
       .limit(4);
     if (!error) (data || []).forEach(g => {

@@ -51,7 +51,7 @@ async function loadLocalGroups() {
 }
 function allGroups() {
   const map = new Map();
-  [..._localGroups, ...remoteGroups].forEach(g => { if (g?.id) map.set(g.id, g); });
+  [..._localGroups, ...remoteGroups].forEach(g => { if (g?.id && !g.isPrivate) map.set(g.id, g); });   // maxfiy guruhlar bu yerda ko'rinmaydi
   return [...map.values()];
 }
 
