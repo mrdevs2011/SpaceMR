@@ -437,6 +437,8 @@
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 2px 14px; }
 .settings-row-text { min-width: 0; }
 .settings-row-title { font-size: 13px; font-weight: 500; color: var(--text); }
+.settings-legal-link { color: var(--text); text-decoration: none; }
+.settings-legal-link:hover { color: var(--blue, #1d9bf0); text-decoration: underline; }
 .settings-row-hint { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.4; }
 .switch-toggle { flex-shrink: 0; width: 44px; height: 26px; padding: 0; border-radius: var(--radius); background: var(--pal-legacy-2e2e2e); border: 1px solid var(--line2); position: relative; cursor: pointer;  }
 .switch-toggle .switch-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--pal-white); box-shadow: 0 1px 3px var(--pal-black-35);  }
