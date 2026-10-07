@@ -1087,7 +1087,8 @@ export function startChatsWatcher() {
       chatState._latestChatMap = chatMap;
       chatState._chatsFresh = true;      // serverdan tasdiqlangan (thread keshini tekshirishda ishlatiladi)
       _chatsReadyRes?.();
-      updateChatBadge(total);
+      // Guruh unread ham qo'shiladi (_totalUnreadBadge)
+      updateChatBadge(_totalUnreadBadge());
       if (chatState._usersCache) cacheChatsList(state.me.uid, chatState._usersCache, chatMap);
       if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatMap);
     };
@@ -1613,7 +1614,11 @@ export async function openChatThread(uid) {
     inboxWarm(uid);
   }
 
-  // unread_count endi faqat ekranda ko'rilgan xabarlar bo'yicha kamayadi (IntersectionObserver)
+  // Chat ochilishi bilan unread ni tozalaymiz (badge +N qolib ketmasin)
+  if (!isSaved && chatId && uid) {
+    forceClearDmUnread(chatId, uid).catch(() => {});
+  }
+  // Qo'shimcha: IntersectionObserver — peer ga read receipt yuborish uchun
 
   // Kontaktlarni saqlash — xato bo'lsa chat ochilishga ta'sir qilmaydi (o'zim bilan chat kontakt emas).
   if (!isSaved) try {
@@ -1830,13 +1835,95 @@ function _teardownReadObserver() {
   chatState._readFlushTimer = null;
 }
 
+/** DM + guruh unread yig'indisi — pastki nav badge */
+function _totalUnreadBadge() {
+  const me = state.me?.uid;
+  if (!me) return 0;
+  let n = 0;
+  for (const c of Object.values(chatState._latestChatMap || {})) {
+    n += c.unreadCount?.[me] || 0;
+  }
+  try {
+    const { getLatestGroupMap } = requireGroupMap();
+    for (const g of Object.values(getLatestGroupMap() || {})) {
+      n += g.unreadCount?.[me] || 0;
+    }
+  } catch (_) {
+    // groups moduli bo'lmasa — faqat DM
+  }
+  return n;
+}
+
+function requireGroupMap() {
+  // lazy — circular import oldini olish
+  return {
+    getLatestGroupMap: () => {
+      try {
+        return chatState._latestGroupMapRef?.() || {};
+      } catch (_) {
+        return {};
+      }
+    },
+  };
+}
+
+function _setLocalDmUnread(peerUid, remaining) {
+  const me = state.me?.uid;
+  if (!me || !peerUid) return;
+  const prev = chatState._latestChatMap[peerUid];
+  if (prev) {
+    chatState._latestChatMap[peerUid] = {
+      ...prev,
+      unreadCount: { ...(prev.unreadCount || {}), [me]: remaining },
+    };
+  }
+  updateChatBadge(_totalUnreadBadge());
+  if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+}
+
+/** Chat ochilganda/yopilganda: unread_count ni majburan 0 + barcha peer xabarlarni read */
+async function forceClearDmUnread(chatId, otherUid) {
+  if (!state.me || !chatId || !otherUid) return;
+  const me = state.me.uid;
+  // 1) UI darhol
+  _setLocalDmUnread(otherUid, 0);
+  try {
+    // 2) chat_members
+    await sb.from('chat_members').update({ unread_count: 0 })
+      .eq('chat_id', chatId).eq('user_id', me);
+    // 3) peer dan kelgan o'qilmagan xabarlar
+    const { data: unreadRows } = await sb.from('messages')
+      .select('id')
+      .eq('chat_id', chatId)
+      .eq('sender_id', otherUid)
+      .neq('status', 'read');
+    const ids = (unreadRows || []).map(r => r.id).filter(Boolean);
+    if (ids.length) {
+      ids.forEach(id => chatState._locallyReadIds.add(id));
+      await sb.from('messages')
+        .update({ status: 'read', read_at: new Date().toISOString() })
+        .in('id', ids);
+      chatState._curMsgs = (chatState._curMsgs || []).map(m =>
+        ids.includes(m.id) ? { ...m, status: 'read' } : m
+      );
+      try { chatState._rt?.sendRead(ids); } catch (_) {}
+    }
+  } catch (err) {
+    console.error('forceClearDmUnread:', err?.message || err);
+  }
+}
+
 async function markThreadRead(chatId, otherUid, msgs) {
   if (!state.me || !chatId || !otherUid) return;
   const me = state.me.uid;
   const unread = (msgs || []).filter(m =>
     m && m.senderId === otherUid && m.status !== 'read' && !chatState._locallyReadIds.has(m.id)
   );
-  if (!unread.length) return;
+  if (!unread.length) {
+    // Lokal xabarlar allaqachon read, lekin badge eskirgan bo'lishi mumkin
+    await forceClearDmUnread(chatId, otherUid);
+    return;
+  }
   const ids = unread.map(m => m.id);
   ids.forEach(id => chatState._locallyReadIds.add(id));
 
@@ -1848,25 +1935,13 @@ async function markThreadRead(chatId, otherUid, msgs) {
 
     chatState._curMsgs = chatState._curMsgs.map(m => ids.includes(m.id) ? { ...m, status: 'read' } : m);
 
-    const remaining = chatState._curMsgs.filter(m =>
-      m.senderId === otherUid && m.status !== 'read' && !chatState._locallyReadIds.has(m.id)
-    ).length;
-    await sb.from('chat_members').update({ unread_count: remaining })
+    // Qolgan o'qilmaganlar — DB dagi haqiqiy hisob (faqat _curMsgs emas)
+    await sb.from('chat_members').update({ unread_count: 0 })
       .eq('chat_id', chatId).eq('user_id', me);
+    _setLocalDmUnread(otherUid, 0);
 
-    // Lokal badge darhol — realtime kechiksa ham +N qolib ketmasin
-    const prev = chatState._latestChatMap[otherUid];
-    if (prev) {
-      chatState._latestChatMap[otherUid] = {
-        ...prev,
-        unreadCount: { ...(prev.unreadCount || {}), [me]: remaining },
-      };
-    }
-    const total = Object.values(chatState._latestChatMap).reduce(
-      (n, c) => n + (c.unreadCount?.[me] || 0), 0
-    );
-    updateChatBadge(total);
-    if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+    // Agar hali yuklanmagan eski o'qilmaganlar bo'lsa — to'liq tozalash
+    forceClearDmUnread(chatId, otherUid).catch(() => {});
 
     try { chatState._rt?.sendRead(ids); } catch (_) {}
   } catch (err) {
@@ -2523,19 +2598,9 @@ export function closeChatThread() {
     if (chatId && peer && state.me && state.currentChatKind !== 'group') {
       clearTimeout(chatState._readFlushTimer);
       chatState._readFlushTimer = null;
-      const pending = [...chatState._pendingReadIds];
       chatState._pendingReadIds.clear();
-      const fromPending = chatState._curMsgs.filter(m => pending.includes(m.id));
-      const allPeerUnread = chatState._curMsgs.filter(m =>
-        m && m.senderId === peer && m.status !== 'read' && !chatState._locallyReadIds.has(m.id)
-      );
-      const byId = new Map();
-      for (const m of [...fromPending, ...allPeerUnread]) if (m?.id) byId.set(m.id, m);
-      const batch = [...byId.values()];
-      if (batch.length) {
-        // fire-and-forget — yopishni kutdirmaymiz
-        markThreadRead(chatId, peer, batch);
-      }
+      // Majburan 0 — IntersectionObserver o'tkazib yuborgan bo'lsa ham badge yo'qoladi
+      forceClearDmUnread(chatId, peer);
     }
   } catch (_) {}
   _teardownReadObserver();
