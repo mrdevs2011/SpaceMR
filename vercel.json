@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node scripts/build-sw.mjs && node scripts/bump-sw.mjs && node scripts/build-env.mjs && node scripts/build-css.mjs",
+  "buildCommand": "node scripts/build-sw.mjs && node scripts/bump-sw.mjs && node scripts/build-env.mjs && node scripts/build-css.mjs && node scripts/minify-css.mjs",
   "outputDirectory": ".",
   "trailingSlash": false,
   "headers": [

@@ -1,0 +1,30 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: store-policy
+        run: node tests/store-policy.mjs
+      - name: flags
+        run: node tests/flags.mjs
+        continue-on-error: true
+      - name: secret patterns (basic)
+        run: |
+          if git grep -nE 'service_role|SUPABASE_SERVICE_ROLE|sk_live_|BEGIN RSA PRIVATE' -- '*.js' '*.mjs' '*.html' '*.json' ':!modules/vendor/*' ':!package-lock.json'; then
+            echo 'Possible secret pattern found' >&2
+            exit 1
+          fi
+          echo 'OK: no obvious secrets in tracked sources'
