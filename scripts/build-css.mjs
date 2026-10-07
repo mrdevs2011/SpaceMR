@@ -7,7 +7,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const FILES = ['tokens', 'base', 'features', 'layers', 'admin', 'mono-x', 'video-note', 'chat-attach', 'apps', 'profile-pro', 'motion'].map(n => `CSS/${n}.css`);
+const FILES = ['tokens', 'base', 'features', 'layers', 'admin', 'mono-x', 'video-note', 'chat-attach', 'apps', 'profile-pro', 'profile-x', 'motion'].map(n => `CSS/${n}.css`);
 
 const parts = ['/* SpaceMR app.css — build-css.mjs orqali avtomatik yig\'ilgan. Qo\'lda tahrirlamang! */'];
 for (const f of FILES) parts.push(readFileSync(join(ROOT, f), 'utf8').trim());

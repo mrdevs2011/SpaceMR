@@ -90,13 +90,14 @@ function _counts() {
   return { photos, music: _data.audio.length, file: _data.file.length };
 }
 
-function _paintHead(name) {
+function _paintHead(name, username) {
   const c = _counts();
   const av = (_avatar || defAvi(name || 'U')).replace(/"/g, '&quot;');
   $body().innerHTML = `
     <div class="up-head"><div class="up-avi-wrap"><div class="up-avi"><img class="w-full h-full object-cover" src="${esc(av)}" onerror="this.src='${defAvi(name || 'U')}'"></div></div></div>
     <div class="up-info">
       <div class="up-name">${esc(name || 'Suhbat')}</div>
+      ${username ? `<div class="up-username">@${esc(username)}</div>` : ''}
       <div class="up-stats">
         <div class="up-stat"><div class="up-stat-val">${c.photos}</div><div class="up-stat-lbl">media</div></div>
         <div class="up-stat"><div class="up-stat-val">${c.music}</div><div class="up-stat-lbl">musiqa</div></div>
@@ -287,7 +288,7 @@ function _closeViewer() {
 }
 
 /* ── Ochish / yopish ────────────────────────────────────────────────── */
-export async function openChatMedia({ chatId, name, avatar } = {}) {
+export async function openChatMedia({ chatId, name, avatar, uid } = {}) {
   if (!chatId) return;
   _ensureBound();
   const my = ++_token;
@@ -300,9 +301,12 @@ export async function openChatMedia({ chatId, name, avatar } = {}) {
   $modal().scrollTop = 0;
   $modal().classList.add('show');
 
+  // Suhbatdoshning @username i — profil sarlavhasida ko'rinsin
+  const unameP = uid ? sb.from('profiles').select('username').eq('id', uid).maybeSingle().then(r => r?.data?.username || '', () => '') : Promise.resolve('');
   const { data, error } = await sb.from('messages').select('*')
     .eq('chat_id', chatId).eq('type', 'file')
     .order('created_at', { ascending: false }).limit(LIMIT);
+  const username = await unameP;
   if (my !== _token || !_active) return;
   if (error) {
     console.warn('[ChatMedia]', error.message);
@@ -317,7 +321,7 @@ export async function openChatMedia({ chatId, name, avatar } = {}) {
     else if (m.kind === 'audio') _data.audio.push(m);
     else _data.file.push(m);
   }
-  _paintHead(name);
+  _paintHead(name, username);
 }
 
 export function closeChatMedia() {

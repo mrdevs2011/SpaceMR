@@ -3133,7 +3133,7 @@ export function destroyChatsView() {
       const uid = state.currentChatUid;
       if (!uid) return;
       const { openChatMedia } = await import('./chat-media.js');
-      openChatMedia({ chatId: state.currentChatId, name: nameEl?.textContent, avatar: aviEl?.querySelector('img')?.src });
+      openChatMedia({ chatId: state.currentChatId, uid, name: nameEl?.textContent, avatar: aviEl?.querySelector('img')?.src });
     } else {
       // guruh yoki kanal — group info overlay
       const { openGroupInfo } = await import('./groups.js');
