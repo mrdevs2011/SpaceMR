@@ -28,7 +28,7 @@
 .avi-crop-stage:active { cursor: grabbing; }
 .avi-crop-checkered {
   position: absolute; inset: 0;
-  background: conic-gradient(#2a2d31 25%, #1a1c1f 0 50%, #2a2d31 0 75%, #1a1c1f 0) 0 0 / 16px 16px;
+  background: #000;  /* shaffof rasm eksportda #000 bilan to'ldiriladi — preview ham shunday */
 }
 .avi-crop-img {
   position: absolute; left: 50%; top: 50%; max-width: none; max-height: none;

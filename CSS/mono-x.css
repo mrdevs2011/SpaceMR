@@ -3797,13 +3797,6 @@ textarea:not(:focus) {
 .settings-more-menu { bottom: 52px; }
 .settings-row + .settings-section-label { margin-top: 22px; }
 @media (min-width: 1200px) { .settings-row + .settings-section-label { margin-top: 8px; } }
-.settings-actions .settings-help-btn {
-  flex: 0 0 44px; width: 44px; height: 44px; margin: 0; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px solid var(--line, #2f3336); background: transparent;
-  color: var(--text); cursor: pointer;
-}
-.settings-actions .settings-help-btn:hover { background: var(--pal-mid-16, rgba(231, 233, 234, 0.1)); }
 
 :where(#grpFormAvi, #grpFormAviWrap, #svNext, #svPrev, #chatThreadAvi, #chatThreadName, #profileAvi, #uploadDrop, #voiceMiniPlayer, .story-plus, .user-avi-btn, .cm-row) { cursor: pointer; }
 
@@ -9088,4 +9081,20 @@ select.field option { background: #000000; color: var(--text); }
 .modal-btn-row > button {
   flex: 1 1 0; width: auto !important; min-width: 0; margin: 0 !important; padding: 12px 8px;
   display: flex; align-items: center; justify-content: center; gap: 6px; text-align: center; line-height: 1.2;
+}
+
+/* Avatarlar: shaffof (fonsiz) rasm qo'yilsa orqa fon doim #000 */
+img:is(.avi, .chat-avi, .profile-avi, .up-avi, .cmt-avi, .cmt-my-avi, .hdr-avi, .grp-avi, .gi-avi, .dm-avi, .sb-acc-avi, .settings-profile-avi, .chat-thread-avi, .composer-avi, .home-composer-avi, .grp-member-avi, .pe-avi-img),
+:is(.avi, .chat-avi, .profile-avi, .up-avi, .cmt-avi, .cmt-my-avi, .hdr-avi, .grp-avi, .gi-avi, .dm-avi, .sb-acc-avi, .settings-profile-avi, .chat-thread-avi, .composer-avi, .home-composer-avi, .grp-member-avi, .pe-avi-img) img:not(.icon) { background-color: #000; }
+
+/* Avatar rasmlari (manzili /avatars/ yoki /group-avatars/): qaysi klass/konteynerda bo'lishidan qat'i nazar shaffof joy doim #000 */
+img[src*="/avatars/"],
+img[src*="/group-avatars/"] { background-color: #000 !important; }
+
+/* Chat scroll silliq: `.chat-msg` dagi content-visibility:auto xabar balandligini 64px deb taxmin qilib,
+   scroll paytida haqiqiy balandlikka o'tganda "dirrr" qilardi (feeddagi bilan bir xil sabab). Qaytarish kerak bo'lsa — shu blokni olib tashlang. */
+#chatThreadMessages .chat-msg,
+.chat-thread-messages .chat-msg {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
 }
