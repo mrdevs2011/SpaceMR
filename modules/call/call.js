@@ -91,7 +91,77 @@ export async function flushPendingCallEnd() {
 function _hardEnd(reason, endSound = 'local') {
   if (_ending || (!_callId && !_pc)) return;
   console.warn('[call] hard end:', reason);
+  _clearIceRecovery();
   _endCall(false, endSound);
+}
+
+/* ── ICE tiklanish: temporary disconnect/fail — qayta urinish, uzoq kutish ──
+   Maqsad: 10 yil gaplashsang ham o'zi tashlab yubormasin.
+   disconnected → 12s kutamiz + restartIce
+   failed → darhol restartIce, 8s ichida tiklanmasa tugatamiz
+*/
+let _iceRecTimer = null;
+let _iceRecAttempts = 0;
+const ICE_REC_MAX = 5;
+
+function _clearIceRecovery() {
+  if (_iceRecTimer) { clearTimeout(_iceRecTimer); _iceRecTimer = null; }
+  _iceRecAttempts = 0;
+}
+
+function _tryRestartIce() {
+  try {
+    if (!_pc || _ending) return false;
+    // Prefer native restartIce (yangi ICE candidate'lar onicecandidate orqali ketadi)
+    if (typeof _pc.restartIce === 'function') {
+      _pc.restartIce();
+      console.warn('[call] restartIce');
+      return true;
+    }
+    // Eski brauzer: iceRestart offer — faqat local, signaling o'zgartirmaymiz
+    // (asosiy offer/answer ni buzmaslik uchun). Candidate'lar baribir yuboriladi.
+    if (_pc.signalingState === 'stable' && typeof _pc.createOffer === 'function') {
+      _pc.createOffer({ iceRestart: true }).then(async offer => {
+        if (!_pc || _ending) return;
+        try { await _pc.setLocalDescription(offer); } catch (_) {}
+      }).catch(() => {});
+      return true;
+    }
+  } catch (e) { console.warn('[call] restartIce fail:', e?.message || e); }
+  return false;
+}
+
+function _scheduleIceRecovery(reason, isFailed = false) {
+  if (_ending || !_pc) return;
+  // Allaqachon timer bor — qayta boshlamaymiz (spam yo'q)
+  if (_iceRecTimer && !isFailed) return;
+
+  const attempt = () => {
+    if (_ending || !_pc) return;
+    const st = _pc.connectionState;
+    const ice = _pc.iceConnectionState;
+    if (st === 'connected' || st === 'connecting' || ice === 'connected' || ice === 'completed') {
+      _clearIceRecovery();
+      return;
+    }
+    _iceRecAttempts++;
+    console.warn('[call] ICE recovery', reason, 'attempt', _iceRecAttempts, 'pc=', st, 'ice=', ice);
+    _tryRestartIce();
+
+    if (_iceRecAttempts >= ICE_REC_MAX) {
+      // Uzoq tiklanmadi — endi tugatamiz
+      _hardEnd(reason + '-giveup');
+      return;
+    }
+    // Keyingi urinish
+    _iceRecTimer = setTimeout(attempt, isFailed ? 6000 : 10000);
+  };
+
+  // disconnected: 12s kutamiz (vaqtinchalik tarmoq tebranishi)
+  // failed: 1.5s dan keyin birinchi restart
+  const delay = isFailed ? 1500 : 12000;
+  if (_iceRecTimer) clearTimeout(_iceRecTimer);
+  _iceRecTimer = setTimeout(attempt, delay);
 }
 
 async function _userInfo(uid) {
@@ -645,6 +715,7 @@ let _ending = false;
 async function _endCall(notify = true, endSound = null) {
   if (_ending) return;
   _ending = true;
+  _clearIceRecovery();
   // Tarix yozuvi — faqat chaqiruvchi, bir marta
   let _log = null;
   if (_isCaller && _callId && _callChatId && !_logged.has(_callId)) {
@@ -761,11 +832,42 @@ function _createPC() {
     else _pendingIce.push(c);   // yozuv hali yaratilmagan — keyin yuboriladi
   };
 
+  // Uzluksiz qo'ng'iroq: temporary "disconnected" — tiklanishi mumkin.
+  // Faqat uzoq muddat failed yoki yopilganda tugatamiz.
   _pc.onconnectionstatechange = () => {
-    if (_pc?.connectionState === 'disconnected' ||
-        _pc?.connectionState === 'failed' ||
-        _pc?.connectionState === 'closed') {
-      _hardEnd('pc-' + _pc?.connectionState);
+    const st = _pc?.connectionState;
+    if (!st) return;
+    if (st === 'connected' || st === 'connecting') {
+      _clearIceRecovery();
+      return;
+    }
+    if (st === 'disconnected') {
+      _scheduleIceRecovery('pc-disconnected');
+      return;
+    }
+    if (st === 'failed') {
+      _scheduleIceRecovery('pc-failed', true);
+      return;
+    }
+    if (st === 'closed') {
+      // Biz o'zimiz yopsak _ending true bo'ladi
+      if (!_ending) _hardEnd('pc-closed');
+    }
+  };
+
+  _pc.oniceconnectionstatechange = () => {
+    const st = _pc?.iceConnectionState;
+    if (!st) return;
+    if (st === 'connected' || st === 'completed') {
+      _clearIceRecovery();
+      return;
+    }
+    if (st === 'disconnected') {
+      _scheduleIceRecovery('ice-disconnected');
+      return;
+    }
+    if (st === 'failed') {
+      _scheduleIceRecovery('ice-failed', true);
     }
   };
 
@@ -1453,5 +1555,10 @@ window.addEventListener('pagehide', () => {
   try { _localStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
   try { _pc?.close(); } catch (_) {}
 });
-window.addEventListener('offline', () => _hardEnd('offline'));
+window.addEventListener('offline', () => {
+  // Darhol tugatmaymiz — qisqa offline tezda online bo'lishi mumkin
+  console.warn('[call] offline — 20s kutamiz');
+  _scheduleIceRecovery('offline', false);
+  // Max 20s offline bo'lsa recovery o'zi tugatadi (attemptlar)
+});
 window.addEventListener('online', () => { flushPendingCallEnd(); });

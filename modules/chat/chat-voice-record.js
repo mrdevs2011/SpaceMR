@@ -183,7 +183,22 @@ function _vidWaitFrame(v, ms) {
    canvas oxirgi kadrni ushlab turadi. */
 function _vidPaint() {
   const v = _vidPreviewEl;
-  if (!_vidCtx || _vidSwitching || !v || v.readyState < 2 || !v.videoWidth) return;
+  if (!_vidCtx) return;
+  if (_vidSwitching) {
+    // Freeze kadrini chizamiz — yozuv qotmasin
+    try {
+      const el = document.getElementById('vnotePreview');
+      const fz = el?.querySelector('.vnp-freeze');
+      if (fz && fz.width && fz.height && fz.classList.contains('show')) {
+        const S = VID_SIZE;
+        const sc = Math.max(S / fz.width, S / fz.height);
+        const dw = fz.width * sc, dh = fz.height * sc;
+        _vidCtx.drawImage(fz, (S - dw) / 2, (S - dh) / 2, dw, dh);
+      }
+    } catch (_) {}
+    return;
+  }
+  if (!v || v.readyState < 2 || !v.videoWidth) return;
   const S = VID_SIZE, vw = v.videoWidth, vh = v.videoHeight;
   const sc = Math.max(S / vw, S / vh), dw = vw * sc, dh = vh * sc;
   _vidCtx.drawImage(v, (S - dw) / 2, (S - dh) / 2, dw, dh);
@@ -413,13 +428,13 @@ async function _vidToggleTorch() {
 async function _vidFlip() {
   if (!_vidLocked || !_vidActive || _vidSwitching || !_vidRec) return;
   if (!_vidUseCanvas) { toast("Bu brauzerda yozuv paytida kamerani almashtirib bo'lmaydi", 'error'); return; }
-  _vidSwitching = true;
   const el = document.getElementById('vnotePreview');
   const pv = el?.querySelector('video');
   const fz = el?.querySelector('.vnp-freeze');
   const prevFace = _vidFacing;
   const next = prevFace === 'user' ? 'environment' : 'user';
   let failed = false;
+  _vidSwitching = true;
   // Oxirgi kadr xira holda ushlab turiladi (qora ekran ko'rinmaydi)
   try {
     if (fz && pv?.videoWidth) {
@@ -433,19 +448,41 @@ async function _vidFlip() {
   } catch (_) {}
   try {
     if (_vidTorchOn) { try { await setTorch(_vidVideoTrack, false); } catch (_) {} _vidTorchOn = false; }
-    try { _vidVideoTrack?.stop(); } catch (_) {}
+    const oldTrack = _vidVideoTrack;
     let ns = null;
+    // 1) Yangi oqimni avval ochishga urinish (2 kamera birga — ba'zi qurilmalarda ishlaydi)
     try {
       ns = await navigator.mediaDevices.getUserMedia({ audio: false, video: _vidVideoConstraints(next) });
-      _vidFacing = next;
     } catch (_) {
-      toast("Kamerani almashtirib bo'lmadi", 'error');
-      try { ns = await navigator.mediaDevices.getUserMedia({ audio: false, video: _vidVideoConstraints(prevFace) }); }
-      catch (_2) { failed = true; }
+      // 2) Busy: eskisini to'xtatib qayta
+      try { oldTrack?.stop(); } catch (_) {}
+      try {
+        ns = await navigator.mediaDevices.getUserMedia({ audio: false, video: _vidVideoConstraints(next) });
+      } catch (_2) {
+        toast("Kamerani almashtirib bo'lmadi", 'error');
+        try { ns = await navigator.mediaDevices.getUserMedia({ audio: false, video: _vidVideoConstraints(prevFace) }); }
+        catch (_3) { failed = true; }
+      }
     }
     if (ns) {
       _vidVideoTrack = ns.getVideoTracks()[0];
-      if (pv) { pv.srcObject = new MediaStream([_vidVideoTrack]); pv.play().catch(() => {}); }
+      _vidFacing = (ns.getVideoTracks()[0]?.getSettings?.()?.facingMode === 'environment') ? 'environment' : next;
+      if (pv) {
+        pv.srcObject = new MediaStream([_vidVideoTrack]);
+        await pv.play().catch(() => {});
+        // Birinchi kadr
+        await new Promise(r => {
+          let done = false;
+          const fin = () => { if (!done) { done = true; r(); } };
+          const t = setTimeout(fin, 1200);
+          if (pv.requestVideoFrameCallback) pv.requestVideoFrameCallback(() => { clearTimeout(t); fin(); });
+          else setTimeout(fin, 150);
+        });
+      }
+      // Eski track hali live bo'lsa to'xtat
+      if (oldTrack && oldTrack !== _vidVideoTrack && oldTrack.readyState === 'live') {
+        try { oldTrack.stop(); } catch (_) {}
+      }
       waitTrackTorchReady(_vidVideoTrack, 1000).then(() => _vidSyncCtrls());
       setTimeout(() => _vidSyncCtrls(), 400);
       setTimeout(() => _vidSyncCtrls(), 1000);
@@ -453,11 +490,6 @@ async function _vidFlip() {
   } finally {
     if (!failed) {
       _vidSyncCtrls();
-      await new Promise(r => {
-        const t = setTimeout(r, 900);
-        if (pv?.requestVideoFrameCallback) pv.requestVideoFrameCallback(() => { clearTimeout(t); r(); });
-        else setTimeout(r, 150);
-      });
       fz?.classList.remove('show');
     }
     _vidSwitching = false;

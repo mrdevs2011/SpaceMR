@@ -276,7 +276,21 @@ export async function openCameraCapture(options = {}) {
     let recStarting = false, recRaf = 0, recCanvas = null, recCtx = null, recLastDraw = 0, recOutStream = null;
     const paintRec = () => {
       const v = liveVid;
-      if (!recCtx || switchingFace || v.readyState < 2 || !v.videoWidth) return;
+      if (!recCtx) return;
+      // Switching paytida live video tayyor emas — oxirgi kadr (freezeEl) ni chizamiz,
+      // shunda MediaRecorder bitta uzluksiz video saqlaydi, qotib qolmaydi.
+      if (switchingFace) {
+        try {
+          if (freezeEl.width && freezeEl.height && freezeEl.classList.contains('show')) {
+            const cw = recCanvas.width, ch = recCanvas.height;
+            const fw = freezeEl.width, fh = freezeEl.height;
+            const sc = Math.max(cw / fw, ch / fh), dw = fw * sc, dh = fh * sc;
+            recCtx.drawImage(freezeEl, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+          }
+        } catch (_) {}
+        return;
+      }
+      if (v.readyState < 2 || !v.videoWidth) return;
       const cw = recCanvas.width, ch = recCanvas.height, vw = v.videoWidth, vh = v.videoHeight;
       const sc = Math.max(cw / vw, ch / vh), dw = vw * sc, dh = vh * sc;
       recCtx.drawImage(v, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
@@ -447,21 +461,56 @@ export async function openCameraCapture(options = {}) {
     const switchFacing = async (want) => {
       if (reviewing || switchingFace || !stream || !canSwitch) return;
       if (recording && !canCanvasRec) { toast("Yozuv paytida kamerani almashtirib bo'lmaydi", 'error'); return; }
-      switchingFace = true;
       const nextFace = want || (facing === 'user' ? 'environment' : 'user');
       if (nextFace === facing) return;
+      switchingFace = true;
       const nextDev = nextFace === 'user' ? cams.front : cams.back;
       const prevFace = facing, prevDev = deviceId;
+      const oldStream = stream;
       freezeFrame();
       if (flipBtn) { flipBtn.classList.remove('spin'); void flipBtn.offsetWidth; flipBtn.classList.add('spin'); }
       try {
         try { await setTorch(vTrack(), false); } catch (_) {}
         torchOn = false;
-        // Yozuv to'xtamaydi — canvas oxirgi kadrni ushlab turadi, mikrofon alohida oqimda davom etadi
-        try { stream.getTracks().forEach(t => t.stop()); } catch (_) {}
-        const s1 = await _startStream(nextDev?.deviceId || null, nextFace);
-        deviceId = nextDev?.deviceId || s1.getVideoTracks()[0]?.getSettings?.().deviceId || null;
-        await setStream(s1, nextFace);
+        // 1) Yangi oqimni AVVAL ochamiz (ba'zi qurilmalar 2 kamera birga ochadi).
+        //    Agar xato (busy) — eski oqimni to'xtatib qayta urinadi.
+        let s1 = null;
+        try {
+          s1 = await _startStream(nextDev?.deviceId || null, nextFace);
+        } catch (e1) {
+          // Ko'pchilik mobil: 2 kamera birga ochilmaydi — eskisini to'xtatib qayta
+          try { oldStream?.getTracks().forEach(t => t.stop()); } catch (_) {}
+          s1 = await _startStream(nextDev?.deviceId || null, nextFace);
+        }
+        // 2) Yangi video birinchi kadr chiqsin
+        const vt = s1.getVideoTracks()[0];
+        deviceId = nextDev?.deviceId || vt?.getSettings?.().deviceId || null;
+        liveVid.srcObject = s1;
+        liveVid.classList.toggle('mirror', nextFace === 'user');
+        await liveVid.play().catch(() => {});
+        // Birinchi kadr tayyor bo'lguncha kutamiz (max 1.2s)
+        await new Promise(r => {
+          let done = false;
+          const fin = () => { if (!done) { done = true; r(); } };
+          const t = setTimeout(fin, 1200);
+          if (liveVid.requestVideoFrameCallback) {
+            liveVid.requestVideoFrameCallback(() => { clearTimeout(t); fin(); });
+          } else if (vt) {
+            const onMute = () => { if (!vt.muted && liveVid.videoWidth) { clearTimeout(t); fin(); } };
+            vt.addEventListener('unmute', onMute, { once: true });
+            setTimeout(onMute, 80);
+          }
+        });
+        stream = s1;
+        facing = nextFace;
+        initZoom();
+        refreshFlash();
+        setTimeout(() => { if (stream === s1) refreshFlash(); }, 400);
+        waitTrackTorchReady(vTrack(), 1000).then(() => { if (stream === s1) refreshFlash(); });
+        // 3) Eski oqimni endi to'xtatamiz (agar hali ochiq bo'lsa)
+        if (oldStream && oldStream !== s1) {
+          try { oldStream.getTracks().forEach(t => { if (t.readyState === 'live') t.stop(); }); } catch (_) {}
+        }
       } catch (err) {
         toast(cameraErrorMsg(err), 'error');
         try {
