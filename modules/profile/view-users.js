@@ -589,33 +589,38 @@ function _render(wrap, users) {
     </div>`;
   }).join('');
 
+  function _closeUaMenus() {
+    wrap.querySelectorAll('.ua-more-menu').forEach(m => {
+      m.hidden = true;
+      m.style.top = '';
+      m.style.left = '';
+      m.style.right = '';
+    });
+    wrap.querySelectorAll('.ua-more-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  }
   wrap.querySelectorAll('.ua-more-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const menu = btn.parentElement?.querySelector('.ua-more-menu');
       if (!menu) return;
       const wasOpen = !menu.hidden;
-      wrap.querySelectorAll('.ua-more-menu').forEach(m => {
-        m.hidden = true;
-        m.style.position = '';
-        m.style.top = '';
-        m.style.left = '';
-        m.style.right = '';
-      });
+      _closeUaMenus();
       if (wasOpen) return;
-      // overflow:hidden ota ichida kesilmasin — fixed joylashuv
       menu.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
       const r = btn.getBoundingClientRect();
-      menu.style.position = 'fixed';
-      menu.style.zIndex = '5000';
-      menu.style.top = Math.min(r.bottom + 4, window.innerHeight - 8) + 'px';
-      menu.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
-      menu.style.left = 'auto';
-      // pastga sig'masa tepaga och
+      const mw = 200;
+      let left = r.right - mw;
+      if (left < 8) left = 8;
+      if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+      let top = r.bottom + 6;
+      menu.style.top = top + 'px';
+      menu.style.left = left + 'px';
+      menu.style.right = 'auto';
       requestAnimationFrame(() => {
         const mr = menu.getBoundingClientRect();
         if (mr.bottom > window.innerHeight - 8) {
-          menu.style.top = Math.max(8, r.top - mr.height - 4) + 'px';
+          menu.style.top = Math.max(8, r.top - mr.height - 6) + 'px';
         }
       });
     });
@@ -623,7 +628,7 @@ function _render(wrap, users) {
   if (!wrap._uaMenuCloser) {
     wrap._uaMenuCloser = (e) => {
       if (e.target.closest('.ua-more-wrap')) return;
-      wrap.querySelectorAll('.ua-more-menu').forEach(m => { m.hidden = true; });
+      _closeUaMenus();
     };
     document.addEventListener('click', wrap._uaMenuCloser);
   }

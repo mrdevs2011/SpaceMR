@@ -1144,38 +1144,81 @@
   .ua-hover-tools { opacity: 0.9; pointer-events: auto; }
 }
 
-.ua-more-wrap { position: relative; }
+.ua-more-wrap { position: relative; z-index: 1; }
 .ua-more-btn {
-  width: 32px; height: 32px; border: none; border-radius: 50%;
-  background: transparent; color: var(--text2, #8b98a5);
+  width: 34px; height: 34px; border: none; border-radius: 50%;
+  background: transparent; color: #71767b;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer; padding: 0;
+  transition: background .15s ease, color .15s ease, transform .12s ease;
 }
-.ua-more-btn:hover { background: rgba(231,233,234,0.1); color: var(--text); }
+.ua-more-btn:hover {
+  background: rgba(231,233,234,0.1);
+  color: #e7e9ea;
+}
+.ua-more-btn:active { transform: scale(0.92); }
+.ua-more-btn[aria-expanded="true"] {
+  background: rgba(231,233,234,0.12);
+  color: #e7e9ea;
+}
 
+/* Fixed menyu — list overflow ichida kesilmaydi */
 .ua-more-menu {
-  position: absolute; top: calc(100% + 4px); right: 0; z-index: 200;
-  min-width: 168px; padding: 6px;
-  background: #000; border: 1px solid var(--line, #2f3336);
-  border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.55);
-  display: flex; flex-direction: column; gap: 2px;
-  /* parent overflow:hidden bo'lsa ham menyu tashqariga chiqsin */
-  max-height: none; overflow: visible;
+  position: fixed;
+  z-index: 10050;
+  min-width: 200px;
+  padding: 8px;
+  background: #000000;
+  border: 1px solid #2f3336;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 16px 48px rgba(0,0,0,0.65),
+    0 4px 12px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: visible;
+  animation: uaMenuIn .16s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top right;
+}
+@keyframes uaMenuIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .ua-list, #actionsView .ua-list, #uaUsersList {
   overflow: visible !important;
 }
-.ua-more-menu[hidden] { display: none !important; }
+.ua-more-menu[hidden] { display: none !important; animation: none; }
 .ua-menu-item {
-  display: block; width: 100%; text-align: left;
-  padding: 10px 12px; border: none; border-radius: 8px;
-  background: transparent; color: var(--text);
-  font: 600 13px var(--font); cursor: pointer;
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #e7e9ea;
+  font: 600 14px/1.25 var(--font);
+  cursor: pointer;
+  transition: background .12s ease;
 }
-.ua-menu-item:hover { background: rgba(231,233,234,0.08); }
+.ua-menu-item:hover {
+  background: rgba(231,233,234,0.1);
+}
+.ua-menu-item:active {
+  background: rgba(231,233,234,0.14);
+}
 .ua-menu-item.ua-menu-danger,
 .ua-menu-item.ua-delete-btn,
-.ua-menu-item.ua-block-btn { color: var(--red, #f4212e); }
+.ua-menu-item.ua-block-btn {
+  color: #f4212e;
+}
+.ua-menu-item.ua-menu-danger:hover,
+.ua-menu-item.ua-delete-btn:hover,
+.ua-menu-item.ua-block-btn:hover {
+  background: rgba(244, 33, 46, 0.12);
+}
 
 .ua-approve-btn {
   border: none; border-radius: 999px; padding: 6px 12px;
