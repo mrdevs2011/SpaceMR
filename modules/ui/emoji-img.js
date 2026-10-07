@@ -1,13 +1,17 @@
-/* emoji-img.js — emojini tizim shrifti o'rniga rasm (Noto, WebP) qilib ko'rsatadi: hamma telefonda bir xil.
-   2d = /emoji/2d (72px)  — picker, matn ichi, reaksiyalar, bubble ichidagi emojilar.
-   3d = /emoji/3d (128px) — faqat bubblesiz katta xabarlar (1–3 ta emoji, `emoji-only`).
-   Fayl nomi: kodpointlar kichik harf, '-' bilan, FE0F tashlangan (masalan 1f602.webp, 1f468-200d-1f4bb.webp).
-   Rasm topilmasa: 3d -> 2d -> oddiy matn emoji (bo'sh joy qolmaydi). */
-const BASE = '/emoji';
-// Matn ko'rinishidagi belgilar (©, ™, ❤ FE0F'siz) rasmga aylanmasin — faqat haqiqiy emoji
-const NEEDS_IMG = /\p{Emoji_Presentation}|\uFE0F|\u20E3/u;
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+/* emoji-img.js — SpaceMR'da emoji FAQAT 2D PNG rasm sifatida ishlaydi (tizim emoji shrifti ko'rsatilmaydi).
+   Fayl:    /emoji/2d/<kalit>.png (72px). Kalit = kodpointlar kichik harf, '-' bilan, FE0F tashlangan (1f602, 1f468-200d-1f4bb).
+   Bazaga (Supabase) rasm EMAS, faqat PATH yoziladi:  "emoji/2d/1f525.png"
+     - reaksiyalar:  message_reactions.emoji = path
+     - xabar matni:  matn ichida  [[emoji/2d/1f525.png]]  (yuborishda klaviatura emojisi shunga aylantiriladi)
+   Ko'rsatishda path'dan <img> real vaqtda chiziladi. Path DB'dan kelgani uchun HAR DOIM EMO_PATH_RE bilan tekshiriladi (XSS yo'q).
+   Kodda emoji belgisi yo'q: ro'yxatlar kalit (hex) bilan yoziladi. */
+export const EMO_DIR = 'emoji/2d';
+export const EMO_PATH_RE = /^emoji\/2d\/[0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*\.png$/;
+const KEY_RE = /^[0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*$/;
+const TOKEN_RE = /\[\[(emoji\/2d\/[0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*\.png)\]\]/g;
+const PUA = '\uE000';   // token o'rniga bitta belgi (emoji-only hisoblash uchun)
 
+/* Emoji belgisi (grapheme) -> kalit. FE0F tashlanadi. */
 export function emojiKey(e) {
   const out = [];
   for (const ch of String(e || '')) {
@@ -16,58 +20,85 @@ export function emojiKey(e) {
   }
   return out.join('-');
 }
-
-/* lazy=true — faqat qidiruv natijalari (ko'p rasm, ko'rinmaydiganlari yuklanmasin). Chat/reaksiyada darrov yuklanadi va
-   sinxron dekodlanadi (kesh'dan kelsa birinchi kadrdayoq chiqadi, "keyinroq paydo bo'lish" yo'q). */
-export function emojiImg(e, kind = '2d', lazy = false) {
-  if (!e || !NEEDS_IMG.test(e)) return esc(e || '');
-  const key = emojiKey(e);
-  return `<img class="emo-img" src="${BASE}/${kind}/${key}.webp" alt="${esc(e)}" data-key="${key}" data-k="${kind}" draggable="false"${lazy ? ' loading="lazy" decoding="async"' : ' decoding="sync"'}>`;
+/* Kalit | path | emoji belgisi  ->  kalit ('' agar yaroqsiz) */
+export function toKey(x) {
+  const s = String(x || '');
+  if (KEY_RE.test(s)) return s;
+  const m = s.match(/^emoji\/2d\/(.+)\.png$/);
+  if (m && KEY_RE.test(m[1])) return m[1];
+  if (EMO_PATH_RE.test(s)) return s.slice(EMO_DIR.length + 1, -4);
+  const k = emojiKey(s);
+  return KEY_RE.test(k) ? k : '';
+}
+export const emojiPath = x => { const k = toKey(x); return k ? `${EMO_DIR}/${k}.png` : ''; };
+export const isEmojiPath = s => EMO_PATH_RE.test(String(s || ''));
+/* Kalit -> belgi (faqat yozish maydoniga qo'yish va rasm yuklanmay qolgan holat uchun) */
+export function keyToGlyph(x) {
+  const k = toKey(x);
+  if (!k) return '';
+  try { return String.fromCodePoint(...k.split('-').map(h => parseInt(h, 16))); } catch (_) { return ''; }
 }
 
-/* Tez-tez ishlatiladigan emojilarni (reaksiyalar va h.k.) ilova bo'sh turganda oldindan yuklab, keshga soladi —
-   birinchi ochilishda ham kechikish bo'lmasin. Asosiy yuklashga xalaqit bermaydi (idle). */
+/* Bitta emoji rasmi (HTML). x = kalit | path | belgi. lazy=true — qidiruv natijalari uchun */
+export function emojiImg(x, kind, lazy) {
+  if (kind === true || kind === false) lazy = kind;      // eski chaqiruv: emojiImg(e, '2d', lazy) ham ishlaydi
+  const k = toKey(x);
+  if (!k) return '';
+  return `<img class="emo-img" src="/${EMO_DIR}/${k}.png" alt="" data-key="${k}" draggable="false"${lazy ? ' loading="lazy" decoding="async"' : ' decoding="sync"'}>`;
+}
+
+/* Tez-tez ishlatiladigan emojilarni oldindan keshga soladi (idle) */
 const _warmed = new Set();
-export function warmEmoji(list, kind = '2d') {
+export function warmEmoji(list) {
   if (typeof window === 'undefined') return;
   const run = () => {
-    for (const e of list) {
-      if (!NEEDS_IMG.test(e)) continue;
-      const url = `${BASE}/${kind}/${emojiKey(e)}.webp`;
-      if (_warmed.has(url)) continue;
-      _warmed.add(url);
-      const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = url;
+    for (const x of list) {
+      const k = toKey(x);
+      if (!k || _warmed.has(k)) continue;
+      _warmed.add(k);
+      const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = `/${EMO_DIR}/${k}.png`;
     }
   };
   (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(run, { timeout: 4000 });
 }
-
-// error hodisasi ko'pirmaydi — capture bosqichida ushlaymiz (bitta global tinglovchi)
+/* Rasm topilmasa (juda yangi emoji) — kontent yo'qolmasin: belgi matn bo'lib qoladi */
 if (typeof document !== 'undefined') {
   document.addEventListener('error', (ev) => {
     const img = ev.target;
     if (!img || img.tagName !== 'IMG' || !img.classList.contains('emo-img')) return;
-    if (img.dataset.k === '3d') { img.dataset.k = '2d'; img.src = `${BASE}/2d/${img.dataset.key}.webp`; return; }
-    img.replaceWith(document.createTextNode(img.alt));
+    img.replaceWith(document.createTextNode(keyToGlyph(img.dataset.key)));
   }, true);
 }
-
 /* Picker sprite'ini (kategoriya atlasi) oldindan keshlaydi */
 export function warmAtlas(id) {
   if (typeof window === 'undefined' || !id || _warmed.has('atlas:' + id)) return;
   _warmed.add('atlas:' + id);
-  const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = `${BASE}/atlas/${id}.webp`;
+  const im = new Image(); im.decoding = 'async'; im.fetchPriority = 'low'; im.src = `/emoji/atlas/${id}.png`;
 }
 
-/* Klaviaturadan (yoki paneldan) emoji kiritilganda — yuborishdan OLDIN ikkala (2D va 3D) rasmini yuklab qo'yamiz:
-   xabar chiqqanda rasm allaqachon keshda bo'ladi. */
-const EMO_SEQ = /\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*|\p{Regional_Indicator}{2}/gu;
-export function warmTyped(text) {
-  const m = String(text || '').match(EMO_SEQ);
-  if (!m) return;
-  const uniq = [...new Set(m)].slice(0, 6);
-  warmEmoji(uniq, '2d'); warmEmoji(uniq, '3d');
+/* ── Matn <-> path ─────────────────────────────────────────────────────────────── */
+const EMO_SEQ = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3)(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*/gu;
+/* YUBORISHDAN OLDIN: matndagi emoji belgilari -> [[emoji/2d/<kalit>.png]] (bazaga faqat path boradi) */
+export function encodeEmojiText(text) {
+  return String(text ?? '').replace(EMO_SEQ, m => { const p = emojiPath(m); return p ? `[[${p}]]` : m; });
 }
-if (typeof document !== 'undefined') {
-  document.addEventListener('input', (ev) => { const d = ev.data; if (d && d.length <= 40) warmTyped(d); }, true);
+/* TAHRIRLASH (yozish maydoniga qaytarish): [[path]] -> belgi (maydon oddiy matn; yuborishda yana path bo'ladi) */
+export function decodeEmojiText(text) {
+  return String(text ?? '').replace(TOKEN_RE, (_, p) => keyToGlyph(p));
 }
+/* Faqat matn ko'rinadigan joylar (push, qidiruv nusxasi): token olib tashlanadi */
+export function stripEmojiText(text) {
+  return String(text ?? '').replace(TOKEN_RE, '').replace(/\s{2,}/g, ' ').trim();
+}
+/* Xavfsiz HTML (esc qilingan matn): [[path]] va eski xabarlardagi belgilar -> <span class="emj"><img>. Teglar ichiga tegilmaydi. */
+const HTML_RE = /(<[^>]*>)|\[\[(emoji\/2d\/[0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*\.png)\]\]|((?:\p{Extended_Pictographic}|\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3)(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*)/gu;
+export function emojiHtml(html) {
+  return String(html ?? '').replace(HTML_RE, (m, tag, path, glyph) => {
+    if (tag) return tag;
+    const img = emojiImg(path || glyph);
+    return img ? `<span class="emj">${img}</span>` : m;
+  });
+}
+/* emoji-only xabar hisobi uchun: tokenlarni bitta belgiga aylantiradi */
+export const tokensToPua = text => String(text ?? '').replace(TOKEN_RE, PUA);
+export const EMO_PUA = PUA;

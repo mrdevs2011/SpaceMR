@@ -250,7 +250,7 @@ function floatBarDone(success) {
     ring.style.stroke = success ? '#00ba7c' : '#f4212e';
   }
   const pctEl = $('ufbPct');
-  if (pctEl) pctEl.textContent = success ? '✓' : '!';
+  if (pctEl) { if (success) pctEl.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'; else pctEl.textContent = '!'; }
   setTimeout(() => { floatBarHide(); }, 1400);
 }
 

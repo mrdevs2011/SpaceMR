@@ -9,11 +9,11 @@
  *  Edge Function eski bo'lsa ham ishlaydi (ikki qavatli himoya). */
 function friendlyBody(data) {
   let b = String(data.body || '').replace(/\s+/g, ' ').trim();
-  b = b.replace(/\{\s*"__postShare"[\s\S]*$/, '📌 Post ulashdi');
-  b = b.replace(/\{\s*"__callLog"[\s\S]*$/, "📞 Qo'ng'iroq");
-  b = b.replace(/\{\s*"__gif"[\s\S]*$/, '🎞 GIF');
-  if (b.startsWith('{"__')) b = '💬 Yangi xabar';
-  if (data.type === 'call' && b && !b.startsWith('📞')) b = '📞 ' + b;
+  b = b.replace(/\{\s*"__postShare"[\s\S]*$/, 'Post ulashdi');
+  b = b.replace(/\{\s*"__callLog"[\s\S]*$/, "Qo'ng'iroq");
+  b = b.replace(/\{\s*"__gif"[\s\S]*$/, 'GIF');
+  if (b.startsWith('{"__')) b = 'Yangi xabar';
+  if (data.type === 'call' && b && !/^Qo'ng'iroq/.test(b)) b = "Qo'ng'iroq: " + b;
   return b;
 }
 
@@ -126,6 +126,7 @@ const PRECACHE_URLS = [
   '/modules/auth/auth-reg-recovery.js',
   '/modules/auth/auth-settings.js',
   '/modules/auth/auth.js',
+  '/modules/auth/device-sessions.js',
   '/modules/auth/pwd-ui.js',
   '/modules/call/call.js',
   '/modules/chat/attach-menu.js',
@@ -180,6 +181,7 @@ const PRECACHE_URLS = [
   '/modules/feed/compress.js',
   '/modules/feed/feed.js',
   '/modules/feed/like-sync.js',
+  '/modules/feed/post-image-zoom.js',
   '/modules/feed/stories.js',
   '/modules/feed/story-cache.js',
   '/modules/feed/upload.js',

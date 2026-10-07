@@ -1,5 +1,5 @@
 import { onEsc } from './esc-stack.js';
-import { emojiImg, warmEmoji, warmAtlas, warmTyped } from './emoji-img.js';
+import { emojiImg, warmEmoji, warmAtlas, toKey, keyToGlyph } from './emoji-img.js';
 import { createGifPanel } from './gif-panel.js';
 /* emoji-picker.js — telefon klaviaturasi (Gboard) uslubidagi emoji paneli.
    Tepada: qidiruv tugmasi + kategoriya ikonlari (SVG). Pastda: "Oxirgilar" va kategoriyalar
@@ -29,16 +29,16 @@ function loadRecent() {
   try {
     const raw = localStorage.getItem(RECENT_KEY) || localStorage.getItem('mrspace_emoji_recent');
     const a = JSON.parse(raw || '[]');
-    return Array.isArray(a) ? a.slice(0, RECENT_MAX) : [];
+    return Array.isArray(a) ? [...new Set(a.map(toKey).filter(Boolean))].slice(0, RECENT_MAX) : [];
   } catch { return []; }
 }
 function saveRecent(list) { try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX))); } catch {} }
 
-/* Kategoriya sahifalari — sprite (kategoriyaga 1 ta fayl: /emoji/atlas/<id>.webp, 16 ustun, katak 76px).
+/* Kategoriya sahifalari — sprite (kategoriyaga 1 ta fayl: /emoji/atlas/<id>.png, 16 ustun, katak 76px).
    Oxirgilar va qidiruv natijalari — alohida rasmlar (ular kam). */
 const ATLAS_COLS = 16;
 const POS = new Map();   // emoji -> { a: kategoriya, x: ustun, y: qator } — build() da to'ldiriladi
-const btnHtml = (e, inner) => `<button type="button" class="ep-e" data-e="${esc(e)}" aria-label="${esc(e)}">${inner}</button>`;
+const btnHtml = (e, inner) => `<button type="button" class="ep-e" data-e="${esc(e)}" aria-label="Emoji">${inner}</button>`;
 const gridImg = (list, lazy) => list.map(e => btnHtml(e, emojiImg(e, '2d', lazy))).join('');
 const gridAtlas = list => list.map(e => { const p = POS.get(e); return btnHtml(e, p ? `<i class="emo-s" data-a="${p.a}" style="--x:${p.x};--y:${p.y}"></i>` : emojiImg(e, '2d', true)); }).join('');
 
@@ -220,15 +220,17 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
     if (on) searchInp.focus();
     else { searchInp.value = ''; onSearch(); }
   }
-  function insert(emoji) {
+  function insert(key) {
+    const emoji = keyToGlyph(key);   // yozish maydoniga belgi qo'yiladi; yuborishda [[emoji/2d/<kalit>.png]] ga aylanadi (bazaga path)
+    if (!emoji) return;
     const start = input.selectionStart ?? input.value.length;
     const end = input.selectionEnd ?? input.value.length;
     input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
     const caret = start + emoji.length;
     input.focus(); input.setSelectionRange(caret, caret);
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    warmTyped(emoji);   // yuborilganda rasm (2D/3D) allaqachon keshda bo'lsin
-    recent = [emoji, ...recent.filter(x => x !== emoji)].slice(0, RECENT_MAX);
+    warmEmoji([key]);   // yuborilganda rasm allaqachon keshda bo'lsin
+    recent = [key, ...recent.filter(x => x !== key)].slice(0, RECENT_MAX);
     saveRecent(recent);
     if (searchRow?.hidden !== false) paintRecent();
   }
@@ -311,7 +313,7 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
     if (!cell.isConnected || !cell.matches(':hover')) return;
     if (!uzMap) { try { ({ EMOJI_UZ: uzMap } = await import('./emoji-uz.js')); } catch { return; } }
     if (!cell.isConnected || !cell.matches(':hover')) return;
-    const name = uzMap[(cell.dataset.e || '').replace(/\uFE0F/g, '')];
+    const name = uzMap[cell.dataset.e || ''];
     if (!name) return;
     hideTip();
     tipEl = document.createElement('div');

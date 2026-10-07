@@ -317,7 +317,7 @@ async function openAppForm(editId, presetCat) {
   const ov = document.createElement('div');
   ov.className = 'apf-ov'; ov.id = 'appFormOverlay';
   ov.innerHTML = `<div class="apf" role="dialog" aria-modal="true">
-    <div class="apf-h"><b>${a ? 'Ilovani tahrirlash' : 'Yangi ilova'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish">✕</button></div>
+    <div class="apf-h"><b>${a ? 'Ilovani tahrirlash' : 'Yangi ilova'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <label class="apf-l">Nomi<input id="afName" maxlength="40" autocomplete="off" value="${esc(a?.name || '')}" placeholder="Mening o'yinim"></label>
     <label class="apf-l">Unikal nom (URL)
       <span class="apf-slug"><i>/apps/…/</i><input id="afSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(a?.slug || '')}" placeholder="mygame"${a ? ' readonly aria-readonly="true" tabindex="-1"' : ''}></span>
@@ -416,7 +416,7 @@ function openCatForm(editId, fromEmpty, onDone) {
   const ov = document.createElement('div');
   ov.className = 'apf-ov'; ov.id = 'appCatOverlay';
   ov.innerHTML = `<div class="apf" role="dialog" aria-modal="true">
-    <div class="apf-h"><b>${c ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish">✕</button></div>
+    <div class="apf-h"><b>${c ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <label class="apf-l">Nomi<input id="acName" maxlength="40" autocomplete="off" value="${esc(c?.name || '')}" placeholder="Maktab"></label>
     <label class="apf-l">Unikal nom (URL)
       <span class="apf-slug"><i>/apps/</i><input id="acSlug" maxlength="30" autocomplete="off" spellcheck="false" value="${esc(c?.slug || '')}" placeholder="school"${c ? ' readonly aria-readonly="true" tabindex="-1"' : ''}></span>

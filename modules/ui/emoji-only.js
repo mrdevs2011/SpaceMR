@@ -1,11 +1,11 @@
 /* emoji-only.js — xabar faqat emojidan iborat bo'lsa, chat.js/groups.js `.chat-msg` ga qo'shadigan klass.
    1 ta emoji eng katta, 2 va 3 ta — kichikroq (bubblesiz); 4+ — oddiy bubble (CSS: .emo-1..emo-3). */
-import { emojiImg } from './emoji-img.js';
+import { emojiHtml, tokensToPua } from './emoji-img.js';
 const SEG = (typeof Intl !== 'undefined' && Intl.Segmenter) ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
-const EMO = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[#*0-9]\uFE0F?\u20E3)/u;
+const EMO = /^(?:\uE000|\p{Extended_Pictographic}|\p{Regional_Indicator}|[#*0-9]\uFE0F?\u20E3)/u;
 
 export function emojiOnlyCount(text) {
-  const t = String(text || '').replace(/\s+/g, '');
+  const t = tokensToPua(text).replace(/\s+/g, '');
   if (!t || t.length > 200) return 0;
   const parts = SEG ? [...SEG.segment(t)].map(s => s.segment) : Array.from(t);
   for (const g of parts) if (!EMO.test(g)) return 0;
@@ -58,10 +58,8 @@ function softPop(t) {
 
 initEmojiTap();
 
-/* Xabar HTML'idagi emojilarni <span class="emj"> ichiga o'raydi — CSS user-select:none
-   (chat/guruhda emoji belgilanmaydi). Teglar ichiga tegilmaydi. */
-const EMJ_RE = /(<[^>]*>)|((?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[#*0-9]\uFE0F?\u20E3)(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*)/gu;
-/* kind: '2d' (oddiy) yoki '3d' (faqat bubblesiz katta emoji-only xabarlar) — rasm emoji-img.js'dan */
-export function wrapEmojiNoSelect(html, kind = '2d') {
-  return String(html || '').replace(EMJ_RE, (m, tag, emo) => tag ? tag : `<span class="emj">${emojiImg(emo, kind)}</span>`);
+/* Xabar HTML'idagi [[emoji/2d/..png]] tokenlari (va eski xabarlardagi emoji belgilari) <span class="emj"><img> bo'ladi —
+   CSS user-select:none (chat/guruhda emoji belgilanmaydi). Teglar ichiga tegilmaydi. 2-argument eski chaqiruvlar uchun (e'tiborsiz). */
+export function wrapEmojiNoSelect(html /*, kind */) {
+  return emojiHtml(html);
 }
