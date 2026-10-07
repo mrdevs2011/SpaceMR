@@ -1832,6 +1832,7 @@ function _teardownReadObserver() {
 
 async function markThreadRead(chatId, otherUid, msgs) {
   if (!state.me || !chatId || !otherUid) return;
+  const me = state.me.uid;
   const unread = (msgs || []).filter(m =>
     m && m.senderId === otherUid && m.status !== 'read' && !chatState._locallyReadIds.has(m.id)
   );
@@ -1851,7 +1852,21 @@ async function markThreadRead(chatId, otherUid, msgs) {
       m.senderId === otherUid && m.status !== 'read' && !chatState._locallyReadIds.has(m.id)
     ).length;
     await sb.from('chat_members').update({ unread_count: remaining })
-      .eq('chat_id', chatId).eq('user_id', state.me.uid);
+      .eq('chat_id', chatId).eq('user_id', me);
+
+    // Lokal badge darhol — realtime kechiksa ham +N qolib ketmasin
+    const prev = chatState._latestChatMap[otherUid];
+    if (prev) {
+      chatState._latestChatMap[otherUid] = {
+        ...prev,
+        unreadCount: { ...(prev.unreadCount || {}), [me]: remaining },
+      };
+    }
+    const total = Object.values(chatState._latestChatMap).reduce(
+      (n, c) => n + (c.unreadCount?.[me] || 0), 0
+    );
+    updateChatBadge(total);
+    if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
 
     try { chatState._rt?.sendRead(ids); } catch (_) {}
   } catch (err) {
@@ -1887,7 +1902,7 @@ function _observeMessagesForRead() {
       if (!peer) return;
       let any = false;
       for (const e of entries) {
-        if (!e.isIntersecting || e.intersectionRatio < 0.4) continue;
+        if (!e.isIntersecting || e.intersectionRatio < 0.15) continue;
         const id = e.target?.dataset?.msgId;
         if (!id) continue;
         if (chatState._locallyReadIds.has(id) || chatState._pendingReadIds.has(id)) continue;
@@ -1903,7 +1918,7 @@ function _observeMessagesForRead() {
     }, {
       root: box,
       rootMargin: '0px',
-      threshold: [0.4, 0.6, 0.85],
+      threshold: [0.15, 0.4, 0.7],
     });
   } else {
     try { chatState._readObs.disconnect(); } catch (_) {}
@@ -2501,6 +2516,28 @@ export function resetSeenMsgs(key) {
 export function closeChatThread() {
   $('chatThreadModal')?.classList.remove('is-saved');
   try { forceStopVoiceRecording(); } catch (err) {}
+  // Yopishdan oldin: ekranda turgan + pending o'qishlarni yozib qo'yamiz (badge qolib ketmasin)
+  try {
+    const chatId = state.currentChatId;
+    const peer = state.currentChatUid;
+    if (chatId && peer && state.me && state.currentChatKind !== 'group') {
+      clearTimeout(chatState._readFlushTimer);
+      chatState._readFlushTimer = null;
+      const pending = [...chatState._pendingReadIds];
+      chatState._pendingReadIds.clear();
+      const fromPending = chatState._curMsgs.filter(m => pending.includes(m.id));
+      const allPeerUnread = chatState._curMsgs.filter(m =>
+        m && m.senderId === peer && m.status !== 'read' && !chatState._locallyReadIds.has(m.id)
+      );
+      const byId = new Map();
+      for (const m of [...fromPending, ...allPeerUnread]) if (m?.id) byId.set(m.id, m);
+      const batch = [...byId.values()];
+      if (batch.length) {
+        // fire-and-forget — yopishni kutdirmaymiz
+        markThreadRead(chatId, peer, batch);
+      }
+    }
+  } catch (_) {}
   _teardownReadObserver();
   chatState._locallyReadIds.clear();
   document.getElementById('chatHeaderDropdown')?.remove();
