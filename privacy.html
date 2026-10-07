@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maxfiylik siyosati — SpaceMR</title>
+  <link rel="stylesheet" href="/app.css" />
+  <style>
+    body { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; line-height: 1.55; color: var(--text, #e8e8e8); background: var(--bg, #0a0a0a); }
+    h1 { font-size: 1.35rem; margin: 0 0 0.5rem; }
+    h2 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; }
+    p, li { color: var(--text2, #b0b0b0); font-size: 0.95rem; }
+    a { color: var(--accent, #6ea8fe); }
+    .meta { color: var(--text3, #777); font-size: 0.85rem; margin-bottom: 1.25rem; }
+  </style>
+</head>
+<body>
+  <p><a href="/">← SpaceMR</a></p>
+  <h1>Maxfiylik siyosati</h1>
+  <p class="meta">Yangilangan: 2026-10-07 · Yopiq oilaviy / do‘stlar doirasi ilovasi</p>
+
+  <p>SpaceMR — ochiq ommaviy ijtimoiy tarmoq emas. Kirish admin tasdiqlashi bilan cheklangan.</p>
+
+  <h2>Qanday ma’lumot saqlanadi</h2>
+  <ul>
+    <li>Hisob: username, ko‘rsatiladigan ism, avatar, ixtiyoriy bio/sayt</li>
+    <li>Xabarlar va guruh xabarlari (matn, ovoz, fayl, reaksiyalar)</li>
+    <li>Postlar, izohlar, like, hikoyalar, saqlanganlar</li>
+    <li>Media fayllar (rasm/video/audio) — Storage’da</li>
+    <li>Qurilma sessiyalari, push obunalari (bildirishnoma uchun)</li>
+    <li>Ixtiyoriy tiklash email / telefon (agar kiritilgan bo‘lsa)</li>
+    <li>Texnik xato jurnali (xabar, brauzer, stack — shaxsiy matn emas)</li>
+  </ul>
+
+  <h2>Kim ko‘ra oladi</h2>
+  <ul>
+    <li>Siz va suhbatdoshlar — o‘z xabarlaringiz/postlaringiz</li>
+    <li>Admin — moderatsiya, tasdiqlash, xavfsizlik (RLS + admin huquqi)</li>
+    <li>Uchinchi tomon reklama tarmog‘i yo‘q</li>
+  </ul>
+
+  <h2>Saqlash va xavfsizlik</h2>
+  <p>Ma’lumotlar Supabase (Postgres + Storage) da, qator darajasida ruxsat (RLS) bilan. Parollar Supabase Auth orqali xeshlanadi. Brauzerga faqat ochiq (anon) kalit beriladi.</p>
+
+  <h2>O‘chirish</h2>
+  <p>Hisobni o‘chirish yoki ma’lumot eksporti uchun admin bilan bog‘laning. Admin panel orqali foydalanuvchi va bog‘liq ma’lumotlar o‘chirilishi mumkin (wipe oqimi).</p>
+
+  <h2>Aloqa</h2>
+  <p>Savollar: ilova admini orqali.</p>
+  <p><a href="/terms.html">Foydalanish shartlari</a></p>
+</body>
+</html>

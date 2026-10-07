@@ -264,3 +264,7 @@ button:active > img.icon {
    manifest.json theme_color/background_color + <meta theme-color> + html/body fon — hammasi #000000. ── */
 html { background: #000000; min-height: 100%; overscroll-behavior: none; }
 body { min-height: 100vh; min-height: 100dvh; background: #000000; overscroll-behavior: none; }
+
+/* A11y: klaviatura fokus (sichqoncha :focus outline yoq) */
+:focus-visible { outline: 2px solid var(--pal-blue, #1d9bf0); outline-offset: 2px; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible) { outline: none; }
