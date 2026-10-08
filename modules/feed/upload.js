@@ -483,7 +483,8 @@ function raiseUploadOverlay() {
   ov.style.position = 'fixed';
   ov.style.inset = '0';
   ov.style.zIndex = '2147483000';
-  ov.style.alignItems = 'flex-start';
+  ov.style.alignItems = 'center';
+  ov.style.justifyContent = 'center';
   ov.style.justifyContent = 'center';
   return ov;
 }
