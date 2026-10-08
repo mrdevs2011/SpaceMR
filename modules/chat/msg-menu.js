@@ -732,9 +732,14 @@ export async function commitEdit(rawText) {
   if (!plain) return true;
   if (plain === (ed.text || '').trim()) { cancelEdit(true); return true; }
   const text = encodeForSend(plain);
-  const { error } = await sb.from(tbl())
-    .update({ text, edited_at: new Date().toISOString() }).eq('id', ed.id);
-  if (error) { console.warn('[MsgMenu] edit:', error.message); toast('Tahrirlanmadi', 'error'); return true; }
+  const { data: _upRows, error } = await sb.from(tbl())
+    .update({ text, edited_at: new Date().toISOString() }).eq('id', ed.id).select('id');
+  if (error || !(_upRows || []).length) {   // RLS jim 0 qator / xabar allaqachon o'chirilgan — "tahrirlandi" deb aldamaymiz
+    console.warn('[MsgMenu] edit:', error?.message || '0 qator');
+    toast('Tahrirlanmadi', 'error');
+    api.reload();
+    return true;
+  }
   // Chats list last_message ni darhol yangila (DB trigger + client)
   try {
     if (typeof api.onMessageEdited === 'function') api.onMessageEdited(ed.id, text);

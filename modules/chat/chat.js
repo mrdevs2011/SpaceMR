@@ -896,12 +896,24 @@ function _dropGone(list) {
   return list;
 }
 
+/* Delta (seq) tahrirni qaytarmaydi (UPDATE seq oshirmaydi): so'rov paytida realtime orqali kelgan yangiroq tahrirni eski snapshot bosib ketmasin */
+function _keepNewerEdits(list, live) {
+  if (!list || !live || !live.length) return list;
+  const mp = new Map();
+  for (const m of live) if (m?.id) mp.set(String(m.id), m);
+  for (let i = 0; i < list.length; i++) {
+    const l = list[i], v = l && mp.get(String(l.id));
+    if (v && (Number(v.editedAt) || 0) > (Number(l.editedAt) || 0)) list[i] = { ...l, text: v.text, editedAt: v.editedAt };
+  }
+  return list;
+}
+
 function _rtMerge(msgs) {
   _dropGone(msgs);
   if (chatState._rtLocal.size) {
     const have = new Set(msgs.map(m => m.id));
     for (const [id, m] of chatState._rtLocal) {
-      if (have.has(id) || Date.now() - m._at > 20000) chatState._rtLocal.delete(id);
+      if (have.has(id) || (m.status !== 'failed' && m.status !== 'sending' && Date.now() - m._at > 20000)) chatState._rtLocal.delete(id);   // yuborilmagan (qayta urinish tugmali) xabar 20s dan keyin yo'qolmasin
       else msgs.push(m);
     }
   }
@@ -1762,6 +1774,7 @@ export async function openChatThread(uid) {
   // aks holda eski snapshot ustiga chizilib, ular jim yo'qolardi.
   const _mergeLive = (list, tombs, minTs) => {
     _dropGone(list);
+    _keepNewerEdits(list, chatState._curMsgs);
     const have = new Set(list.map(m => m.id));
     const dead = new Set((tombs || []).map(t => t?.message_id).filter(Boolean));
     let extra = false;

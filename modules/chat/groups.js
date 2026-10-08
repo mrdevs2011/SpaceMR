@@ -55,6 +55,17 @@ let _gLoaded = false;
 let _gReadMax = 0;          // boshqa a'zolardan biri o'qigan eng so'nggi vaqt (ms) — 062 (last_read_at)
 let _gRt = null;            // guruh uchun WebRTC mesh (zaxira: broadcast)
 const _gPending = new Map(); // bazadan hali tasdiqlanmagan optimistik xabarlar
+/* Delta (seq) tahrirni qaytarmaydi: so'rov paytida realtime orqali kelgan yangiroq tahrirni eski snapshot bosib ketmasin */
+function _gKeepNewerEdits(list, live) {
+  if (!list || !live || !live.length) return list;
+  const mp = new Map();
+  for (const m of live) if (m?.id) mp.set(String(m.id), m);
+  for (let i = 0; i < list.length; i++) {
+    const l = list[i], v = l && mp.get(String(l.id));
+    if (v && (Number(v.editedAt) || 0) > (Number(l.editedAt) || 0)) list[i] = { ...l, text: v.text, editedAt: v.editedAt };
+  }
+  return list;
+}
 const _gGone = new Set();    // o'chirilgan xabar id lari: kech kelgan nusxalar (P2P, pending, kesh) xabarni qaytarib chiqarmasin
 let _gForceFull = false;     // keyingi yuklash delta emas, bazadan to'liq (o'chirish xato bo'lganda)
 const _gUuid = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -676,7 +687,7 @@ export async function openGroupThread(groupId) {
             const have = new Set(msgs.map(m => m.id));
             for (const [pid, pm] of _gPending) {
               if (_gGone.has(String(pid))) { _gPending.delete(pid); continue; }
-              if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
+              if (have.has(pid) || (pm.status !== 'failed' && pm.status !== 'sending' && Date.now() - pm._at > 20000)) _gPending.delete(pid); else msgs.push(pm);
             }
           }
           await _readP;
@@ -696,6 +707,7 @@ export async function openGroupThread(groupId) {
               return (a.createdAt || 0) - (b.createdAt || 0);
             });
           }
+          _gKeepNewerEdits(msgs, _gMsgs);
           _gMsgs = msgs; _gLoaded = true;
           paintGroupMessages(msgs, _currentGroupData || groupData);
           if ((_latestGroupMap[groupId]?.unreadCount?.[state.me.uid] || 0) > 0) _resetGroupUnread(groupId);
@@ -720,11 +732,12 @@ export async function openGroupThread(groupId) {
       const have = new Set(msgs.map(m => m.id));
       for (const [pid, pm] of _gPending) {
         if (_gGone.has(String(pid))) { _gPending.delete(pid); continue; }
-        if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
+        if (have.has(pid) || (pm.status !== 'failed' && pm.status !== 'sending' && Date.now() - pm._at > 20000)) _gPending.delete(pid); else msgs.push(pm);
       }
     }
     await _readP;
     if (_gDead || _currentGroupId !== groupId) return;
+    _gKeepNewerEdits(msgs, _gMsgs);
     _gMsgs = msgs; _gLoaded = true;
     try {
       let mx = 0;
