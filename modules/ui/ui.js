@@ -14,6 +14,14 @@ function openSearchOverlay() {
   searchOverlay?.classList.add('open');
   setTimeout(() => searchInput?.focus(), 60);
   sbSearchToggle?.classList.add('search-active');
+  // URL: /explore (float emas — to'liq sahifa)
+  try {
+    import('../url-router.js').then(m => {
+      if (m.setUrl) m.setUrl('/explore');
+      else if (m.applyPath) m.applyPath('/explore');
+    }).catch(() => {});
+  } catch (_) {}
+  import('./right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
 }
 
 function closeSearchOverlay() {
@@ -21,6 +29,15 @@ function closeSearchOverlay() {
   sbSearchToggle?.classList.remove('search-active');
   import('./right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   if (searchInput) { searchInput.value = ''; _doSearch(''); }
+  // Explore yopilganda oldingi URL ga qaytish — url-router computeUrl + schedule
+  try {
+    import('../url-router.js').then(m => {
+      if (typeof m.goBack === 'function') {
+        /* overlay yopildi — sync orqali */
+      }
+      window.dispatchEvent(new CustomEvent('spacemr:route'));
+    }).catch(() => {});
+  } catch (_) {}
 }
 
 /* hdrSearchBtn onclick — router.js/_attachSearchHandler tomonidan boshqariladi.

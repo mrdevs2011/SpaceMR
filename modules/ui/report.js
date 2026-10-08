@@ -356,6 +356,15 @@ export function openReportPage(ctx = {}) {
   el.classList.add('is-open');
   el.setAttribute('aria-hidden', 'false');
   document.body.classList.add('report-open');
+  // URL /report (tab kabi, float emas)
+  if (!ctx.fromUrl) {
+    try {
+      if (location.pathname.replace(/\/+$/, '') !== '/report') {
+        history.pushState({ i: (history.state?.i || 0) + 1, prev: location.pathname }, '', '/report');
+      }
+    } catch (_) {}
+  }
+  try { window.dispatchEvent(new CustomEvent('spacemr:route')); } catch (_) {}
   setTimeout(() => {
     try { el.querySelector('.report-reason')?.focus({ preventScroll: true }); } catch (_) {}
   }, 50);
@@ -369,6 +378,14 @@ export function closeReportPage() {
   document.body.classList.remove('report-open');
   _ctx = null;
   _kindLocked = false;
+  try {
+    if (location.pathname.replace(/\/+$/, '') === '/report' || location.pathname.replace(/\/+$/, '') === '/shikoyat') {
+      const prev = history.state?.prev;
+      if (prev && prev !== '/report') history.pushState({ i: (history.state?.i || 0) + 1, prev: null }, '', prev);
+      else history.pushState({ i: (history.state?.i || 0) + 1, prev: null }, '', '/home');
+    }
+  } catch (_) {}
+  try { window.dispatchEvent(new CustomEvent('spacemr:route')); } catch (_) {}
 }
 
 window._openReportPage = openReportPage;

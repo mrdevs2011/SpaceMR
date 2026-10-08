@@ -117,7 +117,7 @@ self.addEventListener('notificationclick', (event) => {
 
 /* ── Cache versiyasi ── */
 // Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
-const CACHE_VERSION  = 't-1791303437580'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1791450000001'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 const EMOJI_CACHE    = 'spacemr-emoji-v1';
@@ -125,6 +125,7 @@ let _emojiCache = null;
 
 // PRECACHE_URLS — scripts/build-sw.mjs avtomatik to'ldiradi (barcha modules/**/*.js).
 // BEGIN_PRECACHE
+/* Faqat shell — modules runtime cache. */
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -135,119 +136,12 @@ const PRECACHE_URLS = [
   '/icons/icon-512.png',
   '/svg/logo.png',
   '/svg/favicon.png',
-  '/modules/admin/admin-badge.js',
-  '/modules/admin/admin-force-reload.js',
-  '/modules/admin/admin-gate.js',
-  '/modules/admin/admin-keys.js',
-  '/modules/admin/admin-reset-password.js',
-  '/modules/admin/admin-storage.js',
-  '/modules/admin/admin-wipe.js',
-  '/modules/apps/apps.js',
-  '/modules/apps/code-hl.js',
-  '/modules/apps/logo-extract.js',
-  '/modules/apps/panels.js',
-  '/modules/apps/runner.js',
-  '/modules/auth/auth-pending.js',
-  '/modules/auth/auth-recovery.js',
-  '/modules/auth/auth-reg-recovery.js',
-  '/modules/auth/auth-settings.js',
-  '/modules/auth/auth.js',
-  '/modules/auth/device-sessions.js',
-  '/modules/auth/pwd-ui.js',
-  '/modules/call/call.js',
-  '/modules/chat/attach-menu.js',
-  '/modules/chat/camera-access.js',
-  '/modules/chat/camera-capture.js',
-  '/modules/chat/chat-actions.js',
-  '/modules/chat/chat-media.js',
-  '/modules/chat/chat-pin.js',
-  '/modules/chat/chat-shared.js',
-  '/modules/chat/chat-state.js',
-  '/modules/chat/chat-storage.js',
-  '/modules/chat/chat-voice-player.js',
-  '/modules/chat/chat-voice-record.js',
-  '/modules/chat/chat.js',
-  '/modules/chat/chats-x.js',
-  '/modules/chat/components/chat-image-zoom.js',
-  '/modules/chat/components/message-bubble.js',
-  '/modules/chat/components/video-note.js',
-  '/modules/chat/groups.js',
-  '/modules/chat/msg-menu.js',
-  '/modules/chat/msg-reactions.js',
-  '/modules/chat/rt-chat.js',
-  '/modules/core/auto-update.js',
-  '/modules/core/cache-policy.js',
-  '/modules/core/config.js',
-  '/modules/core/env.js',
-  '/modules/core/error-log.js',
-  '/modules/core/file-icons.js',
-  '/modules/core/force-reload.js',
-  '/modules/core/icons.js',
-  '/modules/core/live.js',
-  '/modules/core/local-cache.js',
-  '/modules/core/no-autocomplete.js',
-  '/modules/core/perf.js',
-  '/modules/core/quota.js',
-  '/modules/core/rate-limit.js',
-  '/modules/core/rt-bus.js',
-  '/modules/core/scroll-jump-debug.js',
-  '/modules/core/store/db.js',
-  '/modules/core/store/flags.js',
-  '/modules/core/store/index.js',
-  '/modules/core/store/media-cache.js',
-  '/modules/core/store/outbox.js',
-  '/modules/core/store/paint-gate.js',
-  '/modules/core/store/store.js',
-  '/modules/core/store/sync.js',
-  '/modules/core/upload-policy.js',
-  '/modules/core/utils.js',
-  '/modules/core/video-hold-speed.js',
-  '/modules/core/video-policy.js',
-  '/modules/explore.js',
-  '/modules/feed/comments.js',
-  '/modules/feed/compress.js',
-  '/modules/feed/feed.js',
-  '/modules/feed/like-sync.js',
-  '/modules/feed/post-image-zoom.js',
-  '/modules/feed/stories.js',
-  '/modules/feed/story-cache.js',
-  '/modules/feed/upload.js',
-  '/modules/profile/profile.js',
-  '/modules/profile/view-actions.js',
-  '/modules/profile/view-apps.js',
-  '/modules/profile/view-chats.js',
-  '/modules/profile/view-home.js',
-  '/modules/profile/view-login.js',
-  '/modules/profile/view-notifs.js',
-  '/modules/profile/view-profile.js',
-  '/modules/profile/view-saved.js',
-  '/modules/profile/view-users.js',
-  '/modules/push.js',
-  '/modules/router.js',
   '/modules/script.js',
-  '/modules/ui/attach-menu.js',
-  '/modules/ui/avi-crop.js',
-  '/modules/ui/bar.js',
-  '/modules/ui/dissolve.js',
-  '/modules/ui/emoji-data.js',
-  '/modules/ui/emoji-dom.js',
-  '/modules/ui/emoji-img.js',
-  '/modules/ui/emoji-only.js',
-  '/modules/ui/emoji-picker.js',
-  '/modules/ui/emoji-uz.js',
-  '/modules/ui/esc-stack.js',
-  '/modules/ui/gif-panel.js',
-  '/modules/ui/install-guide.js',
-  '/modules/ui/notifs.js',
-  '/modules/ui/password-confirm.js',
-  '/modules/ui/right-rail.js',
-  '/modules/ui/shortcuts.js',
-  '/modules/ui/sidebar.js',
-  '/modules/ui/spacemr-group-chip.js',
-  '/modules/ui/toast.js',
-  '/modules/ui/ui.js',
-  '/modules/url-router.js',
-  '/modules/vendor/vendor-supabase.js'
+  '/modules/core/config.js',
+  '/modules/core/utils.js',
+  '/modules/core/env.js',
+  '/modules/router.js',
+  '/modules/url-router.js'
 ];
 // END_PRECACHE
 
@@ -270,8 +164,28 @@ function _isStaticAsset(request) {
 
 async function _precacheAll() {
   const cache = await caches.open(STATIC_CACHE);
-  // addAll bitta xatoda hammasi yiqiladi — alohida add
-  await Promise.all(PRECACHE_URLS.map(u => cache.add(u).catch(() => {})));
+  // Parallel cheklov + umumiy timeout — install uzoq osilib qolmasin (tab spinner)
+  const urls = PRECACHE_URLS.slice();
+  const CONC = 6;
+  const hardMs = 8000;
+  let i = 0;
+  const worker = async () => {
+    while (i < urls.length) {
+      const u = urls[i++];
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 4000);
+        const res = await fetch(u, { signal: ctrl.signal, cache: 'no-cache' });
+        clearTimeout(t);
+        if (res && res.ok) await cache.put(u, res.clone());
+      } catch (_) {}
+    }
+  };
+  const run = Promise.all(Array.from({ length: Math.min(CONC, urls.length) }, () => worker()));
+  await Promise.race([
+    run,
+    new Promise(r => setTimeout(r, hardMs)),
+  ]);
 }
 
 self.addEventListener('install', (event) => {

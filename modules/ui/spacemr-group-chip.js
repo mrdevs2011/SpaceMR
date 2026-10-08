@@ -120,7 +120,7 @@ else _bindPushPrefs();
 
 /* Shikoyat — sozlamalar + desktop leftbar */
 function _bindReportRow() {
-  const go = () => import('./report.js').then(m => m.openReportPage({ kind: 'other' })).catch(() => {});
+  const go = () => import('../url-router.js').then(m => m.applyPath('/report')).catch(() => import('./report.js').then(r => r.openReportPage({ kind: 'other' })));
   const bind = (el) => {
     if (!el || el._bound) return;
     el._bound = true;

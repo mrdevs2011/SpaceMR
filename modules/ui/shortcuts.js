@@ -139,9 +139,9 @@ document.addEventListener('keydown', e => {
         });
         return;
       }
-      if (digit === '9') { // Shikoyat
-        import('./report.js').then(m => m.openReportPage({ kind: 'other' })).catch(() => {
-          $('sbReportBtn')?.click();
+      if (digit === '9') { // Shikoyat — /report
+        import('../url-router.js').then(m => m.applyPath('/report')).catch(() => {
+          import('./report.js').then(r => r.openReportPage({ kind: 'other' }));
         });
         return;
       }

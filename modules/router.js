@@ -267,8 +267,7 @@ function _initSearchHandlers() {
 
   function handleSearchClick(e) {
     e.stopPropagation();
-    // Leftbar/header qidiruv — HAR DOIM alohida Explore/qidiruv sahifasini ochadi.
-    // Tabga (chats/profile/home) bog'liq emas, suhbat inputini fokuslamaydi.
+    // Explore — to'liq sahifa + /explore URL (float modal emas)
     const overlay = document.getElementById('searchOverlay');
     if (!overlay) return;
     if (overlay.classList.contains('open')) {
@@ -277,11 +276,14 @@ function _initSearchHandlers() {
       hdrSearchBtn?.classList.remove('search-active');
       const si = document.getElementById('searchInput');
       if (si) si.value = '';
+      window.dispatchEvent(new CustomEvent('spacemr:route'));
     } else {
-      overlay.classList.add('open');
-      sbSearchToggle?.classList.add('search-active');
-      hdrSearchBtn?.classList.add('search-active');
-      setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
+      import('./url-router.js').then(m => m.applyPath('/explore')).catch(() => {
+        overlay.classList.add('open');
+        sbSearchToggle?.classList.add('search-active');
+        hdrSearchBtn?.classList.add('search-active');
+        setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
+      });
     }
     import('./ui/right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   }
