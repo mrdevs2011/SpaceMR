@@ -476,8 +476,20 @@ function loadComposerAvi() {
 }
 
 /* ── Overlay open/close ──────────────────────────────────────────────── */
-export function openComposer() {
+function raiseUploadOverlay() {
   const ov = $('uploadOverlay');
+  if (!ov) return null;
+  if (ov.parentElement !== document.body) document.body.appendChild(ov);
+  ov.style.position = 'fixed';
+  ov.style.inset = '0';
+  ov.style.zIndex = '2147483000';
+  ov.style.alignItems = 'flex-start';
+  ov.style.justifyContent = 'center';
+  return ov;
+}
+
+export function openComposer() {
+  const ov = raiseUploadOverlay();
   if (!ov) return;
   ov.classList.add('show');
   lockScroll('uploadOverlay');
@@ -488,7 +500,7 @@ export function openComposer() {
 /* Story "+" bosilganda: fayl menejerini darhol ochmaymiz — post kabi composer kartasi ochiladi */
 export function openStoryComposer() {
   if (!state.me) return;
-  const ov = $('uploadOverlay');
+  const ov = raiseUploadOverlay();
   if (!ov) return;
   ov.classList.add('show');
   lockScroll('uploadOverlay');

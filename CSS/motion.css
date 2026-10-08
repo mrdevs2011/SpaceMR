@@ -253,3 +253,17 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
   contain: layout style;
 }
 img, video { decoding: async; }
+
+/* Post/story composer: har qanday tabda sahifa eng yuqorisi, eng baland qatlam */
+#uploadOverlay.show {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 12px 12px 24px !important;
+}
+#uploadOverlay.show .composer-sheet {
+  margin-top: 0 !important;
+}
