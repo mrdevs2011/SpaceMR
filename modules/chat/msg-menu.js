@@ -960,12 +960,23 @@ export function initMsgMenu(opts) {
         openMenu(r, null, null);
         return;
       }
+      blockTouch(true);
       beginDrag(r, y0);
     }, LONG_MS);
   }, { passive: true });
+  // Scrollni bloklamaslik uchun asosiy touchmove PASSIV. preventDefault kerak bo'lsa (surib belgilash / swipe-reply) —
+  // faqat shu paytga ulanadigan alohida (passiv bo'lmagan) listener ishlatiladi: oddiy scroll main-thread kutmaydi.
+  let touchBlocked = false;
+  const touchBlock = e => { if ((drag || sw?.on) && e.cancelable) e.preventDefault(); };
+  const blockTouch = on => {
+    if (on === touchBlocked) return;
+    touchBlocked = on;
+    if (on) box.addEventListener('touchmove', touchBlock, { passive: false });
+    else box.removeEventListener('touchmove', touchBlock);
+  };
   box.addEventListener('touchmove', e => {
     const t = e.touches[0];
-    if (drag) { e.preventDefault(); updateDrag(t.clientY); return; } // surish paytida ro'yxat o'zi siljimasin
+    if (drag) { updateDrag(t.clientY); return; } // surish paytida ro'yxat siljimasligini touchBlock ta'minlaydi
     if (sw) {
       const dx = t.clientX - sw.x, dy = t.clientY - sw.y;
       if (!sw.on) {
@@ -981,15 +992,15 @@ export function initMsgMenu(opts) {
           }
         }
       }
-      if (sw?.on) { e.preventDefault(); swUpdate(dx); return; }
+      if (sw?.on) { blockTouch(true); swUpdate(dx); return; }
     }
     if (!lp) return;
     if (Math.abs(t.clientX - lp.x) > 10 || Math.abs(t.clientY - lp.y) > 10) cancelLp();
-  }, { passive: false });
+  }, { passive: true });
   // Bosib turib qo'yib yuborilganda brauzer "click" yuborishi mumkin (play tugmasi, havola...) — uni yutamiz
   const endTouch = (e) => {
     if (sw) swEnd(e?.type === 'touchend' && sw.on && Math.abs(sw.dx) >= SW_TRIGGER);
-    cancelLp(); endDrag(); if (lpOpened) { lpOpened = false; suppressUntil = Date.now() + 400; }
+    cancelLp(); endDrag(); blockTouch(false); if (lpOpened) { lpOpened = false; suppressUntil = Date.now() + 400; }
   };
   box.addEventListener('touchend', endTouch, { passive: true });
   box.addEventListener('touchcancel', endTouch, { passive: true });
