@@ -882,8 +882,9 @@ export async function doDelete(id) {
     toast("Faqat o'z postingizni o'chira olasiz", 'error');
     return;
   }
-  const { error } = await sb.from('posts').delete().eq('id', id);
+  const { data: _delRows, error } = await sb.from('posts').delete().eq('id', id).select('id');
   if (error) { toast("O'chirib bo'lmadi: " + error.message, 'error'); return; }
+  if (!(_delRows || []).length) { toast("O'chirib bo'lmadi: ruxsat yo'q yoki post allaqachon yo'q", 'error'); return; }   // RLS jim 0 qator — post qayta chiqib qolmasin
   if (post?.mediaPath) {
     sb.storage.from(MEDIA_BUCKET).remove([post.mediaPath]).then(() => {
       import('../admin/admin-storage.js').then(m => m.refreshStorageUsage?.()).catch(() => {});

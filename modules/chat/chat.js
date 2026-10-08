@@ -562,6 +562,7 @@ export function initChatHeaderMenu() {
         const { error } = await q;
         if (error) throw error;
         chatState._curMsgs = [];
+        try { cacheThreadMessages(chatId, []); } catch (_) {}   // kesh qolsa keyingi ochishda xabarlar qaytadi
         paintMessages([]);
         const c = chatState._latestChatMap?.[uid];
         if (c) { c.lastMessage = ''; c.lastMessageAt = 0; c.lastSenderId = null; c.lastMessageId = null; }

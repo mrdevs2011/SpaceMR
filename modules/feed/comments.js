@@ -334,8 +334,9 @@ function _paintCmts(postId, listId, cmts, aMap) {
 
     const deleteCmt = async (cmtId) => {
       try {
-        const { error: delErr } = await sb.from('comments').delete().eq('id', cmtId);
+        const { data: _delRows, error: delErr } = await sb.from('comments').delete().eq('id', cmtId).select('id');
         if (delErr) throw delErr;
+        if (!(_delRows || []).length) throw new Error('0 qator o\'chirildi (RLS)');   // jim rad etilsa izoh qayta chiqib qolardi
         toast('Izoh o\'chirildi', 'success');
         const _left = cmts.filter(x => String(x.id) !== String(cmtId));
         _cmtCache = { postId, listId, cmts: _left, aMap };

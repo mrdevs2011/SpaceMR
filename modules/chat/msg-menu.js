@@ -645,7 +645,9 @@ function remove(ids) {
         }
       }
       try {
-        const { error } = await sb.from(tbl()).delete().in('id', idList);
+        // .select('id'): RLS qatorni jim o'tkazib yuborsa (0 qator) xato bermaydi — xabar keyin qaytib chiqardi
+        const { data: _delRows, error: _delErr } = await sb.from(tbl()).delete().in('id', idList).select('id');
+        const error = _delErr || ((_delRows || []).length ? null : { message: 'hech qaysi qator o\'chirilmadi (ruxsat yo\'q yoki allaqachon yo\'q)' });
         if (error) {
           unmarkDissolve(idList);
           console.warn('[MsgMenu] delete:', error.message);
