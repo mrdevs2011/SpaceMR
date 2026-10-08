@@ -4498,14 +4498,14 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 }
 
 
-/* Shikoyat modal — pure dark #000 */
+/* Shikoyat — base (joylashuv mono-x report-center-column da) */
 .report-sheet {
   position: fixed;
-  inset: 0;
-  z-index: 12000;
+  z-index: 30;
   display: none;
-  align-items: flex-end;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
+  background: #000;
 }
 .report-sheet.is-open { display: flex; }
 .report-sheet-backdrop {
