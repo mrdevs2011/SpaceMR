@@ -95,7 +95,6 @@ export function parsePath(rawPath) {
     if (a === 'apps')     return { kind: 'view', view: 'apps', sub: '' };
     if (a === 'settings') return { kind: 'redirect', to: isWideDesktop() ? '/profile' : '/profile/settings' };
     if (a === 'explore')  return { kind: 'overlay', overlay: 'explore', base: 'home' };
-    if (a === 'report' || a === 'shikoyat') return { kind: 'overlay', overlay: 'report', base: 'home' };
     if (a === 'newpost')  return { kind: 'overlay', overlay: 'newpost', base: 'home' };
   }
   if (a === 'apps' && (seg.length === 2 || seg.length === 3)) {
@@ -321,8 +320,6 @@ function computeUrl() {
 
   /* uploadOverlay float — URL ni o'zgartirmaydi (barcha sahifada ishlaydi) */
   if (hasShow('searchOverlay', 'open')) return '/explore' + (state.exploreQuery ? '?q=' + encodeURIComponent(state.exploreQuery) : '');
-  if (document.getElementById('reportSheet')?.classList.contains('is-open')) return '/report';
-
   if (threadOpen()) {
     const modal = $('chatThreadModal');
     if (state.currentChatKind === 'dm' && state.currentChatUid && state.me && state.currentChatUid === state.me.uid) return '/chats/saved-messages';
@@ -415,7 +412,7 @@ function sync() {
 
 const TITLES = {
   '/login': 'Kirish', '/home': 'Bosh sahifa', '/chats': 'Suhbatlar', '/profile': 'Profil',
-  '/settings': 'Sozlamalar', '/profile/settings': 'Sozlamalar', '/profile/settings/general': 'Sozlamalar', '/profile/settings/email': 'Sozlamalar', '/profile/settings/password': 'Sozlamalar', '/explore': 'Kashf', '/report': 'Shikoyat', '/shikoyat': 'Shikoyat', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
+  '/settings': 'Sozlamalar', '/profile/settings': 'Sozlamalar', '/profile/settings/general': 'Sozlamalar', '/profile/settings/email': 'Sozlamalar', '/profile/settings/password': 'Sozlamalar', '/explore': 'Kashf', '/newpost': 'Yangi post', '/actions': 'Boshqaruv', '/saved': 'Saqlanganlar',
   '/chats/groupcreate': 'Yangi guruh',
   '/chats/saved-messages': 'Saqlangan xabarlar',
 };
@@ -440,9 +437,6 @@ function closeEverythingExcept(keep) {
   if (keep !== 'groupcreate' && hasShow('grpCreateFormOverlay')) $('grpFormCancelBtn')?.click();
   /* uploadOverlay float — closeEverythingExcept yopmaydi */
   if (keep !== 'explore' && hasShow('searchOverlay', 'open')) $('searchOverlayClose')?.click();
-  if (keep !== 'report' && document.getElementById('reportSheet')?.classList.contains('is-open')) {
-    import('./ui/report.js').then(m => m.closeReportPage?.()).catch(() => {});
-  }
   if (keep !== 'settings' && hasShow('settingsOverlay') && !settingsPinned()) $('closeSettingsBtn')?.click();
 }
 
@@ -494,10 +488,6 @@ async function openOverlay(name, section) {
         setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
       }
     }
-    return;
-  }
-  if (name === 'report') {
-    import('./ui/report.js').then(m => m.openReportPage({ kind: 'other', fromUrl: true })).catch(() => {});
     return;
   }
   if (name === 'newpost') {

@@ -13,7 +13,7 @@
  *  P              — Profil
  *  Ctrl/Cmd+K     — Qidiruv
  *  Ctrl/Cmd+,     — Sozlamalar
- *  Ctrl/Cmd+1…9/0 — Home / Explore / Notifs / Chats / Apps / Saved / Profil / Group / Shikoyat / Post
+ *  Ctrl/Cmd+1…9/0 — Home / Explore / Notifs / Chats / Apps / Saved / Profil / Group / Post
  *  Ctrl/Cmd+Shift+0 — Story upload
  *  Delete         — tanlangan o'z xabarlarini o'chirish (chat)
  */
@@ -154,7 +154,6 @@ document.addEventListener('keydown', e => {
         case '6': path('/saved'); break;
         case '7': path('/profile'); break;
         case '8': path('/chats/g/spacemr'); break;
-        case '9': path('/report'); break;
         case '0':
           if (e.shiftKey) {
             import('../feed/upload.js').then(m => m.openStoryComposer?.()).catch(() => {});

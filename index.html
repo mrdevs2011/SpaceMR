@@ -76,7 +76,7 @@ html{color-scheme:dark;}
       var s = p.split('/').filter(Boolean).map(function(x){ try { return decodeURIComponent(x); } catch (e) { return x; } });
       var a = (s[0] || '').toLowerCase(), b = (s[1] || '').toLowerCase(), n = s.length, ok = false;
       if (!n) ok = true;
-      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications|apps|report|shikoyat)$/.test(a);
+      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications|apps)$/.test(a);
       else if (a === 'profile' && b === 'settings') ok = (n === 2) || (n === 3 && /^(general|email|password)$/.test((s[2] || '').toLowerCase()));
       else if (a === 'profile' && n === 2) ok = /^(photos|videos|text|music)$/.test(b);
       else if (a === 'u' && n === 2) ok = true;
@@ -605,14 +605,10 @@ html[data-nf],html[data-nf] body{background:#000000}
       <span class="nav-badge d-none" id="adminActionsBadge"></span>
     </button>
 
-    <!-- SpaceMR Group + Shikoyat — Profil dan keyin (rasmdagi kabi) -->
+    <!-- SpaceMR Group — Profil dan keyin -->
     <button class="nav-btn sb-grp-row" id="sbGrpBtn" data-grp-chip aria-label="SpaceMR Group" data-tip="SpaceMR Group" type="button">
       <img src="./svg/logo.png" alt="" class="icon grp-chip-img" width="26" height="26">
       <span class="nav-label">SpaceMR Group</span>
-    </button>
-    <button class="nav-btn sb-report-btn" id="sbReportBtn" type="button" data-tip="Shikoyat" aria-label="Shikoyat qilish">
-      <img src="./svg/admin/warn.svg" alt="" class="icon" width="26" height="26">
-      <span class="nav-label">Shikoyat</span>
     </button>
 
     <!-- Joylash -->
@@ -968,13 +964,6 @@ html[data-nf],html[data-nf] body{background:#000000}
     </div>
 
     <div class="settings-section-label">Yordam</div>
-    <div class="settings-row" id="settingsReportRow" role="button" tabindex="0" style="cursor:pointer">
-      <div class="settings-row-text">
-        <div class="settings-row-title">Shikoyat qilish</div>
-        <div class="settings-row-hint">Post yoki foydalanuvchi haqida</div>
-      </div>
-      <span class="settings-row-chevron" aria-hidden="true">›</span>
-    </div>
     <div class="settings-row" id="settingsFeedbackRow" role="button" tabindex="0" style="cursor:pointer">
       <div class="settings-row-text">
         <div class="settings-row-title">Muammo haqida yozish</div>

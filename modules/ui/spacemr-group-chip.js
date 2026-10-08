@@ -118,17 +118,3 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else _bindPushPrefs();
 
 
-/* Shikoyat — sozlamalar + desktop leftbar */
-function _bindReportRow() {
-  const go = () => import('../url-router.js').then(m => m.applyPath('/report')).catch(() => import('./report.js').then(r => r.openReportPage({ kind: 'other' })));
-  const bind = (el) => {
-    if (!el || el._bound) return;
-    el._bound = true;
-    el.addEventListener('click', go);
-    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-  };
-  bind(document.getElementById('settingsReportRow'));
-  bind(document.getElementById('sbReportBtn'));
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindReportRow, { once: true });
-else _bindReportRow();
