@@ -123,6 +123,21 @@
   ],
   "routes": [
     {
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(self), microphone=(self), geolocation=()",
+        "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://spacemr.vercel.app https://*.vercel.app https://rtc.live.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self'; frame-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests",
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Resource-Policy": "same-site",
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        "X-XSS-Protection": "0"
+      },
+      "continue": true
+    },
+    {
       "src": "/(supabase|docs|scripts|CSS|tests|scratch)(/.*)?$",
       "status": 404,
       "continue": false
