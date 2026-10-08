@@ -40,6 +40,49 @@ window._chatVidMeta = function (v) {
   } catch (_) {}
   window._chatImgLoaded && window._chatImgLoaded(v);
 };
+/* ── Rolik (dumaloq video): qora/qotgan kadr muammosi ──
+   1) MediaRecorder webm/mp4'ida duration yo'q (Infinity) → metadata kelgach tuzatiladi.
+   2) preload=metadata birinchi kadrni chizmaydi → qora doira: kichik seek bilan kadr chiziladi.
+   3) Android (Chrome): har bir <video> kadr chizilgach apparat dekoderini ushlaydi; chatda ko'p rolik bo'lsa dekoderlar tugab,
+      qolganlari qora bo'lib qotadi. Shuning uchun kadr FAQAT ekrandagi roliklarga chiziladi, ekrandan uzoqlashganlarida
+      src bo'shatiladi (dekoder qaytadi) va qaytib kelganda qayta ulanadi. Ijro etilayotgani hech qachon bo'shatilmaydi. */
+const _noteIO = typeof IntersectionObserver !== 'undefined'
+  ? new IntersectionObserver(entries => {
+    for (const e of entries) {
+      const v = e.target;
+      if (!v.isConnected) { _noteIO.unobserve(v); continue; }
+      if (e.isIntersecting) {
+        v.dataset.noteVis = '1';
+        if (v.dataset.noteGone === '1') { v.dataset.noteGone = ''; v.src = v.dataset.noteSrc; }   // metadata qayta keladi → _chatNoteMeta kadrni chizadi
+        else _notePaint(v);
+      } else {
+        v.dataset.noteVis = '';
+        _noteRelease(v);
+      }
+    }
+  }, { rootMargin: '600px 0px' })
+  : null;
+function _notePaint(v) {
+  try { if (v.paused && !v.ended && (v.currentTime || 0) < 0.05) v.currentTime = 0.05; } catch (_) {}
+}
+function _noteRelease(v) {
+  try {
+    const w = v.closest('.cfm-note-wrap');
+    if (!v.dataset.noteSrc || !v.getAttribute('src') || !v.paused || w?.classList.contains('playing')) return;
+    v.dataset.noteGone = '1';
+    v.removeAttribute('src');
+    v.load();
+  } catch (_) {}
+}
+window._chatNoteMeta = function (v) {
+  try {
+    if (!v.dataset.noteSrc) v.dataset.noteSrc = v.getAttribute('src') || '';
+    ensureVideoDuration(v);
+    if (!_noteIO) { _notePaint(v); return; }
+    _noteIO.observe(v);                                   // allaqachon kuzatilsa — hech narsa o'zgarmaydi
+    if (v.dataset.noteVis === '1') { _notePaint(v); setTimeout(() => _notePaint(v), 700); }   // duration tuzatish seekidan keyin ham
+  } catch (_) {}
+};
 function _fmtVidTime(s) {
   if (!isFinite(s) || s < 0) return '0:00';
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
@@ -294,19 +337,20 @@ if (!window.__chatNoteBound) {
     document.querySelectorAll('.cfm-note-wrap.playing').forEach(stopNote);
     document.querySelectorAll('.cfm-vid-wrap.playing video').forEach(o => o.pause());
     w.classList.add('playing');
-    // Kechni oldini olish: avval buffer, keyin play
+    if (v.dataset.noteGone === '1') { v.dataset.noteGone = ''; v.src = v.dataset.noteSrc; }   // dekoder uchun bo'shatilgan bo'lsa — qayta ulaymiz
+    // Qotib qolmasin: duration tuzatiladi, play ishonchli (muted fallback + stalled/waiting tiklash)
     try { v.muted = false; } catch (_) {}
-    try { v.preload = 'auto'; } catch (_) {}
-    try { hardenVideoPlayback(v); } catch (_) {}
-    const tryPlay = () => v.play().catch(() => w.classList.remove('playing'));
-    if (v.readyState >= 2) tryPlay();
-    else {
-      const onReady = () => { v.removeEventListener('canplay', onReady); tryPlay(); };
-      v.addEventListener('canplay', onReady);
-      try { v.load(); } catch (_) {}
-      // fallback agar canplay kelmasa
-      setTimeout(() => { if (w.classList.contains('playing') && v.paused) tryPlay(); }, 800);
-    }
+    try { ensureVideoDuration(v); } catch (_) {}
+    const giveUp = () => w.classList.remove('playing');
+    v.addEventListener('error', giveUp, { once: true });
+    _playVidReliable(v);
+    // 2.5 s ichida ijro boshlanmasa — qora kadrda qotib turmasin: play tugmasi qaytadi (qayta bosilsa yana urinadi)
+    setTimeout(() => {
+      if (w.classList.contains('playing') && v.paused && !v.ended) {
+        v.removeEventListener('error', giveUp);
+        w.classList.remove('playing');
+      }
+    }, 2500);
   }, true);
   document.addEventListener('ended', e => {
     if (!e.target?.matches?.('.cfm-note-vid')) return;

@@ -26,7 +26,7 @@ export function renderVideoNote({ url, fileName, time, ticks = '', ttl = '' }) {
   const sec = videoNoteSec(fileName);
   return `<div class="cfm-note-wrap"${ttl}>
         <div class="cfm-note">
-          <video class="cfm-note-vid" src="${esc(url)}" preload="metadata" playsinline webkit-playsinline disablepictureinpicture></video>
+          <video class="cfm-note-vid" src="${esc(url)}" preload="metadata" playsinline webkit-playsinline disablepictureinpicture onloadedmetadata="window._chatNoteMeta&&window._chatNoteMeta(this)"></video>
           <button type="button" class="cfm-note-play" aria-label="Ijro etish">${PLAY_SVG}</button>
         </div>
         <span class="chat-msg-meta cfm-media-badge cfm-note-badge">
