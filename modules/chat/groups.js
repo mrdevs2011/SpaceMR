@@ -1320,7 +1320,7 @@ export async function openGroupInfo(groupId) {
             const online = isUidOnline(u.uid, isOnline(u.lastSeenAt));
             return `<div class="grp-member-row" data-uid="${uid}">
               <div class="grp-member-avi-wrap">
-                <div class="grp-member-avi"><img src="${esc(av)}" onerror="this.style.display='none'"></div>
+                <div class="grp-member-avi"><img loading="lazy" decoding="async" src="${esc(av)}" onerror="this.style.display='none'"></div>
                 ${online ? '<span class="presence-dot" title="onlayn"></span>' : ''}
               </div>
               <div class="grp-member-info">
@@ -1724,7 +1724,7 @@ export function openJoinGroupModal() {
       const joined = (g.members || []).includes(state.me?.uid);
       const cnt = g.subscriberCount || (g.members || []).length || 0;
       return `<div class="grp-join-row" data-gid="${esc(g.id)}">
-        <img class="grp-join-row-avi" src="${esc(g.avatar || defAvi(g.name || 'G'))}" alt="" onerror="this.style.visibility='hidden'">
+        <img loading="lazy" decoding="async" class="grp-join-row-avi" src="${esc(g.avatar || defAvi(g.name || 'G'))}" alt="" onerror="this.style.visibility='hidden'">
         <div class="grp-join-row-body">
           <div class="grp-join-row-name">${esc(g.name || 'Guruh')}</div>
           <div class="grp-join-row-meta">${g.username ? '@' + esc(g.username) + ' · ' : ''}${cnt} a'zo</div>

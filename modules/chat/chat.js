@@ -604,7 +604,7 @@ function _paintUserRows(users, animate = false) {
     const unameAttr = (!isSaved && u.username) ? ` data-username="${esc(u.username)}"` : '';
     return `<div class="chat-row${unread ? ' unread' : ''}${animate ? ' chat-row-anim' : ''}${isSaved ? ' chat-row-saved' : ''}" data-uid="${u.uid}"${isSaved ? ' data-saved="1"' : ''} ${animStyle}>
       <div class="chat-avi chat-avi-profile"${unameAttr} data-uid="${u.uid}" role="link" title="Profil" tabindex="0">
-        <img src="${esc(av)}" onerror="this.style.display='none'">
+        <img loading="lazy" decoding="async" src="${esc(av)}" onerror="this.style.display='none'">
         ${online ? '<span class="presence-dot" title="onlayn"></span>' : ''}
       </div>
       <div class="chat-row-body">
@@ -1315,7 +1315,7 @@ async function _appendGroupRows(root, term = '') {
 
       return `<div class="chat-row${unread ? ' unread' : ''}" data-gid="${g.id}">
         <div class="chat-avi">
-          <img src="${esc(av)}" onerror="this.style.display='none'">
+          <img loading="lazy" decoding="async" src="${esc(av)}" onerror="this.style.display='none'">
         </div>
         <div class="chat-row-body">
           <div class="chat-row-name">${esc(g.name || 'Guruh')}${unameHtml}</div>

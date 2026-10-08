@@ -296,7 +296,7 @@ export async function openDetail(id) {
   $('detailContent').innerHTML = `
     <div class="dm-handle"></div>
     <div class="dm-head">
-      <div class="dm-avi dm-avi-link" data-uid="${p.userId}"><img src="${esc(av)}" onerror="this.style.display='none'"></div>
+      <div class="dm-avi dm-avi-link" data-uid="${p.userId}"><img loading="lazy" decoding="async" src="${esc(av)}" onerror="this.style.display='none'"></div>
       <div class="dm-meta">
         <div class="dm-name dm-name-link" data-uid="${p.userId}">${esc(ud.fullName||'Noma\'lum')}</div>
         <div class="dm-time">${fmt(p.createdAt)}</div>

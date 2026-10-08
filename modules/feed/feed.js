@@ -210,7 +210,7 @@ export async function renderFeedTo(feedEl, posts) {
 
     html += `<div class="post" data-id="${p.id}">
       <div class="post-head">
-        <div class="avi user-avi-btn" data-uid="${p.userId}"><img src="${esc(u.avatar)}" onerror="this.style.display='none'"></div>
+        <div class="avi user-avi-btn" data-uid="${p.userId}"><img loading="lazy" decoding="async" src="${esc(u.avatar)}" onerror="this.style.display='none'"></div>
         <div class="post-meta user-avi-btn" data-uid="${p.userId}">
           <span class="post-name">${esc(u.fullName||'Noma\'lum')}</span>
           ${u.username ? `<span class="post-user">@${esc(u.username)}</span>` : ''}
