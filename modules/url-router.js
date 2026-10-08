@@ -61,6 +61,9 @@ let _replaceNext = false;     // keyingi sinxronlashda push emas, replace
 let _raf = 0;
 let _timer = 0;
 let _applying = false;
+let _applyGen = 0;
+let _applyChain = Promise.resolve();
+
 let _inited = false;
 const _unameCache = new Map(); // uid -> username
 
@@ -549,14 +552,14 @@ async function postExists(id) {
   return !!v;
 }
 
-/** URL ga qarab ilova holatini o'rnatadi. */
-export async function applyPath(rawPath, { initial = false } = {}) {
+/** URL ga qarab ilova holatini o'rnatadi (ichki). */
+async function _applyPathImpl(rawPath, { initial = false } = {}) {
   document.documentElement.removeAttribute('data-nf');
   // Chuqur havola (user/guruh/post) yuklanayotganda 404 chiqmasin — loading
   const _deep = /\/(chats\/(u|g)\/|u\/|p\/|s\/)/i.test(String(rawPath || ''));
   if (_deep) document.documentElement.setAttribute('data-route-loading', '1');
   _applying = true;
-  _suppressUntil = Date.now() + 900;
+  _suppressUntil = Date.now() + 120;
   try {
     const route = parsePath(rawPath);
     const here = location.pathname;
@@ -775,9 +778,20 @@ export async function applyPath(rawPath, { initial = false } = {}) {
     try { document.documentElement.removeAttribute('data-route-loading'); } catch (_) {}
     _applying = false;
     _fromLogin = false;
-    _suppressUntil = Date.now() + 150;
+    _suppressUntil = Date.now() + 80;
     schedule();
   }
+}
+
+/** Ketma-ket Ctrl+1,2,3… — faqat OXIRGI yo'l qo'llanadi (poyga yo'q). */
+export function applyPath(rawPath, opts = {}) {
+  const gen = ++_applyGen;
+  const job = () => {
+    if (gen !== _applyGen) return Promise.resolve();
+    return _applyPathImpl(rawPath, opts);
+  };
+  _applyChain = _applyChain.then(job, job);
+  return _applyChain;
 }
 
 /* ── Kirish holatini kuzatish ───────────────────────────────────────── */
