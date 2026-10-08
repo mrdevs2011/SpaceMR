@@ -95,13 +95,10 @@ export async function openMediaInModal(postId) {
   openZoom(post.mediaUrl, 'image');
 }
 
-/* ── Logo click → home ───────────────────────────────────────────────── */
+/* ── Header logo click → sahifani yangilash (SpaceMR yozuvi esa guruhga olib boradi) ── */
 const hdrLogoBtn = document.getElementById('hdrLogoBtn');
 if (hdrLogoBtn) {
-  hdrLogoBtn.addEventListener('click', async () => {
-    const { navigateTo } = await import('../router.js');
-    navigateTo('home');
-  });
+  hdrLogoBtn.addEventListener('click', () => { location.reload(); });
 }
 
 /* ── Nav buttons handled by router.js — do NOT add duplicate listeners here ── */
