@@ -34,3 +34,15 @@ Sentry vs client_errors, beta ro'yxati, jonli RLS negativ test va zaxira tiklash
 1. Preview smoke + telefon
 2. Prod promote / teg
 3. Beta SpaceMR guruhi orqali
+
+## Sinxron 100% (2026-10-08)
+
+| Tomon | Holat |
+|-------|--------|
+| Git `main` | = `origin/main` (`e71c6528`), dirty 0 |
+| Supabase | migratsiyalar `000`–`104` local=remote |
+| RLS | 29/29 jadval yoqilgan |
+| content_reports | bor, RLS on |
+| Klient | oflayn, shikoyat, onboarding, roadmap |
+
+Vercel Production avtomatik `main` deploy (agar ulangan bo'lsa).
