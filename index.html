@@ -226,6 +226,54 @@ html[data-nf],html[data-nf] body{background:#000000}
 </div>
 
 
+
+<script>
+/* Splash vaqtida versiya: yangi bo'lsa faqat HTML/CSS/JS keshini tashlab tarmoqdan qayta yuklaydi. Kontent (rasm, emoji, post) tegilmaydi. */
+(function(){
+  var KEY = 'spacemr_shell_ver';
+  var GUARD = 'spacemr_shell_reload';
+  function go() {
+    var path = (location.pathname || '/') + location.search + location.hash;
+    try { location.replace(path); } catch (e) { location.reload(); }
+  }
+  function shellReload(v) {
+    try { localStorage.setItem(KEY, v); sessionStorage.setItem(GUARD, v); } catch (e) {}
+    var jobs = [];
+    try {
+      if (window.caches && caches.keys) {
+        jobs.push(caches.keys().then(function(ks){
+          return Promise.all(ks.filter(function(k){ return /^spacemr-(static|runtime)-/.test(k); }).map(function(k){ return caches.delete(k); }));
+        }));
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+        jobs.push(navigator.serviceWorker.getRegistration().then(function(reg){
+          if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }));
+      }
+    } catch (e) {}
+    Promise.all(jobs).then(go, go);
+    setTimeout(go, 1600);
+  }
+  var ctrl = new AbortController();
+  var tm = setTimeout(function(){ try { ctrl.abort(); } catch (e) {} }, 2200);
+  fetch('/sw.js', { cache: 'no-store', credentials: 'omit', signal: ctrl.signal })
+    .then(function(r){ return r.ok ? r.text() : ''; })
+    .then(function(text){
+      clearTimeout(tm);
+      var m = /CACHE_VERSION\s*=\s*'([^']+)'/.exec(text || '');
+      var v = m ? m[1] : '';
+      if (!v) return;
+      var prev = '', guard = '';
+      try { prev = localStorage.getItem(KEY) || ''; } catch (e) {}
+      try { guard = sessionStorage.getItem(GUARD) || ''; } catch (e) {}
+      if (!prev) { try { localStorage.setItem(KEY, v); } catch (e) {} return; }
+      if (v === prev || v === guard) { try { localStorage.setItem(KEY, v); } catch (e) {} return; }
+      shellReload(v);
+    })
+    .catch(function(){ clearTimeout(tm); });
+})();
+</script>
+
 <!-- AUTH -->
 <div id="authWrap" style="display:none;">
   <div class="auth-card">

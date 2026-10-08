@@ -49,9 +49,14 @@ async function _apply() {
   } catch (_) {}
   _pending = false;
   try {
-    const { executeHardFullReload } = await import('./force-reload.js');
-    executeHardFullReload();
-  } catch (_) { location.reload(); }
+    if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter(k => /^spacemr-(static|runtime)-/.test(k)).map(k => caches.delete(k)));
+    }
+    const reg = await navigator.serviceWorker?.getRegistration?.();
+    reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+  } catch (_) {}
+  try { location.reload(); } catch (_) {}
 }
 
 async function _check() {
