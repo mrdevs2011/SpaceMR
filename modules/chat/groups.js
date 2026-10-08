@@ -55,6 +55,8 @@ let _gLoaded = false;
 let _gReadMax = 0;          // boshqa a'zolardan biri o'qigan eng so'nggi vaqt (ms) — 062 (last_read_at)
 let _gRt = null;            // guruh uchun WebRTC mesh (zaxira: broadcast)
 const _gPending = new Map(); // bazadan hali tasdiqlanmagan optimistik xabarlar
+const _gGone = new Set();    // o'chirilgan xabar id lari: kech kelgan nusxalar (P2P, pending, kesh) xabarni qaytarib chiqarmasin
+let _gForceFull = false;     // keyingi yuklash delta emas, bazadan to'liq (o'chirish xato bo'lganda)
 const _gUuid = () => (crypto.randomUUID ? crypto.randomUUID()
   : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
 let _groupChatSelFile = null;
@@ -337,7 +339,7 @@ export function stopGroupsWatcher() {
 /** P2P/broadcast orqali kelgan guruh xabari — bazadan oldin ko'rsatiladi (id bo'yicha dedup) */
 function _gIncoming(groupId, m) {
   if (!m?.id || _currentGroupId !== groupId || !_gLoaded) return;
-  if (_gPending.has(m.id) || _gMsgs.some(x => x.id === m.id)) return;
+  if (_gPending.has(m.id) || _gGone.has(String(m.id)) || _gMsgs.some(x => x.id === m.id)) return;
   if (m.from === state.me?.uid && !m.notice) return;
   const notice = m.notice || / (joined the group|left the group|changed the group photo|changed the group username|changed the group name|guruhga qo'shildi|guruhdan chiqdi|guruh nomini o'zgartirdi|guruh rasmini o'zgartirdi|guruh usernameini o'zgartirdi)$/.test(m.text || '');
   if (!notice && !(_currentGroupData?.members || []).includes(m.from) && m.from !== state.me?.uid) return;
@@ -635,7 +637,7 @@ export async function openGroupThread(groupId) {
   // Subscribe to messages
   if (_groupThreadUnsub) { _groupThreadUnsub(); _groupThreadUnsub = null; }
   let _gDead = false, _gTimer = null;
-  _gMsgs = []; _gLoaded = false; _gReadMax = 0; _gPending.clear();
+  _gMsgs = []; _gLoaded = false; _gReadMax = 0; _gPending.clear(); _gGone.clear(); _gForceFull = false;
   // Tezkor yo'l: a'zolar bilan to'liq mesh (WebRTC DataChannel); baza baribir asosiy
   if (_gRt) { _gRt.close(); _gRt = null; }
   _gRt = openRtGroup(groupId, (_currentGroupData || groupData)?.members || [], {
@@ -645,6 +647,7 @@ export async function openGroupThread(groupId) {
     onRetract: (id) => {
       if (!_gPending.has(id) || _currentGroupId !== groupId) return;   // faqat hali bazada tasdiqlanmagan nusxa
       _gPending.delete(id);
+      _gGone.add(String(id));
       markDissolve([id]);
       _gMsgs = _gMsgs.filter(x => x.id !== id);
       paintGroupMessages(_gMsgs, _currentGroupData);
@@ -659,10 +662,11 @@ export async function openGroupThread(groupId) {
   }).catch(() => {});
   const loadMsgs = async () => {
     const _readP = _gLoadReadMax(groupId);   // xabarlar bilan bir vaqtda so'raladi
+    const _full = _gForceFull; _gForceFull = false;
 
     // Phase 4/8: seq-delta. Faqat ekranda allaqachon xabarlar bo'lsa (resync/reconnect);
     // yangi ochilganda (_gMsgs bo'sh) kursor eski bo'lib, delta bo'sh qaytadi -> "xabarlar yo'q" xatosi
-    if (isSyncV2Enabled() && _gMsgs.length) {
+    if (isSyncV2Enabled() && _gMsgs.length && !_full) {
       try {
         const delta = await loadGroupDelta(groupId, _gMsgs || []);
         if (_gDead || _currentGroupId !== groupId) return;
@@ -671,6 +675,7 @@ export async function openGroupThread(groupId) {
           if (_gPending.size) {
             const have = new Set(msgs.map(m => m.id));
             for (const [pid, pm] of _gPending) {
+              if (_gGone.has(String(pid))) { _gPending.delete(pid); continue; }
               if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
             }
           }
@@ -682,7 +687,7 @@ export async function openGroupThread(groupId) {
             const _dead = new Set((delta.tombstones || []).map(t => t?.message_id).filter(Boolean));
             let _extra = false;
             for (const m of (_gMsgs || [])) {
-              if (!m?.id || _have.has(m.id) || _dead.has(m.id) || _gPending.has(m.id) || String(m.id).startsWith('tmp') || m.status === 'sending') continue;
+              if (!m?.id || _have.has(m.id) || _dead.has(m.id) || _gGone.has(String(m.id)) || _gPending.has(m.id) || String(m.id).startsWith('tmp') || m.status === 'sending') continue;
               msgs.push(m); _have.add(m.id); _extra = true;
             }
             if (_extra) msgs.sort((a, b) => {
@@ -714,6 +719,7 @@ export async function openGroupThread(groupId) {
     if (_gPending.size) {
       const have = new Set(msgs.map(m => m.id));
       for (const [pid, pm] of _gPending) {
+        if (_gGone.has(String(pid))) { _gPending.delete(pid); continue; }
         if (have.has(pid) || Date.now() - pm._at > 20000) _gPending.delete(pid); else msgs.push(pm);
       }
     }
@@ -735,6 +741,7 @@ export async function openGroupThread(groupId) {
     if (_gDead || _currentGroupId !== groupId) return;
     if (!_gLoaded) { sched(); return; }
     if (p.eventType === 'DELETE') {
+      if (p.old?.id) _gGone.add(String(p.old.id));
       if (isSyncV2Enabled()) return; // Phase 5: tombstone kanal
       const did = p.old?.id;
       if (!did) { sched(); return; }
@@ -744,6 +751,7 @@ export async function openGroupThread(groupId) {
     } else {
       const m = mapMessage(p.new);
       if (!m || !m.id) { sched(); return; }
+      if (_gGone.has(String(m.id))) return;   // allaqachon o'chirilgan xabarning kech kelgan nusxasi
       _gPending.delete(m.id);
       const i = _gMsgs.findIndex(x => String(x.id) === String(m.id));
       if (i >= 0) {
@@ -791,6 +799,7 @@ export async function openGroupThread(groupId) {
       if (_gDead || _currentGroupId !== groupId) return;
       const did = row?.message_id;
       if (!did) return;
+      _gGone.add(String(did));
       _gPending.delete(did);
       markDissolve([did]);
       _gMsgs = _gMsgs.filter(x => x.id !== did);
@@ -884,7 +893,11 @@ chatUI.isGroupModerator = () => {
 };
 chatUI.groupNames = () => _gNames();
 /* Lokal (optimistik) o'chirishda guruh xabarlar keshidan ham darhol olib tashlaymiz — DELETE hodisasi kelguncha qayta chizilsa xabar qaytib chiqmasin */
-chatUI.dropGroupMsgs = (ids) => { const set = new Set((ids || []).map(String)); _gMsgs = _gMsgs.filter(x => !set.has(String(x.id))); };
+chatUI.dropGroupMsgs = (ids) => {
+  const set = new Set((ids || []).map(String));
+  set.forEach(id => { _gGone.add(id); _gPending.delete(id); });   // pending'da qolsa keyingi yuklashda qaytib chiqardi
+  _gMsgs = _gMsgs.filter(x => !set.has(String(x.id)));
+};
 
 /* Yuboruvchi ismlari + guruhdagi roli (owner/admin) — sarlavhada nishon uchun */
 function _gNames() {
@@ -993,7 +1006,7 @@ export function groupTypingInput() {
   clearTimeout(_gTypTimer);
   _gTypTimer = setTimeout(() => _gSetTyping(false), TYPING_STOP_MS);
 }
-export function reloadGroupThread() { _reloadGroupThread && _reloadGroupThread(); }
+export function reloadGroupThread() { _gGone.clear(); _gForceFull = true; _reloadGroupThread && _reloadGroupThread(); }   // tashqaridan (masalan o'chirish xato bo'lganda) — bazadan to'liq
 
 /* ─────────────────────────────────────────────────────────────────────
    SEND MESSAGE TO GROUP / CHANNEL
