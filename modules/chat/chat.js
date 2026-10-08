@@ -1080,7 +1080,11 @@ function _onProfileLive(row) {
 
 export function startChatsWatcher() {
   // Qoralamalar: chat.js modul yuklanganda state.me hali yo'q (kirishdan oldin) — shuning uchun serverdan faqat shu yerda (kirgandan keyin) yuklanadi
-  loadDrafts().then(() => { try { renderChatsList(); } catch (_) {} }).catch(() => {});
+  // FAQAT bir marta (akkaunt boshiga): renderChatsList -> startChatsWatcher -> loadDrafts -> renderChatsList sikli cheksiz so'rov (ERR_INSUFFICIENT_RESOURCES) berardi
+  if (state.me?.uid && chatState._draftsLoadedFor !== state.me.uid) {
+    chatState._draftsLoadedFor = state.me.uid;
+    loadDrafts().then(() => { try { renderChatsList(); } catch (_) {} }).catch(() => {});
+  }
   // Boshqalarning profil o'zgarishlari (ism/avatar) — BIR MARTA ulanamiz
   if (!chatState._profileLiveCh) {
     chatState._profileLiveCh = sb.channel('profiles-live-names')
@@ -1264,6 +1268,7 @@ export function startChatsWatcher() {
 
 export function stopChatsWatcher() {
   stopGroupsWatcher();
+  chatState._draftsLoadedFor = null;
   try { resetDrafts(); } catch (_) {}   // chiqishda oldingi akkaunt qoralamalari xotirada qolmasin
   if (chatState._chatsUnsub) { chatState._chatsUnsub(); chatState._chatsUnsub = null; }
   if (chatState._noticeUnsub) { chatState._noticeUnsub(); chatState._noticeUnsub = null; }
