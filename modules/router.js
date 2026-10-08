@@ -63,6 +63,8 @@ let isInitialized = false;
    Barchasi routes at root (/) - no subpaths
    ═══════════════════════════════════════════════════════════════════════ */
 
+const VIEW_URL = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications', apps: '/apps' };
+
 export function navigateTo(routeName, pushState = true) {
   const route = routes[routeName];
   if (!route) {
@@ -70,7 +72,15 @@ export function navigateTo(routeName, pushState = true) {
     return;
   }
 
-  // URL ni url-router.js boshqaradi (holat -> URL sinxronlash, 'spacemr:route' hodisasi orqali)
+  // Avval URL (0ms), keyin sahifa. applyPath o'zi chaqirsa pushState=false.
+  if (pushState !== false) {
+    const path = VIEW_URL[routeName] || '/home';
+    if (location.pathname !== path) {
+      const st = history.state || {};
+      history.pushState({ i: (st.i || 0) + 1, prev: location.pathname }, '', path);
+    }
+  }
+
   state.focusPostId = null; state.focusCmtId = null;   // /p/<id> fokusi tab almashganda tozalanadi
 
   // Post/story composer float — tab almashganda saqlab qolamiz

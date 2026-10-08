@@ -386,8 +386,9 @@ export function goBack() {
 }
 
 function schedule() {
-  if (_raf) return;
-  _raf = requestAnimationFrame(() => { _raf = 0; sync(); });
+  if (_raf) cancelAnimationFrame(_raf);
+  _raf = 0;
+  sync();
 }
 
 function sync() {

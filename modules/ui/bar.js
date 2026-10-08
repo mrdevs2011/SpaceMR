@@ -18,10 +18,13 @@ let currentView = 'home';
    NAV BUTTON CLICK HANDLER
    ═══════════════════════════════════════════════════════════════════════ */
 
-async function handleNavClick(viewName) {
-  // Always delegate to router — router owns current-view state
-  const { navigateTo } = await import('../router.js');
-  navigateTo(viewName);
+function handleNavClick(viewName) {
+  const path = { home: '/home', explore: '/explore', notifs: '/notifications', chats: '/chats', apps: '/apps', saved: '/saved', profile: '/profile', actions: '/actions' }[viewName] || '/home';
+  if (location.pathname !== path) {
+    const st = history.state || {};
+    history.pushState({ i: (st.i || 0) + 1, prev: location.pathname }, '', path);
+  }
+  import('../url-router.js').then(m => m.applyPath(path)).catch(() => import('../router.js').then(r => r.navigateTo(viewName, false)));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
