@@ -4578,11 +4578,10 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 .report-kind-wrap {
   position: relative;
   margin-bottom: 14px;
+  z-index: 2;
 }
-.report-kind-select {
+.report-kind-btn {
   width: 100%;
-  appearance: none;
-  -webkit-appearance: none;
   box-sizing: border-box;
   min-height: 48px;
   padding: 12px 40px 12px 14px;
@@ -4595,21 +4594,27 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   font-family: inherit;
   cursor: pointer;
   outline: none;
+  text-align: left;
+  display: flex;
+  align-items: center;
   transition: border-color .15s ease;
+  position: relative;
 }
-.report-kind-select:hover:not(:disabled),
-.report-kind-select:focus {
+.report-kind-btn:hover:not(:disabled),
+.report-kind-wrap.is-open .report-kind-btn {
   border-color: #1d9bf0;
 }
-.report-kind-select:disabled,
-.report-kind-select.is-locked {
+.report-kind-wrap.is-locked .report-kind-btn,
+.report-kind-btn:disabled {
   opacity: 0.85;
   cursor: default;
-  color: #e7e9ea;
 }
-.report-kind-select option {
-  background: #000;
-  color: #e7e9ea;
+.report-kind-val {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .report-kind-chev {
   position: absolute;
@@ -4619,6 +4624,45 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   color: #71767b;
   font-size: 12px;
   pointer-events: none;
+  transition: transform .15s ease;
+}
+.report-kind-wrap.is-open .report-kind-chev {
+  transform: translateY(-50%) rotate(180deg);
+  color: #1d9bf0;
+}
+.report-kind-menu {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 6px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  background: #000;
+  border: 1px solid #2f3336;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.65);
+  max-height: 240px;
+  overflow-y: auto;
+}
+.report-kind-menu[hidden] { display: none !important; }
+.report-kind-opt {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #e7e9ea;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.report-kind-opt:hover {
+  background: rgba(231,233,234,0.08);
+}
+.report-kind-opt.is-on {
+  background: rgba(29,155,240,0.16);
+  color: #1d9bf0;
+  font-weight: 600;
 }
 
 .report-target {

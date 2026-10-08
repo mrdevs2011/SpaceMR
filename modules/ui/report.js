@@ -34,6 +34,11 @@ function _esc(s) {
 
 function _ensureDom() {
   let el = document.getElementById('reportSheet');
+  // Eski native <select> versiyasi — yangilab qayta chizamiz
+  if (el && !el.querySelector('#reportKindBtn')) {
+    el.remove();
+    el = null;
+  }
   if (el) return el;
 
   el = document.createElement('div');
@@ -51,12 +56,17 @@ function _ensureDom() {
       </div>
       <p class="report-sheet-lead">Muammo haqida yozing — xabar <strong>SpaceMR</strong> guruhiga yuboriladi.</p>
 
-      <label class="report-kind-lbl" for="reportKind">Shikoyat turi</label>
-      <div class="report-kind-wrap">
-        <select id="reportKind" class="report-kind-select" aria-label="Shikoyat turi">
-          ${KINDS.map(k => `<option value="${k.id}">${_esc(k.label)}</option>`).join('')}
-        </select>
-        <span class="report-kind-chev" aria-hidden="true">▾</span>
+      <div class="report-kind-lbl" id="reportKindLbl">Shikoyat turi</div>
+      <div class="report-kind-wrap" id="reportKindWrap">
+        <button type="button" class="report-kind-btn" id="reportKindBtn"
+          aria-haspopup="listbox" aria-expanded="false" aria-labelledby="reportKindLbl">
+          <span class="report-kind-val" id="reportKindVal">Umumiy muammo</span>
+          <span class="report-kind-chev" aria-hidden="true">▾</span>
+        </button>
+        <ul class="report-kind-menu" id="reportKindMenu" role="listbox" hidden>
+          ${KINDS.map(k => `<li role="option" class="report-kind-opt" data-kind="${k.id}" tabindex="-1">${_esc(k.label)}</li>`).join('')}
+        </ul>
+        <input type="hidden" id="reportKind" value="other">
       </div>
 
       <div class="report-target" id="reportTarget" hidden></div>
@@ -94,13 +104,7 @@ function _ensureDom() {
     reasons.appendChild(b);
   });
 
-  const kindSel = el.querySelector('#reportKind');
-  kindSel?.addEventListener('change', () => {
-    if (_kindLocked) return;
-    if (!_ctx) _ctx = { kind: 'other' };
-    _ctx.kind = kindSel.value || 'other';
-    _paintTarget(el);
-  });
+  _bindKindDropdown(el);
 
   el.addEventListener('click', e => {
     if (e.target.closest('[data-report-close]')) closeReportPage();
@@ -115,6 +119,78 @@ function _ensureDom() {
   });
 
   return el;
+}
+
+
+function _kindLabel(id) {
+  return KINDS.find(k => k.id === id)?.label || 'Umumiy muammo';
+}
+
+function _setKind(el, kind, { silent } = {}) {
+  const id = kind || 'other';
+  const hidden = el.querySelector('#reportKind');
+  const val = el.querySelector('#reportKindVal');
+  const menu = el.querySelector('#reportKindMenu');
+  if (hidden) hidden.value = id;
+  if (val) val.textContent = _kindLabel(id);
+  menu?.querySelectorAll('.report-kind-opt').forEach(o => {
+    const on = o.dataset.kind === id;
+    o.classList.toggle('is-on', on);
+    o.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  if (!silent) {
+    if (!_ctx) _ctx = { kind: id };
+    else _ctx.kind = id;
+    _paintTarget(el);
+  }
+}
+
+function _closeKindMenu(el) {
+  const wrap = el.querySelector('#reportKindWrap');
+  const btn = el.querySelector('#reportKindBtn');
+  const menu = el.querySelector('#reportKindMenu');
+  if (menu) menu.hidden = true;
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  wrap?.classList.remove('is-open');
+}
+
+function _openKindMenu(el) {
+  if (_kindLocked) return;
+  const wrap = el.querySelector('#reportKindWrap');
+  const btn = el.querySelector('#reportKindBtn');
+  const menu = el.querySelector('#reportKindMenu');
+  if (!menu) return;
+  menu.hidden = false;
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  wrap?.classList.add('is-open');
+}
+
+function _bindKindDropdown(el) {
+  if (el._kindBound) return;
+  el._kindBound = true;
+  const btn = el.querySelector('#reportKindBtn');
+  const menu = el.querySelector('#reportKindMenu');
+  const wrap = el.querySelector('#reportKindWrap');
+
+  btn?.addEventListener('click', e => {
+    e.stopPropagation();
+    if (_kindLocked) return;
+    if (menu?.hidden) _openKindMenu(el);
+    else _closeKindMenu(el);
+  });
+
+  menu?.addEventListener('click', e => {
+    const opt = e.target.closest('.report-kind-opt');
+    if (!opt || _kindLocked) return;
+    e.stopPropagation();
+    _setKind(el, opt.dataset.kind);
+    _closeKindMenu(el);
+  });
+
+  // panel ichida boshqa joy / backdrop
+  el.addEventListener('click', e => {
+    if (!wrap?.contains(e.target)) _closeKindMenu(el);
+  });
 }
 
 function _paintTarget(el) {
@@ -191,8 +267,8 @@ async function _submit() {
     return;
   }
   const note = (el.querySelector('#reportNote')?.value || '').trim();
-  const kindSel = el.querySelector('#reportKind');
-  if (_ctx && kindSel && !_kindLocked) _ctx.kind = kindSel.value || _ctx.kind;
+  const kindHidden = el.querySelector('#reportKind');
+  if (_ctx && kindHidden && !_kindLocked) _ctx.kind = kindHidden.value || _ctx.kind;
   const msg = _buildMessage(_ctx, reasonBtn.dataset.reason, note);
 
   const btn = el.querySelector('#reportSubmit');
@@ -256,12 +332,16 @@ export function openReportPage(ctx = {}) {
   };
 
   const el = _ensureDom();
-  const kindSel = el.querySelector('#reportKind');
-  if (kindSel) {
-    kindSel.value = _ctx.kind in Object.fromEntries(KINDS.map(k => [k.id, 1])) ? _ctx.kind : 'other';
-    kindSel.disabled = _kindLocked;
-    kindSel.classList.toggle('is-locked', _kindLocked);
+  const kindId = KINDS.some(k => k.id === _ctx.kind) ? _ctx.kind : 'other';
+  _setKind(el, kindId, { silent: true });
+  const wrap = el.querySelector('#reportKindWrap');
+  const btn = el.querySelector('#reportKindBtn');
+  wrap?.classList.toggle('is-locked', _kindLocked);
+  if (btn) {
+    btn.disabled = _kindLocked;
+    btn.setAttribute('aria-disabled', _kindLocked ? 'true' : 'false');
   }
+  _closeKindMenu(el);
   _paintTarget(el);
   el.querySelector('#reportNote').value = '';
   el.querySelectorAll('.report-reason').forEach(b => {

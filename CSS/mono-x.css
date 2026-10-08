@@ -9196,47 +9196,80 @@ nav.bot-nav .sb-grp-avi .grp-chip-img{width:38px;height:38px;border-radius:50%;o
 nav.bot-nav .sb-grp-row .sb-grp-text{font-size:17px;font-weight:700}
 #appHdr .hdr-brand{display:none!important}
 #appHdr .hdr-logo{gap:0!important}
-nav.bot-nav .sb-top #sbLogoBtn{display:none!important}
+nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
 @media (max-width:400px){.hdr-grp-text{font-size:19px}}
 @media (min-width:1100px){.profile-gear-btn{display:none!important}}
 
-/* Desktop leftbar past: SpaceMR Group + Shikoyat */
+/* Desktop leftbar past: Group + Shikoyat + akkaunt */
 @media (max-width: 1099px) {
+  nav.bot-nav .sb-top,
   nav.bot-nav .sb-grp-row,
-  nav.bot-nav .sb-report-btn {
+  nav.bot-nav .sb-report-btn,
+  nav.bot-nav .sb-account {
     display: none !important;
   }
 }
 @media (min-width: 1100px) {
+  nav.bot-nav {
+    display: flex;
+    flex-direction: column;
+  }
+  nav.bot-nav .sb-top {
+    flex-shrink: 0;
+  }
+  nav.bot-nav .sb-top #sbLogoBtn {
+    display: flex !important;
+    width: 100%;
+  }
+  nav.bot-nav #createBtn.nav-center-btn {
+    order: 0; /* HTML tartibida — order mobil uchun */
+  }
   nav.bot-nav .sb-bottom {
     display: flex;
     flex-direction: column;
     gap: 2px;
     margin-top: auto;
-    padding-top: 8px;
+    padding-top: 12px;
+    flex-shrink: 0;
   }
   nav.bot-nav .sb-bottom .sb-grp-row {
     width: 100%;
-    min-height: 48px;
+    min-height: 50px;
     height: auto;
-    padding: 6px 12px 6px 4px;
+    padding: 4px 12px 4px 4px;
     margin: 0;
+    gap: 12px;
+  }
+  nav.bot-nav .sb-bottom .sb-grp-row .sb-grp-text {
+    font-size: 17px;
+    font-weight: 700;
   }
   nav.bot-nav .sb-bottom .sb-report-btn {
     width: 100%;
     justify-content: flex-start;
-    height: 48px;
-    min-height: 48px;
+    height: 50px;
+    min-height: 50px;
     padding: 0 16px 0 12px;
-    gap: 16px;
+    gap: 20px;
     border-radius: 999px;
+    background: none !important;
+    border: none !important;
+  }
+  nav.bot-nav .sb-bottom .sb-report-btn:hover {
+    background: rgba(231, 233, 234, 0.05) !important;
   }
   nav.bot-nav .sb-bottom .sb-report-btn .nav-label {
     display: block;
-    font-size: 17px;
+    font-size: 20px;
+    line-height: 24px;
     font-weight: 400;
   }
+  nav.bot-nav .sb-bottom .sb-report-btn img.icon {
+    width: 26px;
+    height: 26px;
+  }
   nav.bot-nav .sb-bottom .sb-account {
-    margin-bottom: 4px;
+    margin-top: 4px;
+    margin-bottom: 0;
   }
 }
