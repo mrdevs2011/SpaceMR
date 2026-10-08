@@ -97,21 +97,114 @@ function fileNameFor(m, blobType) {
   return `${pre}_${String(m.id).slice(0, 8)}.${ext}`;
 }
 
+/** Rolik (vnote): 1:1 kvadrat videoni qora fonda dumaloq maska bilan qayta yozadi —
+ *  yuklab olingan MP4 chatdagi ko'rinishga o'xshaydi (chetlari qora, o'rtasi doira). */
+async function circleMaskVnote(srcBlob) {
+  const url = URL.createObjectURL(srcBlob);
+  try {
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.src = url;
+    await new Promise((res, rej) => {
+      video.onloadedmetadata = () => res();
+      video.onerror = () => rej(new Error('video load'));
+    });
+    const size = Math.min(480, Math.max(240, Math.round(Math.min(video.videoWidth || 480, video.videoHeight || 480))));
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const stream = canvas.captureStream(30);
+    // Audio saqlash (agar bor bo'lsa)
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ac.createMediaElementSource(video);
+      const dest = ac.createMediaStreamDestination();
+      src.connect(dest);
+      src.connect(ac.destination); // silent path not needed — muted video
+      dest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
+    } catch (_) {}
+    const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+      : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm');
+    const chunks = [];
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 1_200_000 });
+    rec.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
+    const done = new Promise(res => { rec.onstop = () => res(); });
+    rec.start(100);
+    video.currentTime = 0;
+    await video.play().catch(() => {});
+    const r = size / 2;
+    const draw = () => {
+      if (video.paused || video.ended) return;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, size, size);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(r, r, r, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      // object-fit: cover
+      const vw = video.videoWidth || size, vh = video.videoHeight || size;
+      const scale = Math.max(size / vw, size / vh);
+      const dw = vw * scale, dh = vh * scale;
+      ctx.drawImage(video, (size - dw) / 2, (size - dh) / 2, dw, dh);
+      ctx.restore();
+      requestAnimationFrame(draw);
+    };
+    draw();
+    await new Promise(res => {
+      video.onended = () => res();
+      // max 60s safety
+      setTimeout(res, Math.min(60_000, ((video.duration || 15) + 0.5) * 1000));
+    });
+    video.pause();
+    if (rec.state !== 'inactive') rec.stop();
+    await done;
+    stream.getTracks().forEach(tr => tr.stop());
+    const outType = mime.startsWith('video/mp4') ? 'video/mp4' : 'video/webm';
+    return new Blob(chunks, { type: outType });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function triggerDownload(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+
 async function downloadMedia(m) {
   const url = mediaUrlOf(m);
   if (!url) { toast('Fayl topilmadi', 'error'); return; }
-  toast('Yuklanmoqda…', 'info');
+  const kind = mediaKind(m);
+  toast(kind === 'vnote' ? 'Rolik tayyorlanmoqda…' : 'Yuklanmoqda…', 'info');
   try {
     const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const blob = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = fileNameFor(m, blob.type);
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    let blob = await r.blob();
+    let name = fileNameFor(m, blob.type);
+    if (kind === 'vnote') {
+      try {
+        const circled = await circleMaskVnote(blob);
+        if (circled?.size > 0) {
+          blob = circled;
+          // Fayl nomi: doira maskali ekanligi aniq bo'lsin
+          const base = name.replace(/\.[^.]+$/, '') || 'rolik';
+          name = base + (circled.type.includes('mp4') ? '.mp4' : '.webm');
+        }
+      } catch (err) {
+        console.warn('[MsgMenu] circleMaskVnote:', err?.message || err);
+        // xato bo'lsa oddiy 1:1 fayl yuklanadi
+      }
+    }
+    triggerDownload(blob, name);
   } catch (_) {
     // CORS/tarmoq: oddiy havola orqali (brauzer o'zi yuklaydi yoki yangi oynada ochadi)
     const a = document.createElement('a');
