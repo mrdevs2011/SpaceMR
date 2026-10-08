@@ -671,7 +671,7 @@ export async function openGroupThread(groupId) {
         const delta = await loadGroupDelta(groupId, _gMsgs || []);
         if (_gDead || _currentGroupId !== groupId) return;
         if (delta && !delta.reset) {
-          let msgs = delta.msgs.slice();
+          let msgs = delta.msgs.filter(m => !_gGone.has(String(m.id)));
           if (_gPending.size) {
             const have = new Set(msgs.map(m => m.id));
             for (const [pid, pm] of _gPending) {
@@ -714,7 +714,7 @@ export async function openGroupThread(groupId) {
       $('chatThreadMessages').innerHTML = `<div class="empty pt-30vh tac"><div class="fs-13px c-text2">Xabarlar yuklanmadi</div></div>`;
       return;
     }
-    const msgs = (data || []).map(mapMessage).reverse();
+    const msgs = (data || []).map(mapMessage).reverse().filter(m => !_gGone.has(String(m.id)));   // so'rov o'chirishdan oldin ketgan bo'lsa ham qaytmasin
     // Hali bazadan tasdiqlanmagan (optimistik) xabarlarni yo'qotmaymiz
     if (_gPending.size) {
       const have = new Set(msgs.map(m => m.id));

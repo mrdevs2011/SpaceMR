@@ -887,7 +887,16 @@ async function _refreshUsersPresence() {
 
 
 
+/* O'chirilgan xabar id lari: P2P/kesh/kechikkan so'rov natijasi xabarni qaytarib chiqarmasin */
+const _dmGone = new Set();
+function _dropGone(list) {
+  if (!_dmGone.size || !list) return list;
+  for (let i = list.length - 1; i >= 0; i--) if (list[i] && _dmGone.has(String(list[i].id))) list.splice(i, 1);
+  return list;
+}
+
 function _rtMerge(msgs) {
+  _dropGone(msgs);
   if (chatState._rtLocal.size) {
     const have = new Set(msgs.map(m => m.id));
     for (const [id, m] of chatState._rtLocal) {
@@ -901,7 +910,7 @@ function _rtMerge(msgs) {
 
 function _rtIncoming(m) {
   if (!m?.id || state.currentChatId !== chatState._rtChatId) return;
-  if (chatState._rtLocal.has(m.id) || chatState._curMsgs.some(x => x.id === m.id)) return;
+  if (_dmGone.has(String(m.id)) || chatState._rtLocal.has(m.id) || chatState._curMsgs.some(x => x.id === m.id)) return;
   const now = Date.now();
   const type = m.type || 'text';
   const mediaPath = m.mediaPath || null;
@@ -936,6 +945,7 @@ function _rtReadAck(ids) {
 function _rtRetract(id) {
   if (!chatState._rtLocal.has(id)) return; // DB'da tasdiqlangan bo'lsa tegmaymiz
   chatState._rtLocal.delete(id);
+  _dmGone.add(String(id));
   markDissolve([id]);
   paintMessages(chatState._curMsgs.filter(x => x.id !== id));
 }
@@ -1707,7 +1717,7 @@ export async function openChatThread(uid) {
 
   // Tezkor yo'l: WebRTC DataChannel (zaxira: broadcast). Baza baribir asosiy.
   if (chatState._rt) { chatState._rt.close(); chatState._rt = null; }
-  chatState._rtLocal.clear(); chatState._rtRead.clear();
+  chatState._rtLocal.clear(); chatState._rtRead.clear(); _dmGone.clear();
   chatState._rtChatId = chatId;
   if (!isSaved) {
     chatState._rt = openRt(chatId, uid, { onMsg: _rtIncoming, onRead: _rtReadAck, onRetract: _rtRetract, onTyping: (v) => chatState._onPeerTyping(v), onEmo: (id, k) => playRemoteEmoji(id, k) });
@@ -1750,6 +1760,7 @@ export async function openChatThread(uid) {
   // So'rov kutilayotgan paytda realtime orqali kelgan (ekranda turgan) xabarlarni natijaga qaytarib qo'shamiz:
   // aks holda eski snapshot ustiga chizilib, ular jim yo'qolardi.
   const _mergeLive = (list, tombs, minTs) => {
+    _dropGone(list);
     const have = new Set(list.map(m => m.id));
     const dead = new Set((tombs || []).map(t => t?.message_id).filter(Boolean));
     let extra = false;
@@ -1848,6 +1859,7 @@ export async function openChatThread(uid) {
       if (isSyncV2Enabled()) return;
       const delId = p.old?.id;
       if (!delId) { schedThread(); return; }
+      _dmGone.add(String(delId));
       chatState._rtLocal.delete(delId);
       markDissolve([delId]);
       paintMessages(chatState._curMsgs.filter(x => x.id !== delId));
@@ -1856,6 +1868,7 @@ export async function openChatThread(uid) {
     }
     const m = mapMessage(p.new);
     if (!m || !m.id) { schedThread(); return; }
+    if (_dmGone.has(String(m.id))) return;   // o'chirilgan xabarning kech kelgan nusxasi
     chatState._rtLocal.delete(m.id);
     if (chatState._rtRead.has(m.id)) m.status = 'read';
     const list = chatState._curMsgs.slice();
@@ -1903,6 +1916,7 @@ export async function openChatThread(uid) {
       if (_tDead || state.currentChatId !== chatId) return;
       const delId = row?.message_id;
       if (!delId) return;
+      _dmGone.add(String(delId));
       chatState._rtLocal.delete(delId);
       markDissolve([delId]);
       const next = (chatState._curMsgs || []).filter(x => x.id !== delId);
@@ -2738,7 +2752,7 @@ export function closeChatThread() {
   document.getElementById('groupJoinBar')?.remove();
   document.dispatchEvent(new Event('chatmedia:close'));
   if (chatState._rt) { chatState._rt.close(); chatState._rt = null; }
-  chatState._rtLocal.clear(); chatState._rtRead.clear(); chatState._rtChatId = null;
+  chatState._rtLocal.clear(); chatState._rtRead.clear(); _dmGone.clear(); chatState._rtChatId = null;
   msgMenuReset();
   if (chatState._threadUnsub) { chatState._threadUnsub(); chatState._threadUnsub = null; }
   if (chatState._peerUserUnsub) { chatState._peerUserUnsub(); chatState._peerUserUnsub = null; }
@@ -3269,7 +3283,7 @@ initMsgMenu({
   getMsgs: () => chatState._curMsgs,
   // Moderator: sayt admini yoki shu guruhning owner/admini — boshqalarning xabarini ham o'chira oladi
   canModerate: () => isAdmin() || (state.currentChatKind === 'group' && !!chatUI.isGroupModerator?.()),
-  reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) chatState._reloadThread(); },
+  reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) { _dmGone.clear(); chatState._reloadThread(); } },
   markSent: (id) => {
     const conf = chatState._rtLocal.get(id);
     if (conf) { conf.status = 'sent'; conf._at = Date.now(); chatState._rtLocal.set(id, conf); }
@@ -3280,10 +3294,13 @@ initMsgMenu({
     const set = new Set((ids || []).map(String));
     if (!set.size) return;
     ids.forEach(id => { try { chatState._rtLocal.delete(id); } catch (_) {} });
+    set.forEach(id => _dmGone.add(id));
     const next = chatState._curMsgs.filter(x => !set.has(String(x.id)));
     // Guruhda ism/avatar sarlavhalari yo'qolib ketmasligi uchun guruh painter'i bilan chizamiz
     if (state.currentChatKind === 'group') chatUI.dropGroupMsgs?.(ids);
     else {
+      // DM: keshdan ham olib tashlaymiz (aks holda keyingi delta asosi o'chirilgan xabarni qaytaradi)
+      try { if (state.currentChatId) cacheThreadMessages(state.currentChatId, next); } catch (_) {}
       // DM: chatlar ro'yxatidagi oxirgi xabar prevyusi ham o'chirilgan xabarda qolmasin
       const cm = chatState._latestChatMap?.[state.currentChatUid], last = next[next.length - 1];
       if (cm) {
