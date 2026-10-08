@@ -302,7 +302,10 @@ async function submitStory() {
   }
 }
 
+let _submitBusy = false;
 export async function submitPost() {
+  if (_submitBusy) return;
+  _submitBusy = true;
   if (_composerMode === 'story') return submitStory();
   const caption      = $('captionInput').value.trim();
   const isPublic     = true;
@@ -432,6 +435,7 @@ export async function submitPost() {
     toast(msg, 'error');
     if (localBlob) try { URL.revokeObjectURL(localBlob); } catch (_) {}
   } finally {
+    _submitBusy = false;
     $('uploadBtn').disabled = false;
     $('uploadBtn').textContent = 'Joylash';
   }

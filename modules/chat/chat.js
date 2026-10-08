@@ -3365,7 +3365,22 @@ $('chatThreadInput').addEventListener('input', () => {
   const scope = gid ? ('grp:' + gid) : (state.currentChatUid ? ('dm:' + state.currentChatUid) : '');
   if (scope) setDraft(scope, $('chatThreadInput').value);
 });
-window.addEventListener('spacemr:draft', () => { try { renderChatsList(); } catch (_) {} });
+function _paintDraftRow(scope) {
+  if (!scope || scope === '*') return;
+  const kind = scope.startsWith('grp:') ? 'gid' : 'uid';
+  const id = scope.slice(4);
+  const row = document.querySelector(`.chat-row[data-${kind}="${CSS.escape(id)}"] .chat-row-preview`);
+  if (!row) return;
+  const text = getDraft(scope).trim();
+  if (!text) return;
+  row.classList.remove('chat-row-empty');
+  row.innerHTML = `<span class="chat-draft-tag">Draft:</span> ${esc(text.slice(0, 46))}`;
+}
+window.addEventListener('spacemr:draft', (e) => {
+  const scope = e?.detail;
+  if (scope === '*') { try { renderChatsList(); } catch (_) {} return; }
+  _paintDraftRow(scope);
+});
 loadDrafts().then(() => { try { renderChatsList(); } catch (_) {} }).catch(() => {});
 
 $('chatThreadInput').addEventListener('keydown', e => {
