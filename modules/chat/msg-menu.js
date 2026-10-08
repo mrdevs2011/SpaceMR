@@ -3,7 +3,7 @@
    Amallar: Nusxalash, Tahrirlash, Uzatish, O'chirish, Tanlash (ko'p tanlash paneli bilan).
    DM chat (#chatThreadMessages) uchun. Xabarlar har realtime o'zgarishda qayta chizilgani uchun
    holat (tanlov, ochiq menyu) xabar ID'lari bo'yicha saqlanadi va msgMenuAfterPaint() bilan tiklanadi. */
-import { sb, state } from '../core/config.js';
+import { sb, state, mediaPublicUrl } from '../core/config.js';
 import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
@@ -22,6 +22,7 @@ const IC = {
   sel: '<img src="./svg/menu/sel.svg" alt="" class="icon" width="18" height="18">',
   resend: '<img src="./svg/menu/resend.svg" alt="" class="icon" width="18" height="18">',
   reply: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
+  dl: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e7e9ea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><polyline points="7 11 12 16 17 11"/><path d="M5 20h14"/></svg>',
   x: '<img src="./svg/menu/x.svg" alt="" class="icon" width="18" height="18">',
   seen: '<img src="./svg/extra/icon-041fdea3033a.svg" alt="" class="icon" width="18" height="11">',
   sent: '<img src="./svg/extra/icon-e20961b31619.svg" alt="" class="icon" width="12" height="10">',
@@ -59,6 +60,97 @@ function rowAtPoint(target, y) {
 const TAP_KEEP = 'a, button, audio, input, textarea, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid]';
 const coarse = () => window.matchMedia('(pointer: coarse)').matches;
 const pad = n => String(n).padStart(2, '0');
+
+/* ── Media xabarlar: rasm / video / rolik / ovozli xabar / audio ─────────────── */
+const IMG_X = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif'];
+const VID_X = ['mp4', 'webm', 'mov', 'm4v', 'mkv', 'ogv', '3gp'];
+const AUD_X = ['mp3', 'm4a', 'wav', 'ogg', 'oga', 'aac', 'flac', 'opus', 'wma'];
+function mediaKind(m) {
+  if (!m) return null;
+  if (m.type === 'voice') return 'voice';
+  if (m.type !== 'file') return null;
+  const mime = (m.mediaType || '').toLowerCase();
+  const ext = (m.fileName || m.mediaPath || '').toLowerCase().split('?')[0].split('.').pop() || '';
+  if (mime.startsWith('image/') || IMG_X.includes(ext)) return 'image';
+  if (mime.startsWith('video/') || VID_X.includes(ext)) return /^vnote_/i.test(m.fileName || '') ? 'vnote' : 'video';
+  if (mime.startsWith('audio/') || AUD_X.includes(ext)) return 'audio';
+  return null;   // oddiy fayl — o'z yuklash tugmasi bor
+}
+const mediaUrlOf = m => (m?.mediaUrl || (m?.mediaPath ? mediaPublicUrl(m.mediaPath) : '') || '').trim();
+const DL_LABEL = { image: 'Rasmni yuklash', video: 'Videoni yuklash', vnote: 'Rolikni yuklash', voice: 'Ovozli xabarni yuklash', audio: 'Audioni yuklash' };
+
+/** Menyu qaysi joyda ochilgani: izoh (caption) ustida bo'lsa — matnni nusxalash, aks holda rasm/media */
+let menuTarget = null;
+const onCaption = () => !!menuTarget?.closest?.('.cfm-caption, .chat-bubble-text');
+
+function fileNameFor(m, blobType) {
+  let n = (m.fileName || '').trim();
+  if (n) return n;
+  const base = String(m.mediaPath || '').split('?')[0].split('/').pop();
+  if (base && base.includes('.')) return base;
+  const t = (blobType || m.mediaType || '').toLowerCase();
+  const ext = t.includes('mp4') || t.includes('m4a') || t.includes('aac') ? (t.startsWith('video') ? 'mp4' : 'm4a')
+    : t.includes('ogg') ? 'ogg' : t.includes('webm') ? 'webm'
+    : t.includes('mpeg') ? 'mp3' : t.includes('png') ? 'png' : t.includes('jpeg') || t.includes('jpg') ? 'jpg'
+    : t.includes('gif') ? 'gif' : t.includes('webp') ? 'webp' : 'bin';
+  const pre = m.type === 'voice' ? 'ovozli_xabar' : (mediaKind(m) || 'media');
+  return `${pre}_${String(m.id).slice(0, 8)}.${ext}`;
+}
+
+async function downloadMedia(m) {
+  const url = mediaUrlOf(m);
+  if (!url) { toast('Fayl topilmadi', 'error'); return; }
+  toast('Yuklanmoqda…', 'info');
+  try {
+    const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileNameFor(m, blob.type);
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  } catch (_) {
+    // CORS/tarmoq: oddiy havola orqali (brauzer o'zi yuklaydi yoki yangi oynada ochadi)
+    const a = document.createElement('a');
+    a.href = url; a.download = fileNameFor(m); a.target = '_blank'; a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+}
+
+async function copyImage(m) {
+  const url = mediaUrlOf(m);
+  if (!url) { toast('Rasm topilmadi', 'error'); return; }
+  if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+    toast('Brauzer rasmni nusxalashni qo‘llamaydi', 'error');
+    return;
+  }
+  try {
+    // Promise beramiz — Safari/iOS da foydalanuvchi bosishi (gesture) saqlanib qoladi. PNG — hamma joyda qo'llanadi.
+    const pngPromise = (async () => {
+      const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const blob = await r.blob();
+      if (blob.type === 'image/png') return blob;
+      const bmp = await createImageBitmap(blob);
+      const c = document.createElement('canvas');
+      c.width = bmp.width; c.height = bmp.height;
+      c.getContext('2d').drawImage(bmp, 0, 0);
+      bmp.close?.();
+      return await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/png'));
+    })();
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngPromise })]);
+    toast('Rasm nusxalandi');
+  } catch (e) {
+    console.warn('[MsgMenu] copyImage:', e?.message || e);
+    toast('Rasm nusxalanmadi', 'error');
+  }
+}
 
 function when(ts) {
   const d = new Date(ts);
@@ -234,7 +326,12 @@ function menuHtml(m) {
   const isGif = !!(m.text && m.text.includes('"__gif"'));
   // Reply — har qanday oddiy xabar uchun (Telegram uslubida)
   if (!isCallMsg(m) && !(mine && m.status === 'sending')) h += it('reply', IC.reply, 'Javob');
-  if (hasText && isDM() && !isGif) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');
+  const kind = mediaKind(m);
+  const mUrl = mediaUrlOf(m);
+  const onCap = kind && onCaption();
+  if (kind === 'image' && mUrl && !onCap) h += it('copyimg', IC.copy, 'Rasmni nusxalash');           // rasm ustida: matn o'rniga rasm
+  else if (hasText && (isDM() || kind) && !isGif && (!kind || onCap)) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');   // izoh ustida: matn
+  if (kind && mUrl && !onCap) h += it('dl', IC.dl, DL_LABEL[kind]);   // izoh (matn) ustida — yuklash yo'q, faqat matnni nusxalash
   if (mine && m.type === 'text' && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('link', IC.copy, 'Xabar havolasi');
   h += it('fwd', IC.fwd, 'Uzatish');
@@ -367,6 +464,8 @@ function run(act, id) {
     toast('Nusxalandi');
     return;
   }
+  if (act === 'copyimg') return void copyImage(m);
+  if (act === 'dl') return void downloadMedia(m);
   if (act === 'link') {
     copyToClipboard(`${window.location.origin}${window.location.pathname}#m-${id}`);
     toast('Havola nusxalandi');
@@ -808,6 +907,9 @@ export function initMsgMenu(opts) {
   if (!box || box.dataset.msgMenu) return;
   box.dataset.msgMenu = '1';
   reactInit(box);
+  // Menyu qayerdan ochilgani (izoh yoki rasm) — menuHtml() shunga qarab "Nusxalash" / "Rasmni nusxalash" tanlaydi
+  ['contextmenu', 'mousedown', 'touchstart', 'click'].forEach(ev =>
+    box.addEventListener(ev, e => { menuTarget = e.target; }, { capture: true, passive: true }));
   // Reply quote bosilsa — asl xabarga SEKIN smooth scroll + och ko'k "men shu yerdaman" flash
   box.addEventListener('click', e => {
     const q = e.target.closest?.('.msg-reply-quote');
