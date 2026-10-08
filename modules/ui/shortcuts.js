@@ -75,6 +75,15 @@ function closeTopmost() {
 const anyOpen = () => CLOSERS.some(([id]) => isOpen($(id)));
 const isTyping = t => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
 const hasMouse = () => window.matchMedia?.('(pointer: fine)').matches ?? true;
+/** Mobil/planshet: Ctrl+1…0, H/C/P/N va h.k. ishlamasin. Esc va Enter saqlanadi. */
+const navShortcutsOn = () => {
+  try {
+    if (window.matchMedia('(max-width: 1099px)').matches) return false;
+    if (window.matchMedia('(pointer: coarse)').matches) return false;
+    if (window.matchMedia('(hover: none)').matches && !window.matchMedia('(pointer: fine)').matches) return false;
+    return true;
+  } catch (_) { return true; }
+};
 
 /* ── Esc + bir harfli shortcutlar ────────────────────────────────────── */
 document.addEventListener('keydown', e => {
@@ -89,6 +98,9 @@ document.addEventListener('keydown', e => {
     }
     return;
   }
+
+  // Mobil / tablet — navigatsiya shortcutlari o'chirilgan
+  if (!navShortcutsOn()) return;
 
   // Ctrl/Cmd navigatsiya — input fokusida HAM ishlaydi (aks holda Ctrl+2 → qidiruv
   // fokuslanadi va Ctrl+3/4… bloklanadi). Ctrl+A/C/V/X/Z kabi tahrir shortcutlari
