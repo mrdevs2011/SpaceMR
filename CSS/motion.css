@@ -342,3 +342,24 @@ img, video { decoding: async; }
 @media (min-width: 900px) {
   #pfEditBtn, #profileView #pfEditBtn, #profileView .pf-btn-main { display: none !important; }
 }
+
+/* Tanlash: qator flex qoladi, doira chiziq bo'lib yoyilmaydi */
+#chatThreadMessages.msg-selecting .chat-msg,
+.chat-thread-messages.msg-selecting .chat-msg {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  text-align: initial;
+}
+#chatThreadMessages.msg-selecting .chat-msg.mine { justify-content: flex-end; }
+#chatThreadMessages.msg-selecting .chat-msg.theirs { justify-content: flex-start; }
+#chatThreadMessages.msg-selecting .chat-msg::before {
+  display: block;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+}
+#chatThreadMessages.msg-selecting .chat-msg .chat-bubble {
+  display: block;
+  vertical-align: unset;
+}

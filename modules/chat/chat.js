@@ -2423,6 +2423,7 @@ function _replyQuoteHtml(m, msgs, grp) {
     }
   }
   preview = formatLastMessageText(preview) || preview || 'Xabar';
+  preview = String(preview).replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '');
   if (preview.startsWith('{') && preview.includes('"__')) preview = 'Xabar';
   name = name || 'Xabar';
   return `<div class="msg-reply-quote" data-reply-to="${esc(ridS)}" role="button" tabindex="0">
