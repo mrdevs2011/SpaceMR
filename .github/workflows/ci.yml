@@ -23,7 +23,7 @@ jobs:
         continue-on-error: true
       - name: secret patterns (basic)
         run: |
-          if git grep -nE 'service_role|SUPABASE_SERVICE_ROLE|sk_live_|BEGIN RSA PRIVATE' -- '*.js' '*.mjs' '*.html' '*.json' ':!modules/vendor/*' ':!package-lock.json'; then
+          if git grep -nE 'sk_live_[A-Za-z0-9]+|BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY|sb_secret_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|SUPABASE_SERVICE_ROLE(_KEY)?["'\'' :=]+[A-Za-z0-9._-]{30,}' -- '*.js' '*.mjs' '*.html' '*.json' '*.ts' '*.sql' ':!modules/vendor/*' ':!package-lock.json'; then
             echo 'Possible secret pattern found' >&2
             exit 1
           fi
