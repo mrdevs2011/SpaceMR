@@ -1186,6 +1186,7 @@ async function _preloadForSplash(uid) {
         if (posts.length) {
           state.allPosts = posts;
           try { cachePosts(uid, posts); } catch (_) {}
+          try { import('../feed/feed.js').then(m => m.warmFeedMedia?.(posts)); } catch (_) {}
           if (state.view === 'home') _cb.renderFeed?.();
         }
       }

@@ -18,7 +18,7 @@ export {
 export { enqueueSend, flushOutbox, scheduleFlush, pendingCount, listPending } from './outbox.js';
 export {
   resolveMedia, putMedia, touch, removeMedia, evictIfNeeded, clearMediaCache,
-  cachedMediaUrlSync, resolvePublicMedia, mediaCache,
+  cachedMediaUrlSync, resolvePublicMedia, prefetchMany, mediaCache,
 } from './media-cache.js';
 export {
   isKillSwitch, setKillSwitch,

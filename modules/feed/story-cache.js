@@ -20,7 +20,8 @@ const DB_VER = 1;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_ITEM_BYTES = 40 * 1024 * 1024;     // bitta fayl uchun yuqori chegara
 const MAX_TOTAL_BYTES = 300 * 1024 * 1024;   // umumiy kesh chegarasi
-const CONCURRENCY = 3;
+const CONCURRENCY = 5;
+const IDLE_CONCURRENCY = 8;
 
 let _dbp = null;
 const _urls = new Map();       // storyId -> blob: URL (sessiya davomida)
@@ -161,18 +162,31 @@ export function cacheItem(item) {
  *  - yangi story'lar keshlanadi (ko'rilmaganlar va birinchilar oldin);
  *  - serverda yo'q / muddati o'tganlar keshdan o'chadi.
  */
-export async function syncMedia(groups) {
+export async function syncMedia(groups, opts = {}) {
   try {
     const items = [];
     for (const g of groups || []) for (const i of g.items || []) if (!i._optimistic && !isExpired(i)) items.push(i);
     const live = new Set(items.map(i => i.id));
     await purge(live);
     const order = [...items.filter(i => !i.seen), ...items.filter(i => i.seen)];
+    // Idle yoki background: ko'proq parallel — chatda o'tirganda ham to'ldiriladi
+    const n = opts.idle ? IDLE_CONCURRENCY : CONCURRENCY;
     let idx = 0;
     const worker = async () => { while (idx < order.length) { await cacheItem(order[idx++]); } };
-    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, order.length) }, worker));
+    await Promise.all(Array.from({ length: Math.min(n, order.length || 1) }, worker));
     await trimTotal();
   } catch (_) {}
+}
+
+/** Chat/yuklanish bo'sh vaqtida story media ni fonda to'ldirish */
+export function scheduleIdleSync(groups) {
+  if (!groups?.length) return;
+  const run = () => { syncMedia(groups, { idle: true }).catch(() => {}); };
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(() => run(), { timeout: 8000 });
+  } else {
+    setTimeout(run, 1500);
+  }
 }
 
 /** Muddati o'tgan yoki serverda endi yo'q (o'chirilgan) story fayllarini o'chiradi. */

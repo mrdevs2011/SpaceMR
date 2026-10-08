@@ -7,7 +7,7 @@ import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
 import './post-image-zoom.js';
-import { cachedMediaUrlSync, resolvePublicMedia } from '../core/store/media-cache.js';
+import { cachedMediaUrlSync, resolvePublicMedia, prefetchMany } from '../core/store/media-cache.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
 // Feed/upload native <video controls>: WebM duration Infinity → progress oxirida qotadi
@@ -69,10 +69,12 @@ export function buildMedia(p) {
   const urlL = String(p.mediaUrl || '').toLowerCase();
   const isImg = mt.startsWith('image') || /\.(jpe?g|png|gif|webp|avif|heic|bmp)(\?|$)/i.test(urlL);
   const isVid = mt.startsWith('video') || /\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(urlL);
+  // Keshda bor bo'lsa blob URL — tarmoq kutmasdan chiqadi
+  const cached = cachedMediaUrlSync(p.mediaUrl) || p.mediaUrl;
   if (isImg)
-    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(p.mediaUrl)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
+    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(cached)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   if (isVid)
-    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(p.mediaUrl)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
+    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}">
     <div class="file-card-icon">${getFileIcon(p.fileName||'', p.mediaType||'')}</div>
     <div class="file-info"><div class="file-name">${esc(p.fileName||'File')}</div><div class="file-size">${p.fileSize ? fmtSz(p.fileSize) : ''}</div></div>
@@ -656,6 +658,20 @@ try {
   });
 } catch (_) {}
 
+/** Post media ni orqa fonda keshlaydi — chatda o'tirganda feed tayyor bo'ladi */
+let _warmTimer = 0;
+export function warmFeedMedia(posts) {
+  const urls = (posts || []).map(p => p.mediaUrl).filter(Boolean);
+  if (!urls.length) return;
+  clearTimeout(_warmTimer);
+  const run = () => prefetchMany(urls.slice(0, 24), { concurrency: 3 }).catch(() => {});
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(() => run(), { timeout: 12000 });
+  } else {
+    _warmTimer = setTimeout(run, 2000);
+  }
+}
+
 function paintSaveBtn(btn, on) {
   btn.classList.toggle('saved', on);
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -984,6 +1000,9 @@ export async function renderFeed() {
   _feedFirstRender = false;
 
   await renderFeedTo(feedEl, posts);
+  warmFeedMedia(posts);
+  // Keyingi postlar ham fonda
+  try { warmFeedMedia(filtered().slice(0, Math.max(state.visibleN + 10, 20))); } catch (_) {}
   restoreScrollAnchor(feedEl, _snap);
   // minHeight ni keyingi kadrda olib tashlash (layout barqarorlashgach)
   if (feedEl) requestAnimationFrame(() => { feedEl.style.minHeight = ''; });

@@ -309,8 +309,23 @@ export async function resolvePublicMedia(publicUrl, opts) {
   return resolveMedia(publicUrl, opts);
 }
 
+
+/** Orqa fonda bir nechta media URL ni keshlaydi (parallel, limit bilan). */
+export async function prefetchMany(urls, { concurrency = 4, expiresAt = null } = {}) {
+  const list = [...new Set((urls || []).filter(u => u && /^https?:\/\//i.test(u)))];
+  if (!list.length) return;
+  let i = 0;
+  const worker = async () => {
+    while (i < list.length) {
+      const u = list[i++];
+      try { await resolveMedia(u, { expiresAt }); } catch (_) {}
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, list.length) }, worker));
+}
+
 export const mediaCache = {
   resolveMedia, putMedia, touch, removeMedia, evictIfNeeded, clearMediaCache,
-  cachedMediaUrlSync, resolvePublicMedia,
+  cachedMediaUrlSync, resolvePublicMedia, prefetchMany,
 };
 export default mediaCache;

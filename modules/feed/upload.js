@@ -179,21 +179,25 @@ function clearFile() {
 /* ── Float bar helpers ───────────────────────────────────────────────── */
 
 /* Rasm kerak bo'lganda siqadi (compress.js). Float bar'da foiz ko'rsatiladi. */
-async function _prepareUploadFile(file, label) {
+async function _prepareUploadFile(file, label, mode = 'post') {
   if (!file) return file;
-  // Video — kamera yozgan fayl tayyor bo'lsa qayta kodlanmaydi; boshqasi standartga tushadi.
+  const isStory = mode === 'story';
+  // Video — kamera yozgan fayl tayyor bo'lsa qayta kodlanmaydi; story: 720p tez preset
   if (isVideoFile(file)) {
     const nameEl = $('ufbName');
-    if (nameEl) nameEl.textContent = 'Video standartga keltirilmoqda';
-    const res = await prepareVideo(file, { onProgress: p => floatBarUpdate(Math.round((p || 0) * 40)) });
+    if (nameEl) nameEl.textContent = isStory ? 'Story video tayyorlanmoqda' : 'Video standartga keltirilmoqda';
+    const res = await prepareVideo(file, {
+      onProgress: p => floatBarUpdate(Math.round((p || 0) * 40)),
+      preset: isStory ? 'story' : 'post',
+    });
     if (res.truncated) toast('Video 1 daqiqadan oshdi — faqat dastlabki 60 soniya olindi', 'info');
-    console.info('[video] standart:', fmtSz(file.size), '→', fmtSz(res.file.size), res.file.type);
+    console.info('[video] standart:', fmtSz(file.size), '→', fmtSz(res.file.size), res.file.type, isStory ? '(story)' : '');
     return res.file;
   }
-  // Rasm — shaffoflikni saqlagan holda siqish
+  // Rasm — story uchun kuchliroq siqish
   if (file.type.startsWith('image/')) {
     try {
-      const compressed = await compressImage(file);
+      const compressed = await compressImage(file, { preset: isStory ? 'story' : 'post' });
       if (compressed !== file) console.info('[compress] image:', fmtSz(file.size), '→', fmtSz(compressed.size), compressed.type);
       return compressed;
     } catch (e) {
@@ -329,7 +333,7 @@ async function submitStory() {
   let simInterval;
   try {
     let simPct = 0;
-    file = await _prepareUploadFile(fileRef, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name);
+    file = await _prepareUploadFile(fileRef, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'story');
     floatBarUpdate(0);
     simInterval = setInterval(() => {
       const step = Math.max(0.3, (3 - (file.size / (10 * 1024 * 1024))) * Math.random());
@@ -447,7 +451,7 @@ export async function submitPost() {
 
     if (hasFile && fileRef) {
       let file = fileRef;
-      file = await _prepareUploadFile(file, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name);
+      file = await _prepareUploadFile(file, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'post');
       floatBarUpdate(0);
 
       let simPct = 0;

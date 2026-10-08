@@ -5,7 +5,7 @@
 import { sb, state, mapProfile, mediaPublicUrl } from '../core/config.js';
 import { $, esc, defAvi } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
-import { loadSnapshot, saveSnapshot, syncMedia, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
+import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
 import { fixVideoDuration } from '../core/video-policy.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
@@ -585,7 +585,7 @@ export async function loadStories() {
     _groups = groups;
     renderBar();
     // Keshni serverdagi ro'yxat bilan solishtirish: yangilari keshlanadi, eskilari/o'chirilganlari o'chadi
-    saveSnapshot(me, groups); syncMedia(groups);
+    saveSnapshot(me, groups); syncMedia(groups); scheduleIdleSync(groups);
   } catch (e) {
     console.warn('[stories]', e?.message || e);
     if (_groups.length) { renderBar(); return; }   // internet yo'q — keshdagi ro'yxat turaveradi

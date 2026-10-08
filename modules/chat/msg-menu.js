@@ -117,15 +117,18 @@ async function circleMaskVnote(srcBlob) {
     canvas.height = size;
     const ctx = canvas.getContext('2d');
     const stream = canvas.captureStream(30);
-    // Audio saqlash (agar bor bo'lsa)
+    // Ovoz: AudioContext orqali (dinamikka chiqmaydi). Muvaffaqiyatsiz bo'lsa — ovozsiz doira.
     try {
+      video.muted = false; // MediaElementSource uchun kerak
       const ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') await ac.resume();
       const src = ac.createMediaElementSource(video);
       const dest = ac.createMediaStreamDestination();
       src.connect(dest);
-      src.connect(ac.destination); // silent path not needed — muted video
       dest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
-    } catch (_) {}
+    } catch (_) {
+      video.muted = true;
+    }
     const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
       : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm');
     const chunks = [];

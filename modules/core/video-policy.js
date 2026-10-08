@@ -83,24 +83,28 @@ export async function probeVideo(file) {
   } finally { dispose(); }
 }
 
-function _fit(sw, sh) {
-  const s = Math.min(1, VIDEO_W / Math.max(sw, sh), VIDEO_H / Math.min(sw, sh));
+function _fit(sw, sh, maxW = VIDEO_W, maxH = VIDEO_H) {
+  const s = Math.min(1, maxW / Math.max(sw, sh), maxH / Math.min(sw, sh));
   const even = n => Math.max(2, Math.round(n * s) & ~1);
   return { w: even(sw), h: even(sh) };
 }
 
-async function _transcode(file, meta, onProgress) {
+async function _transcode(file, meta, onProgress, preset = null) {
   if (typeof MediaRecorder === 'undefined') throw new Error('MediaRecorder yo\'q');
   const mime = pickVideoMime();
+  const maxW = preset?.maxW || VIDEO_W;
+  const maxH = preset?.maxH || VIDEO_H;
+  const bitrate = preset?.bitrate || VIDEO_BITRATE;
+  const fps = preset?.fps || VIDEO_FPS;
   const { v, dispose } = _el(file);
   let ac = null, timer = null, rec = null;
   try {
     await _waitMeta(v);
-    const { w, h } = _fit(v.videoWidth, v.videoHeight);
+    const { w, h } = _fit(v.videoWidth, v.videoHeight, maxW, maxH);
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d', { alpha: false });
-    const vstream = canvas.captureStream(VIDEO_FPS);
+    const vstream = canvas.captureStream(fps);
 
     // Audio: MediaElementSource → MediaStreamDestination (dinamikka chiqmaydi, jim yoziladi)
     let atrack = null;
@@ -115,7 +119,7 @@ async function _transcode(file, meta, onProgress) {
     } catch (_) { atrack = null; }
 
     const out = new MediaStream([...vstream.getVideoTracks(), ...(atrack ? [atrack] : [])]);
-    const opts = { videoBitsPerSecond: VIDEO_BITRATE, audioBitsPerSecond: AUDIO_BITRATE };
+    const opts = { videoBitsPerSecond: bitrate, audioBitsPerSecond: AUDIO_BITRATE };
     if (mime) opts.mimeType = mime;
     rec = new MediaRecorder(out, opts);
     const chunks = [];
@@ -309,16 +313,29 @@ export function hardenVideoPlayback(v) {
   } catch (_) {}
 }
 
-export async function prepareVideo(file, { onProgress } = {}) {
+/** Story: 720p / 2 Mbps — tezroq; Post: 1080p / 3 Mbps */
+export const PRESET_STORY = Object.freeze({ maxW: 1280, maxH: 720, bitrate: 2_000_000, fps: 30 });
+export const PRESET_POST  = Object.freeze({ maxW: VIDEO_W, maxH: VIDEO_H, bitrate: VIDEO_BITRATE, fps: VIDEO_FPS });
+
+export async function prepareVideo(file, { onProgress, preset } = {}) {
   if (isVideoReady(file)) {
     return { file, truncated: false, width: null, height: null };
   }
+  const ps = preset === 'story' ? PRESET_STORY : (preset && typeof preset === 'object' ? preset : PRESET_POST);
   let meta = null;
   try { meta = await probeVideo(file); } catch (e) { throw new Error(e?.message || "Videoni o'qib bo'lmadi"); }
+  // Allaqachon standartga mos va kichik — qayta kodlamasdan o'tkazamiz (tez yuklash)
+  const maxEdge = Math.max(ps.maxW || VIDEO_W, ps.maxH || VIDEO_H);
+  const alreadyOk = isFinite(meta.duration) && meta.duration <= MAX_VIDEO_MS / 1000 + 0.25
+    && file.size <= Math.min(MAX_VIDEO_BYTES, (ps.bitrate || VIDEO_BITRATE) * 8) // taxminiy
+    && Math.max(meta.width || 0, meta.height || 0) <= maxEdge + 8
+    && file.size <= 12 * 1024 * 1024;
+  if (alreadyOk && /video\/(mp4|webm|quicktime)/i.test(file.type || '')) {
+    return { file: markVideoReady(file), truncated: false, width: meta.width, height: meta.height };
+  }
   try {
-    return await _transcode(file, meta, onProgress);
+    return await _transcode(file, meta, onProgress, ps);
   } catch (e) {
-    // Qayta kodlash ishlamasa — faqat asl fayl allaqachon standartga mos bo'lsa (metadata bo'yicha) o'tkazamiz
     const ok = isFinite(meta.duration) && meta.duration <= MAX_VIDEO_MS / 1000 + 0.25
       && file.size <= MAX_VIDEO_BYTES
       && Math.max(meta.width, meta.height) <= VIDEO_W && Math.min(meta.width, meta.height) <= VIDEO_H;

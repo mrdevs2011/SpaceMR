@@ -8,6 +8,10 @@
 const IMG_MAX_DIM = 2560;   // eng uzun tomoni (sifat uchun)
 const IMG_QUALITY = 0.92;   // JPEG sifati (xiralik kamayadi)
 const IMG_MIN_SAVE = 0.92;  // siqish 8% dan kam tejasa — original qoladi
+/** Story: kichikroq + biroz kuchliroq siqish — tezroq yuklash */
+const STORY_MAX_DIM = 1440;
+const STORY_QUALITY = 0.82;
+const STORY_MIN_SAVE = 0.88;
 
 /** Canvasda alpha kanali bor-yo'qligini tekshiradi (shaffof piksel bormi). */
 function _hasTransparency(ctx, w, h) {
@@ -27,15 +31,19 @@ function _hasTransparency(ctx, w, h) {
 }
 
 /** Rasm faylni siqib qaytaradi. Siqish kerakmas/mumkin bo'lmasa — original. */
-export async function compressImage(file) {
+export async function compressImage(file, opts = {}) {
   try {
     if (!file || !file.type.startsWith('image/')) return file;
     // GIF (animatsiya) va SVG ni tegma
     if (file.type === 'image/gif') return file;
     if (file.type === 'image/svg+xml') throw new Error('SVG yuklash mumkin emas');
 
+    const maxDim = opts.preset === 'story' ? STORY_MAX_DIM : (opts.maxDim || IMG_MAX_DIM);
+    const quality = opts.preset === 'story' ? STORY_QUALITY : (opts.quality || IMG_QUALITY);
+    const minSave = opts.preset === 'story' ? STORY_MIN_SAVE : IMG_MIN_SAVE;
+
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, IMG_MAX_DIM / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
     const w = Math.round(bitmap.width * scale);
     const h = Math.round(bitmap.height * scale);
 
@@ -58,14 +66,14 @@ export async function compressImage(file) {
       ext = '.png';
     } else {
       // Oddiy rasm — JPEG (kichikroq)
-      blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', IMG_QUALITY));
+      blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
       mime = 'image/jpeg';
       ext = '.jpg';
     }
 
     if (!blob) return file;
     // Siqish foydasiz bo'lsa (kichik/kam presslangan rasm) — originalni qaytar
-    if (blob.size >= file.size * IMG_MIN_SAVE) return file;
+    if (blob.size >= file.size * minSave) return file;
 
     const name = (file.name || 'photo').replace(/\.[^.]*$/, '') + ext;
     return new File([blob], name, { type: mime, lastModified: Date.now() });
