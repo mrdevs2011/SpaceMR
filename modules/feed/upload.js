@@ -8,6 +8,7 @@ import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
 import { getFileTypeInfo } from '../core/file-icons.js';
 import { prepareVideo, ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
+import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, hide as floatBarHide } from '../ui/float-progress.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    FILE TYPE → SVG icon + label + accent color
@@ -208,80 +209,6 @@ async function _prepareUploadFile(file, label, mode = 'post') {
   return file;
 }
 
-function floatBarShow(kind) {
-  const bar = $('uploadFloatBar');
-  if (!bar) return;
-  const label = kind === 'story' ? 'Hikoya'
-    : kind === 'post' ? 'Joylash'
-    : 'Yuklash';
-  const nameEl = $('ufbName');
-  if (nameEl) nameEl.textContent = label;
-  const ring = $('ufbRing');
-  if (ring) {
-    ring.classList.remove('indeterminate', 'done', 'fail');
-    ring.setAttribute('stroke-dasharray', '0 100');
-    ring.style.stroke = '';
-  }
-  const pctEl = $('ufbPct');
-  if (pctEl) pctEl.textContent = '0%';
-  bar.classList.remove('d-none');
-  bar.style.display = 'flex';
-}
-
-function floatBarUpdate(pct) {
-  const ring = $('ufbRing');
-  const pctEl = $('ufbPct');
-  if (!ring) return;
-  const p = Math.max(0, Math.min(100, pct));
-  if (p >= 95) {
-    ring.classList.add('indeterminate');
-    ring.setAttribute('stroke-dasharray', '30 100');
-    if (pctEl) pctEl.textContent = '…';
-  } else {
-    ring.classList.remove('indeterminate');
-    ring.setAttribute('stroke-dasharray', Math.round(p) + ' 100');
-    if (pctEl) pctEl.textContent = Math.round(p) + '%';
-  }
-}
-
-function floatBarDone(success) {
-  const bar = $('uploadFloatBar');
-  if (!bar) return;
-  const ring = $('ufbRing');
-  if (ring) {
-    ring.classList.remove('indeterminate');
-    ring.setAttribute('stroke-dasharray', '100 100');
-    ring.style.stroke = success ? '#00ba7c' : '#f4212e';
-  }
-  const pctEl = $('ufbPct');
-  if (pctEl) { if (success) pctEl.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'; else pctEl.textContent = '!'; }
-  setTimeout(() => { floatBarHide(); }, 1400);
-}
-
-function floatBarHide() {
-  const bar = $('uploadFloatBar');
-  if (!bar) return;
-  bar.style.display = 'none';
-  bar.classList.add('d-none');
-  const ring = $('ufbRing');
-  if (ring) {
-    ring.classList.remove('indeterminate');
-    ring.setAttribute('stroke-dasharray', '0 100');
-    ring.style.stroke = '';
-  }
-  const pctEl = $('ufbPct');
-  if (pctEl) pctEl.textContent = '0%';
-}
-
-// X — float barni yopish (upload fonida davom etishi mumkin)
-{
-  const btn = $('ufbClose');
-  if (btn) btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    floatBarHide();
-  });
-}
 
 /* ── Yuklash / Post ───────────────────────────────────────────────────── */
 /* ── Story yuklash (composer 'story' rejimida) ─────────────────────── */

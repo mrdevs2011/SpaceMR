@@ -11,6 +11,7 @@ import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
 import { emojiImg, encodeForSend, decodeEmojiText } from '../ui/emoji-img.js';
 import { humanMsgPreview } from './chat-shared.js';
+import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, fetchWithProgress } from '../ui/float-progress.js';
 
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -187,29 +188,29 @@ async function downloadMedia(m) {
   const url = mediaUrlOf(m);
   if (!url) { toast('Fayl topilmadi', 'error'); return; }
   const kind = mediaKind(m);
-  toast(kind === 'vnote' ? 'Rolik tayyorlanmoqda…' : 'Yuklanmoqda…', 'info');
+  floatBarShow('download');
+  floatBarUpdate(kind === 'vnote' ? 5 : 0);
   try {
-    const r = await fetch(url, { mode: 'cors', credentials: 'omit' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    let blob = await r.blob();
+    let blob = await fetchWithProgress(url, { mode: 'cors', credentials: 'omit' });
     let name = fileNameFor(m, blob.type);
     if (kind === 'vnote') {
+      floatBarUpdate(93);
       try {
         const circled = await circleMaskVnote(blob);
         if (circled?.size > 0) {
           blob = circled;
-          // Fayl nomi: doira maskali ekanligi aniq bo'lsin
           const base = name.replace(/\.[^.]+$/, '') || 'rolik';
           name = base + (circled.type.includes('mp4') ? '.mp4' : '.webm');
         }
       } catch (err) {
         console.warn('[MsgMenu] circleMaskVnote:', err?.message || err);
-        // xato bo'lsa oddiy 1:1 fayl yuklanadi
       }
     }
+    floatBarUpdate(100);
     triggerDownload(blob, name);
+    floatBarDone(true);
   } catch (_) {
-    // CORS/tarmoq: oddiy havola orqali (brauzer o'zi yuklaydi yoki yangi oynada ochadi)
+    floatBarDone(false);
     const a = document.createElement('a');
     a.href = url; a.download = fileNameFor(m); a.target = '_blank'; a.rel = 'noopener';
     a.style.display = 'none';

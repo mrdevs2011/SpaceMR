@@ -1993,11 +1993,17 @@ if (peAviInput) {
     if (f.size > 12*1024*1024) { toast("Rasm 12 MB dan kam bo'lishi kerak", 'error'); return; }
     // Crop / zoom oynasini ochamiz
     peAviInput.value = ''; // qayta tanlash uchun
-    const cropped = await openAviCrop(f);
-    if (!cropped) return; // bekor qilindi
+    const fullImg = await openAviCrop(f);
+    if (!fullImg) return; // bekor qilindi
     toast('Yuklanmoqda...', 'info');
     try {
-      const file = new File([cropped], 'avatar.png', { type: 'image/png', lastModified: Date.now() });
+      // To'liq rasm — doira faqat CSS da (overflow:hidden + border-radius)
+      const file = fullImg instanceof File
+        ? fullImg
+        : new File([fullImg], 'avatar.' + ((fullImg.type || '').includes('png') ? 'png' : 'jpg'), {
+            type: fullImg.type || 'image/jpeg',
+            lastModified: Date.now(),
+          });
       const result = await uploadViaController(file, 'avatars');
       _peAviPending = result.url;
       const peAviImg = $('peAviImg');

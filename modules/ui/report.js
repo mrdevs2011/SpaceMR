@@ -1,37 +1,73 @@
-/** Shikoyat sahifasi (ROADMAP 7) — post/profil/umumiy.
- *  Yuborish: matn tayyorlanadi va SpaceMR guruhiga o'tiladi (alohida backend forma yo'q). */
+/** Shikoyat — SpaceMR guruhiga yuboriladi. Dark (#000) modal. */
 import { sb, state } from '../core/config.js';
 import { toast } from './toast.js';
 
+/** SpaceMR dagi haqiqiy shikoyat turlari (reklama yo'q — platformada reklama yo'q) */
 const REASONS = [
-  { id: 'spam', label: 'Spam yoki reklama' },
-  { id: 'abuse', label: 'Haqorat yoki tahdid' },
-  { id: 'fake', label: 'Soxta yoki aldov' },
-  { id: 'nsfw', label: 'Nomunosib kontent' },
-  { id: 'other', label: 'Boshqa' },
+  { id: 'abuse',   label: 'Haqorat yoki tahdid' },
+  { id: 'fake',    label: 'Soxta hisob yoki o\'g\'irlash' },
+  { id: 'nsfw',    label: 'Nomunosib kontent' },
+  { id: 'spam',    label: 'Spam / keraksiz xabar' },
+  { id: 'privacy', label: 'Maxfiylik buzilishi' },
+  { id: 'rules',   label: 'Qoida buzish' },
+  { id: 'bug',     label: 'Xato / nosozlik' },
+  { id: 'other',   label: 'Boshqa' },
 ];
 
-let _ctx = null; // { kind: 'post'|'user'|'other', id?, uid?, text? }
+const KINDS = [
+  { id: 'other', label: 'Umumiy muammo' },
+  { id: 'user',  label: 'Foydalanuvchi' },
+  { id: 'post',  label: 'Post' },
+  { id: 'group', label: 'Guruh' },
+];
+
+let _ctx = null;
+let _kindLocked = false; // post/user menyudan ochilganda tur o'zgarmaydi
+
+function _esc(s) {
+  return String(s || '')
+    .replace(/&/g, '&' + 'amp;')
+    .replace(/</g, '&' + 'lt;')
+    .replace(/>/g, '&' + 'gt;')
+    .replace(/"/g, '&' + 'quot;');
+}
 
 function _ensureDom() {
   let el = document.getElementById('reportSheet');
   if (el) return el;
+
   el = document.createElement('div');
   el.id = 'reportSheet';
   el.className = 'report-sheet';
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `
     <div class="report-sheet-backdrop" data-report-close></div>
-    <div class="report-sheet-panel" role="dialog" aria-labelledby="reportTitle">
+    <div class="report-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
       <div class="report-sheet-hdr">
         <h2 id="reportTitle">Shikoyat</h2>
-        <button type="button" class="report-sheet-x" data-report-close aria-label="Yopish">✕</button>
+        <button type="button" class="report-sheet-x" data-report-close aria-label="Yopish">
+          <img src="./svg/action/close.svg" alt="" class="icon" width="18" height="18">
+        </button>
       </div>
-      <p class="report-sheet-lead" id="reportLead">Muammo haqida yozing — xabar SpaceMR guruhiga yuboriladi.</p>
-      <div class="report-target" id="reportTarget"></div>
+      <p class="report-sheet-lead">Muammo haqida yozing — xabar <strong>SpaceMR</strong> guruhiga yuboriladi.</p>
+
+      <label class="report-kind-lbl" for="reportKind">Shikoyat turi</label>
+      <div class="report-kind-wrap">
+        <select id="reportKind" class="report-kind-select" aria-label="Shikoyat turi">
+          ${KINDS.map(k => `<option value="${k.id}">${_esc(k.label)}</option>`).join('')}
+        </select>
+        <span class="report-kind-chev" aria-hidden="true">▾</span>
+      </div>
+
+      <div class="report-target" id="reportTarget" hidden></div>
+
+      <div class="report-sec-lbl">Sabab</div>
       <div class="report-reasons" id="reportReasons" role="listbox" aria-label="Sabab"></div>
+
       <label class="report-note-lbl" for="reportNote">Qo'shimcha (ixtiyoriy)</label>
-      <textarea id="reportNote" class="report-note" rows="3" maxlength="500" placeholder="Qisqa izoh yoki skrinshot haqida..."></textarea>
+      <textarea id="reportNote" class="report-note" rows="3" maxlength="500"
+        placeholder="Qisqa izoh, vaqt, skrinshot haqida..."></textarea>
+
       <button type="button" class="report-submit" id="reportSubmit">SpaceMR guruhiga yuborish</button>
       <p class="report-foot">Shikoyatlar faqat SpaceMR guruhi orqali ko'rib chiqiladi.</p>
     </div>`;
@@ -45,56 +81,102 @@ function _ensureDom() {
     b.dataset.reason = r.id;
     b.textContent = r.label;
     b.setAttribute('role', 'option');
+    b.setAttribute('aria-selected', 'false');
     b.addEventListener('click', () => {
-      reasons.querySelectorAll('.report-reason').forEach(x => x.classList.remove('is-on'));
+      reasons.querySelectorAll('.report-reason').forEach(x => {
+        x.classList.remove('is-on');
+        x.setAttribute('aria-selected', 'false');
+      });
       b.classList.add('is-on');
+      b.setAttribute('aria-selected', 'true');
+      el.querySelector('#reportSubmit')?.removeAttribute('disabled');
     });
     reasons.appendChild(b);
+  });
+
+  const kindSel = el.querySelector('#reportKind');
+  kindSel?.addEventListener('change', () => {
+    if (_kindLocked) return;
+    if (!_ctx) _ctx = { kind: 'other' };
+    _ctx.kind = kindSel.value || 'other';
+    _paintTarget(el);
   });
 
   el.addEventListener('click', e => {
     if (e.target.closest('[data-report-close]')) closeReportPage();
   });
   el.querySelector('#reportSubmit')?.addEventListener('click', _submit);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && el.classList.contains('is-open')) {
+      e.preventDefault();
+      closeReportPage();
+    }
+  });
+
   return el;
+}
+
+function _paintTarget(el) {
+  const box = el.querySelector('#reportTarget');
+  if (!box) return;
+  const html = _targetHtml(_ctx);
+  if (html) {
+    box.innerHTML = html;
+    box.hidden = false;
+  } else {
+    box.innerHTML = '';
+    box.hidden = true;
+  }
 }
 
 function _targetHtml(ctx) {
   if (!ctx) return '';
   if (ctx.kind === 'post') {
-    const preview = (ctx.text || '').trim().slice(0, 80);
-    return `<div class="report-target-inner"><strong>Post</strong>${ctx.id ? ` · <code>${_esc(String(ctx.id).slice(0, 12))}</code>` : ''}${preview ? `<div class="report-prev">${_esc(preview)}</div>` : ''}</div>`;
+    const preview = (ctx.text || '').trim().slice(0, 100);
+    return `<div class="report-target-inner">
+      <div class="report-target-k">Post</div>
+      ${ctx.id ? `<code>${_esc(String(ctx.id).slice(0, 16))}</code>` : ''}
+      ${preview ? `<div class="report-prev">${_esc(preview)}</div>` : ''}
+    </div>`;
   }
   if (ctx.kind === 'user') {
-    return `<div class="report-target-inner"><strong>Foydalanuvchi</strong>${ctx.name ? ` · ${_esc(ctx.name)}` : ''}${ctx.username ? ` · @${_esc(ctx.username)}` : ''}</div>`;
+    return `<div class="report-target-inner">
+      <div class="report-target-k">Foydalanuvchi</div>
+      ${ctx.name ? `<span>${_esc(ctx.name)}</span>` : ''}
+      ${ctx.username ? `<span class="report-at">@${_esc(ctx.username)}</span>` : ''}
+    </div>`;
   }
-  return `<div class="report-target-inner"><strong>Umumiy muammo</strong></div>`;
-}
-
-function _esc(s) {
-  return String(s || '').replace(/&/g, '&' + 'amp;').replace(/</g, '&' + 'lt;').replace(/>/g, '&' + 'gt;').replace(/"/g, '&' + 'quot;');
+  if (ctx.kind === 'group') {
+    return `<div class="report-target-inner">
+      <div class="report-target-k">Guruh</div>
+      ${ctx.name ? `<span>${_esc(ctx.name)}</span>` : ''}
+    </div>`;
+  }
+  return '';
 }
 
 function _buildMessage(ctx, reasonId, note) {
-  /* SpaceMR renderMarkdown bilan ishlaydigan oddiy markdown — alohida parser yo'q */
   const reason = REASONS.find(r => r.id === reasonId)?.label || reasonId || '—';
+  const kindLabel = KINDS.find(k => k.id === (ctx?.kind || 'other'))?.label || 'Umumiy';
   const lines = ['**[Shikoyat]**'];
+  lines.push('**Turi:** ' + kindLabel);
   if (ctx?.kind === 'post') {
-    lines.push('**Turi:** post');
     if (ctx.id) lines.push('**Post ID:** `' + ctx.id + '`');
-    if (ctx.uid) lines.push('**Muallif UID:** `' + ctx.uid + '`');
+    if (ctx.uid) lines.push('**Muallif:** `' + ctx.uid + '`');
     if (ctx.text) lines.push('**Matn:** ' + String(ctx.text).slice(0, 120));
   } else if (ctx?.kind === 'user') {
-    lines.push('**Turi:** foydalanuvchi');
     if (ctx.uid) lines.push('**UID:** `' + ctx.uid + '`');
     if (ctx.username) lines.push('@' + ctx.username);
     if (ctx.name) lines.push('**Ism:** ' + ctx.name);
-  } else {
-    lines.push('**Turi:** umumiy');
+  } else if (ctx?.kind === 'group' && ctx.name) {
+    lines.push('**Guruh:** ' + ctx.name);
   }
   lines.push('**Sabab:** ' + reason);
   if (note) lines.push('**Izoh:** ' + note);
-  if (state.me?.uid) lines.push('**Yuboruvchi:** ' + (state.me.username ? '@' + state.me.username : '`' + state.me.uid + '`'));
+  if (state.me?.uid) {
+    lines.push('**Yuboruvchi:** ' + (state.me.username ? '@' + state.me.username : '`' + state.me.uid + '`'));
+  }
   return lines.join('\n');
 }
 
@@ -104,16 +186,25 @@ async function _submit() {
   const reasonBtn = el.querySelector('.report-reason.is-on');
   if (!reasonBtn) {
     toast('Sababni tanlang', 'error');
+    el.querySelector('.report-reasons')?.classList.add('report-reasons--need');
+    setTimeout(() => el.querySelector('.report-reasons')?.classList.remove('report-reasons--need'), 1200);
     return;
   }
   const note = (el.querySelector('#reportNote')?.value || '').trim();
+  const kindSel = el.querySelector('#reportKind');
+  if (_ctx && kindSel && !_kindLocked) _ctx.kind = kindSel.value || _ctx.kind;
   const msg = _buildMessage(_ctx, reasonBtn.dataset.reason, note);
+
+  const btn = el.querySelector('#reportSubmit');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Yuborilmoqda…';
+  }
 
   try {
     localStorage.setItem('spacemr_report_draft', msg);
   } catch (_) {}
 
-  // Serverga yozish (content_reports) — muvaffaqiyatsiz bo'lsa ham guruhga o'tamiz
   try {
     if (state.me?.uid) {
       await sb.from('content_reports').insert({
@@ -135,7 +226,6 @@ async function _submit() {
     location.hash = '#/chats/g/spacemr';
   }
 
-  // Chat inputga matnni qo'yish (guruh ochilgach)
   const tryFill = (n) => {
     const inp = document.getElementById('chatThreadInput');
     if (inp) {
@@ -144,31 +234,51 @@ async function _submit() {
       try { inp.focus({ preventScroll: true }); } catch (_) {}
       return;
     }
-    if (n < 20) setTimeout(() => tryFill(n + 1), 150);
+    if (n < 25) setTimeout(() => tryFill(n + 1), 120);
   };
-  setTimeout(() => tryFill(0), 400);
-  toast('SpaceMR guruhiga yozing — matn tayyor', 'info');
+  setTimeout(() => tryFill(0), 350);
+  toast('Matn tayyor — SpaceMR guruhiga yuboring', 'info');
 }
 
 /**
- * @param {{ kind?: 'post'|'user'|'other', id?: string, uid?: string, text?: string, name?: string, username?: string }} ctx
+ * @param {{ kind?: 'post'|'user'|'other'|'group', id?: string, uid?: string, text?: string, name?: string, username?: string }} ctx
  */
 export function openReportPage(ctx = {}) {
+  const kind = ctx.kind || 'other';
+  _kindLocked = !!(ctx.kind && ctx.kind !== 'other' && (ctx.id || ctx.uid || ctx.name));
   _ctx = {
-    kind: ctx.kind || 'other',
+    kind,
     id: ctx.id || null,
     uid: ctx.uid || null,
     text: ctx.text || null,
     name: ctx.name || null,
     username: ctx.username || null,
   };
+
   const el = _ensureDom();
-  el.querySelector('#reportTarget').innerHTML = _targetHtml(_ctx);
+  const kindSel = el.querySelector('#reportKind');
+  if (kindSel) {
+    kindSel.value = _ctx.kind in Object.fromEntries(KINDS.map(k => [k.id, 1])) ? _ctx.kind : 'other';
+    kindSel.disabled = _kindLocked;
+    kindSel.classList.toggle('is-locked', _kindLocked);
+  }
+  _paintTarget(el);
   el.querySelector('#reportNote').value = '';
-  el.querySelectorAll('.report-reason').forEach(b => b.classList.remove('is-on'));
+  el.querySelectorAll('.report-reason').forEach(b => {
+    b.classList.remove('is-on');
+    b.setAttribute('aria-selected', 'false');
+  });
+  const sub = el.querySelector('#reportSubmit');
+  if (sub) {
+    sub.disabled = false;
+    sub.textContent = 'SpaceMR guruhiga yuborish';
+  }
   el.classList.add('is-open');
   el.setAttribute('aria-hidden', 'false');
   document.body.classList.add('report-open');
+  setTimeout(() => {
+    try { el.querySelector('.report-reason')?.focus({ preventScroll: true }); } catch (_) {}
+  }, 50);
 }
 
 export function closeReportPage() {
@@ -178,6 +288,7 @@ export function closeReportPage() {
   el.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('report-open');
   _ctx = null;
+  _kindLocked = false;
 }
 
 window._openReportPage = openReportPage;

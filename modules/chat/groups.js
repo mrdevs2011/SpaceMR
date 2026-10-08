@@ -626,7 +626,7 @@ export async function openGroupThread(groupId) {
   $('chatThreadName').addEventListener('click', openInfo);
 
   // Messages spinner
-  $('chatThreadMessages').innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+  $('chatThreadMessages').innerHTML = `<div class="spin-wrap chat-thread-spin"><div class="spinner"></div></div>`;
 
   // Mark my unread as 0
   _resetGroupUnread(groupId);

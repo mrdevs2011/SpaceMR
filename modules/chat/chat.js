@@ -1267,10 +1267,10 @@ export async function renderChatsList() {
         chatState._usersCache = cached.users;
         paintChatsList(cached.users, chatState._latestChatMap || {});
       } else {
-        root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+        root.innerHTML = `<div class="spin-wrap chat-thread-spin"><div class="spinner"></div></div>`;
       }
     } catch (_) {
-      root.innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+      root.innerHTML = `<div class="spin-wrap chat-thread-spin"><div class="spinner"></div></div>`;
     }
   }
 
@@ -1618,7 +1618,7 @@ export async function openChatThread(uid) {
   if (_cachedMsgs && _cachedMsgs.length) {
     paintMessages(_cachedMsgs);
   } else {
-    $('chatThreadMessages').innerHTML = `<div class="spin-wrap pt-60px"><div class="spinner"></div></div>`;
+    $('chatThreadMessages').innerHTML = `<div class="spin-wrap chat-thread-spin"><div class="spinner"></div></div>`;
   }
   // Reset voice/file state (functions defined below, safe after page load)
   try { forceStopVoiceRecording(); } catch(_) {}

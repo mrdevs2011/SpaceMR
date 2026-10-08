@@ -118,14 +118,17 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else _bindPushPrefs();
 
 
-/* Shikoyat sahifasi — sozlamalardan */
+/* Shikoyat — sozlamalar + desktop leftbar */
 function _bindReportRow() {
-  const row = document.getElementById('settingsReportRow');
-  if (!row || row._bound) return;
-  row._bound = true;
   const go = () => import('./report.js').then(m => m.openReportPage({ kind: 'other' })).catch(() => {});
-  row.addEventListener('click', go);
-  row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  const bind = (el) => {
+    if (!el || el._bound) return;
+    el._bound = true;
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  };
+  bind(document.getElementById('settingsReportRow'));
+  bind(document.getElementById('sbReportBtn'));
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindReportRow, { once: true });
 else _bindReportRow();

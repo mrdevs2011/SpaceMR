@@ -557,19 +557,13 @@ html[data-nf],html[data-nf] body{background:#000000}
   <!-- BOTTOM NAV / DESKTOP SIDEBAR -->
   <nav class="bot-nav">
 
-    <!-- Desktop: SpaceMR logo (eng yuqorida, faqat desktop da ko'rinadi) -->
+    <!-- Desktop: SpaceMR logo (eng yuqorida) -->
     <div class="sb-top">
       <button class="sb-logo-row" id="sbLogoBtn" aria-label="Bosh sahifa" data-tip="SpaceMR">
         <div class="sb-logo-glass">
           <img src="./svg/logo.png" alt="SpaceMR" class="sb-logo-img" width="26" height="26">
         </div>
         <span class="sb-brand-text">SpaceMR</span>
-      </button>
-      <button class="sb-logo-row sb-grp-row" id="sbGrpBtn" data-grp-chip aria-label="SpaceMR Group" data-tip="SpaceMR Group">
-        <div class="sb-logo-glass sb-grp-avi">
-          <img src="./svg/logo.png" alt="" class="grp-chip-img" width="38" height="38">
-        </div>
-        <span class="sb-brand-text sb-grp-text">SpaceMR Group</span>
       </button>
     </div>
 
@@ -615,7 +609,7 @@ html[data-nf],html[data-nf] body{background:#000000}
       <span class="nav-badge d-none" id="adminActionsBadge"></span>
     </button>
 
-    <!-- Desktop: mute at bottom -->
+    <!-- Desktop: past — akkaunt, so'ng SpaceMR Group, eng pastida Shikoyat -->
     <div class="sb-bottom">
       <button class="sb-account" id="sbAccount" type="button" aria-label="Profil">
         <span class="sb-acc-avi" id="sbAccAvi"></span>
@@ -624,6 +618,16 @@ html[data-nf],html[data-nf] body{background:#000000}
           <span class="sb-acc-user" id="sbAccUser"></span>
         </span>
         <img src="./svg/ui/dots-horizontal.svg" alt="" class="icon sb-acc-dots" width="18" height="18">
+      </button>
+      <button class="sb-logo-row sb-grp-row" id="sbGrpBtn" data-grp-chip aria-label="SpaceMR Group" data-tip="SpaceMR Group" type="button">
+        <div class="sb-logo-glass sb-grp-avi">
+          <img src="./svg/logo.png" alt="" class="grp-chip-img" width="38" height="38">
+        </div>
+        <span class="sb-brand-text sb-grp-text">SpaceMR Group</span>
+      </button>
+      <button class="nav-btn sb-report-btn" id="sbReportBtn" type="button" data-tip="Shikoyat" aria-label="Shikoyat qilish">
+        <img src="./svg/admin/warn.svg" alt="" class="icon" width="22" height="22">
+        <span class="nav-label">Shikoyat</span>
       </button>
     </div>
   </nav>

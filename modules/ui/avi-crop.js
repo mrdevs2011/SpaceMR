@@ -1,12 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   AVATAR CROP — zoom / pan / circular crop for profile picture
-   Usage: openAviCrop(file).then(blob => ...) or null if cancelled
+   AVATAR PREVIEW — zoom/pan faqat ko'rinish uchun.
+   Saqlash: TO'LIQ rasm (kesilmaydi, doira maska yo'q).
+   UI da circle = CSS overflow:hidden. openAviCrop(file) → File|Blob|null
    ═══════════════════════════════════════════════════════════════════════ */
 
 import { lockScroll, unlockScroll } from '../core/utils.js';
 
-const OUT_SIZE = 512; // output square px
+const MAX_EDGE = 2048; // to'liq rasm max tomoni (siqish uchun)
 
+let _sourceFile = null; // asl fayl — kesilmasdan saqlanadi
 let _img = null;
 let _natW = 0, _natH = 0;
 let _scale = 1;
@@ -161,6 +163,7 @@ function _close(result) {
   unlockScroll('aviCropModal');
   if (_objectUrl) { URL.revokeObjectURL(_objectUrl); _objectUrl = null; }
   _img = null;
+  if (result == null) _sourceFile = null;
   _ptrs.clear(); _dragging = false; _pinchD = 0;
   const r = _resolve;
   _resolve = null;
@@ -168,73 +171,64 @@ function _close(result) {
 }
 
 async function _exportAndClose() {
-  if (!_img) return _close(null);
+  if (!_img && !_sourceFile) return _close(null);
   const btn = $('aviCropUpload');
   if (btn) { btn.disabled = true; btn.textContent = 'Tayyorlanmoqda…'; }
 
   try {
-    const d = _circleD();
-    const stage = _stageSize();
-    // Map from stage coords to natural image coords
-    // Image center in stage is at (stage/2 + _tx, stage/2 + _ty)
-    // Circle center is stage center
-    // Source rect in natural pixels that maps to the circle
-    const scaleToNat = _natW / (_natW * _scale); // = 1/_scale for width... actually:
-    // displayed size = nat * _scale  (where _scale is px-per-nat-px on stage)
-    // so 1 stage px = 1/_scale natural px
-    const natPerStage = 1 / _scale;
+    // 1) Asl fayl kichik/o'rtacha — to'liq, hech narsa kesilmaydi
+    if (_sourceFile && _sourceFile.size <= 8 * 1024 * 1024) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Yuklash'; }
+      const f = _sourceFile;
+      _sourceFile = null;
+      _close(f);
+      return;
+    }
 
-    const circleR = d / 2;
-    // circle center in stage
-    const cx = stage / 2;
-    const cy = stage / 2;
-    // image top-left in stage
-    const imgLeft = cx + _tx - (_natW * _scale) / 2;
-    const imgTop  = cy + _ty - (_natH * _scale) / 2;
-
-    // circle top-left in stage
-    const circLeft = cx - circleR;
-    const circTop  = cy - circleR;
-
-    // source in natural image
-    const sx = (circLeft - imgLeft) * natPerStage;
-    const sy = (circTop  - imgTop)  * natPerStage;
-    const sw = d * natPerStage;
-    const sh = d * natPerStage;
-
+    // 2) Juda katta — to'liq kadr, faqat max tomon cheklanadi (aspect saqlanadi, doira YO'Q)
+    const nw = _natW || _img?.naturalWidth || 0;
+    const nh = _natH || _img?.naturalHeight || 0;
+    if (!nw || !nh || !_img) {
+      if (_sourceFile) { const f = _sourceFile; _sourceFile = null; _close(f); return; }
+      _close(null);
+      return;
+    }
+    const scale = Math.min(1, MAX_EDGE / Math.max(nw, nh));
+    const w = Math.max(1, Math.round(nw * scale));
+    const h = Math.max(1, Math.round(nh * scale));
     const canvas = document.createElement('canvas');
-    canvas.width = OUT_SIZE;
-    canvas.height = OUT_SIZE;
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext('2d');
+    // To'liq rasm — clip/crop/doira yo'q
+    ctx.drawImage(_img, 0, 0, nw, nh, 0, 0, w, h);
 
-    // Circular clip for transparent PNG edges (nice for avatars)
-    ctx.beginPath();
-    ctx.arc(OUT_SIZE / 2, OUT_SIZE / 2, OUT_SIZE / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-
-    // Fon rangi yo'q (shaffof) rasmlar uchun avtomatik qora fon (#000)
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, OUT_SIZE, OUT_SIZE);
-
-    ctx.drawImage(_img, sx, sy, sw, sh, 0, 0, OUT_SIZE, OUT_SIZE);
-
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/png', 0.92));
+    const srcType = (_sourceFile && _sourceFile.type) || 'image/jpeg';
+    const usePng = /png|webp|gif/i.test(srcType) && !/jpe?g/i.test(srcType);
+    const mime = usePng ? 'image/png' : 'image/jpeg';
+    const blob = await new Promise(res => canvas.toBlob(res, mime, usePng ? undefined : 0.92));
     if (btn) { btn.disabled = false; btn.textContent = 'Yuklash'; }
-    _close(blob || null);
+    if (!blob) { _close(_sourceFile || null); return; }
+    const ext = usePng ? 'png' : 'jpg';
+    const name = (_sourceFile && _sourceFile.name) ? _sourceFile.name.replace(/\.[^.]+$/, '') + '.' + ext : 'avatar.' + ext;
+    _sourceFile = null;
+    _close(new File([blob], name, { type: mime, lastModified: Date.now() }));
   } catch (e) {
     console.warn('[avi-crop] export failed', e);
     if (btn) { btn.disabled = false; btn.textContent = 'Yuklash'; }
-    _close(null);
+    // Xato bo'lsa ham asl faylni saqlashga urinish
+    if (_sourceFile) { const f = _sourceFile; _sourceFile = null; _close(f); }
+    else _close(null);
   }
 }
 
 /**
- * Open crop modal for a File/Blob. Resolves with cropped PNG Blob or null.
+ * Preview modal. Resolves with FULL image File/Blob (no circular crop) or null.
  */
 export function openAviCrop(file) {
   return new Promise((resolve) => {
     _resolve = resolve;
+    _sourceFile = file || null;
     _bindOnce();
 
     if (_objectUrl) URL.revokeObjectURL(_objectUrl);
