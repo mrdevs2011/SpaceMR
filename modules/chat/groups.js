@@ -24,6 +24,7 @@ import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapG
 import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
+import { getDraft, clearDraft } from '../core/drafts.js';
 import { rateOk }                                   from '../core/rate-limit.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { encodeForSend } from '../ui/emoji-img.js';
@@ -838,7 +839,7 @@ export function closeGroupThread() {
   document.getElementById('chatHeaderDropdown')?.remove();
   $('chatThreadInput').disabled = false;
   $('chatThreadInput').placeholder = 'Xabar yozing...';
-  $('chatThreadInput').value = '';
+  $('chatThreadInput').value = getDraft('grp:' + groupId) || '';
   setTimeout(() => window.updateVoiceSendBtn && window.updateVoiceSendBtn(), 50);
   [$('chatAttachBtn'), $('chatVoiceBtn')].forEach(el => {
     if (!el) return;
@@ -1028,7 +1029,7 @@ export async function sendGroupMessage(opts) {
   if (!userText && !postShare) return;
   if (!rateOk('msg', 8, 10000)) return;
 
-  if (gifText == null) inp.value = '';
+  if (gifText == null) { inp.value = ''; clearDraft('grp:' + _currentGroupId); }
   if (postShare && chatUI.clearPendingPostShare) {
     chatUI.clearPendingPostShare();
   } else {

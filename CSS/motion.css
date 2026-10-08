@@ -368,3 +368,5 @@ img, video { decoding: async; }
 #uploadOverlay.show,
 #uploadOverlay.show .composer-sheet { overflow: visible !important; }
 .attach-menu { z-index: 2147483001 !important; }
+
+.chat-draft-tag { color: #f4212e; font-weight: 700; margin-right: 4px; }

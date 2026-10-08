@@ -9,6 +9,7 @@ import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DEN
 import { getFileTypeInfo } from '../core/file-icons.js';
 import { prepareVideo, ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
 import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, hide as floatBarHide } from '../ui/float-progress.js';
+import { getDraft, setDraft, clearDraft } from '../core/drafts.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    FILE TYPE → SVG icon + label + accent color
@@ -160,7 +161,7 @@ export function pickFile(f) {
 }
 
 /* ── Caption input → enable/disable Post btn ─────────────────────────── */
-$('captionInput').addEventListener('input', refreshPostBtn);
+$('captionInput').addEventListener('input', () => { refreshPostBtn(); setDraft(_composerMode === 'story' ? 'story' : 'post', $('captionInput').value); });
 
 /* ── Preview clear ───────────────────────────────────────────────────── */
 $('previewArea').addEventListener('click', e => {
@@ -282,6 +283,7 @@ async function submitStory() {
     if (error) throw error;
 
     floatBarDone(true);
+    try { clearDraft('story'); } catch (_) {}
     toast(captionLost ? 'Story qo\'shildi, lekin izoh saqlanmadi (DB da caption ustuni yo\'q)' : 'Story qo\'shildi',
           captionLost ? 'info' : 'success');
     // Serverdagi haqiqiy story — boshqalarga + o'zimni yangilash
@@ -488,6 +490,12 @@ export function openComposer() {
 }
 /* Story "+" bosilganda: fayl menejerini darhol ochmaymiz — post kabi composer kartasi ochiladi */
 export function openStoryComposer() {
+  try {
+    const sd = getDraft('story');
+    const cap = $('captionInput');
+    if (sd && cap && !cap.value.trim()) cap.value = sd;
+  } catch (_) {}
+
   if (!state.me) return;
   const ov = raiseUploadOverlay();
   if (!ov) return;
@@ -510,6 +518,7 @@ let _homeFocused = false;
 const DRAFT_KEY = 'spacemr_post_draft';
 
 function _savePostDraft(text) {
+  try { setDraft('post', text || ''); } catch (_) {}
   try {
     const t = String(text || '').trim();
     if (!t) { localStorage.removeItem(DRAFT_KEY); return; }
@@ -519,6 +528,8 @@ function _savePostDraft(text) {
 
 function _loadPostDraft() {
   try {
+    const acc = getDraft('post');
+    if (acc) return acc;
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const o = JSON.parse(raw);
@@ -528,6 +539,7 @@ function _loadPostDraft() {
 
 function _clearPostDraft() {
   try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
+  try { clearDraft('post'); } catch (_) {}
 }
 
 function _restorePostDraft() {

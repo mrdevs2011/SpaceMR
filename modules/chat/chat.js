@@ -1,6 +1,7 @@
 import { sendChatMessage, sendVoiceMessage, sendChatFile, handleSendAction } from './chat-actions.js';
 export { sendChatMessage, handleSendAction };
 import { chatState, chatUI } from './chat-state.js';
+import { getDraft, setDraft, clearDraft, loadDrafts } from '../core/drafts.js';
 /* ── Onlayn holat (presence) uchun CSS ────────────────────────────────── */
 function _injectPresenceCSS() { /* CSS: mono-x.css .presence-dot */ }
 
@@ -666,7 +667,10 @@ function _paintUserRows(users, animate = false) {
     const isAdminUser = u.username === 'admin';
     const rawPreview = c?.lastMessage || '';
     const formattedLastMsg = formatLastMessageText(rawPreview, c?.lastSenderId === state.me?.uid);
-    const preview = (c && rawPreview)
+    const dmDraft = getDraft('dm:' + u.uid).trim();
+    const preview = dmDraft
+      ? `<span class="chat-draft-tag">Draft:</span> ${esc(dmDraft.slice(0, 46))}`
+      : (c && rawPreview)
       ? `${(!isSaved && c.lastSenderId === state.me.uid) ? 'You: ' : ''}${esc(formattedLastMsg.slice(0, 46))}`
       : isSaved ? 'Xabarlarni shu yerga saqlang' : isAdminUser ? "Admin bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
     const time   = (c?.lastMessageAt && rawPreview) ? fmt(c.lastMessageAt) : '';
@@ -1381,7 +1385,8 @@ async function _appendGroupRows(root, term = '') {
       const badgeTxt = unread > 99 ? '+99' : `+${unread}`;
       const rawPreview = g.lastMessage || '';
       const formattedLastMsg = formatLastMessageText(rawPreview);
-      const preview  = rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh';
+      const grpDraft = getDraft('grp:' + g.id).trim();
+      const preview  = grpDraft ? `<span class="chat-draft-tag">Draft:</span> ${esc(grpDraft.slice(0, 46))}` : (rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh');
       const time     = (g.lastMessageAt && rawPreview) ? fmt(g.lastMessageAt) : '';
       const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
       const unameHtml = g.username ? `<span style="font-size:11.5px;color:var(--blue,#1d9bf0);font-weight:500;margin-left:6px;">@${esc(g.username)}</span>` : '';
@@ -1569,7 +1574,7 @@ export async function openChatThread(uid) {
   $('chatThreadName').textContent   = '...';
   $('chatThreadAvi').innerHTML      = '';
 
-  const draft = localStorage.getItem('draft_' + uid) || '';
+  const draft = getDraft('dm:' + uid) || localStorage.getItem('draft_' + uid) || '';
   $('chatThreadInput').value = draft;
   setTimeout(updateVoiceSendBtn, 50);
 
@@ -3355,6 +3360,14 @@ if (_chatsAddBtn) _chatsAddBtn.addEventListener('click', openCreateChoice);
 // Input text changes — toggle mic/send icon + "yozmoqda..." holatini yuborish
 $('chatThreadInput').addEventListener('input', updateVoiceSendBtn);
 $('chatThreadInput').addEventListener('input', _onChatInputTyping);
+$('chatThreadInput').addEventListener('input', () => {
+  const gid = document.getElementById('chatThreadModal')?.dataset?.gid;
+  const scope = gid ? ('grp:' + gid) : (state.currentChatUid ? ('dm:' + state.currentChatUid) : '');
+  if (scope) setDraft(scope, $('chatThreadInput').value);
+});
+window.addEventListener('spacemr:draft', () => { try { renderChatsList(); } catch (_) {} });
+loadDrafts().then(() => { try { renderChatsList(); } catch (_) {} }).catch(() => {});
+
 $('chatThreadInput').addEventListener('keydown', e => {
   // Desktop: Enter = yuborish, Shift+Enter = yangi qator. Telefon (sensorli): Enter = yangi qator, yuborish tugma bilan.
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !window.matchMedia('(pointer: coarse)').matches) { e.preventDefault(); handleSendAction(); }

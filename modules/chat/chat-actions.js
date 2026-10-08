@@ -1,3 +1,4 @@
+import { clearDraft } from '../core/drafts.js';
 
 import { sb, state } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
@@ -347,7 +348,9 @@ export async function handleSendAction() {
     const inp = $('chatThreadInput');
     const text = inp ? inp.value.trim() : '';
     if (inp) {
-    localStorage.removeItem('draft_' + (state.currentChatUid || state.currentChatId));
+    clearDraft(document.getElementById('chatThreadModal')?.dataset?.gid ? ('grp:' + document.getElementById('chatThreadModal').dataset.gid) : ('dm:' + (state.currentChatUid || '')));
+    try { localStorage.removeItem('draft_' + (state.currentChatUid || state.currentChatId)); } catch (_) {}
+
 
       inp.value = '';
       inp.style.height = '';
