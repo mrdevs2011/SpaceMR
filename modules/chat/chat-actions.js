@@ -1,4 +1,4 @@
-import { clearDraft } from '../core/drafts.js';
+import { clearDraft, setDraft } from '../core/drafts.js';
 
 import { sb, state } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
@@ -343,22 +343,33 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
   }
 }
 
+let _sendLock = false;
+function _draftScope() {
+  const gid = document.getElementById('chatThreadModal')?.dataset?.gid;
+  return gid ? ('grp:' + gid) : ('dm:' + (state.currentChatUid || ''));
+}
 export async function handleSendAction() {
-  if (chatState._chatSelFile) {
-    const inp = $('chatThreadInput');
-    const text = inp ? inp.value.trim() : '';
-    if (inp) {
-    clearDraft(document.getElementById('chatThreadModal')?.dataset?.gid ? ('grp:' + document.getElementById('chatThreadModal').dataset.gid) : ('dm:' + (state.currentChatUid || '')));
-    try { localStorage.removeItem('draft_' + (state.currentChatUid || state.currentChatId)); } catch (_) {}
-
-
-      inp.value = '';
-      inp.style.height = '';
+  if (_sendLock) return;
+  _sendLock = true;
+  const scope = _draftScope();
+  try {
+    if (chatState._chatSelFile) {
+      const inp = $('chatThreadInput');
+      const text = inp ? inp.value.trim() : '';
+      if (inp) {
+        inp.value = '';
+        inp.style.height = '';
+      }
+      chatUI.updateVoiceSendBtn();
+      await sendChatFile(null, text);
+      if (inp && inp.value.trim()) setDraft(scope, inp.value);
+      else clearDraft(scope);
+    } else {
+      await sendChatMessage();
+      clearDraft(scope);
     }
-    chatUI.updateVoiceSendBtn();
-    await sendChatFile(null, text);
-  } else {
-    await sendChatMessage();
+  } finally {
+    _sendLock = false;
   }
 }
 
