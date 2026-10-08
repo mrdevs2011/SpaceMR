@@ -27,10 +27,10 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** yangi foydalanuvchi bo'sh lentani ko'rmasin.
 
-- [ ] Birinchi kirishda 2–3 qadamli qisqa tanishtiruv (lenta, chat, SpaceMR guruhi). Bir marta ko'rsatiladi, o'tkazib yuborish tugmasi bor.
-- [ ] Lenta bo'sh bo'lsa: "Odamlarni toping" ro'yxati (qidiruv/foydalanuvchilar sahifasiga havola).
-- [ ] "Ko'rsatildi" belgisi `localStorage`da (kalit nomi `spacemr_*` formatida).
-- [ ] Tanishtiruvda "Muammo bo'lsa SpaceMR guruhiga yozing" (7-band va 10-bandga bog'liq).
+- [x] Birinchi kirishda 2–3 qadamli qisqa tanishtiruv (lenta, chat, SpaceMR guruhi). Bir marta ko'rsatiladi, o'tkazib yuborish tugmasi bor.
+- [x] Lenta bo'sh bo'lsa: "Odamlarni toping" ro'yxati (qidiruv/foydalanuvchilar sahifasiga havola).
+- [x] "Ko'rsatildi" belgisi `localStorage`da (kalit nomi `spacemr_*` formatida).
+- [x] Tanishtiruvda "Muammo bo'lsa SpaceMR guruhiga yozing" (7-band va 10-bandga bog'liq).
 
 **Qabul mezoni:** yangi hisob bilan kirganda tanishtiruv bir marta chiqadi, qayta kirganda chiqmaydi; bo'sh lentada bo'sh ekran emas, yo'naltiruvchi blok bor.
 
@@ -38,10 +38,10 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** lenta va chat darrov ochilsin.
 
-- [ ] Avval keshdagi ma'lumotni ko'rsatish, yangisini orqada yuklab almashtirish (mavjud `modules/core/store/` kesh qatlamidan foydalaning).
-- [ ] Skelet (shimmer) yuklanish ko'rinishi: lenta, chat ro'yxati, profil.
-- [ ] Rasm/videolar lazy-load; lentada ko'rinmagan media yuklanmasin.
-- [ ] O'lchash: birinchi ko'rinadigan kontentgacha vaqt (mobil, 4G). Natijani shu faylga yoki `docs/`ga yozing.
+- [x] Avval keshdagi ma'lumotni ko'rsatish, yangisini orqada yuklab almashtirish (mavjud `modules/core/store/` kesh qatlamidan foydalaning).
+- [x] Skelet (shimmer) yuklanish ko'rinishi: lenta, chat ro'yxati, profil.
+- [x] Rasm/videolar lazy-load; lentada ko'rinmagan media yuklanmasin.
+- [x] O'lchash: birinchi ko'rinadigan kontentgacha vaqt (mobil, 4G). Natijani shu faylga yoki `docs/`ga yozing.
 
 **Qabul mezoni:** ikkinchi ochilishda lenta keshdan 1 soniyadan kam vaqtda ko'rinadi; yuklanish paytida bo'sh qora ekran yo'q.
 
@@ -49,10 +49,10 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** faqat kerakli narsalar, foydalanuvchi sozlay olsin.
 
-- [ ] Push faqat: yangi xabar, izohga javob, tilga olish (mention). Har bir layk uchun push yo'q.
-- [ ] Sozlamalarda turlar bo'yicha yoqish/o'chirish.
-- [ ] Suhbat va guruhni **ovozsiz qilish** (mute).
-- [ ] Ilova ichidagi bildirishnoma sahifasi (`notifs`) bilan push turlari mos bo'lsin.
+- [x] Push faqat: yangi xabar, izohga javob, tilga olish (mention). Har bir layk uchun push yo'q.
+- [x] Sozlamalarda turlar bo'yicha yoqish/o'chirish.
+- [x] Suhbat va guruhni **ovozsiz qilish** (mute).
+- [x] Ilova ichidagi bildirishnoma sahifasi (`notifs`) bilan push turlari mos bo'lsin.
 - Eslatma: vaqt bo'yicha "tinch soatlar" va mavzu sozlamalari bu bandga kirmaydi.
 
 **Qabul mezoni:** o'chirilgan tur uchun push kelmaydi; mute qilingan guruhdan push kelmaydi, lekin ilovada o'qilmagan soni ko'rinadi.
@@ -61,11 +61,11 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** internet uzilsa ilova qotmasin.
 
-- [ ] "Ulanish yo'q" yo'lagi (banner), ulanish qaytganda o'zi yo'qoladi.
-- [ ] Yozilgan chat xabari oflaynda navbatga tushadi va ulanganda yuboriladi; holat belgisi ("yuborilmoqda", "yuborilmadi — qayta urinish").
-- [ ] Post yozish: oflaynda qoralama sifatida saqlanadi.
-- [ ] Service worker (`sw.js`): server yo'naltirishi (302 → `/login`) keshdagi qobiq bilan almashtirilmasligi saqlansin (regressiya bo'lmasin).
-- [ ] Oflayn bo'lganda har bir so'rov xatosi aniq xabar bilan ko'rsatiladi, bo'sh ekran emas.
+- [x] "Ulanish yo'q" yo'lagi (banner), ulanish qaytganda o'zi yo'qoladi.
+- [x] Yozilgan chat xabari oflaynda navbatga tushadi va ulanganda yuboriladi; holat belgisi ("yuborilmoqda", "yuborilmadi — qayta urinish").
+- [x] Post yozish: oflaynda qoralama sifatida saqlanadi.
+- [x] Service worker (`sw.js`): server yo'naltirishi (302 → `/login`) keshdagi qobiq bilan almashtirilmasligi saqlansin (regressiya bo'lmasin).
+- [x] Oflayn bo'lganda har bir so'rov xatosi aniq xabar bilan ko'rsatiladi, bo'sh ekran emas.
 
 **Qabul mezoni:** samolyot rejimida ilova ochiladi, keshdagi lenta/chat ko'rinadi, xabar yozish mumkin; ulanganda xabar yuboriladi.
 
@@ -73,11 +73,11 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** ilovadagi eng ko'p ishlatiladigan qism ravon bo'lsin.
 
-- [ ] Tekshirish: o'qildi belgisi, javob berish (reply), reaksiyalar, ovozli xabar, pin — qaysilari to'liq ishlashini ro'yxatga oling, yo'qlarini qo'shing.
-- [ ] Chat ichida xabar qidirish.
-- [ ] Uzun suhbatda tez scroll (virtualizatsiya yoki sahifalash), yuqoriga scrollda eski xabarlar.
-- [ ] Yozayotgani ("yozmoqda…") ko'rsatkichi (agar yo'q bo'lsa).
-- [ ] Media xabarlarda yuklash progressi va xatoda qayta urinish.
+- [x] Tekshirish: o'qildi belgisi, javob berish (reply), reaksiyalar, ovozli xabar, pin — qaysilari to'liq ishlashini ro'yxatga oling, yo'qlarini qo'shing.
+- [x] Chat ichida xabar qidirish.
+- [x] Uzun suhbatda tez scroll (virtualizatsiya yoki sahifalash), yuqoriga scrollda eski xabarlar.
+- [x] Yozayotgani ("yozmoqda…") ko'rsatkichi (agar yo'q bo'lsa).
+- [x] Media xabarlarda yuklash progressi va xatoda qayta urinish.
 
 **Qabul mezoni:** 1000+ xabarli suhbat qotmaydi; xabar qidiruvi natija beradi; ovozli va rasmli xabar xatoda qayta yuborilishi mumkin.
 
@@ -85,11 +85,11 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** asosiy amallar bir tegishda.
 
-- [ ] Eng ko'p ishlatiladigan amallarni aniqlang: post yozish, chatga o'tish, SpaceMR guruhi, bildirishnomalar.
-- [ ] Header va pastki menyuda ortiqcha tugmalarni olib tashlang yoki "yana" menyusiga o'tkazing.
-- [ ] Bugungi header qoidasi saqlansin: chapda logo (bosilsa home + faqat feed/story yangilanadi), yonida "SpaceMR" yozuvi (bosilsa guruh chati).
-- [ ] Profil sozlama tugmasi desktopda ko'rinmaydi, faqat mobilda.
-- [ ] Barcha bosiladigan elementlar mobilda kamida 44×44px.
+- [x] Eng ko'p ishlatiladigan amallarni aniqlang: post yozish, chatga o'tish, SpaceMR guruhi, bildirishnomalar.
+- [x] Header va pastki menyuda ortiqcha tugmalarni olib tashlang yoki "yana" menyusiga o'tkazing.
+- [x] Bugungi header qoidasi saqlansin: chapda logo (bosilsa home + faqat feed/story yangilanadi), yonida "SpaceMR" yozuvi (bosilsa guruh chati).
+- [x] Profil sozlama tugmasi desktopda ko'rinmaydi, faqat mobilda.
+- [x] Barcha bosiladigan elementlar mobilda kamida 44×44px.
 
 **Qabul mezoni:** post yozish va chatga o'tish 1–2 teginish; header'da takroriy logo/tugma yo'q.
 
@@ -97,11 +97,11 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** yopiq tarmoqda ishonch.
 
-- [ ] Post/story kimga ko'rinishi aniq belgilansin.
-- [ ] Foydalanuvchini bloklash va kontentga shikoyat qilish tugmasi (profil va post menyusida). Hozir mavjudligini tekshiring.
-- [ ] Hisobni o'chirish oson topilsin (sozlamalarda), tasdiqlash bilan. Chiqqandan keyin `/login` ga o'tadi.
-- [ ] `privacy.html` va `terms.html` sozlamalardan havola bilan ochilsin.
-- [ ] Muammo/shikoyat uchun yo'l: SpaceMR guruhi (10-band).
+- [x] Post/story kimga ko'rinishi aniq belgilansin.
+- [x] Foydalanuvchini bloklash va kontentga shikoyat qilish tugmasi (profil va post menyusida). Hozir mavjudligini tekshiring.
+- [x] Hisobni o'chirish oson topilsin (sozlamalarda), tasdiqlash bilan. Chiqqandan keyin `/login` ga o'tadi.
+- [x] `privacy.html` va `terms.html` sozlamalardan havola bilan ochilsin.
+- [x] Muammo/shikoyat uchun yo'l: SpaceMR guruhi (10-band).
 
 **Qabul mezoni:** bloklangan foydalanuvchi xabar yoza olmaydi va kontenti ko'rinmaydi; hisobni o'chirish 3 teginishdan oshmaydi.
 
@@ -109,10 +109,10 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** ortiqcha bosimsiz, odamni ilovaga qaytarish.
 
-- [ ] Yangi story'lar uchun nuqta/halqa (allaqachon bor story halqasini tekshiring).
-- [ ] O'qilmagan xabar/bildirishnoma soni (belgi).
-- [ ] Ixtiyoriy: haftalik qisqa xulosa ("bu hafta 12 ta yangi post"), faqat ilova ichida.
-- [ ] Streak yoki majburlovchi mexanika QO'SHILMAYDI, agar foydalanuvchi so'ramasa.
+- [x] Yangi story'lar uchun nuqta/halqa (allaqachon bor story halqasini tekshiring).
+- [x] O'qilmagan xabar/bildirishnoma soni (belgi).
+- [x] Ixtiyoriy: haftalik qisqa xulosa ("bu hafta 12 ta yangi post"), faqat ilova ichida.
+- [x] Streak yoki majburlovchi mexanika QO'SHILMAYDI, agar foydalanuvchi so'ramasa.
 
 **Qabul mezoni:** foydalanuvchi ilovani ochmasdan nima yangi ekanini bilmaydi, lekin ochganda darrov ko'radi; hech qanday bezovta qiluvchi eslatma yo'q.
 
@@ -120,10 +120,10 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** tushunarli o'zbekcha matn.
 
-- [ ] Barcha `toast(..., 'error')` va `catch` matnlarini ro'yxatga oling.
-- [ ] Texnik xabar ("Failed to fetch", `e.message`) foydalanuvchiga ko'rsatilmasin; o'rniga: sabab + nima qilish kerak.
-- [ ] Namuna matnlar: "Internet yo'q, qayta urinib ko'ring", "Server javob bermadi, birozdan keyin urinib ko'ring", "Bu amalga ruxsat yo'q".
-- [ ] Texnik tafsilot `client_errors`ga yoziladi (foydalanuvchiga emas).
+- [x] Barcha `toast(..., 'error')` va `catch` matnlarini ro'yxatga oling.
+- [x] Texnik xabar ("Failed to fetch", `e.message`) foydalanuvchiga ko'rsatilmasin; o'rniga: sabab + nima qilish kerak.
+- [x] Namuna matnlar: "Internet yo'q, qayta urinib ko'ring", "Server javob bermadi, birozdan keyin urinib ko'ring", "Bu amalga ruxsat yo'q".
+- [x] Texnik tafsilot `client_errors`ga yoziladi (foydalanuvchiga emas).
 
 **Qabul mezoni:** ilovada inglizcha yoki texnik xato matni qolmagan.
 
@@ -131,11 +131,11 @@ Bu fayl AI agent (Claude Code) va dasturchi uchun. Har bir bandni alohida branch
 
 **Maqsad:** muammo va takliflar bir joyga tushsin; alohida forma kerak emas.
 
-- [ ] Chap paneldagi va header'dagi "SpaceMR" tugmasi guruh chatini ochadi (mavjud). Tooltip: "Muammo va takliflar".
-- [ ] Guruhda "Muammo yoki taklif bo'lsa shu yerga yozing, imkon bo'lsa skrinshot bilan" xabarini qadang (pin).
-- [ ] Birinchi kirishda (1-band) bir marta shu haqda eslatma.
-- [ ] Sozlamalarda "Muammo haqida yozish" qatori ham SpaceMR guruhini ochadi.
-- [ ] Qora ekran qo'riqchisidagi "Ilova ochilmadi" panelida "Guruhga yozish" havolasi (ochilishi mumkin bo'lsa).
+- [x] Chap paneldagi va header'dagi "SpaceMR" tugmasi guruh chatini ochadi (mavjud). Tooltip: "Muammo va takliflar".
+- [x] Guruhda "Muammo yoki taklif bo'lsa shu yerga yozing, imkon bo'lsa skrinshot bilan" xabarini qadang (pin).
+- [x] Birinchi kirishda (1-band) bir marta shu haqda eslatma.
+- [x] Sozlamalarda "Muammo haqida yozish" qatori ham SpaceMR guruhini ochadi.
+- [x] Qora ekran qo'riqchisidagi "Ilova ochilmadi" panelida "Guruhga yozish" havolasi (ochilishi mumkin bo'lsa).
 
 **Qabul mezoni:** foydalanuvchi har qanday ekrandan 2 teginishda guruhga muammo yoza oladi.
 

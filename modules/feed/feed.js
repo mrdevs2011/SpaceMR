@@ -106,6 +106,21 @@ async function appendPostsToFeed(feedEl, newPosts) {
   bindFeedEvents(feedEl);
 }
 
+
+/** ROADMAP 2 — yuklanish skeleti */
+export function paintFeedSkeleton(feedEl, n = 4) {
+  if (!feedEl) return;
+  const row = () => `<div class="feed-skel-card" aria-hidden="true">
+    <div class="feed-skel-avi skel-pulse"></div>
+    <div class="feed-skel-lines">
+      <div class="feed-skel-line skel-pulse" style="width:40%"></div>
+      <div class="feed-skel-line skel-pulse" style="width:90%"></div>
+      <div class="feed-skel-line skel-pulse" style="width:70%"></div>
+    </div>
+  </div>`;
+  feedEl.innerHTML = Array.from({ length: n }, row).join('');
+}
+
 export async function renderFeedTo(feedEl, posts) {
   if (!state.me || !feedEl) return;
   if (!posts.length) {
@@ -124,12 +139,19 @@ export async function renderFeedTo(feedEl, posts) {
       feedEl.innerHTML = `<div class="empty empty--home">
         <div class="empty-glow" aria-hidden="true"></div>
         <div class="empty-icon">
-          <img src="./svg/extra/icon-44d5da9e7c91.svg" alt="" class="icon" width="36" height="36">
+          <img src="./svg/nav/home.svg" alt="" class="icon" width="40" height="40">
         </div>
         <div class="empty-title">Lenta hali bo'sh</div>
         <div class="empty-sub">Rasm yoki fikr bo'lishing — do'stlaringiz ko'radi.</div>
-        ${createBtn}
+        <button type="button" class="empty-cta" id="emptyFindPeople">Odamlarni toping</button>
+        <button type="button" class="empty-cta empty-cta--ghost" onclick="document.querySelector('.nav-center-btn')?.click() || document.getElementById('createBtn')?.click()">Birinchi postingizni joylang</button>
       </div>`;
+      queueMicrotask(() => {
+        document.getElementById('emptyFindPeople')?.addEventListener('click', () => {
+          try { import('../url-router.js').then(m => m.applyPath('/explore')).catch(() => {});
+          } catch (_) { location.hash = '#explore'; }
+        });
+      });
     }
     return;
   }

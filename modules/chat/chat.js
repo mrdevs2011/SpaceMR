@@ -427,6 +427,47 @@ function _openChatContextMenu(row) {
 }
 
 /* ── Header 3-dots Dropdown Menu (DM & Group) ────────────────────────── */
+
+/** Chat ichida xabar qidirish (ROADMAP 5) */
+function openThreadMsgSearch() {
+  const box = $('chatThreadMessages');
+  if (!box) return;
+  let bar = document.getElementById('threadMsgSearchBar');
+  if (bar) { bar.querySelector('input')?.focus(); return; }
+  bar = document.createElement('div');
+  bar.id = 'threadMsgSearchBar';
+  bar.className = 'thread-msg-search';
+  bar.innerHTML = `
+    <input type="search" id="threadMsgSearchInput" placeholder="Xabar qidirish..." autocomplete="off" enterkeyhint="search">
+    <button type="button" id="threadMsgSearchClose" aria-label="Yopish">✕</button>
+  `;
+  const hdr = document.querySelector('.chat-thread-hdr');
+  if (hdr) hdr.insertAdjacentElement('afterend', bar);
+  else box.parentElement?.insertBefore(bar, box);
+
+  const inp = bar.querySelector('#threadMsgSearchInput');
+  const close = () => {
+    box.querySelectorAll('.chat-msg.msg-search-hit').forEach(el => el.classList.remove('msg-search-hit'));
+    bar.remove();
+  };
+  bar.querySelector('#threadMsgSearchClose')?.addEventListener('click', close);
+  inp?.addEventListener('input', () => {
+    const q = (inp.value || '').trim().toLowerCase();
+    box.querySelectorAll('.chat-msg').forEach(el => {
+      const text = (el.textContent || '').toLowerCase();
+      const hit = q.length >= 2 && text.includes(q);
+      el.classList.toggle('msg-search-hit', hit);
+      if (!q) el.classList.remove('msg-search-hit');
+    });
+    if (q.length >= 2) {
+      const first = box.querySelector('.chat-msg.msg-search-hit');
+      first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  });
+  inp?.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  setTimeout(() => inp?.focus(), 50);
+}
+
 export function initChatHeaderMenu() {
   const btn = $('chatHeaderMenuBtn');
   if (!btn || btn._wired) return;
@@ -447,22 +488,38 @@ export function initChatHeaderMenu() {
     drop.id = 'chatHeaderDropdown';
     drop.className = 'chat-header-dropdown';
 
+    const muteKey = isGroup
+      ? ('spacemr_mute_g_' + (getCurrentGroupId() || modal?.dataset?.gid || ''))
+      : ('spacemr_mute_u_' + (state.currentChatUid || ''));
+    let muted = false;
+    try { muted = !!muteKey && localStorage.getItem(muteKey) === '1'; } catch (_) {}
+    const muteLabel = muted ? 'Ovozni yoqish' : 'Ovozsiz qilish';
+
+    const commonTop = `
+        <button type="button" class="chat-header-dropdown-item" id="chmSearchMsgs">
+          <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="16" height="16">
+          <span>Xabarlarni qidirish</span>
+        </button>
+        <button type="button" class="chat-header-dropdown-item" id="chmMute">
+          <span>${muteLabel}</span>
+        </button>`;
+
     if (isSaved) {
-      drop.innerHTML = `
+      drop.innerHTML = commonTop + `
         <button type="button" class="chat-header-dropdown-item danger" id="chmClearSaved">
           <img src="./svg/extra/icon-938ddddb771c.svg" alt="" class="icon" width="16" height="16">
           <span>Tarixni tozalash</span>
         </button>
       `;
     } else if (isGroup) {
-      drop.innerHTML = `
+      drop.innerHTML = commonTop + `
         <button type="button" class="chat-header-dropdown-item danger" id="chmLeaveGroup">
           <img src="./svg/action/logout.svg" alt="" class="icon" width="16" height="16">
           <span>Guruhdan chiqish</span>
         </button>
       `;
     } else {
-      drop.innerHTML = `
+      drop.innerHTML = commonTop + `
         <button type="button" class="chat-header-dropdown-item danger" id="chmDeleteChat">
           <img src="./svg/extra/icon-938ddddb771c.svg" alt="" class="icon" width="16" height="16">
           <span>Suhbatdan chiqish</span>
@@ -472,6 +529,22 @@ export function initChatHeaderMenu() {
 
     const hdr = document.querySelector('.chat-thread-hdr');
     if (hdr) hdr.appendChild(drop);
+
+    drop.querySelector('#chmSearchMsgs')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      drop.remove();
+      openThreadMsgSearch();
+    });
+    drop.querySelector('#chmMute')?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      drop.remove();
+      if (!muteKey || muteKey.endsWith('_')) return;
+      try {
+        if (muted) localStorage.removeItem(muteKey);
+        else localStorage.setItem(muteKey, '1');
+        toast(muted ? 'Ovoz yoqildi' : 'Suhbat ovozsiz qilindi', 'info');
+      } catch (_) {}
+    });
 
     drop.querySelector('#chmClearSaved')?.addEventListener('click', async (ev) => {
       ev.stopPropagation();

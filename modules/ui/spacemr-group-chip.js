@@ -92,3 +92,27 @@ function _bindFeedback() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindFeedback, { once: true });
 else _bindFeedback();
+
+
+/* ROADMAP 3 — push tur sozlamalari (localStorage) */
+function _bindPushPrefs() {
+  const map = {
+    pushPrefMsg: 'spacemr_push_msg',
+    pushPrefComment: 'spacemr_push_comment',
+  };
+  Object.entries(map).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el || el._bound) return;
+    el._bound = true;
+    try {
+      const v = localStorage.getItem(key);
+      if (v === '0') el.checked = false;
+      else el.checked = true;
+    } catch (_) {}
+    el.addEventListener('change', () => {
+      try { localStorage.setItem(key, el.checked ? '1' : '0'); } catch (_) {}
+    });
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindPushPrefs, { once: true });
+else _bindPushPrefs();

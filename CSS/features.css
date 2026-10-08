@@ -4364,3 +4364,126 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   transform: scale(0.92);
   opacity: 0.9;
 }
+
+
+/* ROADMAP 5 — chat xabar qidiruv */
+.thread-msg-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #16181c;
+  border-bottom: 1px solid #2f3336;
+  flex-shrink: 0;
+}
+.thread-msg-search input {
+  flex: 1;
+  height: 40px;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid #2f3336;
+  background: #0f1419;
+  color: #e7e9ea;
+  padding: 0 12px;
+  font-size: 15px;
+}
+.thread-msg-search button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #71767b;
+  font-size: 18px;
+  cursor: pointer;
+}
+.chat-msg.msg-search-hit .chat-bubble {
+  outline: 2px solid #1d9bf0;
+  outline-offset: 2px;
+}
+.empty-cta--ghost {
+  margin-top: 8px;
+  background: transparent !important;
+  color: #1d9bf0 !important;
+  border: 1px solid #2f3336;
+}
+
+
+/* Settings toggle (ROADMAP 3) */
+.settings-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 28px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.settings-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.settings-toggle span {
+  position: absolute;
+  inset: 0;
+  background: #2f3336;
+  border-radius: 999px;
+  transition: background .15s;
+}
+.settings-toggle span::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 3px;
+  background: #e7e9ea;
+  border-radius: 50%;
+  transition: transform .15s;
+}
+.settings-toggle input:checked + span {
+  background: #1d9bf0;
+}
+.settings-toggle input:checked + span::after {
+  transform: translateX(16px);
+}
+
+
+/* ROADMAP 2 — feed skeleton */
+.feed-skel-card {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #2f3336;
+}
+.feed-skel-avi {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2f3336;
+  flex-shrink: 0;
+}
+.feed-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.feed-skel-line {
+  height: 12px;
+  border-radius: 6px;
+  background: #2f3336;
+}
+@keyframes skel-pulse {
+  0%, 100% { opacity: .45; }
+  50% { opacity: .9; }
+}
+.skel-pulse { animation: skel-pulse 1.2s ease-in-out infinite; }
+
+/* ROADMAP 6 — minimal 44px touch on key controls */
+@media (max-width: 1099px) {
+  nav.bot-nav .nav-btn,
+  nav.bot-nav .sb-search-toggle,
+  .chat-thread-back,
+  .chat-call-btn,
+  .chat-attach-btn,
+  .chat-emoji-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

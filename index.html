@@ -940,6 +940,27 @@ html[data-nf],html[data-nf] body{background:#000000}
       <button class="ig-open-btn" id="fullAppReloadBtn" type="button">Yangilash</button>
     </div>
 
+    <div class="settings-section-label">Bildirishnomalar</div>
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">Yangi xabar</div>
+        <div class="settings-row-hint">Chat va guruh xabarlari</div>
+      </div>
+      <label class="settings-toggle"><input type="checkbox" id="pushPrefMsg" checked><span></span></label>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-text">
+        <div class="settings-row-title">Izoh va tilga olish</div>
+        <div class="settings-row-hint">Izoh javobi va mention</div>
+      </div>
+      <label class="settings-toggle"><input type="checkbox" id="pushPrefComment" checked><span></span></label>
+    </div>
+    <div class="settings-row settings-row-hint-only">
+      <div class="settings-row-text">
+        <div class="settings-row-hint">Layk uchun push yuborilmaydi. Ovozsiz suhbat: chat menyusidan.</div>
+      </div>
+    </div>
+
     <div class="settings-section-label">Yordam</div>
     <div class="settings-row" id="settingsFeedbackRow" role="button" tabindex="0" style="cursor:pointer">
       <div class="settings-row-text">
@@ -1386,8 +1407,7 @@ html[data-nf],html[data-nf] body{background:#000000}
 
 <script>
 (function() {
-  // onboarding removed
-  window._startOnboarding = function() {};
+  // onboarding: modules/ui/onboarding.js (window._startOnboarding)
 })();
 </script>
 
