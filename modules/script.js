@@ -13,6 +13,7 @@ import { initUrlRouter } from './url-router.js';
 import { initNavigation } from './ui/bar.js';
 import './explore.js';
 import './ui/emoji-dom.js';   // ekrandagi hamma emoji -> 2D PNG (post, izoh, story, bio, ism...)
+import './ui/spacemr-group-chip.js'; // SpaceMR Group tugmasi (mobil header + desktop chap panel)
 
 /* ── Splash: min 0.8s, max 2s; ma'lumot tayyor bo'lguncha kutadi ── */
 const _splashT0 = Date.now();
