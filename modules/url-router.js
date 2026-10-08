@@ -359,7 +359,7 @@ export function setUrl(target, { replace = false } = {}) {
   const tpath = target.split(/[?#]/)[0];
   if (hasExtra ? target === cur + location.search + location.hash : tpath === cur) return;
   const st = history.state || {};
-  const keepTail = !hasExtra && !cur.startsWith('/p/') && cur !== '/explore' && !/^#[cm]-/.test(location.hash);
+  const keepTail = !hasExtra && !cur.startsWith('/p/') && cur !== '/explore' && (tpath === cur || !/^#[cm]-/.test(location.hash));
   const tail = hasExtra ? '' : (keepTail ? location.search + location.hash : '');
   if (!replace && famOf(tpath) === famOf(cur) && (hasExtra || tpath !== cur)) replace = true;
   if (!replace && st.prev === tpath) {
@@ -518,19 +518,41 @@ function pickTab(selector, key, tab) {
 
 /** Xabarga havola (#m-<id>): xabargacha scroll + qisqa yoritish */
 function scrollToMsg(id) {
-  const q = CSS.escape(String(id));
+  let raw = String(id || '');
+  try { raw = decodeURIComponent(raw); } catch (_) {}
+  const q = CSS.escape(raw);
   let n = 0;
-  const tick = () => {
-    const el = document.querySelector(`.chat-msg[data-msg-id="${q}"]`);
-    if (el) {
-      smoothScrollIntoView(el, { block: 'center' });
-      el.classList.add('msg-link-highlight');
-      setTimeout(() => el.classList.remove('msg-link-highlight'), 3000);
-      return;
+  let fetching = false;
+  const highlight = (el) => {
+    const box = document.getElementById('chatThreadMessages');
+    if (box) {
+      const top = el.offsetTop - (box.clientHeight / 2) + (el.offsetHeight / 2);
+      box.scrollTop = Math.max(0, top);
     }
-    if (n++ < 20) setTimeout(tick, 250);
+    el.classList.add('msg-link-highlight');
+    clearTimeout(el._hlT);
+    el._hlT = setTimeout(() => el.classList.remove('msg-link-highlight'), 2800);
   };
-  setTimeout(tick, 300);
+  const tick = async () => {
+    const el = document.querySelector(`#chatThreadMessages .chat-msg[data-msg-id="${q}"]`);
+    if (el) { highlight(el); return; }
+    if (!fetching && (n === 6 || n === 18)) {
+      fetching = true;
+      try {
+        const gid = document.getElementById('chatThreadModal')?.dataset?.gid;
+        if (gid) {
+          const g = await import('./chat/groups.js');
+          await g.revealGroupMessage?.(raw);
+        } else {
+          const c = await import('./chat/chat.js');
+          await c.revealDmMessage?.(raw);
+        }
+      } catch (_) {}
+      fetching = false;
+    }
+    if (n++ < 40) setTimeout(tick, 300);
+  };
+  setTimeout(tick, 150);
 }
 
 async function postExists(id) {
@@ -846,7 +868,10 @@ export function initUrlRouter() {
   window.addEventListener('hashchange', () => {
     if (_auth === 'out' && cleanPath(location.pathname) !== '/login') {
       history.replaceState({ i: 0, prev: null }, '', '/login');
+      return;
     }
+    const mid = (location.hash.match(/^#m-(.+)$/) || [])[1];
+    if (mid && document.getElementById('chatThreadModal')?.classList.contains('show')) scrollToMsg(mid);
   });
 
   window.addEventListener('popstate', () => {

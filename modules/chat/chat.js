@@ -2433,6 +2433,30 @@ function _replyQuoteHtml(m, msgs, grp) {
     </div>
   </div>`;
 }
+
+/** Havola (#m-id) xabari oxirgi 60 tadan tashqarida bo'lsa, shu xabar atrofini ochadi. */
+export async function revealDmMessage(id) {
+  const chatId = state.currentChatId;
+  if (!chatId || !id) return false;
+  const cols = 'id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq';
+  const { data } = await sb.from('messages').select(cols).eq('id', id).maybeSingle();
+  if (!data || data.chat_id !== chatId) return false;
+  const created = data.created_at;
+  const before = await sb.from('messages').select(cols).eq('chat_id', chatId).lte('created_at', created).order('created_at', { ascending: false }).limit(40);
+  const after = await sb.from('messages').select(cols).eq('chat_id', chatId).gt('created_at', created).order('created_at', { ascending: true }).limit(20);
+  const rows = [...(before.data || [])].reverse().concat(after.data || []);
+  const seen = new Set();
+  const msgs = [];
+  for (const row of rows) {
+    if (!row?.id || seen.has(row.id)) continue;
+    seen.add(row.id);
+    msgs.push(mapMessage(row));
+  }
+  if (!seen.has(id)) msgs.push(mapMessage(data));
+  paintMessages(msgs);
+  return true;
+}
+
 export function paintMessages(msgs, grp = null) {
   const box = $('chatThreadMessages');
   if (!box) return;
@@ -2457,7 +2481,7 @@ export function paintMessages(msgs, grp = null) {
   // Foydalanuvchi pastda (eng oxirgi xabarlarda) turganini tekshiramiz
   // threshold: pastdan 120px uzoqda bo'lsa "pastda" hisoblanadi
   const isAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
-  const isInitialLoad = prevCount === 0;
+  const isInitialLoad = prevCount === 0 && !/^#m-/.test(location.hash);
   _bindPinTracking(box);
   const _baseline = !chatState._seenBaselineDone;   // shu chatning birinchi chizilishi — animatsiyasiz
   chatState._seenBaselineDone = true;

@@ -896,6 +896,31 @@ function _gNames() {
   return out;
 }
 
+
+/** Havola (#m-id) guruh xabari oxirgi 60 tadan tashqarida bo'lsa, shu xabar atrofini ochadi. */
+export async function revealGroupMessage(id) {
+  const groupId = _currentGroupId;
+  if (!groupId || !id) return false;
+  const cols = 'id, group_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, edited_at, created_at, reply_to, waveform, seq';
+  const { data } = await sb.from('group_messages').select(cols).eq('id', id).maybeSingle();
+  if (!data || data.group_id !== groupId) return false;
+  const created = data.created_at;
+  const before = await sb.from('group_messages').select(cols).eq('group_id', groupId).lte('created_at', created).order('created_at', { ascending: false }).limit(40);
+  const after = await sb.from('group_messages').select(cols).eq('group_id', groupId).gt('created_at', created).order('created_at', { ascending: true }).limit(20);
+  const rows = [...(before.data || [])].reverse().concat(after.data || []);
+  const seen = new Set();
+  const msgs = [];
+  for (const row of rows) {
+    if (!row?.id || seen.has(row.id)) continue;
+    seen.add(row.id);
+    msgs.push(mapMessage(row));
+  }
+  if (!seen.has(id)) msgs.push(mapMessage(data));
+  _gMsgs = msgs;
+  paintGroupMessages(msgs, _currentGroupData);
+  return true;
+}
+
 async function paintGroupMessages(msgs, groupData) {
   if (!$('chatThreadMessages')) return;
   msgs = _gTicked(msgs);
