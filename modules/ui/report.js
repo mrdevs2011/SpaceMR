@@ -232,19 +232,32 @@ function _targetHtml(ctx) {
   return '';
 }
 
+function _origin() {
+  try { return location.origin || ''; } catch (_) { return ''; }
+}
+
 function _buildMessage(ctx, reasonId, note) {
-  const reason = REASONS.find(r => r.id === reasonId)?.label || reasonId || '—';
+  const reason = REASONS.find(r => r.id === reasonId)?.label || reasonId || '-';
   const kindLabel = KINDS.find(k => k.id === (ctx?.kind || 'other'))?.label || 'Umumiy';
+  const origin = _origin();
   const lines = ['**[Shikoyat]**'];
   lines.push('**Turi:** ' + kindLabel);
   if (ctx?.kind === 'post') {
-    if (ctx.id) lines.push('**Post ID:** `' + ctx.id + '`');
-    if (ctx.uid) lines.push('**Muallif:** `' + ctx.uid + '`');
+    if (ctx.id) {
+      const url = origin + '/p/' + encodeURIComponent(ctx.id);
+      lines.push('**Post:** [Ochish](' + url + ')');
+      lines.push(url);
+    }
+    if (ctx.username) lines.push('**Muallif:** @' + ctx.username);
+    else if (ctx.uid) lines.push('**Muallif:** `' + ctx.uid + '`');
     if (ctx.text) lines.push('**Matn:** ' + String(ctx.text).slice(0, 120));
   } else if (ctx?.kind === 'user') {
-    if (ctx.uid) lines.push('**UID:** `' + ctx.uid + '`');
-    if (ctx.username) lines.push('@' + ctx.username);
+    if (ctx.username) {
+      lines.push('**Foydalanuvchi:** @' + ctx.username);
+      if (origin) lines.push(origin + '/u/' + encodeURIComponent(ctx.username));
+    }
     if (ctx.name) lines.push('**Ism:** ' + ctx.name);
+    if (ctx.uid) lines.push('**UID:** `' + ctx.uid + '`');
   } else if (ctx?.kind === 'group' && ctx.name) {
     lines.push('**Guruh:** ' + ctx.name);
   }

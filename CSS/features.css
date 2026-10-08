@@ -4804,33 +4804,6 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 body.report-open { overflow: hidden; }
 
 
-/* explore-page-full — Kashf to'liq sahifa (float modal emas) */
-.search-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  background: var(--bg, #000);
-  opacity: 0;
-  pointer-events: none;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  padding: 0;
-  transition: opacity .15s ease;
-}
-.search-overlay.open {
-  opacity: 1;
-  pointer-events: all;
-}
-.search-overlay-inner {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  transform: none !important;
-  padding: 12px 0 24px;
-  box-sizing: border-box;
-}
-
 /* report-page-full — Shikoyat /report to'liq sahifa */
 .report-sheet {
   position: fixed;
