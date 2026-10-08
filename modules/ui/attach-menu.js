@@ -113,7 +113,7 @@ export function initAttachMenu({
     const m = document.createElement('div');
     m.className = 'attach-menu';
     m.setAttribute('role', 'menu');
-    m.style.zIndex = '100050';
+    m.style.zIndex = '2147483001';
 
     m.innerHTML = items.map(({ k, t, forId }) => {
       if (forId) {
@@ -130,12 +130,15 @@ export function initAttachMenu({
     const mw = m.offsetWidth || 180;
     const mh = m.offsetHeight || 120;
     const left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8));
-    if (window.innerHeight - r.bottom >= mh + 12) {
-      m.style.top = (r.bottom + 8) + 'px';
-      m.style.bottom = 'auto';
-    } else {
+    const inComposer = !!btn.closest('#uploadOverlay, .composer-sheet');
+    const spaceBelow = window.innerHeight - r.bottom;
+    const openUp = inComposer || spaceBelow < mh + 12;
+    if (openUp) {
       m.style.bottom = (window.innerHeight - r.top + 8) + 'px';
       m.style.top = 'auto';
+    } else {
+      m.style.top = (r.bottom + 8) + 'px';
+      m.style.bottom = 'auto';
     }
     m.style.left = left + 'px';
 

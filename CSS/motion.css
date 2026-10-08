@@ -363,3 +363,8 @@ img, video { decoding: async; }
   display: block;
   vertical-align: unset;
 }
+
+/* Composer skrepka menyusi kartaning pastida qirqilmasin — tepada, overlay ustida */
+#uploadOverlay.show,
+#uploadOverlay.show .composer-sheet { overflow: visible !important; }
+.attach-menu { z-index: 2147483001 !important; }
