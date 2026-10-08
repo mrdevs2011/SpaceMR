@@ -592,6 +592,10 @@ function _flushDeferredForceLogout() {
   _forceSignOut();
 }
 
+function _clearGateCookie() {
+  try { document.cookie = 'sp_at=; Path=/; Max-Age=0; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (_) {}
+}
+
 async function _forceSignOut() {
   _pendingForceLogout = false;
   _stopUserWatch();
@@ -620,7 +624,8 @@ async function _forceSignOut() {
   if (app) app.classList.remove('show');
   if (authWrap) authWrap.classList.add('show');
   hidePendingScreen();
-  location.replace('/');
+  _clearGateCookie();
+  location.replace('/login');
 }
 
 let _mandatoryModalActive = false;
@@ -2212,7 +2217,8 @@ export async function logOut() {
       if (/supabase|spacemr|mrspace|sb-/i.test(k)) sessionStorage.removeItem(k);
     });
   } catch (_) {}
-  location.replace('/');
+  _clearGateCookie();
+  location.replace('/login');
 }
 
 const logoutBtn = $('logoutBtn');

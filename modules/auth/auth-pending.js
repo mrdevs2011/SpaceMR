@@ -231,7 +231,8 @@ if (pendingSignOutBtn) {
     if (typeof _onPendingSignOut === 'function') await _onPendingSignOut();
     hidePendingScreen();
     try { await sb.auth.signOut(); } catch (_) {}
-    location.replace('/');
+    try { document.cookie = 'sp_at=; Path=/; Max-Age=0; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (_) {}
+    location.replace('/login');
   });
 }
 

@@ -252,7 +252,8 @@ if (deleteAccountBtn) {
           clearAllCache();
           try { await sb.auth.signOut(); } catch (_) {}
           try { localStorage.removeItem('spacemr-auth'); localStorage.removeItem('mrspace-auth'); } catch (_) {}
-          location.replace('/');
+          try { document.cookie = 'sp_at=; Path=/; Max-Age=0; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); } catch (_) {}
+          location.replace('/login');
         } catch (e) {
           deleteAccountBtn.disabled = false;
           toast('Xato: ' + e.message, 'error');

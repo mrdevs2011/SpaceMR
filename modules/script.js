@@ -34,6 +34,15 @@ export function hideSplash(reason) {
       if (splash) splash.style.display = 'none';
       const aw = document.getElementById('authWrap');
       if (aw) aw.style.display = '';
+      /* Qora ekran qo'riqchisi: splash yopildi, lekin ilova ham, login ham ko'rinmadi va sessiya yo'q → loginni ochamiz */
+      setTimeout(() => {
+        try {
+          const app = $('app');
+          if (app?.classList.contains('show') || aw?.classList.contains('show')) return;
+          const has = !!(localStorage.getItem('spacemr-auth') || localStorage.getItem('mrspace-auth'));
+          if (!has && aw) { aw.classList.add('show'); aw.style.display = ''; }
+        } catch (_) {}
+      }, 1500);
     }, 350);
   }, wait);
   if (reason) console.debug('[splash] hide:', reason);

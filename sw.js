@@ -336,6 +336,8 @@ async function _networkFirst(req, cacheName, fallbackUrls) {
       await _putIn(cacheName, req, res);
       return res;
     }
+    // Server yo'naltirdi (masalan chiqishdan keyin 302 -> /login): keshdagi eski qobiqni EMAS, yo'naltirishni qaytaramiz
+    if (res && (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400))) return res;
   } catch (_) {}
   const hit = await _matchCache(req);
   if (hit) return hit;
