@@ -353,7 +353,7 @@ function computeUrl() {
 /* Bir "oila" ichidagi o'zgarish (tab almashtirish, qidiruv so'zi, izoh havolasi) tarixga yangi yozuv qo'shmaydi */
 const famOf = p => p.replace(/^(\/u\/[^/]+|\/profile)\/(photos|videos|text|music)$/, '$1').replace(/^(\/p\/[^/]+)\/comments$/i, '$1');
 
-function setUrl(target, { replace = false } = {}) {
+export function setUrl(target, { replace = false } = {}) {
   const cur = location.pathname;
   const hasExtra = /[?#]/.test(target);
   const tpath = target.split(/[?#]/)[0];

@@ -76,7 +76,7 @@ html{color-scheme:dark;}
       var s = p.split('/').filter(Boolean).map(function(x){ try { return decodeURIComponent(x); } catch (e) { return x; } });
       var a = (s[0] || '').toLowerCase(), b = (s[1] || '').toLowerCase(), n = s.length, ok = false;
       if (!n) ok = true;
-      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications|apps)$/.test(a);
+      else if (n === 1) ok = /^(index\.html|index|login|home|chats|profile|actions|saved|settings|explore|newpost|notifications|apps|report|shikoyat)$/.test(a);
       else if (a === 'profile' && b === 'settings') ok = (n === 2) || (n === 3 && /^(general|email|password)$/.test((s[2] || '').toLowerCase()));
       else if (a === 'profile' && n === 2) ok = /^(photos|videos|text|music)$/.test(b);
       else if (a === 'u' && n === 2) ok = true;
