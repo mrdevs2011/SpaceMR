@@ -336,3 +336,8 @@ img, video { decoding: async; }
   62% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* Desktop: Profilni tahrirlash tugmasi yo'q (sozlamalar alohida) */
+@media (min-width: 1100px) {
+  #profileView #pfEditBtn { display: none !important; }
+}
