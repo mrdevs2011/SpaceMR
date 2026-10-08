@@ -1055,15 +1055,63 @@ export async function sendGroupMessage(opts) {
     }
   } catch (err) {
     console.error('[Groups] send failed:', err);
-    toast('Xabar yuborilmadi', 'error');
-    _gPending.delete(mid);
-    _gRt?.retract(mid);
-    _gMsgs = _gMsgs.filter(x => x.id !== mid);
-    if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
-    if (gifText == null) inp.value = userText;
-    if (postShare) chatUI.setPendingPostShare?.(postShare);
-    chatUI.updateVoiceSendBtn();
+    // Oflayn/tarmoq: xabar qoladi — failed + qayta urinish (ROADMAP 4)
+    const conf = _gPending.get(mid);
+    if (conf) {
+      conf.status = 'failed';
+      conf._payload = { text: finalMsgText, reply_to: replyToId, type: 'text' };
+      _gPending.set(mid, conf);
+    }
+    _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'failed' } : m);
+    if (_currentGroupId === groupId) {
+      if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(mid, 'failed');
+      else paintGroupMessages(_gMsgs, groupData);
+    }
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    toast(offline ? "Internet yo'q, qayta urinib ko'ring" : 'Xabar yuborilmadi', 'error');
     return;
+  }
+}
+
+/** Guruh failed xabarini qayta yuborish */
+export async function retryFailedGroupMessage(msgId) {
+  if (!msgId || !state.me || !_currentGroupId) return;
+  const conf = _gPending.get(msgId);
+  if (!conf || conf.status !== 'failed') return;
+  const groupId = conf.groupId || conf.group_id || _currentGroupId;
+  conf.status = 'sending';
+  _gPending.set(msgId, conf);
+  _gMsgs = _gMsgs.map(m => m.id === msgId ? { ...m, status: 'sending' } : m);
+  if (_currentGroupId === groupId && typeof chatUI.updateMsgTicks === 'function') {
+    chatUI.updateMsgTicks(msgId, 'sending');
+  }
+  const p = conf._payload || { text: conf.text, reply_to: conf.replyTo || null, type: 'text' };
+  try {
+    const { error } = await sb.from('group_messages').insert({
+      id: msgId,
+      group_id: groupId,
+      sender_id: state.me.uid,
+      type: p.type || 'text',
+      text: p.text ?? conf.text ?? null,
+      reply_to: p.reply_to ?? conf.replyTo ?? null,
+    });
+    if (error) throw error;
+    conf.status = 'sent';
+    _gPending.set(msgId, conf);
+    _gMsgs = _gMsgs.map(m => m.id === msgId ? { ...m, status: 'sent' } : m);
+    if (_currentGroupId === groupId && typeof chatUI.updateMsgTicks === 'function') {
+      chatUI.updateMsgTicks(msgId, 'sent');
+    }
+  } catch (err) {
+    console.error('[Groups] retry failed:', err);
+    conf.status = 'failed';
+    _gPending.set(msgId, conf);
+    _gMsgs = _gMsgs.map(m => m.id === msgId ? { ...m, status: 'failed' } : m);
+    if (_currentGroupId === groupId && typeof chatUI.updateMsgTicks === 'function') {
+      chatUI.updateMsgTicks(msgId, 'failed');
+    }
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    toast(offline ? "Internet yo'q, qayta urinib ko'ring" : 'Xabar yuborilmadi', 'error');
   }
 }
 

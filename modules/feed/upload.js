@@ -487,20 +487,28 @@ export async function submitPost() {
     // Haqiqiy post → temp o'rniga; boshqalarga ham
     if (_newPost) busEmit('post', { op: 'new', row: _newPost, replaceId: tempId });
 
+    _clearPostDraft();
     if (hasFile) floatBarDone(true);
     else toast('Yuklandi!', 'success');
 
     // blob endi server URL bilan almashtirilgan — biroz kutib revoke
     if (localBlob) setTimeout(() => { try { URL.revokeObjectURL(localBlob); } catch (_) {} }, 8000);
   } catch (err) {
-    // Optimistic postni olib tashlash
+    // Optimistic postni olib tashlash; matn qoralama sifatida saqlanadi (ROADMAP 4)
     busEmit('post', { op: 'del', id: tempId });
-    if (hasFile) {
-      floatBarDone(false);
-      toast('Yuklash amalga oshmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
-    } else {
-      toast('Xatolik: ' + (err.message || 'Noma\'lum xatolik'), 'error');
+    if (caption) {
+      _savePostDraft(caption);
+      const home = $('homeComposerInput');
+      if (home && !home.value.trim()) { home.value = caption; _syncHomeUi(); }
+      const capEl = $('captionInput');
+      if (capEl && !capEl.value.trim()) capEl.value = caption;
     }
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    const msg = offline
+      ? "Internet yo'q — matn qoralama sifatida saqlandi"
+      : (hasFile ? 'Yuklash amalga oshmadi' : 'Post joylanmadi');
+    if (hasFile) floatBarDone(false);
+    toast(msg, 'error');
     if (localBlob) try { URL.revokeObjectURL(localBlob); } catch (_) {}
   } finally {
     $('uploadBtn').disabled = false;
@@ -559,6 +567,41 @@ $('hdrNewPostBtn').onclick = openComposer;
 /* Inline home composer — joyida yoziladi, modal ochilmaydi */
 let _homeAviSig = '';
 let _homeFocused = false;
+
+const DRAFT_KEY = 'spacemr_post_draft';
+
+function _savePostDraft(text) {
+  try {
+    const t = String(text || '').trim();
+    if (!t) { localStorage.removeItem(DRAFT_KEY); return; }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ text: t, at: Date.now() }));
+  } catch (_) {}
+}
+
+function _loadPostDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    return o && typeof o.text === 'string' ? o.text : null;
+  } catch (_) { return null; }
+}
+
+function _clearPostDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
+}
+
+function _restorePostDraft() {
+  const t = _loadPostDraft();
+  if (!t) return;
+  const home = $('homeComposerInput');
+  if (home && !home.value.trim()) {
+    home.value = t;
+    _syncHomeUi();
+  }
+  const cap = $('captionInput');
+  if (cap && !cap.value.trim()) cap.value = t;
+}
 
 function _fillHomeComposerAvi() {
   const box = $('homeComposerAvi');
@@ -727,7 +770,7 @@ function _bindHomeComposer() {
       _syncHomeUi();
     }, 150);
   });
-  inp.addEventListener('input', () => _syncHomeUi());
+  inp.addEventListener('input', () => { _syncHomeUi(); _savePostDraft(inp.value); });
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -777,6 +820,7 @@ function _bindHomeComposer() {
   /* Modul yuklanganda state.me hali yo'q bo'ladi (avatar bo'sh qolardi) — kirish tugagach va profil yangilanganda qayta chizamiz */
   document.addEventListener('meUpdated', () => { _homeAviSig = ''; _fillHomeComposerAvi(); });
   document.addEventListener('profilesPreloaded', () => _fillHomeComposerAvi());
+  _restorePostDraft();
 }
 _bindHomeComposer();
 

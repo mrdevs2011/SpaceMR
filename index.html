@@ -147,6 +147,10 @@ html{color-scheme:dark;}
         try { Object.keys(localStorage).forEach(function (k) { if (/supabase|spacemr-auth|mrspace-auth|sb-.*-auth/i.test(k)) localStorage.removeItem(k); }); } catch (e) {}
         wipe(true, function () { location.replace('/login'); });
       }));
+      // ROADMAP 10: muammo haqida guruhga yozish
+      w.appendChild(btn('Guruhga yozish', false, function () {
+        try { location.replace('/chats/g/spacemr'); } catch (e) { location.href = '/chats/g/spacemr'; }
+      }));
       document.body.appendChild(w);
     }
     function check() {
@@ -934,6 +938,14 @@ html[data-nf],html[data-nf] body{background:#000000}
         <div class="settings-row-hint">Barcha fayllarni to'liq qayta yuklash (kesh va SW dan mustaqil)</div>
       </div>
       <button class="ig-open-btn" id="fullAppReloadBtn" type="button">Yangilash</button>
+    </div>
+
+    <div class="settings-section-label">Yordam</div>
+    <div class="settings-row" id="settingsFeedbackRow" role="button" tabindex="0" style="cursor:pointer">
+      <div class="settings-row-text">
+        <div class="settings-row-title">Muammo haqida yozish</div>
+        <div class="settings-row-hint">SpaceMR guruhiga xabar yuboring</div>
+      </div>
     </div>
 
     <div class="settings-section-label">Huquqiy</div>

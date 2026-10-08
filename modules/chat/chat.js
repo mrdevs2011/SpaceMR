@@ -3418,7 +3418,12 @@ document.addEventListener('click', (e) => {
   const msgEl = btn.closest('.chat-msg[data-msg-id]');
   const id = msgEl?.dataset?.msgId;
   if (!id) return;
-  import('./chat-actions.js').then(m => m.retryFailedMessage?.(id)).catch(() => {});
+  const isGroup = state.currentChatKind && state.currentChatKind !== 'dm';
+  if (isGroup) {
+    import('./groups.js').then(m => m.retryFailedGroupMessage?.(id)).catch(() => {});
+  } else {
+    import('./chat-actions.js').then(m => m.retryFailedMessage?.(id)).catch(() => {});
+  }
 }, true);
 
 Object.assign(chatUI, { paintMessages, updateMsgTicks, updateVoiceSendBtn, clearPendingPostShare, setPendingPostShare, clearChatFile, _showOptimisticVoiceBubble, _setTyping, paintGroupThread, resetSeenMsgs, initChatHeaderMenu, getPendingPostShare, updatePostAttachBar });

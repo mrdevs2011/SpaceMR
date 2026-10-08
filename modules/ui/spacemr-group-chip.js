@@ -47,6 +47,9 @@ async function _load() {
 }
 
 function _init() {
+  document.querySelectorAll('[data-grp-chip]').forEach(el => {
+    if (!el.getAttribute('title')) el.setAttribute('title', 'Muammo va takliflar');
+  });
   let cached = '';
   try { cached = localStorage.getItem(CACHE_KEY) || ''; } catch (_) {}
   _bindFallback();
@@ -69,3 +72,23 @@ function _init() {
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _init, { once: true });
 else _init();
+
+
+/* ROADMAP 10: sozlamalardan SpaceMR guruhiga */
+function _bindFeedback() {
+  const row = document.getElementById('settingsFeedbackRow');
+  if (!row || row._bound) return;
+  row._bound = true;
+  const go = () => {
+    import('../url-router.js')
+      .then(m => m.applyPath('/chats/g/spacemr'))
+      .catch(() => { location.href = '/chats/g/spacemr'; });
+    document.getElementById('settingsOverlay')?.classList.remove('show');
+  };
+  row.addEventListener('click', go);
+  row.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindFeedback, { once: true });
+else _bindFeedback();
