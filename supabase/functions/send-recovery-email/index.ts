@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     return json({ error: resErr.message }, 400);
   }
   if (resData?.error === 'rate_limited') {
-    return json({ error: 'Juda ko'p urinish. 15 daqiqa kuting.' }, 429);
+    return json({ error: "Juda ko'p urinish. 15 daqiqa kuting." }, 429);
   }
   if (!resData?.ok || resData?.sent === false) {
     // uniform: foydalanuvchi/email yo'q — maxfiy
