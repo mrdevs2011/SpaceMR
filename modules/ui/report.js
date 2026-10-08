@@ -76,24 +76,25 @@ function _esc(s) {
 }
 
 function _buildMessage(ctx, reasonId, note) {
+  /* SpaceMR renderMarkdown bilan ishlaydigan oddiy markdown — alohida parser yo'q */
   const reason = REASONS.find(r => r.id === reasonId)?.label || reasonId || '—';
-  const lines = ['[Shikoyat]'];
+  const lines = ['**[Shikoyat]**'];
   if (ctx?.kind === 'post') {
-    lines.push('Turi: post');
-    if (ctx.id) lines.push('Post ID: ' + ctx.id);
-    if (ctx.uid) lines.push('Muallif UID: ' + ctx.uid);
-    if (ctx.text) lines.push('Matn: ' + String(ctx.text).slice(0, 120));
+    lines.push('**Turi:** post');
+    if (ctx.id) lines.push('**Post ID:** `' + ctx.id + '`');
+    if (ctx.uid) lines.push('**Muallif UID:** `' + ctx.uid + '`');
+    if (ctx.text) lines.push('**Matn:** ' + String(ctx.text).slice(0, 120));
   } else if (ctx?.kind === 'user') {
-    lines.push('Turi: foydalanuvchi');
-    if (ctx.uid) lines.push('UID: ' + ctx.uid);
+    lines.push('**Turi:** foydalanuvchi');
+    if (ctx.uid) lines.push('**UID:** `' + ctx.uid + '`');
     if (ctx.username) lines.push('@' + ctx.username);
-    if (ctx.name) lines.push('Ism: ' + ctx.name);
+    if (ctx.name) lines.push('**Ism:** ' + ctx.name);
   } else {
-    lines.push('Turi: umumiy');
+    lines.push('**Turi:** umumiy');
   }
-  lines.push('Sabab: ' + reason);
-  if (note) lines.push('Izoh: ' + note);
-  if (state.me?.uid) lines.push('Yuboruvchi: ' + (state.me.username ? '@' + state.me.username : state.me.uid));
+  lines.push('**Sabab:** ' + reason);
+  if (note) lines.push('**Izoh:** ' + note);
+  if (state.me?.uid) lines.push('**Yuboruvchi:** ' + (state.me.username ? '@' + state.me.username : '`' + state.me.uid + '`'));
   return lines.join('\n');
 }
 

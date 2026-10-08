@@ -57,7 +57,7 @@ function rowAtPoint(target, y) {
   return bd <= 3 ? best : null;
 }
 // Mobilda bitta bosish menyu ochadi — lekin bu elementlar o'z ishini qiladi (play, havola, rasm, avatar)
-const TAP_KEEP = 'a, button, audio, input, textarea, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid]';
+const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link';
 const coarse = () => window.matchMedia('(pointer: coarse)').matches;
 const pad = n => String(n).padStart(2, '0');
 
@@ -942,6 +942,8 @@ export function initMsgMenu(opts) {
   box.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) { sw = null; return; }
     const t = e.touches[0];
+    // Havola / interaktiv element ustida — long-press va swipe yo'q (URL ochilsin)
+    if (e.target.closest?.(TAP_KEEP)) { sw = null; cancelLp(); return; }
     const row = rowAtPoint(e.target, t.clientY);
     if (!row) return;
     sw = (swEligible(row, t.clientX) && !e.target.closest?.('.cvm-track, input, audio, video, [data-seek]')) ? { row, x: t.clientX, y: t.clientY, dx: 0, on: false, armed: false } : null;
@@ -1076,6 +1078,20 @@ export function initMsgMenu(opts) {
     if (!selMode) {
       // Mobil: xabar (yoki uning qatori) ustiga bitta bosish -> menyu
       if (!coarse()) return;
+      // Havola: menyu ochilmasin, URL ochilsin
+      const link = e.target.closest?.('a[href], .md-link');
+      if (link && box.contains(link)) {
+        const href = link.getAttribute('href') || '';
+        if (/^https?:\/\//i.test(href) || href.startsWith('mailto:')) {
+          e.stopPropagation();
+          // target=_blank bo'lsa brauzer o'zi ochadi
+          if (link.getAttribute('target') === '_blank') return;
+          e.preventDefault();
+          try { window.open(href, '_blank', 'noopener,noreferrer'); } catch (_) { location.href = href; }
+          return;
+        }
+        return;
+      }
       const r = rowAtPoint(e.target, e.clientY);
       if (!r) return;
       const keep = e.target.closest?.(TAP_KEEP);

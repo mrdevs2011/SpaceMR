@@ -3557,6 +3557,16 @@ button:focus-visible,
 a, .md-link { color: var(--x-blue) !important; }
 .dm-name:hover { color: var(--x-blue) !important; }
 
+/* Mine (ko'k) bubble ichida linklar oq — ko'k fon ustida ko'rinishi uchun */
+#chatThreadModal .chat-msg.mine .chat-bubble a,
+#chatThreadModal .chat-msg.mine .chat-bubble .md-link,
+.chat-msg.mine .chat-bubble a,
+.chat-msg.mine .chat-bubble .md-link {
+  color: var(--pal-white) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ── Search active icon: blue ───────────────────────────────────── */
 #sbSearchToggle.search-active svg , #sbSearchToggle.search-active img.icon { stroke: var(--x-blue) !important; }
 .chat-search-btn.active { color: var(--x-blue) !important; }
