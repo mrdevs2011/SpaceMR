@@ -6,7 +6,7 @@
  */
 
 import { state } from './core/config.js';
-import { $, resetScrollLock } from './core/utils.js';
+import { $, resetScrollLock, lockScroll } from './core/utils.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    ROUTE CONFIGURATION
@@ -73,6 +73,9 @@ export function navigateTo(routeName, pushState = true) {
   // URL ni url-router.js boshqaradi (holat -> URL sinxronlash, 'spacemr:route' hodisasi orqali)
   state.focusPostId = null; state.focusCmtId = null;   // /p/<id> fokusi tab almashganda tozalanadi
 
+  // Post/story composer float — tab almashganda saqlab qolamiz
+  const _keepUpload = !!document.getElementById('uploadOverlay')?.classList.contains('show');
+
   // Navigatsiya vaqtida barcha ochiq modal/overlay/panel larni yopamiz
   const modalsToClose = [
     // Profile & content
@@ -122,13 +125,24 @@ export function navigateTo(routeName, pushState = true) {
     state.currentViewingUserId    = null;
     state.currentViewingUserPosts = [];
   }
-  // Scroll lock ni ham tozalaymiz (position:fixed + hisoblagich bilan, faqat overflow emas)
+  // Scroll lock
   resetScrollLock();
-  document.body.style.overflow = '';
-  document.documentElement.style.overflow = '';
+  if (!_keepUpload) {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
 
   // Switch view (prevRoute'ni async destroy uchun saqlaymiz)
   switchView(currentRoute, routeName);
+
+  // Post/story float — yopilmasin
+  if (_keepUpload) {
+    const ov = document.getElementById('uploadOverlay');
+    if (ov) {
+      ov.classList.add('show');
+      try { lockScroll('uploadOverlay'); } catch (_) {}
+    }
+  }
 
   // Update state — switchView chaqiruvidan KEYIN (destroyView uchun prev kerak)
   currentRoute = routeName;
