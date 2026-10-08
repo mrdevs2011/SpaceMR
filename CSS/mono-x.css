@@ -9199,7 +9199,7 @@ nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
 @media (max-width:400px){.hdr-grp-text{font-size:19px}}
 @media (min-width:1100px){.profile-gear-btn{display:none!important}}
 
-/* Desktop leftbar: Group + Shikoyat = oddiy nav-btn layout */
+/* Desktop leftbar — BARCHA nav bir xil hover / active / layout */
 @media (max-width: 1099px) {
   nav.bot-nav .sb-top,
   nav.bot-nav .sb-grp-row,
@@ -9221,40 +9221,87 @@ nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
     width: 100%;
   }
 
-  /* Group + Shikoyat: nav-btn bilan bir xil (padding/gap/icon) */
-  nav.bot-nav .nav-btn.sb-grp-row,
-  nav.bot-nav .nav-btn.sb-report-btn {
-    height: 50px;
-    min-height: 50px;
-    padding: 0 16px 0 12px;
-    gap: 20px;
-    border-radius: 999px;
-    background: none !important;
+  /* Bir xil o'lcham / padding / gap */
+  nav.bot-nav .nav-btn,
+  nav.bot-nav .sb-search-toggle {
+    height: 50px !important;
+    min-height: 50px !important;
+    padding: 0 16px 0 12px !important;
+    gap: 20px !important;
+    border-radius: 999px !important;
+    background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    color: var(--text);
-    justify-content: flex-start;
+    color: var(--text) !important;
+    justify-content: flex-start !important;
     width: 100%;
+    transition: background .15s ease;
   }
-  nav.bot-nav .nav-btn.sb-grp-row:hover,
-  nav.bot-nav .nav-btn.sb-report-btn:hover {
-    background: rgba(231, 233, 234, 0.05) !important;
+
+  /* Hover — hammasi bir xil */
+  nav.bot-nav .nav-btn:hover,
+  nav.bot-nav .sb-search-toggle:hover {
+    background: rgba(231, 233, 234, 0.1) !important;
   }
-  nav.bot-nav .nav-btn.sb-grp-row img.icon,
-  nav.bot-nav .nav-btn.sb-report-btn img.icon {
-    width: 26.25px;
-    height: 26.25px;
+
+  /* Active: faqat qalin matn */
+  nav.bot-nav .nav-btn.on,
+  nav.bot-nav #sbSearchToggle.search-active {
+    background: transparent !important;
+  }
+  nav.bot-nav .nav-btn.on:hover,
+  nav.bot-nav #sbSearchToggle.search-active:hover {
+    background: rgba(231, 233, 234, 0.1) !important;
+  }
+
+  /* Ikonlar: inactive = active rang (gray override yo'q) */
+  nav.bot-nav .nav-btn svg,
+  nav.bot-nav .nav-btn img.icon,
+  nav.bot-nav .sb-search-toggle svg,
+  nav.bot-nav .sb-search-toggle img.icon,
+  nav.bot-nav .nav-btn:not(.on) svg,
+  nav.bot-nav .nav-btn:not(.on) img.icon {
+    width: 26.25px !important;
+    height: 26.25px !important;
     flex-shrink: 0;
+    stroke: var(--text) !important;
+    color: var(--text) !important;
+    fill: none;
+    stroke-width: 1.9;
+    opacity: 1 !important;
+  }
+  nav.bot-nav .nav-btn.on svg,
+  nav.bot-nav .nav-btn.on img.icon,
+  nav.bot-nav #sbSearchToggle.search-active svg,
+  nav.bot-nav #sbSearchToggle.search-active img.icon {
+    stroke-width: 2.4 !important;
+  }
+
+  nav.bot-nav .nav-btn.sb-grp-row img.icon {
     object-fit: cover;
     border-radius: 50%;
+    stroke: none !important;
   }
-  nav.bot-nav .nav-btn.sb-grp-row .nav-label,
-  nav.bot-nav .nav-btn.sb-report-btn .nav-label {
-    display: block;
-    font-size: 20px;
-    line-height: 24px;
-    font-weight: 400;
-    color: var(--text);
+
+  nav.bot-nav .nav-btn .nav-label,
+  nav.bot-nav .sb-search-toggle .nav-label {
+    display: block !important;
+    font-size: 20px !important;
+    line-height: 24px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    color: var(--text) !important;
+  }
+  nav.bot-nav .nav-btn.on .nav-label,
+  nav.bot-nav #sbSearchToggle.search-active .nav-label {
+    font-weight: 700 !important;
+  }
+
+  nav.bot-nav .nav-btn.on::before,
+  nav.bot-nav .nav-btn::after,
+  nav.bot-nav .nav-btn.on::after {
+    display: none !important;
+    content: none !important;
   }
 
   nav.bot-nav .sb-bottom {
@@ -9267,4 +9314,8 @@ nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
   nav.bot-nav .sb-bottom .sb-account {
     margin: 0;
   }
+  nav.bot-nav .sb-account:hover {
+    background: rgba(231, 233, 234, 0.1) !important;
+  }
 }
+

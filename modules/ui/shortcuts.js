@@ -13,7 +13,8 @@
  *  P              — Profil
  *  Ctrl/Cmd+K     — Qidiruv
  *  Ctrl/Cmd+,     — Sozlamalar
- *  Ctrl/Cmd+1/2/3 — Home / Chats / Profile
+ *  Ctrl/Cmd+1…9/0 — Home / Explore / Notifs / Chats / Apps / Saved / Profil / Group / Shikoyat / Post
+ *  Ctrl/Cmd+Shift+0 — Story upload
  *  Delete         — tanlangan o'z xabarlarini o'chirish (chat)
  */
 import { $, unlockScroll } from '../core/utils.js';
@@ -97,8 +98,10 @@ document.addEventListener('keydown', e => {
 
   // Navigatsiya (overlay ochiq bo'lsa ham ishlashi mumkin — faqat typing bo'lmasa)
   if (mod && !isTyping(e.target)) {
-    const k = e.key.toLowerCase();
-    if (k === 'k') { // Qidiruv / Kashf
+    const k = e.key;
+    const kl = k.toLowerCase();
+
+    if (kl === 'k') { // Qidiruv / Kashf
       e.preventDefault();
       if (!isOpen($('searchOverlay'))) $('hdrSearchBtn')?.click() || import('./ui.js').then(m => m.openSearchOverlay?.());
       return;
@@ -108,9 +111,53 @@ document.addEventListener('keydown', e => {
       $('settingsBtn')?.click() || $('rrSettingsBtn')?.click();
       return;
     }
-    if (k === '1') { e.preventDefault(); import('../router.js').then(m => m.navigateTo('home')); return; }
-    if (k === '2') { e.preventDefault(); import('../router.js').then(m => m.navigateTo('chats')); return; }
-    if (k === '3') { e.preventDefault(); import('../router.js').then(m => m.navigateTo('profile')); return; }
+
+    // Ctrl/Cmd + 0…9 navigatsiya (Shift+0 = story). e.code — layout/shift mustahkam.
+    const codeDigit = /^Digit([0-9])$/.exec(e.code || '');
+    const digit = codeDigit ? codeDigit[1]
+      : (k === '0' || k === ')') ? '0'
+      : (k >= '1' && k <= '9') ? k
+      : null;
+    if (digit !== null) {
+      e.preventDefault();
+      const go = (route) => import('../router.js').then(m => m.navigateTo(route));
+      if (digit === '1') return void go('home');
+      if (digit === '2') { // Explore / Kashf
+        if (!isOpen($('searchOverlay'))) {
+          $('hdrSearchBtn')?.click() || $('sbSearchToggle')?.click() || import('./ui.js').then(m => m.openSearchOverlay?.());
+        }
+        return;
+      }
+      if (digit === '3') return void go('notifs');
+      if (digit === '4') return void go('chats');
+      if (digit === '5') return void go('apps');
+      if (digit === '6') return void go('saved');
+      if (digit === '7') return void go('profile');
+      if (digit === '8') { // SpaceMR Group
+        import('../url-router.js').then(m => m.applyPath('/chats/g/spacemr')).catch(() => {
+          $('sbGrpBtn')?.click();
+        });
+        return;
+      }
+      if (digit === '9') { // Shikoyat
+        import('./report.js').then(m => m.openReportPage({ kind: 'other' })).catch(() => {
+          $('sbReportBtn')?.click();
+        });
+        return;
+      }
+      if (digit === '0') {
+        if (e.shiftKey) {
+          // Story upload
+          import('../feed/upload.js').then(m => m.openStoryComposer?.()).catch(() => {});
+        } else {
+          // Post upload
+          import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {
+            ($('createBtn') || $('hdrNewPostBtn'))?.click();
+          });
+        }
+        return;
+      }
+    }
   }
 
   if (mod || isTyping(e.target)) return;
