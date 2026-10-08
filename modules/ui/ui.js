@@ -95,10 +95,19 @@ export async function openMediaInModal(postId) {
   openZoom(post.mediaUrl, 'image');
 }
 
-/* ── Header logo click → sahifani yangilash (SpaceMR yozuvi esa guruhga olib boradi) ── */
+/* ── Header logo click → bosh sahifaga (/) qaytish + faqat home kontentini (feed + story) yangilash.
+      To'liq sahifa reload (Ctrl+R) EMAS. SpaceMR yozuvi esa guruhga olib boradi. ── */
 const hdrLogoBtn = document.getElementById('hdrLogoBtn');
 if (hdrLogoBtn) {
-  hdrLogoBtn.addEventListener('click', () => { location.reload(); });
+  hdrLogoBtn.addEventListener('click', async () => {
+    try {
+      const { navigateTo } = await import('../router.js');
+      navigateTo('home');
+    } catch (_) {}
+    try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (_) { window.scrollTo(0, 0); }
+    try { const { renderFeed } = await import('../feed/feed.js'); await renderFeed(); } catch (_) {}
+    try { const { loadStories } = await import('../feed/stories.js'); await loadStories(); } catch (_) {}
+  });
 }
 
 /* ── Nav buttons handled by router.js — do NOT add duplicate listeners here ── */
