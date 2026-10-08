@@ -90,15 +90,21 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  // Ctrl/Cmd+raqam/harf navigatsiya (inputda emas)
+  // Ctrl/Cmd navigatsiya — input fokusida HAM ishlaydi (aks holda Ctrl+2 → qidiruv
+  // fokuslanadi va Ctrl+3/4… bloklanadi). Ctrl+A/C/V/X/Z kabi tahrir shortcutlari
+  // faqat o'ziga tegishli — ularga tegmaymiz.
   const mod = e.ctrlKey || e.metaKey;
   if (e.altKey) return;
-  if (isTyping(e.target) && !(mod && (e.key === 'Enter'))) return;
   if (!state.me?.uid) return;
 
-  // Ctrl/Cmd shortcutlar — bir marta, mustaqil (e.repeat / dublikat click yo'q)
-  if (mod && !isTyping(e.target)) {
+  // Ctrl/Cmd shortcutlar — bir marta, mustaqil (e.repeat yo'q)
+  if (mod) {
     if (e.repeat) return;
+    // Brauzer tahrir shortcutlari — inputda o'tkazib yuboramiz
+    const kl0 = (e.key || '').toLowerCase();
+    if (isTyping(e.target) && ['a','c','v','x','z','y','r','f','p','s','u','i','b'].includes(kl0) && !/^Digit/.test(e.code||'')) {
+      return;
+    }
 
     const k = e.key;
     const kl = (k || '').toLowerCase();
