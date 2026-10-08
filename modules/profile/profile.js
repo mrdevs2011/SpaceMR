@@ -458,6 +458,7 @@ export async function renderUserProfileModal(uid) {
         <img src="./svg/extra/icon-ea9c18b62f47.svg" alt="" class="icon" width="18" height="18">
         Chat yozish
       </button>
+      <button type="button" id="upReportBtn" class="up-report-btn">Shikoyat</button>
     </div>
     <div class="up-info">
       <div class="up-name">${esc(ud.fullName||'Noma\'lum')}</div>
@@ -510,6 +511,16 @@ export async function renderUserProfileModal(uid) {
       openChatThread(uid);
     });
   }
+
+  document.getElementById('upReportBtn')?.addEventListener('click', async () => {
+    const { openReportPage } = await import('../ui/report.js');
+    openReportPage({
+      kind: 'user',
+      uid,
+      name: ud.fullName || '',
+      username: ud.username || '',
+    });
+  });
 
   // Avatar rasmini kattalashtirish (boshqa user profili)
   const upAviEl = document.getElementById('upAviImg');

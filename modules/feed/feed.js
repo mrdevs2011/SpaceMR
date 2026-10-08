@@ -822,7 +822,13 @@ function openPostMenu(btn) {
   if (btn.dataset.canDel) items.push({ label: 'Postni o\'chirish', danger: true, run: () =>
     showConfirm('Bu post butunlay o\'chiriladi.', () => doDelete(id), 'Post o\'chirilsinmi?', 'O\'chirish')
   });
-  showMenu(btn, items);
+    if (uid && uid !== state.me?.uid) {
+    items.push({ label: 'Shikoyat qilish', danger: true, run: async () => {
+      const { openReportPage } = await import('../ui/report.js');
+      openReportPage({ kind: 'post', id, uid, text: post?.text || '' });
+    }});
+  }
+showMenu(btn, items);
 }
 
 /** Umumiy ⋯ dropdown: items = [{ label, danger?, run }]. Post va izohlar ishlatadi. */

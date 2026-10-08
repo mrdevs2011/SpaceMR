@@ -116,3 +116,16 @@ function _bindPushPrefs() {
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindPushPrefs, { once: true });
 else _bindPushPrefs();
+
+
+/* Shikoyat sahifasi — sozlamalardan */
+function _bindReportRow() {
+  const row = document.getElementById('settingsReportRow');
+  if (!row || row._bound) return;
+  row._bound = true;
+  const go = () => import('./report.js').then(m => m.openReportPage({ kind: 'other' })).catch(() => {});
+  row.addEventListener('click', go);
+  row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _bindReportRow, { once: true });
+else _bindReportRow();
