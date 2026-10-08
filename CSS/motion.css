@@ -267,3 +267,54 @@ img, video { decoding: async; }
 #uploadOverlay.show .composer-sheet {
   margin-top: 0 !important;
 }
+
+/* Xabar havolasi: har bir xabar display:block, yoritish soyasi butun blok */
+#chatThreadMessages .chat-msg,
+.chat-thread-messages .chat-msg {
+  display: block;
+  width: max-content;
+  max-width: min(72%, 100%);
+  box-sizing: border-box;
+}
+#chatThreadMessages .chat-msg.mine,
+.chat-thread-messages .chat-msg.mine { margin-left: auto; }
+#chatThreadMessages .chat-msg.theirs,
+.chat-thread-messages .chat-msg.theirs { margin-right: auto; }
+#chatThreadMessages .chat-msg .msg-avi-btn,
+#chatThreadMessages .chat-msg .grp-avi-gap,
+.chat-thread-messages .chat-msg .msg-avi-btn,
+.chat-thread-messages .chat-msg .grp-avi-gap {
+  display: inline-block;
+  vertical-align: bottom;
+}
+#chatThreadMessages .chat-msg .chat-bubble,
+.chat-thread-messages .chat-msg .chat-bubble {
+  display: inline-block;
+  vertical-align: bottom;
+  max-width: 100%;
+}
+.chat-msg.msg-link-highlight {
+  position: relative;
+  display: block;
+  isolation: isolate;
+  animation: none;
+  background: transparent;
+}
+.chat-msg.msg-link-highlight::before {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  pointer-events: none;
+  z-index: 4;
+  background: rgba(231, 233, 234, 0.16);
+  box-shadow: 0 0 0 2px #e7e9ea, 0 10px 36px rgba(231, 233, 234, 0.55);
+  animation: msgLinkBlockHl 3s ease-out forwards;
+}
+@keyframes msgLinkBlockHl {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
