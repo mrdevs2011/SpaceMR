@@ -1160,24 +1160,32 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Offline Indicator — liquid glass ── */
+/* ── Offline Indicator — liquid glass (ROADMAP 4) ── */
 #offlineIndicator {
   position: fixed;
-  bottom: calc(var(--nav) + 16px);
+  bottom: calc(var(--nav, 56px) + 16px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--glass-mid);
-  color: var(--text);
+  background: var(--glass-mid, rgba(22, 24, 28, 0.92));
+  color: var(--text, #e7e9ea);
   padding: 10px 20px;
-  border-radius: var(--radius);
+  border-radius: var(--radius, 12px);
   font-size: 13px;
   font-weight: 500;
   z-index: 9999;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 8px;
-  border: 0.5px solid var(--glass-border);
-  box-shadow: var(--specular-top), var(--liquid-shadow-md);
+  border: 0.5px solid var(--glass-border, #2f3336);
+  box-shadow: var(--specular-top, none), var(--liquid-shadow-md, 0 8px 24px rgba(0,0,0,.4));
+  pointer-events: none;
+}
+#offlineIndicator.is-visible,
+#offlineIndicator:not([hidden]) {
+  display: flex;
+}
+#offlineIndicator[hidden] {
+  display: none !important;
 }
 
 #offlineIndicator::before {
@@ -1187,6 +1195,12 @@ body {
   background: #ffd400;
   border-radius: 50%;
   box-shadow: 0 0 8px #ffd400;
+  flex-shrink: 0;
+}
+@media (min-width: 1100px) {
+  #offlineIndicator {
+    bottom: 24px;
+  }
 }
 
 /* ── Cached Badge — liquid glass ── */
