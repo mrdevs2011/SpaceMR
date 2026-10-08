@@ -80,6 +80,15 @@ function _bindProfileTabs() {
   });
 }
 
+
+function _hideDesktopEdit() {
+  const edit = document.getElementById('pfEditBtn');
+  if (!edit) return;
+  const desk = window.matchMedia('(min-width: 900px)').matches;
+  edit.style.setProperty('display', desk ? 'none' : '', 'important');
+  edit.hidden = desk;
+  edit.setAttribute('aria-hidden', desk ? 'true' : 'false');
+}
 let _pfActionsBound = false;
 function _bindProfileActions() {
   if (_pfActionsBound) return;
@@ -103,7 +112,12 @@ function _bindProfileActions() {
 
 export async function renderProfile() {
   if (!state.me) return;
+  _hideDesktopEdit();
   _bindProfileActions();
+  if (!window._pfEditResize) {
+    window._pfEditResize = true;
+    window.addEventListener('resize', _hideDesktopEdit);
+  }
 
   // Tarmoqni kutmasdan — keshdagi so'nggi profil ma'lumotini darhol chizamiz
   const cached = getCachedProfile(state.me.uid);

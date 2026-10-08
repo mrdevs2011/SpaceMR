@@ -338,6 +338,6 @@ img, video { decoding: async; }
 }
 
 /* Desktop: Profilni tahrirlash tugmasi yo'q (sozlamalar alohida) */
-@media (min-width: 1100px) {
-  #profileView #pfEditBtn { display: none !important; }
+@media (min-width: 900px) {
+  #pfEditBtn, #profileView #pfEditBtn, #profileView .pf-btn-main { display: none !important; }
 }

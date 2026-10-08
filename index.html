@@ -466,7 +466,8 @@ html[data-nf],html[data-nf] body{background:#000000}
         <div class="profile-links" id="profileLinks" hidden></div>
       </div>
       <div class="pf-actions">
-        <button type="button" class="pf-btn pf-btn-main" id="pfEditBtn">
+        <style id="pf-edit-desktop-hide">@media (min-width: 900px){#pfEditBtn{display:none !important}}</style>
+<button type="button" class="pf-btn pf-btn-main" id="pfEditBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           <span>Profilni tahrirlash</span>
         </button>
