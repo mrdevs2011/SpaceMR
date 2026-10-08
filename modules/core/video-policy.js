@@ -326,11 +326,10 @@ export async function prepareVideo(file, { onProgress, preset } = {}) {
   try { meta = await probeVideo(file); } catch (e) { throw new Error(e?.message || "Videoni o'qib bo'lmadi"); }
   // Allaqachon standartga mos va kichik — qayta kodlamasdan o'tkazamiz (tez yuklash)
   const maxEdge = Math.max(ps.maxW || VIDEO_W, ps.maxH || VIDEO_H);
-  const alreadyOk = isFinite(meta.duration) && meta.duration <= MAX_VIDEO_MS / 1000 + 0.25
-    && file.size <= Math.min(MAX_VIDEO_BYTES, (ps.bitrate || VIDEO_BITRATE) * 8) // taxminiy
-    && Math.max(meta.width || 0, meta.height || 0) <= maxEdge + 8
-    && file.size <= 12 * 1024 * 1024;
-  if (alreadyOk && /video\/(mp4|webm|quicktime)/i.test(file.type || '')) {
+  const playable = /video\/(mp4|webm|quicktime)/i.test(file.type || '');
+  const alreadyOk = playable && isFinite(meta.duration) && meta.duration <= MAX_VIDEO_MS / 1000 + 0.25
+    && file.size <= MAX_VIDEO_BYTES;
+  if (alreadyOk) {
     return { file: markVideoReady(file), truncated: false, width: meta.width, height: meta.height };
   }
   try {

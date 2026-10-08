@@ -168,20 +168,63 @@ export function endUpload() { _uploadCount = Math.max(0, _uploadCount - 1); }
  * (storage policy birinchi papka = auth.uid() bo'lishini talab qiladi)
  * @param {{ track?: boolean }} [opts] track:false — ichki chaqiruv (progress fallback)
  */
+function _uploadTimeoutMs(file) {
+  const mb = (file?.size || 0) / (1024 * 1024);
+  return Math.min(180000, Math.max(25000, 15000 + mb * 8000));
+}
+
+function _xhrUpload(url, file, token, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.setRequestHeader('x-upsert', 'false');
+    xhr.setRequestHeader('cache-control', '3600');
+    xhr.timeout = _uploadTimeoutMs(file);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(e.loaded / Math.max(1, e.total));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText || '{}')); }
+        catch (_) { resolve({}); }
+      } else {
+        reject(new Error('Yuklash xatosi ' + xhr.status));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Tarmoq xatosi'));
+    xhr.ontimeout = () => reject(new Error('Yuklash vaqti tugadi'));
+    xhr.send(file);
+  });
+}
+
 export async function uploadViaController(file, folder = 'posts', opts = {}) {
   const track = opts.track !== false;
   if (track) beginUpload();
   try {
     if (!state.me) throw new Error('Tizimga kirilmagan');
-    assertAllowedUpload(file, folder); // post/story video faqat video-policy standarti; avatar faqat rasm
+    assertAllowedUpload(file, folder);
     const safeName = file.name.replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
     const path = `${state.me.uid}/${folder}/${Date.now()}_${(crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))}_${safeName}`;
-    const { data, error } = await sb.storage.from(MEDIA_BUCKET).upload(path, file, {
-      contentType: file.type || 'application/octet-stream',
-      upsert: false,
-    });
-    if (error) { console.error('Storage:', error); throw error; }
-    return { path: data.path, url: mediaPublicUrl(data.path) };
+    const { data: sess } = await sb.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) throw new Error('Tizimga kirilmagan');
+    const url = `${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`;
+    const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
+    let lastErr = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await _xhrUpload(url, file, token, onProgress);
+        return { path, url: mediaPublicUrl(path) };
+      } catch (e) {
+        lastErr = e;
+        if (attempt === 0) await new Promise(r => setTimeout(r, 600));
+      }
+    }
+    console.error('Storage:', lastErr);
+    throw lastErr || new Error('Yuklash amalga oshmadi');
   } finally {
     if (track) endUpload();
   }

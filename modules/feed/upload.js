@@ -257,19 +257,13 @@ async function submitStory() {
     const cap = $('captionInput'); if (cap) cap.value = '';
   } catch (_) {}
 
-  let simInterval;
   try {
-    let simPct = 0;
     file = await _prepareUploadFile(fileRef, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'story');
-    floatBarUpdate(0);
-    simInterval = setInterval(() => {
-      const step = Math.max(0.3, (3 - (file.size / (10 * 1024 * 1024))) * Math.random());
-      simPct = Math.min(simPct + step, 88);
-      floatBarUpdate(simPct);
-    }, 200);
-    const { path } = await uploadViaController(file, 'stories');
-    clearInterval(simInterval);
-    floatBarUpdate(100);
+    floatBarUpdate(8);
+    const { path } = await uploadViaController(file, 'stories', {
+      onProgress: (r) => floatBarUpdate(8 + Math.round(Math.min(1, r) * 86)),
+    });
+    floatBarUpdate(96);
 
     const row = {
       user_id:    state.me.uid,
@@ -296,7 +290,6 @@ async function submitStory() {
     // blob endi kerak emas
     if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
   } catch (err) {
-    clearInterval(simInterval);
     floatBarDone(false);
     toast('Hikoya yuklanmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
     if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
@@ -381,16 +374,11 @@ export async function submitPost() {
       file = await _prepareUploadFile(file, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'post');
       floatBarUpdate(0);
 
-      let simPct = 0;
-      const simInterval = setInterval(() => {
-        const step = Math.max(0.3, (3 - (file.size / (10 * 1024 * 1024))) * Math.random());
-        simPct = Math.min(simPct + step, 88);
-        floatBarUpdate(simPct);
-      }, 200);
-
-      const result = await uploadViaController(file, 'posts');
-      clearInterval(simInterval);
-      floatBarUpdate(100);
+      floatBarUpdate(8);
+      const result = await uploadViaController(file, 'posts', {
+        onProgress: (r) => floatBarUpdate(8 + Math.round(Math.min(1, r) * 86)),
+      });
+      floatBarUpdate(96);
 
       mediaPath = result.path;
       mediaType = file.type;
