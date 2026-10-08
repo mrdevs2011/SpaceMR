@@ -1,7 +1,7 @@
 import { sendChatMessage, sendVoiceMessage, sendChatFile, handleSendAction } from './chat-actions.js';
 export { sendChatMessage, handleSendAction };
 import { chatState, chatUI } from './chat-state.js';
-import { getDraft, setDraft, clearDraft, loadDrafts } from '../core/drafts.js';
+import { getDraft, setDraft, clearDraft, loadDrafts, resetDrafts } from '../core/drafts.js';
 /* ── Onlayn holat (presence) uchun CSS ────────────────────────────────── */
 function _injectPresenceCSS() { /* CSS: mono-x.css .presence-dot */ }
 
@@ -1079,6 +1079,8 @@ function _onProfileLive(row) {
 }
 
 export function startChatsWatcher() {
+  // Qoralamalar: chat.js modul yuklanganda state.me hali yo'q (kirishdan oldin) — shuning uchun serverdan faqat shu yerda (kirgandan keyin) yuklanadi
+  loadDrafts().then(() => { try { renderChatsList(); } catch (_) {} }).catch(() => {});
   // Boshqalarning profil o'zgarishlari (ism/avatar) — BIR MARTA ulanamiz
   if (!chatState._profileLiveCh) {
     chatState._profileLiveCh = sb.channel('profiles-live-names')
@@ -1262,6 +1264,7 @@ export function startChatsWatcher() {
 
 export function stopChatsWatcher() {
   stopGroupsWatcher();
+  try { resetDrafts(); } catch (_) {}   // chiqishda oldingi akkaunt qoralamalari xotirada qolmasin
   if (chatState._chatsUnsub) { chatState._chatsUnsub(); chatState._chatsUnsub = null; }
   if (chatState._noticeUnsub) { chatState._noticeUnsub(); chatState._noticeUnsub = null; }
   chatState._loadNoticeFn = null;
