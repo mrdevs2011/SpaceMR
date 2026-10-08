@@ -268,7 +268,7 @@ img, video { decoding: async; }
   margin-top: 0 !important;
 }
 
-/* Xabar qatori butun kenglik. Havola/reply soyasi shu qatorni to'liq egallaydi (pufak ichida qoladi). */
+/* Xabar qatori butun kenglik. Havola/reply soyasi: radius/border yo'q, sky-blue, sekin yonib sekin o'chadi. */
 #chatThreadMessages .chat-msg,
 .chat-thread-messages .chat-msg {
   display: block;
@@ -304,6 +304,9 @@ img, video { decoding: async; }
   isolation: isolate;
   animation: none;
   background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 .chat-msg.msg-link-highlight::after,
 .chat-msg.msg-reply-hl::after {
@@ -313,20 +316,23 @@ img, video { decoding: async; }
   inset: 0;
   width: 100%;
   height: 100%;
-  border-radius: var(--radius);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   pointer-events: none;
   z-index: 1;
-  background: rgba(231, 233, 234, 0.16);
-  box-shadow: inset 0 0 0 1.5px rgba(231, 233, 234, 0.85);
-  animation: msgLinkBlockHl 3s ease-out forwards;
+  background: rgba(135, 206, 235, 0.34);
+  animation: msgLinkBlockHl 2.8s ease-in-out forwards;
 }
-.chat-msg.msg-reply-hl::after { animation-duration: 2.2s; }
+.chat-msg.msg-reply-hl::after { animation-duration: 2.8s; }
 .chat-msg.msg-link-highlight .chat-bubble,
 .chat-msg.msg-reply-hl .chat-bubble {
   position: relative;
   z-index: 2;
 }
 @keyframes msgLinkBlockHl {
-  0%, 60% { opacity: 1; }
+  0% { opacity: 0; }
+  28% { opacity: 1; }
+  62% { opacity: 1; }
   100% { opacity: 0; }
 }
