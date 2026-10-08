@@ -430,7 +430,6 @@ function menuHtml(m) {
   else if (hasText && (isDM() || kind) && !isGif && (!kind || onCap)) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');   // izoh ustida: matn
   if (kind && mUrl && !onCap) h += it('dl', IC.dl, DL_LABEL[kind]);   // izoh (matn) ustida — yuklash yo'q, faqat matnni nusxalash
   if (mine && m.type === 'text' && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
-  h += it('link', IC.copy, 'Xabar havolasi');
   h += it('fwd', IC.fwd, 'Uzatish');
   if (canDel(m)) h += it('del', IC.del, 'O‘chirish', 'danger');
   h += it('sel', IC.sel, 'Tanlash');
@@ -563,11 +562,6 @@ function run(act, id) {
   }
   if (act === 'copyimg') return void copyImage(m);
   if (act === 'dl') return void downloadMedia(m);
-  if (act === 'link') {
-    copyToClipboard(`${window.location.origin}${window.location.pathname}#m-${id}`);
-    toast('Havola nusxalandi');
-    return;
-  }
   if (act === 'reply') return startReply(m);
   if (act === 'edit') return startEdit(m);
   if (act === 'fwd') return forward([id]);
