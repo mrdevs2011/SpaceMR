@@ -82,8 +82,8 @@ export function navigateTo(routeName, pushState = true) {
     'chatThreadModal',
     // Comments
     'cmtModal',
-    // Upload
-    'uploadOverlay',
+    // Upload — float: tab almashganda yopilmaydi (barcha sahifada ishlaydi)
+    // 'uploadOverlay',
     // Settings (fullscreen page / right-rail)
     'settingsOverlay',
     // Zoom

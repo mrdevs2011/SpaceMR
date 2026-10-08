@@ -477,20 +477,27 @@ function loadComposerAvi() {
 
 /* ── Overlay open/close ──────────────────────────────────────────────── */
 export function openComposer() {
-  $('uploadOverlay').classList.add('show');
+  const ov = $('uploadOverlay');
+  if (!ov) return;
+  ov.classList.add('show');
   lockScroll('uploadOverlay');
   resetUpload();
   loadComposerAvi();
+  try { window.dispatchEvent(new CustomEvent('spacemr:route')); } catch (_) {}
 }
 /* Story "+" bosilganda: fayl menejerini darhol ochmaymiz — post kabi composer kartasi ochiladi */
 export function openStoryComposer() {
   if (!state.me) return;
-  $('uploadOverlay').classList.add('show');
+  const ov = $('uploadOverlay');
+  if (!ov) return;
+  ov.classList.add('show');
   lockScroll('uploadOverlay');
   resetUpload();
   _setComposerMode('story');
-  $('uploadBtn').textContent = 'Hikoya';
+  const ub = $('uploadBtn');
+  if (ub) ub.textContent = 'Hikoya';
   loadComposerAvi();
+  try { window.dispatchEvent(new CustomEvent('spacemr:route')); } catch (_) {}
 }
 $('createBtn').onclick     = openComposer;
 $('hdrNewPostBtn').onclick = openComposer;

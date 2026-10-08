@@ -316,7 +316,7 @@ function computeUrl() {
     return sec ? '/profile/settings/' + sec : '/profile/settings';
   }
 
-  if (hasShow('uploadOverlay')) return '/newpost';
+  /* uploadOverlay float — URL ni o'zgartirmaydi (barcha sahifada ishlaydi) */
   if (hasShow('searchOverlay', 'open')) return '/explore' + (state.exploreQuery ? '?q=' + encodeURIComponent(state.exploreQuery) : '');
   if (document.getElementById('reportSheet')?.classList.contains('is-open')) return '/report';
 
@@ -425,7 +425,7 @@ function updateTitle(path) {
 
 function hasAnyOverlay() {
   return (hasShow('settingsOverlay') && !settingsPinned())
-    || hasShow('uploadOverlay') || hasShow('searchOverlay', 'open')
+    || hasShow('searchOverlay', 'open')
     || (hasShow('grpCreateFormOverlay') && !$('grpCreateFormOverlay').dataset.addMode && !$('grpCreateFormOverlay').dataset.editMode);
 }
 
@@ -435,7 +435,7 @@ function closeEverythingExcept(keep) {
   if (keep !== 'story' && sv && !sv.hidden) import('./feed/stories.js').then(m => m.closeStoryViewer?.()).catch(() => {});
   if (keep !== 'userprofile' && hasShow('userProfileModal')) $('upBack')?.click();
   if (keep !== 'groupcreate' && hasShow('grpCreateFormOverlay')) $('grpFormCancelBtn')?.click();
-  if (keep !== 'newpost' && hasShow('uploadOverlay')) $('cancelUpload')?.click();
+  /* uploadOverlay float — closeEverythingExcept yopmaydi */
   if (keep !== 'explore' && hasShow('searchOverlay', 'open')) $('searchOverlayClose')?.click();
   if (keep !== 'report' && document.getElementById('reportSheet')?.classList.contains('is-open')) {
     import('./ui/report.js').then(m => m.closeReportPage?.()).catch(() => {});

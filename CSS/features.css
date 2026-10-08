@@ -4804,31 +4804,61 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 body.report-open { overflow: hidden; }
 
 
-/* report-page-full — Shikoyat /report to'liq sahifa */
+/* report-center — Shikoyat faqat markaz; leftbar + rightbar saqlanadi */
 .report-sheet {
   position: fixed;
-  inset: 0;
-  z-index: 920;
+  z-index: 40;
   display: none;
   align-items: stretch;
-  justify-content: center;
+  justify-content: stretch;
   background: #000;
+  /* mobil: header osti, bottom-nav usti */
+  top: var(--hdr, 52px);
+  left: 0;
+  right: 0;
+  bottom: var(--nav, 56px);
 }
 .report-sheet.is-open { display: flex; }
 .report-sheet-backdrop {
-  display: none; /* full page — backdrop yo'q */
+  display: none !important;
 }
 .report-sheet-panel {
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   max-height: none;
   height: 100%;
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
   overflow-y: auto;
-  padding: 16px 16px 32px;
+  padding: 12px 16px max(24px, env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   background: #000;
+}
+body.report-open {
+  /* leftbar/rightbar ishlashi uchun body scrollni butunlay bloklamaymiz */
+  overflow: auto;
+}
+@media (min-width: 1100px) {
+  .report-sheet {
+    top: 0;
+    bottom: 0;
+    left: var(--content-left, var(--sidebar, 260px));
+    right: auto;
+    width: var(--center-w, 600px);
+    max-width: var(--center-w, 600px);
+  }
+  .report-sheet-panel {
+    border-left: 1px solid var(--line, #2f3336) !important;
+    border-right: 1px solid var(--line, #2f3336) !important;
+    padding: 16px 16px 32px;
+  }
+}
+@media (min-width: 1200px) {
+  .report-sheet {
+    left: var(--content-left, var(--sidebar, 260px));
+    width: var(--center-w, 600px);
+    max-width: var(--center-w, 600px);
+  }
 }

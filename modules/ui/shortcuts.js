@@ -96,88 +96,83 @@ document.addEventListener('keydown', e => {
   if (isTyping(e.target) && !(mod && (e.key === 'Enter'))) return;
   if (!state.me?.uid) return;
 
-  // Navigatsiya (overlay ochiq bo'lsa ham ishlashi mumkin — faqat typing bo'lmasa)
+  // Ctrl/Cmd shortcutlar — bir marta, mustaqil (e.repeat / dublikat click yo'q)
   if (mod && !isTyping(e.target)) {
+    if (e.repeat) return;
+
     const k = e.key;
-    const kl = k.toLowerCase();
-
-    if (kl === 'k') { // Qidiruv / Kashf
-      e.preventDefault();
-      if (!isOpen($('searchOverlay'))) $('hdrSearchBtn')?.click() || import('./ui.js').then(m => m.openSearchOverlay?.());
-      return;
-    }
-    if (k === ',') { // Sozlamalar
-      e.preventDefault();
-      $('settingsBtn')?.click() || $('rrSettingsBtn')?.click();
-      return;
-    }
-
-    // Ctrl/Cmd + 0…9 navigatsiya (Shift+0 = story). e.code — layout/shift mustahkam.
+    const kl = (k || '').toLowerCase();
     const codeDigit = /^Digit([0-9])$/.exec(e.code || '');
     const digit = codeDigit ? codeDigit[1]
       : (k === '0' || k === ')') ? '0'
       : (k >= '1' && k <= '9') ? k
       : null;
-    if (digit !== null) {
-      e.preventDefault();
-      const go = (route) => import('../router.js').then(m => m.navigateTo(route));
-      if (digit === '1') return void go('home');
-      if (digit === '2') { // Explore / Kashf
-        if (!isOpen($('searchOverlay'))) {
-          $('hdrSearchBtn')?.click() || $('sbSearchToggle')?.click() || import('./ui.js').then(m => m.openSearchOverlay?.());
-        }
-        return;
-      }
-      if (digit === '3') return void go('notifs');
-      if (digit === '4') return void go('chats');
-      if (digit === '5') return void go('apps');
-      if (digit === '6') return void go('saved');
-      if (digit === '7') return void go('profile');
-      if (digit === '8') { // SpaceMR Group
-        import('../url-router.js').then(m => m.applyPath('/chats/g/spacemr')).catch(() => {
-          $('sbGrpBtn')?.click();
-        });
-        return;
-      }
-      if (digit === '9') { // Shikoyat — /report
-        import('../url-router.js').then(m => m.applyPath('/report')).catch(() => {
-          import('./report.js').then(r => r.openReportPage({ kind: 'other' }));
-        });
-        return;
-      }
-      if (digit === '0') {
-        if (e.shiftKey) {
-          // Story upload
-          import('../feed/upload.js').then(m => m.openStoryComposer?.()).catch(() => {});
-        } else {
-          // Post upload
-          import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {
-            ($('createBtn') || $('hdrNewPostBtn'))?.click();
-          });
-        }
-        return;
-      }
+
+    const stop = () => { e.preventDefault(); e.stopPropagation(); };
+    const path = (p) => import('../url-router.js').then(m => m.applyPath(p)).catch(() => {});
+    const go = (route) => import('../router.js').then(m => m.navigateTo(route)).catch(() => {});
+
+    if (kl === 'k') {
+      stop();
+      path('/explore');
+      return;
     }
+    if (k === ',') {
+      stop();
+      const s = $('settingsBtn') || $('rrSettingsBtn');
+      if (s) s.click();
+      return;
+    }
+
+    if (digit !== null) {
+      stop();
+      // Bitta raqam = bitta amal (zanjir/click dublikat yo'q)
+      switch (digit) {
+        case '1': path('/home'); break;
+        case '2': path('/explore'); break;
+        case '3': path('/notifications'); break;
+        case '4': path('/chats'); break;
+        case '5': path('/apps'); break;
+        case '6': path('/saved'); break;
+        case '7': path('/profile'); break;
+        case '8': path('/chats/g/spacemr'); break;
+        case '9': path('/report'); break;
+        case '0':
+          if (e.shiftKey) {
+            import('../feed/upload.js').then(m => m.openStoryComposer?.()).catch(() => {});
+          } else {
+            import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {});
+          }
+          break;
+        default: break;
+      }
+      return;
+    }
+    return; // boshqa Ctrl kombinatsiyalar (Ctrl+R va h.k.) — tegmaymiz
   }
 
   if (mod || isTyping(e.target)) return;
+  if (e.repeat) return;
   if (anyOpen()) return;
 
+  // Bir harfli — Ctrl/Cmd bilan aralashmaydi
   if (e.key === 'n' || e.key === 'N') {
     e.preventDefault();
-    ($('createBtn') || $('hdrNewPostBtn'))?.click();
+    import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {
+      ($('createBtn') || $('hdrNewPostBtn'))?.click();
+    });
   } else if (e.key === '/') {
     e.preventDefault();
-    $('hdrSearchBtn')?.click();
+    import('../url-router.js').then(m => m.applyPath('/explore')).catch(() => {});
   } else if (e.key === 'c' || e.key === 'C') {
     e.preventDefault();
-    import('../router.js').then(m => m.navigateTo('chats'));
+    import('../url-router.js').then(m => m.applyPath('/chats')).catch(() => {});
   } else if (e.key === 'h' || e.key === 'H') {
     e.preventDefault();
-    import('../router.js').then(m => m.navigateTo('home'));
+    import('../url-router.js').then(m => m.applyPath('/home')).catch(() => {});
   } else if (e.key === 'p' || e.key === 'P') {
     e.preventDefault();
-    import('../router.js').then(m => m.navigateTo('profile'));
+    import('../url-router.js').then(m => m.applyPath('/profile')).catch(() => {});
   }
 });
 
