@@ -84,3 +84,38 @@ Rotatsiya: yangi qiymat → deploy/secret yangilash → eski bekor. **service_ro
 
 `script-src 'self' 'unsafe-inline'` — `index.html` inline skript va markdown `onclick` uchun.
 Hash/nonce keyinroq; hozircha sabab: UI (spoiler, copy, mention).
+
+
+## 11. Service Worker KILL_SWITCH
+
+Masofadan buzilgan SW ni o'chirish:
+
+1. Admin panel → foydalanuvchilarni yangilash (force-reload) yoki
+2. Client ga `postMessage({ type: 'KILL_SWITCH' })` (sw.js tinglaydi).
+3. Natija: SW unregister + cache tozalash + hard reload.
+4. Kod: `modules/core/force-reload.js`, `sw.js` (`KILL_SWITCH` handler).
+
+Sinov: bir marta Preview da force-reload yuborib, barcha tablar yangilangani.
+
+## 12. Qora ekran / kirish ishlamasa
+
+1. Foydalanuvchi: "Qayta yuklash" paneli → Tozalab qayta kirish.
+2. SW: `navigator.serviceWorker.getRegistrations()` → unregister.
+3. Vercel: oldingi Production → Promote (rollback).
+4. SpaceMR guruhi orqali xabar (monitoring + aloqa).
+
+## 13. Chat kelmasa / Realtime
+
+1. Supabase Dashboard → Realtime status.
+2. Brauzer: Network WebSocket ochiqmi.
+3. RLS: user o'z chatiga o'qish huquqi.
+4. Rollback faqat klient regressiyasi bo'lsa.
+
+## 14. Deploy oldidan qisqa varaq (ROADMAP2)
+
+- [ ] `node --check` o'zgargan JS; `node scripts/build-css.mjs`
+- [ ] Preview: login → logout → qayta kirish; yopib ochish
+- [ ] Telefon: home, chat, post yozish
+- [ ] Desktop ≥1100px: header/panel takroriy tugmasiz
+- [ ] Konsol CSP/modul xatosiz
+- [ ] Rollback yo'li ma'lum (Vercel Promote previous)

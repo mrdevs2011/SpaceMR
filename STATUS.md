@@ -1,55 +1,36 @@
 # SpaceMR — Production STATUS
 
-**Sana:** 2026-10-07  
-**Roadmap:** `docs/PRODUCTION-ROADMAP.md`  
-**Tag (lokal):** `pre-prod-2026-10-07` (push/MR kutilyapti)
+**Sana:** 2026-10-08  
+**Mahsulot roadmap:** `docs/ROADMAP.md` (10 band — yopilgan)  
+**Production roadmap:** `docs/ROADMAP2.md`  
+**Branch ish:** `feat/4-offline-banner` → `main`
 
 ## Qisqa xulosa
 
-Lokal ishlar: xavfsizlik fixlari, emoji path, CSS minify, CI skeleton, RUNBOOK, maxfiylik/shartlar sahifalari.  
-**Hali ochiq:** `main` merge/push, prod SQL 094/095, jonli RLS test, MR §10 qarorlari, go-live smoke.
+Kod tomoni productionga tayyor: oflayn, xato matnlari, feedback (SpaceMR guruhi),
+onboarding, chat qidiruv, mute, push prefs, toast, skelet, RUNBOOK/KILL_SWITCH.
 
-## Bosqichlar
+**MR qarori kerak (operatsion):** alohida prod Supabase, storage plan, maxsus domen,
+Sentry vs client_errors, beta ro'yxati, jonli RLS negativ test va zaxira tiklash mashqi.
 
-| # | Nom | Holat |
-|---|-----|--------|
-| 0 | Muzlatish | Commitlar tayyor; merge/tag push/zaxira — MR |
-| 1 | Xavfsizlik | Asosiy kod fix ✅; jonli RLS negativ — MR |
-| 2 | Ishonchlilik | RUNBOOK + client_errors ✅; bo'sh DB/yuk/uptime — ochiq |
-| 3 | Tezlik | CSS gzip ~82 KB ✅; JS minify/Lighthouse — ochiq |
-| 4 | Mahsulot | Profil-pro + apps tablet ✅; vizual QA/a11y — ochiq |
-| 5 | Qonuniy | privacy.html, terms.html, RUNBOOK ✅ |
-| 6 | CI | GitHub Actions skeleton ✅ |
-| 7 | Go-live | Kutilmoqda |
+## ROADMAP2 fazalar
 
-## Asosiy commitlar (feat/prod-*)
+| Faza | Kod | Operatsion (MR) |
+|------|-----|------------------|
+| 1 Production blokerlari | CSP, rate limit, npm audit 0, shell 302, RUNBOOK rollback | Jonli RLS test, prod Supabase, zaxira tiklash |
+| 2 Mobil sifat | safe-area, dvh, klaviatura adapt, 44px, oflayn banner, PWA guide | Qurilma matritsasi qo'lda |
+| 3 Kundalik ishonch | toast, empty states, kesh, minify, modulepreload | Smoke iOS+Android |
+| 4 Kuzatuv | client_errors, force-reload, KILL_SWITCH, SpaceMR guruh | Uptime monitor, ogohlantirish |
+| 5 Go-live | STATUS yangilandi | Beta 5–10 kishi, v1.0.0 teg |
 
-- Profil pro, emoji SVG/png, 3d olib tashlash, reaksiya path, 094/095
-- XSS/website, deploy hygiene, SVG upload block
-- RUNBOOK, CSP.md, CSS minify, CI
-- Apps phone/tablet/desktop
-- privacy.html / terms.html
+## Metrikalar
 
-## Metrikalar (lokal)
-
-- `app.css` gzip ≈ **82 KB** (maqsad ≤120)
 - `npm audit`: 0 vulnerabilities
-- `tests/store-policy.mjs`: PASS
-- `tests/flags.mjs`: 2 fail (muhit)
-- Playwright smoke: paketi yo'q bo'lishi mumkin
+- `app.css` gzip maqsad ≤120 KB (build minify yoqilgan)
+- Offline banner + post draft + failed msg retry
 
-## MR dan kerak (§10)
+## Keyingi (faqat egasi)
 
-1. Emoji 49 MB: SVG to'liq / saqlash?
-2. Storage 1 GB: plan yoki limit?
-3. Alohida prod Supabase?
-4. Maxsus domen?
-5. `/apps` prod yoqiladimi?
-6. Monitoring: client_errors yoki Sentry?
-
-## Keyingi amallar
-
-1. Branchlarni merge → push `main`
-2. Prod: backup → 094 → 095
-3. Preview SMOKE (iOS+Android)
-4. Production promote + `v1.0.0`
+1. Preview smoke + telefon
+2. Prod promote / teg
+3. Beta SpaceMR guruhi orqali
