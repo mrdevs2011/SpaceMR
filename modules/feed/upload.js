@@ -306,7 +306,8 @@ let _submitBusy = false;
 export async function submitPost() {
   if (_submitBusy) return;
   _submitBusy = true;
-  if (_composerMode === 'story') return submitStory();
+  try {
+    if (_composerMode === 'story') return await submitStory();
   const caption      = $('captionInput').value.trim();
   const isPublic     = true;
   if (!state.me) return;
@@ -438,6 +439,9 @@ export async function submitPost() {
     _submitBusy = false;
     $('uploadBtn').disabled = false;
     $('uploadBtn').textContent = 'Joylash';
+  }
+  } finally {
+    _submitBusy = false;
   }
 }
 

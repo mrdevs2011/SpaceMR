@@ -3372,7 +3372,7 @@ function _paintDraftRow(scope) {
   const row = document.querySelector(`.chat-row[data-${kind}="${CSS.escape(id)}"] .chat-row-preview`);
   if (!row) return;
   const text = getDraft(scope).trim();
-  if (!text) return;
+  if (!text) { try { renderChatsList(); } catch (_) {} return; }
   row.classList.remove('chat-row-empty');
   row.innerHTML = `<span class="chat-draft-tag">Draft:</span> ${esc(text.slice(0, 46))}`;
 }
