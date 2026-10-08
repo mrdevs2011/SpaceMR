@@ -2034,9 +2034,12 @@ function _observeMessagesForRead() {
 }
 
 function renderTicks(status) {
-  // 'sending' = soat, 'read' = 2 chek, boshqa (sent/null/undefined) = 1 chek — har doim bor
+  // 'sending' = soat, 'failed' = qayta urinish, 'read' = 2 chek, boshqa = 1 chek
   if (status === 'sending') {
     return `<img src="./svg/ui/ticks-b1f42f.svg" alt="" class="icon msg-ticks sending" width="14" height="14" data-t0="${Date.now()}" aria-label="Yuborilmoqda">`;
+  }
+  if (status === 'failed') {
+    return `<button type="button" class="msg-ticks failed" title="Yuborilmadi — qayta urinish" aria-label="Yuborilmadi — qayta urinish">!</button>`;
   }
   if (status === 'read') {
     return `<img src="./svg/ui/ticks-98b8af.svg" alt="" class="icon msg-ticks read" width="18" height="11" aria-label="O'qildi">`;
@@ -3405,5 +3408,17 @@ export function destroyChatsView() {
   if (aviEl)  aviEl.addEventListener('click',  openCurrentProfile);
   if (nameEl) nameEl.addEventListener('click', openCurrentProfile);
 })();
+
+/* Failed tick: qayta yuborish (ROADMAP 4) */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.msg-ticks.failed');
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const msgEl = btn.closest('.chat-msg[data-msg-id]');
+  const id = msgEl?.dataset?.msgId;
+  if (!id) return;
+  import('./chat-actions.js').then(m => m.retryFailedMessage?.(id)).catch(() => {});
+}, true);
 
 Object.assign(chatUI, { paintMessages, updateMsgTicks, updateVoiceSendBtn, clearPendingPostShare, setPendingPostShare, clearChatFile, _showOptimisticVoiceBubble, _setTyping, paintGroupThread, resetSeenMsgs, initChatHeaderMenu, getPendingPostShare, updatePostAttachBar });

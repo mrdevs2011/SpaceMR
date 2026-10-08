@@ -16,6 +16,7 @@ const KEEP = [
   { re: /ruxsat|mikrofon|kameraga/i, text: 'Ruxsat berilmadi', type: 'info' },
   { re: /juda tez/i, text: 'Juda tez yuboryapsiz. Biroz kuting', type: 'warning' },
   { re: /juda ko'p|limit|hajmi|MB dan|daqiqa to'ldi|daqiqadan oshdi/i, text: 'Limitdan oshdi', type: 'warning' },
+  { re: /internet yo'q|ulanis yo'q|offline/i, text: "Internet yo'q, qayta urinib ko'ring", type: 'error' },
   { re: /yuborilmadi|yuklanmadi|saqlanmadi|ochilmadi|bo'lmadi|bo‘lmadi|xatolik|xato:|xato yuz|amalga oshmadi|javob bermadi/i, text: 'Amal bajarilmadi', type: 'error' },
 ];
 

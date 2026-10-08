@@ -96,13 +96,71 @@ export async function sendChatMessage(opts) {
     // Push bildirishnoma push.js bosqichida ulanadi (Edge Function / DB webhook)
   } catch (err) {
     console.error('sendChatMessage failed:', err.message);
-    toast('Xabar yuborilmadi', 'error');
-    chatState._rtLocal.delete(id);
-    if (chatState._rt && chatState._rtChatId === chatId) chatState._rt.retract(id);
-    if (state.currentChatId === chatId) chatUI.paintMessages(chatState._curMsgs.filter(x => x.id !== id));
-    if (gifText == null) inp.value = userText; // qaytarib qo'yamiz, user qayta yuborishi uchun
-    if (postShare) chatUI.setPendingPostShare(postShare);
-    chatUI.updateVoiceSendBtn();
+    // Oflayn/tarmoq: xabar ekranda qoladi — "yuborilmadi" + qayta urinish (ROADMAP 4)
+    const conf = chatState._rtLocal.get(id);
+    if (conf) {
+      conf.status = 'failed';
+      conf._at = Date.now();
+      conf._payload = { text: finalMsgText, reply_to: replyToId, type: 'text' };
+      chatState._rtLocal.set(id, conf);
+    }
+    if (state.currentChatId === chatId) {
+      if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(id, 'failed');
+      else chatUI.paintMessages(chatState._curMsgs.map(m => m.id === id ? { ...m, status: 'failed' } : m));
+    }
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    toast(offline ? "Internet yo'q, qayta urinib ko'ring" : 'Xabar yuborilmadi', 'error');
+  }
+}
+
+/** Failed xabarni qayta yuborish (tick ! bosilganda). */
+export async function retryFailedMessage(msgId) {
+  if (!msgId || !state.me) return;
+  const conf = chatState._rtLocal.get(msgId);
+  if (!conf || conf.status !== 'failed') return;
+  const chatId = conf.chatId || state.currentChatId;
+  if (!chatId) return;
+  conf.status = 'sending';
+  conf._at = Date.now();
+  chatState._rtLocal.set(msgId, conf);
+  if (state.currentChatId === chatId && typeof chatUI.updateMsgTicks === 'function') {
+    chatUI.updateMsgTicks(msgId, 'sending');
+  }
+  const p = conf._payload || { text: conf.text, reply_to: conf.replyTo || null, type: conf.type || 'text' };
+  try {
+    const row = {
+      id: msgId,
+      chat_id: chatId,
+      sender_id: state.me.uid,
+      type: p.type || 'text',
+      text: p.text ?? conf.text ?? null,
+      reply_to: p.reply_to ?? conf.replyTo ?? null,
+    };
+    if (p.media_path) {
+      row.media_path = p.media_path;
+      row.media_type = p.media_type ?? null;
+      row.file_name = p.file_name ?? null;
+      row.file_size = p.file_size ?? null;
+      row.duration = p.duration ?? null;
+    }
+    const { error } = await sb.from('messages').insert(row);
+    if (error) throw error;
+    conf.status = 'sent';
+    conf._at = Date.now();
+    chatState._rtLocal.set(msgId, conf);
+    if (state.currentChatId === chatId && typeof chatUI.updateMsgTicks === 'function') {
+      chatUI.updateMsgTicks(msgId, 'sent');
+    }
+  } catch (err) {
+    console.error('retryFailedMessage:', err?.message || err);
+    conf.status = 'failed';
+    conf._at = Date.now();
+    chatState._rtLocal.set(msgId, conf);
+    if (state.currentChatId === chatId && typeof chatUI.updateMsgTicks === 'function') {
+      chatUI.updateMsgTicks(msgId, 'failed');
+    }
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    toast(offline ? "Internet yo'q, qayta urinib ko'ring" : 'Xabar yuborilmadi', 'error');
   }
 }
 
@@ -302,3 +360,17 @@ export async function handleSendAction() {
 }
 
 
+
+
+// Internet qaytganda failed xabarlarni avtomatik qayta urinish (ROADMAP 4)
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    const ids = [];
+    try {
+      for (const [id, m] of chatState._rtLocal.entries()) {
+        if (m && m.status === 'failed') ids.push(id);
+      }
+    } catch (_) {}
+    ids.forEach(id => { retryFailedMessage(id).catch(() => {}); });
+  });
+}
