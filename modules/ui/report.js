@@ -1,6 +1,6 @@
 /** Shikoyat sahifasi (ROADMAP 7) — post/profil/umumiy.
  *  Yuborish: matn tayyorlanadi va SpaceMR guruhiga o'tiladi (alohida backend forma yo'q). */
-import { state } from '../core/config.js';
+import { sb, state } from '../core/config.js';
 import { toast } from './toast.js';
 
 const REASONS = [
@@ -110,6 +110,20 @@ async function _submit() {
 
   try {
     localStorage.setItem('spacemr_report_draft', msg);
+  } catch (_) {}
+
+  // Serverga yozish (content_reports) — muvaffaqiyatsiz bo'lsa ham guruhga o'tamiz
+  try {
+    if (state.me?.uid) {
+      await sb.from('content_reports').insert({
+        reporter_id: state.me.uid,
+        target_type: _ctx?.kind || 'other',
+        target_id: _ctx?.id || null,
+        target_uid: _ctx?.uid || null,
+        reason: reasonBtn.dataset.reason || 'other',
+        note: note || null,
+      });
+    }
   } catch (_) {}
 
   closeReportPage();

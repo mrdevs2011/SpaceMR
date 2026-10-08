@@ -27,8 +27,8 @@
 ## Faza 1 — Production blokerlari
 
 ### 1.1 Xavfsizlik tekshiruvi
-- [ ] RLS (qator darajasidagi himoya) siyosatlari har jadval uchun ro'yxatga olinadi; **jonli negativ test**: boshqa foydalanuvchi ma'lumotini o'qish/yozishga urinish rad etiladi (post, chat, guruh, profil, storage).
-- [ ] `anon` rolga ruxsatlar minimal; storage bucket'lar (`media`, guruh avatarlari) siyosatlari tekshiriladi (yuklash turi/hajmi, faol kontent taqiqi).
+- [x] RLS (qator darajasidagi himoya) siyosatlari har jadval uchun ro'yxatga olinadi; **jonli negativ test**: boshqa foydalanuvchi ma'lumotini o'qish/yozishga urinish rad etiladi (post, chat, guruh, profil, storage).
+- [x] `anon` rolga ruxsatlar minimal; storage bucket'lar (`media`, guruh avatarlari) siyosatlari tekshiriladi (yuklash turi/hajmi, faol kontent taqiqi).
 - [x] Server darvozasi (`api/shell.js`): yaroqsiz/muddati o'tgan token → 302 `/login`; yaroqli token → ilova. Ikkala holat qo'lda tekshiriladi.
 - [x] CSP (`vercel.json`) brauzer konsolida buzilishsiz ishlaydi (rasm, video, WebSocket, push).
 - [x] Rate limit: login, parolni tiklash, xabar yuborish, post, yuklash uchun yuqori chegaralar aniq va sinalgan.
@@ -36,7 +36,7 @@
 
 ### 1.2 Baza va muhit
 - [ ] Alohida **production Supabase** loyihasi (dev/test bilan aralashmasin) — qaror kerak.
-- [ ] Kutilayotgan migratsiyalar (`094`, `095` va keyingilari) avval preview/staging'da, keyin prod'da: **zaxira → migratsiya → tekshiruv**.
+- [x] Kutilayotgan migratsiyalar (`094`, `095` va keyingilari) avval preview/staging'da, keyin prod'da: **zaxira → migratsiya → tekshiruv**.
 - [ ] Zaxirani **tiklab ko'rish mashqi** (faqat saqlash yetarli emas): kamida bir marta test bazaga tiklab, ma'lumot butunligi tekshiriladi.
 - [ ] Storage hajmi va narx rejasi (media/emoji hajmi) — limit yoki plan qarori; foydalanuvchi uchun kvota ishlaydi.
 
