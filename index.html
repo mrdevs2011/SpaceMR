@@ -96,14 +96,14 @@ html{color-scheme:dark;}
   /* Qora ekran qo'riqchisi: ilova (login yoki asosiy ekran) chiqmay qolsa — kesh tozalab bir marta avtomatik qayta yuklaydi,
      baribir chiqmasa "Qayta yuklash" paneli ko'rsatiladi. Modullarga bog'liq emas (modul yuklanmasa ham ishlaydi). */
   (function(){
-    var KEY = 'spacemr_recover_ts', t0 = Date.now(), sooner = false;
+    var KEY = 'spacemr_recover_ts', t0 = Date.now(), sooner = false, failed = false, lastErr = '';
     function alive() {
       try {
         var d = document, de = d.documentElement;
         if (de.hasAttribute('data-nf') || d.getElementById('spacemrRecover')) return true;
         var sp = d.getElementById('splash');
         var spVis = !!sp && sp.style.display !== 'none' && !sp.classList.contains('out');
-        if (spVis) return (Date.now() - t0) < 20000;
+        if (spVis) return failed ? false : (Date.now() - t0) < 20000;
         var pts = [[.5,.5],[.5,.25],[.5,.75],[.25,.5]];
         for (var i = 0; i < pts.length; i++) {
           var el = d.elementFromPoint(innerWidth * pts[i][0], innerHeight * pts[i][1]);
@@ -136,12 +136,14 @@ html{color-scheme:dark;}
       w.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#000;color:#e7e9ea;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font:15px/1.4 system-ui,sans-serif';
       var h = document.createElement('div'); h.textContent = 'Ilova ochilmadi'; h.style.cssText = 'font-size:20px;font-weight:700';
       var p = document.createElement('div'); p.textContent = "Eski kesh yoki tarmoq xatosi bo'lishi mumkin."; p.style.opacity = '.7';
+      var ed = null;
+      if (lastErr) { ed = document.createElement('div'); ed.textContent = String(lastErr).slice(0, 240); ed.style.cssText = 'max-width:92%;font:11.5px/1.45 ui-monospace,Menlo,monospace;color:#f4212e;word-break:break-word;opacity:.9'; }
       function btn(label, primary, fn) {
         var b = document.createElement('button'); b.type = 'button'; b.textContent = label;
         b.style.cssText = 'height:44px;padding:0 26px;border-radius:999px;border:' + (primary ? '0' : '1px solid #444') + ';background:' + (primary ? '#e7e9ea' : 'transparent') + ';color:' + (primary ? '#000' : '#e7e9ea') + ';font:600 15px system-ui,sans-serif;cursor:pointer';
         b.onclick = function () { b.disabled = true; fn(); }; return b;
       }
-      w.appendChild(h); w.appendChild(p);
+      w.appendChild(h); w.appendChild(p); if (ed) w.appendChild(ed);
       w.appendChild(btn('Qayta yuklash', true, function () { wipe(true, function () { location.replace('/'); }); }));
       w.appendChild(btn('Tozalab, qayta kirish', false, function () {
         try { Object.keys(localStorage).forEach(function (k) { if (/supabase|spacemr-auth|mrspace-auth|sb-.*-auth/i.test(k)) localStorage.removeItem(k); }); } catch (e) {}
@@ -164,6 +166,7 @@ html{color-scheme:dark;}
     window.addEventListener('error', function (e) {
       var m = (e && e.message) || '';
       var res = e && e.target && e.target.tagName === 'SCRIPT';
+      if (res || /module|import|export/i.test(m)) { failed = true; lastErr = res ? ('Skript yuklanmadi: ' + ((e.target && (e.target.src || '').split('/').slice(-2).join('/')) || '')) : m; }
       if (!sooner && (res || /module|import|export/i.test(m))) { sooner = true; setTimeout(check, 3500); }
     }, true);
     setTimeout(check, 7000);
