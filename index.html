@@ -1528,6 +1528,36 @@ html[data-nf],html[data-nf] body{background:#000000}
   import { initQuota } from './modules/core/quota.js';
   initQuota();
 </script>
+
+<script>
+  /* Eruda — mobil console. Yoqish: ?eruda=1 yoki localStorage spacemr_eruda=1;
+     o'chirish: ?eruda=0. CSP: faqat /vendor/eruda.min.js (self). */
+  (function () {
+    try {
+      var q = location.search || '';
+      if (/[?&]eruda=0(?:&|$)/.test(q)) {
+        try { localStorage.removeItem('spacemr_eruda'); } catch (e) {}
+        return;
+      }
+      var on = /[?&]eruda=1(?:&|$)/.test(q);
+      if (on) { try { localStorage.setItem('spacemr_eruda', '1'); } catch (e) {} }
+      else { try { on = localStorage.getItem('spacemr_eruda') === '1'; } catch (e) {} }
+      if (!on) return;
+      var s = document.createElement('script');
+      s.src = '/vendor/eruda.min.js';
+      s.async = true;
+      s.onload = function () {
+        try {
+          if (window.eruda) {
+            eruda.init();
+            try { eruda.position({ x: 8, y: Math.max(48, (window.innerHeight || 600) - 56) }); } catch (e) {}
+          }
+        } catch (e) {}
+      };
+      document.head.appendChild(s);
+    } catch (e) {}
+  })();
+</script>
 <script type="module" src="./modules/core/error-log.js"></script>
 <script type="module" src="./modules/core/no-autocomplete.js"></script>
 <script type="module" src="./modules/core/scroll-jump-debug.js"></script>
