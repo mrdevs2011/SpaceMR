@@ -31,7 +31,7 @@ const extOf = s => {
   const i = n.lastIndexOf('.');
   return i < 0 ? (/^(dockerfile|makefile)$/i.test(n.split('/').pop()) ? n.split('/').pop().toLowerCase() : '') : n.slice(i + 1).toLowerCase().replace(/[^a-z0-9]/g, '');
 };
-const set = s => new Set(s.split(' '));
+const set = s => new Set(typeof s === 'string' ? s.split(' ') : (Array.isArray(s) ? s : []));
 const IMG = set('jpg jpeg png gif webp avif bmp svg ico');
 const VID = set('mp4 webm mov mkv avi m4v ogv');
 const AUD = set('mp3 wav ogg aac flac m4a opus oga weba');
@@ -71,11 +71,11 @@ function scan(src, re, fn) {
   }
   return out + E(src.slice(last));
 }
-const KW = set(('if else elif for while do switch case break continue return def class function fn func let var const val mut pub struct enum impl trait interface type ' +
+const KW = set('if else elif for while do switch case break continue return def class function fn func let var const val mut pub struct enum impl trait interface type ' +
   'import from export package use using namespace new delete this self super null nil none true false try catch except finally throw throws raise with as in is not and or ' +
   'lambda yield async await static final public private protected void int float double char bool boolean string long short unsigned extern typedef sizeof ' +
   'select insert update create drop alter table into values where join left right inner outer on group by order limit having distinct union set primary key foreign references default ' +
-  'echo fi then done esac local readonly begin end unless module require defer go chan map range fallthrough goto match when override abstract virtual operator template typename volatile').split(' '));
+  'echo fi then done esac local readonly begin end unless module require defer go chan map range fallthrough goto match when override abstract virtual operator template typename volatile');
 const RE_C = /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|("(?:\\[\s\S]|[^"\\\n])*"?|'(?:\\[\s\S]|[^'\\\n])*'?|`(?:\\[\s\S]|[^`\\])*`?)|(\b0x[\da-f]+\b|\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)(?=\s*\()|([A-Za-z_]\w*)/gi;
 const RE_H = /(#[^\n]*)|("""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\[\s\S]|[^"\\\n])*"?|'(?:\\[\s\S]|[^'\\\n])*'?)|(\b0x[\da-f]+\b|\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)(?=\s*\()|([A-Za-z_][\w-]*)/gi;
 const RE_S = /(--[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|('(?:''|[^'])*'?|"(?:\\[\s\S]|[^"\\\n])*"?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)(?=\s*\()|([A-Za-z_]\w*)/gi;
