@@ -75,10 +75,12 @@ export function buildMedia(p) {
     return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(cached)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   if (isVid)
     return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
-  return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}">
+  const _fext = (String(p.fileName || '').split('.').pop() || '').toUpperCase().slice(0, 6);
+  const _fsub = [String(p.fileName || '').includes('.') ? _fext : '', p.fileSize ? fmtSz(p.fileSize) : ''].filter(Boolean).join(' · ');
+  return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}" data-fv-url="${esc(p.mediaUrl)}" data-fv-name="${esc(p.fileName||'file')}" data-fv-mime="${esc(p.mediaType||'')}" data-fv-size="${+p.fileSize || 0}" role="button" tabindex="0">
     <div class="file-card-icon">${getFileIcon(p.fileName||'', p.mediaType||'')}</div>
-    <div class="file-info"><div class="file-name">${esc(p.fileName||'File')}</div><div class="file-size">${p.fileSize ? fmtSz(p.fileSize) : ''}</div></div>
-    <button class="file-dl" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}">Yuklab olish</button>
+    <div class="file-info"><div class="file-name">${esc(p.fileName||'File')}</div><div class="file-size">${esc(_fsub)}</div></div>
+    <button type="button" class="file-dl" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}" aria-label="Yuklab olish" title="Yuklab olish"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
   </div>`;
 }
 
@@ -612,7 +614,7 @@ function bindFeedEvents(feedEl) {
     const card = t.closest('.file-card');
     if (card && !t.closest('.file-dl')) {
       const url = card.dataset.url;
-      if (url) location.assign(url);
+      if (url) { const { openFileViewer } = await import('../ui/file-viewer.js'); openFileViewer({ url, name: card.dataset.name }); }
       return;
     }
     const capMore = t.closest('.cap-more');

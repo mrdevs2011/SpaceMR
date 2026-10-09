@@ -3082,7 +3082,14 @@ async function _hydrateChatPostCards(root) {
       if (_hk === 'file') {
         mediaWrap.className = 'cpc-file';
         mediaWrap.setAttribute('data-cpc-file', '1');
-        mediaWrap.innerHTML = _cpcFileInner(data.file_name || _cpcBaseName(data.media_path), mt, data.file_size || 0);
+        const _hn = data.file_name || _cpcBaseName(data.media_path);
+        mediaWrap.setAttribute('data-fv-url', url);
+        mediaWrap.setAttribute('data-fv-name', _hn || 'file');
+        mediaWrap.setAttribute('data-fv-mime', mt);
+        mediaWrap.setAttribute('data-fv-size', String(+data.file_size || 0));
+        mediaWrap.setAttribute('role', 'button');
+        mediaWrap.setAttribute('tabindex', '0');
+        mediaWrap.innerHTML = _cpcFileInner(_hn, mt, data.file_size || 0, url);
       } else if (_hk === 'video') {
         mediaWrap.className = 'cpc-media cpc-media-video';
         mediaWrap.innerHTML = `<video src="${esc(url)}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>`;
@@ -3128,12 +3135,21 @@ function _cpcKind(mt, names) {
 function _cpcBaseName(x) {
   try { return decodeURIComponent(String(x || '').split(/[?#]/)[0].split('/').pop() || ''); } catch (_) { return ''; }
 }
-function _cpcFileInner(name, mime, size) {
+const _CPC_DL_SVG = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
+/** Fayl kartasi bosilsa SpaceMR ichida ochiladi (file-viewer.js), SVG tugma bosilsa yuklanadi */
+function _cpcFvAttrs(url, name, mime, size) {
+  if (!url) return '';
+  return ` data-fv-url="${esc(url)}" data-fv-name="${esc(name || 'file')}" data-fv-mime="${esc(mime || '')}" data-fv-size="${+size || 0}" role="button" tabindex="0"`;
+}
+function _cpcFileInner(name, mime, size, url) {
   const nm = name || 'Fayl';
   let icon = '';
   try { icon = getChatFileIcon(nm, mime || ''); } catch (_) {}
   const sz = size ? fmtSz(size) : '';
-  return `<div class="cpc-file-icon">${icon}</div><div class="cpc-file-info"><div class="cpc-file-name">${esc(nm)}</div>${sz ? `<div class="cpc-file-size">${esc(sz)}</div>` : ''}</div>`;
+  const ext = (nm.includes('.') ? nm.split('.').pop() : '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+  const sub = [ext, sz].filter(Boolean).join(' \u00b7 ');
+  const dl = url ? `<button type="button" class="fv-dlbtn" aria-label="Yuklab olish" title="Yuklab olish">${_CPC_DL_SVG}</button>` : '';
+  return `<div class="cpc-file-icon">${icon}</div><div class="cpc-file-info"><div class="cpc-file-name">${esc(nm)}</div>${sub ? `<div class="cpc-file-size">${esc(sub)}</div>` : ''}</div>${dl}`;
 }
 function _cpcCleanAvatar(u) {
   u = String(u || '').trim();
@@ -3210,7 +3226,7 @@ export function renderChatPostCard(ps) {
         <audio src="${safeUrl}" controls preload="metadata" controlslist="nodownload"></audio>
       </div>`;
     } else if (isFile) {
-      mediaHtml = `<div class="cpc-file" data-cpc-media="1" data-cpc-file="1">${_cpcFileInner(_fname, mediaType, p.fileSize)}</div>`;
+      mediaHtml = `<div class="cpc-file" data-cpc-media="1" data-cpc-file="1"${_cpcFvAttrs(mediaUrl, _fname, mediaType, p.fileSize)}>${_cpcFileInner(_fname, mediaType, p.fileSize, mediaUrl)}</div>`;
     } else if (mediaUrl) {
       mediaHtml = `
       <div class="cpc-media" data-cpc-media="1">

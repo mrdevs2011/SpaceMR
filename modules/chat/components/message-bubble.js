@@ -482,8 +482,8 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
           <div class="cvm-track" role="slider" aria-label="Ijro joyi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i class="cvm-track-fill"></i></div>
           <span class="cvm-dur" data-sub="${fsz}">${fsz}</span>
         </div>
-        <a class="cfm-dl" href="${safeUrl}" download="${fname}" title="Yuklab olish">
-          <img src="./svg/extra/icon-2f7c262fe1e7.svg" alt="" class="icon" width="14" height="14">
+        <a class="cfm-dl" href="${safeUrl}" download="${fname}" title="Yuklab olish" aria-label="Yuklab olish">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>
         </a>
       </div>
       ${captionHtml}
@@ -491,14 +491,14 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
   } else {
     // Other files
     bubbleContent = `<div class="cfm-file-wrap">
-      <div class="chat-file-msg">
+      <div class="chat-file-msg" data-fv-url="${safeUrl}" data-fv-name="${fname}" data-fv-mime="${esc(m.mediaType || '')}" data-fv-size="${+m.fileSize || 0}">
         <div class="cfm-icon">${getChatFileIcon(m.fileName, m.mediaType)}</div>
         <div class="cfm-info">
           <a class="cfm-name cfm-name--link" href="${safeUrl}" title="Ochish">${fname}</a>
           ${fsz ? `<div class="cfm-size">${fsz}</div>` : ''}
         </div>
-        <a class="cfm-dl" href="${safeUrl}" download="${fname}" title="Yuklab olish">
-          <img src="./svg/extra/icon-2f7c262fe1e7.svg" alt="" class="icon" width="14" height="14">
+        <a class="cfm-dl" href="${safeUrl}" download="${fname}" title="Yuklab olish" aria-label="Yuklab olish">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>
         </a>
       </div>
       ${captionHtml}

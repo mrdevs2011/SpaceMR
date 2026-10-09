@@ -1,0 +1,79 @@
+/* file-viewer.css — fayl ko'rgich (modules/ui/file-viewer.js) + fayl kartalaridagi SVG yuklash tugmasi.
+   Header apps runner (.apr-bar) bilan bir xil uslubda. */
+
+/* ── Oyna ── */
+.fv { position: fixed; inset: 0; z-index: 1650; display: flex; flex-direction: column; background: #000; color: #e7e9ea; animation: fv-in .16s ease-out; }
+@keyframes fv-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fv { animation: none; } }
+.fv-bar { display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px; border-bottom: 1px solid #2f3336; background: #000; flex: none; }
+.fv-ico { flex: none; display: inline-flex; width: 34px; height: 34px; }
+.fv-ico svg { width: 34px; height: 34px; display: block; }
+.fv-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fv-title b { font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-title small { font-size: 11.5px; color: #71767b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-tools { display: inline-flex; align-items: center; gap: 2px; }
+.fv-ib { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; flex: none; -webkit-tap-highlight-color: transparent; }
+.fv-ib:hover { background: rgba(231, 233, 234, 0.1); }
+.fv-ib.on { background: rgba(29, 155, 240, 0.22); color: #1d9bf0; }
+.fv-ib:focus-visible { outline: 2px solid #1d9bf0; outline-offset: 1px; }
+.fv-body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #000; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.fv-load { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+/* ── Matn / kod ── */
+.fv-code { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; outline: none; background: #0d1117; }
+.fv-cut { padding: 8px 14px; font-size: 12px; color: #d29922; background: #1c1608; border-bottom: 1px solid #3a2d0b; position: sticky; left: 0; }
+.fv-cols { display: flex; align-items: flex-start; width: max-content; min-width: 100%; font: 400 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.fv-ln, .fv-pre { margin: 0; padding-top: 12px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font: inherit; tab-size: 2; }
+.fv-ln { position: sticky; left: 0; flex: none; padding-left: 10px; padding-right: 10px; min-width: 2.2em; text-align: right; color: #6e7681; background: #0d1117; border-right: 1px solid #21262d; user-select: none; -webkit-user-select: none; z-index: 1; }
+.fv-pre { flex: 1; padding-left: 14px; padding-right: 18px; color: #e6edf3; white-space: pre; -webkit-user-select: text; user-select: text; }
+.fv-pre code { font: inherit; }
+.fv-wrap .fv-cols { width: 100%; }
+.fv-wrap .fv-pre { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
+.fv-code .hl-c, .fv-code .hl-d, .fv-code .hl-p { color: #8b949e; }
+.fv-code .hl-t { color: #7ee787; }
+.fv-code .hl-a { color: #79c0ff; }
+.fv-code .hl-s { color: #a5d6ff; }
+.fv-code .hl-n { color: #ffa657; }
+.fv-code .hl-k { color: #ff7b72; }
+.fv-code .hl-f { color: #d2a8ff; }
+.fv-code .hl-sel { color: #7ee787; }
+
+/* ── CSV jadval ── */
+.fv-tablewrap { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; background: #0d1117; }
+.fv-table { border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 100%; }
+.fv-table th, .fv-table td { padding: 7px 12px; border-right: 1px solid #21262d; border-bottom: 1px solid #21262d; white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.fv-table thead th { position: sticky; top: 0; z-index: 2; background: #161b22; color: #e6edf3; font-weight: 700; }
+.fv-table .fv-rn { position: sticky; left: 0; z-index: 1; min-width: 38px; text-align: right; color: #6e7681; background: #161b22; font-variant-numeric: tabular-nums; }
+.fv-table thead .fv-rn { z-index: 3; }
+.fv-table tbody tr:nth-child(even) td:not(.fv-rn) { background: rgba(255, 255, 255, 0.025); }
+
+/* ── Rasm / video / audio / PDF ── */
+.fv-media { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden; }
+.fv-media img, .fv-media video { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.fv-audio { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; }
+.fv-audio b { font-size: 15px; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-audio audio { width: min(420px, 92%); }
+.fv-frame { flex: 1; width: 100%; border: 0; background: #fff; }
+
+/* ── Xabar oynasi (ochib bo'lmaydigan turlar) ── */
+.fv-msg { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; color: #71767b; font-size: 13.5px; }
+.fv-msg b { color: #e7e9ea; font-size: 15px; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-msg-ico svg { display: block; }
+.fv-big-dl { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 11px 22px; border: 0; border-radius: 999px; background: #e7e9ea; color: #0f1419; font: 700 14px/1 var(--font, system-ui); cursor: pointer; }
+.fv-big-dl:hover { background: #fff; }
+
+/* ── Fayl kartalari: bosilsa ochiladi, yuklash — faqat SVG ikonka ── */
+[data-fv-url] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+html[data-theme] .file-dl,
+html[data-theme] .fv-dlbtn {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(231, 233, 234, 0.1); color: #e7e9ea; font-size: 0; cursor: pointer;
+}
+html[data-theme] .file-dl:hover, html[data-theme] .fv-dlbtn:hover { background: rgba(231, 233, 234, 0.2); }
+html[data-theme] .file-dl svg, html[data-theme] .fv-dlbtn svg { display: block; width: 19px; height: 19px; }
+.file-card .file-info, .cpc-file .cpc-file-info { min-width: 0; flex: 1; }
+.file-card .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpc-file[data-fv-url] { cursor: pointer; }
+.cpc-file .fv-dlbtn { margin-left: auto; }
+.cm-row .cm-dl { cursor: pointer; }

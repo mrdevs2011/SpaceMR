@@ -23,7 +23,7 @@ const JS_KW = new Set(('const let var function return if else for while do switc
   'import export from default async await try catch finally throw typeof instanceof in of delete void yield static super ' +
   'null undefined true false').split(' '));
 const JS_RE = /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|("(?:\\[\s\S]|[^"\\\n])*"?|'(?:\\[\s\S]|[^'\\\n])*'?|`(?:\\[\s\S]|[^`\\])*`?)|(\b0x[\da-f]+\b|\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)|([A-Za-z_$][\w$]*)(?=\s*\()|([A-Za-z_$][\w$]*)/gi;
-const hlJs = src => scan(src, JS_RE, m =>
+export const hlJs = src => scan(src, JS_RE, m =>
   m[1] ? w('c', m[0]) : m[2] ? w('s', m[0]) : m[3] ? w('n', m[0]) :
   m[4] ? (JS_KW.has(m[4]) ? w('k', m[4]) : w('f', m[4])) :
   (JS_KW.has(m[5]) ? w('k', m[5]) : E(m[5])));
@@ -32,7 +32,7 @@ const hlJs = src => scan(src, JS_RE, m =>
 const CSS_CONT = /^@(media|supports|layer|container|(-webkit-)?keyframes|document)/i;
 const CSS_VAL_RE = /(#[0-9a-f]{3,8}\b)|(\b\d+(?:\.\d+)?(?:[a-z]+|%)?)|(!important)|([\w-]+)(?=\()/gi;
 const cssVal = t => scan(t, CSS_VAL_RE, m => m[1] || m[2] ? w('n', m[0]) : m[3] ? w('k', m[0]) : w('f', m[0]));
-function hlCss(src) {
+export function hlCss(src) {
   const stack = [];           // true = ichida qoidalar (@media...), false = deklaratsiyalar
   let prelude = '', inValue = false;
   const re = /(\/\*[\s\S]*?(?:\*\/|$))|("(?:\\[\s\S]|[^"\\\n])*"?|'(?:\\[\s\S]|[^'\\\n])*'?)|([{};])|([^{};"'\/]+|\/)/g;
