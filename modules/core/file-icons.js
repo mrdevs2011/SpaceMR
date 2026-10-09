@@ -3,12 +3,12 @@
 const TYPES = [
   { test: (e, m) => m.startsWith('audio') || ['mp3','wav','ogg','aac','flac','m4a','wma','opus','aiff','mid','midi'].includes(e), label: 'AUDIO', color: '#a855f7', icon: 'audio' },
   { test: (e, m) => e === 'pdf' || m === 'application/pdf', label: 'PDF', color: '#ef4444', icon: 'pdf' },
-  { test: (e, m) => ['doc','docx'].includes(e) || m.includes('msword') || m.includes('wordprocessingml'), label: 'DOC', color: '#3b82f6', icon: 'doc' },
-  { test: (e, m) => ['xls','xlsx','csv','ods'].includes(e) || m.includes('spreadsheet') || m.includes('excel') || m === 'text/csv', label: 'XLS', color: '#22c55e', icon: 'sheet' },
-  { test: (e) => ['ppt','pptx','odp'].includes(e), label: 'PPT', color: '#f97316', icon: 'slide' },
+  { test: (e, m) => ['doc','docx','dot','dotx','odt','rtf','pages'].includes(e) || m.includes('msword') || m.includes('wordprocessingml'), label: 'DOC', color: '#3b82f6', icon: 'doc' },
+  { test: (e, m) => ['xls','xlsx','xlsm','xlsb','csv','tsv','ods','numbers'].includes(e) || m.includes('spreadsheet') || m.includes('excel') || m === 'text/csv', label: 'XLS', color: '#22c55e', icon: 'sheet' },
+  { test: (e) => ['ppt','pptx','pps','ppsx','odp','key'].includes(e), label: 'PPT', color: '#f97316', icon: 'slide' },
   { test: (e, m) => ['zip','rar','7z','tar','gz','bz2','xz','lz','lzma'].includes(e), label: 'ZIP', color: '#eab308', icon: 'zip' },
   { test: (e, m) => m.startsWith('video/') || ['mp4','webm','mov','mkv','avi'].includes(e), label: 'VIDEO', color: '#06b6d4', icon: 'video' },
-  { test: (e, m) => m.startsWith('image/'), label: 'IMG', color: '#14b8a6', icon: 'image' },
+  { test: (e, m) => m.startsWith('image/') || ['jpg','jpeg','png','gif','webp','avif','heic','bmp','svg'].includes(e), label: 'IMG', color: '#14b8a6', icon: 'image' },
   { test: (e, m) => ['js','mjs','cjs'].includes(e) || m.includes('javascript'), label: 'JS', color: '#eab308', icon: 'code' },
   { test: (e) => ['jsx','tsx'].includes(e), label: 'JSX', color: '#38bdf8', icon: 'code' },
   { test: (e) => ['ts'].includes(e), label: 'TS', color: '#3b82f6', icon: 'code' },
@@ -16,7 +16,7 @@ const TYPES = [
   { test: (e, m) => e === 'json' || m === 'application/json', label: 'JSON', color: '#a3e635', icon: 'code' },
   { test: (e) => ['css','scss','sass','less'].includes(e), label: 'CSS', color: '#22d3ee', icon: 'code' },
   { test: (e, m) => ['html','htm'].includes(e) || m === 'text/html', label: 'HTML', color: '#f97316', icon: 'code' },
-  { test: (e) => ['md','mdx','markdown'].includes(e), label: 'MD', color: '#94a3b8', icon: 'doc' },
+  { test: (e) => ['md','mdx','markdown','epub','tex'].includes(e), label: 'MD', color: '#94a3b8', icon: 'doc' },
   { test: (e, m) => ['txt','log','ini','cfg','conf'].includes(e) || m === 'text/plain', label: 'TXT', color: '#94a3b8', icon: 'doc' },
   { test: (e) => ['apk','ipa','dmg','exe','msi'].includes(e), label: 'APP', color: '#a855f7', icon: 'app' },
 ];
@@ -37,7 +37,8 @@ function glyph(kind, c) {
 }
 
 function resolve(name = '', mime = '') {
-  const ext = (String(name).split('.').pop() || '').toLowerCase();
+  const _n = String(name || '');
+  const ext = _n.includes('.') ? (_n.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '') : '';
   const m = (mime || '').toLowerCase();
   for (const t of TYPES) {
     if (t.test(ext, m)) {

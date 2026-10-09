@@ -3064,7 +3064,7 @@ async function _hydrateChatPostCards(root) {
       continue;
     }
     try {
-      const { data } = await sb.from('posts').select('id, media_path, media_type, text').eq('id', postId).maybeSingle();
+      const { data } = await sb.from('posts').select('id, media_path, media_type, text, file_name, file_size').eq('id', postId).maybeSingle();
       if (!data) {
         chatState._postExistenceMap.set(postId, false);
         continue;
@@ -3078,11 +3078,11 @@ async function _hydrateChatPostCards(root) {
       mediaWrap.removeAttribute('data-need-hydrate');
       mediaWrap.classList.remove('cpc-media-loading');
       if (!url) { mediaWrap.innerHTML = ''; continue; }
-      const _hk = _cpcKind(mt, [data.media_path]);
+      const _hk = _cpcKind(mt, [data.file_name, data.media_path]);
       if (_hk === 'file') {
         mediaWrap.className = 'cpc-file';
         mediaWrap.setAttribute('data-cpc-file', '1');
-        mediaWrap.innerHTML = _cpcFileInner(_cpcBaseName(data.media_path), mt, 0);
+        mediaWrap.innerHTML = _cpcFileInner(data.file_name || _cpcBaseName(data.media_path), mt, data.file_size || 0);
       } else if (_hk === 'video') {
         mediaWrap.className = 'cpc-media cpc-media-video';
         mediaWrap.innerHTML = `<video src="${esc(url)}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>`;
@@ -3101,19 +3101,29 @@ async function _hydrateChatPostCards(root) {
 }
 
 /* ── Ulashilgan post: media turini aniqlash (matn/pdf/doc fayl rasm sifatida chizilmasin) ── */
-const _CPC_IMG_RE = /\.(jpe?g|png|gif|webp|avif|heic|bmp|svg)$/i;
+const _CPC_IMG = new Set(['jpg','jpeg','png','gif','webp','avif','heic','heif','bmp','svg','ico','tif','tiff']);
+const _CPC_VID = new Set(['mp4','webm','mov','mkv','avi','m4v','3gp']);
+const _CPC_AUD = new Set(['mp3','m4a','ogg','oga','wav','aac','flac','opus','weba']);
+const _CPC_GENERIC_MT = /^(file|document|doc|binary|attachment|application\/octet-stream|application\/x-download|application\/force-download)$/;
+function _cpcExt(names) {
+  for (const n of (names || [])) {
+    const m = String(n || '').split(/[?#]/)[0].match(/\.([A-Za-z0-9]{1,8})$/);
+    if (m) return m[1].toLowerCase();
+  }
+  return '';
+}
+/** 'image' | 'video' | 'audio' | 'file' — barcha fayl turlari (docx, pdf, xlsx, pptx, zip, txt, ...) fayl kartasiga tushadi */
 function _cpcKind(mt, names) {
-  mt = String(mt || '').toLowerCase();
-  if (mt.includes('video')) return 'video';
-  if (mt.includes('audio') || mt === 'voice') return 'audio';
-  if (mt.startsWith('image') || mt === 'photo') return 'image';
-  if (mt) return 'file'; // text/plain, application/pdf, 'file' va h.k.
-  const n = (names || []).map(x => String(x || '').split(/[?#]/)[0]).find(x => /\.[A-Za-z0-9]{1,6}$/.test(x)) || '';
-  if (!n) return 'image'; // eski postlar: tur yo'q — rasm deb olamiz
-  if (_CPC_IMG_RE.test(n)) return 'image';
-  if (/\.(mp4|webm|mov|mkv)$/i.test(n)) return 'video';
-  if (/\.(mp3|m4a|ogg|wav|aac)$/i.test(n)) return 'audio';
-  return 'file';
+  mt = String(mt || '').toLowerCase().trim();
+  const ext = _cpcExt(names);
+  const extKind = !ext ? '' : _CPC_IMG.has(ext) ? 'image' : _CPC_VID.has(ext) ? 'video' : _CPC_AUD.has(ext) ? 'audio' : 'file';
+  // media_type noto'g'ri qo'yilgan bo'lsa ham (masalan image + .docx) kengaytma hal qiladi
+  if (mt.startsWith('image') || mt === 'photo') return extKind === 'file' ? 'file' : 'image';
+  if (mt.includes('video')) return extKind === 'file' ? 'file' : 'video';
+  if (mt.includes('audio') || mt === 'voice') return extKind === 'file' ? 'file' : 'audio';
+  if (mt && !_CPC_GENERIC_MT.test(mt)) return 'file'; // text/plain, application/pdf, ...wordprocessingml..., zip ...
+  if (!ext) return mt ? 'file' : 'image'; // tur ham, kengaytma ham yo'q: eski postlar — rasm
+  return extKind;
 }
 function _cpcBaseName(x) {
   try { return decodeURIComponent(String(x || '').split(/[?#]/)[0].split('/').pop() || ''); } catch (_) { return ''; }
