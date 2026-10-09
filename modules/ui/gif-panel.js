@@ -74,26 +74,42 @@ export function createGifPanel(root, onPick) {
   }
   // Bo'sh qidiruv: kundalik mashhur reaction/emoji GIF lar
   const POPULAR_Q = 'reaction';
+  let failUntil = 0; // 429/tarmoq xatosidan keyin qayta urinish vaqti (ms)
   async function load() {
     if (busy || !next) return;
+    if (Date.now() < failUntil) return; // rate-limit / xato cooldown
     busy = true; const my = seq; page = next;
-    if (page === 1) say(''); // loading yozuvini ko'rsatmaymiz — tezroq tuyuladi
+    if (page === 1) say('');
     try {
       const { data: { session } } = await sb.auth.getSession();
       const qq = q || (page === 1 ? POPULAR_Q : '');
       const r = await fetch(`/api/gifs?page=${page}&q=${encodeURIComponent(qq)}`, { headers: { Authorization: 'Bearer ' + (session?.access_token || '') } });
       if (my !== seq) return;
-      if (!r.ok) throw new Error(r.status);
+      if (!r.ok) {
+        // 429/5xx: to'xtat — aks holda scrollHeight kichik bo'lib cheksiz so'rov ketadi
+        next = 0;
+        failUntil = Date.now() + (r.status === 429 ? 60000 : 15000);
+        if (page === 1) say(r.status === 429 ? "Ko'p so'rov — keyinroq" : "GIF yuklanmadi");
+        return;
+      }
       const j = await r.json();
       say('');
       add(j.items || []);
       next = j.next || 0;
       if (!items.size) say('Topilmadi');
-    } catch { if (my === seq) say(page === 1 ? 'GIF yuklanmadi' : ''); next = page === 1 ? 1 : next; }
-    finally { if (my === seq) busy = false; }
-    if (my === seq && next && body.scrollHeight <= body.clientHeight + 40) load();
+    } catch {
+      if (my === seq) {
+        next = 0; // qayta urinish loop YO'Q
+        failUntil = Date.now() + 15000;
+        if (page === 1) say('GIF yuklanmadi');
+      }
+    } finally {
+      if (my === seq) busy = false;
+    }
+    // Faqat muvaffaqiyatli yuklashdan keyin bo'sh joyni to'ldirish
+    if (my === seq && next && items.size && body.scrollHeight <= body.clientHeight + 40) load();
   }
-  function search() { seq++; busy = false; reset(); load(); }
+  function search() { seq++; busy = false; failUntil = 0; reset(); load(); }
   function applyQuery(raw, { instant = false } = {}) {
     const v = String(raw ?? '').trim();
     if (v === q && items.size && loaded) return;
@@ -129,10 +145,15 @@ export function createGifPanel(root, onPick) {
       onPick(picked); // darhol yuborish
     }
   });
-  // Oldindan yuklash — panel ochilganda kutmaslik
-  try { load(); loaded = true; } catch (_) {}
+  // Avto-yuklash YO'Q: login/boot da 429 to'foni bo'lmasin. Faqat open() da.
+  loaded = false;
   return {
-    open() { paintRecent(); if (!loaded) { loaded = true; load(); } else if (!items.size) load(); },
+    open() {
+      paintRecent();
+      if (!loaded) loaded = true;
+      // 429 dan keyin next=0 bo'lishi mumkin — cooldown tugagach qayta urinish
+      if (!items.size && Date.now() >= failUntil) { next = next || 1; load(); }
+    },
     focusSearch() { try { inp.focus({ preventScroll: true }); } catch { inp.focus(); } },
     setQuery(raw, opts) {
       const v = String(raw ?? '');
