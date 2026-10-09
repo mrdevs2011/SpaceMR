@@ -58,7 +58,7 @@ function rowAtPoint(target, y) {
   return bd <= 3 ? best : null;
 }
 // Mobilda bitta bosish menyu ochadi — lekin bu elementlar o'z ishini qiladi (play, havola, rasm, avatar)
-const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url]';
+const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote';
 const coarse = () => window.matchMedia('(pointer: coarse)').matches;
 const pad = n => String(n).padStart(2, '0');
 
@@ -1009,14 +1009,20 @@ export function initMsgMenu(opts) {
   ['contextmenu', 'mousedown', 'touchstart', 'click'].forEach(ev =>
     box.addEventListener(ev, e => { menuTarget = e.target; }, { capture: true, passive: true }));
   // Reply quote bosilsa — asl xabarga SEKIN smooth scroll + och ko'k "men shu yerdaman" flash
-  box.addEventListener('click', e => {
+  box.addEventListener('click', async e => {
     const q = e.target.closest?.('.msg-reply-quote');
     if (!q) return;
     const id = q.getAttribute('data-reply-to');
     if (!id) return;
     e.preventDefault();
     e.stopPropagation();
-    const el = box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(id)}"]`);
+    const find = () => box.querySelector(`.chat-msg[data-msg-id="${CSS.escape(id)}"]`);
+    let el = find();
+    if (!el) {
+      // Asl xabar hali yuklanmagan (eski) — atrofini yuklab ochamiz
+      try { const c = await import('./chat.js'); await c.revealDmMessage?.(id); } catch (_) {}
+      el = find();
+    }
     if (!el) return;
     smoothScrollIntoView(el, { block: 'center' }).then(() => {
       el.classList.remove('msg-reply-hl');
