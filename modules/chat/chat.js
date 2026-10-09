@@ -2516,6 +2516,7 @@ export function paintMessages(msgs, grp = null) {
     msgMenuAfterPaint();
     _observeMessagesForRead();
   try { _hydrateChatPostCards($('chatThreadMessages')); } catch (_) {}
+  try { _hydrateChatPostAvatars($('chatThreadMessages')); } catch (_) {}
     return;
   }
 
@@ -3039,6 +3040,8 @@ function requireMediaUrl() {
 }
 
 /** Ulashilgan post kartalaridagi qora/bo'sh mediarni serverdan to'ldirish */
+if (typeof window !== 'undefined') window._cpcAviFix = () => { try { _hydrateChatPostAvatars(); } catch (_) {} };
+
 async function _hydrateChatPostCards(root) {
   const box = root || $('chatThreadMessages');
   if (!box) return;
@@ -3048,6 +3051,7 @@ async function _hydrateChatPostCards(root) {
     const mediaWrap = card.querySelector('[data-cpc-media]');
     const postId = card.dataset.postId;
     if (!postId) continue;
+    if (mediaWrap?.hasAttribute('data-cpc-file')) { card.dataset.cpcHydrated = '1'; continue; }
     // Rasm allaqachon yuklangan va OK — o'tkazib yuboramiz
     const img = mediaWrap?.querySelector('img');
     if (img && img.complete && img.naturalWidth > 0 && !mediaWrap?.hasAttribute('data-need-hydrate')) {
@@ -3074,10 +3078,15 @@ async function _hydrateChatPostCards(root) {
       mediaWrap.removeAttribute('data-need-hydrate');
       mediaWrap.classList.remove('cpc-media-loading');
       if (!url) { mediaWrap.innerHTML = ''; continue; }
-      if (mt.includes('video')) {
+      const _hk = _cpcKind(mt, [data.media_path]);
+      if (_hk === 'file') {
+        mediaWrap.className = 'cpc-file';
+        mediaWrap.setAttribute('data-cpc-file', '1');
+        mediaWrap.innerHTML = _cpcFileInner(_cpcBaseName(data.media_path), mt, 0);
+      } else if (_hk === 'video') {
         mediaWrap.className = 'cpc-media cpc-media-video';
         mediaWrap.innerHTML = `<video src="${esc(url)}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>`;
-      } else if (mt.includes('audio') || mt === 'voice') {
+      } else if (_hk === 'audio') {
         mediaWrap.className = 'cpc-media cpc-media-audio';
         mediaWrap.innerHTML = `<audio src="${esc(url)}" controls preload="metadata" controlslist="nodownload"></audio>`;
       } else {
@@ -3091,12 +3100,69 @@ async function _hydrateChatPostCards(root) {
   }
 }
 
+/* ── Ulashilgan post: media turini aniqlash (matn/pdf/doc fayl rasm sifatida chizilmasin) ── */
+const _CPC_IMG_RE = /\.(jpe?g|png|gif|webp|avif|heic|bmp|svg)$/i;
+function _cpcKind(mt, names) {
+  mt = String(mt || '').toLowerCase();
+  if (mt.includes('video')) return 'video';
+  if (mt.includes('audio') || mt === 'voice') return 'audio';
+  if (mt.startsWith('image') || mt === 'photo') return 'image';
+  if (mt) return 'file'; // text/plain, application/pdf, 'file' va h.k.
+  const n = (names || []).map(x => String(x || '').split(/[?#]/)[0]).find(x => /\.[A-Za-z0-9]{1,6}$/.test(x)) || '';
+  if (!n) return 'image'; // eski postlar: tur yo'q — rasm deb olamiz
+  if (_CPC_IMG_RE.test(n)) return 'image';
+  if (/\.(mp4|webm|mov|mkv)$/i.test(n)) return 'video';
+  if (/\.(mp3|m4a|ogg|wav|aac)$/i.test(n)) return 'audio';
+  return 'file';
+}
+function _cpcBaseName(x) {
+  try { return decodeURIComponent(String(x || '').split(/[?#]/)[0].split('/').pop() || ''); } catch (_) { return ''; }
+}
+function _cpcFileInner(name, mime, size) {
+  const nm = name || 'Fayl';
+  let icon = '';
+  try { icon = getChatFileIcon(nm, mime || ''); } catch (_) {}
+  const sz = size ? fmtSz(size) : '';
+  return `<div class="cpc-file-icon">${icon}</div><div class="cpc-file-info"><div class="cpc-file-name">${esc(nm)}</div>${sz ? `<div class="cpc-file-size">${esc(sz)}</div>` : ''}</div>`;
+}
+function _cpcCleanAvatar(u) {
+  u = String(u || '').trim();
+  if (!u || /\/(undefined|null)$/i.test(u) || u === 'undefined' || u === 'null') return '';
+  return u;
+}
+
+/** Ulashilgan post kartasida avatar yo'q/buzuq bo'lsa — profiles dan to'ldiramiz */
+async function _hydrateChatPostAvatars(root) {
+  const box = root || $('chatThreadMessages');
+  if (!box) return;
+  const avis = [...box.querySelectorAll('.chat-post-card .cpc-avi[data-need-avi]')];
+  if (!avis.length) return;
+  const uids = [...new Set(avis.map(a => a.closest('.chat-post-card')?.dataset.userId).filter(Boolean))];
+  if (!uids.length) return;
+  const map = {};
+  try {
+    const { data } = await sb.from('profiles').select('id, avatar').in('id', uids);
+    (data || []).forEach(r => { if (r.avatar) map[r.id] = r.avatar; });
+  } catch (_) {}
+  avis.forEach(a => {
+    const uid = a.closest('.chat-post-card')?.dataset.userId;
+    const url = _cpcCleanAvatar(map[uid]);
+    if (!url || a.querySelector('img')) { a.removeAttribute('data-need-avi'); return; }
+    const im = document.createElement('img');
+    im.alt = '';
+    im.onerror = () => im.remove();
+    im.src = url;
+    a.appendChild(im);
+    a.removeAttribute('data-need-avi');
+  });
+}
+
 export function renderChatPostCard(ps) {
   const p = ps.post || {};
   const comment = (ps.comment || '').trim();
   const authorName = esc(p.authorName || 'Foydalanuvchi');
   const authorUser = p.authorUsername ? `@${esc(p.authorUsername)}` : '';
-  const authorAvi = p.authorAvatar ? esc(p.authorAvatar) : '';
+  const authorAvi = _cpcCleanAvatar(p.authorAvatar);
   const postText = (p.text || '').trim();
   let mediaUrl = (p.mediaUrl || '').trim();
   const mediaPath = (p.mediaPath || '').trim();
@@ -3118,8 +3184,11 @@ export function renderChatPostCard(ps) {
   let mediaHtml = '';
   if (!isPostDeleted && (mediaUrl || mediaPath || postId)) {
     const safeUrl = esc(mediaUrl);
-    const isVid = mediaType.includes('video') || /\.(mp4|webm|mov)(\?|$)/i.test(mediaUrl);
-    const isAud = mediaType.includes('audio') || mediaType === 'voice' || /\.(mp3|m4a|ogg|wav|webm)(\?|$)/i.test(mediaUrl) && !isVid;
+    const _fname = (p.fileName || '').trim() || _cpcBaseName(mediaPath) || _cpcBaseName(mediaUrl);
+    const _kind = _cpcKind(mediaType, [p.fileName, mediaPath, mediaUrl]);
+    const isVid = _kind === 'video';
+    const isAud = _kind === 'audio';
+    const isFile = _kind === 'file';
     if (isVid && mediaUrl) {
       mediaHtml = `
       <div class="cpc-media cpc-media-video" data-cpc-media="1">
@@ -3130,6 +3199,8 @@ export function renderChatPostCard(ps) {
       <div class="cpc-media cpc-media-audio" data-cpc-media="1">
         <audio src="${safeUrl}" controls preload="metadata" controlslist="nodownload"></audio>
       </div>`;
+    } else if (isFile) {
+      mediaHtml = `<div class="cpc-file" data-cpc-media="1" data-cpc-file="1">${_cpcFileInner(_fname, mediaType, p.fileSize)}</div>`;
     } else if (mediaUrl) {
       mediaHtml = `
       <div class="cpc-media" data-cpc-media="1">
@@ -3181,8 +3252,9 @@ export function renderChatPostCard(ps) {
       </div>
       <div class="cpc-content${isPostDeleted ? ' is-deleted' : ''}" onclick="${contentOnClick}">
         <div class="cpc-author-row">
-          <div class="cpc-avi${isUserDeleted ? ' is-deleted' : ''}">
-            ${authorAvi ? `<img src="${esc(authorAvi)}" alt="${authorName}" onerror="this.style.display='none'">` : `<div class="cpc-avi-placeholder">${authorName.charAt(0)}</div>`}
+          <div class="cpc-avi${isUserDeleted ? ' is-deleted' : ''}"${authorAvi ? '' : ' data-need-avi="1"'}>
+            <div class="cpc-avi-placeholder">${esc((p.authorName || 'F').trim().charAt(0).toUpperCase() || 'F')}</div>
+            ${authorAvi ? `<img src="${esc(authorAvi)}" alt="" onerror="var a=this.parentNode;this.remove();a&&a.setAttribute('data-need-avi','1');window._cpcAviFix&&window._cpcAviFix()">` : ''}
           </div>
           <div class="cpc-author-meta">
             <span class="cpc-author-name${isUserDeleted ? ' is-deleted' : ''}">${authorName}${isUserDeleted ? ' <span class="cpc-del-tag">(O\'chirilgan hisob)</span>' : ''}</span>

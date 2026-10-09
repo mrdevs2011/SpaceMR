@@ -381,7 +381,12 @@ export async function sharePostToChat(postId) {
 
   const authorName = postEl?.querySelector('.post-name')?.textContent || '';
   const authorUsername = postEl?.querySelector('.post-user')?.textContent?.replace(/^@/, '') || '';
-  const authorAvatar = postEl?.querySelector('.post-head .avi img')?.src || '';
+  const _rawAvi = postEl?.querySelector('.post-head .avi img')?.getAttribute('src') || '';
+  const _uidForAvi = post?.userId || postEl?.querySelector('.user-avi-btn')?.dataset.uid || '';
+  const _aviOk = u => u && !/\/(undefined|null)$/i.test(u) && u !== 'undefined' && u !== 'null';
+  const authorAvatar = _aviOk(_rawAvi)
+    ? (postEl?.querySelector('.post-head .avi img')?.src || _rawAvi)
+    : (state._userCache?.[_uidForAvi]?.avatar || '');
   const postText = postEl?.querySelector('.post-caption')?.textContent || post?.text || '';
   const postMediaEl = postEl?.querySelector('.post-media');
   const mediaImg = postMediaEl?.querySelector('img')?.src || '';
@@ -406,6 +411,8 @@ export async function sharePostToChat(postId) {
     mediaUrl: mediaUrl,
     mediaPath: mediaPath,
     mediaType: mediaType,
+    fileName: post?.fileName || '',
+    fileSize: post?.fileSize || 0,
     createdAt: post?.createdAt || Date.now()
   };
 
