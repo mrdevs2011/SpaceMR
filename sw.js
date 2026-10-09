@@ -117,7 +117,7 @@ self.addEventListener('notificationclick', (event) => {
 
 /* ── Cache versiyasi ── */
 // Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
-const CACHE_VERSION  = 't-1791450000001'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1791560000001'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 const EMOJI_CACHE    = 'spacemr-emoji-v1';
@@ -321,12 +321,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Barcha JS/CSS — BIR XIL strategiya: cache-first + SWR
-  // (shell va modules aralashmasin — SW versiya o'zgaganda cache tozalanadi)
-  const isCode = req.destination === 'script' || req.destination === 'style'
-    || path.endsWith('.js') || path.endsWith('.css') || path.endsWith('.mjs');
-  if (isCode) {
+  // CSS — cache-first + SWR
+  const isCss = req.destination === 'style' || path.endsWith('.css');
+  if (isCss) {
     event.respondWith(_cacheFirstSWR(req, STATIC_CACHE));
+    return;
+  }
+
+  // JS/modullar — network-first (deploydan keyin eski kesh ushlab qolmasin)
+  const isJs = req.destination === 'script'
+    || path.endsWith('.js') || path.endsWith('.mjs');
+  if (isJs) {
+    event.respondWith(_networkFirst(req, STATIC_CACHE));
     return;
   }
 

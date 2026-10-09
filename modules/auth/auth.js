@@ -560,7 +560,7 @@ async function _fetchProfile(uid) {
 }
 
 function _showOnce(reason, until = null) {
-  try { (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('gate'); } catch (_) {}
+  try { window.__spacemrBootOk = true; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('gate'); } catch (_) {}
 
   const key = reason + ':' + (until || '');
   if (_shownKey === key) return;
@@ -954,7 +954,7 @@ async function _handleSession(session) {
         if (p !== '/login') history.replaceState({ i: 0, prev: null }, '', '/login');
       }
     } catch (_) {}
-    try { (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('no-session'); } catch (_) {}
+    try { window.__spacemrBootOk = true; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('no-session'); } catch (_) {}
     return;
   }
 
@@ -1131,7 +1131,7 @@ async function _enterApp(user) {
     } catch (e) {
       console.warn('[Auth] preload:', e?.message || e);
     }
-    try { (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-ready'); } catch (_) {}
+    try { window.__spacemrBootOk = true; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-ready'); } catch (_) {}
 
     // "Oxirgi faollik" — splash yopilgandan KEYIN fonda (P4). Boot yo'lini bloklamaydi.
     try {

@@ -93,17 +93,41 @@ html{color-scheme:dark;}
   })();
 </script>
 <script>
-  /* Qora ekran qo'riqchisi: ilova (login yoki asosiy ekran) chiqmay qolsa — kesh tozalab bir marta avtomatik qayta yuklaydi,
-     baribir chiqmasa "Qayta yuklash" paneli ko'rsatiladi. Modullarga bog'liq emas (modul yuklanmasa ham ishlaydi). */
+  /* Qora ekran qo'riqchisi: faqat HAQIQIY boot muvaffaqiyatsizligida.
+     Muhim: ikkinchi darajali skript xatosi yoki 3.5s da panel OCHILMAYDI.
+     Ilova/login ko'rinsa yoki splash yopilsa — tirik deb hisoblanadi. */
   (function(){
     var KEY = 'spacemr_recover_ts', t0 = Date.now(), sooner = false, failed = false, lastErr = '';
+    var CRITICAL = /\/(modules\/script\.js|modules\/core\/(config|env|utils)\.js|modules\/auth\/auth\.js|app\.js)(\?|$)/i;
+
+    function bootOk() {
+      try {
+        if (window.__spacemrBootOk) return true;
+        var app = document.getElementById('app');
+        var aw = document.getElementById('authWrap');
+        if (app && app.classList.contains('show')) return true;
+        if (aw && (aw.classList.contains('show') || (aw.style && aw.style.display !== 'none' && aw.offsetParent !== null))) return true;
+        var sp = document.getElementById('splash');
+        if (sp && (sp.style.display === 'none' || sp.classList.contains('out'))) {
+          // splash yopilgan — login yoki app chiqishini biroz kutamiz, lekin failed deb emas
+          if ((Date.now() - t0) > 4000) return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
     function alive() {
       try {
         var d = document, de = d.documentElement;
         if (de.hasAttribute('data-nf') || d.getElementById('spacemrRecover')) return true;
+        if (bootOk()) return true;
         var sp = d.getElementById('splash');
         var spVis = !!sp && sp.style.display !== 'none' && !sp.classList.contains('out');
-        if (spVis) return failed ? false : (Date.now() - t0) < 20000;
+        // Splash hali ko'rinadi: normal kutish 20s; faqat CRITICAL fail da 12s dan keyin o'tkaziladi
+        if (spVis) {
+          if (failed && (Date.now() - t0) > 12000) return false;
+          return (Date.now() - t0) < 20000;
+        }
         var pts = [[.5,.5],[.5,.25],[.5,.75],[.25,.5]];
         for (var i = 0; i < pts.length; i++) {
           var el = d.elementFromPoint(innerWidth * pts[i][0], innerHeight * pts[i][1]);
@@ -112,32 +136,43 @@ html{color-scheme:dark;}
         return false;
       } catch (e) { return true; }
     }
+
     function wipe(full, then) {
       var done = false;
       function go() { if (done) return; done = true; try { then(); } catch (e) { location.reload(); } }
-      setTimeout(go, 4000);
+      setTimeout(go, 2500);
       try {
         var jobs = [];
         if (full && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-          jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+          jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+            return Promise.all(rs.map(function (r) { return r.unregister(); }));
+          }));
         }
         if (window.caches && caches.keys) {
           jobs.push(caches.keys().then(function (ks) {
-            return Promise.all(ks.filter(function (k) { return full || /^spacemr-(static|runtime)-/.test(k); }).map(function (k) { return caches.delete(k); }));
+            return Promise.all(ks.filter(function (k) {
+              return full || /^spacemr-(static|runtime)-/.test(k);
+            }).map(function (k) { return caches.delete(k); }));
           }));
         }
         Promise.all(jobs).then(go, go);
       } catch (e) { go(); }
     }
+
     function panel() {
       if (!document.body || document.getElementById('spacemrRecover')) return;
+      if (bootOk()) return;
       var w = document.createElement('div');
       w.id = 'spacemrRecover';
       w.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#000;color:#e7e9ea;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;font:15px/1.4 system-ui,sans-serif';
       var h = document.createElement('div'); h.textContent = 'Ilova ochilmadi'; h.style.cssText = 'font-size:20px;font-weight:700';
       var p = document.createElement('div'); p.textContent = "Eski kesh yoki tarmoq xatosi bo'lishi mumkin."; p.style.opacity = '.7';
       var ed = null;
-      if (lastErr) { ed = document.createElement('div'); ed.textContent = String(lastErr).slice(0, 240); ed.style.cssText = 'max-width:92%;font:11.5px/1.45 ui-monospace,Menlo,monospace;color:#f4212e;word-break:break-word;opacity:.9'; }
+      if (lastErr) {
+        ed = document.createElement('div');
+        ed.textContent = String(lastErr).slice(0, 240);
+        ed.style.cssText = 'max-width:92%;font:11.5px/1.45 ui-monospace,Menlo,monospace;color:#f4212e;word-break:break-word;opacity:.9';
+      }
       function btn(label, primary, fn) {
         var b = document.createElement('button'); b.type = 'button'; b.textContent = label;
         b.style.cssText = 'height:44px;padding:0 26px;border-radius:999px;border:' + (primary ? '0' : '1px solid #444') + ';background:' + (primary ? '#e7e9ea' : 'transparent') + ';color:' + (primary ? '#000' : '#e7e9ea') + ';font:600 15px system-ui,sans-serif;cursor:pointer';
@@ -145,16 +180,20 @@ html{color-scheme:dark;}
       }
       w.appendChild(h); w.appendChild(p); if (ed) w.appendChild(ed);
       w.appendChild(btn('Qayta yuklash', true, function () { wipe(true, function () { location.replace('/'); }); }));
-      w.appendChild(btn('Tozalab, qayta kirish', false, function () {
-        try { Object.keys(localStorage).forEach(function (k) { if (/supabase|spacemr-auth|mrspace-auth|sb-.*-auth/i.test(k)) localStorage.removeItem(k); }); } catch (e) {}
+      w.appendChild(btn("Tozalab, qayta kirish", false, function () {
+        try {
+          Object.keys(localStorage).forEach(function (k) {
+            if (/supabase|spacemr-auth|mrspace-auth|sb-.*-auth/i.test(k)) localStorage.removeItem(k);
+          });
+        } catch (e) {}
         wipe(true, function () { location.replace('/login'); });
       }));
-      // ROADMAP 10: muammo haqida guruhga yozish
       w.appendChild(btn('Guruhga yozish', false, function () {
         try { location.replace('/chats/g/spacemr'); } catch (e) { location.href = '/chats/g/spacemr'; }
       }));
       document.body.appendChild(w);
     }
+
     function check() {
       if (alive()) return;
       var last = 0; try { last = +sessionStorage.getItem(KEY) || 0; } catch (e) {}
@@ -163,13 +202,49 @@ html{color-scheme:dark;}
         wipe(false, function () { location.replace('/'); });
       } else panel();
     }
+
+    function markCritical(src, msg) {
+      failed = true;
+      lastErr = src ? ('Skript: ' + src) : (msg || '');
+      if (!sooner) {
+        sooner = true;
+        // 3.5s emas — 10s: script.js bo'lishi uchun vaqt
+        setTimeout(check, 10000);
+      }
+    }
+
     window.addEventListener('error', function (e) {
-      var m = (e && e.message) || '';
-      var res = e && e.target && e.target.tagName === 'SCRIPT';
-      if (res || /module|import|export/i.test(m)) { failed = true; lastErr = res ? ('Skript yuklanmadi: ' + ((e.target && (e.target.src || '').split('/').slice(-2).join('/')) || '')) : m; }
-      if (!sooner && (res || /module|import|export/i.test(m))) { sooner = true; setTimeout(check, 3500); }
+      try {
+        var t = e && e.target;
+        var res = t && t.tagName === 'SCRIPT';
+        var src = res ? (t.src || '') : '';
+        var m = (e && e.message) || '';
+        // Faqat o'z domenimizdagi MUHIM skriptlar
+        if (res && src && CRITICAL.test(src)) {
+          markCritical(src.split('/').slice(-2).join('/'), m);
+          return;
+        }
+        // Inline/module parse: faqat critical path tilga olinganda
+        if (!res && /Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(m)) {
+          if (/modules\/(script|core\/(config|env)|auth\/auth)/i.test(m)) markCritical('', m);
+          return;
+        }
+        // Boshqa module|import matnlari — e'tiborsiz (extension, ikkinchi darajali)
+      } catch (_) {}
     }, true);
-    setTimeout(check, 7000);
+
+    window.addEventListener('unhandledrejection', function (e) {
+      try {
+        var r = e && e.reason;
+        var m = (r && (r.message || String(r))) || '';
+        if (/Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(m)
+            && /modules\/(script|core\/(config|env)|auth\/auth)/i.test(m)) {
+          markCritical('', m);
+        }
+      } catch (_) {}
+    });
+
+    setTimeout(check, 10000);
     setTimeout(check, 22000);
   })();
 </script>

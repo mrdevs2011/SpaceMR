@@ -27,6 +27,7 @@ let _splashDone = false;
 export function hideSplash(reason) {
   if (_splashDone) return;
   _splashDone = true;
+  try { window.__spacemrBootOk = true; } catch (_) {}
   try { mark('splash-hide' + (reason ? ':' + reason : '')); } catch (_) {}
   const elapsed = Date.now() - _splashT0;
   const wait = Math.max(0, SPLASH_MIN_MS - elapsed);
