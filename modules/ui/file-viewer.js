@@ -20,6 +20,9 @@ const CHEV = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke
 const DL = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
 const COPY = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg>';
 const WRAP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h13a3 3 0 0 1 0 6h-4m0 0 2-2m-2 2 2 2M4 18h5"/></svg>';
+const SUN = '<svg class="fv-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+const MOON = '<svg class="fv-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>';
+const THEME_ICO = SUN + MOON;
 
 /* ── Tur ────────────────────────────────────────────────────────────── */
 const extOf = s => {
@@ -265,29 +268,54 @@ function zipTreeHtml(files) {
 }
 
 /* ── OOXML helpers ──────────────────────────────────────────────────── */
-const xmlText = (xml, tag) => {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'gi');
-  // wrong - need simpler
-  return null;
-};
-function stripXml(s) {
-  const a = '&' + 'amp;', l = '&' + 'lt;', g = '&' + 'gt;', q = '&' + 'quot;';
+function decodeEntities(s) {
   return String(s || '')
-    .replace(/<w:tab\/>/gi, '\t')
-    .replace(/<w:br[^/]*\/>/gi, '\n')
-    .replace(/<\/w:p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replaceAll(a, '&')
-    .replaceAll(l, '<')
-    .replaceAll(g, '>')
-    .replaceAll(q, '"')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n));
+}
+
+/** Matndan har qanday qolgan XML/HTML tegni olib tashlaydi (xavfsizlik to'ri). */
+function stripTags(s) {
+  return String(s || '').replace(/<[^>]*>/g, '');
+}
+
+function stripXml(s) {
+  return decodeEntities(
+    String(s || '')
+      .replace(/<w:tab\/>/gi, '\t')
+      .replace(/<w:br[^/]*\/>/gi, '\n')
+      .replace(/<\/w:p>/gi, '\n')
+      .replace(/<text:line-break[^/]*\/>/gi, '\n')
+      .replace(/<text:tab[^/]*\/>/gi, '\t')
+      .replace(/<[^>]+>/g, '')
+  ).replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/** Paragraf XML ichidan tartib bilan matn + tab + break yig'adi. Hech qachon teg qoldirmaydi. */
+function extractRuns(pxml, textTag) {
+  // textTag: 'w:t' (docx) yoki 'a:t' (pptx)
+  const re = new RegExp(
+    '<' + textTag + '\\b[^>]*>([\\s\\S]*?)</' + textTag + '>|<w:tab\\s*/>|<w:br\\b[^/]*/>|<a:br\\s*/>',
+    'gi'
+  );
+  let out = '', m;
+  while ((m = re.exec(pxml))) {
+    if (m[0].startsWith('<w:tab') || m[0].startsWith('<a:br') === false && /tab/i.test(m[0])) out += '\t';
+    else if (/^<(?:w:br|a:br)/i.test(m[0])) out += '\n';
+    else out += decodeEntities(m[1] || '');
+  }
+  // Agar hech narsa topilmasa — butun blokni strip qilib fallback
+  if (!out && pxml) out = stripXml(pxml);
+  return stripTags(out);
 }
 
 async function renderDocx(zip, body, tools, blobUrls) {
-  const isOdt = zip.files.some(f => f.name === 'content.xml');
+  const isOdt = zip.files.some(f => f.name === 'content.xml') && !zip.files.some(f => f.name.startsWith('word/'));
   let html = '';
   let plain = '';
 
@@ -295,28 +323,42 @@ async function renderDocx(zip, body, tools, blobUrls) {
     const u8 = await zipRead(zip, 'content.xml');
     if (!u8) throw new Error('odt');
     const xml = new TextDecoder('utf-8').decode(u8);
-    plain = stripXml(xml.replace(/<text:p[^>]*>/gi, '\n').replace(/<text:h[^>]*>/gi, '\n'));
-    html = plain.split('\n').filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
+    // ODT: text:p / text:h paragraflar
+    const parts = xml.split(/<text:(?:p|h)[\s>]/);
+    const out = [];
+    for (let i = 1; i < parts.length; i++) {
+      const end = parts[i].search(/<\/text:(?:p|h)>/);
+      const pxml = end >= 0 ? parts[i].slice(0, end) : parts[i];
+      let text = '';
+      const tRe = /<text:span[^>]*>([\s\S]*?)<\/text:span>|<text:s[^/]*\/>|<text:tab[^/]*\/>|<text:line-break[^/]*\/>|>([^<]+)</g;
+      // Oddiyroq: stripXml yetarli
+      text = stripXml(pxml);
+      if (text) {
+        out.push(`<p>${esc(text)}</p>`);
+        plain += text + '\n';
+      }
+    }
+    html = out.join('') || '<p class="fv-muted">(Matn topilmadi)</p>';
   } else {
-    // relationships for images
     const relsU8 = await zipRead(zip, 'word/_rels/document.xml.rels');
     const relMap = {};
     if (relsU8) {
       const rels = new TextDecoder('utf-8').decode(relsU8);
-      const re = /Id="([^"]+)"[^>]*Target="([^"]+)"/g;
+      const re = /Id="([^"]+)"[^>]*Target="([^"]+)"|Target="([^"]+)"[^>]*Id="([^"]+)"/g;
       let m;
       while ((m = re.exec(rels))) {
-        let t = m[2];
-        if (!t.startsWith('/')) t = 'word/' + t.replace(/^\.\//, '');
-        else t = t.replace(/^\//, '');
-        relMap[m[1]] = t.replace(/\\/g, '/');
+        const id = m[1] || m[4];
+        let tg = m[2] || m[3];
+        if (!id || !tg) continue;
+        if (!tg.startsWith('/')) tg = 'word/' + tg.replace(/^\.\//, '');
+        else tg = tg.replace(/^\//, '');
+        relMap[id] = tg.replace(/\\/g, '/');
       }
     }
     const docU8 = await zipRead(zip, 'word/document.xml');
     if (!docU8) throw new Error('docx');
     const xml = new TextDecoder('utf-8').decode(docU8);
 
-    // Build HTML paragraph by paragraph, inject images
     const parts = xml.split(/<w:p[\s>]/);
     const out = [];
     let imgCount = 0;
@@ -325,7 +367,6 @@ async function renderDocx(zip, body, tools, blobUrls) {
       const end = chunk.indexOf('</w:p>');
       const pxml = end >= 0 ? chunk.slice(0, end) : chunk;
 
-      // drawings / blips
       const imgs = [];
       const blipRe = /r:embed="([^"]+)"/g;
       let bm;
@@ -335,8 +376,8 @@ async function renderDocx(zip, body, tools, blobUrls) {
         try {
           const imgData = await zipRead(zip, target);
           if (!imgData) continue;
-          const ext = extOf(target);
-          const mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : ext === 'svg' ? 'image/svg+xml' : 'image/jpeg';
+          const e = extOf(target);
+          const mime = e === 'png' ? 'image/png' : e === 'gif' ? 'image/gif' : e === 'webp' ? 'image/webp' : e === 'svg' ? 'image/svg+xml' : 'image/jpeg';
           const url = URL.createObjectURL(new Blob([imgData], { type: mime }));
           blobUrls.push(url);
           imgs.push(url);
@@ -344,12 +385,16 @@ async function renderDocx(zip, body, tools, blobUrls) {
         } catch (_) {}
       }
 
-      // text runs
+      // Runlarni tartib bilan yig'ish: w:t + w:tab + w:br
       let text = '';
-      const tRe = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
-      let tm;
-      while ((tm = tRe.exec(pxml))) text += tm[1].replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
-      if (/<w:tab\/>/.test(pxml)) text = text; // already sequential
+      const runRe = /<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<w:tab\s*\/>|<w:br\b[^/]*\/>/gi;
+      let rm;
+      while ((rm = runRe.exec(pxml))) {
+        if (rm[0].startsWith('<w:tab')) text += '\t';
+        else if (rm[0].startsWith('<w:br')) text += '\n';
+        else text += decodeEntities(rm[1] || '');
+      }
+      text = stripTags(text);
 
       if (text.trim() || imgs.length) {
         if (text.trim()) {
@@ -405,7 +450,7 @@ async function renderXlsx(zip, body, tools) {
       const tRe = /<t[^>]*>([\s\S]*?)<\/t>/g;
       let tm;
       while ((tm = tRe.exec(sm[0]))) t += tm[1];
-      shared.push(t.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>'));
+      shared.push(decodeEntities(stripTags(t)));
     }
   }
 
@@ -464,7 +509,7 @@ async function renderPptx(zip, body, tools) {
     let text = '';
     const tRe = /<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
     let tm;
-    while ((tm = tRe.exec(xml))) text += tm[1].replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>') + ' ';
+    while ((tm = tRe.exec(xml))) text += decodeEntities(stripTags(tm[1] || '')) + ' ';
     text = text.replace(/\s+/g, ' ').trim();
     if (!text) continue;
     plain += `--- Slayd ${i + 1} ---\n${text}\n\n`;
@@ -510,11 +555,15 @@ export function openFileViewer(f = {}) {
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-label', name);
+  let fvTheme = 'dark';
+  try { const s = localStorage.getItem('fv_theme'); if (s === 'light' || s === 'dark') fvTheme = s; } catch (_) {}
+  el.dataset.fvTheme = fvTheme;
   el.innerHTML = `<div class="fv-bar">
       <button type="button" class="fv-ib" data-fv="close" aria-label="Orqaga" title="Orqaga">${CHEV}</button>
       <span class="fv-ico">${fileIconSvg(name, mime, 34)}</span>
       <div class="fv-title"><b>${esc(name)}</b><small>${esc(sub)}</small></div>
       <span class="fv-tools"></span>
+      <button type="button" class="fv-ib fv-theme" data-fv="theme" aria-label="Light / Dark" title="Light / Dark">${THEME_ICO}</button>
       <button type="button" class="fv-ib" data-fv="dl" aria-label="Yuklab olish" title="Yuklab olish">${DL}</button>
     </div>
     <div class="fv-body"><div class="fv-load"><div class="spinner"></div></div></div>`;
@@ -553,6 +602,11 @@ export function openFileViewer(f = {}) {
     if (!b) return;
     const a = b.dataset.fv;
     if (a === 'close') close();
+    else if (a === 'theme') {
+      fvTheme = fvTheme === 'dark' ? 'light' : 'dark';
+      el.dataset.fvTheme = fvTheme;
+      try { localStorage.setItem('fv_theme', fvTheme); } catch (_) {}
+    }
     else if (a === 'dl') dlFile(url, name);
     else if (a === 'copy') {
       (navigator.clipboard?.writeText(rawText) || Promise.reject()).then(() => toast('Nusxalandi', 'success'), () => toast('Nusxalab bo\'lmadi', 'error'));
