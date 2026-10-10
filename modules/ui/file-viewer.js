@@ -305,7 +305,7 @@ function zipTreeHtml(files) {
   return html;
 }
 
-/* ── OOXML helpers ──────────────────────────────────────────────────── */
+/* ── OOXML helpers (DOMParser — LibreOffice/WPS uslubiga yaqin) ── */
 function decodeEntities(s) {
   return String(s || '')
     .replace(/&amp;/g, '&')
@@ -317,11 +317,9 @@ function decodeEntities(s) {
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n));
 }
 
-/** Matndan har qanday qolgan XML/HTML tegni olib tashlaydi (xavfsizlik to'ri). */
 function stripTags(s) {
   return String(s || '').replace(/<[^>]*>/g, '');
 }
-
 function stripXml(s) {
   return decodeEntities(
     String(s || '')
@@ -334,22 +332,82 @@ function stripXml(s) {
   ).replace(/\n{3,}/g, '\n\n').trim();
 }
 
-/** Paragraf XML ichidan tartib bilan matn + tab + break yig'adi. Hech qachon teg qoldirmaydi. */
-function extractRuns(pxml, textTag) {
-  // textTag: 'w:t' (docx) yoki 'a:t' (pptx)
-  const re = new RegExp(
-    '<' + textTag + '\\b[^>]*>([\\s\\S]*?)</' + textTag + '>|<w:tab\\s*/>|<w:br\\b[^/]*/>|<a:br\\s*/>',
-    'gi'
-  );
-  let out = '', m;
-  while ((m = re.exec(pxml))) {
-    if (m[0].startsWith('<w:tab') || m[0].startsWith('<a:br') === false && /tab/i.test(m[0])) out += '\t';
-    else if (/^<(?:w:br|a:br)/i.test(m[0])) out += '\n';
-    else out += decodeEntities(m[1] || '');
+/** XML string -> Document (namespace-agnostic getElements). */
+function parseXml(xml) {
+  try {
+    const doc = new DOMParser().parseFromString(String(xml || ''), 'application/xml');
+    if (doc.querySelector('parsererror')) return null;
+    return doc;
+  } catch (_) { return null; }
+}
+/** Local-name match (w:t, a:t, t — namespace farqi muhim emas). */
+function elName(n) {
+  return (n.localName || n.nodeName || '').replace(/^.*:/, '').toLowerCase();
+}
+function kids(node, name) {
+  if (!node || !node.childNodes) return [];
+  const out = [];
+  for (const c of node.childNodes) {
+    if (c.nodeType === 1 && elName(c) === name) out.push(c);
   }
-  // Agar hech narsa topilmasa — butun blokni strip qilib fallback
-  if (!out && pxml) out = stripXml(pxml);
-  return stripTags(out);
+  return out;
+}
+function deepKids(node, name) {
+  if (!node || !node.getElementsByTagNameNS) {
+    // fallback: walk
+    const out = [];
+    (function walk(n) {
+      if (!n) return;
+      if (n.nodeType === 1 && elName(n) === name) out.push(n);
+      for (const c of n.childNodes || []) walk(c);
+    })(node);
+    return out;
+  }
+  // Barcha namespace'lardan
+  const out = [];
+  const all = node.getElementsByTagName('*');
+  for (const el of all) if (elName(el) === name) out.push(el);
+  return out;
+}
+function textOf(node) {
+  if (!node) return '';
+  // Faqat to'g'ridan-to'g'ri + ichki text, teglarsiz
+  let s = '';
+  (function walk(n) {
+    if (!n) return;
+    if (n.nodeType === 3) { s += n.nodeValue || ''; return; }
+    if (n.nodeType !== 1) return;
+    const nm = elName(n);
+    if (nm === 'tab') { s += '\t'; return; }
+    if (nm === 'br' || nm === 'cr') { s += '\n'; return; }
+    // o'chirilgan revision matnini o'tkazib yubor
+    if (nm === 'del' || nm === 'deltext') return;
+    for (const c of n.childNodes) walk(c);
+  })(node);
+  return s;
+}
+/** Paragraf yoki run konteyneridan toza matn. */
+function paraText(pNode) {
+  let s = '';
+  (function walk(n) {
+    if (!n) return;
+    if (n.nodeType === 3) { s += n.nodeValue || ''; return; }
+    if (n.nodeType !== 1) return;
+    const nm = elName(n);
+    if (nm === 't' || nm === 'deltext') {
+      // faqat w:t / a:t — delText revisionda skip qilish mumkin
+      if (nm === 'deltext') return;
+      s += n.textContent || '';
+      return;
+    }
+    if (nm === 'tab') { s += '\t'; return; }
+    if (nm === 'br' || nm === 'cr') { s += '\n'; return; }
+    if (nm === 'del') return;
+    // drawing/pict — keyin alohida
+    if (nm === 'drawing' || nm === 'pict' || nm === 'object') return;
+    for (const c of n.childNodes) walk(c);
+  })(pNode);
+  return s.replace(/\u00a0/g, ' ');
 }
 
 async function renderDocx(zip, body, tools, blobUrls) {
@@ -361,20 +419,39 @@ async function renderDocx(zip, body, tools, blobUrls) {
     const u8 = await zipRead(zip, 'content.xml');
     if (!u8) throw new Error('odt');
     const xml = new TextDecoder('utf-8').decode(u8);
-    // ODT: text:p / text:h paragraflar
-    const parts = xml.split(/<text:(?:p|h)[\s>]/);
+    const doc = parseXml(xml);
     const out = [];
-    for (let i = 1; i < parts.length; i++) {
-      const end = parts[i].search(/<\/text:(?:p|h)>/);
-      const pxml = end >= 0 ? parts[i].slice(0, end) : parts[i];
-      let text = '';
-      const tRe = /<text:span[^>]*>([\s\S]*?)<\/text:span>|<text:s[^/]*\/>|<text:tab[^/]*\/>|<text:line-break[^/]*\/>|>([^<]+)</g;
-      // Oddiyroq: stripXml yetarli
-      text = stripXml(pxml);
-      if (text) {
-        out.push(`<p>${esc(text)}</p>`);
-        plain += text + '\n';
-      }
+    if (doc) {
+      const nodes = deepKids(doc, 'p').concat(deepKids(doc, 'h'));
+      // document order: walk body
+      const bodyEl = deepKids(doc, 'body')[0] || doc.documentElement;
+      const walk = (n) => {
+        if (!n || n.nodeType !== 1) return;
+        const nm = elName(n);
+        if (nm === 'p' || nm === 'h') {
+          const text = paraText(n).trim();
+          if (text) { out.push(`<p>${esc(text)}</p>`); plain += text + '\n'; }
+          return;
+        }
+        if (nm === 'table') {
+          const rows = [];
+          for (const tr of deepKids(n, 'table-row')) {
+            const cells = [];
+            for (const td of deepKids(tr, 'table-cell')) cells.push(paraText(td).trim());
+            if (cells.some(Boolean)) rows.push(cells);
+          }
+          if (rows.length) {
+            out.push(matrixTableHtml(rows, false).replace('fv-tablewrap', 'fv-tablewrap fv-doc-table'));
+            plain += rows.map(r => r.join('\t')).join('\n') + '\n';
+          }
+          return;
+        }
+        for (const c of n.childNodes) walk(c);
+      };
+      walk(bodyEl);
+    } else {
+      plain = stripXml(xml);
+      out.push(...plain.split('\n').filter(Boolean).map(p => `<p>${esc(p)}</p>`));
     }
     html = out.join('') || '<p class="fv-muted">(Matn topilmadi)</p>';
   } else {
@@ -396,20 +473,23 @@ async function renderDocx(zip, body, tools, blobUrls) {
     const docU8 = await zipRead(zip, 'word/document.xml');
     if (!docU8) throw new Error('docx');
     const xml = new TextDecoder('utf-8').decode(docU8);
-
-    const parts = xml.split(/<w:p[\s>]/);
+    const doc = parseXml(xml);
     const out = [];
     let imgCount = 0;
-    for (let i = 1; i < parts.length; i++) {
-      const chunk = parts[i];
-      const end = chunk.indexOf('</w:p>');
-      const pxml = end >= 0 ? chunk.slice(0, end) : chunk;
 
+    const pullImgs = async (node) => {
       const imgs = [];
-      const blipRe = /r:embed="([^"]+)"/g;
-      let bm;
-      while ((bm = blipRe.exec(pxml)) && imgCount < MAX_DOC_IMGS) {
-        const target = relMap[bm[1]];
+      for (const blip of deepKids(node, 'blip')) {
+        if (imgCount >= MAX_DOC_IMGS) break;
+        const emb = blip.getAttribute('r:embed') || blip.getAttributeNS?.('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') || '';
+        // ba'zan attributes namespace bilan
+        let rid = emb;
+        if (!rid) {
+          for (const a of blip.attributes || []) {
+            if (/embed$/i.test(a.localName || a.name)) { rid = a.value; break; }
+          }
+        }
+        const target = relMap[rid];
         if (!target) continue;
         try {
           const imgData = await zipRead(zip, target);
@@ -422,24 +502,76 @@ async function renderDocx(zip, body, tools, blobUrls) {
           imgCount++;
         } catch (_) {}
       }
+      return imgs;
+    };
 
-      // Runlarni tartib bilan yig'ish: w:t + w:tab + w:br
-      let text = '';
-      const runRe = /<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<w:tab\s*\/>|<w:br\b[^/]*\/>/gi;
-      let rm;
-      while ((rm = runRe.exec(pxml))) {
-        if (rm[0].startsWith('<w:tab')) text += '\t';
-        else if (rm[0].startsWith('<w:br')) text += '\n';
-        else text += decodeEntities(rm[1] || '');
+    const renderTable = async (tbl) => {
+      const rows = [];
+      for (const tr of deepKids(tbl, 'tr')) {
+        // faqat to'g'ridan-to'g'ri qatorlar — nested table deepKids hammasi oladi, shuning uchun child
+        const cells = [];
+        for (const c of tr.childNodes) {
+          if (c.nodeType !== 1) continue;
+          if (elName(c) !== 'tc') continue;
+          let cellTxt = '';
+          for (const p of kids(c, 'p')) cellTxt += (cellTxt ? ' ' : '') + paraText(p).trim();
+          if (!cellTxt) cellTxt = paraText(c).trim();
+          cells.push(cellTxt);
+        }
+        if (cells.length) rows.push(cells);
       }
-      text = stripTags(text);
+      if (!rows.length) return '';
+      plain += rows.map(r => r.join('\t')).join('\n') + '\n';
+      return matrixTableHtml(rows, false).replace('class="fv-tablewrap"', 'class="fv-tablewrap fv-doc-table"');
+    };
 
-      if (text.trim() || imgs.length) {
+    const walkBody = async (node) => {
+      if (!node || node.nodeType !== 1) return;
+      const nm = elName(node);
+      if (nm === 'p') {
+        const text = paraText(node);
+        const imgs = await pullImgs(node);
         if (text.trim()) {
           out.push(`<p>${esc(text)}</p>`);
           plain += text + '\n';
+        } else if (!imgs.length) {
+          // bo'sh paragraf — vizual bo'shliq
+          out.push('<p class="fv-empty-p"></p>');
         }
         for (const u of imgs) out.push(`<figure class="fv-doc-img"><img src="${u}" alt="" loading="lazy" decoding="async"></figure>`);
+        return;
+      }
+      if (nm === 'tbl') {
+        const th = await renderTable(node);
+        if (th) out.push(th);
+        return;
+      }
+      if (nm === 'sectpr' || nm === 'bookmarkstart' || nm === 'bookmarkend') return;
+      // body / document / sdt / tc content
+      for (const c of node.childNodes) {
+        if (c.nodeType === 1) await walkBody(c);
+      }
+    };
+
+    if (doc) {
+      const bodyEl = deepKids(doc, 'body')[0] || doc.documentElement;
+      await walkBody(bodyEl);
+    } else {
+      // regex fallback
+      const parts = xml.split(/<w:p[\s>]/);
+      for (let i = 1; i < parts.length; i++) {
+        const end = parts[i].indexOf('</w:p>');
+        const pxml = end >= 0 ? parts[i].slice(0, end) : parts[i];
+        let text = '';
+        const runRe = /<w:t\b[^>]*>([\s\S]*?)<\/w:t>|<w:tab\s*\/>|<w:br\b[^/]*\/>/gi;
+        let rm;
+        while ((rm = runRe.exec(pxml))) {
+          if (rm[0].startsWith('<w:tab')) text += '\t';
+          else if (rm[0].startsWith('<w:br')) text += '\n';
+          else text += decodeEntities(rm[1] || '');
+        }
+        text = stripTags(text);
+        if (text.trim()) { out.push(`<p>${esc(text)}</p>`); plain += text + '\n'; }
       }
     }
     html = out.join('') || '<p class="fv-muted">(Matn topilmadi)</p>';
@@ -455,71 +587,151 @@ async function renderXlsx(zip, body, tools) {
   if (isOds) {
     const u8 = await zipRead(zip, 'content.xml');
     const xml = new TextDecoder('utf-8').decode(u8 || new Uint8Array());
+    const doc = parseXml(xml);
     const rows = [];
-    const rowRe = /<table:table-row[\s>][\s\S]*?<\/table:table-row>/gi;
-    let rm, cut = false;
-    while ((rm = rowRe.exec(xml))) {
-      const cells = [];
-      const cellRe = /<table:table-cell[\s>][\s\S]*?<\/table:table-cell>|<table:table-cell[^/]*\/>/gi;
-      let cm;
-      while ((cm = cellRe.exec(rm[0]))) {
-        const t = stripXml(cm[0]);
-        const rep = /table:number-columns-repeated="(\d+)"/.exec(cm[0]);
-        const n = rep ? Math.min(20, +rep[1]) : 1;
-        for (let i = 0; i < n; i++) cells.push(t);
+    let cut = false;
+    if (doc) {
+      for (const tr of deepKids(doc, 'table-row')) {
+        const cells = [];
+        for (const c of tr.childNodes) {
+          if (c.nodeType !== 1 || elName(c) !== 'table-cell') continue;
+          const rep = +(c.getAttribute('table:number-columns-repeated') || c.getAttribute('number-columns-repeated') || 1);
+          const t = paraText(c).trim() || stripXml(c.textContent || '');
+          const n = Math.min(20, Math.max(1, rep));
+          for (let i = 0; i < n; i++) cells.push(t);
+        }
+        if (cells.some(Boolean)) rows.push(cells);
+        if (rows.length > MAX_ROWS) { cut = true; break; }
       }
-      if (cells.some(c => c)) rows.push(cells);
-      if (rows.length > MAX_ROWS) { cut = true; break; }
+    } else {
+      const rowRe = /<table:table-row[\s>][\s\S]*?<\/table:table-row>/gi;
+      let rm;
+      while ((rm = rowRe.exec(xml))) {
+        const cells = [];
+        const cellRe = /<table:table-cell[\s>][\s\S]*?<\/table:table-cell>|<table:table-cell[^/]*\/>/gi;
+        let cm;
+        while ((cm = cellRe.exec(rm[0]))) {
+          const t = stripXml(cm[0]);
+          const rep = /table:number-columns-repeated="(\d+)"/.exec(cm[0]);
+          const n = rep ? Math.min(20, +rep[1]) : 1;
+          for (let i = 0; i < n; i++) cells.push(t);
+        }
+        if (cells.some(c => c)) rows.push(cells);
+        if (rows.length > MAX_ROWS) { cut = true; break; }
+      }
     }
     body.innerHTML = matrixTableHtml(rows, cut);
     tools.innerHTML = '';
     return rows.map(r => r.join('\t')).join('\n');
   }
 
-  // shared strings
-  const ssU8 = await zipRead(zip, 'xl/sharedStrings.xml');
+  // shared strings via DOM
   const shared = [];
+  const ssU8 = await zipRead(zip, 'xl/sharedStrings.xml');
   if (ssU8) {
     const ss = new TextDecoder('utf-8').decode(ssU8);
-    const siRe = /<si[\s>][\s\S]*?<\/si>/gi;
-    let sm;
-    while ((sm = siRe.exec(ss))) {
-      let t = '';
-      const tRe = /<t[^>]*>([\s\S]*?)<\/t>/g;
-      let tm;
-      while ((tm = tRe.exec(sm[0]))) t += tm[1];
-      shared.push(decodeEntities(stripTags(t)));
+    const doc = parseXml(ss);
+    if (doc) {
+      for (const si of deepKids(doc, 'si')) {
+        // rich text: bir nechta <t>
+        let t = '';
+        for (const te of deepKids(si, 't')) t += te.textContent || '';
+        if (!t) t = si.textContent || '';
+        shared.push(t.replace(/\u00a0/g, ' '));
+      }
+    } else {
+      const siRe = /<si[\s>][\s\S]*?<\/si>/gi;
+      let sm;
+      while ((sm = siRe.exec(ss))) {
+        let t = '';
+        const tRe = /<t[^>]*>([\s\S]*?)<\/t>/g;
+        let tm;
+        while ((tm = tRe.exec(sm[0]))) t += tm[1];
+        shared.push(decodeEntities(stripTags(t)));
+      }
     }
   }
 
-  // first sheet
-  const sheetEntry = zip.files.find(f => /^xl\/worksheets\/sheet\d+\.xml$/i.test(f.name));
-  if (!sheetEntry) throw new Error('sheet');
-  const shU8 = await zipRead(zip, sheetEntry.name);
-  const sh = new TextDecoder('utf-8').decode(shU8 || new Uint8Array());
-  const rows = [];
-  let cut = false;
-  const rowRe = /<row[^>]*>([\s\S]*?)<\/row>/gi;
-  let rm;
-  while ((rm = rowRe.exec(sh))) {
-    const cells = [];
-    const cRe = /<c\s([^>]*)>([\s\S]*?)<\/c>|<c\s([^/]*)\/>/gi;
-    let cm;
-    while ((cm = cRe.exec(rm[1] || ''))) {
-      const attrs = cm[1] || cm[3] || '';
-      const inner = cm[2] || '';
-      const ref = /r="([A-Z]+)(\d+)"/.exec(attrs);
-      const col = ref ? ref[1].split('').reduce((n, ch) => n * 26 + (ch.charCodeAt(0) - 64), 0) - 1 : cells.length;
-      while (cells.length < col) cells.push('');
-      const t = /t="s"/.test(attrs);
-      const v = /<v>([\s\S]*?)<\/v>/.exec(inner);
-      let val = v ? v[1] : '';
-      if (t && val !== '') val = shared[+val] ?? val;
-      cells[col] = val;
+  // barcha sheetlar (birinchi asosiy)
+  const sheetEntries = zip.files
+    .filter(f => /^xl\/worksheets\/sheet\d+\.xml$/i.test(f.name))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  if (!sheetEntries.length) throw new Error('sheet');
+
+  const colIndex = (ref) => {
+    const m = /^([A-Z]+)/i.exec(ref || '');
+    if (!m) return 0;
+    return m[1].toUpperCase().split('').reduce((n, ch) => n * 26 + (ch.charCodeAt(0) - 64), 0) - 1;
+  };
+
+  const parseSheet = (shXml) => {
+    const rows = [];
+    let cut = false;
+    const doc = parseXml(shXml);
+    if (doc) {
+      const rowNodes = [];
+      for (const el of deepKids(doc, 'row')) {
+        // faqat sheetData ichidagi
+        rowNodes.push(el);
+      }
+      for (const row of rowNodes) {
+        const cells = [];
+        for (const c of row.childNodes) {
+          if (c.nodeType !== 1 || elName(c) !== 'c') continue;
+          const ref = c.getAttribute('r') || '';
+          const col = colIndex(ref);
+          while (cells.length < col) cells.push('');
+          const t = c.getAttribute('t') || '';
+          let val = '';
+          if (t === 's') {
+            const v = kids(c, 'v')[0];
+            const idx = v ? +(v.textContent || 0) : 0;
+            val = shared[idx] ?? '';
+          } else if (t === 'inlineStr') {
+            const is = kids(c, 'is')[0];
+            val = is ? paraText(is) : '';
+          } else if (t === 'b') {
+            const v = kids(c, 'v')[0];
+            val = (v && v.textContent === '1') ? 'TRUE' : 'FALSE';
+          } else {
+            const v = kids(c, 'v')[0];
+            val = v ? (v.textContent || '') : '';
+          }
+          cells[col] = val;
+        }
+        rows.push(cells);
+        if (rows.length > MAX_ROWS) { cut = true; break; }
+      }
+    } else {
+      // regex fallback
+      const rowRe = /<row[^>]*>([\s\S]*?)<\/row>/gi;
+      let rm;
+      while ((rm = rowRe.exec(shXml))) {
+        const cells = [];
+        const cRe = /<c\s([^>]*)>([\s\S]*?)<\/c>|<c\s([^/]*)\/>/gi;
+        let cm;
+        while ((cm = cRe.exec(rm[1] || ''))) {
+          const attrs = cm[1] || cm[3] || '';
+          const inner = cm[2] || '';
+          const ref = /r="([A-Z]+)(\d+)"/.exec(attrs);
+          const col = ref ? colIndex(ref[1]) : cells.length;
+          while (cells.length < col) cells.push('');
+          const isS = /t="s"/.test(attrs);
+          const v = /<v>([\s\S]*?)<\/v>/.exec(inner);
+          let val = v ? v[1] : '';
+          if (isS && val !== '') val = shared[+val] ?? val;
+          cells[col] = val;
+        }
+        rows.push(cells);
+        if (rows.length > MAX_ROWS) { cut = true; break; }
+      }
     }
-    rows.push(cells);
-    if (rows.length > MAX_ROWS) { cut = true; break; }
-  }
+    return { rows, cut };
+  };
+
+  const shU8 = await zipRead(zip, sheetEntries[0].name);
+  const sh = new TextDecoder('utf-8').decode(shU8 || new Uint8Array());
+  const { rows, cut } = parseSheet(sh);
   body.innerHTML = matrixTableHtml(rows, cut);
   tools.innerHTML = '';
   return rows.map(r => r.join('\t')).join('\n');
@@ -527,7 +739,7 @@ async function renderXlsx(zip, body, tools) {
 
 async function renderPptx(zip, body, tools) {
   const slides = zip.files
-    .filter(f => /^ppt\/slides\/slide\d+\.xml$/i.test(f.name) || /^content\.xml$/.test(f.name))
+    .filter(f => /^ppt\/slides\/slide\d+\.xml$/i.test(f.name))
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
   if (zip.files.some(f => f.name === 'content.xml') && !zip.files.some(f => f.name.startsWith('ppt/'))) {
@@ -544,10 +756,20 @@ async function renderPptx(zip, body, tools) {
     const u8 = await zipRead(zip, slides[i].name);
     if (!u8) continue;
     const xml = new TextDecoder('utf-8').decode(u8);
+    const doc = parseXml(xml);
     let text = '';
-    const tRe = /<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
-    let tm;
-    while ((tm = tRe.exec(xml))) text += decodeEntities(stripTags(tm[1] || '')) + ' ';
+    if (doc) {
+      // a:t matnlari tartib bilan
+      for (const te of deepKids(doc, 't')) {
+        const parent = te.parentNode;
+        // skip if inside deleted?
+        text += (te.textContent || '') + ' ';
+      }
+    } else {
+      const tRe = /<a:t[^>]*>([\s\S]*?)<\/a:t>/g;
+      let tm;
+      while ((tm = tRe.exec(xml))) text += decodeEntities(stripTags(tm[1] || '')) + ' ';
+    }
     text = text.replace(/\s+/g, ' ').trim();
     if (!text) continue;
     plain += `--- Slayd ${i + 1} ---\n${text}\n\n`;

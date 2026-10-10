@@ -222,3 +222,7 @@ html[data-theme] .file-dl svg, html[data-theme] .fv-dlbtn svg { display: block; 
 /* HTML live preview */
 .fv-html-preview { flex: 1; min-height: 0; display: flex; background: #fff; }
 .fv-html-frame { flex: 1; width: 100%; height: 100%; border: 0; background: #fff; }
+
+.fv-doc .fv-doc-table { margin: 12px 0; max-height: none; overflow: auto; border: 1px solid #1a1a1a; border-radius: 8px; }
+.fv-doc .fv-empty-p { height: 0.6em; margin: 0; padding: 0; }
+.fv[data-fv-theme="light"] .fv-doc .fv-doc-table { border-color: #e5dcc8; }
