@@ -23,6 +23,9 @@ const WRAP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke
 const SUN = '<svg class="fv-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 const MOON = '<svg class="fv-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>';
 const THEME_ICO = SUN + MOON;
+const CODE_ICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
+const VIEW_ICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+
 
 /* ── Tur ────────────────────────────────────────────────────────────── */
 const extOf = s => {
@@ -48,6 +51,41 @@ const OFFICE_DOC = set('docx dotx odt');
 const OFFICE_SHEET = set('xlsx xlsm ods');
 const OFFICE_SLIDE = set('pptx ppsx odp');
 const ARCHIVE = set('zip jar apk epub');
+const HTML_EXT = set('html htm xhtml');
+const isDevKind = (ext) => !!(LANG[ext] || HTML_EXT.has(ext));
+const isHtmlExt = (ext) => HTML_EXT.has(ext);
+
+/* ── Preview hash (chats + posts = bitta markaziy URL) ─────────────── */
+const PREVIEW_STORE = 'fv_preview_meta';
+function previewSlug(name, url) {
+  const base = String(name || 'file').replace(/\.[^.]+$/, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'file';
+  const e = extOf(name);
+  let h = 2166136261;
+  const s = String(url || '');
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  const id = (h >>> 0).toString(36);
+  return (e ? base + '-' + e : base) + '-' + id;
+}
+function savePreviewMeta(slug, meta) {
+  try {
+    const all = JSON.parse(sessionStorage.getItem(PREVIEW_STORE) || '{}');
+    all[slug] = meta;
+    // limit entries
+    const keys = Object.keys(all);
+    if (keys.length > 40) keys.slice(0, keys.length - 40).forEach(k => delete all[k]);
+    sessionStorage.setItem(PREVIEW_STORE, JSON.stringify(all));
+  } catch (_) {}
+}
+function loadPreviewMeta(slug) {
+  try { return (JSON.parse(sessionStorage.getItem(PREVIEW_STORE) || '{}') || {})[slug] || null; }
+  catch (_) { return null; }
+}
+function parsePreviewHash() {
+  const m = String(location.hash || '').match(/^#preview:(.+)$/i);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 
 function kindOf(name, mime) {
   const e = extOf(name), m = String(mime || '').toLowerCase();
@@ -533,12 +571,38 @@ function rtfToText(src) {
 
 /* ── Oyna ───────────────────────────────────────────────────────────── */
 let cur = null;
+let _pushingHash = false;
+
 onEsc(Z, () => { if (!cur) return false; cur.close(); return true; });
 
 export function closeFileViewer() { if (cur) cur.close(); }
 
+function setPreviewHash(slug) {
+  const next = '#preview:' + encodeURIComponent(slug);
+  if (location.hash === next) return;
+  _pushingHash = true;
+  try {
+    history.pushState({ ...(history.state || {}), fv: 1, fvSlug: slug }, '', location.pathname + location.search + next);
+  } catch (_) {
+    location.hash = next;
+  }
+  _pushingHash = false;
+}
+
+function clearPreviewHash() {
+  if (!/^#preview:/i.test(location.hash || '')) return;
+  _pushingHash = true;
+  try {
+    if (history.state && history.state.fv) history.back();
+    else history.replaceState(history.state || {}, '', location.pathname + location.search);
+  } catch (_) {
+    try { history.replaceState(history.state || {}, '', location.pathname + location.search); } catch (__) {}
+  }
+  _pushingHash = false;
+}
+
 export function openFileViewer(f = {}) {
-  closeFileViewer();
+  if (cur) cur.close(true); // silent: hash ni hozircha saqlaymiz / almashtiramiz
   const url = f.url;
   if (!url) return;
   let name = f.name;
@@ -547,23 +611,40 @@ export function openFileViewer(f = {}) {
   const mime = f.mime || '';
   const ext = extOf(name);
   let kind = kindOf(name, mime);
+  // html as dedicated kind for live preview
+  if (isHtmlExt(ext) || /html/i.test(mime)) kind = 'html';
   const size = +f.size || 0;
   const sub = [(ext || 'FILE').toUpperCase(), size ? fmtSz(size) : ''].filter(Boolean).join(' · ');
+  const slug = previewSlug(name, url);
+  savePreviewMeta(slug, { url, name, mime, size });
+  if (!f._fromHash) setPreviewHash(slug);
 
   const el = document.createElement('div');
   el.className = 'fv';
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-label', name);
+  el.dataset.fvSlug = slug;
+
+  const isDev = isDevKind(ext) || kind === 'html';
   let fvTheme = 'dark';
-  try { const s = localStorage.getItem('fv_theme'); if (s === 'light' || s === 'dark') fvTheme = s; } catch (_) {}
-  el.dataset.fvTheme = fvTheme;
+  if (!isDev) {
+    try { const s = localStorage.getItem('fv_theme'); if (s === 'light' || s === 'dark') fvTheme = s; } catch (_) {}
+    el.dataset.fvTheme = fvTheme;
+  }
+
+  const themeBtn = isDev ? '' : `<button type="button" class="fv-ib fv-theme" data-fv="theme" aria-label="Light / Dark" title="Light / Dark">${THEME_ICO}</button>`;
+  const codeBtn = kind === 'html'
+    ? `<button type="button" class="fv-ib" data-fv="code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>`
+    : '';
+
   el.innerHTML = `<div class="fv-bar">
       <button type="button" class="fv-ib" data-fv="close" aria-label="Orqaga" title="Orqaga">${CHEV}</button>
       <span class="fv-ico">${fileIconSvg(name, mime, 34)}</span>
       <div class="fv-title"><b>${esc(name)}</b><small>${esc(sub)}</small></div>
       <span class="fv-tools"></span>
-      <button type="button" class="fv-ib fv-theme" data-fv="theme" aria-label="Light / Dark" title="Light / Dark">${THEME_ICO}</button>
+      ${codeBtn}
+      ${themeBtn}
       <button type="button" class="fv-ib" data-fv="dl" aria-label="Yuklab olish" title="Yuklab olish">${DL}</button>
     </div>
     <div class="fv-body"><div class="fv-load"><div class="spinner"></div></div></div>`;
@@ -572,15 +653,18 @@ export function openFileViewer(f = {}) {
   const ac = new AbortController();
   let blobUrl = null, rawText = '';
   const blobUrls = [];
+  let htmlMode = 'preview'; // preview | code
+  let htmlSrc = '';
 
-  const close = () => {
+  const close = (fromPop) => {
     ac.abort();
     if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (_) {} }
     for (const u of blobUrls) { try { URL.revokeObjectURL(u); } catch (_) {} }
     el.remove();
     if (cur && cur.el === el) cur = null;
+    if (!fromPop) clearPreviewHash();
   };
-  cur = { el, close };
+  cur = { el, close, slug };
 
   const msg = text => {
     body.innerHTML = `<div class="fv-msg"><div class="fv-msg-ico">${fileIconSvg(name, mime, 76)}</div><b>${esc(name)}</b><span>${esc(text)}</span><button type="button" class="fv-big-dl" data-fv="dl">${DL}<span>Yuklab olish</span></button></div>`;
@@ -597,6 +681,30 @@ export function openFileViewer(f = {}) {
       <button type="button" class="fv-ib" data-fv="copy" aria-label="Nusxalash" title="Nusxalash">${COPY}</button>`;
   };
 
+  const paintHtmlPreview = () => {
+    body.innerHTML = '<div class="fv-html-preview"><iframe class="fv-frame fv-html-frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-presentation" referrerpolicy="no-referrer" title="HTML preview"></iframe></div>';
+    const frame = body.querySelector('iframe');
+    try { frame.srcdoc = htmlSrc; } catch (_) {
+      const b = new Blob([htmlSrc], { type: 'text/html' });
+      blobUrl = URL.createObjectURL(b);
+      frame.src = blobUrl;
+    }
+    tools.innerHTML = '';
+  };
+
+  const paintHtmlCode = () => {
+    paintText(htmlSrc, false);
+  };
+
+  const setCodeBtn = (on) => {
+    const b = el.querySelector('[data-fv="code"]');
+    if (!b) return;
+    b.innerHTML = on ? VIEW_ICO : CODE_ICO;
+    const t = on ? "Ilovani ko'rish" : "Kodni ko'rish";
+    b.setAttribute('title', t); b.setAttribute('aria-label', t);
+    b.classList.toggle('on', on);
+  };
+
   el.addEventListener('click', e => {
     const b = e.target.closest?.('[data-fv]');
     if (!b) return;
@@ -607,9 +715,16 @@ export function openFileViewer(f = {}) {
       el.dataset.fvTheme = fvTheme;
       try { localStorage.setItem('fv_theme', fvTheme); } catch (_) {}
     }
+    else if (a === 'code') {
+      if (kind !== 'html') return;
+      htmlMode = htmlMode === 'preview' ? 'code' : 'preview';
+      setCodeBtn(htmlMode === 'code');
+      if (htmlMode === 'code') paintHtmlCode();
+      else paintHtmlPreview();
+    }
     else if (a === 'dl') dlFile(url, name);
     else if (a === 'copy') {
-      (navigator.clipboard?.writeText(rawText) || Promise.reject()).then(() => toast('Nusxalandi', 'success'), () => toast('Nusxalab bo\'lmadi', 'error'));
+      (navigator.clipboard?.writeText(rawText) || Promise.reject()).then(() => toast('Nusxalandi', 'success'), () => toast("Nusxalab bo'lmadi", 'error'));
     } else if (a === 'wrap') {
       const c = body.querySelector('.fv-code');
       if (!c) return;
@@ -626,7 +741,7 @@ export function openFileViewer(f = {}) {
       if (kind === 'image') {
         body.innerHTML = '<div class="fv-media"><img alt=""></div>';
         const img = body.querySelector('img');
-        img.onerror = () => msg('Rasmni ochib bo\'lmadi.');
+        img.onerror = () => msg("Rasmni ochib bo'lmadi.");
         img.src = url;
         return;
       }
@@ -650,9 +765,8 @@ export function openFileViewer(f = {}) {
         return;
       }
 
-      // Binary-ish office/zip
       if (kind === 'docx' || kind === 'xlsx' || kind === 'pptx' || kind === 'zip' || kind === 'rtf') {
-        if (size > MAX_BIN) { msg('Fayl juda katta — yuklab olib oching.'); return; }
+        if (size > MAX_BIN) { msg("Fayl juda katta — yuklab olib oching."); return; }
         const res = await fetch(url, { signal: ac.signal });
         if (!res.ok) throw new Error('http');
         const { buf, cut } = await readLimited(res, MAX_BIN);
@@ -662,15 +776,13 @@ export function openFileViewer(f = {}) {
           paintText(txt, cut);
           return;
         }
-        // ZIP magic
         const head = new Uint8Array(buf, 0, 4);
         if (!(head[0] === 0x50 && head[1] === 0x4b)) {
-          // maybe not zip - try as text fallback
           if (!looksBinary(new Uint8Array(buf))) {
             paintText(new TextDecoder('utf-8').decode(new Uint8Array(buf)), cut);
             return;
           }
-          msg('Bu arxiv/formatni ochib bo\'lmadi.');
+          msg("Bu arxiv/formatni ochib bo'lmadi.");
           return;
         }
         const zip = await parseZip(buf);
@@ -679,26 +791,16 @@ export function openFileViewer(f = {}) {
           tools.innerHTML = '';
           return;
         }
-        if (kind === 'docx') {
-          rawText = await renderDocx(zip, body, tools, blobUrls);
-          return;
-        }
-        if (kind === 'xlsx') {
-          rawText = await renderXlsx(zip, body, tools);
-          return;
-        }
-        if (kind === 'pptx') {
-          rawText = await renderPptx(zip, body, tools);
-          return;
-        }
+        if (kind === 'docx') { rawText = await renderDocx(zip, body, tools, blobUrls); return; }
+        if (kind === 'xlsx') { rawText = await renderXlsx(zip, body, tools); return; }
+        if (kind === 'pptx') { rawText = await renderPptx(zip, body, tools); return; }
       }
 
-      if (kind === 'unknown' && size > 3 * 1024 * 1024) { msg('Bu turdagi faylni ilova ichida ko\'rsatib bo\'lmaydi.'); return; }
+      if (kind === 'unknown' && size > 3 * 1024 * 1024) { msg("Bu turdagi faylni ilova ichida ko'rsatib bo'lmaydi."); return; }
       const res = await fetch(url, { signal: ac.signal });
       if (!res.ok) throw new Error('http');
       const { buf, cut } = await readLimited(res, MAX_TEXT);
       const u8 = new Uint8Array(buf);
-      // ZIP magic on unknown → tree
       if (u8[0] === 0x50 && u8[1] === 0x4b) {
         try {
           const zip = await parseZip(buf);
@@ -706,10 +808,20 @@ export function openFileViewer(f = {}) {
           return;
         } catch (_) {}
       }
-      if (kind === 'unknown' && looksBinary(u8)) { msg('Bu turdagi faylni ilova ichida ko\'rsatib bo\'lmaydi.'); return; }
-      if (kind === 'text' && looksBinary(u8)) { msg('Fayl matn emas ko\'rinadi — yuklab olib oching.'); return; }
+      if (kind === 'unknown' && looksBinary(u8)) { msg("Bu turdagi faylni ilova ichida ko'rsatib bo'lmaydi."); return; }
+      if (kind === 'text' && looksBinary(u8)) { msg("Fayl matn emas ko'rinadi — yuklab olib oching."); return; }
       let txt = new TextDecoder('utf-8').decode(u8);
       if (txt.charCodeAt(0) === 0xFEFF) txt = txt.slice(1);
+
+      if (kind === 'html') {
+        htmlSrc = txt;
+        rawText = txt;
+        htmlMode = 'preview';
+        setCodeBtn(false);
+        paintHtmlPreview();
+        return;
+      }
+
       if (kind === 'table') {
         rawText = txt;
         body.innerHTML = tableHtml(txt, ext) || '<div class="fv-msg"><span>Fayl bo\'sh.</span></div>';
@@ -721,10 +833,36 @@ export function openFileViewer(f = {}) {
     } catch (err) {
       if (ac.signal.aborted) return;
       console.warn('[fv]', err);
-      msg('Faylni ochib bo\'lmadi. Yuklab olishni sinab ko\'ring.');
+      msg("Faylni ochib bo'lmadi. Yuklab olishni sinab ko'ring.");
     }
   })();
 }
+
+function openFromHash() {
+  const slug = parsePreviewHash();
+  if (!slug) {
+    if (cur) cur.close(true);
+    return;
+  }
+  if (cur && cur.slug === slug) return;
+  const meta = loadPreviewMeta(slug);
+  if (!meta || !meta.url) return;
+  openFileViewer({ ...meta, _fromHash: true });
+}
+
+window.addEventListener('popstate', () => {
+  if (_pushingHash) return;
+  const slug = parsePreviewHash();
+  if (!slug) { if (cur) cur.close(true); return; }
+  openFromHash();
+});
+window.addEventListener('hashchange', () => {
+  if (_pushingHash) return;
+  openFromHash();
+});
+// boot: agar URL da #preview: bo'lsa och
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', openFromHash);
+else setTimeout(openFromHash, 0);
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ') return;

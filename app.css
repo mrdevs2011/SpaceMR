@@ -18595,6 +18595,11 @@ html[data-theme] .file-dl svg, html[data-theme] .fv-dlbtn svg { display: block; 
 .fv[data-fv-theme="light"] .fv-tree-row { border-bottom-color: #e5dcc8; }
 .fv[data-fv-theme="light"] .fv-tree-name { color: #1a1612; }
 .fv[data-fv-theme="light"] .fv-tree-sz { color: #8a8070; }
+
+
+/* HTML live preview */
+.fv-html-preview { flex: 1; min-height: 0; display: flex; background: #fff; }
+.fv-html-frame { flex: 1; width: 100%; height: 100%; border: 0; background: #fff; }
 /* ═══════════════════════════════════════════════════════════════════════
    profile-pro.css — O'z profili (#profileView): sodda X (Twitter) uslubi
    Tekis cover • oddiy avatar • matnli statistika • konturli tugma • chiziqli tablar
