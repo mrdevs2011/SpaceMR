@@ -5,14 +5,13 @@
 .fv { color-scheme: dark; position: fixed; inset: 0; z-index: 1650; display: flex; flex-direction: column; background: #000; color: #e7e9ea; animation: fv-in .16s ease-out; }
 @keyframes fv-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fv { animation: none; } }
-.fv-bar { display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px; border-bottom: 1px solid #2f3336; background: #000; flex: none; }
-.fv-ico { flex: none; display: inline-flex; width: 34px; height: 34px; }
-.fv-ico svg { width: 34px; height: 34px; display: block; }
-.fv-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.fv-title b { font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fv-title small { font-size: 11.5px; color: #71767b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-bar { display: flex; align-items: center; gap: 2px; padding: calc(env(safe-area-inset-top, 0px) + 2px) 6px 2px; min-height: 36px; border-bottom: 1px solid #16181c; background: #000; flex: none; }
+.fv-ico, .fv-title small { display: none; }
+.fv-title { flex: 1; min-width: 0; display: flex; flex-direction: row; align-items: center; padding: 0 4px; }
+.fv-title b { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fv-tools { display: inline-flex; align-items: center; gap: 2px; }
-.fv-ib { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; flex: none; -webkit-tap-highlight-color: transparent; }
+.fv-ib { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; flex: none; -webkit-tap-highlight-color: transparent; }
+.fv-ib svg { width: 18px; height: 18px; display: block; }
 .fv-ib:hover { background: rgba(231, 233, 234, 0.1); }
 .fv-ib.on { background: rgba(29, 155, 240, 0.22); color: #1d9bf0; }
 .fv-ib:focus-visible { outline: 2px solid #1d9bf0; outline-offset: 1px; }

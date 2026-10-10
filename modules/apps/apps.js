@@ -203,7 +203,6 @@ async function openRunner(a, c) {
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}
     </div>
-    <div class="apr-note">Bu ilova foydalanuvchi tomonidan yuklangan va SpaceMR'dan alohida (sandbox) ishlaydi — u SpaceMR ma'lumotlariga kira olmaydi. Parol yoki shaxsiy ma'lumot kiritmang.</div>
     <div class="apr-body"><div class="spin-wrap"><div class="spinner"></div></div></div>`;
   document.body.appendChild(el);
   const body = el.querySelector('.apr-body');
