@@ -231,6 +231,21 @@ async function openRunner(a, c) {
 
 /* ── Formalar ───────────────────────────────────────────────────────── */
 
+/** Paste/save: faqat HTML qabul qilinadi. */
+function isHtmlCode(src) {
+  const s = String(src || '').trim();
+  if (!s) return false;
+  const head = s.slice(0, 500);
+  // JS / module / JSON / pure CSS — HTML tegsiz
+  if (/^(import\s|export\s|const\s|let\s|var\s|function\s|class\s)/i.test(head) && !/<[a-z!\/]/i.test(head)) return false;
+  if (/^(\{[\s\S]*\}|\[[\s\S]*\])\s*$/.test(s) && !/<[a-z]/i.test(s)) return false;
+  if (/^(body\s*\{|:root\s*\{|\*[\s{])/i.test(head) && (s.match(/\{/g) || []).length > 2 && !/<[a-z]/i.test(s)) return false;
+  if (/<!doctype\s+html\b/i.test(s)) return true;
+  if (/<\s*(html|head|body|div|span|p|a|script|style|section|main|header|footer|nav|ul|ol|li|table|form|input|button|img|h[1-6]|meta|link|title|canvas|svg|template|iframe)\b/i.test(s)) return true;
+  if (/<\s*[a-z][\w:-]*(\s[^>]*)?\s*>/i.test(s) && /<\//.test(s)) return true;
+  return false;
+}
+
 const slugify = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^[-_]+|[-_]+$/g, '').slice(0, 30);
 const slugTaken = (slug, exceptId) =>
   RESERVED.includes(slug) || cats.some(c => c.slug === slug && c.id !== exceptId) || apps.some(a => a.slug === slug && a.id !== exceptId);
@@ -406,13 +421,36 @@ async function openAppForm(editId, presetCat) {
     ta.selectionStart = ta.selectionEnd = s + 2;
     paintCode();
   });
+  /* Paste: darhol analyze — HTML bo'lmasa rad */
+  ta.addEventListener('paste', e => {
+    const clip = e.clipboardData?.getData('text/plain') ?? '';
+    if (!clip.trim()) return;
+    if (!isHtmlCode(clip)) {
+      e.preventDefault();
+      setErr("Bu HTML kod emas — faqat HTML qabul qilinadi");
+      return;
+    }
+    setErr('');
+    // paste odatdagidek, keyin qayta tekshir
+    setTimeout(() => {
+      if (!isHtmlCode(ta.value)) {
+        setErr("Bu HTML kod emas — rad etildi");
+      } else {
+        setErr('');
+        paintCode();
+        schedLogo();
+      }
+    }, 0);
+  });
   paintNow();
 $('afHtml').addEventListener('input', schedLogo);
   nameI.addEventListener('input', schedLogo);
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     if (f.size > 1000000) { setErr('HTML 1 MB dan kichik bo\'lsin'); e.target.value = ''; return; }
-    $('afHtml').value = await f.text(); paintNow(); setErr(''); refreshLogo();
+    const txt = await f.text();
+    if (!isHtmlCode(txt)) { setErr("Fayl HTML emas — rad etildi"); e.target.value = ''; return; }
+    $('afHtml').value = txt; paintNow(); setErr(''); refreshLogo();
     if (!nameI.value.trim()) { const t = /<title[^>]*>([^<]{1,40})/i.exec($('afHtml').value); if (t) { nameI.value = t[1].trim(); nameI.dispatchEvent(new Event('input')); } }
   });
 
@@ -426,6 +464,7 @@ $('afHtml').addEventListener('input', schedLogo);
     if (!name) return setErr('Nomini yozing');
     if (!a && !slugHint(hint, slug, null)) return setErr('Unikal nomni to\'g\'rilang');
     if (!html.trim()) return setErr('HTML kodni kiriting');
+    if (!isHtmlCode(html)) return setErr('Bu HTML kod emas — faqat HTML qabul qilinadi');
     if (new Blob([html]).size > 1000000) return setErr('HTML 1 MB dan oshmasin');
     const btn = $('afSave'); btn.disabled = true; setErr('');
     /* Logo: koddan; topilmasa va kod o'zgarmagan bo'lsa eskisi qoladi */
