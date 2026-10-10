@@ -454,6 +454,14 @@ $('afHtml').addEventListener('input', schedLogo);
     if (!nameI.value.trim()) { const t = /<title[^>]*>([^<]{1,40})/i.exec($('afHtml').value); if (t) { nameI.value = t[1].trim(); nameI.dispatchEvent(new Event('input')); } }
   });
 
+  /* Ctrl/Cmd+S: hammasi to'liq bo'lsa saqlaydi va yopadi (description ixtiyoriy) */
+  ov.addEventListener('keydown', e => {
+    if (!(e.key === 's' || e.key === 'S') || !(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const btn = $('afSave');
+    if (btn && !btn.disabled) btn.click();
+  });
   ov.addEventListener('click', async e => {
     if (e.target === ov) return closeForm('appFormOverlay');
     const f = e.target.closest('[data-f]')?.dataset.f; if (!f) return;
@@ -467,7 +475,7 @@ $('afHtml').addEventListener('input', schedLogo);
     if (!isHtmlCode(html)) return setErr('Bu HTML kod emas — faqat HTML qabul qilinadi');
     if (new Blob([html]).size > 1000000) return setErr('HTML 1 MB dan oshmasin');
     const btn = $('afSave'); btn.disabled = true; setErr('');
-    /* Logo: koddan; topilmasa va kod o'zgarmagan bo'lsa eskisi qoladi */
+    /* Logo: koddan; topilmasa va kod o\'zgarmagan bo\'lsa eskisi qoladi */
     const found = await extractLogo(html, name);
     const logo = found ? found.logo : (a && a.html === html ? (a.logo || null) : null);
     let res;
