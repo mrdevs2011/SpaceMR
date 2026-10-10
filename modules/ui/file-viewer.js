@@ -1058,7 +1058,7 @@ export function openFileViewer(f = {}) {
         htmlSrc = txt;
         rawText = txt;
         const host = mountDual('fv-html-preview');
-        htmlRunner = runApp(host, { id: 'fv:' + slug, html: txt, persist: false });
+        htmlRunner = runApp(host, { id: 'fv:' + slug, html: txt, persist: false, selectable: true });
         showDual('preview');
         return;
       }

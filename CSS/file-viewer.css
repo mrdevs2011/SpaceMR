@@ -266,3 +266,7 @@ html[data-theme] .fv[data-fv-theme="light"] .fv-md a.md-link { color: #0b6bcb !i
 .fv[data-fv-theme="light"] .fv-md .md-codeblock { color: #1a1612; }
 .fv[data-fv-theme="light"] .fv-md .md-table th, .fv[data-fv-theme="light"] .fv-md .md-table td { border-color: #ddd5c4; }
 .fv[data-fv-theme="light"] .fv-md .md-table th { background: rgba(26, 22, 18, .05); }
+
+/* ── Belgilash/nusxalash HAR DOIM ishlasin (global `*{user-select:none}` ni fv ichida qayta ochamiz) ── */
+.fv-title, .fv-body, .fv-body * { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+.fv-body button, .fv-body .fv-big-dl, .fv-body .fv-tree-ico { -webkit-user-select: none; user-select: none; }

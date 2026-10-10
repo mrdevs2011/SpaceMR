@@ -87,8 +87,11 @@ function shimTag(seed, persist) {
 }
 
 /** Shimni foydalanuvchi HTML'iga qo'shadi (doctype'ni buzmasdan -> quirks mode bo'lmaydi). */
-function inject(html, seed, persist) {
-  const tag = shimTag(seed, persist);
+/* Post/chat preview: sahifa o'zi user-select:none qilgan bo'lsa ham matn belgilansin (tugma/input/canvas tegilmaydi) */
+const SELECT_STYLE = '<style>html,body,body *:not(button):not(input):not(textarea):not(select):not(canvas):not(video):not(audio){-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}</style>';
+
+function inject(html, seed, persist, selectable) {
+  const tag = shimTag(seed, persist) + (selectable ? SELECT_STYLE : '');
   let m = /<head(\s[^>]*)?>/i.exec(html);
   if (m) return html.slice(0, m.index + m[0].length) + tag + html.slice(m.index + m[0].length);
   m = /<html(\s[^>]*)?>/i.exec(html);
@@ -115,7 +118,7 @@ export function runApp(host, app) {
     frame.setAttribute('allow', ALLOW);
     frame.setAttribute('referrerpolicy', 'no-referrer');
     frame.setAttribute('loading', 'eager');
-    frame.srcdoc = inject(String(app.html || ''), keep ? loadData(app.id) : Object.create(null), keep);
+    frame.srcdoc = inject(String(app.html || ''), keep ? loadData(app.id) : Object.create(null), keep, !!app.selectable);
     onMsg = e => {
       if (!keep || !frame || e.source !== frame.contentWindow) return;   // faqat shu iframe
       const d = e.data;
