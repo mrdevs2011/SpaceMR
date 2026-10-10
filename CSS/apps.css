@@ -272,12 +272,16 @@ html[data-theme] .apf-hint.bad:empty { display: none; }
 
 /* HTML kod maydoni: doim 10 qator + rangli kod.
    Textarea shaffof matn bilan yuqorida, bo'yalgan <pre> uning ostida — font/padding bir xil. */
-html[data-theme] .apf-code { --cb-fs: 12.5px; --cb-lh: 19px; position: relative; box-sizing: border-box; height: calc(var(--cb-lh) * 10 + 26px); border: 1px solid #2f3336; border-radius: var(--radius); background: #000; overflow: hidden; transition: border-color .15s; }
+html[data-theme] .apf-code { --cb-fs: 12.5px; --cb-lh: 19px; position: relative; display: flex; box-sizing: border-box; height: calc(var(--cb-lh) * 14 + 26px); border: 1px solid #2f3336; border-radius: var(--radius); background: #0a0a0a; overflow: hidden; transition: border-color .15s; }
 html[data-theme] .apf-code:focus-within { border-color: #1d9bf0; }
-html[data-theme] .apf-code .apf-hl, html[data-theme] .apf div.apf-code textarea.apf-ta { position: absolute; inset: 0; box-sizing: border-box !important; width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0; padding: 12px 14px !important; border: 0 !important; border-radius: 0 !important; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; letter-spacing: 0; white-space: pre !important; tab-size: 2; word-spacing: 0; }
+html[data-theme] .apf-code .apf-ln { flex: none; box-sizing: border-box; margin: 0; padding: 12px 8px 12px 10px; border-right: 1px solid #1a1a1a; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none; -webkit-user-select: none; white-space: pre; overflow: hidden; min-width: 2.4em; background: #050505; }
+html[data-theme] .apf-code .apf-code-main { position: relative; flex: 1; min-width: 0; height: 100%; overflow: hidden; }
+html[data-theme] .apf-code .apf-code-main .apf-hl, html[data-theme] .apf div.apf-code .apf-code-main textarea.apf-ta { position: absolute; inset: 0; box-sizing: border-box !important; width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0; padding: 12px 14px !important; border: 0 !important; border-radius: 0 !important; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; letter-spacing: 0; white-space: pre !important; tab-size: 2; word-spacing: 0; }
 html[data-theme] .apf-code .apf-hl { overflow: hidden; pointer-events: none; color: #e7e9ea; background: transparent; }
 html[data-theme] .apf-code .apf-hl code { font: inherit; white-space: inherit; }
-html[data-theme] .apf div.apf-code textarea.apf-ta { z-index: 1; overflow: auto; resize: none !important; background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent; caret-color: #e7e9ea; outline: none; scrollbar-width: thin; scrollbar-color: #2f3336 transparent; }
+html[data-theme] .apf div.apf-code textarea.apf-ta { z-index: 1; overflow: auto; resize: none !important; background: transparent !important; color: transparent !important; -webkit-text-fill-color: transparent; caret-color: #e7e9ea; outline: none; scrollbar-width: thin; scrollbar-color: #3a3a3a transparent; }
+html[data-theme] .apf div.apf-code textarea.apf-ta::-webkit-scrollbar { width: 8px; height: 8px; }
+html[data-theme] .apf div.apf-code textarea.apf-ta::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
 html[data-theme] .apf div.apf-code textarea.apf-ta::selection { background: rgba(29, 155, 240, 0.35); -webkit-text-fill-color: transparent; }
 html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-fill-color: #536471; color: #536471; }
 :is(.apf-hl, .apr-code) .hl-c, :is(.apf-hl, .apr-code) .hl-d, :is(.apf-hl, .apr-code) .hl-p { color: #8b949e; }
@@ -294,12 +298,17 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
 
 /* Runner: kod ko'rinishi — faqat o'qish, rangli; sarlavhadagi tugma bilan almashadi */
 .apr-body .apr-view { position: absolute; inset: 0; }
-.apr-code { display: none; position: absolute; inset: 0; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; outline: none; }
+.apr-code { display: none; position: absolute; inset: 0; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; outline: none; scrollbar-width: thin; scrollbar-color: #3a3a3a transparent; }
+.apr-code::-webkit-scrollbar { width: 8px; height: 8px; }
+.apr-code::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
+.apr-code::-webkit-scrollbar-track { background: transparent; }
 .apr.code .apr-code { display: block; }
 .apr.code .apr-view, .apr.code [data-act="run-reload"] { display: none; }
 .apr.code [data-act="run-code"] { color: #1d9bf0; }
-.apr-code pre { box-sizing: border-box; margin: 0; width: max-content; min-width: 100%; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)); font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e7e9ea; white-space: pre; tab-size: 2; -webkit-user-select: text; user-select: text; }
-.apr-code code { font: inherit; }
+.apr-code-cols { display: flex; align-items: flex-start; min-height: 100%; width: max-content; min-width: 100%; }
+.apr-ln { flex: none; box-sizing: border-box; margin: 0; padding: 12px 10px 12px 12px; border-right: 1px solid #1a1a1a; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none; -webkit-user-select: none; white-space: pre; tab-size: 2; min-width: 2.6em; }
+.apr-pre { flex: 1; box-sizing: border-box; margin: 0; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e7e9ea; white-space: pre; tab-size: 2; -webkit-user-select: text; user-select: text; }
+.apr-pre code { font: inherit; -webkit-user-select: text; user-select: text; }
 
 /* Unikal nom yaratilgandan keyin o'zgarmaydi: qulflangan ko'rinish (bosilmaydi, fokus yo'q, ko'k ramka yo'q) */
 html[data-theme] .apf-slug:has(input[readonly]) { cursor: not-allowed; background: #0a0a0a; }

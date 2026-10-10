@@ -10,6 +10,7 @@ import { esc, showConfirm } from '../core/utils.js';
 import { runApp } from './runner.js';
 import { extractLogo } from './logo-extract.js';
 import { highlight } from './code-hl.js';
+import { toast } from '../ui/toast.js';
 import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome, tabletHome } from './panels.js';
 
 const $ = id => document.getElementById(id);
@@ -161,23 +162,49 @@ let runnerHtml = null;
 const svgIco = p => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const CODE_ICO = svgIco('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>');
 const VIEW_ICO = svgIco('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
+const COPY_ICO = svgIco('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>');
 
 function toggleCode() {
   const el = $('appRunner');
   if (!el || runnerHtml === null) return;
   const on = el.classList.toggle('code');
   const code = el.querySelector('.apr-code code');
+  const ln = el.querySelector('.apr-ln');
   if (on && code && !code.dataset.ready) {
-    code.innerHTML = runnerHtml.length > 250000 ? esc(runnerHtml) : highlight(runnerHtml);
+    const src = runnerHtml;
+    code.innerHTML = src.length > 250000 ? esc(src) : highlight(src);
     code.dataset.ready = '1';
+    if (ln) {
+      const n = Math.max(1, src.split('\n').length);
+      ln.textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n');
+    }
   }
   const pane = el.querySelector('.apr-code');
   if (pane) { pane.scrollTop = 0; pane.scrollLeft = 0; }
   const b = el.querySelector('[data-act="run-code"]');
   if (b) {
     b.innerHTML = on ? VIEW_ICO : CODE_ICO;
-    const t = on ? 'Ilovani ko\'rish' : 'Kodni ko\'rish';
-    b.setAttribute('title', t); b.setAttribute('aria-label', t);
+    const lab = on ? "Ilovani ko'rish" : "Kodni ko'rish";
+    b.setAttribute('title', lab); b.setAttribute('aria-label', lab);
+  }
+  let copyBtn = el.querySelector('[data-act="run-copy"]');
+  if (on) {
+    if (!copyBtn) {
+      const bar = el.querySelector('.apr-bar');
+      const codeBtn = el.querySelector('[data-act="run-code"]');
+      copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'apr-ib';
+      copyBtn.dataset.act = 'run-copy';
+      copyBtn.setAttribute('aria-label', 'Nusxalash');
+      copyBtn.title = 'Nusxalash';
+      copyBtn.innerHTML = COPY_ICO;
+      if (codeBtn) codeBtn.after(copyBtn);
+      else bar?.appendChild(copyBtn);
+    }
+    copyBtn.hidden = false;
+  } else if (copyBtn) {
+    copyBtn.hidden = true;
   }
 }
 
@@ -212,7 +239,7 @@ async function openRunner(a, c) {
     body.innerHTML = `<div class="aps-empty"><b>Ilovani yuklab bo'lmadi</b><span>${esc(error?.message || 'Topilmadi')}</span></div>`;
     return;
   }
-  body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><pre><code></code></pre></div>';
+  body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><div class="apr-code-cols"><pre class="apr-ln" aria-hidden="true"></pre><pre class="apr-pre"><code></code></pre></div></div>';
   runnerHtml = String(data.html || '');
   runner = runApp(body.querySelector('.apr-view'), { id: a.id, html: data.html });
 }
@@ -334,7 +361,13 @@ async function openAppForm(editId, presetCat) {
       <span class="apf-row"><span class="apf-logo" id="afLogoPrev">${safeLogo(a?.logo) ? `<img src="${safeLogo(a.logo)}" alt="">` : '<i>▣</i>'}</span>
       <span class="apf-hint" id="afLogoSrc">${a?.logo ? 'Saqlangan logo. Kod o\'zgarsa, qayta aniqlanadi' : 'HTML koddan avtomatik olinadi (favicon, logotip SVG, rasm yoki emoji)'}</span></span></div>
     <div class="apf-l">
-      <div class="apf-code"><pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre><textarea id="afHtml" class="apf-ta" aria-label="HTML kod" rows="10" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="<!doctype html>…">${esc(a?.html || '')}</textarea></div>
+      <div class="apf-code" id="afCodeBox">
+        <pre class="apf-ln" id="afLn" aria-hidden="true">1</pre>
+        <div class="apf-code-main">
+          <pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre>
+          <textarea id="afHtml" class="apf-ta" aria-label="HTML kod" rows="12" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="<!doctype html>">${esc(a?.html || '')}</textarea>
+        </div>
+      </div>
       <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 1 MB</span></span></div>
     <div class="apf-hint bad" id="afErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
@@ -360,16 +393,36 @@ async function openAppForm(editId, presetCat) {
     setLogoPrev(r ? r.logo : null, r?.source);
   };
   const schedLogo = () => { clearTimeout(logoTimer); logoTimer = setTimeout(refreshLogo, 450); };
-  /* Kod maydoni: doim 10 qator (ichida skroll) + rangli kod (textarea ostida bo'yalgan qatlam) */
-  const ta = $('afHtml'), hl = $('afHl');
-  const syncCode = () => { const p = hl.parentNode; p.scrollTop = ta.scrollTop; p.scrollLeft = ta.scrollLeft; };
+  const ta = $('afHtml'), hl = $('afHl'), ln = $('afLn');
+  const syncCode = () => {
+    const main = hl && hl.parentNode;
+    if (main) { main.scrollTop = ta.scrollTop; main.scrollLeft = ta.scrollLeft; }
+    if (ln) ln.scrollTop = ta.scrollTop;
+  };
   let hlRaf = 0;
-  const paintNow = () => { if (!$('afHl')) return; const v = ta.value; hl.innerHTML = (v.length > 250000 ? esc(v) : highlight(v)) + '\n'; syncCode(); };
+  const paintNow = () => {
+    if (!$('afHl')) return;
+    const v = ta.value;
+    hl.innerHTML = (v.length > 250000 ? esc(v) : highlight(v)) + '\n';
+    if (ln) {
+      const n = Math.max(1, v.split('\n').length);
+      ln.textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n');
+    }
+    syncCode();
+  };
   const paintCode = () => { cancelAnimationFrame(hlRaf); if (ta.value.length < 60000) paintNow(); else hlRaf = requestAnimationFrame(paintNow); };
   ta.addEventListener('input', paintCode);
   ta.addEventListener('scroll', syncCode);
+  ta.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault();
+    const s = ta.selectionStart, en = ta.selectionEnd;
+    ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(en);
+    ta.selectionStart = ta.selectionEnd = s + 2;
+    paintCode();
+  });
   paintNow();
-  $('afHtml').addEventListener('input', schedLogo);
+$('afHtml').addEventListener('input', schedLogo);
   nameI.addEventListener('input', schedLogo);
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
@@ -528,6 +581,11 @@ function onRunnerClick(e) {
   const k = b.dataset.act;
   if (k === 'run-back') { const p = parts(); return go(p[0] || ''); }
   if (k === 'run-code') return toggleCode();
+  if (k === 'run-copy') {
+    const txt = runnerHtml || '';
+    (navigator.clipboard?.writeText(txt) || Promise.reject()).then(() => toast('Nusxalandi', 'success'), () => toast("Nusxalab bo'lmadi", 'error'));
+    return;
+  }
   if (k === 'run-reload') return runner?.reload();
   if (k === 'edit-app') return openAppForm(b.dataset.id);
   if (k === 'del-app') return delApp(b.dataset.id);
