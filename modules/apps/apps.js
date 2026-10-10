@@ -362,10 +362,16 @@ async function openAppForm(editId, presetCat) {
       <span class="apf-hint" id="afLogoSrc">${a?.logo ? 'Saqlangan logo. Kod o\'zgarsa, qayta aniqlanadi' : 'HTML koddan avtomatik olinadi (favicon, logotip SVG, rasm yoki emoji)'}</span></span></div>
     <div class="apf-l">
       <div class="apf-code" id="afCodeBox">
-        <pre class="apf-ln" id="afLn" aria-hidden="true">1</pre>
-        <div class="apf-code-main">
-          <pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre>
-          <textarea id="afHtml" class="apf-ta" aria-label="HTML kod" rows="12" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="<!doctype html>">${esc(a?.html || '')}</textarea>
+        <div class="apf-code-bar" aria-hidden="true">
+          <span class="apf-code-dots"><i></i><i></i><i></i></span>
+          <span class="apf-code-title" id="afCodeTitle">index.html</span>
+        </div>
+        <div class="apf-code-body">
+          <pre class="apf-ln" id="afLn" aria-hidden="true">1</pre>
+          <div class="apf-code-main">
+            <pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre>
+            <textarea id="afHtml" class="apf-ta" aria-label="HTML kod" rows="12" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="<!doctype html>">${esc(a?.html || '')}</textarea>
+          </div>
         </div>
       </div>
       <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 1 MB</span></span></div>
@@ -400,6 +406,20 @@ async function openAppForm(editId, presetCat) {
     if (ln) ln.scrollTop = ta.scrollTop;
   };
   let hlRaf = 0;
+  const codeTitle = () => {
+    const tit = $('afCodeTitle');
+    if (!tit) return;
+    const v = ta.value.trim();
+    if (!v) { tit.textContent = 'index.html'; return; }
+    const m = /<title[^>]*>([^<]{1,80})<\/title>/i.exec(v);
+    if (m) {
+      const t = m[1].replace(/\s+/g, ' ').trim();
+      tit.textContent = t ? (t.length > 40 ? t.slice(0, 40) + '…' : t) : 'index.html';
+      return;
+    }
+    const nm = (nameI.value || '').trim();
+    tit.textContent = nm ? ((nm.replace(/[^\w\s.-]/g, '').trim().slice(0, 36) || 'index') + '.html') : 'index.html';
+  };
   const paintNow = () => {
     if (!$('afHl')) return;
     const v = ta.value;
@@ -409,6 +429,7 @@ async function openAppForm(editId, presetCat) {
       ln.textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n');
     }
     syncCode();
+    codeTitle();
   };
   const paintCode = () => { cancelAnimationFrame(hlRaf); if (ta.value.length < 60000) paintNow(); else hlRaf = requestAnimationFrame(paintNow); };
   ta.addEventListener('input', paintCode);
@@ -444,7 +465,7 @@ async function openAppForm(editId, presetCat) {
   });
   paintNow();
 $('afHtml').addEventListener('input', schedLogo);
-  nameI.addEventListener('input', schedLogo);
+  nameI.addEventListener('input', () => { schedLogo(); codeTitle(); });
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     if (f.size > 1000000) { setErr('HTML 1 MB dan kichik bo\'lsin'); e.target.value = ''; return; }

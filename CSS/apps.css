@@ -272,9 +272,49 @@ html[data-theme] .apf-hint.bad:empty { display: none; }
 
 /* HTML kod maydoni: doim 10 qator + rangli kod.
    Textarea shaffof matn bilan yuqorida, bo'yalgan <pre> uning ostida — font/padding bir xil. */
-html[data-theme] .apf-code { --cb-fs: 12.5px; --cb-lh: 19px; position: relative; display: flex; box-sizing: border-box; height: calc(var(--cb-lh) * 14 + 26px); border: 1px solid #2f3336; border-radius: var(--radius); background: #0a0a0a; overflow: hidden; transition: border-color .15s; }
+html[data-theme] .apf-code {
+  --cb-fs: 12.5px; --cb-lh: 19px;
+  position: relative; display: flex; flex-direction: column;
+  box-sizing: border-box;
+  height: calc(var(--cb-lh) * 14 + 26px + 36px);
+  border: 1px solid #2f3336; border-radius: 10px;
+  background: #0a0a0a; overflow: hidden; transition: border-color .15s;
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+}
 html[data-theme] .apf-code:focus-within { border-color: #1d9bf0; }
-html[data-theme] .apf-code .apf-ln { flex: none; pointer-events: none; box-sizing: border-box; margin: 0; padding: 12px 8px 12px 10px; border-right: 1px solid #1a1a1a; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; white-space: pre; overflow: hidden; min-width: 2.4em; background: #050505; }
+html[data-theme] .apf-code-bar {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  height: 36px; padding: 0 12px;
+  background: linear-gradient(180deg, #2a2a2c 0%, #1e1e20 100%);
+  border-bottom: 1px solid #1a1a1a;
+  user-select: none; -webkit-user-select: none;
+}
+html[data-theme] .apf-code-dots { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+html[data-theme] .apf-code-dots i {
+  display: block; width: 10px; height: 10px; border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0,0,0,.25);
+}
+html[data-theme] .apf-code-dots i:nth-child(1) { background: #ff5f57; }
+html[data-theme] .apf-code-dots i:nth-child(2) { background: #febc2e; }
+html[data-theme] .apf-code-dots i:nth-child(3) { background: #28c840; }
+html[data-theme] .apf-code-title {
+  flex: 1; min-width: 0; text-align: center;
+  font: 600 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: #a0a5aa;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding-right: 40px;
+}
+html[data-theme] .apf-code-body {
+  flex: 1; min-height: 0; display: flex; overflow: hidden; background: #0a0a0a;
+}
+html[data-theme] .apf-code .apf-ln {
+  flex: none; pointer-events: none; box-sizing: border-box; margin: 0;
+  padding: 12px 8px 12px 10px; border-right: 1px solid #1a1a1a;
+  font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #4a4e52; text-align: right;
+  user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
+  white-space: pre; overflow: hidden; min-width: 2.4em; background: #050505;
+}
 html[data-theme] .apf-code .apf-code-main { position: relative; flex: 1; min-width: 0; height: 100%; overflow: hidden; }
 html[data-theme] .apf-code .apf-code-main .apf-hl, html[data-theme] .apf div.apf-code .apf-code-main textarea.apf-ta { position: absolute; inset: 0; box-sizing: border-box !important; width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0; padding: 12px 14px !important; border: 0 !important; border-radius: 0 !important; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; letter-spacing: 0; white-space: pre !important; tab-size: 2; word-spacing: 0; }
 html[data-theme] .apf-code .apf-hl { overflow: hidden; pointer-events: none; color: #e7e9ea; background: transparent; }
