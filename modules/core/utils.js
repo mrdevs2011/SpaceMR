@@ -99,8 +99,8 @@ export function renderMarkdown(rawText) {
     let rows = match.trim().split('\n');
     let html = '<div class="md-table-wrap"><table class="md-table">';
     rows.forEach((row, i) => {
-      if (row.match(/^\|?[ \t:-]+\|[ \t:-|]+$/)) return;
-      const tag = (i === 0 && rows.length > 1 && rows[1].match(/^\|?[ \t:-]+\|[ \t:-|]+$/)) ? 'th' : 'td';
+      if (row.match(/^\|?[ \t:-]+\|[ \t:\-|]+$/)) return;
+      const tag = (i === 0 && rows.length > 1 && rows[1].match(/^\|?[ \t:-]+\|[ \t:\-|]+$/)) ? 'th' : 'td';
       let cols = row.trim().replace(/^\||\|$/g, '').split('|');
       html += '<tr>' + cols.map(c => '<' + tag + '>' + c.trim() + '</' + tag + '>').join('') + '</tr>';
     });

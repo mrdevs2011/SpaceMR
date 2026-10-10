@@ -2,7 +2,8 @@
  * file-viewer.js — SpaceMR ichida fayl ochish (matn, kod, jadval, media, PDF,
  * DOCX/XLSX/PPTX/ODT, ZIP daraxt, RTF). Kutubxonasiz ZIP+OOXML.
  */
-import { esc, fmtSz, dlFile } from '../core/utils.js';
+import { esc, fmtSz, dlFile, renderMarkdown } from '../core/utils.js';
+import { runApp } from '../apps/runner.js';
 import { fileIconSvg } from '../core/file-icons.js';
 import { toast } from './toast.js';
 import { onEsc } from './esc-stack.js';
@@ -24,6 +25,7 @@ const WRAP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke
 const SUN = '<svg class="fv-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 const MOON = '<svg class="fv-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>';
 const THEME_ICO = SUN + MOON;
+const RELOAD_ICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>';
 const CODE_ICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
 const VIEW_ICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 
@@ -836,6 +838,7 @@ export function openFileViewer(f = {}) {
   let kind = kindOf(name, mime);
   // html as dedicated kind for live preview
   if (isHtmlExt(ext) || /html/i.test(mime)) kind = 'html';
+  else if (LANG[ext] === 'md') kind = 'md';
   const size = +f.size || 0;
   const sub = [(ext || 'FILE').toUpperCase(), size ? fmtSz(size) : ''].filter(Boolean).join(' · ');
   const slug = previewSlug(name, url);
@@ -849,7 +852,7 @@ export function openFileViewer(f = {}) {
   el.setAttribute('aria-label', name);
   el.dataset.fvSlug = slug;
 
-  const isDev = isDevKind(ext) || kind === 'html';
+  const isDev = (isDevKind(ext) && kind !== 'md') || kind === 'html';
   let fvTheme = 'dark';
   if (!isDev) {
     try { const s = localStorage.getItem('fv_theme'); if (s === 'light' || s === 'dark') fvTheme = s; } catch (_) {}
@@ -857,7 +860,7 @@ export function openFileViewer(f = {}) {
   }
 
   const themeBtn = isDev ? '' : `<button type="button" class="fv-ib fv-theme" data-fv="theme" aria-label="Light / Dark" title="Light / Dark">${THEME_ICO}</button>`;
-  const codeBtn = kind === 'html'
+  const codeBtn = (kind === 'html' || kind === 'md')
     ? `<button type="button" class="fv-ib" data-fv="code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>`
     : '';
 
@@ -878,9 +881,11 @@ export function openFileViewer(f = {}) {
   const blobUrls = [];
   let htmlMode = 'preview'; // preview | code
   let htmlSrc = '';
+  let dual = null, htmlRunner = null;
 
   const close = (fromPop) => {
     ac.abort();
+    if (htmlRunner) { try { htmlRunner.destroy(); } catch (_) {} htmlRunner = null; }
     if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (_) {} }
     for (const u of blobUrls) { try { URL.revokeObjectURL(u); } catch (_) {} }
     el.remove();
@@ -893,39 +898,48 @@ export function openFileViewer(f = {}) {
     body.innerHTML = `<div class="fv-msg"><div class="fv-msg-ico">${fileIconSvg(name, mime, 76)}</div><b>${esc(name)}</b><span>${esc(text)}</span><button type="button" class="fv-big-dl" data-fv="dl">${DL}<span>Yuklab olish</span></button></div>`;
   };
 
-  const paintText = (txt, cut) => {
-    rawText = txt;
+  const wrapOn = () => { try { return localStorage.getItem('fv_wrap') === '1'; } catch (_) { return false; } };
+  const codeHtml = (txt, cut) => {
     const n = txt.split('\n').length;
     const gut = Array.from({ length: n }, (_, i) => i + 1).join('\n');
-    let wrap = false;
-    try { wrap = localStorage.getItem('fv_wrap') === '1'; } catch (_) {}
-    body.innerHTML = `<div class="fv-code${wrap ? ' fv-wrap' : ''}" tabindex="0">${cut ? '<div class="fv-cut">Katta fayl — faqat boshi ko\'rsatildi. To\'liq ko\'rish uchun yuklab oling.</div>' : ''}<div class="fv-cols"><pre class="fv-ln" aria-hidden="true">${gut}</pre><pre class="fv-pre"><code>${highlightText(txt, ext)}</code></pre></div></div>`;
-    tools.innerHTML = `<button type="button" class="fv-ib${wrap ? ' on' : ''}" data-fv="wrap" aria-label="Qatorlarni o'rash" title="Qatorlarni o'rash">${WRAP}</button>
-      <button type="button" class="fv-ib" data-fv="copy" aria-label="Nusxalash" title="Nusxalash">${COPY}</button>`;
+    return `<div class="fv-code${wrapOn() ? ' fv-wrap' : ''}" tabindex="0">${cut ? '<div class="fv-cut">Katta fayl — faqat boshi ko\'rsatildi. To\'liq ko\'rish uchun yuklab oling.</div>' : ''}<div class="fv-cols"><pre class="fv-ln" aria-hidden="true">${gut}</pre><pre class="fv-pre"><code>${highlightText(txt, ext)}</code></pre></div></div>`;
+  };
+  const copyBtnHtml = `<button type="button" class="fv-ib" data-fv="copy" aria-label="Nusxalash" title="Nusxalash">${COPY}</button>`;
+  const textTools = () => `<button type="button" class="fv-ib${wrapOn() ? ' on' : ''}" data-fv="wrap" aria-label="Qatorlarni o'rash" title="Qatorlarni o'rash">${WRAP}</button>${copyBtnHtml}`;
+  const previewTools = () => (kind === 'html'
+    ? `<button type="button" class="fv-ib" data-fv="reload" aria-label="Qayta yuklash" title="Qayta yuklash">${RELOAD_ICO}</button>` : '') + copyBtnHtml;
+
+  const paintText = (txt, cut) => {
+    rawText = txt;
+    body.innerHTML = codeHtml(txt, cut);
+    tools.innerHTML = textTools();
   };
 
-  const paintHtmlPreview = () => {
-    body.innerHTML = '<div class="fv-html-preview"><iframe class="fv-frame fv-html-frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-presentation" referrerpolicy="no-referrer" title="HTML preview"></iframe></div>';
-    const frame = body.querySelector('iframe');
-    try { frame.srcdoc = htmlSrc; } catch (_) {
-      const b = new Blob([htmlSrc], { type: 'text/html' });
-      blobUrl = URL.createObjectURL(b);
-      frame.src = blobUrl;
-    }
-    tools.innerHTML = '';
-  };
-
-  const paintHtmlCode = () => {
-    paintText(htmlSrc, false);
+  // HTML va MD: preview + code bir vaqtda DOMda turadi (toggle holatni yo'qotmaydi)
+  const mountDual = cls => {
+    body.innerHTML = `<div class="fv-dual-view ${cls}"></div><div class="fv-dual-code" hidden></div>`;
+    dual = { view: body.querySelector('.fv-dual-view'), code: body.querySelector('.fv-dual-code'), ready: false };
+    return dual.view;
   };
 
   const setCodeBtn = (on) => {
     const b = el.querySelector('[data-fv="code"]');
     if (!b) return;
     b.innerHTML = on ? VIEW_ICO : CODE_ICO;
-    const t = on ? "Ilovani ko'rish" : "Kodni ko'rish";
+    const t = on ? (kind === 'md' ? "Ko'rinishni ko'rish" : "Ilovani ko'rish") : "Kodni ko'rish";
     b.setAttribute('title', t); b.setAttribute('aria-label', t);
     b.classList.toggle('on', on);
+  };
+
+  const showDual = mode => {
+    if (!dual) return;
+    htmlMode = mode;
+    const isCode = mode === 'code';
+    dual.view.hidden = isCode;
+    dual.code.hidden = !isCode;
+    if (isCode && !dual.ready) { dual.code.innerHTML = codeHtml(rawText, false); dual.ready = true; }
+    tools.innerHTML = isCode ? textTools() : previewTools();
+    setCodeBtn(isCode);
   };
 
   el.addEventListener('click', e => {
@@ -939,12 +953,10 @@ export function openFileViewer(f = {}) {
       try { localStorage.setItem('fv_theme', fvTheme); } catch (_) {}
     }
     else if (a === 'code') {
-      if (kind !== 'html') return;
-      htmlMode = htmlMode === 'preview' ? 'code' : 'preview';
-      setCodeBtn(htmlMode === 'code');
-      if (htmlMode === 'code') paintHtmlCode();
-      else paintHtmlPreview();
+      if (kind !== 'html' && kind !== 'md') return;
+      showDual(htmlMode === 'preview' ? 'code' : 'preview');
     }
+    else if (a === 'reload') { try { htmlRunner && htmlRunner.reload(); } catch (_) {} }
     else if (a === 'dl') dlFile(url, name);
     else if (a === 'copy') {
       (navigator.clipboard?.writeText(rawText) || Promise.reject()).then(() => {
@@ -1045,9 +1057,9 @@ export function openFileViewer(f = {}) {
       if (kind === 'html') {
         htmlSrc = txt;
         rawText = txt;
-        htmlMode = 'preview';
-        setCodeBtn(false);
-        paintHtmlPreview();
+        const host = mountDual('fv-html-preview');
+        htmlRunner = runApp(host, { id: 'fv:' + slug, html: txt, persist: false });
+        showDual('preview');
         return;
       }
 
@@ -1058,6 +1070,13 @@ export function openFileViewer(f = {}) {
         return;
       }
       if (!txt.trim()) { body.innerHTML = '<div class="fv-msg"><span>Fayl bo\'sh.</span></div>'; return; }
+      if (kind === 'md') {
+        rawText = txt;
+        const host = mountDual('fv-md-view');
+        host.innerHTML = '<article class="fv-md">' + renderMarkdown(txt) + '</article>';
+        showDual('preview');
+        return;
+      }
       paintText(txt, cut);
     } catch (err) {
       if (ac.signal.aborted) return;

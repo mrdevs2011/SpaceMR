@@ -48,7 +48,7 @@ function saveData(appId, obj) {
 }
 
 /* Iframe ICHIDA ishlaydigan shim (toString orqali ichiga solinadi — bu funksiya parent kontekstida ishlamaydi) */
-function shimMain(seed) {
+function shimMain(seed, persist) {
   var P = '__spacemr_app';
   function make(init, persist) {
     var d = Object.create(null), t = 0, k;
@@ -77,18 +77,18 @@ function shimMain(seed) {
       }
     });
   }
-  try { Object.defineProperty(window, 'localStorage', { value: make(seed, true), configurable: true }); } catch (e) {}
+  try { Object.defineProperty(window, 'localStorage', { value: make(seed, persist !== false), configurable: true }); } catch (e) {}
   try { Object.defineProperty(window, 'sessionStorage', { value: make({}, false), configurable: true }); } catch (e) {}
 }
 
-function shimTag(seed) {
+function shimTag(seed, persist) {
   const json = JSON.stringify(seed).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
-  return `<script>(${shimMain.toString()})(${json});</script>`;
+  return `<script>(${shimMain.toString()})(${json},${persist === false ? 'false' : 'true'});</script>`;
 }
 
 /** Shimni foydalanuvchi HTML'iga qo'shadi (doctype'ni buzmasdan -> quirks mode bo'lmaydi). */
-function inject(html, seed) {
-  const tag = shimTag(seed);
+function inject(html, seed, persist) {
+  const tag = shimTag(seed, persist);
   let m = /<head(\s[^>]*)?>/i.exec(html);
   if (m) return html.slice(0, m.index + m[0].length) + tag + html.slice(m.index + m[0].length);
   m = /<html(\s[^>]*)?>/i.exec(html);
@@ -103,6 +103,7 @@ function inject(html, seed) {
  * app: { id, html }
  */
 export function runApp(host, app) {
+  const keep = app.persist !== false;   // false: localStorage faqat sessiya ichida (post/chat preview)
   let frame = null;
   let onMsg = null;
 
@@ -114,9 +115,9 @@ export function runApp(host, app) {
     frame.setAttribute('allow', ALLOW);
     frame.setAttribute('referrerpolicy', 'no-referrer');
     frame.setAttribute('loading', 'eager');
-    frame.srcdoc = inject(String(app.html || ''), loadData(app.id));
+    frame.srcdoc = inject(String(app.html || ''), keep ? loadData(app.id) : Object.create(null), keep);
     onMsg = e => {
-      if (!frame || e.source !== frame.contentWindow) return;   // faqat shu iframe
+      if (!keep || !frame || e.source !== frame.contentWindow) return;   // faqat shu iframe
       const d = e.data;
       if (!d || typeof d !== 'object' || d.__spacemr_app !== 1 || d.t !== 'ls') return;
       const clean = sanitize(d.data);
