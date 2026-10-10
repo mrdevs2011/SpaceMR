@@ -305,10 +305,30 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
 .apr.code .apr-code { display: block; }
 .apr.code .apr-view, .apr.code [data-act="run-reload"] { display: none; }
 .apr.code [data-act="run-code"] { color: #1d9bf0; }
-.apr-code-cols { display: flex; align-items: flex-start; min-height: 100%; width: max-content; min-width: 100%; }
-.apr-ln { flex: none; box-sizing: border-box; margin: 0; padding: 12px 10px 12px 12px; border-right: 1px solid #1a1a1a; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; pointer-events: none; white-space: pre; tab-size: 2; min-width: 2.6em; }
-.apr-pre { flex: 1; box-sizing: border-box; margin: 0; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e7e9ea; white-space: pre; tab-size: 2; -webkit-user-select: text; user-select: text; }
-.apr-pre code { font: inherit; -webkit-user-select: text; user-select: text; }
+.apr-code { user-select: none; -webkit-user-select: none; }
+.apr-code-cols { position: relative; display: block; box-sizing: border-box; width: max-content; min-width: 100%; min-height: 100%; }
+/* Qator raqamlari — overlay, select oqimiga kirmaydi */
+.apr-ln {
+  position: absolute; left: 0; top: 0; z-index: 2;
+  box-sizing: border-box; margin: 0; padding: 12px 10px 12px 12px;
+  border-right: 1px solid #1a1a1a; background: #000;
+  font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #4a4e52; text-align: right; white-space: pre; tab-size: 2;
+  min-width: 3em; pointer-events: none;
+  user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
+}
+.apr-pre {
+  box-sizing: border-box; margin: 0;
+  padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) calc(3em + 14px);
+  font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #e7e9ea; white-space: pre; tab-size: 2;
+  user-select: text; -webkit-user-select: text; -moz-user-select: text;
+}
+.apr-pre code, .apr-pre code * {
+  font: inherit; display: inline;
+  user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important;
+}
+.apr-pre::selection, .apr-pre *::selection { background: rgba(29, 155, 240, 0.35); color: inherit; }
 
 /* Unikal nom yaratilgandan keyin o'zgarmaydi: qulflangan ko'rinish (bosilmaydi, fokus yo'q, ko'k ramka yo'q) */
 html[data-theme] .apf-slug:has(input[readonly]) { cursor: not-allowed; background: #0a0a0a; }
