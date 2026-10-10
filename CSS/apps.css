@@ -298,37 +298,88 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
 
 /* Runner: kod ko'rinishi — faqat o'qish, rangli; sarlavhadagi tugma bilan almashadi */
 .apr-body .apr-view { position: absolute; inset: 0; }
-.apr-code { display: none; position: absolute; inset: 0; overflow: auto; background: #000; -webkit-overflow-scrolling: touch; outline: none; scrollbar-width: thin; scrollbar-color: #3a3a3a transparent; }
+.apr-code {
+  display: none;
+  position: absolute; inset: 0;
+  overflow: auto;
+  background: #000;
+  -webkit-overflow-scrolling: touch;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
 .apr-code::-webkit-scrollbar { width: 8px; height: 8px; }
 .apr-code::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 4px; }
 .apr-code::-webkit-scrollbar-track { background: transparent; }
-.apr.code .apr-code { display: block; }
+.apr.code .apr-code {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  justify-items: stretch;
+}
 .apr.code .apr-view, .apr.code [data-act="run-reload"] { display: none; }
 .apr.code [data-act="run-code"] { color: #1d9bf0; }
-.apr-code { user-select: none; -webkit-user-select: none; }
-.apr-code-cols { position: relative; display: block; box-sizing: border-box; width: max-content; min-width: 100%; min-height: 100%; }
-/* Qator raqamlari — overlay, select oqimiga kirmaydi */
+
+/* Qator raqamlari — alohida ustun, select ga kirmaydi */
 .apr-ln {
-  position: absolute; left: 0; top: 0; z-index: 2;
-  box-sizing: border-box; margin: 0; padding: 12px 10px 12px 12px;
-  border-right: 1px solid #1a1a1a; background: #000;
+  grid-column: 1;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 10px 12px 12px;
+  border-right: 1px solid #1a1a1a;
+  background: #000;
   font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: #4a4e52; text-align: right; white-space: pre; tab-size: 2;
-  min-width: 3em; pointer-events: none;
-  user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important;
+  color: #4a4e52;
+  text-align: right;
+  white-space: pre;
+  tab-size: 2;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
 }
+
+/* Kod matni — bitta uzluksiz select oqimi */
 .apr-pre {
-  box-sizing: border-box; margin: 0;
-  padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) calc(3em + 14px);
+  grid-column: 2;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px;
   font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: #e7e9ea; white-space: pre; tab-size: 2;
-  user-select: text; -webkit-user-select: text; -moz-user-select: text;
+  color: #e7e9ea;
+  white-space: pre;
+  tab-size: 2;
+  overflow: visible;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
 }
-.apr-pre code, .apr-pre code * {
-  font: inherit; display: inline;
-  user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important;
+.apr-pre code {
+  font: inherit;
+  white-space: inherit;
+  user-select: text;
+  -webkit-user-select: text;
 }
-.apr-pre::selection, .apr-pre *::selection { background: rgba(29, 155, 240, 0.35); color: inherit; }
+/* Highlight spanlar — faqat rang, layoutni buzmasin */
+.apr-pre code span {
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  white-space: inherit;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  display: inline;
+}
+.apr-pre::selection,
+.apr-pre code::selection,
+.apr-pre code *::selection {
+  background: rgba(29, 155, 240, 0.4);
+  color: #fff;
+}
 
 /* Unikal nom yaratilgandan keyin o'zgarmaydi: qulflangan ko'rinish (bosilmaydi, fokus yo'q, ko'k ramka yo'q) */
 html[data-theme] .apf-slug:has(input[readonly]) { cursor: not-allowed; background: #0a0a0a; }

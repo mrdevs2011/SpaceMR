@@ -221,7 +221,7 @@ async function openRunner(a, c) {
     body.innerHTML = `<div class="aps-empty"><b>Ilovani yuklab bo'lmadi</b><span>${esc(error?.message || 'Topilmadi')}</span></div>`;
     return;
   }
-  body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><div class="apr-code-cols"><pre class="apr-ln" aria-hidden="true"></pre><pre class="apr-pre"><code></code></pre></div></div>';
+  body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><pre class="apr-ln" aria-hidden="true"></pre><pre class="apr-pre"><code></code></pre></div>';
   runnerHtml = String(data.html || '');
   runner = runApp(body.querySelector('.apr-view'), { id: a.id, html: data.html });
 }
