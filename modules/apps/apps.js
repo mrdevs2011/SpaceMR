@@ -199,7 +199,7 @@ function toggleCode() {
       copyBtn.setAttribute('aria-label', 'Nusxalash');
       copyBtn.title = 'Nusxalash';
       copyBtn.innerHTML = COPY_ICO;
-      if (codeBtn) codeBtn.after(copyBtn);
+      if (codeBtn) codeBtn.before(copyBtn);
       else bar?.appendChild(copyBtn);
     }
     copyBtn.hidden = false;
