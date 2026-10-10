@@ -21,10 +21,18 @@ import './ui/file-viewer.js'; // fayl ochish oynasi (matn/kod/jadval/rasm/video/
 /* ── Splash: min 0.8s, max 2s; ma'lumot tayyor bo'lguncha kutadi ── */
 const _splashT0 = Date.now();
 const SPLASH_MIN_MS = 200;
-const SPLASH_MAX_MS = 2000;
+const SPLASH_MAX_MS = (typeof window !== 'undefined' && window.__spacemrSplashHold) ? 10000 : 2000;
 let _splashDone = false;
 
 export function hideSplash(reason) {
+  /* Apps/Preview deep-link: preview tayyor bo'lguncha kutamiz (timeout/auth-gate dan tashqari) */
+  try {
+    if (window.__spacemrSplashHold) {
+      const ok = reason === 'app-preview' || reason === 'file-preview' || reason === 'timeout' || reason === 'gate' || reason === 'no-session';
+      if (!ok) return;
+      if (reason === 'app-preview' || reason === 'file-preview' || reason === 'timeout') window.__spacemrSplashHold = false;
+    }
+  } catch (_) {}
   if (_splashDone) return;
   _splashDone = true;
   try { window.__spacemrBootOk = true; } catch (_) {}

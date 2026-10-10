@@ -14,6 +14,8 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
 .splash-inner { text-align: center; display: flex; flex-direction: column; align-items: center; }
 .splash-svg { width: 96px; height: 96px; border-radius: 0; overflow: visible; }
 .splash-wordmark { font-size: 22px; font-weight: 600; letter-spacing: 1px; color: var(--text); margin-top: 18px; }
+.splash-sub { margin-top: 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.6px; color: #71767b; text-transform: none; }
+[data-theme="dark"] .splash-sub { color: #8b98a5; }
 /* ═══════════════════════════════════════════ SPLASH — THEME AWARE (bg saqlanadi, o'zgarmagan) ══════════════... */
 [data-theme="dark"] #splash { background-color: var(--pal-gray-900); }
 /* [data-theme="dark"] .splash-wordmark → CSS/dark-theme-fix.css'da qayta belgilangan (keyinroq yuklanadi) — b... */

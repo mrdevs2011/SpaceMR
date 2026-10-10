@@ -299,9 +299,36 @@ html[data-nf],html[data-nf] body{background:#000000}
       </div>
     </div>
     <div class="splash-wordmark">SpaceMR</div>
+    <div class="splash-sub" id="splashSub" hidden></div>
     <div class="splash-bar"><div class="splash-fill"></div></div>
   </div>
 </div>
+<script>
+/* URL bo'yicha splash subtitel + hold (Apps / Preview) — yangi splash emas */
+(function () {
+  try {
+    var p = (location.pathname || '/').replace(/\/+$/, '') || '/';
+    var h = location.hash || '';
+    var sub = '';
+    var hold = false;
+    if (/^\/apps(\/|$)/i.test(p)) {
+      sub = 'Apps';
+      var segs = p.split('/').filter(Boolean);
+      if (segs.length >= 3) hold = true; /* /apps/cat/app */
+    } else if (/^\/p\//i.test(p)) {
+      sub = 'Preview';
+      hold = true;
+    } else if (/^#preview:/i.test(h)) {
+      sub = 'Preview';
+      hold = true;
+    }
+    window.__spacemrSplashSub = sub;
+    window.__spacemrSplashHold = hold;
+    var el = document.getElementById('splashSub');
+    if (el && sub) { el.textContent = sub; el.hidden = false; }
+  } catch (e) {}
+})();
+</script>
 
 
 

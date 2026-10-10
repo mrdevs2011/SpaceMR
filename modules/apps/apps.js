@@ -163,6 +163,7 @@ const svgIco = p => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none"
 const CODE_ICO = svgIco('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>');
 const VIEW_ICO = svgIco('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
 const COPY_ICO = svgIco('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>');
+const CHECK_ICO = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1d9bf0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
 
 function toggleCode() {
   const el = $('appRunner');
@@ -219,11 +220,13 @@ async function openRunner(a, c) {
   if (runnerId !== a.id || !el.isConnected) return;   // bu orada yopilgan
   if (error || !data) {
     body.innerHTML = `<div class="aps-empty"><b>Ilovani yuklab bo'lmadi</b><span>${esc(error?.message || 'Topilmadi')}</span></div>`;
+    try { window.__spacemrSplashHold = false; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-preview'); } catch (_) {}
     return;
   }
   body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><pre class="apr-ln" aria-hidden="true"></pre><pre class="apr-pre"><code></code></pre></div>';
   runnerHtml = String(data.html || '');
   runner = runApp(body.querySelector('.apr-view'), { id: a.id, html: data.html });
+  try { window.__spacemrSplashHold = false; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-preview'); } catch (_) {}
 }
 
 /* ── Formalar ───────────────────────────────────────────────────────── */
@@ -565,7 +568,15 @@ function onRunnerClick(e) {
   if (k === 'run-code') return toggleCode();
   if (k === 'run-copy') {
     const txt = runnerHtml || '';
-    (navigator.clipboard?.writeText(txt) || Promise.reject()).then(() => toast('Nusxalandi', 'success'), () => toast("Nusxalab bo'lmadi", 'error'));
+    const btn = b;
+    (navigator.clipboard?.writeText(txt) || Promise.reject()).then(() => {
+      if (btn) {
+        btn.innerHTML = CHECK_ICO;
+        btn.style.color = '#1d9bf0';
+        clearTimeout(btn._ck);
+        btn._ck = setTimeout(() => { btn.innerHTML = COPY_ICO; btn.style.color = ''; }, 3000);
+      }
+    }, () => toast("Nusxalab bo'lmadi", 'error'));
     return;
   }
   if (k === 'run-reload') return runner?.reload();

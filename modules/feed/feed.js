@@ -496,6 +496,7 @@ export function scrollToPostFromHash() {
     let el = document.querySelector(`.post[data-id="${targetId}"]`);
     if (el) {
       _scrolledTargetId = targetId;
+      try { window.__spacemrSplashHold = false; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('file-preview'); } catch (_) {}
       smoothScrollIntoView(el, { block: 'center' });
       const cmtId = getTargetCommentId();
       if (cmtId) {

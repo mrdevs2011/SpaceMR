@@ -19,6 +19,7 @@ const MAX_DOC_IMGS = 40;
 const CHEV = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
 const DL = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
 const COPY = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg>';
+const CHECK_COPY = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#1d9bf0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
 const WRAP = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h13a3 3 0 0 1 0 6h-4m0 0 2-2m-2 2 2 2M4 18h5"/></svg>';
 const SUN = '<svg class="fv-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 const MOON = '<svg class="fv-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5z"/></svg>';
@@ -946,7 +947,12 @@ export function openFileViewer(f = {}) {
     }
     else if (a === 'dl') dlFile(url, name);
     else if (a === 'copy') {
-      (navigator.clipboard?.writeText(rawText) || Promise.reject()).then(() => toast('Nusxalandi', 'success'), () => toast("Nusxalab bo'lmadi", 'error'));
+      (navigator.clipboard?.writeText(rawText) || Promise.reject()).then(() => {
+        b.innerHTML = CHECK_COPY;
+        b.style.color = '#1d9bf0';
+        clearTimeout(b._ck);
+        b._ck = setTimeout(() => { b.innerHTML = COPY; b.style.color = ''; }, 3000);
+      }, () => toast("Nusxalab bo'lmadi", 'error'));
     } else if (a === 'wrap') {
       const c = body.querySelector('.fv-code');
       if (!c) return;
@@ -957,6 +963,7 @@ export function openFileViewer(f = {}) {
   });
 
   document.body.appendChild(el);
+  try { window.__spacemrSplashHold = false; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('file-preview'); } catch (_) {}
 
   (async () => {
     try {
