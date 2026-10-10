@@ -317,7 +317,7 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
   align-items: start;
   justify-items: stretch;
 }
-.apr.code .apr-view, .apr.code [data-act="run-reload"] { display: none; }
+.apr.code .apr-view { display: none; }
 .apr.code [data-act="run-code"] { color: #1d9bf0; }
 
 /* Qator raqamlari — alohida ustun, select ga kirmaydi */
