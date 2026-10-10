@@ -44,7 +44,10 @@ export function emojiImg(x, kind, lazy) {
   if (kind === true || kind === false) lazy = kind;      // eski chaqiruv: emojiImg(e, '2d', lazy) ham ishlaydi
   const k = toKey(x);
   if (!k) return '';
-  return `<img class="emo-img" src="/${EMO_DIR}/${k}.png" alt="" data-key="${k}" draggable="false"${lazy ? ' loading="lazy" decoding="async"' : ' decoding="sync"'}>`;
+  const l = lazy ? ' loading="lazy" decoding="async"' : ' decoding="sync"';
+  // '3d' — faqat bubblesiz katta emoji-only xabarlar (1–3 ta emoji): /emoji/3d/<kalit>.webp, topilmasa 2D PNG ga tushadi
+  if (kind === '3d') return `<img class="emo-img" src="/emoji/3d/${k}.webp" alt="" data-key="${k}" data-k="3d" draggable="false"${l}>`;
+  return `<img class="emo-img" src="/${EMO_DIR}/${k}.png" alt="" data-key="${k}" draggable="false"${l}>`;
 }
 
 /* Tez-tez ishlatiladigan emojilarni oldindan keshga soladi (idle) */
@@ -68,6 +71,7 @@ if (typeof document !== 'undefined') {
   document.addEventListener('error', (ev) => {
     const img = ev.target;
     if (!img || img.tagName !== 'IMG' || !img.classList.contains('emo-img')) return;
+    if (img.dataset.k === '3d') { img.dataset.k = '2d'; img.src = `/${EMO_DIR}/${img.dataset.key}.png`; return; }   // 3D yo'q -> 2D
     failedKeys.add(img.dataset.key);   // emoji-dom.js shu emojini qayta rasmga aylantirmasin (cheksiz sikl bo'lmasin)
     img.replaceWith(document.createTextNode(keyToGlyph(img.dataset.key)));
   }, true);
@@ -103,10 +107,10 @@ export function stripEmojiText(text) {
 }
 /* Xavfsiz HTML (esc qilingan matn): [[path]] va eski xabarlardagi belgilar -> <span class="emj"><img>. Teglar ichiga tegilmaydi. */
 const HTML_RE = /(<[^>]*>)|\[\[(emoji\/2d\/[0-9a-f]{2,6}(?:-[0-9a-f]{2,6})*\.png)\]\]|((?:\p{Extended_Pictographic}|\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3)(?:\uFE0F|\u200D\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*)/gu;
-export function emojiHtml(html) {
+export function emojiHtml(html, kind) {
   return String(html ?? '').replace(HTML_RE, (m, tag, path, glyph) => {
     if (tag) return tag;
-    const img = emojiImg(path || glyph);
+    const img = emojiImg(path || glyph, kind === '3d' ? '3d' : '2d');
     return img ? `<span class="emj">${img}</span>` : m;
   });
 }

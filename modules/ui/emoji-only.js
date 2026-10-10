@@ -60,6 +60,6 @@ initEmojiTap();
 
 /* Xabar HTML'idagi [[emoji/2d/..png]] tokenlari (va eski xabarlardagi emoji belgilari) <span class="emj"><img> bo'ladi —
    CSS user-select:none (chat/guruhda emoji belgilanmaydi). Teglar ichiga tegilmaydi. 2-argument eski chaqiruvlar uchun (e'tiborsiz). */
-export function wrapEmojiNoSelect(html /*, kind */) {
-  return emojiHtml(html);
+export function wrapEmojiNoSelect(html, kind) {
+  return emojiHtml(html, kind);
 }
