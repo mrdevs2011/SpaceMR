@@ -18193,7 +18193,7 @@ html[data-theme] .apf-hint.bad:empty { display: none; }
    Textarea shaffof matn bilan yuqorida, bo'yalgan <pre> uning ostida — font/padding bir xil. */
 html[data-theme] .apf-code { --cb-fs: 12.5px; --cb-lh: 19px; position: relative; display: flex; box-sizing: border-box; height: calc(var(--cb-lh) * 14 + 26px); border: 1px solid #2f3336; border-radius: var(--radius); background: #0a0a0a; overflow: hidden; transition: border-color .15s; }
 html[data-theme] .apf-code:focus-within { border-color: #1d9bf0; }
-html[data-theme] .apf-code .apf-ln { flex: none; box-sizing: border-box; margin: 0; padding: 12px 8px 12px 10px; border-right: 1px solid #1a1a1a; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none; -webkit-user-select: none; white-space: pre; overflow: hidden; min-width: 2.4em; background: #050505; }
+html[data-theme] .apf-code .apf-ln { flex: none; pointer-events: none; box-sizing: border-box; margin: 0; padding: 12px 8px 12px 10px; border-right: 1px solid #1a1a1a; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; white-space: pre; overflow: hidden; min-width: 2.4em; background: #050505; }
 html[data-theme] .apf-code .apf-code-main { position: relative; flex: 1; min-width: 0; height: 100%; overflow: hidden; }
 html[data-theme] .apf-code .apf-code-main .apf-hl, html[data-theme] .apf div.apf-code .apf-code-main textarea.apf-ta { position: absolute; inset: 0; box-sizing: border-box !important; width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0; padding: 12px 14px !important; border: 0 !important; border-radius: 0 !important; font: 400 var(--cb-fs)/var(--cb-lh) ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; letter-spacing: 0; white-space: pre !important; tab-size: 2; word-spacing: 0; }
 html[data-theme] .apf-code .apf-hl { overflow: hidden; pointer-events: none; color: #e7e9ea; background: transparent; }
@@ -18225,7 +18225,7 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
 .apr.code .apr-view, .apr.code [data-act="run-reload"] { display: none; }
 .apr.code [data-act="run-code"] { color: #1d9bf0; }
 .apr-code-cols { display: flex; align-items: flex-start; min-height: 100%; width: max-content; min-width: 100%; }
-.apr-ln { flex: none; box-sizing: border-box; margin: 0; padding: 12px 10px 12px 12px; border-right: 1px solid #1a1a1a; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none; -webkit-user-select: none; white-space: pre; tab-size: 2; min-width: 2.6em; }
+.apr-ln { flex: none; box-sizing: border-box; margin: 0; padding: 12px 10px 12px 12px; border-right: 1px solid #1a1a1a; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #4a4e52; text-align: right; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; pointer-events: none; white-space: pre; tab-size: 2; min-width: 2.6em; }
 .apr-pre { flex: 1; box-sizing: border-box; margin: 0; padding: 12px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px; font: 400 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: #e7e9ea; white-space: pre; tab-size: 2; -webkit-user-select: text; user-select: text; }
 .apr-pre code { font: inherit; -webkit-user-select: text; user-select: text; }
 
@@ -18417,7 +18417,7 @@ html #confirmOverlay { z-index: 1800; }
 .fv-cut { padding: 8px 14px; font-size: 12px; color: #d29922; background: #000; border-bottom: 1px solid #1a1a1a; position: sticky; left: 0; }
 .fv-cols { display: flex; align-items: flex-start; width: max-content; min-width: 100%; font: 400 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .fv-ln, .fv-pre { margin: 0; padding-top: 12px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font: inherit; tab-size: 2; }
-.fv-ln { position: sticky; left: 0; flex: none; padding-left: 10px; padding-right: 10px; min-width: 2.2em; text-align: right; color: #6e7681; background: #000; border-right: 1px solid #1a1a1a; user-select: none; -webkit-user-select: none; z-index: 1; }
+.fv-ln { pointer-events: none; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; position: sticky; left: 0; flex: none; padding-left: 10px; padding-right: 10px; min-width: 2.2em; text-align: right; color: #6e7681; background: #000; border-right: 1px solid #1a1a1a; user-select: none; -webkit-user-select: none; z-index: 1; }
 .fv-pre { flex: 1; padding-left: 14px; padding-right: 18px; color: #e6edf3; white-space: pre; -webkit-user-select: text; user-select: text; }
 .fv-pre code { font: inherit; }
 .fv-wrap .fv-cols { width: 100%; }

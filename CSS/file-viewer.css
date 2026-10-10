@@ -30,7 +30,7 @@
 .fv-cut { padding: 8px 14px; font-size: 12px; color: #d29922; background: #000; border-bottom: 1px solid #1a1a1a; position: sticky; left: 0; }
 .fv-cols { display: flex; align-items: flex-start; width: max-content; min-width: 100%; font: 400 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .fv-ln, .fv-pre { margin: 0; padding-top: 12px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); font: inherit; tab-size: 2; }
-.fv-ln { position: sticky; left: 0; flex: none; padding-left: 10px; padding-right: 10px; min-width: 2.2em; text-align: right; color: #6e7681; background: #000; border-right: 1px solid #1a1a1a; user-select: none; -webkit-user-select: none; z-index: 1; }
+.fv-ln { pointer-events: none; user-select: none !important; -webkit-user-select: none !important; -moz-user-select: none !important; position: sticky; left: 0; flex: none; padding-left: 10px; padding-right: 10px; min-width: 2.2em; text-align: right; color: #6e7681; background: #000; border-right: 1px solid #1a1a1a; user-select: none; -webkit-user-select: none; z-index: 1; }
 .fv-pre { flex: 1; padding-left: 14px; padding-right: 18px; color: #e6edf3; white-space: pre; -webkit-user-select: text; user-select: text; }
 .fv-pre code { font: inherit; }
 .fv-wrap .fv-cols { width: 100%; }
