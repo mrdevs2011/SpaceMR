@@ -187,25 +187,6 @@ function toggleCode() {
     const lab = on ? "Ilovani ko'rish" : "Kodni ko'rish";
     b.setAttribute('title', lab); b.setAttribute('aria-label', lab);
   }
-  let copyBtn = el.querySelector('[data-act="run-copy"]');
-  if (on) {
-    if (!copyBtn) {
-      const bar = el.querySelector('.apr-bar');
-      const codeBtn = el.querySelector('[data-act="run-code"]');
-      copyBtn = document.createElement('button');
-      copyBtn.type = 'button';
-      copyBtn.className = 'apr-ib';
-      copyBtn.dataset.act = 'run-copy';
-      copyBtn.setAttribute('aria-label', 'Nusxalash');
-      copyBtn.title = 'Nusxalash';
-      copyBtn.innerHTML = COPY_ICO;
-      if (codeBtn) codeBtn.before(copyBtn);
-      else bar?.appendChild(copyBtn);
-    }
-    copyBtn.hidden = false;
-  } else if (copyBtn) {
-    copyBtn.hidden = true;
-  }
 }
 
 function closeRunner() {
@@ -226,6 +207,7 @@ async function openRunner(a, c) {
       ${logoHtml(a, 'apr-logo')}
       <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.slug)}/${esc(a.slug)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
       <button type="button" class="apr-ib" data-act="run-reload" aria-label="Qayta yuklash" title="Qayta yuklash">${ico('action/refresh', 20)}</button>
+      <button type="button" class="apr-ib" data-act="run-copy" aria-label="Nusxalash" title="Nusxalash">${COPY_ICO}</button>
       <button type="button" class="apr-ib" data-act="run-code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}
