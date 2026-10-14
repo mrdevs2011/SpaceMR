@@ -209,6 +209,7 @@ async function openRunner(a, c) {
       <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.slug)}/${esc(a.slug)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
       <button type="button" class="apr-ib" data-act="run-reload" aria-label="Qayta yuklash" title="Qayta yuklash">${ico('action/refresh', 20)}</button>
       <button type="button" class="apr-ib" data-act="run-copy" aria-label="Nusxalash" title="Nusxalash">${COPY_ICO}</button>
+      <button type="button" class="apr-ib" data-act="run-download" aria-label="Yuklab olish" title="HTML yuklab olish">${ico('action/download', 20)}</button>
       <button type="button" class="apr-ib" data-act="run-code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}
@@ -723,6 +724,25 @@ function onRunnerClick(e) {
         btn._ck = setTimeout(() => { btn.innerHTML = COPY_ICO; btn.style.color = ''; }, 3000);
       }
     }, () => toast("Nusxalab bo'lmadi", 'error'));
+    return;
+  }
+  if (k === 'run-download') {
+    const html = runnerHtml || '';
+    if (!html) { toast("Hali yuklanmadi", 'error'); return; }
+    const app = apps.find(x => x.id === runnerId);
+    const rawName = (app?.name || app?.slug || 'app').trim() || 'app';
+    const safe = rawName.replace(/[\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80) || 'app';
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safe + '.html';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Yuklab olindi: ' + safe + '.html');
     return;
   }
   if (k === 'run-reload') return runner?.reload();
