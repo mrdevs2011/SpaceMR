@@ -159,6 +159,7 @@ export async function render() {
 
 /* Runner: kod ko'rinishi (faqat o'qish, rangli) <-> ilova ko'rinishi, sarlavhadagi bitta tugma bilan */
 let runnerHtml = null;
+let runnerName = '';
 const svgIco = p => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const CODE_ICO = svgIco('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>');
 const VIEW_ICO = svgIco('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
@@ -192,6 +193,7 @@ function toggleCode() {
 
 function closeRunner() {
   runnerHtml = null;
+  runnerName = "";
   if (runner) { try { runner.destroy(); } catch (_) {} runner = null; }
   runnerId = '';
   $('appRunner')?.remove();
@@ -226,6 +228,7 @@ async function openRunner(a, c) {
   }
   body.innerHTML = '<div class="apr-view"></div><div class="apr-code" tabindex="0"><pre class="apr-ln" aria-hidden="true"></pre><pre class="apr-pre"><code></code></pre></div>';
   runnerHtml = String(data.html || '');
+  runnerName = String(a.name || a.slug || 'app').trim() || 'app';
   runner = runApp(body.querySelector('.apr-view'), { id: a.id, html: data.html });
   try { window.__spacemrSplashHold = false; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-preview'); } catch (_) {}
 }
@@ -729,8 +732,9 @@ function onRunnerClick(e) {
   if (k === 'run-download') {
     const html = runnerHtml || '';
     if (!html) { toast("Hali yuklanmadi", 'error'); return; }
+    /* Faqat SpaceMR dagi ilova nomi (afName) — HTML <title> emas */
     const app = apps.find(x => x.id === runnerId);
-    const rawName = (app?.name || app?.slug || 'app').trim() || 'app';
+    const rawName = (runnerName || app?.name || app?.slug || 'app').trim() || 'app';
     const safe = rawName.replace(/[\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80) || 'app';
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
