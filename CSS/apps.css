@@ -356,8 +356,14 @@ html[data-theme] .apf div.apf-code textarea.apf-ta::placeholder { -webkit-text-f
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: start;
   justify-items: stretch;
+  z-index: 2;
 }
-.apr.code .apr-view { display: none; }
+/* display:none iframe ni qayta yuklaydi — visibility bilan preview holati saqlanadi */
+.apr.code .apr-view {
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
 .apr.code [data-act="run-code"] { color: #1d9bf0; }
 
 /* Qator raqamlari — alohida ustun, select ga kirmaydi */

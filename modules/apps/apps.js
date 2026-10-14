@@ -169,6 +169,12 @@ const CHECK_ICO = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" s
 function toggleCode() {
   const el = $('appRunner');
   if (!el || runnerHtml === null) return;
+  const pane = el.querySelector('.apr-code');
+  const wasCode = el.classList.contains('code');
+  /* Kod sahifasi scroll holatini saqlash */
+  if (wasCode && pane) {
+    el._codeScroll = { top: pane.scrollTop, left: pane.scrollLeft };
+  }
   const on = el.classList.toggle('code');
   const code = el.querySelector('.apr-code code');
   const ln = el.querySelector('.apr-ln');
@@ -181,8 +187,10 @@ function toggleCode() {
       ln.textContent = Array.from({ length: n }, (_, i) => i + 1).join('\n');
     }
   }
-  const pane = el.querySelector('.apr-code');
-  if (pane) { pane.scrollTop = 0; pane.scrollLeft = 0; }
+  if (on && pane) {
+    const s = el._codeScroll || { top: 0, left: 0 };
+    requestAnimationFrame(() => { pane.scrollTop = s.top; pane.scrollLeft = s.left; });
+  }
   const b = el.querySelector('[data-act="run-code"]');
   if (b) {
     b.innerHTML = on ? VIEW_ICO : CODE_ICO;
