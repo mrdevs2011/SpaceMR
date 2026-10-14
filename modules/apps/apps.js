@@ -374,7 +374,7 @@ async function openAppForm(editId, presetCat) {
           </div>
         </div>
       </div>
-      <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 1 MB</span></span></div>
+      <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 5 MB</span></span></div>
     <div class="apf-hint bad" id="afErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
   </div>`;
@@ -468,7 +468,7 @@ $('afHtml').addEventListener('input', schedLogo);
   nameI.addEventListener('input', () => { schedLogo(); codeTitle(); });
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
-    if (f.size > 1000000) { setErr('HTML 1 MB dan kichik bo\'lsin'); e.target.value = ''; return; }
+    if (f.size > 5000000) { setErr('HTML 5 MB dan kichik bo\'lsin'); e.target.value = ''; return; }
     const txt = await f.text();
     if (!isHtmlCode(txt)) { setErr("Fayl HTML emas — rad etildi"); e.target.value = ''; return; }
     $('afHtml').value = txt; paintNow(); setErr(''); refreshLogo();
@@ -494,7 +494,7 @@ $('afHtml').addEventListener('input', schedLogo);
     if (!a && !slugHint(hint, slug, null)) return setErr('Unikal nomni to\'g\'rilang');
     if (!html.trim()) return setErr('HTML kodni kiriting');
     if (!isHtmlCode(html)) return setErr('Bu HTML kod emas — faqat HTML qabul qilinadi');
-    if (new Blob([html]).size > 1000000) return setErr('HTML 1 MB dan oshmasin');
+    if (new Blob([html]).size > 5000000) return setErr('HTML 5 MB dan oshmasin');
     const btn = $('afSave'); btn.disabled = true; setErr('');
     /* Logo: koddan; topilmasa va kod o\'zgarmagan bo\'lsa eskisi qoladi */
     const found = await extractLogo(html, name);
