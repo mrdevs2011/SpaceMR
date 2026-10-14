@@ -63,7 +63,7 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
       </div>
       <div class="ep-search" hidden>
         <div class="ep-search-wrap">
-          <input type="text" class="ep-search-inp" placeholder="Qidirish (inglizcha: heart, cat...)" autocomplete="off" spellcheck="false">
+          <input type="text" class="ep-search-inp" placeholder="Qidirish (masalan: yurak, mushuk...)" autocomplete="off" spellcheck="false">
           <button type="button" class="ep-clear" data-act="closesearch" title="Yopish">${ICONS.close}</button>
         </div>
       </div>

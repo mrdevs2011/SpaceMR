@@ -10,7 +10,7 @@ const STEPS = [
     body: 'Bu yerda do\'stlaringiz postlari va hikoyalari ko\'rinadi. Yangi post yozish uchun pastki + tugmasini bosing.',
   },
   {
-    title: 'Chat',
+    title: 'Suhbat',
     body: 'Shaxsiy va guruh suhbatlari. Pastki menyudan Chat belgisini bosing yoki odam profilidan yozing.',
   },
   {

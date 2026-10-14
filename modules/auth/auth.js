@@ -170,7 +170,7 @@ function sbErrUz(err) {
     return `Internet aloqasi yo'q yoki serverga ulanish mumkin emas`;
   }
   if (msg.includes('email not confirmed') || msg.includes('not confirmed')) {
-    return 'Email hali tasdiqlanmagan';
+    return 'Elektron pochta hali tasdiqlanmagan';
   }
   if (msg.includes('banned') || msg.includes('disabled') || msg.includes('user_banned')) {
     return 'Bu hisob bloklangan';
@@ -270,7 +270,7 @@ if (authBtn) {
       if (isLogin) {
         const email = await _emailForLogin(cleaned);
         if (!email) {
-          throw new Error("Login yoki parol noto'g'ri");
+          throw new Error("Kirish yoki parol noto'g'ri");
         }
         let authData, authError;
         let res;
@@ -416,10 +416,10 @@ if (authBtn) {
 export function validateStrictEmail(email) {
   const s = String(email || '').trim().toLowerCase();
   if (!s) {
-    return { ok: false, error: 'Email manzili kiritilmadi' };
+    return { ok: false, error: 'Elektron pochta manzili kiritilmadi' };
   }
   if (s.length > 254) {
-    return { ok: false, error: 'Email juda uzun (maksimal 254 belgi)' };
+    return { ok: false, error: 'Elektron pochta juda uzun (maksimal 254 belgi)' };
   }
   if (/\s/.test(s)) {
     return { ok: false, error: 'Email manzilida bo\'sh joy bo\'lishi mumkin emas' };
@@ -431,16 +431,16 @@ export function validateStrictEmail(email) {
 
   const [localPart, domainPart] = s.split('@');
   if (!localPart || localPart.length < 1 || localPart.length > 64) {
-    return { ok: false, error: 'Email bosh qismi noto\'g\'ri' };
+    return { ok: false, error: 'Elektron pochta bosh qismi noto\'g\'ri' };
   }
   if (localPart.startsWith('.') || localPart.endsWith('.') || localPart.includes('..')) {
-    return { ok: false, error: 'Email manzilida nuqtalar noto\'g\'ri qo\'yilgan' };
+    return { ok: false, error: 'Elektron pochta manzilida nuqtalar noto\'g\'ri qo\'yilgan' };
   }
   if (!domainPart || !domainPart.includes('.')) {
     return { ok: false, error: 'Email domeni to\'liq emas (masalan: @gmail.com)' };
   }
   if (domainPart.startsWith('.') || domainPart.endsWith('.') || domainPart.includes('..') || domainPart.startsWith('-') || domainPart.endsWith('-')) {
-    return { ok: false, error: 'Email domenida xatolik bor' };
+    return { ok: false, error: 'Elektron pochta domenida xatolik bor' };
   }
 
   const parts = domainPart.split('.');
@@ -451,7 +451,7 @@ export function validateStrictEmail(email) {
 
   const rfcRegex = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
   if (!rfcRegex.test(s)) {
-    return { ok: false, error: 'Email formati noto\'g\'ri' };
+    return { ok: false, error: 'Elektron pochta formati noto\'g\'ri' };
   }
 
   // Keng tarqalgan xato yozilgan domenlar tekshiruvi (typo check)
@@ -466,7 +466,7 @@ export function validateStrictEmail(email) {
   ];
   for (const t of typos) {
     if (domainPart === t.bad) {
-      return { ok: false, error: `Email domenida xato: @${t.good} kiritmoqchimisiz?` };
+      return { ok: false, error: `Elektron pochta domenida xato: @${t.good} kiritmoqchimisiz?` };
     }
   }
 
@@ -2084,19 +2084,19 @@ if (saveProfileBtn) {
       let newUsername = null;
       if (rawUser) {
         const cleaned = rawUser.toLowerCase().replace(/[^a-z0-9_]/g, '');
-        if (cleaned.length < 2) { toast("Username kamida 2 ta belgi bo'lishi kerak (a-z, 0-9, _)", 'error'); return; }
-        if (cleaned.length > 20) { toast("Username 20 ta belgidan oshmasligi kerak", 'error'); return; }
+        if (cleaned.length < 2) { toast("Foydalanuvchi nomi kamida 2 ta belgi bo'lishi kerak (a-z, 0-9, _)", 'error'); return; }
+        if (cleaned.length > 20) { toast("Foydalanuvchi nomi 20 ta belgidan oshmasligi kerak", 'error'); return; }
         if (cleaned !== _peOriginalUsername) {
           // Username o'zgarishi: auth email ham yangilanadi (eski login ishlamaydi)
           const { data: uRes, error: uErr } = await sb.rpc('change_my_username', { p_new_username: cleaned, p_device_id: getDeviceId() });
           if (uErr) {
             const msg = uErr.message || '';
             if (/band/i.test(msg)) toast('Bu username band', 'error');
-            else toast(msg || "Username o'zgartirilmadi", 'error');
+            else toast(msg || "Foydalanuvchi nomi o'zgartirilmadi", 'error');
             return;
           }
           if (uRes && uRes.ok === false) {
-            toast(uRes.message || "Username o'zgartirilmadi", 'error');
+            toast(uRes.message || "Foydalanuvchi nomi o'zgartirilmadi", 'error');
             return;
           }
           newUsername = cleaned;

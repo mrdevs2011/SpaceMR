@@ -41,7 +41,7 @@ export function askPassword({
       try {
         let email = state.me?.email;
         if (!email) email = (await sb.auth.getUser())?.data?.user?.email;
-        if (!email) throw new Error('Hisob emaili topilmadi');
+        if (!email) throw new Error('Hisob elektron pochtasi topilmadi');
         await verifyPassword(email, pwd);
         done(true);
       } catch (e) {

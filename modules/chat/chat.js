@@ -148,7 +148,7 @@ function _renderSearchBox(container) {
       <div class="ulist-search-icon" id="chatSearchBtn" title="Qidirish">
         <img src="./svg/extra/icon-34d2886eafb1.svg" alt="" class="icon" width="16" height="16">
       </div>
-      <input class="ulist-search-input" id="chatSearchInput" placeholder="Qidirish (ism yoki username)..." autocomplete="off" spellcheck="false">
+      <input class="ulist-search-input" id="chatSearchInput" placeholder="Qidirish (ism yoki foydalanuvchi nomi)..." autocomplete="off" spellcheck="false">
       <button type="button" class="ulist-search-clear d-none" id="chatSearchClear" aria-label="Tozalash">
         <img src="./svg/action/close.svg" alt="" class="icon" width="15" height="15">
       </button>
@@ -670,10 +670,10 @@ function _paintUserRows(users, animate = false) {
     const formattedLastMsg = formatLastMessageText(rawPreview, c?.lastSenderId === state.me?.uid);
     const dmDraft = getDraft('dm:' + u.uid).trim();
     const preview = dmDraft
-      ? `<span class="chat-draft-tag">Draft:</span> ${esc(dmDraft.slice(0, 46))}`
+      ? `<span class="chat-draft-tag">Qoralama:</span> ${esc(dmDraft.slice(0, 46))}`
       : (c && rawPreview)
       ? `${(!isSaved && c.lastSenderId === state.me.uid) ? 'You: ' : ''}${esc(formattedLastMsg.slice(0, 46))}`
-      : isSaved ? 'Xabarlarni shu yerga saqlang' : isAdminUser ? "Admin bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
+      : isSaved ? 'Xabarlarni shu yerga saqlang' : isAdminUser ? "Boshqaruvchi bilan bog'lanish" : isContact ? 'Kontakt' : 'Yangi suhbat boshlash';
     const time   = (c?.lastMessageAt && rawPreview) ? fmt(c.lastMessageAt) : '';
     const unread = c?.unreadCount?.[state.me.uid] || 0;
     const badgeTxt = unread > 99 ? '+99' : '+' + unread;
@@ -1417,7 +1417,7 @@ async function _appendGroupRows(root, term = '') {
       const rawPreview = g.lastMessage || '';
       const formattedLastMsg = formatLastMessageText(rawPreview);
       const grpDraft = getDraft('grp:' + g.id).trim();
-      const preview  = grpDraft ? `<span class="chat-draft-tag">Draft:</span> ${esc(grpDraft.slice(0, 46))}` : (rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh');
+      const preview  = grpDraft ? `<span class="chat-draft-tag">Qoralama:</span> ${esc(grpDraft.slice(0, 46))}` : (rawPreview ? esc(formattedLastMsg.slice(0, 46)) : 'Guruh');
       const time     = (g.lastMessageAt && rawPreview) ? fmt(g.lastMessageAt) : '';
       const pinHtml = pinned ? `<span class="chat-row-pin-ico" title="Qadalgan"><img src="./svg/extra/icon-dc035561d9ad.svg" alt="" class="icon" width="12" height="12"></span>` : '';
       const unameHtml = g.username ? `<span style="font-size:11.5px;color:var(--blue,#1d9bf0);font-weight:500;margin-left:6px;">@${esc(g.username)}</span>` : '';
@@ -3536,7 +3536,7 @@ function _paintDraftRow(scope) {
   const text = getDraft(scope).trim();
   if (!text) { try { renderChatsList(); } catch (_) {} return; }
   row.classList.remove('chat-row-empty');
-  row.innerHTML = `<span class="chat-draft-tag">Draft:</span> ${esc(text.slice(0, 46))}`;
+  row.innerHTML = `<span class="chat-draft-tag">Qoralama:</span> ${esc(text.slice(0, 46))}`;
 }
 window.addEventListener('spacemr:draft', (e) => {
   const scope = e?.detail;

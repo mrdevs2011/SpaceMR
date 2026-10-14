@@ -312,7 +312,7 @@ html[data-nf],html[data-nf] body{background:#000000}
     var sub = '';
     var hold = false;
     if (/^\/apps(\/|$)/i.test(p)) {
-      sub = 'Apps';
+      sub = 'Ilovalar';
       var segs = p.split('/').filter(Boolean);
       if (segs.length >= 3) hold = true; /* /apps/cat/app */
     } else if (/^\/p\//i.test(p)) {
@@ -462,7 +462,7 @@ html[data-nf],html[data-nf] body{background:#000000}
     <section class="rc-step on" data-step="1">
       <div class="rc-mail"><img src="./svg/auth/mail.svg" alt="" class="icon" width="22" height="22"><strong id="recoveryTargetEmail">...</strong></div>
       <p class="rc-hint">Kod 8 ta belgidan iborat. Har safar yangi kod yuborilganda eskilari bekor bo'ladi.</p>
-      <button type="button" class="pw-btn" id="recoverySendBtn">Emailga kod yuborish</button>
+      <button type="button" class="pw-btn" id="recoverySendBtn">Elektron pochtaga kod yuborish</button>
       <div id="recoverySendStatus" style="display:none;"></div>
       <button type="button" class="pw-link" id="recoveryBackBtn">Eski parolim esimda</button>
     </section>
@@ -519,7 +519,7 @@ html[data-nf],html[data-nf] body{background:#000000}
         <img src="./svg/logo.png" alt="SpaceMR" width="28" height="28">
       </div>
     </button>
-    <button type="button" class="hdr-grp-chip" id="hdrGrpBtn" data-grp-chip aria-label="SpaceMR Group chatini ochish" title="SpaceMR Group">
+    <button type="button" class="hdr-grp-chip" id="hdrGrpBtn" data-grp-chip aria-label="SpaceMR guruh suhbatini ochish" title="SpaceMR Guruhi">
       <span class="hdr-grp-text">SpaceMR</span>
     </button>
     <div class="hdr-right" role="toolbar" aria-label="Tezkor amallar">
@@ -664,7 +664,7 @@ html[data-nf],html[data-nf] body{background:#000000}
   <div class="view" id="actionsView">
     <div class="adm-page-hdr">
       <div class="adm-page-title">Boshqaruv</div>
-      <div class="adm-page-sub">Admin panel · tizim va e'lonlar</div>
+      <div class="adm-page-sub">Boshqaruv · tizim va e'lonlar</div>
     </div>
     <!-- Kutayotgan foydalanuvchilar (tezkor tasdiqlash) — asosiy panel -->
     <section class="adm-card" id="admPendingCard">
@@ -679,7 +679,7 @@ html[data-nf],html[data-nf] body{background:#000000}
         <div class="users-admin-hdr">
           <h2>Foydalanuvchilar</h2>
           <div class="ua-search-row">
-            <input type="text" id="uaSearchInput" class="ua-search-input" placeholder="Ism, username yoki email…" autocomplete="off">
+            <input type="text" id="uaSearchInput" class="ua-search-input" placeholder="Ism, foydalanuvchi nomi yoki email…" autocomplete="off">
             <select id="uaStatusFilter" class="ua-status-filter">
               <option value="all">Barchasi</option>
               <option value="pending">Kutayotgan</option>
@@ -760,9 +760,9 @@ html[data-nf],html[data-nf] body{background:#000000}
     </button>
 
     <!-- SpaceMR Group — Profil dan keyin -->
-    <button class="nav-btn sb-grp-row" id="sbGrpBtn" data-grp-chip aria-label="SpaceMR Group" data-tip="SpaceMR Group" type="button">
+    <button class="nav-btn sb-grp-row" id="sbGrpBtn" data-grp-chip aria-label="SpaceMR Guruhi" data-tip="SpaceMR Guruhi" type="button">
       <img src="./svg/logo.png" alt="" class="icon grp-chip-img" width="26" height="26">
-      <span class="nav-label">SpaceMR Group</span>
+      <span class="nav-label">SpaceMR Guruhi</span>
     </button>
 
     <!-- Joylash -->
@@ -944,7 +944,7 @@ html[data-nf],html[data-nf] body{background:#000000}
           <label class="pe-input-label" for="editUsername">Foydalanuvchi nomi</label>
           <div class="pe-field-prefix-wrap">
             <span class="pe-prefix">@</span>
-            <input class="field pe-prefix-field pe-input" type="text" id="editUsername" maxlength="20" placeholder="username" autocomplete="username" autocapitalize="none">
+            <input class="field pe-prefix-field pe-input" type="text" id="editUsername" maxlength="20" placeholder="foydalanuvchi_nomi" autocomplete="username" autocapitalize="none">
           </div>
           <div class="pe-field-note">Kamida 2 ta belgi (harf, raqam va pastki chiziq)</div>
           <div class="pe-field-note pe-lock-note" id="usernameLockNote" hidden></div>
@@ -1100,7 +1100,7 @@ html[data-nf],html[data-nf] body{background:#000000}
     <div class="settings-row">
       <div class="settings-row-text">
         <div class="settings-row-title">Yangi xabar</div>
-        <div class="settings-row-hint">Chat va guruh xabarlari</div>
+        <div class="settings-row-hint">Suhbat va guruh xabarlari</div>
       </div>
       <label class="settings-toggle"><input type="checkbox" id="pushPrefMsg" checked><span></span></label>
     </div>
@@ -1526,7 +1526,7 @@ html[data-nf],html[data-nf] body{background:#000000}
       </div>
       <div class="admin-reset-actions" style="margin-top: 24px; padding-top: 0; border: none; flex-direction: row-reverse;">
         <button type="button" class="admin-reset-done-btn" id="adminResetDoneBtn" style="margin: 0; flex: 1;">Tayyor (Yopish)</button>
-        <button type="button" class="admin-reset-btn-submit" id="adminResetSendEmailBtn" style="display:none; margin: 0; flex: 1; background: var(--x-blue); color: white;">Emailga yuborish</button>
+        <button type="button" class="admin-reset-btn-submit" id="adminResetSendEmailBtn" style="display:none; margin: 0; flex: 1; background: var(--x-blue); color: white;">Elektron pochtaga yuborish</button>
       </div>
     </div>
   </div>

@@ -2170,7 +2170,7 @@ Avval kimdir bilan suhbat oching — keyin shu yerda chiqadi.</div>`;
   container.innerHTML = `
     <div class="grp-picker-search-wrap">
       <img src="./svg/extra/icon-34d2886eafb1.svg" alt="" class="icon" width="14" height="14">
-      <input class="grp-picker-search" id="grpPickerSearch" placeholder="Ism yoki username..." autocomplete="off" spellcheck="false">
+      <input class="grp-picker-search" id="grpPickerSearch" placeholder="Ism yoki foydalanuvchi nomi..." autocomplete="off" spellcheck="false">
     </div>
     <div class="grp-picker-list" id="grpPickerList"></div>
     <div class="grp-sel-count" id="grpSelCount">0 ta tanlangan</div>
@@ -2313,7 +2313,7 @@ async function _submitAddUserByUsername() {
   let uname = inp.value.trim();
   if (uname.startsWith('@')) uname = uname.slice(1);
   if (!uname) {
-    err.textContent = "Username kiriting";
+    err.textContent = "Foydalanuvchi nomini kiriting";
     err.style.display = '';
     return;
   }
@@ -2560,7 +2560,7 @@ export function injectGroupsDOM() {
           <div class="pe-field-label">Ommaviy username (@) *</div>
           <div class="grp-username-input-wrap">
             <span class="grp-username-prefix">@</span>
-            <input class="field" id="grpFormUsername" placeholder="username (masalan: spacemr_uz)" maxlength="40" autocomplete="off">
+            <input class="field" id="grpFormUsername" placeholder="foydalanuvchi_nomi (masalan: spacemr_uz)" maxlength="40" autocomplete="off">
           </div>
           <div class="grp-form-desc-hint" id="grpFormUsernameHint">Ommaviy guruh username orqali topiladi va hamma qo'shila oladi</div>
         </div>
@@ -2726,7 +2726,7 @@ export function injectGroupsDOM() {
             <div class="pe-field-label">Ommaviy username (@) *</div>
             <div class="grp-username-input-wrap">
               <span class="grp-username-prefix">@</span>
-              <input class="field" id="grpEditUsername" placeholder="username" maxlength="40" autocomplete="off">
+              <input class="field" id="grpEditUsername" placeholder="foydalanuvchi_nomi" maxlength="40" autocomplete="off">
             </div>
             <div class="grp-form-desc-hint" id="grpEditUsernameHint">Ommaviy guruh username orqali topiladi</div>
           </div>

@@ -219,7 +219,7 @@ async function openRunner(a, c) {
       <div class="apr-title"><b>${esc(a.name)}</b><small>${esc(c.slug)}/${esc(a.slug)} · @${esc(ownerName(a.owner_id) || '?')}</small></div>
       <button type="button" class="apr-ib" data-act="run-reload" aria-label="Qayta yuklash" title="Qayta yuklash">${ico('action/refresh', 20)}</button>
       <button type="button" class="apr-ib" data-act="run-copy" aria-label="Nusxalash" title="Nusxalash">${COPY_ICO}</button>
-      <button type="button" class="apr-ib" data-act="run-download" aria-label="Yuklab olish" title="HTML yuklab olish">${ico('action/download', 20)}</button>
+      <button type="button" class="apr-ib" data-act="run-download" aria-label="Yuklab olish" title="HTML faylni yuklab olish">${ico('action/download', 20)}</button>
       <button type="button" class="apr-ib" data-act="run-code" aria-label="Kodni ko'rish" title="Kodni ko'rish">${CODE_ICO}</button>
       ${own ? `<button type="button" class="apr-ib" data-act="edit-app" data-id="${esc(a.id)}" aria-label="Tahrirlash" title="Tahrirlash">${ico('action/edit', 20)}</button>
       <button type="button" class="apr-ib danger" data-act="del-app" data-id="${esc(a.id)}" aria-label="O'chirish" title="O'chirish">${ico('action/trash', 20)}</button>` : ''}
@@ -267,11 +267,11 @@ async function readHtmlFile(file) {
   const type = String(file.type || '').toLowerCase();
   const looksHtml = type.includes('html') || type === 'text/plain' || /\.(html?|htm|xhtml|txt)$/i.test(name) || !name;
   if (!looksHtml && type && !type.startsWith('text/')) {
-    throw new Error('Faqat HTML / matn fayl qabul qilinadi');
+    throw new Error('Faqat HTML yoki matn fayl qabul qilinadi');
   }
   if (file.size > MAX_APP_HTML) throw new Error("HTML 5 MB dan kichik bo'lsin");
   const txt = await file.text();
-  if (!isHtmlCode(txt)) throw new Error("Fayl HTML emas yoki bo'sh — rad etildi");
+  if (!isHtmlCode(txt)) throw new Error("Fayl HTML emas yoki bo'sh — qabul qilinmadi");
   return txt;
 }
 
@@ -399,7 +399,7 @@ async function openAppForm(editId, presetCat) {
           <pre class="apf-ln" id="afLn" aria-hidden="true">1</pre>
           <div class="apf-code-main">
             <pre class="apf-hl" aria-hidden="true"><code id="afHl"></code></pre>
-            <textarea id="afHtml" class="apf-ta" aria-label="HTML kod" rows="12" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="<!doctype html>">${esc(a?.html || '')}</textarea>
+            <textarea id="afHtml" class="apf-ta" aria-label="HTML kodi" rows="12" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="<!doctype html>">${esc(a?.html || '')}</textarea>
           </div>
         </div>
       </div>
@@ -506,7 +506,7 @@ async function openAppForm(editId, presetCat) {
     if (!clip.trim()) return;
     if (!isHtmlCode(clip)) {
       e.preventDefault();
-      setErr('Bu HTML emas (JS/CSS/JSON matni) — HTML yoki HTML parcha kerak');
+      setErr('Bu HTML emas — HTML yoki uning parchasi kerak');
       return;
     }
     setErr('');
@@ -560,7 +560,7 @@ async function openAppForm(editId, presetCat) {
     } catch (err) {
       setErr(err.message || 'Fayl HTML emas');
       e.target.value = '';
-      if (fileNameEl) fileNameEl.textContent = 'HTML / .htm / .txt · ≤ 5 MB · telefon: shu tugma';
+      if (fileNameEl) fileNameEl.textContent = 'HTML / .htm / .txt · 5 MB gacha · telefonda shu tugma';
     }
   });
 
@@ -583,7 +583,7 @@ async function openAppForm(editId, presetCat) {
     if (!name) return setErr('Nomini yozing');
     if (!a && !slugHint(hint, slug, null)) return setErr('Unikal nomni to\'g\'rilang');
     if (!html.trim()) return setErr('HTML kodni kiriting');
-    if (!isHtmlCode(html)) return setErr('Bu HTML emas (JS/CSS/JSON) — HTML yoki HTML parcha kerak');
+    if (!isHtmlCode(html)) return setErr('Bu HTML emas — HTML yoki uning parchasi kerak');
     if (new Blob([html]).size > MAX_APP_HTML) return setErr('HTML 5 MB dan oshmasin');
     const btn = $('afSave'); btn.disabled = true; setErr('');
     /* Logo: koddan; topilmasa va kod o\'zgarmagan bo\'lsa eskisi qoladi */

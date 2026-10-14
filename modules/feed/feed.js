@@ -263,8 +263,8 @@ export async function renderFeedTo(feedEl, posts) {
             </button>
             <button class="act-btn share-btn left-three"
               data-id="${p.id}"
-              title="Chatga ulashish"
-              aria-label="Chatga ulashish">
+              title="Suhbatga ulashish"
+              aria-label="Suhbatga ulashish">
               <img src="./svg/extra/icon-22a55ac71fee.svg" alt="" class="icon" width="18" height="18">
             </button>
           </div>

@@ -301,7 +301,7 @@ async function sendCode(triggerBtn) {
       throw new Error(data?.error || resp.error?.message || "Server bilan bog'lanishda xatolik");
     }
     if (!data.email_sent) {
-      throw new Error(data.error_detail || 'Email yuborishda xatolik yuz berdi');
+      throw new Error(data.error_detail || 'Elektron pochta yuborishda xatolik yuz berdi');
     }
 
     const masked = data.masked_email || _activeMaskedEmail || '';
@@ -317,7 +317,7 @@ async function sendCode(triggerBtn) {
     startResendTimer(45);
   } catch (err) {
     console.error('[recovery send] error:', err);
-    showErr(err.message || 'Email yuborishda xatolik yuz berdi');
+    showErr(err.message || 'Elektron pochta yuborishda xatolik yuz berdi');
     if (rcResendBtn) rcResendBtn.disabled = false;
   } finally {
     if (recoverySendBtn) { recoverySendBtn.disabled = false; recoverySendBtn.textContent = 'Emailga kod yuborish'; }

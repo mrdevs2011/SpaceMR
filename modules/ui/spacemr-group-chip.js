@@ -1,5 +1,5 @@
-/* SpaceMR Group tugmasi: mobil header + desktop chap panel.
-   Guruh avatari (username = 'spacemr') doira ichida, yonida "SpaceMR Group" yozuvi; bosilsa guruh chati ochiladi. */
+/* SpaceMR Guruhi tugmasi: mobil header + desktop chap panel.
+   Guruh avatari (username = 'spacemr') doira ichida, yonida "SpaceMR Guruhi" yozuvi; bosilsa guruh chati ochiladi. */
 import { sb } from '../core/config.js';
 
 const USERNAME = 'spacemr';

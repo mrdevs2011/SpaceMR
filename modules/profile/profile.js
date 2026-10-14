@@ -470,7 +470,7 @@ export async function renderUserProfileModal(uid) {
       <div class="up-avi" id="upAviImg" title="Rasmni ko'rish"><img class="w-full h-full object-cover" src="${esc(av)}" alt="" onerror="this.src='${defAvi(ud.fullName || 'U')}'"></div>
       <button type="button" id="upChatBtn" class="up-chat-btn">
         <img src="./svg/extra/icon-ea9c18b62f47.svg" alt="" class="icon" width="18" height="18">
-        Chat yozish
+        Suhbat yozish
       </button>
     </div>
     <div class="up-info">

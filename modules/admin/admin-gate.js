@@ -19,7 +19,7 @@ function build({ title, sub, okLabel, danger }) {
     <form class="adm-gate-card" novalidate>
       <div class="adm-gate-title"></div>
       <div class="adm-gate-sub"></div>
-      <input class="field" type="password" name="p" placeholder="Admin paroli" autocomplete="current-password">
+      <input class="field" type="password" name="p" placeholder="Boshqaruvchi paroli" autocomplete="current-password">
       <div class="adm-gate-err" aria-live="polite"></div>
       <div class="adm-gate-actions">
         <button type="button" class="adm-gate-btn adm-gate-cancel">Bekor qilish</button>
@@ -38,7 +38,7 @@ function build({ title, sub, okLabel, danger }) {
  * Admin parolini so'raydi (username joriy profildan olinadi) va serverda tekshiradi.
  * @returns {Promise<string|null>} to'g'ri parol (keyingi RPC uchun) yoki null (bekor qilindi)
  */
-export function askAdmin({ title = 'Admin paneli', sub = 'Davom etish uchun admin parolini kiriting.', okLabel = 'Kirish', danger = false } = {}) {
+export function askAdmin({ title = 'Boshqaruv paneli', sub = 'Davom etish uchun boshqaruvchi parolini kiriting.', okLabel = 'Kirish', danger = false } = {}) {
   if (_open) _open.cancel();
   return new Promise(resolve => {
     const el = build({ title, sub, okLabel, danger });
