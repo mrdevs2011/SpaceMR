@@ -735,7 +735,7 @@ function onRunnerClick(e) {
     /* Faqat SpaceMR dagi ilova nomi (afName) — HTML <title> emas */
     const app = apps.find(x => x.id === runnerId);
     const rawName = (runnerName || app?.name || app?.slug || 'app').trim() || 'app';
-    const safe = rawName.replace(/[\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80) || 'app';
+    const safe = rawName.replace(/[\/:*?"<>|]+/g, '-').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'app';
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
