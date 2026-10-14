@@ -3003,17 +3003,22 @@ function _updatePostCardsInDOM() {
       const content = card.querySelector('.cpc-content');
       if (content) {
         content.classList.add('is-deleted');
-        content.onclick = (e) => {
-          e.stopPropagation();
-          toast("Bu post o'chirilgan", 'error');
-        };
+        content.onclick = null;
+        content.removeAttribute('onclick');
       }
     }
 
     if (isUserDeleted) {
       card.classList.add('user-deleted');
       const avi = card.querySelector('.cpc-avi');
-      if (avi) avi.classList.add('is-deleted');
+      if (avi) {
+        avi.classList.add('is-deleted');
+        avi.classList.remove('cpc-avi-link');
+        avi.removeAttribute('data-uid');
+        avi.removeAttribute('role');
+        avi.removeAttribute('tabindex');
+        avi.removeAttribute('title');
+      }
       const authorName = card.querySelector('.cpc-author-name');
       if (authorName && !authorName.querySelector('.cpc-del-tag')) {
         authorName.classList.add('is-deleted');
@@ -3021,6 +3026,22 @@ function _updatePostCardsInDOM() {
       }
       const authorHandle = card.querySelector('.cpc-author-handle');
       if (authorHandle) authorHandle.classList.add('is-deleted');
+      /* User o'chirilgan — media interaktiv emas, post ochilmasin */
+      const media = card.querySelector('.cpc-media');
+      if (media) {
+        media.classList.add('is-deleted');
+        media.removeAttribute('data-cpc-kind');
+        const vid = media.querySelector('video');
+        if (vid) { vid.removeAttribute('controls'); vid.pause?.(); }
+        const im = media.querySelector('img');
+        if (im) im.style.visibility = 'hidden';
+      }
+      const btn = card.querySelector('.cpc-open-btn');
+      if (btn && !btn.classList.contains('is-deleted')) {
+        btn.classList.add('is-deleted');
+        btn.innerHTML = `<span>Post mavjud emas</span>`;
+        btn.onclick = (e) => { e.stopPropagation(); toast("Bu foydalanuvchi o'chirilgan", 'error'); };
+      }
     }
   });
   if (_wasBottom && _box) _box.scrollTop = _box.scrollHeight;
@@ -3092,13 +3113,15 @@ async function _hydrateChatPostCards(root) {
         mediaWrap.innerHTML = _cpcFileInner(_hn, mt, data.file_size || 0, url);
       } else if (_hk === 'video') {
         mediaWrap.className = 'cpc-media cpc-media-video';
-        mediaWrap.innerHTML = `<video src="${esc(url)}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>`;
+        mediaWrap.setAttribute('data-cpc-kind', 'video');
+        mediaWrap.innerHTML = `<video src="${esc(url)}" controls playsinline preload="metadata" controlslist="nodownload noremoteplayback" disablePictureInPicture></video>`;
       } else if (_hk === 'audio') {
         mediaWrap.className = 'cpc-media cpc-media-audio';
         mediaWrap.innerHTML = `<audio src="${esc(url)}" controls preload="metadata" controlslist="nodownload"></audio>`;
       } else {
         mediaWrap.className = 'cpc-media';
-        mediaWrap.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy">`;
+        mediaWrap.setAttribute('data-cpc-kind', 'image');
+        mediaWrap.innerHTML = `<img src="${esc(url)}" alt="" loading="lazy" class="cpc-img">`;
       }
       card.dataset.cpcHydrated = '1';
     } catch (e) {
@@ -3217,8 +3240,8 @@ export function renderChatPostCard(ps) {
     const isFile = _kind === 'file';
     if (isVid && mediaUrl) {
       mediaHtml = `
-      <div class="cpc-media cpc-media-video" data-cpc-media="1">
-        <video src="${safeUrl}" playsinline muted preload="metadata" controlslist="nodownload nofullscreen noremoteplayback" disablePictureInPicture></video>
+      <div class="cpc-media cpc-media-video" data-cpc-media="1" data-cpc-kind="video">
+        <video src="${safeUrl}" controls playsinline preload="metadata" controlslist="nodownload noremoteplayback" disablePictureInPicture></video>
       </div>`;
     } else if (isAud && mediaUrl) {
       mediaHtml = `
@@ -3229,8 +3252,8 @@ export function renderChatPostCard(ps) {
       mediaHtml = `<div class="cpc-file" data-cpc-media="1" data-cpc-file="1"${_cpcFvAttrs(mediaUrl, _fname, mediaType, p.fileSize)}>${_cpcFileInner(_fname, mediaType, p.fileSize, mediaUrl)}</div>`;
     } else if (mediaUrl) {
       mediaHtml = `
-      <div class="cpc-media" data-cpc-media="1">
-        <img src="${safeUrl}" alt="" loading="lazy" onerror="this.closest('[data-cpc-media]')?.setAttribute('data-need-hydrate','1')">
+      <div class="cpc-media" data-cpc-media="1" data-cpc-kind="image">
+        <img src="${safeUrl}" alt="" loading="lazy" class="cpc-img" onerror="this.closest('[data-cpc-media]')?.setAttribute('data-need-hydrate','1')">
       </div>`;
     } else {
       // URL yo'q — hydrate qilamiz
@@ -3264,9 +3287,11 @@ export function renderChatPostCard(ps) {
     isUserDeleted ? 'user-deleted' : ''
   ].filter(Boolean).join(' ');
 
-  const contentOnClick = isPostDeleted
-    ? `toast('Bu post o\\'chirilgan', 'error')`
-    : `window._openPostFromChat && window._openPostFromChat('${postId}')`;
+  // Media bosilganda post ochilmasin — faqat "Postni ko'rish" tugmasi
+  // Profil: avi orqali; user o'chirilgan bo'lsa avi bosilmaydi
+  const aviAttrs = isUserDeleted
+    ? ' class="cpc-avi is-deleted"'
+    : ` class="cpc-avi cpc-avi-link" data-uid="${userId}" role="button" tabindex="0" title="Profil"`;
 
   return `
     <div class="${cardClasses}" data-post-id="${postId}" data-user-id="${userId}">
@@ -3276,9 +3301,9 @@ export function renderChatPostCard(ps) {
           <span>${badgeTitle}</span>
         </div>
       </div>
-      <div class="cpc-content${isPostDeleted ? ' is-deleted' : ''}" onclick="${contentOnClick}">
+      <div class="cpc-content${isPostDeleted ? ' is-deleted' : ''}">
         <div class="cpc-author-row">
-          <div class="cpc-avi${isUserDeleted ? ' is-deleted' : ''}"${authorAvi ? '' : ' data-need-avi="1"'}>
+          <div${aviAttrs}${authorAvi ? '' : ' data-need-avi="1"'}>
             <div class="cpc-avi-placeholder">${esc((p.authorName || 'F').trim().charAt(0).toUpperCase() || 'F')}</div>
             ${authorAvi ? `<img src="${esc(authorAvi)}" alt="" onerror="var a=this.parentNode;this.remove();a&&a.setAttribute('data-need-avi','1');window._cpcAviFix&&window._cpcAviFix()">` : ''}
           </div>

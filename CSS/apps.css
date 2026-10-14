@@ -577,3 +577,6 @@ html #confirmOverlay { z-index: 1800; }
   .rr-apps-card { border-radius: 0; }
   .rr-rnd { align-items: flex-start; }
 }
+
+/* Apps form: drag-drop HTML */
+.apf.apf-drop, .apf-ta.apf-drop { outline: 2px dashed var(--x-blue, #1d9bf0); outline-offset: 2px; background: rgba(29,155,240,0.06) !important; }

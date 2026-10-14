@@ -2617,12 +2617,12 @@ body #toast {
   background: rgba(231, 233, 234, 0.05);
   border: 1px solid rgba(231, 233, 234, 0.1);
   border-radius: var(--radius);
-  cursor: pointer;
+  cursor: default;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .cpc-content:hover {
   background: rgba(231, 233, 234, 0.05);
-  border-color: rgba(231, 233, 234, 0.5);
+  border-color: rgba(231, 233, 234, 0.1);
 }
 .cpc-author-row {
   display: flex;
@@ -9176,7 +9176,22 @@ img[src*="/group-avatars/"] { background-color: #000 !important; }
 .chat-post-card .cpc-media video {
   object-fit: contain;
   max-height: 240px;
-  pointer-events: none; /* slider/nav yo'q — faqat preview */
+  pointer-events: auto; /* joyida play — oddiy video kabi */
+}
+.chat-post-card .cpc-media[data-cpc-kind="image"] {
+  cursor: zoom-in;
+}
+.chat-post-card .cpc-avi-link {
+  cursor: pointer;
+}
+.chat-post-card .cpc-avi-link:hover {
+  opacity: 0.92;
+}
+.chat-post-card .cpc-content {
+  cursor: default;
+}
+.chat-post-card .cpc-content:hover {
+  /* butun kartaga hover bosiladigan emas — faqat tugma/media */
 }
 .chat-post-card .cpc-media-audio {
   padding: 10px 12px;

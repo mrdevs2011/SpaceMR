@@ -58,7 +58,7 @@ function rowAtPoint(target, y) {
   return bd <= 3 ? best : null;
 }
 // Mobilda bitta bosish menyu ochadi — lekin bu elementlar o'z ishini qiladi (play, havola, rasm, avatar)
-const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote';
+const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote, .cpc-media, .cpc-avi-link, .cpc-open-btn';
 const coarse = () => window.matchMedia('(pointer: coarse)').matches;
 const pad = n => String(n).padStart(2, '0');
 

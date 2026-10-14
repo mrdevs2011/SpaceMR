@@ -231,19 +231,36 @@ async function openRunner(a, c) {
 
 /* ── Formalar ───────────────────────────────────────────────────────── */
 
-/** Paste/save: faqat HTML qabul qilinadi. */
+/** HTML yoki HTML parcha (fragment) — to\'liq hujjat shart emas. */
 function isHtmlCode(src) {
   const s = String(src || '').trim();
   if (!s) return false;
-  const head = s.slice(0, 500);
-  // JS / module / JSON / pure CSS — HTML tegsiz
-  if (/^(import\s|export\s|const\s|let\s|var\s|function\s|class\s)/i.test(head) && !/<[a-z!\/]/i.test(head)) return false;
+  const head = s.slice(0, 800);
+  // Aniq JS / module / JSON / pure CSS — HTML tegsiz
+  if (/^(import\s|export\s|const\s|let\s|var\s|function\s|class\s|async\s+function)/i.test(head) && !/<[a-z!\/]/i.test(head)) return false;
   if (/^(\{[\s\S]*\}|\[[\s\S]*\])\s*$/.test(s) && !/<[a-z]/i.test(s)) return false;
-  if (/^(body\s*\{|:root\s*\{|\*[\s{])/i.test(head) && (s.match(/\{/g) || []).length > 2 && !/<[a-z]/i.test(s)) return false;
+  if (/^(body\s*\{|:root\s*\{|\*[\s{]|@media\b)/i.test(head) && (s.match(/\{/g) || []).length > 2 && !/<[a-z]/i.test(s)) return false;
   if (/<!doctype\s+html\b/i.test(s)) return true;
-  if (/<\s*(html|head|body|div|span|p|a|script|style|section|main|header|footer|nav|ul|ol|li|table|form|input|button|img|h[1-6]|meta|link|title|canvas|svg|template|iframe)\b/i.test(s)) return true;
-  if (/<\s*[a-z][\w:-]*(\s[^>]*)?\s*>/i.test(s) && /<\//.test(s)) return true;
+  if (/<\s*html\b/i.test(s)) return true;
+  // Fragment: bitta ochuvchi teg yetarli
+  if (/<\s*[a-z!?][\w:-]*/i.test(s)) return true;
   return false;
+}
+
+const MAX_APP_HTML = 5000000;
+
+async function readHtmlFile(file) {
+  if (!file) return null;
+  const name = String(file.name || '').toLowerCase();
+  const type = String(file.type || '').toLowerCase();
+  const looksHtml = type.includes('html') || type === 'text/plain' || /\.(html?|htm|xhtml|txt)$/i.test(name) || !name;
+  if (!looksHtml && type && !type.startsWith('text/')) {
+    throw new Error('Faqat HTML / matn fayl qabul qilinadi');
+  }
+  if (file.size > MAX_APP_HTML) throw new Error("HTML 5 MB dan kichik bo'lsin");
+  const txt = await file.text();
+  if (!isHtmlCode(txt)) throw new Error("Fayl HTML emas yoki bo'sh — rad etildi");
+  return txt;
 }
 
 const slugify = s => String(s || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^[-_]+|[-_]+$/g, '').slice(0, 30);
@@ -374,7 +391,7 @@ async function openAppForm(editId, presetCat) {
           </div>
         </div>
       </div>
-      <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Bitta fayl (CSS/JS ichida), ≤ 5 MB</span></span></div>
+      <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Fayl / drag-drop / Ctrl+V · HTML yoki fragment, ≤ 5 MB</span></span></div>
     <div class="apf-hint bad" id="afErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
   </div>`;
@@ -442,37 +459,79 @@ async function openAppForm(editId, presetCat) {
     ta.selectionStart = ta.selectionEnd = s + 2;
     paintCode();
   });
-  /* Paste: darhol analyze — HTML bo'lmasa rad */
-  ta.addEventListener('paste', e => {
+  const applyHtml = (txt) => {
+    ta.value = txt;
+    paintNow();
+    setErr('');
+    refreshLogo();
+    if (!nameI.value.trim()) {
+      const t = /<title[^>]*>([^<]{1,80})/i.exec(txt);
+      if (t) { nameI.value = t[1].trim(); nameI.dispatchEvent(new Event('input')); }
+    }
+  };
+
+  /* Paste: matn yoki fayl (Ctrl+V) */
+  ta.addEventListener('paste', async e => {
+    const files = e.clipboardData?.files;
+    if (files && files.length) {
+      e.preventDefault();
+      try {
+        const txt = await readHtmlFile(files[0]);
+        applyHtml(txt);
+      } catch (err) {
+        setErr(err.message || 'Faylni o\'qib bo\'lmadi');
+      }
+      return;
+    }
     const clip = e.clipboardData?.getData('text/plain') ?? '';
     if (!clip.trim()) return;
     if (!isHtmlCode(clip)) {
       e.preventDefault();
-      setErr("Bu HTML kod emas — faqat HTML qabul qilinadi");
+      setErr('Bu HTML emas (JS/CSS/JSON matni) — HTML yoki HTML parcha kerak');
       return;
     }
     setErr('');
-    // paste odatdagidek, keyin qayta tekshir
-    setTimeout(() => {
-      if (!isHtmlCode(ta.value)) {
-        setErr("Bu HTML kod emas — rad etildi");
-      } else {
-        setErr('');
-        paintCode();
-        schedLogo();
-      }
-    }, 0);
+    setTimeout(() => { paintCode(); schedLogo(); }, 0);
   });
+
+  /* Drag & drop HTML fayl (codebox yoki butun forma) */
+  const dropTargets = [ta, ta.closest('.apf') || ov].filter(Boolean);
+  dropTargets.forEach(el => {
+    if (el._ddBound) return; el._ddBound = true;
+    el.addEventListener('dragover', e => {
+      if (![...e.dataTransfer.types].includes('Files')) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      el.classList.add('apf-drop');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('apf-drop'));
+    el.addEventListener('drop', async e => {
+      el.classList.remove('apf-drop');
+      const f = e.dataTransfer?.files?.[0];
+      if (!f) return;
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const txt = await readHtmlFile(f);
+        applyHtml(txt);
+      } catch (err) {
+        setErr(err.message || 'Faylni o\'qib bo\'lmadi');
+      }
+    });
+  });
+
   paintNow();
-$('afHtml').addEventListener('input', schedLogo);
+  $('afHtml').addEventListener('input', schedLogo);
   nameI.addEventListener('input', () => { schedLogo(); codeTitle(); });
   $('afHtmlFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
-    if (f.size > 5000000) { setErr('HTML 5 MB dan kichik bo\'lsin'); e.target.value = ''; return; }
-    const txt = await f.text();
-    if (!isHtmlCode(txt)) { setErr("Fayl HTML emas — rad etildi"); e.target.value = ''; return; }
-    $('afHtml').value = txt; paintNow(); setErr(''); refreshLogo();
-    if (!nameI.value.trim()) { const t = /<title[^>]*>([^<]{1,40})/i.exec($('afHtml').value); if (t) { nameI.value = t[1].trim(); nameI.dispatchEvent(new Event('input')); } }
+    try {
+      const txt = await readHtmlFile(f);
+      applyHtml(txt);
+    } catch (err) {
+      setErr(err.message || 'Fayl HTML emas');
+      e.target.value = '';
+    }
   });
 
   /* Ctrl/Cmd+S: hammasi to'liq bo'lsa saqlaydi va yopadi (description ixtiyoriy) */
@@ -493,8 +552,8 @@ $('afHtml').addEventListener('input', schedLogo);
     if (!name) return setErr('Nomini yozing');
     if (!a && !slugHint(hint, slug, null)) return setErr('Unikal nomni to\'g\'rilang');
     if (!html.trim()) return setErr('HTML kodni kiriting');
-    if (!isHtmlCode(html)) return setErr('Bu HTML kod emas — faqat HTML qabul qilinadi');
-    if (new Blob([html]).size > 5000000) return setErr('HTML 5 MB dan oshmasin');
+    if (!isHtmlCode(html)) return setErr('Bu HTML emas (JS/CSS/JSON) — HTML yoki HTML parcha kerak');
+    if (new Blob([html]).size > MAX_APP_HTML) return setErr('HTML 5 MB dan oshmasin');
     const btn = $('afSave'); btn.disabled = true; setErr('');
     /* Logo: koddan; topilmasa va kod o\'zgarmagan bo\'lsa eskisi qoladi */
     const found = await extractLogo(html, name);
