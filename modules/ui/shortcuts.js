@@ -11,11 +11,11 @@
  *  H              — Bosh sahifa
  *  C              — Suhbatlar
  *  P              — Profil
- *  Ctrl/Cmd+K     — Qidiruv
- *  Ctrl/Cmd+,     — Sozlamalar
- *  Ctrl/Cmd+1…8 — Home / Explore / Notifs / Chats / Apps / Saved / Profil / Group
- *  Ctrl/Cmd+9 — Post upload
- *  Ctrl/Cmd+Shift+9 — Story upload
+ *  K              — Qidiruv
+ *  ,              — Sozlamalar
+ *  1…8            — Home / Explore / Notifs / Chats / Apps / Saved / Profil / Group
+ *  9              — Post upload
+ *  Shift+9        — Story upload
  *  Delete         — tanlangan o'z xabarlarini o'chirish (chat)
  */
 import { $, unlockScroll } from '../core/utils.js';
@@ -103,32 +103,84 @@ document.addEventListener('keydown', e => {
   // Mobil / tablet — navigatsiya shortcutlari o'chirilgan
   if (!navShortcutsOn()) return;
 
-  // Ctrl/Cmd navigatsiya — input fokusida HAM ishlaydi (aks holda Ctrl+2 → qidiruv
-  // fokuslanadi va Ctrl+3/4… bloklanadi). Ctrl+A/C/V/X/Z kabi tahrir shortcutlari
-  // faqat o'ziga tegishli — ularga tegmaymiz.
+  // Navigatsiya: Ctrl/Cmd KERAK EMAS — 1..9, K, ,, H, C, P, N, /
+  // Input/textarea ichida ishlamaydi. Brauzer Ctrl+A/C/V saqlanadi.
   const mod = e.ctrlKey || e.metaKey;
   if (e.altKey) return;
   if (!state.me?.uid) return;
 
-  // Ctrl/Cmd shortcutlar — bir marta, mustaqil (e.repeat yo'q)
-  if (mod) {
-    if (e.repeat) return;
-    // Brauzer tahrir shortcutlari — inputda o'tkazib yuboramiz
-    const kl0 = (e.key || '').toLowerCase();
-    if (isTyping(e.target) && ['a','c','v','x','z','y','r','f','p','s','u','i','b'].includes(kl0) && !/^Digit/.test(e.code||'')) {
-      return;
+  // Ctrl/Cmd bosilganda navigatsiya shortcutlari ishlamaydi (brauzerga qoldiramiz)
+  if (mod) return;
+
+  if (isTyping(e.target)) return;
+  if (e.repeat) return;
+  if (anyOpen()) return;
+
+  const k = e.key;
+  const kl = (k || '').toLowerCase();
+  const codeDigit = /^Digit([0-9])$/.exec(e.code || '');
+  const digit = codeDigit ? codeDigit[1]
+    : (k === '0' || k === ')') ? '0'
+    : (k >= '1' && k <= '9') ? k
+    : null;
+
+  const stop = () => { e.preventDefault(); e.stopPropagation(); };
+  const path = (p) => import('../url-router.js').then(m => m.applyPath(p)).catch(() => {});
+
+  if (kl === 'k') {
+    stop();
+    path('/explore');
+    return;
+  }
+  if (k === ',') {
+    stop();
+    const s = $('settingsBtn') || $('rrSettingsBtn');
+    if (s) s.click();
+    return;
+  }
+
+  if (digit !== null) {
+    stop();
+    switch (digit) {
+      case '1': path('/home'); break;
+      case '2': path('/explore'); break;
+      case '3': path('/notifications'); break;
+      case '4': path('/chats'); break;
+      case '5': path('/apps'); break;
+      case '6': path('/saved'); break;
+      case '7': path('/profile'); break;
+      case '8': path('/chats/g/spacemr'); break;
+      case '9':
+        if (e.shiftKey) {
+          import('../feed/upload.js').then(m => m.openStoryComposer?.()).catch(() => {});
+        } else {
+          import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {});
+        }
+        break;
+      default: break;
     }
+    return;
+  }
 
-    const k = e.key;
-    const kl = (k || '').toLowerCase();
-    const codeDigit = /^Digit([0-9])$/.exec(e.code || '');
-    const digit = codeDigit ? codeDigit[1]
-      : (k === '0' || k === ')') ? '0'
-      : (k >= '1' && k <= '9') ? k
-      : null;
-
-    const stop = () => { e.preventDefault(); e.stopPropagation(); };
-    const path = (p) => import('../url-router.js').then(m => m.applyPath(p)).catch(() => {});
+  if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {
+      ($('createBtn') || $('hdrNewPostBtn'))?.click();
+    });
+  } else if (e.key === '/') {
+    e.preventDefault();
+    import('../url-router.js').then(m => m.applyPath('/explore')).catch(() => {});
+  } else if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    import('../url-router.js').then(m => m.applyPath('/chats')).catch(() => {});
+  } else if (e.key === 'h' || e.key === 'H') {
+    e.preventDefault();
+    import('../url-router.js').then(m => m.applyPath('/home')).catch(() => {});
+  } else if (e.key === 'p' || e.key === 'P') {
+    e.preventDefault();
+    import('../url-router.js').then(m => m.applyPath('/profile')).catch(() => {});
+  }
+});
     const go = (route) => import('../router.js').then(m => m.navigateTo(route)).catch(() => {});
 
     if (kl === 'k') {
