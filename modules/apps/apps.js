@@ -391,7 +391,14 @@ async function openAppForm(editId, presetCat) {
           </div>
         </div>
       </div>
-      <span class="apf-row"><input id="afHtmlFile" type="file" accept=".html,.htm,text/html"><span class="apf-hint">Fayl / drag-drop / Ctrl+V · HTML yoki fragment, ≤ 5 MB</span></span></div>
+      <div class="apf-upload">
+        <input id="afHtmlFile" type="file" accept=".html,.htm,.xhtml,.txt,text/html,text/plain" hidden>
+        <button type="button" class="aps-btn apf-upload-btn" id="afHtmlFileBtn" data-f="pick-html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 16V8m0 0l-3 3m3-3l3 3"/><path d="M4 16.5V18a2 2 0 002 2h12a2 2 0 002-2v-1.5"/></svg>
+          <span>Fayl yuklash</span>
+        </button>
+        <span class="apf-hint" id="afHtmlFileName">HTML / .htm / .txt · ≤ 5 MB · telefon: shu tugma</span>
+      </div></div>
     <div class="apf-hint bad" id="afErr"></div>
     <div class="apf-actions"><button type="button" class="aps-btn ghost" data-f="close">Bekor</button><button type="button" class="aps-btn" data-f="save" id="afSave">${a ? 'Saqlash' : 'Qo\'shish'}</button></div>
   </div>`;
@@ -523,14 +530,25 @@ async function openAppForm(editId, presetCat) {
   paintNow();
   $('afHtml').addEventListener('input', schedLogo);
   nameI.addEventListener('input', () => { schedLogo(); codeTitle(); });
-  $('afHtmlFile').addEventListener('change', async e => {
+  const fileBtn = $('afHtmlFileBtn');
+  const fileInp = $('afHtmlFile');
+  const fileNameEl = $('afHtmlFileName');
+  fileBtn?.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileInp?.click();
+  });
+  /* data-f=pick-html ham (overlay click delegatsiyasi) */
+  fileInp?.addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     try {
       const txt = await readHtmlFile(f);
       applyHtml(txt);
+      if (fileNameEl) fileNameEl.textContent = f.name + ' · yuklandi';
     } catch (err) {
       setErr(err.message || 'Fayl HTML emas');
       e.target.value = '';
+      if (fileNameEl) fileNameEl.textContent = 'HTML / .htm / .txt · ≤ 5 MB · telefon: shu tugma';
     }
   });
 
@@ -546,6 +564,7 @@ async function openAppForm(editId, presetCat) {
     if (e.target === ov) return closeForm('appFormOverlay');
     const f = e.target.closest('[data-f]')?.dataset.f; if (!f) return;
     if (f === 'close') return closeForm('appFormOverlay');
+    if (f === 'pick-html') return;
     if (f === 'new-cat') return openCatForm(null, false, id => { const s = $('afCat'); if (s) { s.innerHTML = catOptions(id); } });
     if (f !== 'save') return;
     const name = nameI.value.trim(), slug = slugI.value.trim(), desc = $('afDesc').value.trim(), html = $('afHtml').value, category_id = $('afCat').value;

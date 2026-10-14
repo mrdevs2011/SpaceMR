@@ -580,3 +580,28 @@ html #confirmOverlay { z-index: 1800; }
 
 /* Apps form: drag-drop HTML */
 .apf.apf-drop, .apf-ta.apf-drop { outline: 2px dashed var(--x-blue, #1d9bf0); outline-offset: 2px; background: rgba(29,155,240,0.06) !important; }
+
+/* Apps: mobile-friendly file upload button */
+.apf-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.apf-upload-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px !important;
+  touch-action: manipulation;
+}
+.apf-upload .apf-hint {
+  flex: 1;
+  min-width: 140px;
+}
+@media (max-width: 520px) {
+  .apf-upload { flex-direction: column; align-items: stretch; }
+  .apf-upload-btn { width: 100%; justify-content: center; }
+}
