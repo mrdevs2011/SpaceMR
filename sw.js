@@ -117,7 +117,7 @@ self.addEventListener('notificationclick', (event) => {
 
 /* ── Cache versiyasi ── */
 // Deploy da scripts/bump-sw.mjs yoki build-sw.mjs oshiradi.
-const CACHE_VERSION  = 't-1791560000001'; /* BUILD_VERSION_LINE */
+const CACHE_VERSION  = 't-1792030765357'; /* BUILD_VERSION_LINE */
 const STATIC_CACHE   = `spacemr-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE  = `spacemr-runtime-${CACHE_VERSION}`;
 const EMOJI_CACHE    = 'spacemr-emoji-v1';
