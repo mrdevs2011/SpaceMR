@@ -368,7 +368,7 @@ nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg , nav
 @media (min-width: 1100px) {
   :root { --sidebar: 220px; --content-left: 220px; }
   nav.bot-nav { box-sizing: border-box; gap: 0; width: var(--sidebar); min-width: 200px; }
-  nav.bot-nav .sb-logo-row { width: 50px; height: 50px; }
+  nav.bot-nav .sb-logo-row { width: auto; height: auto; min-height: 50px; }
   nav.bot-nav .sb-logo-img { width: 30px; height: 30px; }
   nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { height: 50px; padding: 0 12px 0 10px; gap: 14px; border-radius: 999px; min-width: 0; }
   nav.bot-nav .nav-btn svg, nav.bot-nav .sb-search-toggle svg ,   nav.bot-nav .nav-btn img.icon, nav.bot-nav .sb-search-toggle img.icon { width: 24px; height: 24px; flex-shrink: 0; }
@@ -1938,42 +1938,46 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   }
 }
 
-/* O'rta desktop: tor icon-rail (X kabi ~88px) — label yashirin, brend faqat logo */
+/* O'rta desktop: to'liq yozuvlar bilan sidebar */
 @media (min-width: 1100px) and (max-width: 1259px) {
   :root {
-    --sidebar: 88px;
-    --content-left: 88px;
+    --sidebar: 240px;
+    --content-left: 240px;
   }
   nav.bot-nav { box-sizing: border-box;
-    width: 88px;
-    padding: 4px 8px 12px;
-    align-items: center;
+    width: 240px;
+    min-width: 220px;
+    padding: 4px 12px 12px;
+    align-items: stretch;
   }
   nav.bot-nav .sb-brand-text,
   nav.bot-nav .nav-btn .nav-label,
   nav.bot-nav .sb-acc-meta,
-  nav.bot-nav .sb-acc-dots,
   nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
-    display: none !important;
+    display: block !important;
+    white-space: nowrap;
+    overflow: visible;
   }
   nav.bot-nav .sb-logo-row {
-    width: 50px;
-    height: 50px;
-    padding: 0;
-    justify-content: center;
+    width: auto;
+    height: auto;
+    min-height: 50px;
+    padding: 4px 12px 4px 4px;
+    justify-content: flex-start;
   }
   nav.bot-nav .nav-btn,
   nav.bot-nav .sb-search-toggle {
-    width: 50px;
-    padding: 0;
-    justify-content: center;
-    align-self: center;
+    width: auto;
+    min-width: 0;
+    padding: 0 14px 0 10px;
+    justify-content: flex-start;
+    align-self: stretch;
   }
   nav.bot-nav #createBtn.nav-center-btn {
-    width: 50px;
+    width: auto;
     height: 50px;
-    margin: 12px auto 4px;
-    padding: 0;
+    margin: 12px 0 4px;
+    padding: 0 16px;
   }
   nav.bot-nav #createBtn.nav-center-btn svg ,   nav.bot-nav #createBtn.nav-center-btn img.icon {
     display: block;
