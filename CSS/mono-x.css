@@ -127,7 +127,7 @@ a { color: var(--link); }
 }
 /* Keng ekran (≥1260px): sidebar + markaz + o'ng ustun, butun guruh markazda */
 @media (min-width: 1260px) {
-  :root { --gutter: max(0px, calc((100vw - 1226px) / 2)); --sidebar: calc(260px + var(--gutter)); --content-left: var(--sidebar); }
+  :root { --gutter: max(0px, calc((100vw - 1266px) / 2)); --sidebar: calc(300px + var(--gutter)); --content-left: var(--sidebar); }
   nav.bot-nav { box-sizing: border-box; padding-left: calc(12px + var(--gutter)); }
   .feed, #followingView .feed { margin: 0; }
 }
