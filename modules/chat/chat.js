@@ -2330,8 +2330,10 @@ async function _loadOlderMessages(box) {
   const cur = chatState._curMsgs || [];
   if (!cur.length) return;
   const oldest = cur[0];
-  const before = oldest?.createdAt;
-  if (!before) return;
+  const beforeMs = oldest?.createdAt;
+  if (!beforeMs) return;
+  // createdAt epoch-ms, created_at esa timestamptz — ISO ga aylantiramiz
+  const before = new Date(beforeMs).toISOString();
 
   chatState._loadingOlder = true;
   chatState._olderCooldown = now + 400;
