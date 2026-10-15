@@ -991,7 +991,7 @@ nav.bot-nav .nav-btn .nav-label { display: none; }
 /* Keng sidebar (≥1100px) */
 @media (min-width: 1100px) {
   :root { --sidebar: 260px; --content-left: 260px; }
-  nav.bot-nav { width: 260px !important; min-width: 240px !important; align-items: stretch; padding: 8px 12px 12px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  nav.bot-nav { width: 300px !important; min-width: 280px !important; align-items: stretch; padding: 8px 12px 12px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
   nav.bot-nav::-webkit-scrollbar { display: none; }
   nav.bot-nav .sb-top { align-items: flex-start; padding: 0 0 4px 4px; margin: 0; border: none; }
   nav.bot-nav .sb-logo-row { padding: 0 12px 0 4px; gap: 10px; justify-content: flex-start; }

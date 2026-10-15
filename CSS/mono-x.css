@@ -366,13 +366,13 @@ nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg , nav
 }
 /* Keng sidebar (>=1100px) */
 @media (min-width: 1100px) {
-  :root { --sidebar: 220px; --content-left: 220px; }
-  nav.bot-nav { box-sizing: border-box; gap: 0; width: var(--sidebar); min-width: 200px; }
+  :root { --sidebar: 300px; --content-left: 300px; }
+  nav.bot-nav { box-sizing: border-box; gap: 0; width: 300px !important; min-width: 280px !important; }
   nav.bot-nav .sb-logo-row { width: auto; height: auto; min-height: 50px; }
   nav.bot-nav .sb-logo-img { width: 30px; height: 30px; }
   nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { height: 50px; padding: 0 12px 0 10px; gap: 14px; border-radius: 999px; min-width: 0; }
   nav.bot-nav .nav-btn svg, nav.bot-nav .sb-search-toggle svg ,   nav.bot-nav .nav-btn img.icon, nav.bot-nav .sb-search-toggle img.icon { width: 24px; height: 24px; flex-shrink: 0; }
-  nav.bot-nav .nav-btn .nav-label { font-family: var(--font); font-size: 17px; line-height: 22px; font-weight: 400; letter-spacing: 0; white-space: nowrap; overflow: visible; text-overflow: clip; flex-shrink: 0; }
+  nav.bot-nav .nav-btn .nav-label { font-family: var(--font); font-size: 16px; line-height: 20px; font-weight: 400; letter-spacing: 0; white-space: nowrap; overflow: visible; text-overflow: clip; flex-shrink: 0; }
   nav.bot-nav .nav-btn.on .nav-label, nav.bot-nav #sbSearchToggle.search-active .nav-label { font-weight: 700; }
   nav.bot-nav .nav-btn:hover { background: var(--bg4); }
   nav.bot-nav #createBtn.nav-center-btn { height: 52px; margin: 16px 0; }
@@ -1122,7 +1122,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 .chat-msg-edited { font-size: 11px; opacity: .6; margin-right: 4px; }
 
-#msgCtx { position: fixed; z-index: 600; display: none; min-width: 220px; max-width: calc(100vw - 16px); padding: 6px; border-radius: var(--radius); background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#msgCtx { position: fixed; z-index: 600; display: none; min-width: 280px; max-width: calc(100vw - 16px); padding: 6px; border-radius: var(--radius); background: #000000; border: 1px solid rgba(231, 233, 234, 0.1); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8); -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
 #msgCtx.show { display: block; animation: mcPop .14s ease-out; }
 @keyframes mcPop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
 #msgCtx .mc-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: var(--radius); background: none; color: var(--text, #e7e9ea); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
@@ -1941,11 +1941,11 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 /* O'rta desktop: to'liq yozuvlar bilan sidebar */
 @media (min-width: 1100px) and (max-width: 1259px) {
   :root {
-    --sidebar: 240px;
-    --content-left: 240px;
+    --sidebar: 300px;
+    --content-left: 300px;
   }
   nav.bot-nav { box-sizing: border-box;
-    width: 240px;
+    width: 300px;
     min-width: 220px;
     padding: 4px 12px 12px;
     align-items: stretch;
