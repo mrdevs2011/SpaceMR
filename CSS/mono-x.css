@@ -372,7 +372,7 @@ nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg , nav
   nav.bot-nav .sb-logo-img { width: 30px; height: 30px; }
   nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { height: 50px; padding: 0 12px 0 10px; gap: 14px; border-radius: 999px; min-width: 0; }
   nav.bot-nav .nav-btn svg, nav.bot-nav .sb-search-toggle svg ,   nav.bot-nav .nav-btn img.icon, nav.bot-nav .sb-search-toggle img.icon { width: 24px; height: 24px; flex-shrink: 0; }
-  nav.bot-nav .nav-btn .nav-label { font-family: var(--font); font-size: 17px; line-height: 22px; font-weight: 400; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  nav.bot-nav .nav-btn .nav-label { font-family: var(--font); font-size: 17px; line-height: 22px; font-weight: 400; letter-spacing: 0; white-space: nowrap; overflow: visible; text-overflow: clip; flex-shrink: 0; }
   nav.bot-nav .nav-btn.on .nav-label, nav.bot-nav #sbSearchToggle.search-active .nav-label { font-weight: 700; }
   nav.bot-nav .nav-btn:hover { background: var(--bg4); }
   nav.bot-nav #createBtn.nav-center-btn { height: 52px; margin: 16px 0; }
