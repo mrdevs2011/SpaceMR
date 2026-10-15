@@ -12,7 +12,7 @@ const searchInput    = $('searchInput');
 
 function openSearchOverlay() {
   searchOverlay?.classList.add('open');
-  setTimeout(() => searchInput?.focus(), 60);
+  // Explore ochilganda input avtomatik fokuslanmasin
   sbSearchToggle?.classList.add('search-active');
   // URL: /explore (float emas — to'liq sahifa)
   try {

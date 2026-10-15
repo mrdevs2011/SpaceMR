@@ -848,6 +848,14 @@ export {
 } from './chat-shared.js';
 
 const MSG_LIMIT = 60; // Bir thread'da max xabar soni (RAM tejash)
+const OLDER_PAGE = 40; // Scroll yuqoriga qilganda bir martada yuklanadigan eski xabarlar
+
+/** Eski xabarlarni yuklash holati (chat ochilganda tozalanadi) */
+function _resetOlderState() {
+  chatState._loadingOlder = false;
+  chatState._hasMoreOlder = true;
+  chatState._oldestTs = null;
+}
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 const _UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1626,6 +1634,7 @@ export async function openChatThread(uid) {
     chatId = data;
   }
   state.currentChatId = chatId;
+  _resetOlderState();
   // Boshqa chatga o'tilganda ID-kuzatuvchini tozalaymiz — aks holda Set
   // cheksiz o'sib ketishi mumkin va yangi chatning birinchi ochilishida
   // xabarlar tabiiy tarzda "pop-in" bo'lishi kerak.
@@ -1851,6 +1860,8 @@ export async function openChatThread(uid) {
       return;
     }
     const msgs = (data || []).map(mapMessage).reverse();
+    chatState._hasMoreOlder = (data || []).length >= MSG_LIMIT;
+    if (msgs.length) chatState._oldestTs = msgs[0].createdAt;
     _mergeLive(msgs, null, msgs.length ? (msgs[0].createdAt || 0) : 0);
     markNetworkReady(_pgKey);
     tryOpenPaint(_pgKey);
@@ -2308,12 +2319,73 @@ function _syncJumpBottom(box) {
     }, 100);
   }
 }
+
+/** Scroll yuqoriga qilganda eski xabarlarni yuklaydi va joyini saqlaydi */
+async function _loadOlderMessages(box) {
+  if (chatState._loadingOlder || !chatState._hasMoreOlder || !state.currentChatId) return;
+  // Qisqa cooldown: ketma-ket yuklash scroll ni ushlab turmasin
+  const now = Date.now();
+  if (chatState._olderCooldown && now < chatState._olderCooldown) return;
+  const chatId = state.currentChatId;
+  const cur = chatState._curMsgs || [];
+  if (!cur.length) return;
+  const oldest = cur[0];
+  const before = oldest?.createdAt;
+  if (!before) return;
+
+  chatState._loadingOlder = true;
+  chatState._olderCooldown = now + 400;
+  const cols = 'id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq';
+  try {
+    const { data, error } = await sb.from('messages').select(cols)
+      .eq('chat_id', chatId)
+      .lt('created_at', before)
+      .order('created_at', { ascending: false })
+      .limit(OLDER_PAGE);
+    if (error || state.currentChatId !== chatId) return;
+    const older = (data || []).map(mapMessage).reverse();
+    if (!older.length) {
+      chatState._hasMoreOlder = false;
+      return;
+    }
+    chatState._hasMoreOlder = older.length >= OLDER_PAGE;
+    // Dublikatlarni olib tashlab oldinga qo'yamiz
+    const seen = new Set(cur.map(m => String(m.id)));
+    const fresh = older.filter(m => m?.id && !seen.has(String(m.id)));
+    if (!fresh.length) {
+      chatState._hasMoreOlder = false;
+      return;
+    }
+    const merged = fresh.concat(cur);
+    // paintMessages o'zi anchor bilan joyini saqlaydi (pastda emas)
+    // Scroll inertia uzilmasin deb qisqa vaqt scroll hodisasini e'tiborsiz qoldiramiz
+    chatState._olderIgnoreUntil = Date.now() + 250;
+    paintMessages(merged);
+    try { cacheThreadMessages(chatId, merged); } catch (_) {}
+  } catch (e) {
+    console.warn('[Chat] older load', e?.message || e);
+  } finally {
+    chatState._loadingOlder = false;
+  }
+}
+
 function _bindPinTracking(box) {
   if (box._pinBound) return;
   box._pinBound = true;
+  let _scrollT = 0;
   box.addEventListener('scroll', () => {
     chatState._pinned = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
     _syncJumpBottom(box);
+    // Throttle: har scroll frame da emas, ~80ms da bir marta tekshiramiz
+    if (_scrollT) return;
+    _scrollT = setTimeout(() => {
+      _scrollT = 0;
+      if (chatState._olderIgnoreUntil && Date.now() < chatState._olderIgnoreUntil) return;
+      // Juda tepada bo'lsagina (inertia uzilmasin)
+      if (box.scrollTop < 40 && !chatState._loadingOlder && chatState._hasMoreOlder && state.currentChatId) {
+        _loadOlderMessages(box);
+      }
+    }, 80);
   }, { passive: true });
   const btn = document.getElementById('chatJumpBottom');
   if (btn && !btn._wired) {

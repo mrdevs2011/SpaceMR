@@ -306,7 +306,7 @@ function _initSearchHandlers() {
         overlay.classList.add('open');
         sbSearchToggle?.classList.add('search-active');
         hdrSearchBtn?.classList.add('search-active');
-        setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
+        // Explore input avtomatik fokuslanmasin
       });
     }
     import('./ui/right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});

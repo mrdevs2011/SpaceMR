@@ -112,10 +112,6 @@ document.addEventListener('keydown', e => {
   // Ctrl/Cmd bosilganda navigatsiya shortcutlari ishlamaydi (brauzerga qoldiramiz)
   if (mod) return;
 
-  if (isTyping(e.target)) return;
-  if (e.repeat) return;
-  if (anyOpen()) return;
-
   const k = e.key;
   const kl = (k || '').toLowerCase();
   const codeDigit = /^Digit([0-9])$/.exec(e.code || '');
@@ -123,6 +119,18 @@ document.addEventListener('keydown', e => {
     : (k === '0' || k === ')') ? '0'
     : (k >= '1' && k <= '9') ? k
     : null;
+
+  // Raqam tugmalari (1-9) har doim ishlasin — input fokusida bo'lsa ham blur qilib navigatsiya qilamiz
+  if (digit !== null && !isTyping(e.target)) {
+    // normal path below
+  } else if (digit !== null) {
+    // typing bo'lsa ham raqamni nav uchun ishlatamiz
+  } else if (isTyping(e.target)) {
+    return;
+  }
+
+  if (e.repeat) return;
+  if (anyOpen()) return;
 
   const stop = () => { e.preventDefault(); e.stopPropagation(); };
   const path = (p) => import('../url-router.js').then(m => m.applyPath(p)).catch(() => {});
@@ -141,6 +149,10 @@ document.addEventListener('keydown', e => {
 
   if (digit !== null) {
     stop();
+    // Input fokusida bo'lsa blur qilamiz, keyingi raqamlar ishlasin
+    if (document.activeElement && document.activeElement !== document.body) {
+      try { document.activeElement.blur(); } catch (_) {}
+    }
     switch (digit) {
       case '1': path('/home'); break;
       case '2': path('/explore'); break;
