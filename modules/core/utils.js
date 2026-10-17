@@ -20,6 +20,7 @@ export function spoilerVaultHas(id) {
   return _spoilerVault.has(String(id));
 }
 
+/* SPOILER_DEPLOY t-1792259696568 */
 /** Approximate display width in "ch" units (emoji/CJK wider). */
 function spoilerChCount(text) {
   let n = 0;
