@@ -2873,6 +2873,9 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   user-select: text !important;
 }
 /* Chat bubble * { user-select:text } ni bosib o'tish */
+/* Barcha joy: post, izoh, chat, profil — blur ochilmaguncha select yo'q */
+.md-spoiler:not(.revealed),
+.md-spoiler:not(.revealed) *,
 #chatThreadMessages .md-spoiler:not(.revealed),
 #chatThreadMessages .md-spoiler:not(.revealed) * {
   -webkit-user-select: none !important;

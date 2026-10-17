@@ -19,22 +19,79 @@ export function spoilerVaultHas(id) {
   return _spoilerVault.has(String(id));
 }
 
+/** Approximate display width in "ch" units (emoji/CJK wider). */
+function spoilerChCount(text) {
+  let n = 0;
+  for (const ch of String(text || '')) {
+    const cp = ch.codePointAt(0);
+    if (cp <= 0x1f || (cp >= 0x7f && cp <= 0x9f)) continue;
+    // emoji / symbols often ~2 columns
+    if (cp > 0xffff || (cp >= 0x1f300 && cp <= 0x1faff) || (cp >= 0x2600 && cp <= 0x27bf)) n += 2;
+    else if (cp >= 0x1100 && cp <= 0xd7af) n += 2; // Hangul / CJK-ish ranges (rough)
+    else if (cp >= 0x2e80 && cp <= 0x9fff) n += 2;
+    else n += 1;
+  }
+  return Math.max(2, n);
+}
+
+/** Pixel-perfect width from live font (text only in memory, never left in DOM). */
+function measureSpoilerPx(text, fontSourceEl) {
+  const t = String(text || '');
+  if (!t) return 0;
+  const probe = document.createElement('span');
+  probe.setAttribute('aria-hidden', 'true');
+  probe.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;white-space:pre;pointer-events:none;height:auto;width:auto;';
+  try {
+    const cs = getComputedStyle(fontSourceEl || document.body);
+    probe.style.font = cs.font;
+    probe.style.letterSpacing = cs.letterSpacing;
+    probe.style.fontSize = cs.fontSize;
+    probe.style.fontFamily = cs.fontFamily;
+    probe.style.fontWeight = cs.fontWeight;
+  } catch (_) {}
+  probe.textContent = t;
+  document.body.appendChild(probe);
+  const w = probe.getBoundingClientRect().width;
+  probe.remove();
+  return Math.ceil(w);
+}
+
 function spoilerPlaceholder(rawInner, meta) {
   meta = meta || {};
-  const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : Array.from(String(rawInner ?? '')).length);
+  const text = String(rawInner ?? '');
+  const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : spoilerChCount(text));
   if (meta.msgId != null && meta.ord != null) {
-    // Server marker: matn faqat reveal_spoiler RPC da
     return '<span class="md-spoiler" data-scope="' + (meta.scope || 'dm') +
       '" data-msg="' + String(meta.msgId).replace(/"/g, '') +
       '" data-ord="' + String(meta.ord) +
+      '" data-ch="' + ch +
       '" style="--spoiler-ch:' + ch +
       '" role="button" tabindex="0" aria-label="Spoiler"></span>';
   }
   const id = 'sp' + (++_spoilerSeq);
-  const text = String(rawInner ?? '');
   _spoilerVault.set(id, text);
-  return '<span class="md-spoiler" data-sid="' + id + '" style="--spoiler-ch:' + ch +
+  return '<span class="md-spoiler" data-sid="' + id + '" data-ch="' + ch +
+    '" style="--spoiler-ch:' + ch +
     '" role="button" tabindex="0" aria-label="Spoiler"></span>';
+}
+
+/** Har qanday konteynerdagi blur bar kengligini aniq qil (post, chat, izoh, ...). */
+export function layoutSpoilers(root) {
+  const scope = root && root.querySelectorAll ? root : document;
+  scope.querySelectorAll('.md-spoiler:not(.revealed)').forEach(el => {
+    const id = el.getAttribute('data-sid');
+    const text = id ? _spoilerVault.get(id) : null;
+    if (text != null) {
+      const px = measureSpoilerPx(text, el.parentElement || el);
+      if (px > 0) {
+        el.style.width = px + 'px';
+        el.style.setProperty('--spoiler-ch', String(spoilerChCount(text)));
+        return;
+      }
+    }
+    const ch = parseInt(el.getAttribute('data-ch') || el.style.getPropertyValue('--spoiler-ch') || '4', 10);
+    el.style.setProperty('--spoiler-ch', String(Math.max(2, ch || 4)));
+  });
 }
 
 async function revealSpoilerEl(el) {
@@ -82,7 +139,7 @@ function hideSpoilerEl(el) {
   if (!el || !el.classList.contains('revealed')) return;
   const id = el.getAttribute('data-sid');
   const text = id ? _spoilerVault.get(id) : null;
-  const ch = text != null ? Math.max(2, Array.from(text).length) : 4;
+  const ch = text != null ? spoilerChCount(text) : 4;
   el.textContent = '';
   el.classList.remove('revealed');
   el.style.setProperty('--spoiler-ch', String(ch));
@@ -110,6 +167,20 @@ export function bindSpoilerUI() {
     e.preventDefault();
     act(el);
   }, true);
+  // DOM ga yangi spoiler tushganda kenglikni aniqla (post/chat/izoh — hammasi)
+  try {
+    const mo = new MutationObserver(muts => {
+      let need = false;
+      for (const m of muts) {
+        if (m.addedNodes && m.addedNodes.length) { need = true; break; }
+      }
+      if (!need) return;
+      requestAnimationFrame(() => layoutSpoilers(document));
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+  } catch (_) {}
+  if (document.readyState !== 'loading') requestAnimationFrame(() => layoutSpoilers(document));
+  else document.addEventListener('DOMContentLoaded', () => layoutSpoilers(document));
 }
 
 
@@ -244,6 +315,8 @@ export function renderMarkdown(rawText, opts) {
   s = s.replace(/\u0000IC(\d+)\u0000/g, (_m, idx) => inlineCodes[parseInt(idx, 10)]);
   s = s.replace(/\u0000CB(\d+)\u0000/g, (_m, idx) => codeBlocks[parseInt(idx, 10)]);
 
+  // Kenglikni keyingi frame da aniq o'lchaymiz (post/chat/izoh)
+  try { requestAnimationFrame(() => layoutSpoilers(document)); } catch (_) {}
   return s;
 }
 
