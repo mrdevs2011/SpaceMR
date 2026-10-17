@@ -39,14 +39,16 @@ function spoilerChCount(text) {
 /** Per-line metrics for multi-line spoilers (matches real text shape). */
 function spoilerLineMetrics(text) {
   const raw = String(text || '');
-  const lines = raw.length ? raw.split(/\r?\n/) : [''];
-  return lines.map(line => ({
-    ch: spoilerChCount(line.length ? line : ' '),
+  let parts = raw.length ? raw.split(/\r?\n/) : [''];
+  while (parts.length > 1 && !String(parts[0]).trim()) parts.shift();
+  while (parts.length > 1 && !String(parts[parts.length - 1]).trim()) parts.pop();
+  if (!parts.length) parts = [''];
+  return parts.map(line => ({
+    ch: Math.max(3, spoilerChCount(line.length ? line : '...')),
     line: line
   }));
 }
 
-/** Pixel width of one line (canvas, no DOM). */
 function measureSpoilerPx(text, fontSourceEl) {
   const t = String(text || '').replace(/[\r\n\t]+/g, ' ');
   if (!t) return 0;
@@ -75,9 +77,9 @@ function measureSpoilerPx(text, fontSourceEl) {
 
 function spoilerLineBarsHtml(metrics) {
   return metrics.map(m => {
-    const ch = Math.max(2, m.ch || 2);
+    const ch = Math.max(3, m.ch || 3);
     return '<span class="md-spoiler-line" style="--spoiler-ch:' + ch +
-      ';width:min(100%,' + ch + 'ch);min-width:2ch" aria-hidden="true"></span>';
+      ';width:min(100%,' + ch + 'ch);min-width:3ch" aria-hidden="true"></span>';
   }).join('');
 }
 

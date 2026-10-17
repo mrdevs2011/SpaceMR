@@ -19973,3 +19973,37 @@ img, video { decoding: async; }
   height: auto !important;
   max-height: none !important;
 }
+
+
+/* Clean multi-line spoiler bars (no thin ghost lines) */
+.md-spoiler.md-spoiler-block {
+  gap: 0.22em !important;
+  padding: 2px 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.md-spoiler-line {
+  height: 1.15em !important;
+  min-height: 1.15em !important;
+  border-radius: 5px !important;
+  background-image: none !important;
+  background-color: rgba(231, 233, 234, 0.55) !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+.chat-msg.mine .md-spoiler-line,
+.chat-msg.mine .md-spoiler:not(.revealed):not(.md-spoiler-block)::before {
+  background-image: none !important;
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+.chat-msg.theirs .md-spoiler-line,
+.chat-msg.theirs .md-spoiler:not(.revealed):not(.md-spoiler-block)::before {
+  background-image: none !important;
+  background-color: rgba(231, 233, 234, 0.55) !important;
+}
+.md-spoiler:not(.revealed):not(.md-spoiler-block)::before {
+  background-image: none !important;
+  background-color: rgba(231, 233, 234, 0.55) !important;
+  box-shadow: none !important;
+}
