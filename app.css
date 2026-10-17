@@ -3212,7 +3212,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   color: #e7e9ea;
   font-family: monospace;
 }
-/* Spoiler: matn DOM da yo'q — faqat ch-kenglikli bar; ochilganda vault matn beradi */
+/* Spoiler: matn DOM da yo'q — kenglik = kalit uzunligi; vizual ::before da (click ishlashi uchun) */
 .md-spoiler {
   cursor: pointer;
   border-radius: 6px;
@@ -3222,44 +3222,61 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   width: calc(var(--spoiler-ch, 4) * 1ch);
   max-width: 100%;
   min-width: 2ch;
-  height: 1.15em;
+  height: 1.2em;
+  line-height: 1.2em;
   box-sizing: border-box;
-  /* Oldindan aniq ko'rinsin: kuchliroq fon + hatch pattern */
-  background-color: rgba(231, 233, 234, 0.32);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(231, 233, 234, 0.22) 0 3px,
-    transparent 3px 6px
-  );
-  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.18);
-  -webkit-filter: blur(4px);
-  filter: blur(4px);
-  opacity: 1;
+  position: relative;
+  /* filter elementning o'zida emas — ::before da, hit-target aniq qoladi */
+  background: transparent;
   -webkit-user-select: none !important;
   user-select: none !important;
   -webkit-touch-callout: none !important;
   -webkit-tap-highlight-color: transparent;
-  transition: filter .35s cubic-bezier(.2,.8,.2,1), opacity .25s ease, width .2s ease;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  z-index: 1;
+}
+.md-spoiler::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background-color: rgba(231, 233, 234, 0.38);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(231, 233, 234, 0.28) 0 3px,
+    transparent 3px 6px
+  );
+  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.2);
+  -webkit-filter: blur(3px);
+  filter: blur(3px);
+  pointer-events: none;
+  transition: filter .3s ease, opacity .2s ease;
 }
 .md-spoiler:not(.revealed) * {
   display: none !important;
 }
 .md-spoiler.revealed {
   display: inline;
-  width: auto;
+  width: auto !important;
+  min-width: 0 !important;
   height: auto;
-  min-width: 0;
+  line-height: inherit;
   padding: 0 3px;
   background: transparent;
-  box-shadow: none;
-  -webkit-filter: none;
-  filter: none;
-  opacity: 1;
+  position: static;
   -webkit-user-select: text !important;
   user-select: text !important;
+  z-index: auto;
 }
-/* Chat bubble * { user-select:text } ni bosib o'tish */
-/* Barcha joy: post, izoh, chat, profil — blur ochilmaguncha select yo'q */
+.md-spoiler.revealed::before {
+  display: none !important;
+}
+.md-spoiler.md-spoiler-loading {
+  opacity: 0.55;
+  pointer-events: none;
+}
+/* Barcha joy: post, izoh, chat — blur ochilmaguncha select yo'q */
 .md-spoiler:not(.revealed),
 .md-spoiler:not(.revealed) *,
 #chatThreadMessages .md-spoiler:not(.revealed),

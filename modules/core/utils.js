@@ -22,21 +22,20 @@ export function spoilerVaultHas(id) {
 /** Approximate display width in "ch" units (emoji/CJK wider). */
 function spoilerChCount(text) {
   let n = 0;
-  for (const ch of String(text || '')) {
+  for (const ch of String(text || '').replace(/[\r\n\t]+/g, '')) {
     const cp = ch.codePointAt(0);
     if (cp <= 0x1f || (cp >= 0x7f && cp <= 0x9f)) continue;
-    // emoji / symbols often ~2 columns
     if (cp > 0xffff || (cp >= 0x1f300 && cp <= 0x1faff) || (cp >= 0x2600 && cp <= 0x27bf)) n += 2;
-    else if (cp >= 0x1100 && cp <= 0xd7af) n += 2; // Hangul / CJK-ish ranges (rough)
+    else if (cp >= 0x1100 && cp <= 0xd7af) n += 2;
     else if (cp >= 0x2e80 && cp <= 0x9fff) n += 2;
     else n += 1;
   }
   return Math.max(2, n);
 }
 
-/** Pixel-perfect width from live font (text only in memory, never left in DOM). */
+/** Pixel width from live font (text only in memory). Newlines → spaces so width = full key length. */
 function measureSpoilerPx(text, fontSourceEl) {
-  const t = String(text || '');
+  const t = String(text || '').replace(/[\r\n\t]+/g, ' ');
   if (!t) return 0;
   const probe = document.createElement('span');
   probe.setAttribute('aria-hidden', 'true');
@@ -60,18 +59,20 @@ function spoilerPlaceholder(rawInner, meta) {
   meta = meta || {};
   const text = String(rawInner ?? '');
   const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : spoilerChCount(text));
+  // inline style: both ch and a safe min-width so bar is never a 2ch stub
+  const style = '--spoiler-ch:' + ch + ';min-width:min(100%,' + ch + 'ch);width:min(100%,' + ch + 'ch)';
   if (meta.msgId != null && meta.ord != null) {
     return '<span class="md-spoiler" data-scope="' + (meta.scope || 'dm') +
       '" data-msg="' + String(meta.msgId).replace(/"/g, '') +
       '" data-ord="' + String(meta.ord) +
       '" data-ch="' + ch +
-      '" style="--spoiler-ch:' + ch +
+      '" style="' + style +
       '" role="button" tabindex="0" aria-label="Spoiler"></span>';
   }
   const id = 'sp' + (++_spoilerSeq);
   _spoilerVault.set(id, text);
   return '<span class="md-spoiler" data-sid="' + id + '" data-ch="' + ch +
-    '" style="--spoiler-ch:' + ch +
+    '" style="' + style +
     '" role="button" tabindex="0" aria-label="Spoiler"></span>';
 }
 
@@ -81,16 +82,24 @@ export function layoutSpoilers(root) {
   scope.querySelectorAll('.md-spoiler:not(.revealed)').forEach(el => {
     const id = el.getAttribute('data-sid');
     const text = id ? _spoilerVault.get(id) : null;
-    if (text != null) {
+    let ch = parseInt(el.getAttribute('data-ch') || '0', 10);
+    if (text != null && text.length) {
+      ch = Math.max(ch || 0, spoilerChCount(text));
       const px = measureSpoilerPx(text, el.parentElement || el);
       if (px > 0) {
-        el.style.width = px + 'px';
-        el.style.setProperty('--spoiler-ch', String(spoilerChCount(text)));
+        // min() against parent so it wraps on narrow screens but still matches key length when possible
+        el.style.width = 'min(100%, ' + px + 'px)';
+        el.style.minWidth = Math.min(px, 48) + 'px';
+        el.style.setProperty('--spoiler-ch', String(ch));
+        el.setAttribute('data-ch', String(ch));
         return;
       }
     }
-    const ch = parseInt(el.getAttribute('data-ch') || el.style.getPropertyValue('--spoiler-ch') || '4', 10);
-    el.style.setProperty('--spoiler-ch', String(Math.max(2, ch || 4)));
+    ch = Math.max(2, ch || 4);
+    el.style.setProperty('--spoiler-ch', String(ch));
+    el.style.width = 'min(100%, ' + ch + 'ch)';
+    el.style.minWidth = Math.min(ch, 8) + 'ch';
+    el.setAttribute('data-ch', String(ch));
   });
 }
 
@@ -103,6 +112,8 @@ async function revealSpoilerEl(el) {
     el.textContent = text;
     el.classList.add('revealed');
     el.style.removeProperty('--spoiler-ch');
+    el.style.removeProperty('width');
+    el.style.removeProperty('min-width');
     return true;
   }
   const msg = el.getAttribute('data-msg');
@@ -124,7 +135,8 @@ async function revealSpoilerEl(el) {
     el.classList.add('revealed');
     el.classList.remove('md-spoiler-loading');
     el.style.removeProperty('--spoiler-ch');
-    // Session cache only in memory (not DOM source)
+    el.style.removeProperty('width');
+    el.style.removeProperty('min-width');
     const vid = 'rpc:' + scope + ':' + msg + ':' + ord;
     _spoilerVault.set(vid, String(data));
     el.setAttribute('data-sid', vid);
@@ -139,22 +151,43 @@ function hideSpoilerEl(el) {
   if (!el || !el.classList.contains('revealed')) return;
   const id = el.getAttribute('data-sid');
   const text = id ? _spoilerVault.get(id) : null;
-  const ch = text != null ? spoilerChCount(text) : 4;
+  const ch = text != null ? spoilerChCount(text) : (parseInt(el.getAttribute('data-ch') || '4', 10) || 4);
   el.textContent = '';
   el.classList.remove('revealed');
   el.style.setProperty('--spoiler-ch', String(ch));
+  el.style.width = 'min(100%, ' + ch + 'ch)';
+  el.setAttribute('data-ch', String(ch));
+  // re-measure next frame if vault has text
+  requestAnimationFrame(() => layoutSpoilers(el.parentElement || document));
 }
 
-let _spoilerUiBound = false;
 export function bindSpoilerUI() {
   if (_spoilerUiBound) return;
   _spoilerUiBound = true;
+  let _lastSpoilerAct = 0;
   const act = (el) => {
+    if (!el || !el.classList.contains('md-spoiler')) return;
+    const now = Date.now();
+    if (now - _lastSpoilerAct < 350) return; // click+pointerup double-fire
+    _lastSpoilerAct = now;
     if (el.classList.contains('revealed')) hideSpoilerEl(el);
     else revealSpoilerEl(el);
   };
-  document.addEventListener('click', e => {
-    const el = e.target.closest?.('.md-spoiler');
+  const onPointer = (e) => {
+    const el = e.target?.closest?.('.md-spoiler');
+    if (!el) return;
+    // only primary button / primary touch
+    if (e.type === 'click' && e.button != null && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation?.();
+    act(el);
+  };
+  document.addEventListener('click', onPointer, true);
+  document.addEventListener('pointerup', (e) => {
+    // iOS/Android: some feeds swallow click; pointerup is reliable
+    if (e.pointerType === 'mouse') return; // mouse uses click
+    const el = e.target?.closest?.('.md-spoiler');
     if (!el) return;
     e.preventDefault();
     e.stopPropagation();
