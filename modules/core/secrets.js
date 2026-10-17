@@ -8,14 +8,16 @@
  *  - Allaqachon ||...|| ichida bo'lgan joyga tegmaydi.
  *  - Kod bloki / `inline kod` ichida kalit bo'lsa — butun kod bo'lagi o'raladi.
  *  - Bitta o'tishda ishlaydi (regexlar chiziqli), odatiy xabarda < 1 ms.
+ *  - Prefiksli kalitlar (gsk_, sk-, xai- ...) bo'shliq/yangi qator bilan
+ *    bo'lingan bo'lsa ham yig'ib o'raladi.
  */
 
 const SEG_RE = /(```[\s\S]*?```|`[^`\n]+`|\|\|[\s\S]*?\|\|)/g;
 
 /* Namuna/placeholder qiymatlar — hujjat va misollarni bekorga yashirmaslik uchun */
-const PLACEHOLDER_RE = /^(?:<[^>]*>|\{\{[^}]*\}\}|\$\{?\w+\}?|%\w+%|your[_-]|my[_-]?(?:key|token|secret)|x{3,}$|\*{3,}|•+|\.{3,}|_{3,}|-{3,}|example|changeme|null$|undefined$|true$|false$|none$|required$|string$|hidden$|redacted)/i;
+const PLACEHOLDER_RE = /^(?:<[^>]*>|\{\{[^}]*\}\}|\$\{?\w+\}?|%\w+%|your[_-]|my[_-]?(?:key|token|secret)|x{3,}$|\*{3,}|•+|\.{3,}|_{3,}|-{3,}|example|changeme|placeholder|dummy|sample|test[_-]?key|null$|undefined$|true$|false$|none$|required$|string$|hidden$|redacted|todo|fixme)/i;
 
-const isPlaceholder = v => PLACEHOLDER_RE.test(v);
+const isPlaceholder = v => PLACEHOLDER_RE.test(String(v || '').trim());
 
 function entropy(s) {
   const f = Object.create(null);
@@ -37,67 +39,180 @@ function luhn(d) {
 
 /** Yuqori entropiyali uzun "so'z" kalitga o'xshaydimi (UUID / git SHA / oddiy matn emas) */
 function looksLikeKey(tok) {
-  if (tok.length < 32 || tok.length > 600) return false;
-  const hexOnly = /^[0-9a-f]+$/i.test(tok);
-  const noDash = tok.replace(/-/g, '');
-  if (/^[0-9a-f]{32}$/i.test(noDash) && tok.length === 36) return false;   // UUID
+  if (!tok || tok.length < 24 || tok.length > 800) return false;
+  const t = tok.replace(/=+$/, ''); // base64 padding
+  if (t.length < 24) return false;
+
+  // UUID — yashirmaymiz
+  const noDash = t.replace(/-/g, '');
+  if (/^[0-9a-f]{32}$/i.test(noDash) && (t.length === 36 || t.length === 32)) return false;
+  // git commit SHA
+  if (/^[0-9a-f]{40}$/i.test(t)) return false;
+  // oddiy so'z / past entropiya
+  if (/(.)\1{9,}/.test(t)) return false;
+
+  const hexOnly = /^[0-9a-f]+$/i.test(t);
   if (hexOnly) {
-    if (tok.length === 40) return false;                                    // git commit SHA
-    return entropy(tok) >= 3.0 && !/(.)\1{7,}/.test(tok);
+    // 64+ hex (sha256 secret, webhook secrets ...)
+    if (t.length >= 64) return entropy(t) >= 2.8;
+    if (t.length >= 32) return entropy(t) >= 3.2;
+    return false;
   }
-  const hasD = /\d/.test(tok), hasL = /[a-z]/.test(tok), hasU = /[A-Z]/.test(tok);
-  const hasSym = /[_+=-]/.test(tok);
+
+  const hasD = /\d/.test(t), hasL = /[a-z]/.test(t), hasU = /[A-Z]/.test(t);
+  const hasSym = /[_+\/=.-]/.test(t);
   if (!hasD || !(hasL || hasU)) return false;
+
+  // base64-ish uzun
+  if (/^[A-Za-z0-9+/]+=*$/.test(tok) && t.length >= 40 && entropy(t) >= 3.5) return true;
+
   if (!((hasL && hasU) || hasSym)) return false;
-  return entropy(tok) >= 4.0;
+  // qisqaroq bo'lsa qattiqroq, uzun bo'lsa yumshoqroq
+  if (t.length >= 48) return entropy(t) >= 3.4;
+  if (t.length >= 32) return entropy(t) >= 3.8;
+  return entropy(t) >= 4.0;
 }
 
-/* Qiymati oxirgi guruhda bo'lgan naqshlar: { re, min?, test? } — guruh DOIM match oxirida */
-const VAL = '([^\\s"\'`,;|<>(){}\\[\\]]';                                 // qiymat belgilari (qavs ochiq)
-const NAME_PRE = '\\b[\\w.-]{0,40}';
+/* Qiymati oxirgi guruhda bo'lgan naqshlar */
+const VAL_CH = '[^\\s"\'`,;|<>(){}\\[\\]]';
+const NAME_PRE = '\\b[\\w.-]{0,48}';
 
 const KV = [
-  /* parol oilasi — qisqa qiymat ham yashiriladi */
-  { re: new RegExp(NAME_PRE + '(?:passw(?:or)?d|passwd|pwd|parol|пароль)[\\w.-]{0,20}["\']?\\s*[:=]\\s*["\'`]?' + VAL + '{4,200})', 'gi'), min: 4 },
-  { re: new RegExp('\\b(?:parol|password|пароль)\\s+[-–—]\\s+' + VAL + '{4,200})', 'gi'), min: 4, needDigitOrSym: true },
-  /* token / secret / api key / private key ... */
-  { re: new RegExp(NAME_PRE + '(?:api[_-]?key|apikey|secret|token|credential|private[_-]?key|access[_-]?key|auth[_-]?key|signing[_-]?key|service[_-]?role)[\\w.-]{0,20}["\']?\\s*[:=]\\s*["\'`]?' + VAL + '{8,500})', 'gi'), min: 8 },
-  /* oddiy "key"/"kalit" — faqat kalitga o'xshash qiymat bo'lsa */
-  { re: new RegExp(NAME_PRE + '(?:key|kalit)[\\w.-]{0,20}["\']?\\s*[:=]\\s*["\'`]?' + VAL + '{12,500})', 'gi'), min: 12, needKeyLike: true },
+  // password family
+  { re: new RegExp(NAME_PRE + '(?:passw(?:or)?d|passwd|pwd|parol|пароль)[\\w.-]{0,24}["\']?\\s*[:=]\\s*["\']?(' + VAL_CH + '{4,300})', 'gi'), min: 4 },
+  { re: new RegExp('\\b(?:parol|password|пароль)\\s+[-–—]\\s+(' + VAL_CH + '{4,300})', 'gi'), min: 4, needDigitOrSym: true },
+  // token / secret / api key family
+  { re: new RegExp(NAME_PRE + '(?:api[_-]?key|apikey|secret[_-]?key|secret|token|access[_-]?token|refresh[_-]?token|client[_-]?secret|credential|private[_-]?key|access[_-]?key|auth[_-]?key|signing[_-]?key|service[_-]?role|service[_-]?key|webhook[_-]?secret|bot[_-]?token|app[_-]?secret|auth[_-]?token)[\\w.-]{0,24}["\']?\\s*[:=]\\s*["\']?(' + VAL_CH + '{8,600})', 'gi'), min: 8 },
+  // key / kalit — only key-like values
+  { re: new RegExp(NAME_PRE + '(?:key|kalit|ключ)[\\w.-]{0,24}["\']?\\s*[:=]\\s*["\']?(' + VAL_CH + '{12,600})', 'gi'), min: 12, needKeyLike: true },
+  // ENV style: API_KEY=xxxx
+  { re: /\b([A-Z][A-Z0-9_]{2,40}(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|PWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*["']?([^\s"'`]+)["']?/g, min: 8, group: 2 },
 ];
 
-/* Butun match yashiriladigan naqshlar */
+/* Prefiksli kalitlar — bo'shliq/yangi qator bilan bo'lingan qismlarni ham yig'adi */
+const PREFIXED = [
+  // OpenAI / Anthropic / OpenRouter / DeepSeek
+  { re: /\b(sk-(?:ant-|proj-|svcacct-|admin-|or-v1-|hs-|live-|test-)?)([A-Za-z0-9_-]{16,})/g, minBody: 16 },
+  { re: /\b(sk-[A-Za-z0-9]{20,})/g, minBody: 20 },
+  // Google AI Studio / Gemini
+  { re: /\b(gsk_)([A-Za-z0-9_-]{16,})/g, minBody: 16 },
+  // Google API
+  { re: /\b(AIza)([0-9A-Za-z_-]{30,})/g, minBody: 30 },
+  // Google OAuth
+  { re: /\b(ya29\.)([0-9A-Za-z_-]{16,})/g, minBody: 16 },
+  // xAI / Grok
+  { re: /\b(xai-)([A-Za-z0-9_-]{16,})/g, minBody: 16 },
+  // Groq
+  { re: /\b(gsk_)([A-Za-z0-9]{20,})/g, minBody: 20 }, // also used by Groq historically overlapping
+  // HuggingFace
+  { re: /\b(hf_)([A-Za-z0-9]{20,})/g, minBody: 20 },
+  // GitHub
+  { re: /\b(gh[pousr]_)([A-Za-z0-9]{20,})/g, minBody: 20 },
+  { re: /\b(github_pat_)([A-Za-z0-9_]{20,})/g, minBody: 20 },
+  // GitLab
+  { re: /\b(glpat-)([A-Za-z0-9_-]{16,})/g, minBody: 16 },
+  // Slack
+  { re: /\b(xox[abprso]-)([A-Za-z0-9-]{8,})/g, minBody: 8 },
+  { re: /\b(xapp-)([A-Za-z0-9-]{10,})/g, minBody: 10 },
+  // Stripe
+  { re: /\b((?:sk|rk|pk)_(?:live|test)_)([0-9A-Za-z]{16,})/g, minBody: 16 },
+  { re: /\b(whsec_)([A-Za-z0-9]{16,})/g, minBody: 16 },
+  // Supabase
+  { re: /\b(sb_(?:secret|publishable)_)([A-Za-z0-9_-]{12,})/g, minBody: 12 },
+  { re: /\b(sbp_)([a-f0-9]{24,})/g, minBody: 24 },
+  // npm / DigitalOcean / SendGrid / Twilio-ish
+  { re: /\b(npm_)([A-Za-z0-9]{20,})/g, minBody: 20 },
+  { re: /\b(dop_v1_)([a-f0-9]{32,})/g, minBody: 32 },
+  { re: /\b(SG\.)([A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,})/g, minBody: 12 },
+  // Cloudflare
+  { re: /\b(cfut_)([A-Za-z0-9_-]{20,})/g, minBody: 20 },
+  // Vercel
+  { re: /\b(vercel_)([A-Za-z0-9_]{20,})/g, minBody: 20 },
+  // Notion
+  { re: /\b(ntn_|secret_)([A-Za-z0-9]{20,})/g, minBody: 20 },
+  // Linear
+  { re: /\b(lin_api_)([A-Za-z0-9]{20,})/g, minBody: 20 },
+  // Discord bot-ish long tokens handled in WHOLE
+  // AWS access key id
+  { re: /\b((?:AKIA|ASIA|AGPA|AIDA|AROA)[0-9A-Z]{16})\b/g, minBody: 16, whole: true },
+  // Telegram bot
+  { re: /\b(\d{8,10}:)([A-Za-z0-9_-]{30,})/g, minBody: 30 },
+  // Claude/Anthropic console keys sometimes sk-ant-
+  // Perplexity / Mistral / Cohere generic high-entropy handled by TOKEN_RE
+  // Azure / OpenAI project keys
+  { re: /\b(sk-proj-)([A-Za-z0-9_-]{20,})/g, minBody: 20 },
+  // Firebase
+  { re: /\b(AAAA[A-Za-z0-9_-]{7}:[A-Za-z0-9_-]{20,})/g, minBody: 20, whole: true },
+];
+
+/* Butun match yashiriladigan naqshlar (prefixsiz yoki murakkab) */
 const WHOLE = [
   /-----BEGIN [A-Z ]*PRIVATE KEY(?: BLOCK)?-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY(?: BLOCK)?-----|$)/g,
-  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g,                       // JWT (Supabase, Auth0 ...)
-  /\bsk-(?:ant-|proj-|svcacct-|admin-|or-v1-)?[A-Za-z0-9_-]{20,}/g,                      // OpenAI / Anthropic / OpenRouter
-  /\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})/g,                      // GitHub
-  /\bglpat-[A-Za-z0-9_-]{20,}/g,                                                          // GitLab
-  /\bxox[abprso]-[A-Za-z0-9-]{10,}/g, /\bxapp-[A-Za-z0-9-]{10,}/g,                       // Slack
-  /\bAIza[0-9A-Za-z_-]{35}/g,                                                             // Google API
-  /\bgsk_[A-Za-z0-9_-]{20,}/g,                                                            // Google AI Studio / Gemini
-  /\bya29\.[0-9A-Za-z_-]{20,}/g,                                                          // Google OAuth
-  /\b(?:AKIA|ASIA|AGPA|AIDA|AROA)[0-9A-Z]{16}\b/g,                                        // AWS
-  /\b(?:sk|rk|pk)_(?:live|test)_[0-9A-Za-z]{16,}/g, /\bwhsec_[A-Za-z0-9]{16,}/g,         // Stripe
-  /\bsb_(?:secret|publishable)_[A-Za-z0-9_-]{16,}/g, /\bsbp_[a-f0-9]{30,}/g,             // Supabase
-  /\bhf_[A-Za-z0-9]{30,}/g, /\bnpm_[A-Za-z0-9]{30,}/g,                                   // HuggingFace, npm
-  /\bSG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}/g,                                        // SendGrid
-  /\bSK[0-9a-f]{32}\b/g,                                                                  // Twilio
-  /\bdop_v1_[a-f0-9]{40,}/g,                                                              // DigitalOcean
-  /\b\d{8,10}:[A-Za-z0-9_-]{35}\b/g,                                                      // Telegram bot token
-  /\b[MNO][A-Za-z0-9_-]{23,25}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,}/g,                  // Discord token
-  /\b[a-z][a-z0-9+.-]{1,20}:\/\/[^\s:@\/?#|]+:[^\s@\/?#|]+@[^\s|]*[^\s.,;:!?)\]}'"|]/gi,  // scheme://user:pass@host
+  /-----BEGIN [A-Z ]*CERTIFICATE-----[\s\S]*?(?:-----END [A-Z ]*CERTIFICATE-----|$)/g,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, // JWT
+  // Discord token
+  /\b[MNO][A-Za-z0-9_-]{23,25}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,}/g,
+  // URL with embedded credentials
+  /\b[a-z][a-z0-9+.-]{1,20}:\/\/[^\s:@\/?#|]+:[^\s@\/?#|]+@[^\s|]*[^\s.,;:!?)\]}'"|]/gi,
+  // mongodb / postgres / redis / mysql connection strings even without user:pass sometimes still sensitive host+creds
+  /\b(?:mongodb(?:\+srv)?|postgres(?:ql)?|mysql|redis|amqp|rediss):\/\/[^\s<>"']+/gi,
+  // AWS secret access key (40 base64 after AKIA line often)
 ];
 
-/* Qiymati oxirgi guruhda: Bearer token */
 const BEARER_RE = /\bBearer\s+([A-Za-z0-9._~+\/-]{16,}=*)/gi;
 
-/* Karta raqami: 13–19 raqam (probel/chiziqcha bilan), Luhn + tanish prefiks */
 const CARD_RE = /\b\d(?:[ -]?\d){12,18}\b/g;
 const CARD_PREFIX_RE = /^(?:4|5[1-5]|2[2-7]|3[47]|6011|65|8600|9860|5614|6262|4073)/;
 
-/* Standalone yuqori entropiyali so'z (chegara belgisi bilan) */
-const TOKEN_RE = /(^|[\s"'`(\[{=:,;])([A-Za-z0-9_+-]{32,600}={0,2})(?=$|[\s"'`)\]},;.!?])/g;
+/* Standalone yuqori entropiyali token */
+const TOKEN_RE = /(^|[\s"'`(\[{=:,;])([A-Za-z0-9_+\/-]{28,800}={0,3})(?=$|[\s"'`)\]},;.!?\n])/g;
+
+/** Prefiksli kalit: body ichidagi bo'shliq/yangi qatorlarni yutib, bitta range qaytaradi */
+function collectPrefixed(text, ranges) {
+  for (const p of PREFIXED) {
+    p.re.lastIndex = 0;
+    let m;
+    while ((m = p.re.exec(text))) {
+      if (p.whole) {
+        ranges.push([m.index, m.index + m[0].length]);
+        continue;
+      }
+      let body, end;
+      if (m[2] != null) {
+        // prefix + body groups
+        body = m[2];
+        end = m.index + m[0].length;
+      } else {
+        // whole match is the key (single group)
+        body = m[1] || m[0];
+        end = m.index + m[0].length;
+      }
+
+      // Keyin kelgan "bo'shliq + kalit-fragment" larni yutish (newline bilan bo'lingan gsk_...)
+      // Masalan: gsk_ABC\nDEF  → ABCDEF
+      let rest = text.slice(end);
+      const fragRe = /^([\s]*)([A-Za-z0-9_\/+-]{8,})/;
+      let guard = 0;
+      while (guard++ < 6) {
+        const fm = fragRe.exec(rest);
+        if (!fm) break;
+        // faqat qisqa bo'shliq (space/newline/tab), yangi so'z emas
+        if (fm[1].length > 3) break;
+        // keyingi token oddiy so'zga o'xshasa to'xtat
+        if (/^[a-z]{4,}$/i.test(fm[2]) && !/\d/.test(fm[2])) break;
+        body += fm[2];
+        end += fm[0].length;
+        rest = text.slice(end);
+        // yangi so'z chegarasi (bo'shliqdan keyin kichik so'z)
+        if (/^[\s]{1,2}[a-z]{3,}\b/i.test(rest) && !/\d/.test(rest.slice(0, 20))) break;
+      }
+
+      if (body.length < (p.minBody || 16)) continue;
+      if (isPlaceholder(body)) continue;
+      ranges.push([m.index, end]);
+    }
+  }
+}
 
 function collect(text, ranges) {
   let m;
@@ -110,6 +225,8 @@ function collect(text, ranges) {
     }
   }
 
+  collectPrefixed(text, ranges);
+
   BEARER_RE.lastIndex = 0;
   while ((m = BEARER_RE.exec(text))) {
     const v = m[1];
@@ -121,12 +238,16 @@ function collect(text, ranges) {
   for (const k of KV) {
     k.re.lastIndex = 0;
     while ((m = k.re.exec(text))) {
-      const v = m[1];
-      const end = m.index + m[0].length;
+      const gi = k.group != null ? k.group : 1;
+      const v = m[gi];
       if (!v || v.length < k.min || isPlaceholder(v)) continue;
       if (k.needDigitOrSym && !/[\d\W_]/.test(v)) continue;
-      if (k.needKeyLike && !(looksLikeKey(v) || (/\d/.test(v) && /[A-Za-z]/.test(v) && entropy(v) >= 3.2))) continue;
-      ranges.push([end - v.length, end]);
+      if (k.needKeyLike && !(looksLikeKey(v) || (/\d/.test(v) && /[A-Za-z]/.test(v) && entropy(v) >= 3.0))) continue;
+      // qiymat match oxirida
+      const end = m.index + m[0].length;
+      const start = end - v.length;
+      // agar qiymat qo'shtirnoq ichida bo'lsa start/end to'g'ri keladi
+      ranges.push([Math.max(m.index, start), end]);
     }
   }
 
@@ -143,6 +264,7 @@ function collect(text, ranges) {
   while ((m = TOKEN_RE.exec(text))) {
     const tok = m[2];
     if (!looksLikeKey(tok)) continue;
+    // allaqachon prefiks bilan ushlangan bo'lsa qayta qo'shmaymiz (merge qiladi)
     const start = m.index + m[1].length;
     ranges.push([start, start + tok.length]);
   }
@@ -152,6 +274,7 @@ function mergeRanges(ranges) {
   ranges.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
   const out = [];
   for (const r of ranges) {
+    if (r[0] >= r[1]) continue;
     const last = out[out.length - 1];
     if (last && r[0] <= last[1]) { if (r[1] > last[1]) last[1] = r[1]; }
     else out.push([r[0], r[1]]);
@@ -190,21 +313,21 @@ export function protectSecrets(input) {
   const text = input == null ? '' : String(input);
   if (text.length < 6) return text;
 
-  const parts = text.split(SEG_RE);          // toq indekslar — kod / mavjud spoiler
+  const parts = text.split(SEG_RE);
 
   const run = (escapeStray) => {
     let changed = false;
     const out = new Array(parts.length);
     for (let i = 0; i < parts.length; i++) {
       const p = parts[i];
-      if (i % 2 === 0) {                      // oddiy matn
+      if (i % 2 === 0) {
         const src = escapeStray ? p.replace(/\|\|/g, '|\u200B|') : p;
         const [np, hit] = protectPlain(src);
         if (hit) changed = true;
         out[i] = np;
-      } else if (p.startsWith('||')) {        // allaqachon yashirilgan
+      } else if (p.startsWith('||')) {
         out[i] = p;
-      } else if (hasSecretIn(p)) {            // kod bo'lagi: ichida kalit bo'lsa — butunlay o'raladi
+      } else if (hasSecretIn(p)) {
         out[i] = '||' + p + '||';
         changed = true;
       } else {
@@ -216,7 +339,6 @@ export function protectSecrets(input) {
 
   let r = run(false);
   if (!r.changed) return text;
-  /* Juftlanmagan "||" bizning o'ramlar bilan juftlashib, kalitni ochib yubormasin */
   if (parts.some((p, i) => i % 2 === 0 && p.indexOf('||') !== -1)) r = run(true);
   return r.str;
 }
@@ -244,7 +366,7 @@ export function redactSpoilersForStorage(input) {
   const secrets = [];
   const parts = text.split(SEG_RE);
   for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 1) continue; // code / already-spoiler segment handled below
+    if (i % 2 === 1) continue;
     parts[i] = parts[i].replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
       if (secrets.length >= 32) return '••••';
       const body = String(inner);
@@ -255,12 +377,11 @@ export function redactSpoilersForStorage(input) {
       return '||@' + ord + ':' + ch + '||';
     });
   }
-  // Odd segments that are already ||...|| spoilers (from SEG_RE) — convert too
   for (let i = 1; i < parts.length; i += 2) {
     const seg = parts[i];
     if (seg && seg.startsWith('||') && seg.endsWith('||') && seg.length >= 4) {
       const inner = seg.slice(2, -2);
-      if (inner.startsWith('@') && /^@\d+:\d+$/.test(inner)) continue; // already marker
+      if (inner.startsWith('@') && /^@\d+:\d+$/.test(inner)) continue;
       if (secrets.length >= 32) { parts[i] = '••••'; continue; }
       if (!inner.length || inner.length > 8000) { parts[i] = '••••'; continue; }
       const ord = secrets.length;
