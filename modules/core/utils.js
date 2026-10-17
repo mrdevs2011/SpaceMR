@@ -1,6 +1,7 @@
 // test 4: diff uchun izoh
 import { state, sb }  from './config.js';
 import { toast }  from '../ui/toast.js';
+import { protectSecrets } from './secrets.js';
 
 /* ── DOM / formatting helpers ─────────────────────────────────────────── */
 export const $    = id => document.getElementById(id);
@@ -188,7 +189,6 @@ export function bindSpoilerUI() {
     if (e.type === 'click' && e.button != null && e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation?.();
     act(el);
   };
   document.addEventListener('click', onPointer, true);
@@ -262,7 +262,8 @@ export function renderMarkdown(rawText, opts) {
   const msgId = opts.messageId || opts.msgId || null;
   const scope = opts.scope || 'dm';
   const _spHold = [];
-  let s = String(rawText).replace(/\|\|@(\d+):(\d+)\|\|/g, (_m, ord, len) => {
+  // Display-time shield: DB dagi eski ochiq kalitlar ham ||spoiler|| ga aylanadi (DOM ga tushmasdan vault)
+  let s = protectSecrets(String(rawText)).replace(/\|\|@(\d+):(\d+)\|\|/g, (_m, ord, len) => {
     const idx = _spHold.push(spoilerPlaceholder('', {
       msgId: msgId, ord: parseInt(ord, 10), ch: parseInt(len, 10), scope: scope
     })) - 1;

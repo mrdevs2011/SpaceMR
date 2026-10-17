@@ -3241,7 +3241,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  background-color: rgba(231, 233, 234, 0.38);
+  background-color: rgba(231, 233, 234, 0.55);
   background-image: repeating-linear-gradient(
     -45deg,
     rgba(231, 233, 234, 0.28) 0 3px,
@@ -19854,3 +19854,16 @@ img, video { decoding: async; }
 .attach-menu { z-index: 2147483001 !important; }
 
 .chat-draft-tag { color: #f4212e; font-weight: 700; margin-right: 4px; }
+
+/* Spoiler security: hech qachon blur ichidagi matn ko'rinmasin */
+.md-spoiler:not(.revealed) {
+  color: transparent !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: transparent !important;
+}
+.chat-bubble-text .md-spoiler:not(.revealed),
+.chat-msg .md-spoiler:not(.revealed) {
+  display: inline-block;
+  vertical-align: -0.12em;
+  max-width: 100%;
+}
