@@ -161,8 +161,10 @@ function hideSpoilerEl(el) {
   requestAnimationFrame(() => layoutSpoilers(el.parentElement || document));
 }
 
+let _spoilerUiBound = false;
 export function bindSpoilerUI() {
   if (_spoilerUiBound) return;
+  if (typeof document === 'undefined') return; // Node / SSR
   _spoilerUiBound = true;
   let _lastSpoilerAct = 0;
   const act = (el) => {
