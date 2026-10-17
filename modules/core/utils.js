@@ -33,26 +33,32 @@ function spoilerChCount(text) {
   return Math.max(2, n);
 }
 
-/** Pixel width from live font (text only in memory). Newlines → spaces so width = full key length. */
+/** Pixel width from live font — canvas only (no DOM append → no MutationObserver loop). */
 function measureSpoilerPx(text, fontSourceEl) {
   const t = String(text || '').replace(/[\r\n\t]+/g, ' ');
   if (!t) return 0;
-  const probe = document.createElement('span');
-  probe.setAttribute('aria-hidden', 'true');
-  probe.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;white-space:pre;pointer-events:none;height:auto;width:auto;';
   try {
     const cs = getComputedStyle(fontSourceEl || document.body);
-    probe.style.font = cs.font;
-    probe.style.letterSpacing = cs.letterSpacing;
-    probe.style.fontSize = cs.fontSize;
-    probe.style.fontFamily = cs.fontFamily;
-    probe.style.fontWeight = cs.fontWeight;
-  } catch (_) {}
-  probe.textContent = t;
-  document.body.appendChild(probe);
-  const w = probe.getBoundingClientRect().width;
-  probe.remove();
-  return Math.ceil(w);
+    const canvas = measureSpoilerPx._c || (measureSpoilerPx._c = document.createElement('canvas'));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return 0;
+    const size = cs.fontSize || '15px';
+    const family = cs.fontFamily || 'sans-serif';
+    const weight = cs.fontWeight || '400';
+    const style = cs.fontStyle || 'normal';
+    ctx.font = style + ' ' + weight + ' ' + size + ' ' + family;
+    const w = ctx.measureText(t).width;
+    // letter-spacing approximate
+    let ls = 0;
+    try {
+      const raw = cs.letterSpacing;
+      if (raw && raw !== 'normal') ls = parseFloat(raw) || 0;
+    } catch (_) {}
+    if (ls) return Math.ceil(w + ls * Math.max(0, t.length - 1));
+    return Math.ceil(w);
+  } catch (_) {
+    return 0;
+  }
 }
 
 function spoilerPlaceholder(rawInner, meta) {
@@ -202,15 +208,29 @@ export function bindSpoilerUI() {
     e.preventDefault();
     act(el);
   }, true);
-  // DOM ga yangi spoiler tushganda kenglikni aniqla (post/chat/izoh — hammasi)
+  // Yangi .md-spoiler qo'shilganda kenglikni aniqla (debounce, faqat spoiler node)
   try {
+    let _layoutSched = false;
+    const scheduleLayout = () => {
+      if (_layoutSched) return;
+      _layoutSched = true;
+      requestAnimationFrame(() => {
+        _layoutSched = false;
+        try { layoutSpoilers(document); } catch (_) {}
+      });
+    };
+    const hasSpoiler = (node) => {
+      if (!node || node.nodeType !== 1) return false;
+      if (node.classList && node.classList.contains('md-spoiler')) return true;
+      return !!(node.querySelector && node.querySelector('.md-spoiler'));
+    };
     const mo = new MutationObserver(muts => {
-      let need = false;
       for (const m of muts) {
-        if (m.addedNodes && m.addedNodes.length) { need = true; break; }
+        if (!m.addedNodes) continue;
+        for (const n of m.addedNodes) {
+          if (hasSpoiler(n)) { scheduleLayout(); return; }
+        }
       }
-      if (!need) return;
-      requestAnimationFrame(() => layoutSpoilers(document));
     });
     mo.observe(document.documentElement, { childList: true, subtree: true });
   } catch (_) {}
