@@ -2833,16 +2833,23 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   font-family: monospace;
 }
 .md-spoiler {
-  background: #2f3336;
-  color: transparent;
   cursor: pointer;
-  border-radius: var(--radius);
-  padding: 0 4px;
-  transition: color 0.3s, background 0.3s;
+  border-radius: 6px;
+  padding: 0 3px;
+  -webkit-filter: blur(7px) saturate(.7);
+  filter: blur(7px) saturate(.7);
+  opacity: .92;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter .45s cubic-bezier(.2,.8,.2,1), -webkit-filter .45s cubic-bezier(.2,.8,.2,1), opacity .3s ease;
 }
 .md-spoiler.revealed {
-  color: inherit;
-  background: rgba(113, 118, 123, 0.2);
+  -webkit-filter: none;
+  filter: none;
+  opacity: 1;
+  -webkit-user-select: text;
+  user-select: text;
 }
 .md-mention {
   color: var(--accent, #1d9bf0);

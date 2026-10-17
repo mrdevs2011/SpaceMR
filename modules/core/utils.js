@@ -664,3 +664,54 @@ export function smoothScrollIntoView(el, { block = 'center', duration = SMOOTH_M
   else nextTop += (er.top - br.top) - (box.clientHeight - er.height) / 2;
   return smoothScrollContainer(box, nextTop, duration);
 }
+
+/**
+ * Faqat ||spoiler|| belgisini qo'llaydigan yengil render (bio kabi joylar uchun).
+ * Matn avval esc() dan o'tadi, shuning uchun HTML in'ektsiya imkoni yo'q.
+ */
+export function renderSpoilers(rawText) {
+  if (!rawText) return '';
+  return esc(String(rawText)).replace(
+    /\|\|([\s\S]*?)\|\|/g,
+    '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>'
+  );
+}
+
+/**
+ * Markdown/spoiler belgilarini olib tashlab, oddiy matn qaytaradi (clipboard uchun).
+ * renderMarkdown() qo'llab-quvvatlagan sintaksis bilan bir xil: ||spoiler||, **qalin**, *kursiv*,
+ * ~~chizilgan~~, `kod`, ```blok```, # sarlavha, > iqtibos, ro'yxat, [matn](url), jadval.
+ * Kod ichidagi belgilar o'zgartirilmaydi.
+ */
+export function markdownToPlain(rawText) {
+  if (!rawText) return '';
+  let s = String(rawText).replace(/\r\n?/g, '\n');
+  const keep = [];
+  const hold = t => '\u0000K' + (keep.push(t) - 1) + '\u0000';
+
+  s = s.replace(/```[a-z0-9]*\n([\s\S]*?)```/gi, (_m, code) => hold(code.trim()));
+  s = s.replace(/`([^`\n]+)`/g, (_m, code) => hold(code));
+
+  s = s.replace(/\|\|([\s\S]*?)\|\|/g, '$1');
+  s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+?)(?:\s+"[^"]*")?\)/g, '$1 ($2)');
+
+  s = s.replace(/(?:^[ \t]*\|.*\|[ \t]*\n)+^[ \t]*\|.*\|[ \t]*/gm, match =>
+    match.trim().split('\n')
+      .filter(r => !/^\|?[ \t:-]+\|[ \t:\-|]+$/.test(r))
+      .map(r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()).join('\t'))
+      .join('\n'));
+
+  s = s.replace(/^[ \t]*#{1,3}\s+(.+)$/gm, '$1');
+  s = s.replace(/^[ \t]*>\s?(.+)$/gm, '$1');
+  s = s.replace(/^([ \t]*)[-*]\s+\[([ xX])\]\s+(.+)$/gm, (_m, ind, c, t) => ind + (c === ' ' ? '\u2610 ' : '\u2611 ') + t);
+  s = s.replace(/^([ \t]*)[-*]\s+(.+)$/gm, '$1\u2022 $2');
+
+  s = s.replace(/~~([^~\n]+)~~/g, '$1');
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '$1');
+  s = s.replace(/__([^_\n]+)__/g, '$1');
+  s = s.replace(/\*([^*\n]+)\*/g, '$1');
+  s = s.replace(/(^|[^\w])_([^_\n]+)_(?!\w)/g, '$1$2');
+
+  s = s.replace(/\u0000K(\d+)\u0000/g, (_m, i) => keep[parseInt(i, 10)]);
+  return s.trim();
+}

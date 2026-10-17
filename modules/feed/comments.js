@@ -1,5 +1,5 @@
 import { sb, state, isAdmin, getMediaUrl, mapProfile } from '../core/config.js';
-import { $, esc, renderMarkdown, defAvi, fmtCount, fmt }     from '../core/utils.js';
+import { $, esc, renderMarkdown, markdownToPlain, defAvi, fmtCount, fmt } from '../core/utils.js';
 import { toast }                   from '../ui/toast.js';
 import { rateOk }                   from '../core/rate-limit.js';
 import { busEmit, busOn }          from '../core/rt-bus.js';
@@ -355,7 +355,7 @@ function _paintCmts(postId, listId, cmts, aMap) {
       if (!c) return;
       const { showMenu, copyText, copyCommentLink } = await import('./feed.js');
       const items = [
-        { label: 'Matnni nusxalash', run: () => copyText(c.text) },
+        { label: 'Matnni nusxalash', run: () => copyText(markdownToPlain(c.text)) },
         { label: 'Izoh havolasini nusxalash', run: () => copyCommentLink(postId, c.id) },
       ];
       if (b.dataset.canDel) items.push({ label: 'Izohni o\'chirish', danger: true, run: () => deleteCmt(c.id) });

@@ -5,7 +5,7 @@
    holat (tanlov, ochiq menyu) xabar ID'lari bo'yicha saqlanadi va msgMenuAfterPaint() bilan tiklanadi. */
 import { sb, state, mediaPublicUrl } from '../core/config.js';
 import { toast } from '../ui/toast.js';
-import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView } from '../core/utils.js';
+import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView, markdownToPlain } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
@@ -556,7 +556,7 @@ function run(act, id) {
         }
       } catch (_) {}
     }
-    copyToClipboard(decodeEmojiText(m.text || '').trim());   // [[path]] -> oddiy emoji belgisi (boshqa joyga qo'yish uchun)
+    copyToClipboard(markdownToPlain(decodeEmojiText(m.text || '').trim()));   // [[path]] -> oddiy emoji belgisi (boshqa joyga qo'yish uchun)
     toast('Nusxalandi');
     return;
   }
@@ -767,7 +767,7 @@ function ensureSelBar() {
     const ids = [...sel];
     if (b.dataset.sb === 'x') exitSelect();
     else if (b.dataset.sb === 'copy') {
-      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => decodeEmojiText(m.text || '').trim()).filter(Boolean).join('\n');
+      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => markdownToPlain(decodeEmojiText(m.text || '').trim())).filter(Boolean).join('\n');
       if (t) { copyToClipboard(t); toast('Nusxalandi'); } else toast('Nusxalanadigan matn yo‘q');
     }
     else if (b.dataset.sb === 'edit') { const m = msgOf(ids[0]); if (m) startEdit(m); }
@@ -1198,6 +1198,7 @@ export function initMsgMenu(opts) {
       }
       const r = rowAtPoint(e.target, e.clientY);
       if (!r) return;
+      if (e.target.closest?.('.md-spoiler')) return; // spoiler: menyu emas — faqat ochiladi/yopiladi (o'zining onclick'i)
       const keep = e.target.closest?.(TAP_KEEP);
       if (keep && box.contains(keep)) return; // play tugmasi, havola, rasm...
       if (e.target.closest?.('.chat-msg.emoji-only.emo-1 .chat-bubble-text')) return; // bitta emoji — faqat animatsiya

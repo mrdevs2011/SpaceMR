@@ -2,7 +2,7 @@ import { busEmit } from '../core/rt-bus.js';
 import { sb, state, CAP_LIMIT, getMediaUrl, isAdmin, mapProfile, mapPost, MEDIA_BUCKET } from '../core/config.js';
 import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          showConfirm,
-         dlFile, openZoom, showHeartBurst, fmtCount, smoothScrollIntoView} from '../core/utils.js';
+         dlFile, openZoom, showHeartBurst, fmtCount, smoothScrollIntoView, markdownToPlain} from '../core/utils.js';
 import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
@@ -844,7 +844,7 @@ function openPostMenu(btn) {
   if (uid && uid !== state.me?.uid) items.push({ label: 'Profilni ko\'rish', run: async () => {
     const { openUserProfileModal } = await import('../profile/profile.js'); openUserProfileModal(uid);
   }});
-  if (post?.text) items.push({ label: 'Matnni nusxalash', run: () => copyText(post.text) });
+  if (post?.text) items.push({ label: 'Matnni nusxalash', run: () => copyText(markdownToPlain(post.text)) });
   if (btn.dataset.canDel) items.push({ label: 'Postni o\'chirish', danger: true, run: () =>
     showConfirm('Bu post butunlay o\'chiriladi.', () => doDelete(id), 'Post o\'chirilsinmi?', 'O\'chirish')
   });

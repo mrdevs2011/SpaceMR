@@ -1,6 +1,6 @@
 import { sb, state, getMediaUrl, uploadViaController, mapProfile, mapPost } from '../core/config.js';
 import { $, esc, fmt, fmtSz, defAvi,
-         openZoom }                      from '../core/utils.js';
+         openZoom, renderSpoilers }      from '../core/utils.js';
 import { toast }                         from '../ui/toast.js';
 
 /** profiles qatori (eski users/{uid} hujjatiga o'xshash) */
@@ -143,7 +143,7 @@ async function _paintProfile(ud) {
     usernameEl.style.display = ud.username ? '' : 'none';
   }
 
-  $('profileBio').textContent  = ud.bio || '';
+  $('profileBio').innerHTML    = renderSpoilers(ud.bio || '');
 
   // Website + telefon (tartibli linklar)
   const linksEl = $('profileLinks');
@@ -476,7 +476,7 @@ export async function renderUserProfileModal(uid) {
     <div class="up-info">
       <div class="up-name">${esc(ud.fullName||'Noma\'lum')}</div>
       ${ud.username ? `<div class="up-username">@${esc(ud.username)}</div>` : ''}
-      ${ud.bio ? `<div class="up-bio">${esc(ud.bio)}</div>` : ''}
+      ${ud.bio ? `<div class="up-bio">${renderSpoilers(ud.bio)}</div>` : ''}
       ${(() => {
         const bits = [];
         const _webs2 = (Array.isArray(ud.websites) && ud.websites.length) ? ud.websites : (ud.website ? [ud.website] : []);
