@@ -3212,7 +3212,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   color: #e7e9ea;
   font-family: monospace;
 }
-/* Spoiler: matn DOM da yo'q — kenglik = kalit uzunligi; vizual ::before da (click ishlashi uchun) */
+/* Spoiler: matn DOM da yo'q — bir qator yoki ko'p qator (har qator o'z uzunligi) */
 .md-spoiler {
   cursor: pointer;
   border-radius: 6px;
@@ -3226,7 +3226,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   line-height: 1.2em;
   box-sizing: border-box;
   position: relative;
-  /* filter elementning o'zida emas — ::before da, hit-target aniq qoladi */
   background: transparent;
   -webkit-user-select: none !important;
   user-select: none !important;
@@ -3235,25 +3234,62 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   pointer-events: auto !important;
   touch-action: manipulation;
   z-index: 1;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
 }
 .md-spoiler::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  background-color: rgba(231, 233, 234, 0.55);
+  background-color: rgba(231, 233, 234, 0.42);
   background-image: repeating-linear-gradient(
     -45deg,
-    rgba(231, 233, 234, 0.28) 0 3px,
+    rgba(231, 233, 234, 0.25) 0 3px,
     transparent 3px 6px
   );
-  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.2);
-  -webkit-filter: blur(3px);
-  filter: blur(3px);
+  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.18);
   pointer-events: none;
-  transition: filter .3s ease, opacity .2s ease;
 }
-.md-spoiler:not(.revealed) * {
+/* Ko'p qator: har qator o'z kengligida, matn shakliga mos */
+.md-spoiler.md-spoiler-block {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.28em;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-width: 100%;
+  vertical-align: top;
+  line-height: 1.2;
+}
+.md-spoiler.md-spoiler-block::before {
+  display: none !important;
+}
+.md-spoiler-line {
+  display: block;
+  height: 1.2em;
+  line-height: 1.2em;
+  border-radius: 6px;
+  box-sizing: border-box;
+  max-width: 100%;
+  background-color: rgba(231, 233, 234, 0.42);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(231, 233, 234, 0.25) 0 3px,
+    transparent 3px 6px
+  );
+  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.18);
+  pointer-events: none;
+}
+.md-spoiler:not(.revealed) .md-spoiler-line {
+  display: block !important;
+  visibility: visible !important;
+  color: transparent !important;
+}
+.md-spoiler:not(.revealed) *:not(.md-spoiler-line) {
   display: none !important;
 }
 .md-spoiler.revealed {
@@ -3265,18 +3301,24 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   padding: 0 3px;
   background: transparent;
   position: static;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
   -webkit-user-select: text !important;
   user-select: text !important;
   z-index: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .md-spoiler.revealed::before {
+  display: none !important;
+}
+.md-spoiler.revealed .md-spoiler-line {
   display: none !important;
 }
 .md-spoiler.md-spoiler-loading {
   opacity: 0.55;
   pointer-events: none;
 }
-/* Barcha joy: post, izoh, chat — blur ochilmaguncha select yo'q */
 .md-spoiler:not(.revealed),
 .md-spoiler:not(.revealed) *,
 #chatThreadMessages .md-spoiler:not(.revealed),
@@ -3284,6 +3326,10 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   -webkit-user-select: none !important;
   user-select: none !important;
   -webkit-touch-callout: none !important;
+}
+.chat-bubble-text .md-spoiler:not(.revealed),
+.chat-msg .md-spoiler:not(.revealed) {
+  max-width: 100%;
 }
 .md-mention {
   color: var(--accent, #1d9bf0);

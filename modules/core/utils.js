@@ -23,7 +23,8 @@ export function spoilerVaultHas(id) {
 /** Approximate display width in "ch" units (emoji/CJK wider). */
 function spoilerChCount(text) {
   let n = 0;
-  for (const ch of String(text || '').replace(/[\r\n\t]+/g, '')) {
+  for (const ch of String(text || '')) {
+    if (ch === '\n' || ch === '\r' || ch === '\t') continue;
     const cp = ch.codePointAt(0);
     if (cp <= 0x1f || (cp >= 0x7f && cp <= 0x9f)) continue;
     if (cp > 0xffff || (cp >= 0x1f300 && cp <= 0x1faff) || (cp >= 0x2600 && cp <= 0x27bf)) n += 2;
@@ -34,7 +35,17 @@ function spoilerChCount(text) {
   return Math.max(2, n);
 }
 
-/** Pixel width from live font — canvas only (no DOM append → no MutationObserver loop). */
+/** Per-line metrics for multi-line spoilers (matches real text shape). */
+function spoilerLineMetrics(text) {
+  const raw = String(text || '');
+  const lines = raw.length ? raw.split(/\r?\n/) : [''];
+  return lines.map(line => ({
+    ch: spoilerChCount(line.length ? line : ' '),
+    line: line
+  }));
+}
+
+/** Pixel width of one line (canvas, no DOM). */
 function measureSpoilerPx(text, fontSourceEl) {
   const t = String(text || '').replace(/[\r\n\t]+/g, ' ');
   if (!t) return 0;
@@ -49,7 +60,6 @@ function measureSpoilerPx(text, fontSourceEl) {
     const style = cs.fontStyle || 'normal';
     ctx.font = style + ' ' + weight + ' ' + size + ' ' + family;
     const w = ctx.measureText(t).width;
-    // letter-spacing approximate
     let ls = 0;
     try {
       const raw = cs.letterSpacing;
@@ -62,25 +72,46 @@ function measureSpoilerPx(text, fontSourceEl) {
   }
 }
 
+function spoilerLineBarsHtml(metrics) {
+  return metrics.map(m => {
+    const ch = Math.max(2, m.ch || 2);
+    return '<span class="md-spoiler-line" style="--spoiler-ch:' + ch +
+      ';width:min(100%,' + ch + 'ch);min-width:2ch" aria-hidden="true"></span>';
+  }).join('');
+}
+
 function spoilerPlaceholder(rawInner, meta) {
   meta = meta || {};
   const text = String(rawInner ?? '');
-  const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : spoilerChCount(text));
-  // inline style: both ch and a safe min-width so bar is never a 2ch stub
-  const style = '--spoiler-ch:' + ch + ';min-width:min(100%,' + ch + 'ch);width:min(100%,' + ch + 'ch)';
+  const metrics = text
+    ? spoilerLineMetrics(text)
+    : [{ ch: Math.max(2, meta.ch != null ? Number(meta.ch) : 4), line: '' }];
+  const totalCh = metrics.reduce((s, m) => s + m.ch, 0);
+  const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : totalCh);
+  const multi = metrics.length > 1;
+  const bars = multi || (text && text.indexOf('\n') >= 0)
+    ? spoilerLineBarsHtml(metrics)
+    : '';
+  const cls = 'md-spoiler' + (bars ? ' md-spoiler-block' : '');
+  const style = bars
+    ? '--spoiler-ch:' + ch
+    : '--spoiler-ch:' + ch + ';min-width:min(100%,' + ch + 'ch);width:min(100%,' + ch + 'ch)';
+
   if (meta.msgId != null && meta.ord != null) {
-    return '<span class="md-spoiler" data-scope="' + (meta.scope || 'dm') +
+    return '<span class="' + cls + '" data-scope="' + (meta.scope || 'dm') +
       '" data-msg="' + String(meta.msgId).replace(/"/g, '') +
       '" data-ord="' + String(meta.ord) +
       '" data-ch="' + ch +
+      '" data-lines="' + metrics.length +
       '" style="' + style +
-      '" role="button" tabindex="0" aria-label="Spoiler"></span>';
+      '" role="button" tabindex="0" aria-label="Spoiler">' + bars + '</span>';
   }
   const id = 'sp' + (++_spoilerSeq);
   _spoilerVault.set(id, text);
-  return '<span class="md-spoiler" data-sid="' + id + '" data-ch="' + ch +
+  return '<span class="' + cls + '" data-sid="' + id + '" data-ch="' + ch +
+    '" data-lines="' + metrics.length +
     '" style="' + style +
-    '" role="button" tabindex="0" aria-label="Spoiler"></span>';
+    '" role="button" tabindex="0" aria-label="Spoiler">' + bars + '</span>';
 }
 
 /** Har qanday konteynerdagi blur bar kengligini aniq qil (post, chat, izoh, ...). */
@@ -89,23 +120,67 @@ export function layoutSpoilers(root) {
   scope.querySelectorAll('.md-spoiler:not(.revealed)').forEach(el => {
     const id = el.getAttribute('data-sid');
     const text = id ? _spoilerVault.get(id) : null;
-    let ch = parseInt(el.getAttribute('data-ch') || '0', 10);
-    if (text != null && text.length) {
-      ch = Math.max(ch || 0, spoilerChCount(text));
-      const px = measureSpoilerPx(text, el.parentElement || el);
-      if (px > 0) {
-        // min() against parent so it wraps on narrow screens but still matches key length when possible
-        el.style.width = 'min(100%, ' + px + 'px)';
-        el.style.minWidth = Math.min(px, 48) + 'px';
-        el.style.setProperty('--spoiler-ch', String(ch));
-        el.setAttribute('data-ch', String(ch));
+    const lines = el.querySelectorAll('.md-spoiler-line');
+
+    if (text != null && text.length && lines.length) {
+      const metrics = spoilerLineMetrics(text);
+      // Rebuild bars if line count mismatch
+      if (metrics.length !== lines.length) {
+        el.innerHTML = spoilerLineBarsHtml(metrics);
+        el.classList.add('md-spoiler-block');
+        el.setAttribute('data-lines', String(metrics.length));
+      }
+      const bars = el.querySelectorAll('.md-spoiler-line');
+      metrics.forEach((m, i) => {
+        const bar = bars[i];
+        if (!bar) return;
+        const px = measureSpoilerPx(m.line.length ? m.line : ' ', el.parentElement || el);
+        const ch = Math.max(2, m.ch);
+        if (px > 0) {
+          bar.style.width = 'min(100%, ' + px + 'px)';
+          bar.style.minWidth = Math.min(px, 24) + 'px';
+        } else {
+          bar.style.width = 'min(100%, ' + ch + 'ch)';
+        }
+        bar.style.setProperty('--spoiler-ch', String(ch));
+      });
+      el.setAttribute('data-ch', String(metrics.reduce((s, m) => s + m.ch, 0)));
+      return;
+    }
+
+    if (text != null && text.length && !lines.length) {
+      // single-line bar (or upgrade to multi)
+      const metrics = spoilerLineMetrics(text);
+      if (metrics.length > 1) {
+        el.innerHTML = spoilerLineBarsHtml(metrics);
+        el.classList.add('md-spoiler-block');
+        el.style.width = 'auto';
+        el.style.height = 'auto';
+        el.setAttribute('data-lines', String(metrics.length));
+        layoutSpoilers(el.parentElement || el);
         return;
       }
+      const px = measureSpoilerPx(text, el.parentElement || el);
+      const ch = Math.max(2, spoilerChCount(text));
+      if (px > 0) {
+        el.style.width = 'min(100%, ' + px + 'px)';
+        el.style.minWidth = Math.min(px, 48) + 'px';
+      } else {
+        el.style.width = 'min(100%, ' + ch + 'ch)';
+      }
+      el.style.setProperty('--spoiler-ch', String(ch));
+      el.setAttribute('data-ch', String(ch));
+      return;
     }
+
+    // marker-only: single bar from data-ch
+    let ch = parseInt(el.getAttribute('data-ch') || '0', 10);
     ch = Math.max(2, ch || 4);
     el.style.setProperty('--spoiler-ch', String(ch));
-    el.style.width = 'min(100%, ' + ch + 'ch)';
-    el.style.minWidth = Math.min(ch, 8) + 'ch';
+    if (!lines.length) {
+      el.style.width = 'min(100%, ' + ch + 'ch)';
+      el.style.minWidth = Math.min(ch, 8) + 'ch';
+    }
     el.setAttribute('data-ch', String(ch));
   });
 }
@@ -116,11 +191,13 @@ async function revealSpoilerEl(el) {
   if (id) {
     const text = _spoilerVault.get(id);
     if (text == null) return false;
+    el.classList.remove('md-spoiler-block');
     el.textContent = text;
     el.classList.add('revealed');
     el.style.removeProperty('--spoiler-ch');
     el.style.removeProperty('width');
     el.style.removeProperty('min-width');
+    el.style.removeProperty('height');
     return true;
   }
   const msg = el.getAttribute('data-msg');
@@ -158,13 +235,28 @@ function hideSpoilerEl(el) {
   if (!el || !el.classList.contains('revealed')) return;
   const id = el.getAttribute('data-sid');
   const text = id ? _spoilerVault.get(id) : null;
-  const ch = text != null ? spoilerChCount(text) : (parseInt(el.getAttribute('data-ch') || '4', 10) || 4);
   el.textContent = '';
   el.classList.remove('revealed');
-  el.style.setProperty('--spoiler-ch', String(ch));
-  el.style.width = 'min(100%, ' + ch + 'ch)';
-  el.setAttribute('data-ch', String(ch));
-  // re-measure next frame if vault has text
+  if (text != null && text.length) {
+    const metrics = spoilerLineMetrics(text);
+    if (metrics.length > 1) {
+      el.innerHTML = spoilerLineBarsHtml(metrics);
+      el.classList.add('md-spoiler-block');
+      el.style.width = 'auto';
+      el.style.height = 'auto';
+      el.setAttribute('data-lines', String(metrics.length));
+    } else {
+      const ch = Math.max(2, metrics[0]?.ch || 4);
+      el.classList.remove('md-spoiler-block');
+      el.style.setProperty('--spoiler-ch', String(ch));
+      el.style.width = 'min(100%, ' + ch + 'ch)';
+      el.setAttribute('data-ch', String(ch));
+    }
+  } else {
+    const ch = parseInt(el.getAttribute('data-ch') || '4', 10) || 4;
+    el.style.setProperty('--spoiler-ch', String(ch));
+    el.style.width = 'min(100%, ' + ch + 'ch)';
+  }
   requestAnimationFrame(() => layoutSpoilers(el.parentElement || document));
 }
 
