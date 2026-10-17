@@ -19951,3 +19951,25 @@ img, video { decoding: async; }
   min-height: 1.2em;
   min-width: 3ch;
 }
+
+
+/* Multi-line spoiler must never collapse to 1 line */
+.md-spoiler.md-spoiler-block {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  height: auto !important;
+  max-height: none !important;
+  white-space: normal !important;
+}
+.md-spoiler.md-spoiler-block .md-spoiler-line {
+  display: block !important;
+  flex: 0 0 auto;
+  height: 1.25em !important;
+  margin: 0;
+}
+.chat-bubble-text .md-spoiler.md-spoiler-block,
+.chat-msg .md-spoiler.md-spoiler-block {
+  height: auto !important;
+  max-height: none !important;
+}

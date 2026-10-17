@@ -84,15 +84,18 @@ function spoilerLineBarsHtml(metrics) {
 function spoilerPlaceholder(rawInner, meta) {
   meta = meta || {};
   const text = String(rawInner ?? '');
-  const metrics = text
-    ? spoilerLineMetrics(text)
-    : [{ ch: Math.max(2, meta.ch != null ? Number(meta.ch) : 4), line: '' }];
+  let metrics;
+  if (text) {
+    metrics = spoilerLineMetrics(text);
+  } else if (meta.lineCh && meta.lineCh.length) {
+    metrics = meta.lineCh.map(ch => ({ ch: Math.max(2, Number(ch) || 2), line: '' }));
+  } else {
+    metrics = [{ ch: Math.max(2, meta.ch != null ? Number(meta.ch) : 4), line: '' }];
+  }
   const totalCh = metrics.reduce((s, m) => s + m.ch, 0);
   const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : totalCh);
   const multi = metrics.length > 1;
-  const bars = multi || (text && text.indexOf('\n') >= 0)
-    ? spoilerLineBarsHtml(metrics)
-    : '';
+  const bars = multi ? spoilerLineBarsHtml(metrics) : '';
   const cls = 'md-spoiler' + (bars ? ' md-spoiler-block' : '');
   const style = bars
     ? '--spoiler-ch:' + ch
@@ -356,9 +359,9 @@ export function renderMarkdown(rawText, opts) {
   const scope = opts.scope || 'dm';
   const _spHold = [];
   // Display-time shield: DB dagi eski ochiq kalitlar ham ||spoiler|| ga aylanadi (DOM ga tushmasdan vault)
-  let s = protectSecrets(String(rawText)).replace(/\|\|@(\d+):(\d+)\|\|/g, (_m, ord, len) => {
+  let s = protectSecrets(String(rawText)).replace(/\|\|@(\d+):([\d,]+)\|\|/g, (_m, ord, lenSpec) => {
     const idx = _spHold.push(spoilerPlaceholder('', {
-      msgId: msgId, ord: parseInt(ord, 10), ch: parseInt(len, 10), scope: scope
+      msgId: msgId, ord: parseInt(ord, 10), ch: (String(lenSpec).split(',').reduce((a,b)=>a+(parseInt(b,10)||0),0)), lineCh: String(lenSpec).split(',').map(x=>parseInt(x,10)||2), scope: scope
     })) - 1;
     return '\u0000SP' + idx + '\u0000';
   });

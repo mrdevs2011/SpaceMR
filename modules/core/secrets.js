@@ -360,6 +360,23 @@ export function maskSpoilers(input) {
  * secrets massivi store_message_secrets RPC ga ketadi.
  * Kod bloki / inline `...` ichidagi || tegilmaydi.
  */
+function spoilerLineChList(body) {
+  return String(body || '').split(/\r?\n/).map(line => {
+    let n = 0;
+    for (const ch of line) {
+      const cp = ch.codePointAt(0);
+      if (cp <= 0x1f) continue;
+      n += (cp > 0xffff || (cp >= 0x1f300 && cp <= 0x1faff)) ? 2 : 1;
+    }
+    return Math.max(2, n || 2);
+  });
+}
+function spoilerMarker(ord, body) {
+  const lines = spoilerLineChList(body);
+  const total = lines.reduce((a, b) => a + b, 0);
+  const chPart = lines.length > 1 ? lines.join(',') : String(total);
+  return '||@' + ord + ':' + chPart + '||';
+}
 export function redactSpoilersForStorage(input) {
   const text = input == null ? '' : String(input);
   if (text.indexOf('||') === -1) return { text, secrets: [] };
@@ -373,20 +390,19 @@ export function redactSpoilersForStorage(input) {
       if (!body.length || body.length > 8000) return '••••';
       const ord = secrets.length;
       secrets.push(body);
-      const ch = Array.from(body).length;
-      return '||@' + ord + ':' + ch + '||';
+      return spoilerMarker(ord, body);
     });
   }
   for (let i = 1; i < parts.length; i += 2) {
     const seg = parts[i];
     if (seg && seg.startsWith('||') && seg.endsWith('||') && seg.length >= 4) {
       const inner = seg.slice(2, -2);
-      if (inner.startsWith('@') && /^@\d+:\d+$/.test(inner)) continue;
+      if (inner.startsWith('@') && /^@\d+:[\d,]+$/.test(inner)) continue;
       if (secrets.length >= 32) { parts[i] = '••••'; continue; }
       if (!inner.length || inner.length > 8000) { parts[i] = '••••'; continue; }
       const ord = secrets.length;
       secrets.push(inner);
-      parts[i] = '||@' + ord + ':' + Array.from(inner).length + '||';
+      parts[i] = spoilerMarker(ord, inner);
     }
   }
   return { text: parts.join(''), secrets };
@@ -394,5 +410,5 @@ export function redactSpoilersForStorage(input) {
 
 /** Marker bormi: ||@0:12|| */
 export function hasSpoilerMarkers(input) {
-  return /\|\|@\d+:\d+\|\|/.test(String(input || ''));
+  return /\|\|@\d+:[\d,]+\|\|/.test(String(input || ''));
 }
