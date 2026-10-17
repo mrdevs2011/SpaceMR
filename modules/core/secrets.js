@@ -75,6 +75,7 @@ const WHOLE = [
   /\bglpat-[A-Za-z0-9_-]{20,}/g,                                                          // GitLab
   /\bxox[abprso]-[A-Za-z0-9-]{10,}/g, /\bxapp-[A-Za-z0-9-]{10,}/g,                       // Slack
   /\bAIza[0-9A-Za-z_-]{35}/g,                                                             // Google API
+  /\bgsk_[A-Za-z0-9_-]{20,}/g,                                                            // Google AI Studio / Gemini
   /\bya29\.[0-9A-Za-z_-]{20,}/g,                                                          // Google OAuth
   /\b(?:AKIA|ASIA|AGPA|AIDA|AROA)[0-9A-Z]{16}\b/g,                                        // AWS
   /\b(?:sk|rk|pk)_(?:live|test)_[0-9A-Za-z]{16,}/g, /\bwhsec_[A-Za-z0-9]{16,}/g,         // Stripe
