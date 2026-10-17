@@ -117,7 +117,14 @@ export function formatLastMessageText(raw, mine = false) {
   // Yalang'och media URL
   if (/^https?:\/\/\S+\.(gif|webp|mp4|webm|mov)(\?\S*)?$/i.test(t)) return 'Media';
   if (/^https?:\/\/static\.klipy\.com\//i.test(t)) return 'GIF';
-  return raw;
+  return maskSpoilers(raw);
+}
+
+/** ||yashirin|| matn preview/bildirishnomada ochiq ko'rinmasin (yopilmagan || ham — preview 120 belgiga kesiladi) */
+export function maskSpoilers(raw) {
+  const s = String(raw ?? '');
+  if (!s.includes('||')) return s;
+  return s.replace(/\|\|[\s\S]*?\|\|/g, '••••').replace(/\|\|[\s\S]*$/, '••••');
 }
 
 /** Reply / quote / list: type + text + fileName asosida odam o'qiydigan matn */

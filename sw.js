@@ -31,6 +31,7 @@ function friendlyBody(data) {
   b = b.replace(/\{\s*"__callLog"[\s\S]*$/, "Qo'ng'iroq");
   b = b.replace(/\{\s*"__gif"[\s\S]*$/, 'GIF');
   if (b.startsWith('{"__')) b = 'Yangi xabar';
+  b = b.replace(/\|\|[\s\S]*?\|\|/g, '••••').replace(/\|\|[\s\S]*$/, '••••'); // ||spoiler|| bildirishnomada ochilmasin
   if (data.type === 'call' && b && !/^Qo'ng'iroq/.test(b)) b = "Qo'ng'iroq: " + b;
   const c = stripPushEmoji(b);
   return c.text || (c.key ? 'Emoji' : b);
