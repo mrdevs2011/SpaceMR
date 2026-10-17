@@ -405,6 +405,14 @@ function showSeenList(rowEl) {
 function hideSeen() { clearTimeout(seenHideT); seenEl?.classList.remove('show'); }
 function hideSeenSoon() { clearTimeout(seenHideT); seenHideT = setTimeout(hideSeen, 160); }
 
+/** Xabarda hali ochilmagan (blur) ||spoiler|| bormi — shunda matnni nusxalab bo'lmaydi */
+const hasHiddenSpoiler = id => {
+  try {
+    const row = box?.querySelector(`.chat-msg[data-msg-id="${CSS.escape(String(id))}"]`);
+    return !!row?.querySelector('.md-spoiler:not(.revealed)');
+  } catch (_) { return false; }
+};
+
 function menuHtml(m) {
   const mine = isMine(m);
   const it = (k, ico, label, cls = '') => `<button type="button" class="mc-item ${cls}" data-mc="${k}">${ico}<span>${label}</span></button>`;
@@ -427,7 +435,7 @@ function menuHtml(m) {
   const mUrl = mediaUrlOf(m);
   const onCap = kind && onCaption();
   if (kind === 'image' && mUrl && !onCap) h += it('copyimg', IC.copy, 'Rasmni nusxalash');           // rasm ustida: matn o'rniga rasm
-  else if (hasText && (isDM() || kind) && !isGif && (!kind || onCap)) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');   // izoh ustida: matn
+  else if (hasText && !hasHiddenSpoiler(m.id) && (isDM() || kind) && !isGif && (!kind || onCap)) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');   // izoh ustida: matn
   if (kind && mUrl && !onCap) h += it('dl', IC.dl, DL_LABEL[kind]);   // izoh (matn) ustida — yuklash yo'q, faqat matnni nusxalash
   if (mine && m.type === 'text' && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('fwd', IC.fwd, 'Uzatish');
@@ -545,6 +553,7 @@ function run(act, id) {
   const m = msgOf(id);
   if (!m) return;
   if (act === 'copy') {
+    if (hasHiddenSpoiler(m.id)) return;   // blur ochilmaguncha nusxalab bo'lmaydi
     if (m.text && m.text.includes('"__postShare"')) {
       try {
         const ps = JSON.parse(m.text);
@@ -767,6 +776,7 @@ function ensureSelBar() {
     const ids = [...sel];
     if (b.dataset.sb === 'x') exitSelect();
     else if (b.dataset.sb === 'copy') {
+      if ([...sel].some(hasHiddenSpoiler)) return;
       const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => markdownToPlain(decodeEmojiText(m.text || '').trim())).filter(Boolean).join('\n');
       if (t) { copyToClipboard(t); toast('Nusxalandi'); } else toast('Nusxalanadigan matn yo‘q');
     }
@@ -820,7 +830,7 @@ function paintSel(keepEmpty) {
   const hasCall = [...sel].some(id => isCallMsg(msgOf(id)));
   selBar.querySelector('[data-sb="fwd"]').hidden = hasCall;
   selBar.querySelector('[data-sb="del"]').hidden = !allMine || ![...sel].every(id => canDel(msgOf(id)));
-  selBar.querySelector('[data-sb="copy"]').hidden = hasCall || !allMine || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
+  selBar.querySelector('[data-sb="copy"]').hidden = hasCall || !allMine || [...sel].some(hasHiddenSpoiler) || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
   selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
 }
