@@ -682,8 +682,9 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     bottom: 12px;
     left: calc(var(--content-left, var(--sidebar, 260px)) + var(--center-w) + 16px);
     right: auto;
-    width: min(350px, calc(100vw - var(--content-left, 260px) - var(--center-w) - 32px));
-    min-width: 280px;
+    /* 3-ustun: chap + markaz + 16px + rail; min-width 0 — tor ekranda siqilmasin, shrink qilsin */
+    width: min(350px, max(240px, calc(100vw - var(--content-left, 260px) - var(--center-w) - 32px)));
+    min-width: 240px;
     max-width: 350px;
     height: auto;
     max-height: calc(100dvh - 24px);
@@ -717,8 +718,8 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     bottom: 12px;
     left: calc(var(--content-left, var(--sidebar, 260px)) + var(--center-w) + 16px);
     right: auto;
-    width: min(350px, calc(100vw - var(--content-left, 260px) - var(--center-w) - 32px));
-    min-width: 280px;
+    width: min(350px, max(240px, calc(100vw - var(--content-left, 260px) - var(--center-w) - 32px)));
+    min-width: 240px;
     max-width: 350px;
     height: calc(100dvh - 24px);
     margin: 0;
@@ -1938,16 +1939,19 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   }
 }
 
-/* O'rta desktop: to'liq yozuvlar bilan sidebar */
+/* O'rta desktop (1100–1259): to'liq yozuvli chap sidebar + markaz; o'ng rail yo'q (<1200) */
 @media (min-width: 1100px) and (max-width: 1259px) {
   :root {
-    --sidebar: 300px;
-    --content-left: 300px;
+    --sidebar: 260px;
+    --content-left: 260px;
+    --center-w: min(600px, calc(100vw - 260px - 24px));
   }
-  nav.bot-nav { box-sizing: border-box;
-    width: 300px;
-    min-width: 220px;
-    padding: 4px 12px 12px;
+  nav.bot-nav {
+    box-sizing: border-box;
+    width: 260px !important;
+    min-width: 240px !important;
+    max-width: 260px;
+    padding: 8px 10px 12px;
     align-items: stretch;
   }
   nav.bot-nav .sb-brand-text,
@@ -1956,43 +1960,63 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
     display: block !important;
     white-space: nowrap;
-    overflow: visible;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   nav.bot-nav .sb-logo-row {
     width: auto;
     height: auto;
     min-height: 50px;
-    padding: 4px 12px 4px 4px;
+    padding: 4px 8px 4px 4px;
     justify-content: flex-start;
   }
   nav.bot-nav .nav-btn,
   nav.bot-nav .sb-search-toggle {
-    width: auto;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
-    padding: 0 14px 0 10px;
+    padding: 0 12px 0 10px;
     justify-content: flex-start;
     align-self: stretch;
+    box-sizing: border-box;
   }
   nav.bot-nav #createBtn.nav-center-btn {
-    width: auto;
-    height: 50px;
-    margin: 12px 0 4px;
-    padding: 0 16px;
+    width: 100%;
+    height: 48px;
+    margin: 12px 0 8px;
+    padding: 0 12px;
+    box-sizing: border-box;
   }
-  nav.bot-nav #createBtn.nav-center-btn svg ,   nav.bot-nav #createBtn.nav-center-btn img.icon {
-    display: block;
-    width: 24px;
-    height: 24px;
-    stroke: currentColor;
+  /* Desktop: faqat matn "Post", ikonka yo'q */
+  nav.bot-nav #createBtn.nav-center-btn svg,
+  nav.bot-nav #createBtn.nav-center-btn img.icon {
+    display: none !important;
   }
+  /* Akkaunt: to'liq qator (meta + avatar), siqilgan 50px emas */
   nav.bot-nav .sb-account {
-    width: 50px;
-    height: 50px;
-    padding: 0;
-    justify-content: center;
+    width: 100%;
+    height: auto;
+    min-height: 48px;
+    padding: 10px 8px;
+    justify-content: flex-start;
+    box-sizing: border-box;
   }
-  nav.bot-nav .nav-badge {
-    left: 28px;
+  nav.bot-nav .sb-acc-meta { display: flex !important; }
+  nav.bot-nav .sb-acc-dots { display: block !important; }
+  nav.bot-nav .nav-badge { left: 28px; }
+
+  /* Markaz ustun: sidebar o'ngida, qolgan kenglik */
+  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on {
+    margin-left: var(--content-left);
+    margin-right: 0;
+    width: var(--center-w);
+    max-width: var(--center-w);
+    box-sizing: border-box;
+  }
+  .feed, #followingView .feed {
+    max-width: var(--center-w);
+    width: 100%;
+    margin: 0;
   }
 }
 
@@ -9419,3 +9443,87 @@ body.report-open { overflow: auto !important; }
 .cpc-file-info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .cpc-file-name { font-size: 14px; font-weight: 600; color: #e7e9ea; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cpc-file-size { font-size: 12px; opacity: .7; color: #e7e9ea; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LAYOUT SSOT — left | center | right (oxirgi kaskad, features 68px icon-rail ni bosadi)
+   <1100  : pastki nav, sidebar yo'q
+   1100–1199 : chap yozuvli sidebar + markaz (o'ng yo'q)
+   ≥1200  : chap + markaz 600 + o'ng rail
+   ≥1260  : gutter bilan markazlash
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1100px) {
+  /* Chap sidebar: doim yozuvli, icon-only emas */
+  nav.bot-nav {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    height: 100dvh;
+    border-right: 0.5px solid var(--glass-border, #2f3336);
+    border-top: none;
+    z-index: 100;
+  }
+  nav.bot-nav .sb-top,
+  nav.bot-nav .sb-bottom { display: flex !important; }
+  nav.bot-nav .nav-btn .nav-label,
+  nav.bot-nav .sb-brand-text,
+  nav.bot-nav .sb-acc-meta,
+  nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
+    display: block !important;
+  }
+  nav.bot-nav .nav-btn,
+  nav.bot-nav .sb-search-toggle {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    width: 100%;
+    max-width: 100%;
+  }
+  nav.bot-nav #createBtn.nav-center-btn svg,
+  nav.bot-nav #createBtn.nav-center-btn img.icon {
+    display: none !important;
+  }
+  nav.bot-nav .sb-account {
+    width: 100%;
+    height: auto;
+    min-height: 48px;
+    padding: 10px 8px;
+    justify-content: flex-start;
+  }
+  /* features.css dagi 44px icon tugmalarini bekor */
+  nav.bot-nav .nav-btn {
+    width: auto;
+    min-width: 0;
+    height: 50px;
+  }
+  nav.bot-nav .nav-btn span:not(.nav-badge) {
+    display: block !important;
+  }
+}
+
+/* Tablet / mobil: pastki nav — chap rail yo'q */
+@media (max-width: 1099px) {
+  :root {
+    --sidebar: 0px;
+    --content-left: 0px;
+    --rail: 0px;
+  }
+  nav.bot-nav {
+    top: auto; bottom: 0; left: 0; right: 0;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: var(--nav);
+    flex-direction: row !important;
+  }
+  nav.bot-nav .sb-top,
+  nav.bot-nav .sb-bottom { display: none !important; }
+  nav.bot-nav .nav-btn .nav-label,
+  nav.bot-nav .sb-brand-text,
+  nav.bot-nav .sb-acc-meta { display: none !important; }
+  .right-rail { display: none !important; }
+  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on {
+    margin-left: 0 !important;
+    width: 100%;
+    max-width: 100%;
+  }
+}

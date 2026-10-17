@@ -231,3 +231,46 @@ export function maskSpoilers(input) {
   const t = input == null ? '' : String(input);
   return t.indexOf('||') === -1 ? t : t.replace(/\|\|[\s\S]*?(?:\|\||$)/g, '••••');
 }
+
+/**
+ * Yuborishdan oldin: ||matn|| → ||@N:len|| (DB/API/Realtime da maxfiy yo'q).
+ * secrets massivi store_message_secrets RPC ga ketadi.
+ * Kod bloki / inline `...` ichidagi || tegilmaydi.
+ */
+export function redactSpoilersForStorage(input) {
+  const text = input == null ? '' : String(input);
+  if (text.indexOf('||') === -1) return { text, secrets: [] };
+  const secrets = [];
+  const parts = text.split(SEG_RE);
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) continue; // code / already-spoiler segment handled below
+    parts[i] = parts[i].replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
+      if (secrets.length >= 32) return '••••';
+      const body = String(inner);
+      if (!body.length || body.length > 8000) return '••••';
+      const ord = secrets.length;
+      secrets.push(body);
+      const ch = Array.from(body).length;
+      return '||@' + ord + ':' + ch + '||';
+    });
+  }
+  // Odd segments that are already ||...|| spoilers (from SEG_RE) — convert too
+  for (let i = 1; i < parts.length; i += 2) {
+    const seg = parts[i];
+    if (seg && seg.startsWith('||') && seg.endsWith('||') && seg.length >= 4) {
+      const inner = seg.slice(2, -2);
+      if (inner.startsWith('@') && /^@\d+:\d+$/.test(inner)) continue; // already marker
+      if (secrets.length >= 32) { parts[i] = '••••'; continue; }
+      if (!inner.length || inner.length > 8000) { parts[i] = '••••'; continue; }
+      const ord = secrets.length;
+      secrets.push(inner);
+      parts[i] = '||@' + ord + ':' + Array.from(inner).length + '||';
+    }
+  }
+  return { text: parts.join(''), secrets };
+}
+
+/** Marker bormi: ||@0:12|| */
+export function hasSpoilerMarkers(input) {
+  return /\|\|@\d+:\d+\|\|/.test(String(input || ''));
+}

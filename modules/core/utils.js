@@ -1,10 +1,117 @@
 // test 4: diff uchun izoh
-import { state }  from './config.js';
+import { state, sb }  from './config.js';
 import { toast }  from '../ui/toast.js';
 
 /* ── DOM / formatting helpers ─────────────────────────────────────────── */
 export const $    = id => document.getElementById(id);
 export const esc  = s  => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
+
+/* ── Spoiler vault: maxfiy matn DOM/HTML da EMAS — faqat xotirada.
+   Kenglik character soniga mos (--spoiler-ch). Ochilganda vault dan ~0ms. */
+const _spoilerVault = new Map();
+let _spoilerSeq = 0;
+
+export function spoilerVaultGet(id) {
+  return _spoilerVault.get(String(id)) ?? null;
+}
+
+export function spoilerVaultHas(id) {
+  return _spoilerVault.has(String(id));
+}
+
+function spoilerPlaceholder(rawInner, meta) {
+  meta = meta || {};
+  const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : Array.from(String(rawInner ?? '')).length);
+  if (meta.msgId != null && meta.ord != null) {
+    // Server marker: matn faqat reveal_spoiler RPC da
+    return '<span class="md-spoiler" data-scope="' + (meta.scope || 'dm') +
+      '" data-msg="' + String(meta.msgId).replace(/"/g, '') +
+      '" data-ord="' + String(meta.ord) +
+      '" style="--spoiler-ch:' + ch +
+      '" role="button" tabindex="0" aria-label="Spoiler"></span>';
+  }
+  const id = 'sp' + (++_spoilerSeq);
+  const text = String(rawInner ?? '');
+  _spoilerVault.set(id, text);
+  return '<span class="md-spoiler" data-sid="' + id + '" style="--spoiler-ch:' + ch +
+    '" role="button" tabindex="0" aria-label="Spoiler"></span>';
+}
+
+async function revealSpoilerEl(el) {
+  if (!el || el.classList.contains('revealed')) return false;
+  const id = el.getAttribute('data-sid');
+  if (id) {
+    const text = _spoilerVault.get(id);
+    if (text == null) return false;
+    el.textContent = text;
+    el.classList.add('revealed');
+    el.style.removeProperty('--spoiler-ch');
+    return true;
+  }
+  const msg = el.getAttribute('data-msg');
+  const ord = el.getAttribute('data-ord');
+  const scope = el.getAttribute('data-scope') || 'dm';
+  if (!msg || ord == null) return false;
+  el.classList.add('md-spoiler-loading');
+  try {
+    const { data, error } = await sb.rpc('reveal_spoiler', {
+      p_scope: scope,
+      p_message_id: msg,
+      p_ordinal: parseInt(ord, 10)
+    });
+    if (error || data == null) {
+      el.classList.remove('md-spoiler-loading');
+      return false;
+    }
+    el.textContent = String(data);
+    el.classList.add('revealed');
+    el.classList.remove('md-spoiler-loading');
+    el.style.removeProperty('--spoiler-ch');
+    // Session cache only in memory (not DOM source)
+    const vid = 'rpc:' + scope + ':' + msg + ':' + ord;
+    _spoilerVault.set(vid, String(data));
+    el.setAttribute('data-sid', vid);
+    return true;
+  } catch (_) {
+    el.classList.remove('md-spoiler-loading');
+    return false;
+  }
+}
+
+function hideSpoilerEl(el) {
+  if (!el || !el.classList.contains('revealed')) return;
+  const id = el.getAttribute('data-sid');
+  const text = id ? _spoilerVault.get(id) : null;
+  const ch = text != null ? Math.max(2, Array.from(text).length) : 4;
+  el.textContent = '';
+  el.classList.remove('revealed');
+  el.style.setProperty('--spoiler-ch', String(ch));
+}
+
+let _spoilerUiBound = false;
+export function bindSpoilerUI() {
+  if (_spoilerUiBound) return;
+  _spoilerUiBound = true;
+  const act = (el) => {
+    if (el.classList.contains('revealed')) hideSpoilerEl(el);
+    else revealSpoilerEl(el);
+  };
+  document.addEventListener('click', e => {
+    const el = e.target.closest?.('.md-spoiler');
+    if (!el) return;
+    e.preventDefault();
+    e.stopPropagation();
+    act(el);
+  }, true);
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest?.('.md-spoiler');
+    if (!el) return;
+    e.preventDefault();
+    act(el);
+  }, true);
+}
+
 
 /**
  * Foydalanuvchi yozgan oddiy Markdown belgilarini xavfsiz
@@ -22,10 +129,26 @@ export const esc  = s  => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;
  * olmaydi. Havolalarda ham faqat http(s)/mailto sxemalariga ruxsat
  * beriladi (masalan "javascript:" kabi xavfli sxemalar rad etiladi).
  */
-export function renderMarkdown(rawText) {
+export function renderMarkdown(rawText, opts) {
   if (!rawText) return '';
-  let s = esc(String(rawText));
-
+  bindSpoilerUI();
+  opts = opts || {};
+  const msgId = opts.messageId || opts.msgId || null;
+  const scope = opts.scope || 'dm';
+  const _spHold = [];
+  let s = String(rawText).replace(/\|\|@(\d+):(\d+)\|\|/g, (_m, ord, len) => {
+    const idx = _spHold.push(spoilerPlaceholder('', {
+      msgId: msgId, ord: parseInt(ord, 10), ch: parseInt(len, 10), scope: scope
+    })) - 1;
+    return '\u0000SP' + idx + '\u0000';
+  });
+  s = s.replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
+    if (inner.charAt(0) === '@') return _m;
+    const idx = _spHold.push(spoilerPlaceholder(inner)) - 1;
+    return '\u0000SP' + idx + '\u0000';
+  });
+  s = esc(s);
+  s = s.replace(/\u0000SP(\d+)\u0000/g, (_m, i) => _spHold[parseInt(i, 10)] || '');
   const codeBlocks = [];
   s = s.replace(/```([a-z0-9]*)\n([\s\S]*?)```/gi, (_m, lang, code) => {
     const safeCode = code.trim();
@@ -47,7 +170,7 @@ export function renderMarkdown(rawText) {
     return '\u0000IC' + idx + '\u0000';
   });
 
-  s = s.replace(/\|\|([\s\S]*?)\|\|/g, '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+  /* spoilers already vaulted above */
 
   s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+?)(?:\s+"[^"]*")?\)/g,
     '<a href="$2" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
@@ -671,10 +794,14 @@ export function smoothScrollIntoView(el, { block = 'center', duration = SMOOTH_M
  */
 export function renderSpoilers(rawText) {
   if (!rawText) return '';
-  return esc(String(rawText)).replace(
-    /\|\|([\s\S]*?)\|\|/g,
-    '<span class="md-spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>'
-  );
+  bindSpoilerUI();
+  const hold = [];
+  let s = String(rawText).replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
+    const idx = hold.push(spoilerPlaceholder(inner)) - 1;
+    return '\u0000SP' + idx + '\u0000';
+  });
+  s = esc(s);
+  return s.replace(/\u0000SP(\d+)\u0000/g, (_m, i) => hold[parseInt(i, 10)] || '');
 }
 
 /**

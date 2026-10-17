@@ -1016,6 +1016,27 @@ export function initMsgMenu(opts) {
   if (!box || box.dataset.msgMenu) return;
   box.dataset.msgMenu = '1';
   reactInit(box);
+
+  /* Blur (spoiler) ochilmaguncha matnni umuman tanlab/select qilib bo'lmasin —
+     CSS user-select:none ba'zi mobil brauzerlarda yetarli emas, shuning uchun JS ham. */
+  const isHiddenSpoiler = el => el?.closest?.('.md-spoiler:not(.revealed)');
+  box.addEventListener('selectstart', e => {
+    if (isHiddenSpoiler(e.target)) { e.preventDefault(); return; }
+  }, true);
+  document.addEventListener('selectionchange', () => {
+    try {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+      const r = sel.getRangeAt(0);
+      const n = r.commonAncestorContainer;
+      const el = n.nodeType === 1 ? n : n.parentElement;
+      if (!box.contains(el)) return;
+      // Tanlov ichida yoki uning atrofida ochilmagan spoiler bormi?
+      if (isHiddenSpoiler(el) || el.querySelector?.('.md-spoiler:not(.revealed)')) {
+        sel.removeAllRanges();
+      }
+    } catch (_) {}
+  });
   // Menyu qayerdan ochilgani (izoh yoki rasm) — menuHtml() shunga qarab "Nusxalash" / "Rasmni nusxalash" tanlaydi
   ['contextmenu', 'mousedown', 'touchstart', 'click'].forEach(ev =>
     box.addEventListener(ev, e => { menuTarget = e.target; }, { capture: true, passive: true }));

@@ -1,4 +1,4 @@
-import { protectSecrets, maskSpoilers } from '../core/secrets.js';
+import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
 import { clearDraft, setDraft } from '../core/drafts.js';
 
 import { sb, state } from '../core/config.js';
@@ -41,9 +41,25 @@ export async function sendChatMessage(opts) {
   chatUI._setTyping(false);
 
   // Bazaga emoji RASM/BELGI emas, PATH yoziladi: [[emoji/2d/<kalit>.png]] (GIF/JSON xabarlarga tegilmaydi)
-  const finalMsgText = postShare
+  let finalMsgText = postShare
     ? JSON.stringify({ __postShare: true, post: postShare, comment: encodeForSend(userText) })
     : (gifText != null ? userText : encodeForSend(userText));
+  let _spoilerSecrets = [];
+  if (gifText == null && !postShare) {
+    const red = redactSpoilersForStorage(finalMsgText);
+    finalMsgText = red.text;
+    _spoilerSecrets = red.secrets;
+  } else if (postShare && userText) {
+    try {
+      const o = JSON.parse(finalMsgText);
+      if (o && o.comment) {
+        const red = redactSpoilersForStorage(o.comment);
+        o.comment = red.text;
+        _spoilerSecrets = red.secrets;
+        finalMsgText = JSON.stringify(o);
+      }
+    } catch (_) {}
+  }
 
   const replyInfo = getReplying();
   const replyToId = replyInfo?.id ? String(replyInfo.id) : null;
@@ -87,6 +103,12 @@ export async function sendChatMessage(opts) {
     const { error } = await sb.from('messages')
       .insert({ id, chat_id: chatId, sender_id: state.me.uid, type: 'text', text: finalMsgText, reply_to: replyToId });
     if (error) throw error;
+    if (_spoilerSecrets.length) {
+      const { error: se } = await sb.rpc('store_message_secrets', {
+        p_scope: 'dm', p_message_id: id, p_secrets: _spoilerSecrets
+      });
+      if (se) console.warn('store_message_secrets:', se.message);
+    }
     // DB tasdiqladi — clock → 1 chek (faqat tick, to'liq paint YO'Q)
     const conf = chatState._rtLocal.get(id);
     if (conf) { conf.status = 'sent'; conf._at = Date.now(); chatState._rtLocal.set(id, conf); }

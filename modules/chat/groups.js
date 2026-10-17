@@ -20,7 +20,7 @@
  *   }
  */
 
-import { protectSecrets, maskSpoilers } from '../core/secrets.js';
+import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
 import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts, MEDIA_BUCKET } from '../core/config.js';
 import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
@@ -1065,9 +1065,15 @@ export async function sendGroupMessage(opts) {
   clearTimeout(_gTypTimer); _gSetTyping(false);
 
   // Bazaga emoji RASM/BELGI emas, PATH yoziladi: [[emoji/2d/<kalit>.png]] (GIF/JSON xabarlarga tegilmaydi)
-  const finalMsgText = postShare
+  let finalMsgText = postShare
     ? JSON.stringify({ __postShare: true, post: postShare, comment: encodeForSend(userText) })
     : (gifText != null ? userText : encodeForSend(userText));
+  let _spoilerSecrets = [];
+  if (gifText == null && !postShare) {
+    const red = redactSpoilersForStorage(finalMsgText);
+    finalMsgText = red.text;
+    _spoilerSecrets = red.secrets;
+  }
 
   const replyInfo = getReplying();
   const replyToId = replyInfo?.id ? String(replyInfo.id) : null;
@@ -1098,6 +1104,12 @@ export async function sendGroupMessage(opts) {
     const { error } = await sb.from('group_messages')
       .insert({ id: mid, group_id: groupId, sender_id: state.me.uid, type: 'text', text: finalMsgText, reply_to: replyToId });
     if (error) throw error;
+    if (_spoilerSecrets.length) {
+      const { error: se } = await sb.rpc('store_message_secrets', {
+        p_scope: 'group', p_message_id: mid, p_secrets: _spoilerSecrets
+      });
+      if (se) console.warn('store_message_secrets:', se.message);
+    }
     // DB tasdiqladi — clock → 1 chek (tez: faqat tick)
     const conf = _gPending.get(mid);
     if (conf) { conf.status = 'sent'; _gPending.set(mid, conf); }
