@@ -26,6 +26,11 @@ function clip(s: string, n = 110): string {
   return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
 }
 
+/** ||yashirin|| matn (yopilmagan bo'lsa ham) push bildirishnomada ko'rinmasin */
+function maskSpoilers(s: string): string {
+  return s.includes("||") ? s.replace(/\|\|[\s\S]*?(?:\|\||$)/g, "••••") : s;
+}
+
 /** Chatdagi ulashilgan post xabari ({"__postShare":true,...}) bo'lsa — obyektni qaytaradi */
 function parseShare(raw: unknown): any | null {
   const t = String(raw ?? "").trim();
@@ -43,7 +48,7 @@ function previewRaw(r: any): string {
   const share = parseShare(r.text);
   if (share) {
     const c = String(share.comment ?? "").trim();
-    return c ? `Post: ${clip(c)}` : `Post: ${share.post?.authorName || "ulashilgan post"}`;
+    return c ? `Post: ${clip(maskSpoilers(c))}` : `Post: ${share.post?.authorName || "ulashilgan post"}`;
   }
   const t = String(r.text ?? "");
   // Qo'ng'iroq yozuvi ({"__callLog":true,"s":"ok"|"no"}) — chaqiruvchi yuboradi, qabul qiluvchiga: kiruvchi / o'tkazib yuborilgan
@@ -52,7 +57,7 @@ function previewRaw(r: any): string {
   }
   // Kutilmagan xom JSON (boshqa maxsus xabar) — chiroyli umumiy matn
   if (t.trim().startsWith('{"__')) return "Yangi xabar";
-  return clip(t);
+  return clip(maskSpoilers(t));
 }
 
 /** Bildirishnoma matni: emoji (belgi va [[emoji/..png]] token) hech qachon ko'rinmaydi. Faqat emoji bo'lsa — "Emoji". */

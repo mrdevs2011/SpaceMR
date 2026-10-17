@@ -20,6 +20,7 @@
  *   }
  */
 
+import { protectSecrets, maskSpoilers } from '../core/secrets.js';
 import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts, MEDIA_BUCKET } from '../core/config.js';
 import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
@@ -1049,7 +1050,7 @@ export async function sendGroupMessage(opts) {
   if (gifText == null && isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
   if (!(await _guardWrite())) return;
   const inp  = $('chatThreadInput');
-  const userText = gifText != null ? gifText : (inp?.value || '').trim();
+  const userText = gifText != null ? gifText : protectSecrets((inp?.value || '').trim());
   const postShare = gifText != null ? null : (chatUI.getPendingPostShare ? chatUI.getPendingPostShare() : null);
 
   if (!userText && !postShare) return;
@@ -1073,8 +1074,8 @@ export async function sendGroupMessage(opts) {
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
-    ? (userText ? userText : `Yozuv: ${postShare.authorName || 'Yozuv'}`)
-    : (gifText != null ? 'GIF' : userText.slice(0, 120));
+    ? (userText ? maskSpoilers(userText) : `Yozuv: ${postShare.authorName || 'Yozuv'}`)
+    : (gifText != null ? 'GIF' : maskSpoilers(userText).slice(0, 120));
 
   const groupId = _currentGroupId;
   const groupData = _currentGroupData;
@@ -1171,7 +1172,7 @@ export async function sendGroupFile(file, caption = '') {
   if (!_currentGroupId || !state.me || !file) return;
   if (!(await _guardWrite())) return;
   const groupId = _currentGroupId;
-  const captionText = (typeof caption === 'string' ? caption : '').trim();
+  const captionText = protectSecrets((typeof caption === 'string' ? caption : '').trim());
   const _fReply = getReplying();
   const _fReplyTo = _fReply?.id ? String(_fReply.id) : null;
   if (_fReply) cancelReply(false);
@@ -1189,7 +1190,7 @@ export async function sendGroupFile(file, caption = '') {
       reply_to: _fReplyTo,
     });
     if (error) throw error;
-    const previewText = fileMsgPreview({ caption: captionText, fileName: file.name });
+    const previewText = fileMsgPreview({ caption: maskSpoilers(captionText), fileName: file.name });
     _gRt?.send({
       id, type: 'file', text: captionText || null,
       mediaPath: result.path, mediaType: file.type || null,

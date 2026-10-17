@@ -6,6 +6,7 @@
  * DM-maxsus yoki guruh-maxsus biznes-logika bu yerga kiritilmaydi.
  */
 
+import { maskSpoilers } from '../core/secrets.js';
 import "./chat-pin.js";
 import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
@@ -105,7 +106,7 @@ export function formatLastMessageText(raw, mine = false) {
   if (cl) return callLogInfo(cl, mine).title;
   const ps = parsePostShare(raw);
   if (ps) {
-    if (ps.comment && String(ps.comment).trim()) return String(ps.comment).trim();
+    if (ps.comment && String(ps.comment).trim()) return maskSpoilers(String(ps.comment).trim());
     const name = ps.post?.authorName ? String(ps.post.authorName) : 'Yozuv';
     return `Yozuv: ${name}`;
   }
@@ -120,12 +121,8 @@ export function formatLastMessageText(raw, mine = false) {
   return maskSpoilers(raw);
 }
 
-/** ||yashirin|| matn preview/bildirishnomada ochiq ko'rinmasin (yopilmagan || ham — preview 120 belgiga kesiladi) */
-export function maskSpoilers(raw) {
-  const s = String(raw ?? '');
-  if (!s.includes('||')) return s;
-  return s.replace(/\|\|[\s\S]*?\|\|/g, '••••').replace(/\|\|[\s\S]*$/, '••••');
-}
+// maskSpoilers — bitta manba: core/secrets.js (chat-shared orqali ham eksport qilinadi)
+export { maskSpoilers };
 
 /** Reply / quote / list: type + text + fileName asosida odam o'qiydigan matn */
 export function humanMsgPreview(m) {

@@ -1,3 +1,4 @@
+import { protectSecrets } from '../core/secrets.js';
 import { sb, state, isAdmin, getMediaUrl, mapProfile } from '../core/config.js';
 import { $, esc, renderMarkdown, markdownToPlain, defAvi, fmtCount, fmt } from '../core/utils.js';
 import { toast }                   from '../ui/toast.js';
@@ -491,7 +492,7 @@ async function sendComment(mode) {
     charId = 'cmtCharCount';
   }
 
-  const text = inp?.value?.trim();
+  const text = protectSecrets(inp?.value?.trim() || '');
   if (!text || !state.cmtPostId || !state.me) return;
   if (!rateOk('cmt', 10, 60000)) return;
 

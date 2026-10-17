@@ -3,6 +3,7 @@
    Amallar: Nusxalash, Tahrirlash, Uzatish, O'chirish, Tanlash (ko'p tanlash paneli bilan).
    DM chat (#chatThreadMessages) uchun. Xabarlar har realtime o'zgarishda qayta chizilgani uchun
    holat (tanlov, ochiq menyu) xabar ID'lari bo'yicha saqlanadi va msgMenuAfterPaint() bilan tiklanadi. */
+import { protectSecrets } from '../core/secrets.js';
 import { sb, state, mediaPublicUrl } from '../core/config.js';
 import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView, markdownToPlain } from '../core/utils.js';
@@ -737,7 +738,7 @@ export function cancelEdit(clearInput = true) {
 export async function commitEdit(rawText) {
   const ed = editing;
   if (!ed) return false;
-  const plain = (rawText || '').trim();
+  const plain = protectSecrets((rawText || '').trim());
   if (!plain) return true;
   if (plain === (ed.text || '').trim()) { cancelEdit(true); return true; }
   const text = encodeForSend(plain);

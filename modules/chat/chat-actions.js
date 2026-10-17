@@ -1,3 +1,4 @@
+import { protectSecrets, maskSpoilers } from '../core/secrets.js';
 import { clearDraft, setDraft } from '../core/drafts.js';
 
 import { sb, state } from '../core/config.js';
@@ -21,7 +22,7 @@ export async function sendChatMessage(opts) {
   }
   if (gifText == null && isEditing()) { await commitEdit($('chatThreadInput')?.value); return; }
   const inp  = $('chatThreadInput');
-  const userText = gifText != null ? gifText : (inp?.value || '').trim();
+  const userText = gifText != null ? gifText : protectSecrets((inp?.value || '').trim());
   const postShare = gifText != null ? null : chatState._pendingPostShare;
 
   if ((!userText && !postShare) || !state.currentChatId || !state.me) return;
@@ -49,8 +50,8 @@ export async function sendChatMessage(opts) {
   if (replyInfo) cancelReply(false);
 
   const previewText = postShare
-    ? (userText ? userText : `Yozuv: ${postShare.authorName || 'Yozuv'}`)
-    : (gifText != null ? 'GIF' : userText.slice(0, 120));
+    ? (userText ? maskSpoilers(userText) : `Yozuv: ${postShare.authorName || 'Yozuv'}`)
+    : (gifText != null ? 'GIF' : maskSpoilers(userText).slice(0, 120));
 
   // 1) Optimistik: o'z xabarimiz shu zahoti ekranda (DB javobini kutmaymiz)
   const id = _uuid();
@@ -276,10 +277,10 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
   if (!file || !state.me) return;
   if (!rateOk('file', 5, 30000)) return;
 
-  const caption = (captionOverride !== null && captionOverride !== undefined
+  const caption = protectSecrets((captionOverride !== null && captionOverride !== undefined
     ? captionOverride
     : ($('chatThreadInput')?.value || '')
-  ).trim();
+  ).trim());
 
   // Route to group file send if in group mode
   if (state.currentChatKind && state.currentChatKind !== 'dm') {
@@ -316,7 +317,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
       reply_to: _fReplyTo,
     });
     if (error) throw error;
-    const previewText = fileMsgPreview({ caption, fileName: file.name });
+    const previewText = fileMsgPreview({ caption: maskSpoilers(caption), fileName: file.name });
     // Tezkor yo'l: peer darhol ko'rsin
     if (chatState._rt && chatState._rtChatId === chatId) {
       chatState._rt.send({

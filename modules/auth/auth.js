@@ -1,3 +1,4 @@
+import { protectSecrets } from '../core/secrets.js';
 import { askPassword } from '../ui/password-confirm.js';
 import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, verifyPassword, SUPABASE_URL, SUPABASE_ANON_KEY } from '../core/config.js';
 import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
@@ -2074,7 +2075,7 @@ if (saveProfileBtn) {
 
       const updates = {
         full_name: fn,
-        bio:       $('editBioInput')?.value?.trim() || '',
+        bio:       protectSecrets($('editBioInput')?.value?.trim() || ''),
         recovery_email: rawRecEmail || null,
         website: webRes.value,
         phone: phoneRes.e164 || null,

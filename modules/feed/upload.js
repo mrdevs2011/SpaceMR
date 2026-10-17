@@ -1,3 +1,4 @@
+import { protectSecrets } from '../core/secrets.js';
 import { busEmit } from '../core/rt-bus.js';
 import { getCachedProfile } from '../core/local-cache.js';
 import { sb, state, MAX_FILE, uploadViaController, mapPost } from '../core/config.js';
@@ -308,7 +309,7 @@ export async function submitPost() {
   _submitBusy = true;
   try {
     if (_composerMode === 'story') return await submitStory();
-  const caption      = $('captionInput').value.trim();
+  const caption      = protectSecrets($('captionInput').value.trim());
   const isPublic     = true;
   if (!state.me) return;
   if (!caption && !state.selFile) return;
