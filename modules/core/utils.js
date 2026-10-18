@@ -180,9 +180,42 @@ export function layoutSpoilers(root) {
     }
 
     // marker-only: single bar from data-ch
+    // Uzun matn uchun oldindan taxminiy qatorlar ajrat (bubble kengligiga qarab)
     let ch = parseInt(el.getAttribute('data-ch') || '0', 10);
     ch = Math.max(2, ch || 4);
     el.style.setProperty('--spoiler-ch', String(ch));
+
+    if (!lines.length && ch > 42) {
+      // Taxminiy qator kengligi: ota element kengligi yoki default ~34ch
+      let charsPerLine = 34;
+      try {
+        const parent = el.parentElement || el;
+        const pw = parent.getBoundingClientRect().width;
+        if (pw > 40) {
+          const cs = getComputedStyle(parent);
+          const fs = parseFloat(cs.fontSize) || 14;
+          charsPerLine = Math.max(18, Math.floor(pw / (fs * 0.55)));
+        }
+      } catch (_) {}
+      const lineCount = Math.max(1, Math.ceil(ch / charsPerLine));
+      if (lineCount > 1) {
+        const metrics = [];
+        let remain = ch;
+        for (let i = 0; i < lineCount; i++) {
+          const lc = Math.min(charsPerLine, remain);
+          metrics.push({ ch: Math.max(3, lc), line: '' });
+          remain -= lc;
+        }
+        el.innerHTML = spoilerLineBarsHtml(metrics);
+        el.classList.add('md-spoiler-block');
+        el.style.width = 'auto';
+        el.style.height = 'auto';
+        el.setAttribute('data-lines', String(lineCount));
+        el.setAttribute('data-ch', String(ch));
+        return;
+      }
+    }
+
     if (!lines.length) {
       el.style.width = 'min(100%, ' + ch + 'ch)';
       el.style.minWidth = Math.min(ch, 8) + 'ch';

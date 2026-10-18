@@ -9527,3 +9527,61 @@ body.report-open { overflow: auto !important; }
     max-width: 100%;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESKTOP SIDEBAR FIX — leftbar markazga tegmasin, hover overflow yo'q
+   (app.css dagi eski tooltip va kenglik ziddiyatlarini bekor qiladi)
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 1100px) {
+  :root {
+    --sidebar: 280px;
+    --content-left: 280px;
+  }
+  nav.bot-nav {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+    left: 0 !important;
+    padding: 8px 12px 16px !important;
+    align-items: stretch !important;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  nav.bot-nav .nav-btn,
+  nav.bot-nav .sb-search-toggle,
+  nav.bot-nav .sb-logo-row,
+  nav.bot-nav .sb-account,
+  nav.bot-nav #createBtn.nav-center-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center;
+    overflow: hidden;
+  }
+  nav.bot-nav .nav-btn .nav-label,
+  nav.bot-nav .sb-brand-text,
+  nav.bot-nav .sb-create-label,
+  nav.bot-nav .sb-acc-name,
+  nav.bot-nav .sb-acc-user {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 190px;
+  }
+  /* Hoverda chiqib ketadigan tooltiplarni butunlay o'chirish */
+  nav.bot-nav .nav-btn::after,
+  nav.bot-nav .nav-center-btn::after,
+  nav.bot-nav .sb-mute-btn::after,
+  #sbSearchToggle::after {
+    display: none !important;
+    content: none !important;
+    opacity: 0 !important;
+  }
+  /* Markaziy kontent sidebarga tegmasin */
+  #homeView.on, #followingView.on, #reelsView.on, #profileView.on,
+  #chatsView.on, #actionsView.on, #savedView.on, #appsView.on {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    max-width: none;
+  }
+}
