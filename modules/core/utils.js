@@ -252,10 +252,7 @@ export function layoutSpoilers(root) {
 
 function _revealSpoilerApply(el, text) {
   /* Serverdan kelgan matn — newline saqlanadi, pre-wrap bilan ko'rsatiladi */
-  let body = String(text ?? '').replace(/
-/g, '
-').replace(//g, '
-');
+  let body = String(text ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const w = el.offsetWidth;
   const h = el.offsetHeight;
   el.classList.remove('md-spoiler-block', 'md-spoiler-loading');
