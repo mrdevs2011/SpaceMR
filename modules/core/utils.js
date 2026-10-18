@@ -78,8 +78,9 @@ function measureSpoilerPx(text, fontSourceEl) {
 function spoilerLineBarsHtml(metrics) {
   return metrics.map(m => {
     const ch = Math.max(3, m.ch || 3);
+    // Absolute ch width — NOT min(100%,…) — flex parent width:auto da % circular collapse qiladi
     return '<span class="md-spoiler-line" style="--spoiler-ch:' + ch +
-      ';width:min(100%,' + ch + 'ch);min-width:3ch" aria-hidden="true"></span>';
+      ';width:' + ch + 'ch;min-width:3ch;max-width:100%" aria-hidden="true"></span>';
   }).join('');
 }
 
@@ -137,19 +138,29 @@ export function layoutSpoilers(root) {
         el.setAttribute('data-lines', String(metrics.length));
       }
       const bars = el.querySelectorAll('.md-spoiler-line');
+      let maxPx = 0;
       metrics.forEach((m, i) => {
         const bar = bars[i];
         if (!bar) return;
         const px = measureSpoilerPx(m.line.length ? m.line : ' ', el.parentElement || el);
         const ch = Math.max(2, m.ch);
+        // Absolute width — min(100%,…) flex column da circular collapse beradi
         if (px > 0) {
-          bar.style.width = 'min(100%, ' + px + 'px)';
+          bar.style.width = px + 'px';
           bar.style.minWidth = Math.min(px, 24) + 'px';
+          bar.style.maxWidth = '100%';
+          if (px > maxPx) maxPx = px;
         } else {
-          bar.style.width = 'min(100%, ' + ch + 'ch)';
+          bar.style.width = ch + 'ch';
+          bar.style.minWidth = '3ch';
+          bar.style.maxWidth = '100%';
         }
         bar.style.setProperty('--spoiler-ch', String(ch));
       });
+      if (maxPx > 0) {
+        el.style.width = 'auto';
+        el.style.maxWidth = '100%';
+      }
       el.setAttribute('data-ch', String(metrics.reduce((s, m) => s + m.ch, 0)));
       return;
     }
@@ -176,6 +187,23 @@ export function layoutSpoilers(root) {
       }
       el.style.setProperty('--spoiler-ch', String(ch));
       el.setAttribute('data-ch', String(ch));
+      return;
+    }
+
+    // marker-only: multi-line bars already present (lineCh from server marker)
+    if (lines.length) {
+      lines.forEach(bar => {
+        let lch = parseInt(bar.style.getPropertyValue('--spoiler-ch') || '0', 10);
+        if (!lch) lch = parseInt(bar.getAttribute('data-ch') || '0', 10);
+        lch = Math.max(3, lch || 3);
+        bar.style.width = lch + 'ch';
+        bar.style.minWidth = '3ch';
+        bar.style.maxWidth = '100%';
+        bar.style.setProperty('--spoiler-ch', String(lch));
+      });
+      el.style.width = 'auto';
+      el.style.maxWidth = '100%';
+      el.style.height = 'auto';
       return;
     }
 
