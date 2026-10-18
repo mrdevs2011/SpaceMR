@@ -8612,14 +8612,21 @@ select.field option { background: #000000; color: var(--text); }
 }
 /* Chat xabari matni: desktopda belgilanadi; mobilda DM'da menyudagi "Nusxalash",
    guruh xabarlarida (menyusiz) oddiy belgilash. Emoji-only va ko'p tanlash rejimi yopiq. */
+/* Chat bubble matni: desktop (sichqoncha) da HAR DOIM belgilanadi */
 @media (pointer: fine) {
+  #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble,
   #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text,
   #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text * {
-    -webkit-user-select: text; user-select: text;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default;
   }
 }
+/* Guruh (menyusiz) xabarlar: mobil + desktopda belgilash */
 #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only):not([data-msg-id]) .chat-bubble-text {
-  -webkit-user-select: text; user-select: text; -webkit-touch-callout: default;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default;
 }
 
 /* Taklif havolasi bloki: ostidagi hint -6px margin bilan blok ustiga chiqib ketardi */
@@ -9663,11 +9670,11 @@ html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
   content: "";
   display: block !important;
   position: absolute;
-  inset: 0.14em -0.2em;
+  inset: -0.08em -0.45em;
   border-radius: 999px;
   border: none !important;
   box-shadow: none !important;
-  background-color: rgba(var(--sp-rgb), 0.38) !important;
+  background-color: rgba(var(--sp-rgb), 0.32) !important;
   background-image: repeating-linear-gradient(
     90deg,
     rgba(var(--sp-rgb), 0.75) 0 0.32em,
@@ -9675,6 +9682,13 @@ html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
     rgba(var(--sp-rgb), 0.6) 0.5em 0.78em,
     rgba(var(--sp-rgb), 0.3) 0.78em 1.05em
   ) !important;
-  filter: blur(3.5px);
+  filter: blur(5.5px);
+  /* Chetlar sekin sochilib ketadi — qattiq to'xtash joyi ko'rinmaydi */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%),
+                      linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%),
+              linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
+  mask-composite: intersect;
   pointer-events: none;
 }
