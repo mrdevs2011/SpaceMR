@@ -9568,6 +9568,13 @@ body.report-open { overflow: auto !important; }
     text-overflow: ellipsis;
     max-width: 190px;
   }
+  /* "Joylash" yozuvi markazda */
+  nav.bot-nav #createBtn.nav-center-btn { justify-content: center !important; }
+  /* Profil bloki: ism "..." tugmasi ustiga chiqmasin */
+  nav.bot-nav .sb-acc-meta { display: flex !important; flex-direction: column; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+  nav.bot-nav .sb-acc-name,
+  nav.bot-nav .sb-acc-user { display: block; max-width: 100%; }
+  nav.bot-nav .sb-acc-dots { flex: 0 0 auto; margin-left: auto; }
   /* Hoverda chiqib ketadigan tooltiplarni butunlay o'chirish */
   nav.bot-nav .nav-btn::after,
   nav.bot-nav .nav-center-btn::after,
