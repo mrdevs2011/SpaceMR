@@ -9644,3 +9644,37 @@ body.report-open { overflow: auto !important; }
   #chatsView .chat-row-body { min-width: 0; }
   #chatsView .chat-row { min-width: 0; }
 }
+
+/* ═══ Spoiler = BLUR: qattiq chiziq o'rniga xira (blur) shakl — o'qib bo'lmaydi.
+   Matn DOM da yo'q (vault), shuning uchun bu faqat ko'rinish; xavfsizlik o'zgarmaydi ═══ */
+html body .md-spoiler:not(.revealed) { --sp-rgb: 231, 233, 234; overflow: visible !important; }
+html body .chat-msg.mine .md-spoiler:not(.revealed) { --sp-rgb: 255, 255, 255; }
+html body .md-spoiler:not(.revealed) .md-spoiler-line,
+html body .md-spoiler.md-spoiler-block .md-spoiler-line {
+  position: relative !important;
+  overflow: visible !important;
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+html body .md-spoiler:not(.revealed):not(.md-spoiler-block)::before,
+html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
+  content: "";
+  display: block !important;
+  position: absolute;
+  inset: 0.14em -0.2em;
+  border-radius: 999px;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: rgba(var(--sp-rgb), 0.38) !important;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(var(--sp-rgb), 0.75) 0 0.32em,
+    rgba(var(--sp-rgb), 0.2) 0.32em 0.5em,
+    rgba(var(--sp-rgb), 0.6) 0.5em 0.78em,
+    rgba(var(--sp-rgb), 0.3) 0.78em 1.05em
+  ) !important;
+  filter: blur(3.5px);
+  pointer-events: none;
+}
