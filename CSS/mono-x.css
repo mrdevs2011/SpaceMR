@@ -9596,3 +9596,16 @@ body.report-open { overflow: auto !important; }
   }
   nav.bot-nav { left: var(--gutter) !important; }
 }
+
+/* ═══ Desktop ≥1100px: chat thread HAR DOIM markaz ustunda (chatsView.on bo'lmasa ham full-screen bo'lib ketmasin) ═══
+   Sabab: yuqoridagi `#chatThreadModal { inset: 0 }` faqat body:has(#chatsView.on) bilan markazga o'tardi */
+@media (min-width: 1100px) {
+  #chatThreadModal {
+    left: var(--content-left, var(--sidebar, 280px));
+    right: auto;
+    width: var(--center-w, 600px);
+    max-width: var(--center-w, 600px);
+    box-sizing: border-box;
+    border: 0;
+  }
+}
