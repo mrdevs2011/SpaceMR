@@ -17918,8 +17918,8 @@ body.report-open { overflow: auto !important; }
   #chatsView .chat-row { min-width: 0; }
 }
 
-/* ═══ Spoiler = BLUR: bitta yumshoq "bulut" — alohida to'rtburchak barlar emas.
-   Chetlari sekin sochilib ketadi, to'xtash joyi bilinmaydi. ═══ */
+/* ═══ Spoiler = SHAFFOF (blur yo'q): fon to'liq ko'rinadi, chetlari aniq.
+   Maxfiy matn DOM da yo'q (vault) + rangi ham transparent — orqadan hech narsa ko'rinmaydi. ═══ */
 html body .md-spoiler:not(.revealed) {
   --sp-rgb: 231, 233, 234;
   overflow: visible !important;
@@ -17942,7 +17942,7 @@ html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
   content: none !important;
 }
 
-/* Shaffof frosted — oq dog' emas; fon ko'rinadi; chet to'liq transparent */
+/* To'liq shaffof qatlam: blur yo'q, mask yo'q, fon ko'rinib turadi */
 html body .md-spoiler:not(.revealed)::before,
 html body .chat-msg .md-spoiler:not(.revealed)::before,
 html body .chat-msg.mine .md-spoiler:not(.revealed)::before,
@@ -17954,7 +17954,7 @@ html body .chat-msg.theirs .md-spoiler:not(.revealed)::before {
   border: none !important;
   box-shadow: none !important;
   border-radius: 12px !important;
-  background-color: rgba(var(--sp-rgb), 0.1) !important;
+  background-color: transparent !important;
   background-image:
     repeating-linear-gradient(
       90deg,
@@ -17963,13 +17963,11 @@ html body .chat-msg.theirs .md-spoiler:not(.revealed)::before {
       rgba(var(--sp-rgb), 0.12) 0.36em 0.54em,
       rgba(var(--sp-rgb), 0.02) 0.54em 0.75em
     ) !important;
-  filter: blur(7px) !important;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%),
-                      linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%) !important;
-  -webkit-mask-composite: source-in !important;
-  mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%),
-              linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%) !important;
-  mask-composite: intersect !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
   pointer-events: none !important;
   z-index: 0 !important;
   opacity: 1 !important;
@@ -17999,6 +17997,16 @@ html body .chat-bubble-text .md-spoiler.md-spoiler-block:not(.revealed) {
 /* features.css dagi display:none ni yengamiz */
 html body .md-spoiler.md-spoiler-block:not(.revealed)::before {
   display: block !important;
+}
+
+/* Kafolat: yopiq spoiler ichidagi hech qanday matn/soya ko'rinmasin */
+html body .md-spoiler:not(.revealed),
+html body .md-spoiler:not(.revealed) * {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
 /* video-note.css — Rolik (dumaloq video xabar): yozish tugmasi, kamera preview, chatdagi doira. DM va guruh uchun BITTA umumiy uslub.
    Kaskad: mono-x dan KEYIN yig'iladi (scripts/build-css.mjs). JS: modules/chat/components/video-note.js */
