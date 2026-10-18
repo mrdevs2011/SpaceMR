@@ -9577,11 +9577,4 @@ body.report-open { overflow: auto !important; }
     content: none !important;
     opacity: 0 !important;
   }
-  /* Markaziy kontent sidebarga tegmasin */
-  #homeView.on, #followingView.on, #reelsView.on, #profileView.on,
-  #chatsView.on, #actionsView.on, #savedView.on, #appsView.on {
-    margin-left: 280px !important;
-    width: calc(100% - 280px) !important;
-    max-width: none;
-  }
 }
