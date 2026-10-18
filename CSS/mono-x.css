@@ -663,7 +663,7 @@ nav.bot-nav #createBtn.nav-center-btn *,
 html, body, #app, .app { background: var(--pal-black); background-color: var(--pal-black); color: var(--pal-gray-100); }
 .view.on, .feed, #homeView, #followingView, #reelsView, #profileView, #chatsView { background: transparent; }/* Right-rail — chegarali karta, feed bilan 16px oraliq */
 .right-rail { display: none; }
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   :root { --center-w: 600px; }
   #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
   .feed, #followingView .feed { max-width: var(--center-w); width: 100%; margin: 0; }
@@ -1076,7 +1076,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 /* Desktop (≥1200px), Suhbatlar ochiq: profil / guruh-info / media sahifasi faqat MARKAZ ustunni egallaydi —
    o'ngdagi suhbatlar ro'yxati (rail) yopilib qolmasin */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   body:has(#chatsView.on) #userProfileModal,
   body:has(#chatsView.on) #grpInfoOverlay {
     left: var(--content-left, var(--sidebar, 260px));
@@ -1728,7 +1728,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 }
 
 /* Desktop ≥1200px: profil gear yashirin — sozlamalar right-rail pastida */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   #profileView .profile-gear-btn,
   #profileView #settingsBtn.profile-gear-btn {
     display: none !important;
@@ -2120,7 +2120,7 @@ body #toast {
   display: flex !important;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   #settingsOverlay.show {
     position: fixed !important;
     top: 12px !important;
@@ -3396,7 +3396,7 @@ button:focus-visible,
   stroke: var(--pal-black) !important;
 }
 /* Group Overlays: Mobile Fullscreen Page */
-@media (max-width: 1199px) {
+@media (max-width: 1099px) {
   :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show {
     display: flex !important;
     flex-direction: column !important;
@@ -3427,7 +3427,7 @@ button:focus-visible,
 }
 
 /* Group Overlays: Desktop Right-Rail */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show {
     position: fixed !important;
     top: 12px !important;
@@ -3830,7 +3830,7 @@ textarea:not(:focus) {
 }
 
 /* Desktop (>=1200, o'ng panel): back/chevron kerak emas. Mobil/planshet (<1200) — to'liq ekran, chevron KO'RINADI */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   #settingsOverlay .settings-back,
   #settingsOverlay.show .settings-back {
     display: none !important;
@@ -3853,7 +3853,7 @@ textarea:not(:focus) {
 .pe-avatar-btn { display: none !important; }
 
 /* Sozlamalar: accordion kartalar orasida masofa — FAQAT mobil/tablet (desktop rightbar'da .settings-body gap:14px bor) */
-@media (max-width: 1199px) {
+@media (max-width: 1099px) {
   .pe-card-group.pe-accordion { margin-bottom: 12px; }
 }
 
@@ -3871,12 +3871,12 @@ textarea:not(:focus) {
 }
 .settings-more-menu { bottom: 52px; }
 .settings-row + .settings-section-label { margin-top: 22px; }
-@media (min-width: 1200px) { .settings-row + .settings-section-label { margin-top: 8px; } }
+@media (min-width: 1100px) { .settings-row + .settings-section-label { margin-top: 8px; } }
 
 :where(#grpFormAvi, #grpFormAviWrap, #svNext, #svPrev, #chatThreadAvi, #chatThreadName, #profileAvi, #uploadDrop, #voiceMiniPlayer, .story-plus, .user-avi-btn, .cm-row) { cursor: pointer; }
 
 /* ── Yangi guruh formasi: MOBILE — to'liq ekran. Desktop (≥1200px) — right-rail ichida (yuqoridagi "Group Overlays: Desktop Right-Rail") ── */
-@media (max-width: 1199px) {
+@media (max-width: 1099px) {
   #grpCreateFormOverlay.show {
     position: fixed !important;
     inset: 0 !important;
@@ -7975,7 +7975,7 @@ nav.bot-nav,
 
 
 /* Desktop rightbar sozlamalar paneli chegarasi qoladi */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   #settingsOverlay.show {
     border: 1px solid #2f3336 !important;
     border-radius: var(--radius)!important;
@@ -7984,7 +7984,7 @@ nav.bot-nav,
 
 
 /* Rightbar bitta fixed ramka. Ichidagi kontent almashadi, ramka qimirlamaydi. */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   body:has(#settingsOverlay.show) #rightRail {
     visibility: visible !important;
     pointer-events: auto !important;
@@ -8174,7 +8174,7 @@ body::-webkit-scrollbar,
   #notifsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
   #notifsView.on { padding-top: 0 !important; }
 }
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   #notifsView.on {
     margin-left: var(--content-left, var(--sidebar, 260px));
     margin-right: 0;
@@ -8446,7 +8446,7 @@ body::-webkit-scrollbar,
 #userProfileModal .up-hero { padding-top: 60px; }               /* tepada orqaga tugmasi uchun joy (X sarlavha qatori) */
 #userProfileModal .up-posts-tab { display: flex; }
 #userProfileModal .up-posts-tab .profile-grid-tab { flex: 1; justify-content: center; height: 48px; background: none !important; font-size: 15px; }
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   #userProfileModal {
     left: var(--content-left, var(--sidebar, 260px));
     right: auto;
@@ -9588,11 +9588,13 @@ body.report-open { overflow: auto !important; }
 
 /* ═══ Desktop ≥1200px: sidebar + markaz + o'ng rail BUTUN GURUH ekranda markazlashgan (chap/o'ng bo'sh joy teng) ═══
    guruh kengligi = 280 (sidebar) + 600 (markaz) + 16 (oraliq) + 350 (rail) = 1246px */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   :root {
     --gutter: max(0px, calc((100vw - 1246px) / 2));
     --sidebar: calc(280px + var(--gutter));
     --content-left: calc(280px + var(--gutter));
+    /* tor ekran/zoom (masalan 125%): markaz siqiladi, 3 ustun saqlanadi (rail ~268px) */
+    --center-w: min(600px, calc(100vw - 580px));
   }
   nav.bot-nav { left: var(--gutter) !important; }
 }
