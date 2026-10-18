@@ -775,7 +775,7 @@ import {
   openGroupThread, closeGroupThread,
   sendGroupMessage, sendGroupFile, sendGroupVoice, groupTypingInput, reloadGroupThread,
   injectGroupsDOM, openCreateChoice, getGroupRows, groupsReady,
-  getCurrentGroupId, joinGroup, leaveGroup, searchGroups
+  getCurrentGroupId, joinGroup, leaveGroup, searchGroups, groupSenderName
 } from './groups.js';
 import {
   cacheChatsList, getCachedChatsList, getCachedChatsListAgeMs,
@@ -2519,6 +2519,12 @@ function preloadRecentChatMedia(msgs) {
 }
 
 
+/** "Uzatilgan xabar — kimdan": iqtibosdan boshqacha ko'rinadi (fon va chiziq yo'q, strelka belgisi) */
+function _fwdHeaderHtml(m) {
+  if (!m?.fwdFrom) return '';
+  return `<div class="msg-fwd"><svg class="mfw-ico" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4l6 6-6 6"/><path d="M21 10H9a6 6 0 0 0-6 6v3"/></svg><div class="mfw-body"><span class="mfw-label">Uzatilgan xabar</span><span class="mfw-name">${esc(m.fwdFrom)}</span></div></div>`;
+}
+
 /** Telegram-style reply quote inside bubble */
 function _replyQuoteHtml(m, msgs, grp) {
   const rid = m.replyTo || m.reply_to || null;
@@ -2739,7 +2745,7 @@ export function paintMessages(msgs, grp = null) {
       ${mine ? renderTicks(m.status) : ''}
     </span>` : '';
 
-    const replyHtml = _replyQuoteHtml(m, msgs, grp);
+    const replyHtml = _fwdHeaderHtml(m) + _replyQuoteHtml(m, msgs, grp);
     const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead, replyHtml });
     return assembleMessageHtml({
       dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml, gAvi,
@@ -3501,6 +3507,7 @@ document.addEventListener('chat:group-deleted', () => {
 initMsgMenu({
   box: $('chatThreadMessages'),
   getMsgs: () => chatState._curMsgs,
+  senderName: (uid) => groupSenderName(uid),
   // Moderator: sayt admini yoki shu guruhning owner/admini — boshqalarning xabarini ham o'chira oladi
   canModerate: () => isAdmin() || (state.currentChatKind === 'group' && !!chatUI.isGroupModerator?.()),
   reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) { _dmGone.clear(); chatState._reloadThread(); } },

@@ -20246,3 +20246,23 @@ img, video { decoding: async; }
 .attach-menu { z-index: 2147483001 !important; }
 
 .chat-draft-tag { color: #f4212e; font-weight: 700; margin-right: 4px; }
+
+/* Uzatilgan xabar belgisi — iqtibosdan farqli: fonsiz, chiziqsiz, strelka bilan */
+.msg-fwd {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 6px;
+  max-width: 100%;
+  color: rgba(231, 233, 234, 0.8);
+}
+.chat-msg.mine .msg-fwd { color: rgba(255, 255, 255, 0.92); }
+.mfw-ico { flex-shrink: 0; margin-top: 2px; opacity: 0.85; }
+.mfw-body { min-width: 0; display: flex; flex-direction: column; }
+.mfw-label { font: italic 400 11px/1.25 var(--font); opacity: 0.75; }
+.mfw-name {
+  font: 700 12.5px/1.3 var(--font);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

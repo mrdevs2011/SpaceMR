@@ -6,6 +6,7 @@
  * DM-maxsus yoki guruh-maxsus biznes-logika bu yerga kiritilmaydi.
  */
 
+import { splitFwd } from '../core/fwd.js';
 import { maskSpoilers } from '../core/secrets.js';
 import "./chat-pin.js";
 import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
@@ -101,6 +102,7 @@ export function parseGif(raw) {
 /** Chat prevyusi: hech qachon JSON/URL ko'rsatilmasin */
 export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
+  { const _f = splitFwd(raw); if (_f.name) { raw = _f.text; if (!String(raw).trim()) return 'Uzatilgan xabar'; } }
   if (parseGif(raw)) return 'GIF';
   const cl = parseCallLog(raw);
   if (cl) return callLogInfo(cl, mine).title;

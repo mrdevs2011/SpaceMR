@@ -883,6 +883,7 @@ export function closeGroupThread() {
 /* ─────────────────────────────────────────────────────────────────────
    PAINT GROUP MESSAGES (reuses same bubble structure as DM)
    ───────────────────────────────────────────────────────────────────── */
+export function groupSenderName(uid) { return _senderCache[uid]?.fullName || ''; }
 const _senderCache = {};   // uid → profil (ism/avatar) — har chizishda tarmoqqa bormaslik uchun
 let _paintSeq = 0;
 /* Guruhda o'z xabarimni kamida 1 kishi o'qigan bo'lsa — 2 chek (status='read') */

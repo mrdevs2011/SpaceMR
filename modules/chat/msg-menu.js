@@ -12,6 +12,7 @@ import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
 import { emojiImg, encodeForSend, decodeEmojiText } from '../ui/emoji-img.js';
 import { humanMsgPreview } from './chat-shared.js';
+import { wrapFwd } from '../core/fwd.js';
 import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, fetchWithProgress } from '../ui/float-progress.js';
 
 const LONG_MS = 420;
@@ -836,6 +837,14 @@ function paintSel(keepEmpty) {
   selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
 }
 
+/* Uzatilayotgan xabarning ASL yuboruvchisi (allaqachon uzatilgan bo'lsa — birinchi yuboruvchi saqlanadi) */
+function _origSenderName(m) {
+  if (m.fwdFrom) return m.fwdFrom;
+  if (m.senderId === state.me?.uid) return state.me?.fullName || state.me?.name || state.me?.username || 'Foydalanuvchi';
+  if (isDM()) return ($('chatThreadName')?.textContent || '').trim() || 'Foydalanuvchi';
+  return api.senderName?.(m.senderId) || state._userCache?.[m.senderId]?.fullName || 'Foydalanuvchi';
+}
+
 /* ── Uzatish (foydalanuvchi tanlash oynasi) ────────────────────────── */
 async function forward(ids, fromSel = false) {
   const list = (api.getMsgs() || []).filter(m => ids.includes(m.id));
@@ -871,7 +880,7 @@ async function forward(ids, fromSel = false) {
     for (const m of list) { // tartib saqlansin — ketma-ket
       const { error } = await sb.from('messages').insert({
         chat_id: chatId, sender_id: state.me.uid, type: m.type,
-        text: m.text || null, media_path: m.mediaPath || null, media_type: m.mediaType || null,
+        text: wrapFwd(_origSenderName(m), m.text), media_path: m.mediaPath || null, media_type: m.mediaType || null,
         file_name: m.fileName || null, file_size: m.fileSize || null, duration: m.duration || null,
       });
       if (error) { console.warn('[MsgMenu] forward:', error.message); toast('Uzatilmadi', 'error'); return; }

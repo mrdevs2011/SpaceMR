@@ -41,8 +41,12 @@ function parseShare(raw: unknown): any | null {
   } catch { return null; }
 }
 
+/** "Uzatilgan xabar" belgisi (core/fwd.js bilan bir xil format) — bildirishnomada ko'rinmasin */
+const stripFwd = (t: unknown): string => String(t ?? "").replace(/^\u2063fwd:[^\u2063]*\u2063/, "");
+
 /** Bildirishnoma matni: xom JSON hech qachon ko'rinmaydi */
 function previewRaw(r: any): string {
+  r = { ...r, text: stripFwd(r.text) };
   if (r.type === "voice") return "Ovozli xabar";
   if (r.type === "file") return r.file_name ? `Fayl: ${clip(String(r.file_name), 60)}` : "Fayl";
   const share = parseShare(r.text);
@@ -73,6 +77,7 @@ function plain(s: unknown, fallback: string): string {
 
 /** Xabar FAQAT emoji'dan iborat bo'lsa — birinchi emoji PNG'i bildirishnoma rasmi bo'ladi */
 function emojiImage(r: any): string | undefined {
+  r = { ...r, text: stripFwd(r.text) };
   if (r.type === "voice" || r.type === "file") return undefined;
   const t = String(r.text ?? "");
   if (t.trim().startsWith("{")) return undefined;

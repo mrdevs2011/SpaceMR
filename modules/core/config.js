@@ -9,6 +9,7 @@ import { createClient } from '../vendor/vendor-supabase.js';
 
 // URL va anon key modules/env.js dan keladi — uni Vercel build (scripts/build-env.mjs)
 // Environment Variables'dan yozadi. service_role ni BU YERGA YOZMANG.
+import { splitFwd } from './fwd.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env.js';
 import { assertAllowedUpload } from './upload-policy.js';
 export { SUPABASE_URL, SUPABASE_ANON_KEY };
@@ -332,6 +333,7 @@ export function mapChat(r) {
 /** messages qatori → eski Firestore ko'rinishi */
 export function mapMessage(r) {
   if (!r) return null;
+  const _f = splitFwd(r.text);
   return {
     id: r.id,
     chatId: r.chat_id || r.group_id || null,
@@ -339,7 +341,8 @@ export function mapMessage(r) {
     seq: r.seq == null ? null : Number(r.seq),
     senderId: r.sender_id,
     type: r.type,
-    text: r.text || '',
+    text: _f.text || '',
+    fwdFrom: _f.name || null,
     mediaPath: r.media_path,
     mediaUrl: mediaPublicUrl(r.media_path) || '',
     mediaType: r.media_type,
