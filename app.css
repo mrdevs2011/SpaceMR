@@ -6590,7 +6590,8 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
   .chats-x-empty.show { display: block; padding: 18vh 24px 0; text-align: center; }
   .chats-x-empty-title { font-size: 28px; font-weight: 800; color: var(--text); }
   .chats-x-empty-sub { margin-top: 8px; font-size: 15px; color: var(--text3); }
-  .chats-x-pane { display: flex; position: fixed; z-index: 1; top: 0; bottom: 0; right: 0; left: calc(var(--sidebar) + var(--chats-w)); align-items: center; justify-content: center; background: var(--bg); }
+  .chats-x-pane { position: fixed; z-index: 39; top: 0; bottom: 0; right: 0; left: calc(var(--sidebar) + var(--chats-w)); align-items: center; justify-content: center; background: var(--bg); }
+  body:has(#chatsView.on) .chats-x-pane { display: flex; }
   .chats-x-pane-in { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 340px; padding: 0 24px; }
   .chats-x-pane-ico { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg3, var(--pal-gray-900)); color: var(--text); }
   .chats-x-pane-title { margin-top: 24px; font-size: 22px; font-weight: 800; color: var(--text); }

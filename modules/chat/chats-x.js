@@ -23,7 +23,9 @@ if (view && wrap) {
       <div class="chats-x-pane-sub">Mavjud suhbatlardan birini tanlang<br>yoki yangisini boshlang.</div>
       <button type="button" class="chats-x-newbtn" id="chatsXNew">Yangi chat</button>
     </div>`;
-  view.appendChild(pane);
+  /* body ga qo'shamiz: #chatsView o'ng ustunda overflow+border-radius bilan qirqilgan, ichidagi position:fixed
+     markaz panel WebKit'da (Rail) compositing'dan keyin qirqilib yo'qolardi. Ko'rinishi CSS'da #chatsView.on ga bog'liq. */
+  document.body.appendChild(pane);
 
   /* "Yangi chat" — username bo'yicha qidiruv maydoniga o'tadi */
   $('chatsXNew')?.addEventListener('click', () => {
