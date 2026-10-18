@@ -26,6 +26,7 @@ let _deferredInstall = null;
 let _installedNow = false;
 let _promptSeen = false;
 let _chromiumSettled = false;
+let _installUnsupported = false;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   _deferredInstall = e;
@@ -303,13 +304,31 @@ async function detectInstalled() {
 function applyInstallUi(installed) {
   const loginBtn = document.getElementById('loginInstallBtn');
   const loginWrap = loginBtn?.closest('.auth-install') || document.querySelector('#authWrap .auth-install');
-  const checked = _promptSeen || !!_deferredInstall || _chromiumSettled || isStandalone() || _installedNow;
+  const blocked = !!installed || _installUnsupported;
+  // Brauzer o'rnatishni qo'llab-quvvatlamasa ham tugmani ko'rsatamiz, lekin kulrang/disabled
+  const checked = _promptSeen || !!_deferredInstall || _chromiumSettled || isStandalone() || _installedNow || _installUnsupported;
   if (loginWrap) loginWrap.hidden = !checked || !!installed;
+  if (loginBtn) {
+    loginBtn.disabled = blocked;
+    loginBtn.classList.toggle('is-unsupported', _installUnsupported && !installed);
+    loginBtn.setAttribute('aria-disabled', blocked ? 'true' : 'false');
+    if (_installUnsupported && !installed) {
+      loginBtn.title = "Bu brauzer ilovani o'rnatishni qo'llab-quvvatlamaydi";
+    } else {
+      loginBtn.removeAttribute('title');
+    }
+  }
   const settingsBtn = document.getElementById('guideOpenBtn');
   if (settingsBtn) {
-    settingsBtn.disabled = !!installed;
+    settingsBtn.disabled = blocked;
     settingsBtn.classList.toggle('is-installed', !!installed);
-    settingsBtn.setAttribute('aria-disabled', installed ? 'true' : 'false');
+    settingsBtn.classList.toggle('is-unsupported', _installUnsupported && !installed);
+    settingsBtn.setAttribute('aria-disabled', blocked ? 'true' : 'false');
+    if (_installUnsupported && !installed) {
+      settingsBtn.title = "Bu brauzer ilovani o'rnatishni qo'llab-quvvatlamaydi";
+    } else {
+      settingsBtn.removeAttribute('title');
+    }
     if (!settingsBtn.textContent.trim() || settingsBtn.textContent.includes('riqnoma') || settingsBtn.textContent.includes('yuklash')) {
       settingsBtn.textContent = "Ilovani yuklash";
     }
@@ -321,6 +340,11 @@ async function syncInstallUi() {
 }
 
 async function installDirect() {
+  // Qo'llab-quvvatlanmaydigan brauzer (masalan Rail/WebKit): hech narsa majburlanmaydi
+  if (_installUnsupported) {
+    applyInstallUi(false);
+    return;
+  }
   if (IS_CHROMIUM && !_deferredInstall && !_chromiumSettled) {
     await new Promise((r) => setTimeout(r, 500));
   }
@@ -335,7 +359,13 @@ async function installDirect() {
       applyInstallUi(true);
       return;
     }
-    toast("Bu brauzer o'rnatish oynasini chiqarmadi. Chrome yoki Edge orqali qayta urinib ko'ring.", 'error');
+    // Desktop non-Chromium: majburlamasdan kulrang qilish
+    if (!IS_IOS && !IS_ANDROID) {
+      _installUnsupported = true;
+      applyInstallUi(false);
+      return;
+    }
+    // iOS/Android: yo'riqnoma ochiladi (pastda openGuide chaqirilishi mumkin emas — bu yerda faqat toast o'rniga hech narsa)
     return;
   }
   try {
@@ -347,7 +377,7 @@ async function installDirect() {
       applyInstallUi(true);
     }
   } catch {
-    toast("O'rnatish bekor qilindi", 'error');
+    // Bekor qilindi — toast majburiy emas
   }
 }
 
@@ -368,13 +398,17 @@ export function initInstallGuide() {
     if (t) {
       e.preventDefault();
       e.stopPropagation();
-      if (t.disabled || t.classList.contains('is-installed')) return;
+      if (t.disabled || t.classList.contains('is-installed') || t.classList.contains('is-unsupported')) return;
       installDirect();
     }
   });
   syncInstallUi();
   setTimeout(() => {
     _chromiumSettled = true;
+    // beforeinstallprompt kelmasa va Chromium/iOS/Android bo'lmasa — o'rnatish qo'llab-quvvatlanmaydi (Rail, Firefox desktop va h.k.)
+    if (!_deferredInstall && !_promptSeen && !isStandalone() && !IS_CHROMIUM && !IS_IOS && !IS_ANDROID) {
+      _installUnsupported = true;
+    }
     syncInstallUi();
   }, 700);
   document.addEventListener('visibilitychange', () => {

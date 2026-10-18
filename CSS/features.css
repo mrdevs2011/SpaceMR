@@ -3436,6 +3436,20 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   border-color: rgba(231, 233, 234, 0.2);
 }
 .auth-install-btn:active { transform: scale(0.98); }
+.auth-install-btn:disabled,
+.auth-install-btn.is-unsupported {
+  opacity: 0.4;
+  color: #71767b;
+  background: rgba(231, 233, 234, 0.05);
+  border-color: rgba(231, 233, 234, 0.1);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.auth-install-btn:disabled:hover,
+.auth-install-btn.is-unsupported:hover {
+  background: rgba(231, 233, 234, 0.05);
+  border-color: rgba(231, 233, 234, 0.1);
+}
 .auth-install-btn svg { flex-shrink: 0; opacity: 0.9; }
 .auth-install-link {
   background: none;

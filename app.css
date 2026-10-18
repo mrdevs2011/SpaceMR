@@ -16083,7 +16083,17 @@ header.app-hdr.force-hide,
 /* Install tugmalari: o'rnatilgan bo'lsa login yashirin, sozlamalar kulrang */
 #authWrap .auth-install[hidden] { display: none !important; }
 #guideOpenBtn.is-installed,
+#guideOpenBtn.is-unsupported,
 #guideOpenBtn:disabled {
+  opacity: 0.4 !important;
+  color: #71767b !important;
+  background: rgba(231, 233, 234, 0.05) !important;
+  border-color: rgba(231, 233, 234, 0.1) !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+#loginInstallBtn:disabled,
+#loginInstallBtn.is-unsupported {
   opacity: 0.4 !important;
   color: #71767b !important;
   background: rgba(231, 233, 234, 0.05) !important;
