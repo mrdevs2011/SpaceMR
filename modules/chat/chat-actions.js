@@ -1,5 +1,5 @@
 import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
-import { clearDraft, setDraft } from '../core/drafts.js';
+import { clearDraft, setDraft, activeChatScope } from '../core/drafts.js';
 
 import { sb, state } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
@@ -367,10 +367,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
 }
 
 let _sendLock = false;
-function _draftScope() {
-  const gid = document.getElementById('chatThreadModal')?.dataset?.gid;
-  return gid ? ('grp:' + gid) : ('dm:' + (state.currentChatUid || ''));
-}
+function _draftScope() { return activeChatScope(); }
 export async function handleSendAction() {
   if (_sendLock) return;
   _sendLock = true;

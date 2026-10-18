@@ -854,6 +854,7 @@ export function closeGroupThread() {
   const modal = $('chatThreadModal');
   if (modal) {
     modal.dataset.kind = '';
+    delete modal.dataset.gid;
     modal.querySelector('.grp-avi-badge')?.remove();
   }
 
@@ -862,7 +863,7 @@ export function closeGroupThread() {
   document.getElementById('chatHeaderDropdown')?.remove();
   $('chatThreadInput').disabled = false;
   $('chatThreadInput').placeholder = 'Xabar yozing...';
-  $('chatThreadInput').value = getDraft('grp:' + groupId) || '';
+  $('chatThreadInput').value = '';   // qoralama allaqachon saqlangan; keyingi chatga oqib o'tmasin
   setTimeout(() => window.updateVoiceSendBtn && window.updateVoiceSendBtn(), 50);
   [$('chatAttachBtn'), $('chatVoiceBtn')].forEach(el => {
     if (!el) return;

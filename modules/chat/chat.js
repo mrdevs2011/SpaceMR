@@ -1,7 +1,7 @@
 import { sendChatMessage, sendVoiceMessage, sendChatFile, handleSendAction } from './chat-actions.js';
 export { sendChatMessage, handleSendAction };
 import { chatState, chatUI } from './chat-state.js';
-import { getDraft, setDraft, clearDraft, loadDrafts, resetDrafts } from '../core/drafts.js';
+import { getDraft, setDraft, clearDraft, loadDrafts, resetDrafts, activeChatScope } from '../core/drafts.js';
 /* ── Onlayn holat (presence) uchun CSS ────────────────────────────────── */
 function _injectPresenceCSS() { /* CSS: mono-x.css .presence-dot */ }
 
@@ -1601,6 +1601,7 @@ export async function openChatThread(uid) {
   msgMenuReset();
 
   state.currentChatKind = 'dm';
+  try { const _m = document.getElementById('chatThreadModal'); if (_m) { delete _m.dataset.gid; } } catch (_) {}
   document.getElementById('groupJoinBar')?.remove();
   document.getElementById('chatHeaderDropdown')?.remove();
   const inputRow = document.querySelector('.chat-thread-input-row');
@@ -3597,8 +3598,7 @@ if (_chatsAddBtn) _chatsAddBtn.addEventListener('click', openCreateChoice);
 $('chatThreadInput').addEventListener('input', updateVoiceSendBtn);
 $('chatThreadInput').addEventListener('input', _onChatInputTyping);
 $('chatThreadInput').addEventListener('input', () => {
-  const gid = document.getElementById('chatThreadModal')?.dataset?.gid;
-  const scope = gid ? ('grp:' + gid) : (state.currentChatUid ? ('dm:' + state.currentChatUid) : '');
+  const scope = activeChatScope();
   if (scope) setDraft(scope, $('chatThreadInput').value);
 });
 function _paintDraftRow(scope) {

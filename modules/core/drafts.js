@@ -52,6 +52,18 @@ export function setDraft(scope, text) {
 
 export function clearDraft(scope) { setDraft(scope, ''); }
 
+/** Hozir ochiq chat thread ining qoralama scope i. Faqat modal HAQIQATAN ochiq bo'lsa va tur (dm/group) aniq bo'lsa;
+ *  eskirgan data-gid / currentChatUid boshqa chatga yozilib ketmasin. */
+export function activeChatScope() {
+  try {
+    const modal = document.getElementById('chatThreadModal');
+    if (!modal || !modal.classList.contains('show')) return '';
+    if (state.currentChatKind === 'dm') return state.currentChatUid ? ('dm:' + state.currentChatUid) : '';
+    const gid = modal.dataset.gid;
+    return (state.currentChatKind && gid) ? ('grp:' + gid) : '';
+  } catch (_) { return ''; }
+}
+
 export async function flush(scope) {
   _ensureUid();
   const uid = state.me?.uid;
