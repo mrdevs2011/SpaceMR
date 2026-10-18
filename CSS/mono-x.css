@@ -9676,35 +9676,44 @@ html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
   content: none !important;
 }
 
-/* BITTA yumshoq bulut — single va multi-line uchun */
-html body .md-spoiler:not(.revealed)::before {
+/* BITTA yumshoq bulut — ko'rinadigan, chetlari smooth */
+html body .md-spoiler:not(.revealed)::before,
+html body .chat-msg .md-spoiler:not(.revealed)::before,
+html body .chat-msg.mine .md-spoiler:not(.revealed)::before,
+html body .chat-msg.theirs .md-spoiler:not(.revealed)::before {
   content: "" !important;
   display: block !important;
   position: absolute !important;
-  inset: -0.2em -0.55em !important;
+  inset: -0.15em -0.4em !important;
   border: none !important;
   box-shadow: none !important;
-  /* Organik, noaniq shakl */
-  border-radius: 42% 58% 48% 52% / 52% 42% 58% 48% !important;
-  background-color: rgba(var(--sp-rgb), 0.42) !important;
+  border-radius: 40% 55% 45% 50% / 50% 40% 55% 45% !important;
+  /* Yetarli kontrast — ko'k bubbleda ham ko'rinsin */
+  background-color: rgba(var(--sp-rgb), 0.72) !important;
   background-image:
-    radial-gradient(ellipse 90% 80% at 30% 40%, rgba(var(--sp-rgb), 0.55) 0%, transparent 70%),
-    radial-gradient(ellipse 70% 90% at 70% 60%, rgba(var(--sp-rgb), 0.4) 0%, transparent 65%),
+    radial-gradient(ellipse 85% 75% at 35% 45%, rgba(var(--sp-rgb), 0.9) 0%, transparent 68%),
+    radial-gradient(ellipse 75% 85% at 65% 55%, rgba(var(--sp-rgb), 0.65) 0%, transparent 62%),
     repeating-linear-gradient(
-      95deg,
-      rgba(var(--sp-rgb), 0.35) 0 0.22em,
-      rgba(var(--sp-rgb), 0.08) 0.22em 0.42em,
-      rgba(var(--sp-rgb), 0.28) 0.42em 0.65em,
-      rgba(var(--sp-rgb), 0.1) 0.65em 0.88em
+      92deg,
+      rgba(var(--sp-rgb), 0.55) 0 0.2em,
+      rgba(var(--sp-rgb), 0.15) 0.2em 0.4em,
+      rgba(var(--sp-rgb), 0.4) 0.4em 0.6em,
+      rgba(var(--sp-rgb), 0.12) 0.6em 0.85em
     ) !important;
-  filter: blur(9px) !important;
-  /* Barcha tomondan sekin sochilish */
-  -webkit-mask-image: radial-gradient(ellipse 88% 82% at 50% 50%,
-    black 35%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.4) 72%, transparent 100%) !important;
-  mask-image: radial-gradient(ellipse 88% 82% at 50% 50%,
-    black 35%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.4) 72%, transparent 100%) !important;
+  filter: blur(8px) !important;
+  -webkit-mask-image: radial-gradient(ellipse 92% 88% at 50% 50%,
+    black 40%, rgba(0,0,0,0.9) 60%, rgba(0,0,0,0.45) 78%, transparent 100%) !important;
+  mask-image: radial-gradient(ellipse 92% 88% at 50% 50%,
+    black 40%, rgba(0,0,0,0.9) 60%, rgba(0,0,0,0.45) 78%, transparent 100%) !important;
   pointer-events: none !important;
   z-index: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html body .md-spoiler.md-spoiler-block:not(.revealed)::before,
+html body .chat-msg .md-spoiler.md-spoiler-block:not(.revealed)::before {
+  display: block !important;
+  content: "" !important;
 }
 
 /* Multi-line: qatorlar yopishib bitta massaga aylanadi */

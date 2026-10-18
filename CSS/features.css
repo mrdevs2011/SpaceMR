@@ -2885,8 +2885,11 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   vertical-align: top;
   line-height: 1.2;
 }
-.md-spoiler.md-spoiler-block::before {
+.md-spoiler.md-spoiler-block.revealed::before {
   display: none !important;
+}
+.md-spoiler.md-spoiler-block:not(.revealed)::before {
+  /* soft cloud mono-x da */
 }
 .md-spoiler-line {
   display: block;
@@ -5004,17 +5007,21 @@ body.report-open {
   max-height: none !important;
   gap: 0.2em !important;
 }
-.chat-msg.mine .md-spoiler:not(.revealed)::before,
 .chat-msg.mine .md-spoiler-line {
-  /* blur mono-x da — qattiq fon yo'q (chet smooth bo'lsin) */
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
 }
-.chat-msg.theirs .md-spoiler:not(.revealed)::before,
+/* ::before — mono-x soft cloud, bu yerda ustiga yozilmasin */
+.chat-msg.mine .md-spoiler:not(.revealed)::before {
+  box-shadow: none !important;
+}
 .chat-msg.theirs .md-spoiler-line {
   background-color: transparent !important;
   background-image: none !important;
+  box-shadow: none !important;
+}
+.chat-msg.theirs .md-spoiler:not(.revealed)::before {
   box-shadow: none !important;
 }
 /* Empty vault placeholder still needs hit area */
