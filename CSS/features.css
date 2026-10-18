@@ -2913,12 +2913,12 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   display: none !important;
 }
 .md-spoiler.revealed {
-  display: inline;
+  display: inline-block;
   width: auto !important;
   min-width: 0 !important;
   height: auto;
   line-height: inherit;
-  padding: 0 3px;
+  padding: 0;
   background: transparent;
   position: static;
   color: inherit !important;
@@ -2926,7 +2926,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   -webkit-user-select: text !important;
   user-select: text !important;
   z-index: auto;
-  white-space: pre-wrap;
+  white-space: pre-wrap !important;
   word-break: break-word;
 }
 .md-spoiler.revealed::before {
@@ -5022,7 +5022,7 @@ body.report-open {
 }
 
 
-/* Multi-line spoiler must never collapse to 1 line */
+/* Multi-line spoiler: bar balandligi matn line-height bilan bir xil — ochilganda surilmasin */
 .md-spoiler.md-spoiler-block {
   display: inline-flex !important;
   flex-direction: column !important;
@@ -5030,31 +5030,40 @@ body.report-open {
   height: auto !important;
   max-height: none !important;
   white-space: normal !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  line-height: inherit !important;
 }
 .md-spoiler.md-spoiler-block .md-spoiler-line {
   display: block !important;
   flex: 0 0 auto;
-  height: 1.25em !important;
-  margin: 0;
+  height: 1.45em !important;
+  min-height: 1.45em !important;
+  line-height: 1.45em !important;
+  margin: 0 !important;
+  border-radius: 5px !important;
+  background-image: none !important;
+  background-color: rgba(231, 233, 234, 0.55) !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 .chat-bubble-text .md-spoiler.md-spoiler-block,
 .chat-msg .md-spoiler.md-spoiler-block {
   height: auto !important;
   max-height: none !important;
 }
-
-
-/* Clean multi-line spoiler bars (no thin ghost lines) */
-.md-spoiler.md-spoiler-block {
-  gap: 0.22em !important;
-  padding: 2px 0 !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+.chat-bubble-text .md-spoiler-line,
+.chat-msg .md-spoiler-line {
+  height: 1.45em !important;
+  min-height: 1.45em !important;
+  line-height: 1.45em !important;
 }
 .md-spoiler-line {
-  height: 1.15em !important;
-  min-height: 1.15em !important;
+  height: 1.45em !important;
+  min-height: 1.45em !important;
   border-radius: 5px !important;
   background-image: none !important;
   background-color: rgba(231, 233, 234, 0.55) !important;

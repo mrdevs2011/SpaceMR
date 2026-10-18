@@ -250,19 +250,43 @@ export function layoutSpoilers(root) {
   });
 }
 
+function _revealSpoilerApply(el, text) {
+  /* Serverdan kelgan matn — newline saqlanadi, pre-wrap bilan ko'rsatiladi */
+  let body = String(text ?? '').replace(/
+/g, '
+').replace(//g, '
+');
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  el.classList.remove('md-spoiler-block', 'md-spoiler-loading');
+  el.innerHTML = '';
+  el.textContent = body;
+  el.classList.add('revealed');
+  el.style.removeProperty('--spoiler-ch');
+  el.style.boxSizing = 'border-box';
+  el.style.whiteSpace = 'pre-wrap';
+  el.style.display = 'inline-block';
+  /* Blur box o'lchamini saqlab surilishni kamaytiramiz */
+  if (w > 0) el.style.width = w + 'px';
+  if (h > 0) el.style.minHeight = h + 'px';
+  el.style.removeProperty('height');
+  el.style.removeProperty('min-width');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (!el.classList.contains('revealed')) return;
+      el.style.removeProperty('width');
+      el.style.removeProperty('min-height');
+    });
+  });
+}
+
 async function revealSpoilerEl(el) {
   if (!el || el.classList.contains('revealed')) return false;
   const id = el.getAttribute('data-sid');
   if (id) {
     const text = _spoilerVault.get(id);
     if (text == null) return false;
-    el.classList.remove('md-spoiler-block');
-    el.textContent = text;
-    el.classList.add('revealed');
-    el.style.removeProperty('--spoiler-ch');
-    el.style.removeProperty('width');
-    el.style.removeProperty('min-width');
-    el.style.removeProperty('height');
+    _revealSpoilerApply(el, text);
     return true;
   }
   const msg = el.getAttribute('data-msg');
@@ -280,15 +304,11 @@ async function revealSpoilerEl(el) {
       el.classList.remove('md-spoiler-loading');
       return false;
     }
-    el.textContent = String(data);
-    el.classList.add('revealed');
-    el.classList.remove('md-spoiler-loading');
-    el.style.removeProperty('--spoiler-ch');
-    el.style.removeProperty('width');
-    el.style.removeProperty('min-width');
+    const text = String(data);
     const vid = 'rpc:' + scope + ':' + msg + ':' + ord;
-    _spoilerVault.set(vid, String(data));
+    _spoilerVault.set(vid, text);
     el.setAttribute('data-sid', vid);
+    _revealSpoilerApply(el, text);
     return true;
   } catch (_) {
     el.classList.remove('md-spoiler-loading');
@@ -300,29 +320,49 @@ function hideSpoilerEl(el) {
   if (!el || !el.classList.contains('revealed')) return;
   const id = el.getAttribute('data-sid');
   const text = id ? _spoilerVault.get(id) : null;
+  /* Yopishdan oldin box o'lchamini saqlaymiz — surilish bo'lmasin */
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
   el.textContent = '';
   el.classList.remove('revealed');
+  el.style.boxSizing = 'border-box';
+  if (w > 0) el.style.width = w + 'px';
+  if (h > 0) el.style.minHeight = h + 'px';
   if (text != null && text.length) {
     const metrics = spoilerLineMetrics(text);
     if (metrics.length > 1) {
       el.innerHTML = spoilerLineBarsHtml(metrics);
       el.classList.add('md-spoiler-block');
-      el.style.width = 'auto';
-      el.style.height = 'auto';
       el.setAttribute('data-lines', String(metrics.length));
     } else {
       const ch = Math.max(2, metrics[0]?.ch || 4);
       el.classList.remove('md-spoiler-block');
       el.style.setProperty('--spoiler-ch', String(ch));
-      el.style.width = 'min(100%, ' + ch + 'ch)';
       el.setAttribute('data-ch', String(ch));
     }
   } else {
     const ch = parseInt(el.getAttribute('data-ch') || '4', 10) || 4;
+    const lines = parseInt(el.getAttribute('data-lines') || '1', 10) || 1;
     el.style.setProperty('--spoiler-ch', String(ch));
-    el.style.width = 'min(100%, ' + ch + 'ch)';
+    if (lines > 1) {
+      /* marker-only multi-line: data-ch jami, lineCh yo'q — taxminiy teng qatorlar */
+      const per = Math.max(3, Math.ceil(ch / lines));
+      const metrics = Array.from({ length: lines }, () => ({ ch: per, line: '' }));
+      el.innerHTML = spoilerLineBarsHtml(metrics);
+      el.classList.add('md-spoiler-block');
+    } else {
+      el.classList.remove('md-spoiler-block');
+    }
   }
-  requestAnimationFrame(() => layoutSpoilers(el.parentElement || document));
+  requestAnimationFrame(() => {
+    layoutSpoilers(el.parentElement || document);
+    requestAnimationFrame(() => {
+      if (el.classList.contains('revealed')) return;
+      el.style.removeProperty('width');
+      el.style.removeProperty('min-height');
+      el.style.height = 'auto';
+    });
+  });
 }
 
 let _spoilerUiBound = false;
