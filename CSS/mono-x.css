@@ -9652,12 +9652,18 @@ body.report-open { overflow: auto !important; }
   #chatsView .chat-row { min-width: 0; }
 }
 
-/* ═══ Spoiler = BLUR: qattiq chiziq o'rniga xira (blur) shakl — o'qib bo'lmaydi.
-   Matn DOM da yo'q (vault), shuning uchun bu faqat ko'rinish; xavfsizlik o'zgarmaydi ═══ */
-html body .md-spoiler:not(.revealed) { --sp-rgb: 231, 233, 234; overflow: visible !important; }
+/* ═══ Spoiler = BLUR: bitta yumshoq "bulut" — alohida to'rtburchak barlar emas.
+   Chetlari sekin sochilib ketadi, to'xtash joyi bilinmaydi. ═══ */
+html body .md-spoiler:not(.revealed) {
+  --sp-rgb: 231, 233, 234;
+  overflow: visible !important;
+  position: relative !important;
+}
 html body .chat-msg.mine .md-spoiler:not(.revealed) { --sp-rgb: 255, 255, 255; }
+
+/* Qatorlar faqat o'lcham uchun — o'zlari ko'rinmaydi */
 html body .md-spoiler:not(.revealed) .md-spoiler-line,
-html body .md-spoiler.md-spoiler-block .md-spoiler-line {
+html body .md-spoiler.md-spoiler-block:not(.revealed) .md-spoiler-line {
   position: relative !important;
   overflow: visible !important;
   background: none !important;
@@ -9665,30 +9671,58 @@ html body .md-spoiler.md-spoiler-block .md-spoiler-line {
   box-shadow: none !important;
   border: none !important;
 }
-html body .md-spoiler:not(.revealed):not(.md-spoiler-block)::before,
 html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
-  content: "";
+  display: none !important;
+  content: none !important;
+}
+
+/* BITTA yumshoq bulut — single va multi-line uchun */
+html body .md-spoiler:not(.revealed)::before {
+  content: "" !important;
   display: block !important;
-  position: absolute;
-  inset: -0.08em -0.45em;
-  border-radius: 999px;
+  position: absolute !important;
+  inset: -0.2em -0.55em !important;
   border: none !important;
   box-shadow: none !important;
-  background-color: rgba(var(--sp-rgb), 0.32) !important;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(var(--sp-rgb), 0.75) 0 0.32em,
-    rgba(var(--sp-rgb), 0.2) 0.32em 0.5em,
-    rgba(var(--sp-rgb), 0.6) 0.5em 0.78em,
-    rgba(var(--sp-rgb), 0.3) 0.78em 1.05em
-  ) !important;
-  filter: blur(5.5px);
-  /* Chetlar sekin sochilib ketadi — qattiq to'xtash joyi ko'rinmaydi */
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%),
-                      linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent 0%, black 14%, black 86%, transparent 100%),
-              linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
-  mask-composite: intersect;
-  pointer-events: none;
+  /* Organik, noaniq shakl */
+  border-radius: 42% 58% 48% 52% / 52% 42% 58% 48% !important;
+  background-color: rgba(var(--sp-rgb), 0.42) !important;
+  background-image:
+    radial-gradient(ellipse 90% 80% at 30% 40%, rgba(var(--sp-rgb), 0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 90% at 70% 60%, rgba(var(--sp-rgb), 0.4) 0%, transparent 65%),
+    repeating-linear-gradient(
+      95deg,
+      rgba(var(--sp-rgb), 0.35) 0 0.22em,
+      rgba(var(--sp-rgb), 0.08) 0.22em 0.42em,
+      rgba(var(--sp-rgb), 0.28) 0.42em 0.65em,
+      rgba(var(--sp-rgb), 0.1) 0.65em 0.88em
+    ) !important;
+  filter: blur(9px) !important;
+  /* Barcha tomondan sekin sochilish */
+  -webkit-mask-image: radial-gradient(ellipse 88% 82% at 50% 50%,
+    black 35%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.4) 72%, transparent 100%) !important;
+  mask-image: radial-gradient(ellipse 88% 82% at 50% 50%,
+    black 35%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.4) 72%, transparent 100%) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+/* Multi-line: qatorlar yopishib bitta massaga aylanadi */
+html body .md-spoiler.md-spoiler-block:not(.revealed) {
+  overflow: visible !important;
+  gap: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  position: relative !important;
+}
+html body .chat-msg .md-spoiler.md-spoiler-block:not(.revealed),
+html body .chat-bubble .md-spoiler.md-spoiler-block:not(.revealed),
+html body .chat-bubble-text .md-spoiler.md-spoiler-block:not(.revealed) {
+  overflow: visible !important;
+  height: auto !important;
+  gap: 0 !important;
+}
+/* features.css dagi display:none ni yengamiz */
+html body .md-spoiler.md-spoiler-block:not(.revealed)::before {
+  display: block !important;
 }

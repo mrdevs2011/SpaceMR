@@ -566,7 +566,7 @@ function run(act, id) {
         }
       } catch (_) {}
     }
-    copyToClipboard(markdownToPlain(decodeEmojiText(m.text || '').trim()));   // [[path]] -> oddiy emoji belgisi (boshqa joyga qo'yish uchun)
+    copyToClipboard(markdownToPlain(decodeEmojiText(m.text || '').trim(), { msgId: m.id, scope: isDM() ? 'dm' : 'group' }));   // spoiler marker -> vault matn
     toast('Nusxalandi');
     return;
   }
@@ -778,7 +778,7 @@ function ensureSelBar() {
     if (b.dataset.sb === 'x') exitSelect();
     else if (b.dataset.sb === 'copy') {
       if ([...sel].some(hasHiddenSpoiler)) return;
-      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => markdownToPlain(decodeEmojiText(m.text || '').trim())).filter(Boolean).join('\n');
+      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => markdownToPlain(decodeEmojiText(m.text || '').trim(), { msgId: m.id, scope: isDM() ? 'dm' : 'group' })).filter(Boolean).join('\n');
       if (t) { copyToClipboard(t); toast('Nusxalandi'); } else toast('Nusxalanadigan matn yo‘q');
     }
     else if (b.dataset.sb === 'edit') { const m = msgOf(ids[0]); if (m) startEdit(m); }

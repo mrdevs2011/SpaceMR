@@ -49,8 +49,12 @@ function spoilerLineMetrics(text) {
   }));
 }
 
-function measureSpoilerPx(text, fontSourceEl) {
-  const t = String(text || '').replace(/[\r\n\t]+/g, ' ');
+function measureSpoilerPx(text, fontSourceEl, chHint) {
+  let t = String(text || '').replace(/[\r\n\t]+/g, ' ');
+  // Matn yo'q (marker-only) — ch soniga mos probe string
+  if (!t && chHint > 0) {
+    t = 'n'.repeat(Math.max(1, Math.min(200, chHint | 0)));
+  }
   if (!t) return 0;
   try {
     const cs = getComputedStyle(fontSourceEl || document.body);
@@ -142,8 +146,8 @@ export function layoutSpoilers(root) {
       metrics.forEach((m, i) => {
         const bar = bars[i];
         if (!bar) return;
-        const px = measureSpoilerPx(m.line.length ? m.line : ' ', el.parentElement || el);
         const ch = Math.max(2, m.ch);
+        const px = measureSpoilerPx(m.line.length ? m.line : '', el.parentElement || el, ch);
         // Absolute width — min(100%,…) flex column da circular collapse beradi
         if (px > 0) {
           bar.style.width = px + 'px';
@@ -192,15 +196,53 @@ export function layoutSpoilers(root) {
 
     // marker-only: multi-line bars already present (lineCh from server marker)
     if (lines.length) {
+      // data-lines bilan bar soni mos kelmasa — qayta chizamiz
+      const wantLines = parseInt(el.getAttribute('data-lines') || '0', 10) || lines.length;
+      if (wantLines > 1 && lines.length !== wantLines) {
+        const totalCh = parseInt(el.getAttribute('data-ch') || '0', 10) || 0;
+        const per = Math.max(3, Math.ceil((totalCh || wantLines * 8) / wantLines));
+        const metrics = Array.from({ length: wantLines }, () => ({ ch: per, line: '' }));
+        el.innerHTML = spoilerLineBarsHtml(metrics);
+        el.classList.add('md-spoiler-block');
+        el.setAttribute('data-lines', String(wantLines));
+        // yangi barlar bilan davom etamiz
+        const bars2 = el.querySelectorAll('.md-spoiler-line');
+        bars2.forEach(bar => {
+          let lch = parseInt(bar.style.getPropertyValue('--spoiler-ch') || '0', 10) || per;
+          lch = Math.max(3, lch);
+          const px = measureSpoilerPx('', el.parentElement || el, lch);
+          if (px > 0) {
+            bar.style.width = px + 'px';
+            bar.style.minWidth = Math.min(px, 24) + 'px';
+          } else {
+            bar.style.width = lch + 'ch';
+            bar.style.minWidth = '3ch';
+          }
+          bar.style.maxWidth = '100%';
+          bar.style.setProperty('--spoiler-ch', String(lch));
+        });
+        el.style.width = 'auto';
+        el.style.maxWidth = '100%';
+        el.style.height = 'auto';
+        return;
+      }
       lines.forEach(bar => {
         let lch = parseInt(bar.style.getPropertyValue('--spoiler-ch') || '0', 10);
         if (!lch) lch = parseInt(bar.getAttribute('data-ch') || '0', 10);
         lch = Math.max(3, lch || 3);
-        bar.style.width = lch + 'ch';
-        bar.style.minWidth = '3ch';
+        // Canvas bilan aniq px — ch birligi shriftga bog'liq, noto'g'ri chiqishi mumkin
+        const px = measureSpoilerPx('', el.parentElement || el, lch);
+        if (px > 0) {
+          bar.style.width = px + 'px';
+          bar.style.minWidth = Math.min(px, 24) + 'px';
+        } else {
+          bar.style.width = lch + 'ch';
+          bar.style.minWidth = '3ch';
+        }
         bar.style.maxWidth = '100%';
         bar.style.setProperty('--spoiler-ch', String(lch));
       });
+      el.classList.add('md-spoiler-block');
       el.style.width = 'auto';
       el.style.maxWidth = '100%';
       el.style.height = 'auto';
@@ -1128,14 +1170,47 @@ export function renderSpoilers(rawText) {
 }
 
 /**
+ * Clipboard uchun: ||@ord:ch|| markerlarini vault dagi ochilgan matnga almashtiradi.
+ * Ochilmagan spoiler bo'lsa •••• qoldiriladi (xavfsizlik).
+ * opts: { msgId, scope } — server markerlari uchun.
+ */
+export function resolveSpoilerMarkers(rawText, opts) {
+  opts = opts || {};
+  const msgId = opts.msgId != null ? String(opts.msgId) : '';
+  const scope = opts.scope || 'dm';
+  let s = String(rawText || '');
+  // Server marker: ||@0:45,12||
+  s = s.replace(/\|\|@(\d+):([\d,]+)\|\|/g, (_m, ord) => {
+    const keys = [
+      'rpc:' + scope + ':' + msgId + ':' + ord,
+      'rpc:dm:' + msgId + ':' + ord,
+      'rpc:group:' + msgId + ':' + ord
+    ];
+    for (const k of keys) {
+      const t = _spoilerVault.get(k);
+      if (t != null) return String(t);
+    }
+    // data-sid yo'q, lekin DOM da revealed bo'lishi mumkin — caller to'ldiradi
+    return '\u2022\u2022\u2022\u2022';
+  });
+  // Klassik ||matn|| (vault sid yo'q — ichidagi matn)
+  s = s.replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
+    if (inner.charAt(0) === '@') return _m; // qolgan marker
+    return inner;
+  });
+  return s;
+}
+
+/**
  * Markdown/spoiler belgilarini olib tashlab, oddiy matn qaytaradi (clipboard uchun).
  * renderMarkdown() qo'llab-quvvatlagan sintaksis bilan bir xil: ||spoiler||, **qalin**, *kursiv*,
  * ~~chizilgan~~, `kod`, ```blok```, # sarlavha, > iqtibos, ro'yxat, [matn](url), jadval.
  * Kod ichidagi belgilar o'zgartirilmaydi.
  */
-export function markdownToPlain(rawText) {
+export function markdownToPlain(rawText, opts) {
   if (!rawText) return '';
-  let s = String(rawText).replace(/\r\n?/g, '\n');
+  // Spoiler markerlarini vault dan ochamiz (||@0:45,12|| -> asl matn)
+  let s = resolveSpoilerMarkers(String(rawText), opts).replace(/\r\n?/g, '\n');
   const keep = [];
   const hold = t => '\u0000K' + (keep.push(t) - 1) + '\u0000';
 
