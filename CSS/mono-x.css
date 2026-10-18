@@ -9611,3 +9611,36 @@ body.report-open { overflow: auto !important; }
     border: 0;
   }
 }
+
+/* ═══ Desktop ≥1100px: chap sidebar sig'masa ichida scroll (scrollbar KO'RINMAYDI) ═══ */
+@media (min-width: 1100px) {
+  nav.bot-nav {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior: contain;
+  }
+  nav.bot-nav::-webkit-scrollbar { display: none; width: 0; height: 0; }
+  nav.bot-nav > * { flex-shrink: 0; }
+}
+
+/* ═══ O'ng panel (rail) va Suhbatlar ro'yxati: har qanday kenglikda sig'adi, ichidagi kontent ham ═══ */
+@media (min-width: 1100px) {
+  .right-rail, #chatsView.on { overflow-x: hidden; }
+  .right-rail > *, #chatsView > * { max-width: 100%; min-width: 0; box-sizing: border-box; }
+  /* sarlavha: [Suhbatlar ........ Hammasi ▾ (+)] — tor panelda sarlavha/filtr qisqaradi, "+" doim ko'rinadi */
+  #chatsView .chats-hdr { flex-wrap: nowrap; min-width: 0; gap: 8px; }
+  #chatsView .chats-hdr > span:first-child {
+    flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #chatsView .chats-filter-btn { flex: 0 1 auto; min-width: 0; max-width: 55%; padding-left: 12px; padding-right: 10px; gap: 6px; }
+  #chatsView .chats-filter-btn #chatsFilterLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #chatsView .chats-filter-btn img { flex: 0 0 auto; }
+  #chatsView .chats-add-btn { flex: 0 0 36px; }
+  /* qator: ism + @username bitta qatorda, sig'masa "…" bilan qirqiladi */
+  #chatsView .chat-row-name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #chatsView .chat-row-name > span { display: inline; max-width: none; margin-left: 4px; }
+  #chatsView .chat-row-body { min-width: 0; }
+  #chatsView .chat-row { min-width: 0; }
+}
