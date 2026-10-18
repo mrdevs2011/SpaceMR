@@ -410,6 +410,10 @@ export function bindSpoilerUI() {
   if (typeof document === 'undefined') return; // Node / SSR
   _spoilerUiBound = true;
   let _lastSpoilerAct = 0;
+  /* Qisqa bosish = ochish/yopish; uzun bosish (select) = hech narsa */
+  let _spDown = null; // { t, x, y, el, pid }
+  const TAP_MS = 380;
+  const TAP_MOVE = 12; // px
   const act = (el) => {
     if (!el || !el.classList.contains('md-spoiler')) return;
     const now = Date.now();
@@ -418,21 +422,52 @@ export function bindSpoilerUI() {
     if (el.classList.contains('revealed')) hideSpoilerEl(el);
     else revealSpoilerEl(el);
   };
-  const onPointer = (e) => {
+  const isShortTap = (e, down) => {
+    if (!down) return false;
+    const dt = Date.now() - down.t;
+    const dx = Math.abs((e.clientX ?? 0) - down.x);
+    const dy = Math.abs((e.clientY ?? 0) - down.y);
+    return dt < TAP_MS && dx < TAP_MOVE && dy < TAP_MOVE;
+  };
+  const hasTextSelection = () => {
+    try {
+      const s = window.getSelection();
+      return !!(s && !s.isCollapsed && s.toString().trim());
+    } catch (_) { return false; }
+  };
+  document.addEventListener('pointerdown', (e) => {
+    const el = e.target?.closest?.('.md-spoiler');
+    if (!el) { _spDown = null; return; }
+    if (e.button != null && e.button !== 0) { _spDown = null; return; }
+    _spDown = { t: Date.now(), x: e.clientX || 0, y: e.clientY || 0, el, pid: e.pointerId };
+  }, true);
+  document.addEventListener('pointercancel', () => { _spDown = null; }, true);
+  document.addEventListener('click', (e) => {
     const el = e.target?.closest?.('.md-spoiler');
     if (!el) return;
-    // only primary button / primary touch
-    if (e.type === 'click' && e.button != null && e.button !== 0) return;
+    if (e.button != null && e.button !== 0) return;
+    // Select rejimi yoki uzun bosish — ochma/yopma
+    if (hasTextSelection()) return;
+    if (_spDown && _spDown.el === el && !isShortTap(e, _spDown)) {
+      _spDown = null;
+      return;
+    }
+    _spDown = null;
     e.preventDefault();
     e.stopPropagation();
     act(el);
-  };
-  document.addEventListener('click', onPointer, true);
+  }, true);
   document.addEventListener('pointerup', (e) => {
-    // iOS/Android: some feeds swallow click; pointerup is reliable
-    if (e.pointerType === 'mouse') return; // mouse uses click
+    // iOS/Android: click ba'zan yutiladi — faqat qisqa tap
+    if (e.pointerType === 'mouse') return;
     const el = e.target?.closest?.('.md-spoiler');
-    if (!el) return;
+    if (!el) { _spDown = null; return; }
+    if (hasTextSelection()) { _spDown = null; return; }
+    if (!_spDown || _spDown.el !== el || !isShortTap(e, _spDown)) {
+      _spDown = null;
+      return;
+    }
+    _spDown = null;
     e.preventDefault();
     e.stopPropagation();
     act(el);
