@@ -13,6 +13,7 @@ import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, re
 import { emojiImg, encodeForSend, decodeEmojiText } from '../ui/emoji-img.js';
 import { humanMsgPreview } from './chat-shared.js';
 import { wrapFwd } from '../core/fwd.js';
+import { groupInboxSend } from '../core/rt-bus.js';
 import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, fetchWithProgress } from '../ui/float-progress.js';
 
 const LONG_MS = 420;
@@ -60,7 +61,7 @@ function rowAtPoint(target, y) {
   return bd <= 3 ? best : null;
 }
 // Mobilda bitta bosish menyu ochadi — lekin bu elementlar o'z ishini qiladi (play, havola, rasm, avatar)
-const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote, .cpc-media, .cpc-avi-link, .cpc-open-btn';
+const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote, .msg-fwd, .cpc-media, .cpc-avi-link, .cpc-open-btn';
 const coarse = () => window.matchMedia('(pointer: coarse)').matches;
 const pad = n => String(n).padStart(2, '0');
 
@@ -837,12 +838,17 @@ function paintSel(keepEmpty) {
   selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
 }
 
-/* Uzatilayotgan xabarning ASL yuboruvchisi (allaqachon uzatilgan bo'lsa — birinchi yuboruvchi saqlanadi) */
-function _origSenderName(m) {
-  if (m.fwdFrom) return m.fwdFrom;
-  if (m.senderId === state.me?.uid) return state.me?.fullName || state.me?.name || state.me?.username || 'Foydalanuvchi';
-  if (isDM()) return ($('chatThreadName')?.textContent || '').trim() || 'Foydalanuvchi';
-  return api.senderName?.(m.senderId) || state._userCache?.[m.senderId]?.fullName || 'Foydalanuvchi';
+/* Uzatilayotgan xabarning ASL manbasi: guruhdan bo'lsa — guruh, aks holda — yuboruvchi odam.
+ * Allaqachon uzatilgan bo'lsa — birinchi manba saqlanadi. */
+function _origFwdMeta(m) {
+  if (m.fwdFrom) return { name: m.fwdFrom, kind: m.fwdKind || 'u', id: m.fwdId || '' };
+  if (!isDM()) {
+    const gid = document.getElementById('chatThreadModal')?.dataset?.gid || '';
+    const gname = ($('chatThreadName')?.textContent || '').trim() || 'Guruh';
+    return { name: gname, kind: 'g', id: gid };
+  }
+  if (m.senderId === state.me?.uid) return { name: state.me?.fullName || state.me?.name || state.me?.username || 'Foydalanuvchi', kind: 'u', id: state.me.uid };
+  return { name: ($('chatThreadName')?.textContent || '').trim() || 'Foydalanuvchi', kind: 'u', id: m.senderId || state.currentChatUid || '' };
 }
 
 /* ── Uzatish (foydalanuvchi tanlash oynasi) ────────────────────────── */
@@ -850,6 +856,8 @@ async function forward(ids, fromSel = false) {
   const list = (api.getMsgs() || []).filter(m => ids.includes(m.id));
   if (!list.length) return;
   const users = await (api.getContactUsers || api.getUsers)().catch(() => []) || [];
+  const groups = (api.getForwardGroups?.() || []);
+  const meta = list.map(m => ({ m, f: _origFwdMeta(m) }));   // manba hozir (thread yopilishidan oldin) aniqlanadi
   if (!fwdEl) {
     fwdEl = document.createElement('div');
     fwdEl.id = 'msgFwd';
@@ -863,9 +871,12 @@ async function forward(ids, fromSel = false) {
   const listEl = fwdEl.querySelector('.mf-list'), search = fwdEl.querySelector('.mf-search');
   const paint = q => {
     q = (q || '').trim().toLowerCase();
-    const res = users.filter(u => !q || (u.fullName || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q));
-    listEl.innerHTML = res.length
-      ? res.map(u => `<div class="mf-row" data-uid="${esc(u.uid)}"><img src="${esc(u.avatar || defAvi(u.fullName || 'U'))}" alt="" onerror="this.src='${defAvi(u.fullName || 'U')}'"><span>${esc(u.fullName || u.username || 'Foydalanuvchi')}</span></div>`).join('')
+    const ru = users.filter(u => !q || (u.fullName || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q));
+    const rg = groups.filter(g => !q || (g.name || '').toLowerCase().includes(q));
+    const rowU = u => `<div class="mf-row" data-uid="${esc(u.uid)}"><img src="${esc(u.avatar || defAvi(u.fullName || 'U'))}" alt="" onerror="this.src='${defAvi(u.fullName || 'U')}'"><span>${esc(u.fullName || u.username || 'Foydalanuvchi')}</span></div>`;
+    const rowG = g => `<div class="mf-row" data-gid="${esc(g.id)}"><img src="${esc(g.avatar || defAvi(g.name || 'G'))}" alt="" onerror="this.src='${defAvi(g.name || 'G')}'"><span>${esc(g.name)}</span><em class="mf-tag">Guruh</em></div>`;
+    listEl.innerHTML = (ru.length || rg.length)
+      ? ru.map(rowU).join('') + rg.map(rowG).join('')
       : '<div class="mf-empty">Topilmadi</div>';
   };
   search.value = '';
@@ -875,17 +886,36 @@ async function forward(ids, fromSel = false) {
     const row = e.target.closest('.mf-row');
     if (!row) return;
     fwdEl.classList.remove('show');
-    const chatId = await api.chatIdFor(row.dataset.uid);
-    if (!chatId) { toast('Suhbat ochilmadi', 'error'); return; }
-    for (const m of list) { // tartib saqlansin — ketma-ket
-      const { error } = await sb.from('messages').insert({
-        chat_id: chatId, sender_id: state.me.uid, type: m.type,
-        text: wrapFwd(_origSenderName(m), m.text), media_path: m.mediaPath || null, media_type: m.mediaType || null,
+    const toGid = row.dataset.gid || '';
+    const toUid = row.dataset.uid || '';
+    let chatId = null;
+    if (!toGid) {
+      chatId = await api.chatIdFor(toUid);
+      if (!chatId) { toast('Suhbat ochilmadi', 'error'); return; }
+    }
+    const sentIds = [];
+    for (const { m, f } of meta) { // tartib saqlansin — ketma-ket
+      const body = {
+        sender_id: state.me.uid, type: m.type,
+        text: wrapFwd(f.name, m.text, f.kind, f.id), media_path: m.mediaPath || null, media_type: m.mediaType || null,
         file_name: m.fileName || null, file_size: m.fileSize || null, duration: m.duration || null,
-      });
+      };
+      let error;
+      if (toGid) {
+        const id = (crypto.randomUUID && crypto.randomUUID()) || undefined;
+        ({ error } = await sb.from('group_messages').insert({ ...(id ? { id } : {}), group_id: toGid, ...body }));
+        if (!error && id) {
+          try { groupInboxSend(toGid, { gid: toGid, from: state.me.uid, id, text: String(humanMsgPreview(m) || 'Uzatilgan xabar').slice(0, 120), ts: Date.now() }); } catch (_) {}
+        }
+      } else {
+        ({ error } = await sb.from('messages').insert({ chat_id: chatId, ...body }));
+      }
       if (error) { console.warn('[MsgMenu] forward:', error.message); toast('Uzatilmadi', 'error'); return; }
     }
     toast('Uzatildi');
+    // Uzatilgan joy hozir ochiq bo'lsa — yangi xabarlar darhol ko'rinsin
+    const curGid = document.getElementById('chatThreadModal')?.dataset?.gid || '';
+    if ((toGid && !isDM() && curGid === toGid) || (toUid && isDM() && state.currentChatUid === toUid)) { try { api.reload?.(); } catch (_) {} }
     if (fromSel) exitSelect();
   };
   fwdEl.classList.add('show');
@@ -1049,6 +1079,28 @@ export function initMsgMenu(opts) {
   // Menyu qayerdan ochilgani (izoh yoki rasm) — menuHtml() shunga qarab "Nusxalash" / "Rasmni nusxalash" tanlaydi
   ['contextmenu', 'mousedown', 'touchstart', 'click'].forEach(ev =>
     box.addEventListener(ev, e => { menuTarget = e.target; }, { capture: true, passive: true }));
+  // "Uzatilgan xabar" belgisi bosilsa — asl odam profili (/u/<username>) yoki guruh (/chats/g/<id>) URL i ochiladi
+  box.addEventListener('click', async e => {
+    const f = e.target.closest?.('.msg-fwd[data-fwd-id]');
+    if (!f) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const id = f.getAttribute('data-fwd-id');
+    const kind = f.getAttribute('data-fwd-kind');
+    try {
+      let path;
+      if (kind === 'g') path = '/chats/g/' + encodeURIComponent(id);
+      else if (id === state.me?.uid) path = '/profile';
+      else {
+        let uname = state._userCache?.[id]?.username;
+        if (!uname) { const { data } = await sb.from('profiles').select('username').eq('id', id).maybeSingle(); uname = data?.username; }
+        if (!uname) { toast('Profil topilmadi', 'error'); return; }
+        path = '/u/' + encodeURIComponent(uname);
+      }
+      const r = await import('../url-router.js');
+      r.applyPath(path);
+    } catch (_) { toast('Ochilmadi', 'error'); }
+  });
   // Reply quote bosilsa — asl xabarga SEKIN smooth scroll + och ko'k "men shu yerdaman" flash
   box.addEventListener('click', async e => {
     const q = e.target.closest?.('.msg-reply-quote');

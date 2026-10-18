@@ -884,6 +884,12 @@ export function closeGroupThread() {
    PAINT GROUP MESSAGES (reuses same bubble structure as DM)
    ───────────────────────────────────────────────────────────────────── */
 export function groupSenderName(uid) { return _senderCache[uid]?.fullName || ''; }
+/** Uzatish oynasi uchun: a'zo bo'lgan va yozish huquqi bor guruhlar */
+export function getForwardGroups() {
+  return Object.values(_latestGroupMap || {})
+    .filter(g => g && g.id && g.canWrite !== false && (!g.members || g.members.includes(state.me?.uid)))
+    .map(g => ({ id: g.id, name: g.name || 'Guruh', avatar: g.avatar || '' }));
+}
 const _senderCache = {};   // uid → profil (ism/avatar) — har chizishda tarmoqqa bormaslik uchun
 let _paintSeq = 0;
 /* Guruhda o'z xabarimni kamida 1 kishi o'qigan bo'lsa — 2 chek (status='read') */

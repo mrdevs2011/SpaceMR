@@ -20266,3 +20266,7 @@ img, video { decoding: async; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+#msgFwd .mf-row .mf-tag { margin-left: auto; font-style: normal; font: 600 11px/1 var(--font); opacity: 0.6; padding: 3px 7px; border-radius: 999px; background: var(--pal-white-08); flex-shrink: 0; }
+.msg-fwd.is-link { cursor: pointer; }
+.msg-fwd.is-link:hover .mfw-name { text-decoration: underline; }

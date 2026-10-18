@@ -343,6 +343,8 @@ export function mapMessage(r) {
     type: r.type,
     text: _f.text || '',
     fwdFrom: _f.name || null,
+    fwdKind: _f.kind || '',
+    fwdId: _f.id || '',
     mediaPath: r.media_path,
     mediaUrl: mediaPublicUrl(r.media_path) || '',
     mediaType: r.media_type,

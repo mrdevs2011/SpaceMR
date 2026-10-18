@@ -775,7 +775,7 @@ import {
   openGroupThread, closeGroupThread,
   sendGroupMessage, sendGroupFile, sendGroupVoice, groupTypingInput, reloadGroupThread,
   injectGroupsDOM, openCreateChoice, getGroupRows, groupsReady,
-  getCurrentGroupId, joinGroup, leaveGroup, searchGroups, groupSenderName
+  getCurrentGroupId, joinGroup, leaveGroup, searchGroups, groupSenderName, getForwardGroups
 } from './groups.js';
 import {
   cacheChatsList, getCachedChatsList, getCachedChatsListAgeMs,
@@ -2519,10 +2519,15 @@ function preloadRecentChatMedia(msgs) {
 }
 
 
-/** "Uzatilgan xabar — kimdan": iqtibosdan boshqacha ko'rinadi (fon va chiziq yo'q, strelka belgisi) */
+/** "Uzatilgan xabar — kimdan": iqtibosdan boshqacha (fon va chiziq yo'q, strelka belgisi). Bosilsa — asl odam profili / guruh */
 function _fwdHeaderHtml(m) {
   if (!m?.fwdFrom) return '';
-  return `<div class="msg-fwd"><svg class="mfw-ico" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4l6 6-6 6"/><path d="M21 10H9a6 6 0 0 0-6 6v3"/></svg><div class="mfw-body"><span class="mfw-label">Uzatilgan xabar</span><span class="mfw-name">${esc(m.fwdFrom)}</span></div></div>`;
+  const isG = m.fwdKind === 'g';
+  const go = m.fwdId ? ` data-fwd-kind="${isG ? 'g' : 'u'}" data-fwd-id="${esc(m.fwdId)}" role="button" tabindex="0"` : '';
+  const ico = isG
+    ? '<svg class="mfw-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 20v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+    : '<svg class="mfw-ico" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4l6 6-6 6"/><path d="M21 10H9a6 6 0 0 0-6 6v3"/></svg>';
+  return `<div class="msg-fwd${m.fwdId ? ' is-link' : ''}"${go}>${ico}<div class="mfw-body"><span class="mfw-label">${isG ? 'Guruhdan uzatilgan' : 'Uzatilgan xabar'}</span><span class="mfw-name">${esc(m.fwdFrom)}</span></div></div>`;
 }
 
 /** Telegram-style reply quote inside bubble */
@@ -3508,6 +3513,7 @@ initMsgMenu({
   box: $('chatThreadMessages'),
   getMsgs: () => chatState._curMsgs,
   senderName: (uid) => groupSenderName(uid),
+  getForwardGroups: () => getForwardGroups(),
   // Moderator: sayt admini yoki shu guruhning owner/admini — boshqalarning xabarini ham o'chira oladi
   canModerate: () => isAdmin() || (state.currentChatKind === 'group' && !!chatUI.isGroupModerator?.()),
   reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) { _dmGone.clear(); chatState._reloadThread(); } },
