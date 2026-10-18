@@ -11622,7 +11622,11 @@ button:focus-visible,
 }
 #chatThreadModal .chat-msg.mine .chat-msg-time,
 #chatThreadModal .chat-msg.mine .chat-msg-edited {
-  color: rgba(231, 233, 234, 0.5) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+/* "tahrirlangan" ga qo'shimcha opacity:.6 berilgan edi — ko'k bubbleda deyarli ko'rinmasdi */
+#chatThreadModal .chat-msg.mine .chat-msg-edited {
+  opacity: 1;
 }
 #chatThreadModal .chat-msg.mine .msg-ticks svg , #chatThreadModal .chat-msg.mine .msg-ticks img.icon {
   stroke: rgba(231, 233, 234, 0.8) !important;
