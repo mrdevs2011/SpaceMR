@@ -9585,3 +9585,14 @@ body.report-open { overflow: auto !important; }
     opacity: 0 !important;
   }
 }
+
+/* ═══ Desktop ≥1200px: sidebar + markaz + o'ng rail BUTUN GURUH ekranda markazlashgan (chap/o'ng bo'sh joy teng) ═══
+   guruh kengligi = 280 (sidebar) + 600 (markaz) + 16 (oraliq) + 350 (rail) = 1246px */
+@media (min-width: 1200px) {
+  :root {
+    --gutter: max(0px, calc((100vw - 1246px) / 2));
+    --sidebar: calc(280px + var(--gutter));
+    --content-left: calc(280px + var(--gutter));
+  }
+  nav.bot-nav { left: var(--gutter) !important; }
+}
