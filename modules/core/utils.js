@@ -185,31 +185,29 @@ export function layoutSpoilers(root) {
     ch = Math.max(2, ch || 4);
     el.style.setProperty('--spoiler-ch', String(ch));
 
-    if (!lines.length && ch > 42) {
-      // Taxminiy qator kengligi: ota element kengligi yoki default ~34ch
-      let charsPerLine = 34;
+    if (!lines.length && ch > 28) {
+      // Uzun blur: bitta to'liq kenglikdagi blok, balandligi taxminiy qatorlar soniga mos
+      // (to'p-to'p qisqa barlar o'rniga)
+      let charsPerLine = 32;
       try {
-        const parent = el.parentElement || el;
+        const parent = el.closest('.chat-bubble') || el.parentElement || el;
         const pw = parent.getBoundingClientRect().width;
-        if (pw > 40) {
-          const cs = getComputedStyle(parent);
+        if (pw > 60) {
+          const cs = getComputedStyle(el);
           const fs = parseFloat(cs.fontSize) || 14;
-          charsPerLine = Math.max(18, Math.floor(pw / (fs * 0.55)));
+          charsPerLine = Math.max(22, Math.floor((pw - 24) / (fs * 0.52)));
         }
       } catch (_) {}
-      const lineCount = Math.max(1, Math.ceil(ch / charsPerLine));
-      if (lineCount > 1) {
-        const metrics = [];
-        let remain = ch;
-        for (let i = 0; i < lineCount; i++) {
-          const lc = Math.min(charsPerLine, remain);
-          metrics.push({ ch: Math.max(3, lc), line: '' });
-          remain -= lc;
-        }
-        el.innerHTML = spoilerLineBarsHtml(metrics);
-        el.classList.add('md-spoiler-block');
-        el.style.width = 'auto';
-        el.style.height = 'auto';
+      const lineCount = Math.max(1, Math.min(6, Math.ceil(ch / charsPerLine)));
+      if (lineCount >= 1) {
+        // Bitta keng bar, balandligi lineCount * 1.25em
+        el.style.width = '100%';
+        el.style.maxWidth = '100%';
+        el.style.minWidth = '0';
+        el.style.height = (lineCount * 1.25) + 'em';
+        el.style.display = 'block';
+        el.classList.remove('md-spoiler-block');
+        el.innerHTML = ''; // ::before pattern butun maydonni qoplasin
         el.setAttribute('data-lines', String(lineCount));
         el.setAttribute('data-ch', String(ch));
         return;
