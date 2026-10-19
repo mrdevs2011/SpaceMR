@@ -10,7 +10,7 @@
     "build:css": "node scripts/build-css.mjs && node scripts/minify-css.mjs"
   },
   "dependencies": {
-    "jsdom": "^30.1.1"
+    "jsdom": "^30.1.3"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
