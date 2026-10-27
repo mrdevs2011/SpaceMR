@@ -429,10 +429,14 @@ function _openChatContextMenu(row) {
 
 /* ── Header 3-dots Dropdown Menu (DM & Group) ────────────────────────── */
 
-/** Chat ichida xabar qidirish (ROADMAP 5) */
+/** Chat ichida xabar qidirish (ROADMAP 5)
+ *  Header #chatThreadModal ichida position:absolute (mono-x.css) — shuning uchun panel
+ *  oddiy oqimga qo'yilsa header ORQASIDA qolib ko'rinmasdi. Endi panel ham absolute va
+ *  headerning aynan tagiga joylanadi. Enter / ▲▼ — keyingi/oldingi topilma, hisoblagich bor. */
 function openThreadMsgSearch() {
   const box = $('chatThreadMessages');
-  if (!box) return;
+  const modal = $('chatThreadModal');
+  if (!box || !modal) return;
   let bar = document.getElementById('threadMsgSearchBar');
   if (bar) { bar.querySelector('input')?.focus(); return; }
   bar = document.createElement('div');
@@ -440,32 +444,67 @@ function openThreadMsgSearch() {
   bar.className = 'thread-msg-search';
   bar.innerHTML = `
     <input type="search" id="threadMsgSearchInput" placeholder="Xabar qidirish..." autocomplete="off" enterkeyhint="search">
+    <span class="tms-count" id="threadMsgSearchCount"></span>
+    <button type="button" id="threadMsgSearchPrev" aria-label="Oldingi">▲</button>
+    <button type="button" id="threadMsgSearchNext" aria-label="Keyingi">▼</button>
     <button type="button" id="threadMsgSearchClose" aria-label="Yopish">✕</button>
   `;
-  const hdr = document.querySelector('.chat-thread-hdr');
-  if (hdr) hdr.insertAdjacentElement('afterend', bar);
-  else box.parentElement?.insertBefore(bar, box);
+  modal.appendChild(bar);
+
+  const hdr = modal.querySelector('.chat-thread-hdr');
+  const place = () => {
+    const mr = modal.getBoundingClientRect();
+    const hb = hdr ? hdr.getBoundingClientRect().bottom : mr.top;
+    bar.style.top = Math.max(0, hb - mr.top + 6) + 'px';
+  };
+  place();
+  window.addEventListener('resize', place);
 
   const inp = bar.querySelector('#threadMsgSearchInput');
+  const cnt = bar.querySelector('#threadMsgSearchCount');
+  let hits = [], idx = -1, mo = null;
+  const clearHits = () => box.querySelectorAll('.chat-msg.msg-search-hit, .chat-msg.msg-search-cur')
+    .forEach(el => el.classList.remove('msg-search-hit', 'msg-search-cur'));
   const close = () => {
-    box.querySelectorAll('.chat-msg.msg-search-hit').forEach(el => el.classList.remove('msg-search-hit'));
+    clearHits();
+    window.removeEventListener('resize', place);
+    mo?.disconnect();
     bar.remove();
   };
-  bar.querySelector('#threadMsgSearchClose')?.addEventListener('click', close);
-  inp?.addEventListener('input', () => {
+  const show = (i) => {
+    if (!hits.length) { cnt.textContent = ''; return; }
+    idx = (i + hits.length) % hits.length;
+    hits.forEach(el => el.classList.remove('msg-search-cur'));
+    const el = hits[idx];
+    el.classList.add('msg-search-cur');
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    cnt.textContent = (idx + 1) + '/' + hits.length;
+  };
+  const run = () => {
     const q = (inp.value || '').trim().toLowerCase();
+    clearHits();
+    hits = [];
+    if (q.length < 1) { cnt.textContent = ''; return; }
     box.querySelectorAll('.chat-msg').forEach(el => {
-      const text = (el.textContent || '').toLowerCase();
-      const hit = q.length >= 2 && text.includes(q);
-      el.classList.toggle('msg-search-hit', hit);
-      if (!q) el.classList.remove('msg-search-hit');
+      if (el.classList.contains('chat-sys')) return;
+      const t = el.querySelector('.chat-bubble') || el;
+      const text = (t.textContent || '').toLowerCase();
+      if (text.includes(q)) { el.classList.add('msg-search-hit'); hits.push(el); }
     });
-    if (q.length >= 2) {
-      const first = box.querySelector('.chat-msg.msg-search-hit');
-      first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
+    if (!hits.length) { cnt.textContent = '0'; return; }
+    show(hits.length - 1); // eng oxirgi (eng yangi) topilmadan boshlaymiz
+  };
+  bar.querySelector('#threadMsgSearchClose')?.addEventListener('click', close);
+  bar.querySelector('#threadMsgSearchPrev')?.addEventListener('click', () => show(idx - 1));
+  bar.querySelector('#threadMsgSearchNext')?.addEventListener('click', () => show(idx + 1));
+  inp?.addEventListener('input', run);
+  inp?.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.stopPropagation(); close(); }
+    else if (e.key === 'Enter') { e.preventDefault(); show(e.shiftKey ? idx + 1 : idx - 1); }
   });
-  inp?.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  /* Chat yopilsa / boshqa suhbatga o'tilsa — panel qolib ketmasin */
+  mo = new MutationObserver(() => { if (!modal.classList.contains('show')) close(); });
+  mo.observe(modal, { attributes: true, attributeFilter: ['class'] });
   setTimeout(() => inp?.focus(), 50);
 }
 

@@ -4501,13 +4501,26 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 
 /* ROADMAP 5 — chat xabar qidiruv */
 .thread-msg-search {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 72px; /* JS headerning tagiga qo'yadi */
+  z-index: 7;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 6px 8px;
   background: #16181c;
-  border-bottom: 1px solid #2f3336;
-  flex-shrink: 0;
+  border: 1px solid #2f3336;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.45);
+}
+.thread-msg-search .tms-count {
+  font-size: 13px;
+  color: #71767b;
+  min-width: 34px;
+  text-align: center;
+  white-space: nowrap;
 }
 .thread-msg-search input {
   flex: 1;
@@ -4521,8 +4534,9 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   font-size: 15px;
 }
 .thread-msg-search button {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 40px;
+  flex-shrink: 0;
   border: 0;
   background: transparent;
   color: #71767b;
@@ -4530,6 +4544,10 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   cursor: pointer;
 }
 .chat-msg.msg-search-hit .chat-bubble {
+  outline: 2px solid rgba(29,155,240,.45);
+  outline-offset: 2px;
+}
+.chat-msg.msg-search-cur .chat-bubble {
   outline: 2px solid #1d9bf0;
   outline-offset: 2px;
 }

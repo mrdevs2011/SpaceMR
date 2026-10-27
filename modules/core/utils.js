@@ -789,14 +789,37 @@ function _zReset() {
   _zApply();
 }
 
-function _zClose() {
+function _zClose(fromPop) {
   const zm = $('zoomModal');
   if (!zm) return;
+  const wasOpen = zm.classList.contains('show');
   zm.classList.remove('show');
   _zReset();
   const im = $('zoomImg');
   if (im) { im.src = ''; im.style.display = 'none'; }
+  /* Zoom ochilganda tarixga 1 ta yozuv qo'shilgan (openZoom) — tugma/Esc/fon bilan
+   * yopilganda o'sha yozuvni olib tashlaymiz. Telefondagi "orqaga" bosilsa (fromPop)
+   * brauzer o'zi allaqachon 1 qadam orqaga qaytgan — qayta back() qilmaymiz. */
+  if (wasOpen && !fromPop && history.state && history.state.zoom) {
+    _zSkipPop();
+    try { history.back(); } catch (_) {}
+  }
 }
+
+/* url-router ning popstate'i zoom bilan bog'liq popstate'ni sahifa almashtirish deb o'ylamasin */
+function _zSkipPop() {
+  window.__zoomSkipPop = true;
+  setTimeout(() => { window.__zoomSkipPop = false; }, 600);
+}
+
+/* Telefondagi/brauzerdagi "orqaga": zoom ochiq bo'lsa — faqat zoom yopiladi, sahifa emas */
+window.addEventListener('popstate', () => {
+  const zm = document.getElementById('zoomModal');
+  if (zm && zm.classList.contains('show') && !(history.state && history.state.zoom)) {
+    _zSkipPop();
+    _zClose(true);
+  }
+}, true);
 
 function _zDist(t) {
   const a = t[0], b = t[1];
@@ -836,7 +859,12 @@ export function openZoom(url, type) {
   im.style.transform = 'translate(0,0) scale(1)';
   im.style.transformOrigin = 'center center';
   im.style.transition = 'none';
+  const wasShown = zm.classList.contains('show');
   zm.classList.add('show');
+  /* "Orqaga" tugmasi zoomni yopsin: tarixga bitta yozuv (URL o'zgarmaydi) */
+  if (!wasShown && !(history.state && history.state.zoom)) {
+    try { history.pushState({ ...(history.state || {}), zoom: 1 }, '', location.href); } catch (_) {}
+  }
 }
 
 function _bindZoomOnce() {

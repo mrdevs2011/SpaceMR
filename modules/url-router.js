@@ -876,6 +876,7 @@ export function initUrlRouter() {
   });
 
   window.addEventListener('popstate', () => {
+    if (window.__zoomSkipPop) { window.__zoomSkipPop = false; return; }  // rasm zoom yopildi — sahifa o'zgarmaydi
     if (_internalPop) { _internalPop = false; return; }
     if (_auth === 'unknown') return;
     if (_auth === 'out' && cleanPath(location.pathname) !== '/login') {
