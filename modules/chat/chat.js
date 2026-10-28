@@ -531,14 +531,16 @@ export function openThreadMsgSearch() {
   const hdr = modal?.querySelector('.chat-thread-hdr');
   if (!box || !modal || !hdr) return;
 
+  document.getElementById('chatHeaderDropdown')?.remove();
+
   let bar = document.getElementById('threadMsgSearchBar');
   if (!bar) {
     bar = document.createElement('div');
     bar.id = 'threadMsgSearchBar';
     bar.className = 'chat-thread-search-bar';
     bar.innerHTML = `
-      <button type="button" class="ctsb-btn" id="threadMsgSearchClose" aria-label="Yopish" title="Yopish">
-        <img src="./svg/nav/arrow-left.svg" alt="" class="icon" width="18" height="18">
+      <button type="button" class="ctsb-btn" id="threadMsgSearchClose" aria-label="Qidiruvdan chiqish" title="Chiqish">
+        <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
       </button>
       <div class="ctsb-input-wrap">
         <img src="./svg/action/search.svg" alt="" class="icon ctsb-search-icon" width="15" height="15">
