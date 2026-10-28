@@ -526,6 +526,38 @@ export function bindSpoilerUI() {
  * olmaydi. Havolalarda ham faqat http(s)/mailto sxemalariga ruxsat
  * beriladi (masalan "javascript:" kabi xavfli sxemalar rad etiladi).
  */
+const YT_IFRAME_RE = /(?:<|&lt;)iframe\b[^>]*(?:src|SRC)=["'&quot;](?:https?:)?\/\/(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)\/embed\/([a-zA-Z0-9_-]{11})[^"'&]*["'&quot;][^>]*(?:>|&gt;)(?:[\s\S]*?(?:<|&lt;)\/iframe(?:>|&gt;))?/gi;
+
+const YT_URL_RE = /(?:https?:\/\/)?(?:(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^\s<"'\`)]*&)?v=|shorts\/|embed\/))|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&][^\s<"'\`)]*)?/gi;
+
+export function renderYouTubeCard({ videoId, canonicalUrl, displayUrl, isShorts }) {
+  const vId = esc(videoId);
+  const cUrl = esc(canonicalUrl);
+  const dUrl = esc(displayUrl || canonicalUrl);
+  const shortsCls = isShorts ? ' is-shorts' : '';
+  const shortsBadge = isShorts ? '<span class="chat-yt-shorts-badge">Shorts</span>' : '';
+
+  return `<div class="chat-yt-card${shortsCls}" data-video-id="${vId}">` +
+    `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy video havolasidan nusxa olish">` +
+      `<svg class="chat-yt-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ff0000">` +
+        `<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>` +
+      `</svg>` +
+      `<span class="chat-yt-url">${dUrl}</span>` +
+      `<span class="chat-yt-copy-badge">` +
+        `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
+        `<span class="chat-yt-copy-text">Nusxa</span>` +
+      `</span>` +
+    `</div>` +
+    `<div class="chat-yt-box" data-video-id="${vId}" data-shorts="${isShorts ? '1' : '0'}" onclick="window._chatPlayYt&&window._chatPlayYt(this)">` +
+      `<img class="chat-yt-thumb" src="https://i.ytimg.com/vi/${vId}/hqdefault.jpg" alt="YouTube video" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${vId}/0.jpg'">` +
+      `<button type="button" class="cfm-vid-play chat-yt-play-btn" aria-label="Ijro etish">` +
+        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.55)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
+      `</button>` +
+      shortsBadge +
+    `</div>` +
+  `</div>`;
+}
+
 export function renderMarkdown(rawText, opts) {
   if (!rawText) return '';
   bindSpoilerUI();
@@ -533,8 +565,27 @@ export function renderMarkdown(rawText, opts) {
   const msgId = opts.messageId || opts.msgId || null;
   const scope = opts.scope || 'dm';
   const _spHold = [];
+  const _ytHold = [];
+
+  // YouTube iframelari va havolalarini ajratib olamiz (matn ichida bo'lsa ham)
+  let s = protectSecrets(String(rawText)).replace(YT_IFRAME_RE, (_m, vid) => {
+    const isShorts = false;
+    const canUrl = `https://www.youtube.com/watch?v=${vid}`;
+    const cardHtml = renderYouTubeCard({ videoId: vid, canonicalUrl: canUrl, displayUrl: canUrl, isShorts });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+  s = s.replace(YT_URL_RE, (match, vid) => {
+    const isShorts = match.includes('/shorts/');
+    const canUrl = isShorts ? `https://www.youtube.com/shorts/${vid}` : `https://www.youtube.com/watch?v=${vid}`;
+    const dispUrl = match.startsWith('http') ? match : ('https://' + match);
+    const cardHtml = renderYouTubeCard({ videoId: vid, canonicalUrl: canUrl, displayUrl: dispUrl, isShorts });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
   // Display-time shield: DB dagi eski ochiq kalitlar ham ||spoiler|| ga aylanadi (DOM ga tushmasdan vault)
-  let s = protectSecrets(String(rawText)).replace(/\|\|@(\d+):([\d,]+)\|\|/g, (_m, ord, lenSpec) => {
+  s = s.replace(/\|\|@(\d+):([\d,]+)\|\|/g, (_m, ord, lenSpec) => {
     const idx = _spHold.push(spoilerPlaceholder('', {
       msgId: msgId, ord: parseInt(ord, 10), ch: (String(lenSpec).split(',').reduce((a,b)=>a+(parseInt(b,10)||0),0)), lineCh: String(lenSpec).split(',').map(x=>parseInt(x,10)||2), scope: scope
     })) - 1;
@@ -641,6 +692,8 @@ export function renderMarkdown(rawText, opts) {
   s = s.replace(/\u0000TB(\d+)\u0000/g, (_m, idx) => tables[parseInt(idx, 10)]);
   s = s.replace(/\u0000IC(\d+)\u0000/g, (_m, idx) => inlineCodes[parseInt(idx, 10)]);
   s = s.replace(/\u0000CB(\d+)\u0000/g, (_m, idx) => codeBlocks[parseInt(idx, 10)]);
+  s = s.replace(/(?:<br>)*\u0000YT(\d+)\u0000(?:<br>)*/g, (_m, idx) => _ytHold[parseInt(idx, 10)] || '');
+  s = s.replace(/\u0000YT(\d+)\u0000/g, (_m, idx) => _ytHold[parseInt(idx, 10)] || '');
 
   // Kenglikni keyingi frame da aniq o'lchaymiz (post/chat/izoh)
   try { requestAnimationFrame(() => layoutSpoilers(document)); } catch (_) {}

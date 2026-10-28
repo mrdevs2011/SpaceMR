@@ -24,6 +24,53 @@ export function rememberImgRatio(img) {
     sessionStorage.setItem(_DIMS_KEY, JSON.stringify(arr));
   } catch (_) {}
 }
+/* ── YouTube Video Cards (inline player + copy source) ─────────────────── */
+if (typeof window !== 'undefined' && !window._chatYtBound) {
+  window._chatYtBound = true;
+  window._copyChatYtSource = function (el, url) {
+    if (!url) return;
+    if (el.closest?.('.msg-selecting') || el.closest?.('#chatThreadMessages.msg-selecting')) return;
+    try {
+      navigator.clipboard.writeText(url).then(() => {
+        const badge = el.querySelector('.chat-yt-copy-text');
+        if (badge) {
+          const orig = badge.textContent;
+          badge.textContent = 'Olingan!';
+          el.classList.add('copied');
+          setTimeout(() => { badge.textContent = orig; el.classList.remove('copied'); }, 1800);
+        }
+        if (typeof window.toast === 'function') {
+          window.toast('Video havolasi nusxalandi', 'info');
+        }
+      }).catch(() => {
+        if (typeof window.toast === 'function') window.toast('Havola: ' + url, 'info');
+      });
+    } catch (_) {
+      if (typeof window.toast === 'function') window.toast('Havola: ' + url, 'info');
+    }
+  };
+
+  window._chatPlayYt = function (box) {
+    if (!box || box.classList.contains('playing')) return;
+    if (box.closest?.('.msg-selecting') || box.closest?.('#chatThreadMessages.msg-selecting')) return;
+    const vid = box.dataset.videoId;
+    if (!vid) return;
+    box.classList.add('playing');
+    document.querySelectorAll('.cfm-vid-wrap.playing video').forEach(v => { try { v.pause(); } catch (_) {} });
+    document.querySelectorAll('.cfm-note-wrap.playing video').forEach(v => { try { v.pause(); } catch (_) {} });
+
+    const iframe = document.createElement('iframe');
+    iframe.className = 'chat-yt-iframe';
+    iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0`;
+    iframe.title = 'YouTube video';
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    iframe.setAttribute('allowfullscreen', 'true');
+    box.innerHTML = '';
+    box.appendChild(iframe);
+  };
+}
+
 /* ── Video preview: birinchi kadr + play tugmasi + davomiylik; bosilsa shu yerning o'zida ijro bo'ladi ── */
 const VID_EXT = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
 const AUD_EXT = ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'oga', 'opus', 'flac', 'weba'];

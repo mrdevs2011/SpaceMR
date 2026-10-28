@@ -832,6 +832,7 @@ export async function openGroupThread(groupId) {
 }
 
 export function closeGroupThread() {
+  try { chatUI.closeThreadMsgSearch?.(); } catch (_) {}
   _gTyp.forEach(t => clearTimeout(t)); _gTyp.clear(); clearTimeout(_gTypTimer); _gSetTyping(false);
   if (_groupThreadUnsub) { _groupThreadUnsub(); _groupThreadUnsub = null; }
 

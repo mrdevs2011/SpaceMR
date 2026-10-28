@@ -1195,9 +1195,30 @@ html[data-nf],html[data-nf] body{background:#000000}
     <button class="chat-call-btn" id="chatVoiceCallBtn" title="Qo'ng'iroq">
       <img src="./svg/call/phone.svg" alt="" class="icon" width="17" height="17">
     </button>
+    <button class="chat-call-btn" id="chatThreadSearchBtn" title="Qidiruv" aria-label="Qidiruv">
+      <img src="./svg/action/search.svg" alt="" class="icon" width="17" height="17">
+    </button>
     <button class="chat-call-btn" id="chatHeaderMenuBtn" title="Menyu" aria-label="Menyu">
       <img src="./svg/ui/dots-vertical-alt.svg" alt="" class="icon" width="18" height="18">
     </button>
+    <div class="chat-thread-search-bar" id="threadMsgSearchBar" hidden>
+      <button type="button" class="ctsb-btn" id="threadMsgSearchClose" aria-label="Yopish" title="Yopish">
+        <img src="./svg/nav/arrow-left.svg" alt="" class="icon" width="18" height="18">
+      </button>
+      <div class="ctsb-input-wrap">
+        <img src="./svg/action/search.svg" alt="" class="icon ctsb-search-icon" width="15" height="15">
+        <input type="search" id="threadMsgSearchInput" class="ctsb-input" placeholder="Xabarlardan qidirish..." autocomplete="off" enterkeyhint="search" spellcheck="false">
+        <span class="ctsb-count" id="threadMsgSearchCount"></span>
+      </div>
+      <div class="ctsb-nav">
+        <button type="button" class="ctsb-btn" id="threadMsgSearchPrev" aria-label="Oldingi (yuqoriga)" title="Tepaga (oldingi)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+        </button>
+        <button type="button" class="ctsb-btn" id="threadMsgSearchNext" aria-label="Keyingi (pastga)" title="Pastga (keyingi)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Typing indicator (Feature 1) -->

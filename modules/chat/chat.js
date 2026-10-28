@@ -427,88 +427,262 @@ function _openChatContextMenu(row) {
   });
 }
 
-/* ── Header 3-dots Dropdown Menu (DM & Group) ────────────────────────── */
+/* ── Header Chat Search & 3-dots Dropdown Menu (DM & Group) ────────────── */
 
-/** Chat ichida xabar qidirish (ROADMAP 5)
- *  Header #chatThreadModal ichida position:absolute (mono-x.css) — shuning uchun panel
- *  oddiy oqimga qo'yilsa header ORQASIDA qolib ko'rinmasdi. Endi panel ham absolute va
- *  headerning aynan tagiga joylanadi. Enter / ▲▼ — keyingi/oldingi topilma, hisoblagich bor. */
-function openThreadMsgSearch() {
+function clearThreadSearchMarks(box) {
+  if (!box) return;
+  box.querySelectorAll('mark.chat-search-mark').forEach(m => {
+    const p = m.parentNode;
+    if (p) {
+      p.replaceChild(document.createTextNode(m.textContent), m);
+      p.normalize();
+    }
+  });
+  box.querySelectorAll('.chat-msg.msg-search-hit, .chat-msg.msg-search-cur').forEach(el => {
+    el.classList.remove('msg-search-hit', 'msg-search-cur');
+  });
+}
+
+function markMatchesInMsg(msg, query) {
+  const bubble = msg.querySelector('.chat-bubble') || msg;
+  const walker = document.createTreeWalker(
+    bubble,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        if (parent.closest('.chat-msg-meta, .msg-ticks, .chat-msg-time, .reactions-wrap, .cvm-waveform, .cvm-dur, .cfp-remove, button')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }
+  );
+
+  const textNodes = [];
+  let currentNode;
+  while ((currentNode = walker.nextNode())) {
+    textNodes.push(currentNode);
+  }
+
+  const marks = [];
+  const q = query.toLowerCase();
+  const qLen = query.length;
+
+  for (const node of textNodes) {
+    const text = node.nodeValue;
+    if (!text) continue;
+    const lower = text.toLowerCase();
+    let matchIdx = lower.indexOf(q);
+    if (matchIdx === -1) continue;
+
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0;
+    while (matchIdx !== -1) {
+      if (matchIdx > lastIdx) {
+        frag.appendChild(document.createTextNode(text.slice(lastIdx, matchIdx)));
+      }
+      const mark = document.createElement('mark');
+      mark.className = 'chat-search-mark';
+      mark.textContent = text.slice(matchIdx, matchIdx + qLen);
+      frag.appendChild(mark);
+      marks.push(mark);
+
+      lastIdx = matchIdx + qLen;
+      matchIdx = lower.indexOf(q, lastIdx);
+    }
+    if (lastIdx < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    }
+    node.parentNode.replaceChild(frag, node);
+  }
+
+  return marks;
+}
+
+export function closeThreadMsgSearch() {
+  const modal = $('chatThreadModal');
+  const hdr = modal?.querySelector('.chat-thread-hdr');
+  const box = $('chatThreadMessages');
+  if (hdr) hdr.classList.remove('search-active');
+  const bar = document.getElementById('threadMsgSearchBar');
+  if (bar) bar.hidden = true;
+  clearThreadSearchMarks(box);
+  const cnt = document.getElementById('threadMsgSearchCount');
+  if (cnt) cnt.textContent = '';
+  if (bar?._mo) {
+    bar._mo.disconnect();
+    bar._mo = null;
+  }
+}
+
+/**
+ * Chat ichida xabarlarni qidirish:
+ * - Headerda joylashadi va header bilan integratsiya bo'ladi
+ * - Dark & gray minimalist uslubda
+ * - Xabar matni ichidagi har bir mos keluvchi so'zni <mark> bilan belgilaydi
+ * - Doimo pastdan tepaga (eng yangidan eski xabarlarga) qarab harakatlanadi
+ * - Auto-scroll bilan topilgan xabarni markazga olib keladi
+ */
+export function openThreadMsgSearch() {
   const box = $('chatThreadMessages');
   const modal = $('chatThreadModal');
-  if (!box || !modal) return;
-  let bar = document.getElementById('threadMsgSearchBar');
-  if (bar) { bar.querySelector('input')?.focus(); return; }
-  bar = document.createElement('div');
-  bar.id = 'threadMsgSearchBar';
-  bar.className = 'thread-msg-search';
-  bar.innerHTML = `
-    <input type="search" id="threadMsgSearchInput" placeholder="Xabar qidirish..." autocomplete="off" enterkeyhint="search">
-    <span class="tms-count" id="threadMsgSearchCount"></span>
-    <button type="button" id="threadMsgSearchPrev" aria-label="Oldingi">▲</button>
-    <button type="button" id="threadMsgSearchNext" aria-label="Keyingi">▼</button>
-    <button type="button" id="threadMsgSearchClose" aria-label="Yopish">✕</button>
-  `;
-  modal.appendChild(bar);
+  const hdr = modal?.querySelector('.chat-thread-hdr');
+  if (!box || !modal || !hdr) return;
 
-  const hdr = modal.querySelector('.chat-thread-hdr');
-  const place = () => {
-    const mr = modal.getBoundingClientRect();
-    const hb = hdr ? hdr.getBoundingClientRect().bottom : mr.top;
-    bar.style.top = Math.max(0, hb - mr.top + 6) + 'px';
-  };
-  place();
-  window.addEventListener('resize', place);
+  let bar = document.getElementById('threadMsgSearchBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'threadMsgSearchBar';
+    bar.className = 'chat-thread-search-bar';
+    bar.innerHTML = `
+      <button type="button" class="ctsb-btn" id="threadMsgSearchClose" aria-label="Yopish" title="Yopish">
+        <img src="./svg/nav/arrow-left.svg" alt="" class="icon" width="18" height="18">
+      </button>
+      <div class="ctsb-input-wrap">
+        <img src="./svg/action/search.svg" alt="" class="icon ctsb-search-icon" width="15" height="15">
+        <input type="search" id="threadMsgSearchInput" class="ctsb-input" placeholder="Xabarlardan qidirish..." autocomplete="off" enterkeyhint="search" spellcheck="false">
+        <span class="ctsb-count" id="threadMsgSearchCount"></span>
+      </div>
+      <div class="ctsb-nav">
+        <button type="button" class="ctsb-btn" id="threadMsgSearchPrev" aria-label="Oldingi (yuqoriga)" title="Tepaga (oldingi)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+        </button>
+        <button type="button" class="ctsb-btn" id="threadMsgSearchNext" aria-label="Keyingi (pastga)" title="Pastga (keyingi)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </button>
+      </div>
+    `;
+    hdr.appendChild(bar);
+  }
+
+  bar.hidden = false;
+  hdr.classList.add('search-active');
 
   const inp = bar.querySelector('#threadMsgSearchInput');
   const cnt = bar.querySelector('#threadMsgSearchCount');
-  let hits = [], idx = -1, mo = null;
-  const clearHits = () => box.querySelectorAll('.chat-msg.msg-search-hit, .chat-msg.msg-search-cur')
-    .forEach(el => el.classList.remove('msg-search-hit', 'msg-search-cur'));
-  const close = () => {
-    clearHits();
-    window.removeEventListener('resize', place);
-    mo?.disconnect();
-    bar.remove();
-  };
+  let hits = [], idx = -1;
+
   const show = (i) => {
-    if (!hits.length) { cnt.textContent = ''; return; }
+    if (!hits.length) {
+      if (cnt) cnt.textContent = inp.value.trim() ? '0' : '';
+      return;
+    }
     idx = (i + hits.length) % hits.length;
-    hits.forEach(el => el.classList.remove('msg-search-cur'));
-    const el = hits[idx];
-    el.classList.add('msg-search-cur');
-    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    cnt.textContent = (idx + 1) + '/' + hits.length;
+    box.querySelectorAll('mark.chat-search-mark.is-current').forEach(el => el.classList.remove('is-current'));
+    box.querySelectorAll('.chat-msg.msg-search-cur').forEach(el => el.classList.remove('msg-search-cur'));
+
+    const mark = hits[idx];
+    if (mark) {
+      mark.classList.add('is-current');
+      const msg = mark.closest('.chat-msg');
+      if (msg) msg.classList.add('msg-search-cur');
+      mark.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    if (cnt) cnt.textContent = `${idx + 1}/${hits.length}`;
   };
+
   const run = () => {
-    const q = (inp.value || '').trim().toLowerCase();
-    clearHits();
+    const q = (inp.value || '').trim();
+    clearThreadSearchMarks(box);
     hits = [];
-    if (q.length < 1) { cnt.textContent = ''; return; }
-    box.querySelectorAll('.chat-msg').forEach(el => {
-      if (el.classList.contains('chat-sys')) return;
-      const t = el.querySelector('.chat-bubble') || el;
-      const text = (t.textContent || '').toLowerCase();
-      if (text.includes(q)) { el.classList.add('msg-search-hit'); hits.push(el); }
-    });
-    if (!hits.length) { cnt.textContent = '0'; return; }
-    show(hits.length - 1); // eng oxirgi (eng yangi) topilmadan boshlaymiz
+    idx = -1;
+    if (!q) {
+      if (cnt) cnt.textContent = '';
+      return;
+    }
+
+    // Doimo pastdan tepaga qarab yurishi uchun xabarlarni teskari tartibda (eng yangidan eng eskiga) tekshiramiz
+    const msgs = Array.from(box.querySelectorAll('.chat-msg')).reverse();
+    for (const msg of msgs) {
+      if (msg.classList.contains('chat-sys')) continue;
+      const msgMarks = markMatchesInMsg(msg, q);
+      if (msgMarks.length) {
+        msg.classList.add('msg-search-hit');
+        for (const m of msgMarks) {
+          hits.push(m);
+        }
+      }
+    }
+
+    if (!hits.length) {
+      if (cnt) cnt.textContent = '0';
+      return;
+    }
+    // Eng birinchi topilma: eng pastdagi (eng yangi) xabardan boshlanadi
+    show(0);
   };
-  bar.querySelector('#threadMsgSearchClose')?.addEventListener('click', close);
-  bar.querySelector('#threadMsgSearchPrev')?.addEventListener('click', () => show(idx - 1));
-  bar.querySelector('#threadMsgSearchNext')?.addEventListener('click', () => show(idx + 1));
-  inp?.addEventListener('input', run);
-  inp?.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { e.stopPropagation(); close(); }
-    else if (e.key === 'Enter') { e.preventDefault(); show(e.shiftKey ? idx + 1 : idx - 1); }
+
+  if (!bar._wiredEvents) {
+    bar._wiredEvents = true;
+    bar.querySelector('#threadMsgSearchClose')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeThreadMsgSearch();
+    });
+    // Tepaga / oldingi (pastdan tepaga ko'tarilish)
+    bar.querySelector('#threadMsgSearchPrev')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      show(idx + 1);
+    });
+    // Pastga / keyingi
+    bar.querySelector('#threadMsgSearchNext')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      show(idx - 1);
+    });
+    let debounceTimer = null;
+    inp?.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(run, 60);
+    });
+    inp?.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        closeThreadMsgSearch();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        show(e.shiftKey ? idx - 1 : idx + 1);
+      }
+    });
+
+    // Xabar ichidagi belgilangan so'zni bevosita bosganda ham shu joyga o'tish
+    box.addEventListener('click', (e) => {
+      const mark = e.target.closest('mark.chat-search-mark');
+      if (!mark) return;
+      const targetIdx = hits.indexOf(mark);
+      if (targetIdx !== -1) {
+        show(targetIdx);
+      }
+    });
+  }
+
+  if (bar._mo) bar._mo.disconnect();
+  bar._mo = new MutationObserver(() => {
+    if (!modal.classList.contains('show')) {
+      closeThreadMsgSearch();
+    }
   });
-  /* Chat yopilsa / boshqa suhbatga o'tilsa — panel qolib ketmasin */
-  mo = new MutationObserver(() => { if (!modal.classList.contains('show')) close(); });
-  mo.observe(modal, { attributes: true, attributeFilter: ['class'] });
-  setTimeout(() => inp?.focus(), 50);
+  bar._mo.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+  setTimeout(() => {
+    inp?.focus();
+    if (inp?.value) run();
+  }, 50);
+}
+
+export function initChatThreadSearch() {
+  const btn = $('chatThreadSearchBtn');
+  if (btn && !btn._wired) {
+    btn._wired = true;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openThreadMsgSearch();
+    });
+  }
 }
 
 export function initChatHeaderMenu() {
+  initChatThreadSearch();
   const btn = $('chatHeaderMenuBtn');
   if (!btn || btn._wired) return;
   btn._wired = true;
@@ -2898,6 +3072,7 @@ export function closeChatThread() {
   chatState._locallyReadIds.clear();
   document.getElementById('chatHeaderDropdown')?.remove();
   document.getElementById('groupJoinBar')?.remove();
+  closeThreadMsgSearch();
   document.dispatchEvent(new Event('chatmedia:close'));
   if (chatState._rt) { chatState._rt.close(); chatState._rt = null; }
   chatState._rtLocal.clear(); chatState._rtRead.clear(); _dmGone.clear(); chatState._rtChatId = null;
@@ -3840,4 +4015,4 @@ document.addEventListener('click', (e) => {
   }
 }, true);
 
-Object.assign(chatUI, { paintMessages, updateMsgTicks, updateVoiceSendBtn, clearPendingPostShare, setPendingPostShare, clearChatFile, _showOptimisticVoiceBubble, _setTyping, paintGroupThread, resetSeenMsgs, initChatHeaderMenu, getPendingPostShare, updatePostAttachBar });
+Object.assign(chatUI, { paintMessages, updateMsgTicks, updateVoiceSendBtn, clearPendingPostShare, setPendingPostShare, clearChatFile, _showOptimisticVoiceBubble, _setTyping, paintGroupThread, resetSeenMsgs, initChatHeaderMenu, initChatThreadSearch, openThreadMsgSearch, closeThreadMsgSearch, getPendingPostShare, updatePostAttachBar });
