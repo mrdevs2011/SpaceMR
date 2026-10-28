@@ -5363,3 +5363,41 @@ body.report-open {
   display: block;
   background: #000000;
 }
+
+/* Standalone YouTube video card (erkin / bubble-free when no text message) */
+.chat-yt-card.chat-yt-standalone,
+.chat-bubble.bubble-media-only .chat-yt-card {
+  margin: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.chat-bubble.bubble-media-only:has(> .chat-bubble-wrap > .chat-yt-card) .chat-bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: max-content;
+  max-width: 100%;
+}
+
+.chat-bubble.bubble-media-only .grp-sender-name + .chat-yt-card {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.chat-yt-box.playing .cfm-media-badge,
+.chat-yt-card.playing .cfm-media-badge {
+  display: none !important;
+}
+
+#chatThreadMessages.msg-selecting .chat-msg.mc-selected .chat-yt-card {
+  position: relative;
+}
+#chatThreadMessages.msg-selecting .chat-msg.mc-selected .chat-yt-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: rgba(29, 155, 240, 0.4);
+  z-index: 5;
+}

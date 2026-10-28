@@ -10,7 +10,7 @@ import { splitFwd } from '../core/fwd.js';
 import { maskSpoilers } from '../core/secrets.js';
 import "./chat-pin.js";
 import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
-import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
+import { $, esc, fmtSz, fmtTime, parsePureYouTube } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { assertAllowedUpload } from '../core/upload-policy.js';
 import { getChatFileIcon } from '../core/file-icons.js';
@@ -104,6 +104,8 @@ export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
   { const _f = splitFwd(raw); if (_f.name) { raw = _f.text; if (!String(raw).trim()) return 'Uzatilgan xabar'; } }
   if (parseGif(raw)) return 'GIF';
+  const yt = parsePureYouTube(raw);
+  if (yt) return yt.isShorts ? 'YouTube Shorts' : 'YouTube video';
   const cl = parseCallLog(raw);
   if (cl) return callLogInfo(cl, mine).title;
   const ps = parsePostShare(raw);

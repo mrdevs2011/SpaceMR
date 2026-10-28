@@ -530,14 +530,15 @@ const YT_IFRAME_RE = /(?:<|&lt;)iframe\b[^>]*(?:src|SRC)=["'&quot;](?:https?:)?\
 
 const YT_URL_RE = /(?:https?:\/\/)?(?:(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^\s<"'\`)]*&)?v=|shorts\/|embed\/))|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&][^\s<"'\`)]*)?/gi;
 
-export function renderYouTubeCard({ videoId, canonicalUrl, displayUrl, isShorts }) {
+export function renderYouTubeCard({ videoId, canonicalUrl, displayUrl, isShorts, badgeHtml = '', standalone = false }) {
   const vId = esc(videoId);
   const cUrl = esc(canonicalUrl);
   const dUrl = esc(displayUrl || canonicalUrl);
   const shortsCls = isShorts ? ' is-shorts' : '';
+  const standaloneCls = standalone ? ' chat-yt-standalone' : '';
   const shortsBadge = isShorts ? '<span class="chat-yt-shorts-badge">Shorts</span>' : '';
 
-  return `<div class="chat-yt-card${shortsCls}" data-video-id="${vId}">` +
+  return `<div class="chat-yt-card${shortsCls}${standaloneCls}" data-video-id="${vId}">` +
     `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy video havolasidan nusxa olish">` +
       `<svg class="chat-yt-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ff0000">` +
         `<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>` +
@@ -554,8 +555,47 @@ export function renderYouTubeCard({ videoId, canonicalUrl, displayUrl, isShorts 
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.55)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
       `</button>` +
       shortsBadge +
+      (badgeHtml || '') +
     `</div>` +
   `</div>`;
+}
+
+export function parsePureYouTube(text) {
+  if (!text || typeof text !== 'string') return null;
+  const t = text.trim();
+  if (!t) return null;
+
+  // 1) Iframe tekshirish: masalan <iframe src="https://www.youtube.com/embed/xyz"></iframe>
+  YT_IFRAME_RE.lastIndex = 0;
+  const iframes = [...t.matchAll(YT_IFRAME_RE)];
+  if (iframes.length === 1) {
+    YT_IFRAME_RE.lastIndex = 0;
+    const rest = t.replace(YT_IFRAME_RE, '').trim();
+    if (!rest) {
+      const vid = iframes[0][1];
+      const canUrl = `https://www.youtube.com/watch?v=${vid}`;
+      return { videoId: vid, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: false };
+    }
+  }
+
+  // 2) URL tekshirish: shorts, watch, youtu.be, embed
+  YT_URL_RE.lastIndex = 0;
+  const urls = [...t.matchAll(YT_URL_RE)];
+  if (urls.length === 1) {
+    YT_URL_RE.lastIndex = 0;
+    const rest = t.replace(YT_URL_RE, '').trim();
+    if (!rest) {
+      const um = urls[0];
+      const vid = um[1];
+      const matchStr = um[0];
+      const isShorts = matchStr.includes('/shorts/');
+      const canUrl = isShorts ? `https://www.youtube.com/shorts/${vid}` : `https://www.youtube.com/watch?v=${vid}`;
+      const dispUrl = matchStr.startsWith('http') ? matchStr : ('https://' + matchStr);
+      return { videoId: vid, canonicalUrl: canUrl, displayUrl: dispUrl, isShorts };
+    }
+  }
+
+  return null;
 }
 
 export function renderMarkdown(rawText, opts) {

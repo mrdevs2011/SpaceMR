@@ -1,5 +1,5 @@
 import './chat-image-zoom.js';
-import { esc } from '../../core/utils.js';
+import { esc, renderYouTubeCard } from '../../core/utils.js';
 import { getChatFileIcon, callLogInfo, fmtCallDur } from '../chat-shared.js';
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
 import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
@@ -56,6 +56,7 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
     const vid = box.dataset.videoId;
     if (!vid) return;
     box.classList.add('playing');
+    box.closest?.('.chat-yt-card')?.classList.add('playing');
     document.querySelectorAll('.cfm-vid-wrap.playing video').forEach(v => { try { v.pause(); } catch (_) {} });
     document.querySelectorAll('.cfm-note-wrap.playing video').forEach(v => { try { v.pause(); } catch (_) {} });
 
@@ -612,6 +613,27 @@ export function generateGifBubble({ gif, m, time, mine, renderTicks, dm = false 
           ${mine ? renderTicks(m.status) : ''}
         </span>
       </div>`,
+  };
+}
+
+/** YouTube video xabar — matnsiz yolg'iz havola/iframe yuborilganda media-only (erkin/fonsiz, vaqt video burchagida) */
+export function generateYouTubeBubble({ yt, m, time, mine, renderTicks, dm = false }) {
+  const badgeHtml = `<span class="chat-msg-meta cfm-media-badge">
+    ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
+    ${mine ? renderTicks(m.status) : ''}
+  </span>`;
+  const cardHtml = renderYouTubeCard({
+    videoId: yt.videoId,
+    canonicalUrl: yt.canonicalUrl,
+    displayUrl: yt.displayUrl,
+    isShorts: yt.isShorts,
+    badgeHtml,
+    standalone: true,
+  });
+  return {
+    bubbleClassExtra: ' bubble-media-only' + (dm ? ' bubble-media-dm' : ''),
+    metaOutside: false,
+    bubbleContent: cardHtml,
   };
 }
 

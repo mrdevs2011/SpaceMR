@@ -974,7 +974,7 @@ import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
   mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
 } from '../core/config.js';
-import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer} from '../core/utils.js';
+import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
 import { mark, armFlashDetector, syncPath } from '../core/perf.js';
 import { initMsgMenu, msgMenuAfterPaint, msgMenuReset, isEditing, commitEdit } from './msg-menu.js';
@@ -983,7 +983,7 @@ import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
-import { generateVoiceBubble, generateFileBubble, generateTextBubble, generateGifBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
+import { generateVoiceBubble, generateFileBubble, generateTextBubble, generateGifBubble, generateYouTubeBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
 import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
@@ -2905,12 +2905,20 @@ export function paintMessages(msgs, grp = null) {
       } else {
         const postShare = parsePostShare(m.text);
         const gif = postShare ? null : parseGif(m.text);
-        const bData = gif
-          ? generateGifBubble({ gif, m, time, mine, renderTicks, dm: !grp })
-          : generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
+        const pureYt = (postShare || gif) ? null : parsePureYouTube(m.text);
+        let bData;
+        if (gif) {
+          bData = generateGifBubble({ gif, m, time, mine, renderTicks, dm: !grp });
+          metaOutside = false;
+        } else if (pureYt) {
+          bData = generateYouTubeBubble({ yt: pureYt, m, time, mine, renderTicks, dm: !grp });
+          metaOutside = false;
+        } else {
+          bData = generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
+          emoCls = bData.emoCls;
+        }
         bubbleClassExtra = bData.bubbleClassExtra;
         bubbleContent = bData.bubbleContent;
-        if (gif) metaOutside = false; else emoCls = bData.emoCls;
       }
     }
 
