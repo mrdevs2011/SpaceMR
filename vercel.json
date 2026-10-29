@@ -24,7 +24,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://spacemr.vercel.app https://*.vercel.app https://rtc.live.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self'; frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com; manifest-src 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://spacemr.vercel.app https://*.vercel.app https://rtc.live.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self'; frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com https://twitter.com https://platform.twitter.com; manifest-src 'self'; upgrade-insecure-requests"
         },
         {
           "key": "Cross-Origin-Opener-Policy",

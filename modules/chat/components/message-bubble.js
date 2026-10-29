@@ -1,5 +1,5 @@
 import './chat-image-zoom.js';
-import { esc, renderYouTubeCard } from '../../core/utils.js';
+import { esc, renderYouTubeCard, renderMediaCard } from '../../core/utils.js';
 import { getChatFileIcon, callLogInfo, fmtCallDur } from '../chat-shared.js';
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
 import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
@@ -50,26 +50,82 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
     }
   };
 
-  window._chatPlayYt = function (box) {
+  window._copyChatMediaSource = window._copyChatYtSource;
+
+  window._chatPlayMedia = function (box) {
     if (!box || box.classList.contains('playing')) return;
     if (box.closest?.('.msg-selecting') || box.closest?.('#chatThreadMessages.msg-selecting')) return;
-    const vid = box.dataset.videoId;
-    if (!vid) return;
+    const type = box.dataset.mediaType || 'youtube';
+    const vid = box.dataset.videoId || '';
+    const rawUrl = box.dataset.url || '';
+    let meta = {};
+    try { meta = JSON.parse(box.dataset.meta || '{}'); } catch (_) {}
+
     box.classList.add('playing');
     box.closest?.('.chat-yt-card')?.classList.add('playing');
     document.querySelectorAll('.cfm-vid-wrap.playing video').forEach(v => { try { v.pause(); } catch (_) {} });
     document.querySelectorAll('.cfm-note-wrap.playing video').forEach(v => { try { v.pause(); } catch (_) {} });
 
-    const iframe = document.createElement('iframe');
-    iframe.className = 'chat-yt-iframe';
-    iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0`;
-    iframe.title = 'YouTube video';
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
-    iframe.setAttribute('allowfullscreen', 'true');
-    box.innerHTML = '';
-    box.appendChild(iframe);
+    if (type === 'youtube') {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'chat-yt-iframe';
+      iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}?autoplay=1&playsinline=1&rel=0`;
+      iframe.title = 'YouTube video';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen', 'true');
+      box.innerHTML = '';
+      box.appendChild(iframe);
+    } else if (type === 'tiktok') {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'chat-yt-iframe';
+      iframe.src = `https://www.tiktok.com/embed/v2/${encodeURIComponent(vid)}`;
+      iframe.title = 'TikTok video';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', 'true');
+      box.innerHTML = '';
+      box.appendChild(iframe);
+    } else if (type === 'instagram') {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'chat-yt-iframe';
+      const igType = meta.subType || 'reel';
+      iframe.src = `https://www.instagram.com/${igType}/${encodeURIComponent(vid)}/embed`;
+      iframe.title = 'Instagram media';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', 'true');
+      box.innerHTML = '';
+      box.appendChild(iframe);
+    } else if (type === 'facebook') {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'chat-yt-iframe';
+      iframe.src = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(rawUrl)}&show_text=0&autoplay=1`;
+      iframe.title = 'Facebook video';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; picture-in-picture');
+      iframe.setAttribute('allowfullscreen', 'true');
+      box.innerHTML = '';
+      box.appendChild(iframe);
+    } else if (type === 'video') {
+      const vidEl = document.createElement('video');
+      vidEl.className = 'chat-yt-iframe';
+      vidEl.src = rawUrl;
+      vidEl.controls = true;
+      vidEl.autoplay = true;
+      vidEl.playsInline = true;
+      box.innerHTML = '';
+      box.appendChild(vidEl);
+      try { vidEl.play(); } catch (_) {}
+    } else if (type === 'image') {
+      if (typeof window.openImgModal === 'function') {
+        window.openImgModal(rawUrl);
+      } else if (typeof window.openImageViewer === 'function') {
+        window.openImageViewer(rawUrl);
+      }
+    }
   };
+  window._chatPlayYt = window._chatPlayMedia;
 }
 
 /* ── Video preview: birinchi kadr + play tugmasi + davomiylik; bosilsa shu yerning o'zida ijro bo'ladi ── */
@@ -616,25 +672,31 @@ export function generateGifBubble({ gif, m, time, mine, renderTicks, dm = false 
   };
 }
 
-/** YouTube video xabar — matnsiz yolg'iz havola/iframe yuborilganda media-only (erkin/fonsiz, vaqt video burchagida) */
-export function generateYouTubeBubble({ yt, m, time, mine, renderTicks, dm = false }) {
+/** Media xabar (YouTube, TikTok, Instagram, Facebook, Video, Rasm) — matnsiz yuborilganda media-only (erkin/fonsiz) */
+export function generateMediaBubble({ media, m, time, mine, renderTicks, dm = false }) {
   const badgeHtml = `<span class="chat-msg-meta cfm-media-badge">
     ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
     ${mine ? renderTicks(m.status) : ''}
   </span>`;
-  const cardHtml = renderYouTubeCard({
-    videoId: yt.videoId,
-    canonicalUrl: yt.canonicalUrl,
-    displayUrl: yt.displayUrl,
-    isShorts: yt.isShorts,
+  const cardHtml = renderMediaCard({
+    type: media.type,
+    videoId: media.videoId,
+    canonicalUrl: media.canonicalUrl,
+    displayUrl: media.displayUrl,
+    isShorts: media.isShorts,
     badgeHtml,
     standalone: true,
+    meta: media.meta || {},
   });
   return {
     bubbleClassExtra: ' bubble-media-only' + (dm ? ' bubble-media-dm' : ''),
     metaOutside: false,
     bubbleContent: cardHtml,
   };
+}
+
+export function generateYouTubeBubble(opts) {
+  return generateMediaBubble({ media: opts.yt || opts.media, ...opts });
 }
 
 /** Outer bubble shell — DM va guruh uchun bir xil */

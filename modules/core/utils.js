@@ -527,76 +527,200 @@ export function bindSpoilerUI() {
  * beriladi (masalan "javascript:" kabi xavfli sxemalar rad etiladi).
  */
 const YT_IFRAME_RE = /(?:<|&lt;)iframe\b[^>]*(?:src|SRC)=["'&quot;](?:https?:)?\/\/(?:www\.)?(?:youtube\.com|youtube-nocookie\.com)\/embed\/([a-zA-Z0-9_-]{11})[^"'&]*["'&quot;][^>]*(?:>|&gt;)(?:[\s\S]*?(?:<|&lt;)\/iframe(?:>|&gt;))?/gi;
-
 const YT_URL_RE = /(?:https?:\/\/)?(?:(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(?:[^\s<"'\`)]*&)?v=|shorts\/|embed\/))|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&][^\s<"'\`)]*)?/gi;
 
-export function renderYouTubeCard({ videoId, canonicalUrl, displayUrl, isShorts, badgeHtml = '', standalone = false }) {
+const IG_RE = /(?:https?:\/\/)?(?:www\.)?instagr(?:\.am|am\.com)\/(p|reel|tv)\/([a-zA-Z0-9_-]+)(?:[/?&][^\s<"'\`)]*)?/gi;
+const TT_RE = /(?:https?:\/\/)?(?:(?:www\.|m\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/(\d+)|(?:vm|vt)\.tiktok\.com\/([a-zA-Z0-9_-]+)\/?|(?:www\.)?tiktok\.com\/t\/([a-zA-Z0-9_-]+)\/?)(?:[?&][^\s<"'\`)]*)?/gi;
+const FB_RE = /(?:https?:\/\/)?(?:(?:www\.|m\.|web\.)?facebook\.com\/(?:watch\/?\?(?:[^\s<"'\`)]*&)?v=(\d+)|reel\/(\d+)|[^\/\s<"'\`)]+\/videos\/(\d+))|fb\.watch\/([a-zA-Z0-9_-]+))(?:[?&][^\s<"'\`)]*)?/gi;
+const VID_RE = /https?:\/\/[^\s<"'\`)]+?\.(?:mp4|webm|mov|m4v)(?:\?[^\s<"'\`)]*)?/gi;
+const IMG_RE = /https?:\/\/[^\s<"'\`)]+?\.(?:jpg|jpeg|png|webp|gif|avif)(?:\?[^\s<"'\`)]*)?/gi;
+
+export const PLATFORM_LOGOS = {
+  youtube: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+  tiktok: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.47 6.27 6.27 0 0 0 1.87-4.47V8.78a8.28 8.28 0 0 0 4.84 1.54V6.87a4.84 4.84 0 0 1-.94-.18z"/></svg>`,
+  instagram: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16"><defs><radialGradient id="smIgG" r="150%" cx="30%" cy="107%"><stop stop-color="#fdf497" offset="0%"/><stop stop-color="#fd5949" offset="45%"/><stop stop-color="#d6249f" offset="60%"/><stop stop-color="#285AEB" offset="90%"/></radialGradient></defs><rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#smIgG)"/><path fill="#ffffff" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/></svg>`,
+  facebook: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
+  x: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="15" height="15" fill="#ffffff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+  pinterest: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#E60023"><path d="M12 0a12 12 0 0 0-4.37 23.18c-.05-.98-.1-2.5.02-3.58l.74-3.15s-.19-.38-.19-.94c0-.88.51-1.54 1.15-1.54.54 0 .8.41.8.9 0 .55-.35 1.37-.53 2.13-.15.64.32 1.16.95 1.16 1.14 0 2.02-1.2 2.02-2.94 0-1.54-1.1-2.61-2.68-2.61-1.83 0-2.9 1.37-2.9 2.78 0 .55.21 1.14.48 1.46.05.06.06.12.04.18l-.18.73c-.03.11-.1.15-.22.1-1-.46-1.62-1.92-1.62-3.1 0-2.52 1.83-4.84 5.28-4.84 2.77 0 4.93 1.98 4.93 4.62 0 2.76-1.74 4.98-4.15 4.98-.81 0-1.57-.42-1.83-.92l-.5 1.9c-.18.7-.67 1.57-1 2.1A12 12 0 1 0 12 0z"/></svg>`,
+  image: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+  video: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+  web: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>`
+};
+
+export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl = '', displayUrl = '', isShorts = false, badgeHtml = '', standalone = false, meta = {} }) {
   const vId = esc(videoId);
   const cUrl = esc(canonicalUrl);
   const dUrl = esc(displayUrl || canonicalUrl);
   const shortsCls = isShorts ? ' is-shorts' : '';
   const standaloneCls = standalone ? ' chat-yt-standalone' : '';
-  const shortsBadge = isShorts ? '<span class="chat-yt-shorts-badge">Shorts</span>' : '';
+  const logoSvg = PLATFORM_LOGOS[type] || PLATFORM_LOGOS.web;
 
-  return `<div class="chat-yt-card${shortsCls}${standaloneCls}" data-video-id="${vId}">` +
-    `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy video havolasidan nusxa olish">` +
-      `<svg class="chat-yt-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ff0000">` +
-        `<path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>` +
-      `</svg>` +
+  let badgeText = '';
+  if (isShorts) badgeText = 'Shorts';
+  else if (type === 'tiktok') badgeText = 'TikTok';
+  else if (type === 'instagram') badgeText = meta.subType === 'p' ? 'Post' : 'Reel';
+  else if (type === 'facebook') badgeText = 'Facebook';
+  else if (type === 'image') badgeText = 'Rasm';
+  else if (type === 'video') badgeText = 'Video';
+  const badgeDom = badgeText ? `<span class="chat-yt-shorts-badge">${badgeText}</span>` : '';
+
+  let boxContent = '';
+  if (type === 'image') {
+    boxContent = `<img class="chat-media-thumb" src="${cUrl}" alt="Rasm" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Rasm yuklanmadi</div>'">${badgeDom}${badgeHtml}`;
+  } else if (type === 'video') {
+    boxContent = `<video class="chat-media-video" src="${cUrl}" preload="metadata" playsinline muted></video>` +
+      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
+        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
+      `</button>` +
+      badgeDom + (badgeHtml || '');
+  } else if (type === 'youtube') {
+    boxContent = `<img class="chat-yt-thumb" src="https://i.ytimg.com/vi/${vId}/hqdefault.jpg" alt="YouTube video" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${vId}/0.jpg'">` +
+      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
+        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
+      `</button>` +
+      badgeDom + (badgeHtml || '');
+  } else if (type === 'tiktok') {
+    boxContent = `<div class="chat-media-placeholder chat-media-tt-ph"><div class="chat-media-ph-bg"></div>${logoSvg}</div>` +
+      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
+        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
+      `</button>` +
+      badgeDom + (badgeHtml || '');
+  } else if (type === 'instagram') {
+    boxContent = `<div class="chat-media-placeholder chat-media-ig-ph"><div class="chat-media-ph-bg"></div>${logoSvg}</div>` +
+      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
+        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
+      `</button>` +
+      badgeDom + (badgeHtml || '');
+  } else if (type === 'facebook') {
+    boxContent = `<div class="chat-media-placeholder chat-media-fb-ph"><div class="chat-media-ph-bg"></div>${logoSvg}</div>` +
+      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
+        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
+      `</button>` +
+      badgeDom + (badgeHtml || '');
+  }
+
+  const metaJson = esc(JSON.stringify(meta || {}));
+  const dataAttrs = `data-media-type="${esc(type)}" data-video-id="${vId}" data-url="${cUrl}" data-shorts="${isShorts ? '1' : '0'}" data-meta="${metaJson}"`;
+
+  return `<div class="chat-yt-card${shortsCls}${standaloneCls} is-media-${type}" data-media-type="${esc(type)}">` +
+    `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy media havolasidan nusxa olish">` +
+      logoSvg +
       `<span class="chat-yt-url">${dUrl}</span>` +
       `<span class="chat-yt-copy-badge">` +
         `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
         `<span class="chat-yt-copy-text">Nusxa</span>` +
       `</span>` +
     `</div>` +
-    `<div class="chat-yt-box" data-video-id="${vId}" data-shorts="${isShorts ? '1' : '0'}" onclick="window._chatPlayYt&&window._chatPlayYt(this)">` +
-      `<img class="chat-yt-thumb" src="https://i.ytimg.com/vi/${vId}/hqdefault.jpg" alt="YouTube video" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${vId}/0.jpg'">` +
-      `<button type="button" class="cfm-vid-play chat-yt-play-btn" aria-label="Ijro etish">` +
-        `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.55)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
-      `</button>` +
-      shortsBadge +
-      (badgeHtml || '') +
+    `<div class="chat-yt-box chat-media-box" ${dataAttrs} onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
+      boxContent +
     `</div>` +
   `</div>`;
 }
 
-export function parsePureYouTube(text) {
+export function renderYouTubeCard(opts) {
+  return renderMediaCard({ type: 'youtube', ...opts });
+}
+
+export function parsePureMedia(text) {
   if (!text || typeof text !== 'string') return null;
   const t = text.trim();
   if (!t) return null;
 
-  // 1) Iframe tekshirish: masalan <iframe src="https://www.youtube.com/embed/xyz"></iframe>
+  // 1) YouTube iframe
   YT_IFRAME_RE.lastIndex = 0;
   const iframes = [...t.matchAll(YT_IFRAME_RE)];
   if (iframes.length === 1) {
     YT_IFRAME_RE.lastIndex = 0;
-    const rest = t.replace(YT_IFRAME_RE, '').trim();
-    if (!rest) {
+    if (!t.replace(YT_IFRAME_RE, '').trim()) {
       const vid = iframes[0][1];
       const canUrl = `https://www.youtube.com/watch?v=${vid}`;
-      return { videoId: vid, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: false };
+      return { type: 'youtube', videoId: vid, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: false };
     }
   }
 
-  // 2) URL tekshirish: shorts, watch, youtu.be, embed
+  // 2) YouTube URL
   YT_URL_RE.lastIndex = 0;
-  const urls = [...t.matchAll(YT_URL_RE)];
-  if (urls.length === 1) {
+  const ytUrls = [...t.matchAll(YT_URL_RE)];
+  if (ytUrls.length === 1) {
     YT_URL_RE.lastIndex = 0;
-    const rest = t.replace(YT_URL_RE, '').trim();
-    if (!rest) {
-      const um = urls[0];
+    if (!t.replace(YT_URL_RE, '').trim()) {
+      const um = ytUrls[0];
       const vid = um[1];
       const matchStr = um[0];
       const isShorts = matchStr.includes('/shorts/');
       const canUrl = isShorts ? `https://www.youtube.com/shorts/${vid}` : `https://www.youtube.com/watch?v=${vid}`;
       const dispUrl = matchStr.startsWith('http') ? matchStr : ('https://' + matchStr);
-      return { videoId: vid, canonicalUrl: canUrl, displayUrl: dispUrl, isShorts };
+      return { type: 'youtube', videoId: vid, canonicalUrl: canUrl, displayUrl: dispUrl, isShorts };
+    }
+  }
+
+  // 3) Instagram
+  IG_RE.lastIndex = 0;
+  const igUrls = [...t.matchAll(IG_RE)];
+  if (igUrls.length === 1) {
+    IG_RE.lastIndex = 0;
+    if (!t.replace(IG_RE, '').trim()) {
+      const m = igUrls[0];
+      const subType = m[1];
+      const id = m[2];
+      const canUrl = `https://www.instagram.com/${subType}/${id}/`;
+      return { type: 'instagram', videoId: id, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: subType === 'reel', meta: { subType } };
+    }
+  }
+
+  // 4) TikTok
+  TT_RE.lastIndex = 0;
+  const ttUrls = [...t.matchAll(TT_RE)];
+  if (ttUrls.length === 1) {
+    TT_RE.lastIndex = 0;
+    if (!t.replace(TT_RE, '').trim()) {
+      const m = ttUrls[0];
+      const id = m[1] || m[2] || m[3];
+      const canUrl = m[0].startsWith('http') ? m[0] : ('https://' + m[0]);
+      return { type: 'tiktok', videoId: id, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: true };
+    }
+  }
+
+  // 5) Facebook
+  FB_RE.lastIndex = 0;
+  const fbUrls = [...t.matchAll(FB_RE)];
+  if (fbUrls.length === 1) {
+    FB_RE.lastIndex = 0;
+    if (!t.replace(FB_RE, '').trim()) {
+      const m = fbUrls[0];
+      const id = m[1] || m[2] || m[3] || m[4];
+      const canUrl = m[0].startsWith('http') ? m[0] : ('https://' + m[0]);
+      const isShorts = canUrl.includes('/reel/');
+      return { type: 'facebook', videoId: id, canonicalUrl: canUrl, displayUrl: canUrl, isShorts };
+    }
+  }
+
+  // 6) Direct Video
+  VID_RE.lastIndex = 0;
+  const vidUrls = [...t.matchAll(VID_RE)];
+  if (vidUrls.length === 1) {
+    VID_RE.lastIndex = 0;
+    if (!t.replace(VID_RE, '').trim()) {
+      const url = vidUrls[0][0];
+      return { type: 'video', videoId: '', canonicalUrl: url, displayUrl: url, isShorts: false };
+    }
+  }
+
+  // 7) Direct Image
+  IMG_RE.lastIndex = 0;
+  const imgUrls = [...t.matchAll(IMG_RE)];
+  if (imgUrls.length === 1) {
+    IMG_RE.lastIndex = 0;
+    if (!t.replace(IMG_RE, '').trim()) {
+      const url = imgUrls[0][0];
+      return { type: 'image', videoId: '', canonicalUrl: url, displayUrl: url, isShorts: false };
     }
   }
 
   return null;
 }
+
+export const parsePureYouTube = parsePureMedia;
 
 export function renderMarkdown(rawText, opts) {
   if (!rawText) return '';
@@ -620,6 +744,47 @@ export function renderMarkdown(rawText, opts) {
     const canUrl = isShorts ? `https://www.youtube.com/shorts/${vid}` : `https://www.youtube.com/watch?v=${vid}`;
     const dispUrl = match.startsWith('http') ? match : ('https://' + match);
     const cardHtml = renderYouTubeCard({ videoId: vid, canonicalUrl: canUrl, displayUrl: dispUrl, isShorts });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
+  // Instagram havolalari
+  s = s.replace(IG_RE, (match, subType, id) => {
+    const canUrl = `https://www.instagram.com/${subType}/${id}/`;
+    const cardHtml = renderMediaCard({ type: 'instagram', videoId: id, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: subType === 'reel', meta: { subType } });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
+  // TikTok havolalari
+  s = s.replace(TT_RE, (match, v1, v2, v3) => {
+    const id = v1 || v2 || v3 || '';
+    const canUrl = match.startsWith('http') ? match : ('https://' + match);
+    const cardHtml = renderMediaCard({ type: 'tiktok', videoId: id, canonicalUrl: canUrl, displayUrl: canUrl, isShorts: true });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
+  // Facebook havolalari
+  s = s.replace(FB_RE, (match, v1, v2, v3, v4) => {
+    const id = v1 || v2 || v3 || v4 || '';
+    const canUrl = match.startsWith('http') ? match : ('https://' + match);
+    const isShorts = canUrl.includes('/reel/');
+    const cardHtml = renderMediaCard({ type: 'facebook', videoId: id, canonicalUrl: canUrl, displayUrl: canUrl, isShorts });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
+  // Direct Video havolalari
+  s = s.replace(VID_RE, (match) => {
+    const cardHtml = renderMediaCard({ type: 'video', canonicalUrl: match, displayUrl: match, isShorts: false });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
+  // Direct Image havolalari
+  s = s.replace(IMG_RE, (match) => {
+    const cardHtml = renderMediaCard({ type: 'image', canonicalUrl: match, displayUrl: match, isShorts: false });
     const idx = _ytHold.push(cardHtml) - 1;
     return '\n\u0000YT' + idx + '\u0000\n';
   });
