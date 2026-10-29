@@ -519,6 +519,9 @@ export function closeThreadMsgSearch() {
     bar._mo = null;
   }
 }
+if (typeof window !== 'undefined') {
+  window.closeThreadMsgSearch = closeThreadMsgSearch;
+}
 
 /**
  * Chat ichida xabarlarni qidirish:
@@ -1834,7 +1837,8 @@ export async function openChatThread(uid) {
   $('chatThreadName').textContent   = '...';
   $('chatThreadAvi').innerHTML      = '';
 
-  const draft = getDraft('dm:' + uid) || localStorage.getItem('draft_' + uid) || '';
+  let draft = '';
+  try { draft = getDraft('dm:' + uid) || localStorage.getItem('draft_' + uid) || ''; } catch (_) {}
   $('chatThreadInput').value = draft;
   setTimeout(updateVoiceSendBtn, 50);
 

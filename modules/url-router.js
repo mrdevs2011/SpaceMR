@@ -879,6 +879,13 @@ export function initUrlRouter() {
     if (window.__zoomSkipPop) { window.__zoomSkipPop = false; return; }  // rasm zoom yopildi — sahifa o'zgarmaydi
     if (_internalPop) { _internalPop = false; return; }
     if (_auth === 'unknown') return;
+
+    // Chat ichidagi qidiruv ochiq bo'lsa — orqaga bosilganda chatdan chiqib ketmasdan, faqat qidiruv yopilsin
+    const searchHdr = document.querySelector('.chat-thread-hdr.search-active');
+    if (searchHdr && typeof window.closeThreadMsgSearch === 'function') {
+      window.closeThreadMsgSearch();
+      return;
+    }
     if (_auth === 'out' && cleanPath(location.pathname) !== '/login') {
       history.replaceState({ i: 0, prev: null }, '', '/login');
       updateTitle('/login');
