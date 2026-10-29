@@ -7,6 +7,56 @@ import { protectSecrets } from './secrets.js';
 export const $    = id => document.getElementById(id);
 export const esc  = s  => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;') : '';
 
+/* ── Production Storage & Safe Parsing Helpers ────────────────────────── */
+export const safeStorage = {
+  get(key, fallback = null) {
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? v : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  },
+  getJSON(key, fallback = null) {
+    try {
+      const v = localStorage.getItem(key);
+      if (v === null || v === undefined) return fallback;
+      return JSON.parse(v);
+    } catch (_) {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  },
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+};
+
+export function safeJSON(raw, fallback = null) {
+  if (typeof raw !== 'string') return raw ?? fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (_) {
+    return fallback;
+  }
+}
+
+export function escapeRegex(str) {
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /* ── Spoiler vault: maxfiy matn DOM/HTML da EMAS — faqat xotirada.
    Kenglik character soniga mos (--spoiler-ch). Ochilganda vault dan ~0ms. */
 const _spoilerVault = new Map();

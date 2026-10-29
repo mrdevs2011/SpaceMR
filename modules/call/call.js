@@ -992,6 +992,9 @@ async function _initiateCallImpl(isVideo) {
   const spBtn = document.getElementById('callSpeakerBtn');
   if (spBtn) { spBtn.classList.remove('active'); spBtn.title = 'Dinamik (ovoz)'; }
 
+  // Ovoz/video yozish faol bo'lsa darhol to'xtatamiz (mikrofon/kamera to'qnashmasligi uchun)
+  try { import('../chat/chat-voice-record.js').then(m => m.forceStopVoiceRecording?.()).catch(() => {}); } catch (_) {}
+
   // 1) Mikrofon so'rovi user gesture ICHIDA, hech narsani kutmasdan boshlanadi (mobil brauzerlar uchun ham shart)
   const micP = navigator.mediaDevices.getUserMedia(
     isVideo ? { audio: true, video: { facingMode: _facingMode } } : { audio: true }
@@ -1132,6 +1135,9 @@ async function _acceptIncomingCall(callData, callId) {
   _facingMode  = 'user';
 
   document.getElementById('incomingCallModal')?.classList.remove('show');
+
+  // Ovoz/video yozish faol bo'lsa darhol to'xtatamiz
+  try { import('../chat/chat-voice-record.js').then(m => m.forceStopVoiceRecording?.()).catch(() => {}); } catch (_) {}
 
   try {
     _localStream = await navigator.mediaDevices.getUserMedia(

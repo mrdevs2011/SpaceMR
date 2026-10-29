@@ -399,9 +399,10 @@ export function initRouter() {
     }
 
     // Check if it's a known route name (not a path)
-    const routeName = href.replace('/', '');
+    const routeName = href === '/' ? 'home' : href.replace(/^\/+/, '');
     if (ALLOWED_ROUTES.includes(routeName)) {
       e.preventDefault();
+      document.documentElement.removeAttribute('data-nf');
       navigateTo(routeName);
     }
   });

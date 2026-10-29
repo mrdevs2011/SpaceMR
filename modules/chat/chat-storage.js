@@ -3,20 +3,16 @@
  * chat.js dan ajratilgan (sifat: monolitni yengillashtirish).
  */
 import { state } from '../core/config.js';
+import { safeStorage } from '../core/utils.js';
 
 export function getPins() {
   if (!state.me?.uid) return { dms: [], groups: [] };
-  try {
-    const raw = localStorage.getItem(`chat_pins_${state.me.uid}`);
-    if (!raw) return { dms: [], groups: [] };
-    const p = JSON.parse(raw);
-    return {
-      dms: Array.isArray(p.dms) ? p.dms : [],
-      groups: Array.isArray(p.groups) ? p.groups : [],
-    };
-  } catch {
-    return { dms: [], groups: [] };
-  }
+  const p = safeStorage.getJSON(`chat_pins_${state.me.uid}`);
+  if (!p) return { dms: [], groups: [] };
+  return {
+    dms: Array.isArray(p.dms) ? p.dms : [],
+    groups: Array.isArray(p.groups) ? p.groups : [],
+  };
 }
 
 export function isPinned(type, id) {
@@ -38,68 +34,46 @@ export function togglePin(type, id) {
   }
   if (type === 'dm') pins.dms = list;
   else pins.groups = list;
-  try {
-    localStorage.setItem(`chat_pins_${state.me.uid}`, JSON.stringify(pins));
-  } catch (_) {}
+  safeStorage.set(`chat_pins_${state.me.uid}`, pins);
   return isNowPinned;
 }
 
 export function getRecents() {
   if (!state.me?.uid) return [];
-  try {
-    const raw = localStorage.getItem(`chat_recent_searches_${state.me.uid}`);
-    if (!raw) return [];
-    const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
-  }
+  const list = safeStorage.getJSON(`chat_recent_searches_${state.me.uid}`);
+  return Array.isArray(list) ? list : [];
 }
 
 export function saveRecent(item) {
   if (!state.me?.uid || !item || !item.id) return;
   const list = getRecents().filter(x => x.id !== item.id);
   list.unshift(item);
-  try {
-    localStorage.setItem(`chat_recent_searches_${state.me.uid}`, JSON.stringify(list.slice(0, 10)));
-  } catch (_) {}
+  safeStorage.set(`chat_recent_searches_${state.me.uid}`, list.slice(0, 10));
 }
 
 export function removeRecent(id) {
   if (!state.me?.uid) return;
   const list = getRecents().filter(x => x.id !== id);
-  try {
-    localStorage.setItem(`chat_recent_searches_${state.me.uid}`, JSON.stringify(list));
-  } catch (_) {}
+  safeStorage.set(`chat_recent_searches_${state.me.uid}`, list);
 }
 
 export function clearAllRecents() {
   if (!state.me?.uid) return;
-  try {
-    localStorage.removeItem(`chat_recent_searches_${state.me.uid}`);
-  } catch (_) {}
+  safeStorage.remove(`chat_recent_searches_${state.me.uid}`);
 }
 
 export function markChatDeletedLocal(uid) {
   if (!state.me?.uid || !uid) return;
-  try {
-    localStorage.setItem(`deleted_chat_${state.me.uid}_${uid}`, String(Date.now()));
-  } catch (_) {}
+  safeStorage.set(`deleted_chat_${state.me.uid}_${uid}`, String(Date.now()));
 }
 
 export function clearChatDeletedLocal(uid) {
   if (!state.me?.uid || !uid) return;
-  try {
-    localStorage.removeItem(`deleted_chat_${state.me.uid}_${uid}`);
-  } catch (_) {}
+  safeStorage.remove(`deleted_chat_${state.me.uid}_${uid}`);
 }
 
 export function getChatDeletedAt(uid) {
-  try {
-    const raw = localStorage.getItem(`deleted_chat_${state.me?.uid}_${uid}`);
-    if (!raw) return null;
-    return Number(raw) || null;
-  } catch {
-    return null;
-  }
+  const raw = safeStorage.get(`deleted_chat_${state.me?.uid}_${uid}`);
+  if (!raw) return null;
+  return Number(raw) || null;
 }

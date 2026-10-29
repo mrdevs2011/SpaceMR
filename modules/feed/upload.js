@@ -3,7 +3,7 @@ import { busEmit } from '../core/rt-bus.js';
 import { getCachedProfile } from '../core/local-cache.js';
 import { sb, state, MAX_FILE, uploadViaController, mapPost } from '../core/config.js';
 import { compressImage } from './compress.js';
-import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi } from '../core/utils.js';
+import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi, safeStorage } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
@@ -528,22 +528,18 @@ const DRAFT_KEY = 'spacemr_post_draft';
 
 function _savePostDraft(text) {
   try { setDraft('post', text || ''); } catch (_) {}
-  try {
-    const t = String(text || '').trim();
-    if (!t) { localStorage.removeItem(DRAFT_KEY); return; }
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ text: t, at: Date.now() }));
-  } catch (_) {}
+  const t = String(text || '').trim();
+  if (!t) { safeStorage.remove(DRAFT_KEY); return; }
+  safeStorage.set(DRAFT_KEY, { text: t, at: Date.now() });
 }
 
 function _loadPostDraft() {
   try {
     const acc = getDraft('post');
     if (acc) return acc;
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return null;
-    const o = JSON.parse(raw);
-    return o && typeof o.text === 'string' ? o.text : null;
-  } catch (_) { return null; }
+  } catch (_) {}
+  const o = safeStorage.getJSON(DRAFT_KEY);
+  return o && typeof o.text === 'string' ? o.text : null;
 }
 
 function _clearPostDraft() {
