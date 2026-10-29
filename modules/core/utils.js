@@ -541,11 +541,39 @@ export const PLATFORM_LOGOS = {
   instagram: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16"><defs><radialGradient id="smIgG" r="150%" cx="30%" cy="107%"><stop stop-color="#fdf497" offset="0%"/><stop stop-color="#fd5949" offset="45%"/><stop stop-color="#d6249f" offset="60%"/><stop stop-color="#285AEB" offset="90%"/></radialGradient></defs><rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#smIgG)"/><path fill="#ffffff" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/></svg>`,
   facebook: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`,
   x: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="15" height="15" fill="#ffffff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
+  telegram: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#24A1DE"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/></svg>`,
+  spotify: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#1DB954"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.623.623 0 0 1-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.624.624 0 1 1-.277-1.218c3.808-.87 7.076-.496 9.712 1.118a.625.625 0 0 1 .207.857zm1.224-2.719a.78.78 0 0 1-1.073.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 1 1-.453-1.493c3.632-1.102 8.147-.568 11.234 1.329a.78.78 0 0 1 .257 1.073zm.105-2.835C14.692 8.95 9.375 8.775 6.297 9.71a.936.936 0 1 1-.543-1.791c3.528-1.071 9.398-.865 13.18 1.381a.936.936 0 0 1-1.02 1.57z"/></svg>`,
+  github: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>`,
+  reddit: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#FF4500"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.56 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.197-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>`,
+  wikipedia: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ffffff"><path d="M12.09 13.12 9.68 6.42H7.4L3.06 17.58h2.09l1.1-2.92h4.52l1.08 2.92h2.24zm-4.99-.04 1.72-4.57 1.69 4.57zm13.84 4.5h-2.1l-2.45-6.6-2.42 6.6h-2.12l3.49-8.94-1.42-3.82h2.15l1.37 3.84 1.39-3.84h2.14l-1.45 3.86z"/></svg>`,
   pinterest: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#E60023"><path d="M12 0a12 12 0 0 0-4.37 23.18c-.05-.98-.1-2.5.02-3.58l.74-3.15s-.19-.38-.19-.94c0-.88.51-1.54 1.15-1.54.54 0 .8.41.8.9 0 .55-.35 1.37-.53 2.13-.15.64.32 1.16.95 1.16 1.14 0 2.02-1.2 2.02-2.94 0-1.54-1.1-2.61-2.68-2.61-1.83 0-2.9 1.37-2.9 2.78 0 .55.21 1.14.48 1.46.05.06.06.12.04.18l-.18.73c-.03.11-.1.15-.22.1-1-.46-1.62-1.92-1.62-3.1 0-2.52 1.83-4.84 5.28-4.84 2.77 0 4.93 1.98 4.93 4.62 0 2.76-1.74 4.98-4.15 4.98-.81 0-1.57-.42-1.83-.92l-.5 1.9c-.18.7-.67 1.57-1 2.1A12 12 0 1 0 12 0z"/></svg>`,
+  linkedin: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#0A66C2"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>`,
   image: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
   video: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
   web: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"/></svg>`
 };
+
+export function getDomainPlatform(urlStr) {
+  try {
+    const u = new URL(urlStr.startsWith('http') ? urlStr : ('https://' + urlStr));
+    const h = u.hostname.toLowerCase().replace(/^www\./, '');
+    if (h.includes('youtube.com') || h === 'youtu.be') return 'youtube';
+    if (h.includes('tiktok.com')) return 'tiktok';
+    if (h.includes('instagram.com') || h === 'instagr.am') return 'instagram';
+    if (h.includes('facebook.com') || h === 'fb.watch' || h === 'fb.com') return 'facebook';
+    if (h === 'x.com' || h.includes('twitter.com')) return 'x';
+    if (h === 't.me' || h.includes('telegram.me') || h.includes('telegram.org')) return 'telegram';
+    if (h.includes('spotify.com')) return 'spotify';
+    if (h.includes('github.com')) return 'github';
+    if (h.includes('reddit.com') || h === 'redd.it') return 'reddit';
+    if (h.includes('wikipedia.org')) return 'wikipedia';
+    if (h.includes('pinterest.com') || h === 'pin.it') return 'pinterest';
+    if (h.includes('linkedin.com')) return 'linkedin';
+    return 'web';
+  } catch (_) {
+    return 'web';
+  }
+}
 
 export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl = '', displayUrl = '', isShorts = false, badgeHtml = '', standalone = false, meta = {} }) {
   const vId = esc(videoId);
@@ -553,7 +581,19 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
   const dUrl = esc(displayUrl || canonicalUrl);
   const shortsCls = isShorts ? ' is-shorts' : '';
   const standaloneCls = standalone ? ' chat-yt-standalone' : '';
-  const logoSvg = PLATFORM_LOGOS[type] || PLATFORM_LOGOS.web;
+
+  let domain = '';
+  try {
+    const u = new URL(canonicalUrl.startsWith('http') ? canonicalUrl : ('https://' + canonicalUrl));
+    domain = u.hostname.replace(/^www\./, '');
+  } catch (_) {
+    domain = canonicalUrl;
+  }
+
+  const platform = (type && type !== 'web') ? type : getDomainPlatform(canonicalUrl);
+  const logoSvg = (platform !== 'web' && PLATFORM_LOGOS[platform])
+    ? PLATFORM_LOGOS[platform]
+    : `<img class="chat-media-icon chat-media-favicon" src="https://www.google.com/s2/favicons?domain=${esc(domain)}&sz=32" alt="" loading="lazy" onerror="this.outerHTML='${esc(PLATFORM_LOGOS.web)}'">`;
 
   let badgeText = '';
   if (isShorts) badgeText = 'Shorts';
@@ -597,6 +637,17 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
       `</button>` +
       badgeDom + (badgeHtml || '');
+  } else {
+    // Har qanday veb-havola (butun dunyo bo'ylab)
+    boxContent = `<div class="chat-link-box" data-preview-url="${cUrl}">` +
+      `<div class="chat-link-thumb-wrap" style="display:none;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy"></div>` +
+      `<div class="chat-link-info">` +
+        `<div class="chat-link-site">${esc(domain)}</div>` +
+        `<div class="chat-link-title">${esc(domain)}</div>` +
+        `<div class="chat-link-desc" style="display:none;"></div>` +
+      `</div>` +
+    `</div>` +
+    (badgeHtml || '');
   }
 
   const metaJson = esc(JSON.stringify(meta || {}));
@@ -715,6 +766,12 @@ export function parsePureMedia(text) {
       const url = imgUrls[0][0];
       return { type: 'image', videoId: '', canonicalUrl: url, displayUrl: url, isShorts: false };
     }
+  }
+
+  // 8) Butun dunyo bo'ylab har qanday veb-havola (generic web link)
+  const GEN_URL_RE = /^https?:\/\/[^\s<"'\`)]+$/i;
+  if (GEN_URL_RE.test(t)) {
+    return { type: 'web', videoId: '', canonicalUrl: t, displayUrl: t, isShorts: false, meta: {} };
   }
 
   return null;
@@ -836,7 +893,11 @@ export function renderMarkdown(rawText, opts) {
   });
 
   // \u0000 (placeholder) va qo'shtirnoqlarda to'xtaydi — aks holda tayyor <a> tegi href ichiga tushib, atribut in'ektsiyasi bo'ladi
-  s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, '<a href="$1" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
+  s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, (match) => {
+    const cardHtml = renderMediaCard({ type: 'web', canonicalUrl: match, displayUrl: match, isShorts: false });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
 
   s = s.replace(/\u0000TG(\d+)\u0000/g, (_m, idx) => htmlTags[parseInt(idx, 10)]);
 

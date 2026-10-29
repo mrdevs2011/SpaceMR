@@ -123,9 +123,61 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
       } else if (typeof window.openImageViewer === 'function') {
         window.openImageViewer(rawUrl);
       }
+    } else {
+      box.classList.remove('playing');
+      box.closest?.('.chat-yt-card')?.classList.remove('playing');
+      if (rawUrl) window.open(rawUrl, '_blank', 'noopener,noreferrer');
     }
   };
   window._chatPlayYt = window._chatPlayMedia;
+}
+
+export async function enrichLinkPreviews(container) {
+  if (!container || typeof fetch === 'undefined') return;
+  const linkBoxes = container.querySelectorAll('.chat-link-box[data-preview-url]:not(.preview-loaded):not(.preview-loading)');
+  if (!linkBoxes.length) return;
+
+  linkBoxes.forEach(async (box) => {
+    box.classList.add('preview-loading');
+    const url = box.dataset.previewUrl;
+    if (!url) return;
+    try {
+      const resp = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);
+      if (!resp.ok) {
+        box.classList.add('preview-loaded');
+        return;
+      }
+      const data = await resp.json();
+      box.classList.add('preview-loaded');
+      if (!data || !data.ok) return;
+
+      const titleEl = box.querySelector('.chat-link-title');
+      const descEl = box.querySelector('.chat-link-desc');
+      const siteEl = box.querySelector('.chat-link-site');
+      const thumbWrap = box.querySelector('.chat-link-thumb-wrap');
+      const thumbImg = box.querySelector('.chat-link-thumb');
+
+      if (data.title && titleEl) {
+        titleEl.textContent = data.title;
+      }
+      if (data.description && descEl) {
+        descEl.textContent = data.description;
+        descEl.style.display = '-webkit-box';
+      }
+      if (data.siteName && siteEl) {
+        siteEl.textContent = data.siteName;
+      }
+      if (data.image && thumbWrap && thumbImg) {
+        thumbImg.src = data.image;
+        thumbWrap.style.display = 'block';
+      }
+    } catch (_) {
+      box.classList.add('preview-loaded');
+    }
+  });
+}
+if (typeof window !== 'undefined') {
+  window._enrichLinkPreviews = enrichLinkPreviews;
 }
 
 /* ── Video preview: birinchi kadr + play tugmasi + davomiylik; bosilsa shu yerning o'zida ijro bo'ladi ── */

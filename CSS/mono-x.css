@@ -3328,7 +3328,7 @@ button:focus-visible,
 }
 
 /* 2. Chat — MINE bubble: blue bg, white text */
-#chatThreadModal .chat-msg.mine .chat-bubble {
+#chatThreadModal .chat-msg.mine .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
   background: var(--bubble-mine) !important;
   color: var(--pal-white) !important;
 }
@@ -8556,11 +8556,11 @@ select.field option { background: #000000; color: var(--text); }
 .grp-username-prefix { left: 13px !important; color: var(--text3) !important; font-weight: 400 !important; }
 
 /* ═══ Chat (DM) — X: yuborilgan ko'k pufak 24/24/4/24, kelgan #2f3336; yozish maydoni kulrang pill ═══ */
-#chatThreadModal .chat-msg.mine .chat-bubble {
+#chatThreadModal .chat-msg.mine .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
   background: var(--x-blue) !important; color: #e7e9ea !important;
   border-radius: var(--radius) var(--radius) var(--radius) var(--radius)!important; border: 0 !important; box-shadow: none !important;
 }
-#chatThreadModal .chat-msg:not(.mine) .chat-bubble {
+#chatThreadModal .chat-msg:not(.mine) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
   background: #2f3336 !important; color: var(--text) !important;
   border-radius: var(--radius) var(--radius) var(--radius) var(--radius)!important; border: 0 !important; box-shadow: none !important;
 }
@@ -9738,4 +9738,16 @@ html body .md-spoiler:not(.revealed) * {
   text-shadow: none !important;
   -webkit-user-select: none !important;
   user-select: none !important;
+}
+
+/* Media faqat o'zi bo'lganda (matnsiz pure YouTube, TikTok, Instagram, Facebook, link, rasm, video) — mutlaqo pufaksiz (erkin) */
+#chatThreadModal .chat-msg .chat-bubble.bubble-media-only,
+#chatThreadModal .chat-msg.mine .chat-bubble.bubble-media-only,
+#chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-only,
+.chat-bubble.bubble-media-only {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
 }

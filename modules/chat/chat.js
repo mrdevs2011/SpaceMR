@@ -3046,6 +3046,7 @@ export function paintMessages(msgs, grp = null) {
   checkSharedPostExistence(msgs);
   // Oxirgi 5 ovoz + 5 rasmni fonda yuklab qo'yamiz (boricha)
   preloadRecentChatMedia(msgs);
+  try { if (typeof window._enrichLinkPreviews === 'function') window._enrichLinkPreviews(box); } catch (_) {}
 }
 
 /** Guruh thread'i shu yagona painter bilan chiziladi (DM bilan bir xil UI/mantiq) */
