@@ -118,10 +118,14 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
       box.appendChild(vidEl);
       try { vidEl.play(); } catch (_) {}
     } else if (type === 'image') {
-      if (typeof window.openImgModal === 'function') {
-        window.openImgModal(rawUrl);
-      } else if (typeof window.openImageViewer === 'function') {
-        window.openImageViewer(rawUrl);
+      box.classList.remove('playing');
+      box.closest?.('.chat-yt-card')?.classList.remove('playing');
+      if (typeof window.openZoom === 'function') {
+        window.openZoom(rawUrl, 'image');
+      } else {
+        import('../../core/utils.js').then(u => u.openZoom(rawUrl, 'image')).catch(() => {
+          if (rawUrl) window.open(rawUrl, '_blank', 'noopener,noreferrer');
+        });
       }
     } else {
       box.classList.remove('playing');
@@ -130,6 +134,11 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
     }
   };
   window._chatPlayYt = window._chatPlayMedia;
+
+  window._chatOpenWebLink = function (url, e) {
+    if (e && e.target && e.target.closest('.chat-link-thumb, .chat-link-thumb-wrap')) return;
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
 }
 
 const _linkPreviewCache = new Map();

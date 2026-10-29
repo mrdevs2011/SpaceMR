@@ -85,10 +85,22 @@ const kunCard = utils.renderMediaCard({ type: 'web', canonicalUrl: 'https://kun.
 assert.ok(kunCard.includes('chat-link-box'), 'Should contain chat-link-box');
 assert.ok(kunCard.includes('KUN'), 'Should display dedicated KUN logo');
 
-// For arbitrary worldwide site (e.g. unknown-site-xyz.org), verify multi-tier favicon fallback
+// Test no "Rasm" or "Video" badge on image/video cards
+const imgCard = utils.renderMediaCard({ type: 'image', canonicalUrl: 'https://example.com/pic.jpg', standalone: true });
+assert.ok(!imgCard.includes('Rasm'), 'Image card must not have "Rasm" badge');
+assert.ok(!imgCard.includes('chat-yt-shorts-badge'), 'Image card must not have badge dom');
+assert.ok(imgCard.includes('chat-media-img-wrap'), 'Image card must use chat-media-img-wrap');
+assert.ok(!imgCard.includes('chat-yt-box'), 'Image card must not use 16:9 chat-yt-box');
+
+const vidCard = utils.renderMediaCard({ type: 'video', canonicalUrl: 'https://example.com/clip.mp4', standalone: true });
+assert.ok(!vidCard.includes('Video'), 'Video card must not have "Video" badge');
+
+// For arbitrary worldwide site (e.g. unknown-site-xyz.org), verify multi-tier favicon fallback and no 16:9 black box
 const arbCard = utils.renderMediaCard({ type: 'web', canonicalUrl: 'https://unknown-site-xyz.org', displayUrl: 'https://unknown-site-xyz.org', standalone: true });
 assert.ok(arbCard.includes('icons.duckduckgo.com/ip3/unknown-site-xyz.org.ico'), 'Tier 1: DuckDuckGo favicon CDN');
 assert.ok(arbCard.includes('google.com/s2/favicons?domain=unknown-site-xyz.org'), 'Tier 2: Google S2 64px fallback');
+assert.ok(!arbCard.includes('chat-yt-box'), 'Generic web card must not use 16:9 chat-yt-box void');
+assert.ok(arbCard.includes('chat-link-card'), 'Web card must have chat-link-card class');
 
 console.log('✓ renderMediaCard test passed');
 

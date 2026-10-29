@@ -3168,9 +3168,9 @@ function setChatFile(file) {
     mediaEl.hidden = false;
     if (fileEl) fileEl.hidden = true;
     if (isImg) {
-      mediaEl.innerHTML = `<img src="${url}" alt="" class="cfp-thumb">`;
+      mediaEl.innerHTML = `<img src="${url}" alt="" class="cfp-thumb" style="cursor: pointer;" title="Kattalashtirish">`;
     } else {
-      mediaEl.innerHTML = `<video src="${url}#t=0.1" class="cfp-thumb" muted playsinline preload="metadata"></video><span class="cfp-vid-badge" aria-hidden="true"></span>`;
+      mediaEl.innerHTML = `<video src="${url}#t=0.1" class="cfp-thumb" muted playsinline preload="metadata" style="cursor: pointer;" title="Ko'rish"></video><span class="cfp-vid-badge" aria-hidden="true"></span>`;
     }
   } else {
     if (mediaEl) { mediaEl.hidden = true; mediaEl.innerHTML = ''; }
@@ -3954,6 +3954,15 @@ $('chatFileInput')?.addEventListener('change', e => {
   if (f) setChatFile(f);
 });
 $('cfpRemove')?.addEventListener('click', clearChatFile);
+$('cfpMedia')?.addEventListener('click', (e) => {
+  if (e.target.closest('#cfpRemove') || e.target.closest('.cfp-remove')) return;
+  if (!chatState._cfpObjectUrl) return;
+  e.stopPropagation();
+  const isVid = (chatState._chatSelFile?.type || '').toLowerCase().startsWith('video/');
+  import('../core/utils.js').then(u => {
+    u.openZoom(chatState._cfpObjectUrl, isVid ? 'video' : 'image');
+  }).catch(() => {});
+});
 $('chatPostAttachClose')?.addEventListener('click', (e) => {
   e.preventDefault();
   e.stopPropagation();

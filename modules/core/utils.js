@@ -644,14 +644,49 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
   else if (type === 'tiktok') badgeText = 'TikTok';
   else if (type === 'instagram') badgeText = meta.subType === 'p' ? 'Post' : 'Reel';
   else if (type === 'facebook') badgeText = 'Facebook';
-  else if (type === 'image') badgeText = 'Rasm';
-  else if (type === 'video') badgeText = 'Video';
+  // Rasm va video uchun badge qo'yilmaydi (foydalanuvchi talabi)
   const badgeDom = badgeText ? `<span class="chat-yt-shorts-badge">${badgeText}</span>` : '';
 
-  let boxContent = '';
   if (type === 'image') {
-    boxContent = `<img class="chat-media-thumb" src="${cUrl}" alt="Rasm" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Rasm yuklanmadi</div>'">${badgeDom}${badgeHtml}`;
-  } else if (type === 'video') {
+    return `<div class="chat-yt-card${standaloneCls} is-media-image" data-media-type="image">` +
+      `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy rasm havolasidan nusxa olish">` +
+        logoSvg +
+        `<span class="chat-yt-url">${dUrl}</span>` +
+        `<span class="chat-yt-copy-badge">` +
+          `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
+          `<span class="chat-yt-copy-text">Nusxa</span>` +
+        `</span>` +
+      `</div>` +
+      `<div class="chat-media-img-wrap" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
+        `<img class="chat-media-thumb" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded')" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">${badgeHtml || ''}` +
+      `</div>` +
+    `</div>`;
+  }
+
+  if (type === 'web') {
+    return `<div class="chat-yt-card chat-link-card${standaloneCls} is-media-web" data-media-type="web">` +
+      `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy havoladan nusxa olish">` +
+        logoSvg +
+        `<span class="chat-yt-url">${dUrl}</span>` +
+        `<span class="chat-yt-copy-badge">` +
+          `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
+          `<span class="chat-yt-copy-text">Nusxa</span>` +
+        `</span>` +
+      `</div>` +
+      `<div class="chat-link-box" data-preview-url="${cUrl}" onclick="window._chatOpenWebLink&&window._chatOpenWebLink('${cUrl}', event)">` +
+        `<div class="chat-link-thumb-wrap" style="display:none;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy" onload="this.parentElement.style.display='block'" onerror="this.parentElement.remove()"></div>` +
+        `<div class="chat-link-info">` +
+          `<div class="chat-link-site">${esc(domain)}</div>` +
+          `<div class="chat-link-title">${esc(domain)}</div>` +
+          `<div class="chat-link-desc" style="display:none;"></div>` +
+        `</div>` +
+      `</div>` +
+      (badgeHtml || '') +
+    `</div>`;
+  }
+
+  let boxContent = '';
+  if (type === 'video') {
     boxContent = `<video class="chat-media-video" src="${cUrl}" preload="metadata" playsinline muted></video>` +
       `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
@@ -681,17 +716,6 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
       `</button>` +
       badgeDom + (badgeHtml || '');
-  } else {
-    // Har qanday veb-havola (butun dunyo bo'ylab)
-    boxContent = `<div class="chat-link-box" data-preview-url="${cUrl}">` +
-      `<div class="chat-link-thumb-wrap" style="display:none;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy"></div>` +
-      `<div class="chat-link-info">` +
-        `<div class="chat-link-site">${esc(domain)}</div>` +
-        `<div class="chat-link-title">${esc(domain)}</div>` +
-        `<div class="chat-link-desc" style="display:none;"></div>` +
-      `</div>` +
-    `</div>` +
-    (badgeHtml || '');
   }
 
   const metaJson = esc(JSON.stringify(meta || {}));
@@ -1156,10 +1180,12 @@ function _zClose(fromPop) {
   const zm = $('zoomModal');
   if (!zm) return;
   const wasOpen = zm.classList.contains('show');
-  zm.classList.remove('show');
+  zm.classList.remove('show', 'zoom-avatar', 'zoom-image', 'zoom-video');
   _zReset();
   const im = $('zoomImg');
   if (im) { im.src = ''; im.style.display = 'none'; }
+  const vid = $('zoomVideo');
+  if (vid) { try { vid.pause(); } catch (_) {} vid.src = ''; vid.style.display = 'none'; }
   /* Zoom ochilganda tarixga 1 ta yozuv qo'shilgan (openZoom) — tugma/Esc/fon bilan
    * yopilganda o'sha yozuvni olib tashlaymiz. Telefondagi "orqaga" bosilsa (fromPop)
    * brauzer o'zi allaqachon 1 qadam orqaga qaytgan — qayta back() qilmaymiz. */
@@ -1197,27 +1223,50 @@ export function openZoom(url, type) {
   if (!im || !zm) { location.assign(url); return; }
   _zReset();
   const isAvi = type === 'avatar';
+  const isVid = type === 'video';
   zm.classList.toggle('zoom-avatar', isAvi);
-  zm.classList.toggle('zoom-image', !isAvi && type === 'image');
-  im.style.display = 'block';
-  im.src = url;
-  if (isAvi) {
-    im.style.borderRadius = '50%';
-    im.style.width = 'min(72vw, 340px)';
-    im.style.height = 'min(72vw, 340px)';
-    im.style.objectFit = 'cover';
-    im.style.maxWidth = 'none';
-    im.style.maxHeight = 'none';
-  } else if (type === 'image') {
-    im.style.borderRadius = '8px';
-    im.style.width = '';
-    im.style.height = '';
-    im.style.objectFit = 'contain';
-    im.style.maxWidth = 'min(90vw, calc(100vw - 48px))';
-    im.style.maxHeight = 'min(86dvh, calc(100dvh - 56px))';
+  zm.classList.toggle('zoom-image', !isAvi && !isVid);
+  zm.classList.toggle('zoom-video', isVid);
+
+  let vid = $('zoomVideo');
+  if (isVid) {
+    im.style.display = 'none';
+    im.src = '';
+    if (!vid) {
+      vid = document.createElement('video');
+      vid.id = 'zoomVideo';
+      vid.className = 'zoom-video-el';
+      vid.controls = true;
+      vid.autoplay = true;
+      vid.playsInline = true;
+      vid.style.maxWidth = 'min(92vw, calc(100vw - 32px))';
+      vid.style.maxHeight = 'min(86dvh, calc(100dvh - 56px))';
+      vid.style.borderRadius = '8px';
+      vid.style.outline = 'none';
+      zm.appendChild(vid);
+    }
+    vid.style.display = 'block';
+    vid.src = url;
+    try { vid.play(); } catch (_) {}
   } else {
-    location.assign(url);
-    return;
+    if (vid) { try { vid.pause(); } catch (_) {} vid.src = ''; vid.style.display = 'none'; }
+    im.style.display = 'block';
+    im.src = url;
+    if (isAvi) {
+      im.style.borderRadius = '50%';
+      im.style.width = 'min(72vw, 340px)';
+      im.style.height = 'min(72vw, 340px)';
+      im.style.objectFit = 'cover';
+      im.style.maxWidth = 'none';
+      im.style.maxHeight = 'none';
+    } else {
+      im.style.borderRadius = '8px';
+      im.style.width = '';
+      im.style.height = '';
+      im.style.objectFit = 'contain';
+      im.style.maxWidth = 'min(90vw, calc(100vw - 48px))';
+      im.style.maxHeight = 'min(86dvh, calc(100dvh - 56px))';
+    }
   }
   im.style.transform = 'translate(0,0) scale(1)';
   im.style.transformOrigin = 'center center';
@@ -1228,6 +1277,9 @@ export function openZoom(url, type) {
   if (!wasShown && !(history.state && history.state.zoom)) {
     try { history.pushState({ ...(history.state || {}), zoom: 1 }, '', location.href); } catch (_) {}
   }
+}
+if (typeof window !== 'undefined') {
+  window.openZoom = openZoom;
 }
 
 function _bindZoomOnce() {

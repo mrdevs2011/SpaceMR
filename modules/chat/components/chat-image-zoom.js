@@ -35,6 +35,18 @@ if (!window.__chatImgZoomBound) {
       return;
     }
 
+    /* Chat media kartalaridagi rasm (link preview yoki to'g'ridan-to'g'ri rasm) */
+    const mediaImg = e.target?.closest?.('.chat-yt-card.is-media-image img, .chat-media-img-wrap img, .chat-link-thumb');
+    if (mediaImg) {
+      const url = mediaImg.currentSrc || mediaImg.src || mediaImg.closest('[data-url]')?.dataset?.url;
+      if (url) {
+        e.preventDefault();
+        e.stopPropagation();
+        openZoom(url, 'image');
+        return;
+      }
+    }
+
     const link = e.target?.closest?.('.cfm-img-link');
     if (!link) return;
     const url = link.getAttribute('href') || link.querySelector('img')?.currentSrc || link.querySelector('img')?.src;

@@ -5502,22 +5502,70 @@ body.report-open {
 }
 
 /* ── Har qanday veb-havola prevyusi (Universal Link Preview Card) ── */
+.chat-yt-card.is-media-image {
+  max-width: 340px;
+}
+.chat-media-img-wrap {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-media-img-wrap img.chat-media-thumb {
+  max-width: 100%;
+  max-height: 380px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.chat-media-img-wrap:hover img.chat-media-thumb {
+  transform: scale(1.015);
+  opacity: 0.95;
+}
+.chat-media-broken {
+  padding: 24px 16px;
+  text-align: center;
+  color: #8b98a5;
+  font-size: 13px;
+  width: 100%;
+}
+
+.chat-yt-card.is-media-web,
+.chat-yt-card.chat-link-card {
+  max-width: 340px;
+  background: rgba(18, 22, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .chat-link-box {
   display: flex;
   flex-direction: column;
   width: 100%;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
   text-align: left;
   overflow: hidden;
+  transition: background 0.15s ease;
+}
+.chat-link-box:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .chat-link-thumb-wrap {
   position: relative;
   width: 100%;
   max-height: 220px;
-  background: rgba(0, 0, 0, 0.4);
+  background: transparent;
   overflow: hidden;
+}
+.chat-link-thumb-wrap:empty {
+  display: none !important;
 }
 
 .chat-link-thumb {
@@ -5526,6 +5574,15 @@ body.report-open {
   max-height: 220px;
   object-fit: cover;
   display: block;
+  cursor: pointer;
+}
+
+#zoomModal video.zoom-video-el {
+  max-width: min(92vw, calc(100vw - 32px));
+  max-height: min(86dvh, calc(100dvh - 56px));
+  border-radius: 8px;
+  outline: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .chat-link-info {
