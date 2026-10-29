@@ -164,9 +164,16 @@ export function pickFile(f) {
 /* ── Caption input → enable/disable Post btn ─────────────────────────── */
 $('captionInput').addEventListener('input', () => { refreshPostBtn(); setDraft(_composerMode === 'story' ? 'story' : 'post', $('captionInput').value); });
 
-/* ── Preview clear ───────────────────────────────────────────────────── */
+/* ── Preview click (clear yoki kattalashtirib ko'rish) ─────────────── */
 $('previewArea').addEventListener('click', e => {
-  if (e.target.closest('[data-action="clear-file"]')) clearFile();
+  if (e.target.closest('[data-action="clear-file"]')) {
+    clearFile();
+    return;
+  }
+  if (state._objUrl && state.selFile) {
+    const isVid = isVideoFile(state.selFile);
+    import('../core/utils.js').then(u => u.openZoom(state._objUrl, isVid ? 'video' : 'image')).catch(() => {});
+  }
 });
 
 function clearFile() {
@@ -759,6 +766,11 @@ function _bindHomeComposer() {
     if (e.target.closest('[data-action="hc-clear"]')) {
       e.preventDefault();
       _clearHomeFile();
+      return;
+    }
+    if (state._objUrl && state.selFile) {
+      const isVid = isVideoFile(state.selFile);
+      import('../core/utils.js').then(u => u.openZoom(state._objUrl, isVid ? 'video' : 'image')).catch(() => {});
     }
   });
 

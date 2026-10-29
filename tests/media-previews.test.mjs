@@ -138,3 +138,4 @@ assert.ok(featuresCss.includes('.chat-yt-card .cfm-media-badge'), 'Media card ba
 console.log('✓ CSS search bar states valid');
 
 console.log('ALL MEDIA PREVIEW TESTS PASSED SUCCESSFULLY!');
+process.exit(0);

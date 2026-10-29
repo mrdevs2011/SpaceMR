@@ -611,10 +611,10 @@ async function _forceSignOut() {
   try { await sb.auth.signOut({ scope: 'global' }); } catch (_) {}
   try {
     Object.keys(localStorage).forEach(k => {
-      if (/supabase|spacemr|mrspace|sb-/i.test(k)) localStorage.removeItem(k);
+      if (/supabase|spacemr|mrspace|mrg_|sb-/i.test(k)) localStorage.removeItem(k);
     });
     Object.keys(sessionStorage).forEach(k => {
-      if (/supabase|spacemr|mrspace|sb-/i.test(k)) sessionStorage.removeItem(k);
+      if (/supabase|spacemr|mrspace|mrg_|sb-/i.test(k)) sessionStorage.removeItem(k);
     });
   } catch (_) {}
   state.me = null;
@@ -976,7 +976,8 @@ async function _handleSession(session) {
   if (!_serverTimeSynced) await _syncServerTime();
 
   let p = null, fetchErr = null;
-  const cachedP = getCachedProfile?.(user.id);
+  const syncProfile = safeStorage.getJSON('mrg_prof_' + user.id);
+  const cachedP = syncProfile || getCachedProfile?.(user.id);
   if (cachedP && cachedP.approved !== false && !cachedP.blocked) {
     p = cachedP;
   }
@@ -988,6 +989,7 @@ async function _handleSession(session) {
     const liveP = await _fetchProfile(user.id);
     if (liveP) {
       p = liveP;
+      safeStorage.set('mrg_prof_' + user.id, liveP);
       cacheProfile?.(user.id, liveP);
     }
   } catch (err) {
@@ -2268,10 +2270,10 @@ export async function logOut() {
   // Qolgan sessiya kalitlarini tozalash
   try {
     Object.keys(localStorage).forEach(k => {
-      if (/supabase|spacemr-auth|mrspace-auth|sb-/i.test(k)) localStorage.removeItem(k);
+      if (/supabase|spacemr|mrspace|mrg_|sb-/i.test(k)) localStorage.removeItem(k);
     });
     Object.keys(sessionStorage).forEach(k => {
-      if (/supabase|spacemr|mrspace|sb-/i.test(k)) sessionStorage.removeItem(k);
+      if (/supabase|spacemr|mrspace|mrg_|sb-/i.test(k)) sessionStorage.removeItem(k);
     });
   } catch (_) {}
   _clearGateCookie();

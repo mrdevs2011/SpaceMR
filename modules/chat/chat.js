@@ -452,7 +452,7 @@ function markMatchesInMsg(msg, query) {
       acceptNode(node) {
         const parent = node.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
-        if (parent.closest('.chat-msg-meta, .msg-ticks, .chat-msg-time, .reactions-wrap, .cvm-waveform, .cvm-dur, .cfp-remove, button')) {
+        if (parent.closest('.chat-msg-meta, .msg-ticks, .chat-msg-time, .reactions-wrap, .cvm-waveform, .cvm-dur, .cfp-remove, .msg-reply-quote, button')) {
           return NodeFilter.FILTER_REJECT;
         }
         return NodeFilter.FILTER_ACCEPT;
@@ -2133,10 +2133,20 @@ export async function openChatThread(uid) {
     const i = list.findIndex(x => x.id === m.id);
     if (i >= 0) {
       const prev = list[i];
-      if (ev === 'UPDATE' && prev && prev.status === m.status && prev.text === m.text
-          && prev.editedAt === m.editedAt && (prev.readAt || null) === (m.readAt || null)
-          && String(prev.replyTo || '') === String(m.replyTo || '')) {
-        return;
+      if (ev === 'UPDATE' && prev) {
+        if (prev.status === m.status && prev.text === m.text
+            && prev.editedAt === m.editedAt && (prev.readAt || null) === (m.readAt || null)
+            && String(prev.replyTo || '') === String(m.replyTo || '')) {
+          return;
+        }
+        // Faqat tick / read_at o'zgargan bo'lsa — to'liq repaint qilmasdan in-place yangilaymiz (ultra-fast 0ms)
+        if (prev.text === m.text && prev.editedAt === m.editedAt && String(prev.replyTo || '') === String(m.replyTo || '')) {
+          list[i] = { ...prev, status: m.status, readAt: m.readAt };
+          chatState._curMsgs = list;
+          updateMsgTicks(m.id, m.status);
+          cacheThreadMessages(chatId, list);
+          return;
+        }
       }
       // replyPreview ni saqlab qolamiz (server mapMessage da yo'q)
       list[i] = {

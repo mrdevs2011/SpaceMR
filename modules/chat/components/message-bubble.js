@@ -136,7 +136,12 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
   window._chatPlayYt = window._chatPlayMedia;
 
   window._chatOpenWebLink = function (url, e) {
-    if (e && e.target && e.target.closest('.chat-link-thumb, .chat-link-thumb-wrap')) return;
+    const thumb = e?.target?.closest?.('.chat-link-thumb');
+    if (thumb && thumb.src) {
+      if (typeof window.openZoom === 'function') window.openZoom(thumb.src, 'image');
+      else import('../../core/utils.js').then(u => u.openZoom(thumb.src, 'image')).catch(() => {});
+      return;
+    }
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 }

@@ -4632,10 +4632,21 @@ mark.chat-search-mark.is-current {
   padding: 0 2px;
   box-shadow: none !important;
 }
+.chat-msg.msg-search-hit,
+.chat-msg.msg-search-cur,
+.chat-msg.msg-search-hit *,
+.chat-msg.msg-search-cur *,
 .chat-msg.msg-search-hit .chat-bubble,
-.chat-msg.msg-search-cur .chat-bubble {
+.chat-msg.msg-search-cur .chat-bubble,
+.chat-msg.msg-search-hit .chat-yt-card,
+.chat-msg.msg-search-cur .chat-yt-card {
   outline: none !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
   box-shadow: none !important;
+}
+.chat-msg.msg-search-cur {
+  border: none !important;
+  outline: none !important;
 }
 .empty-cta--ghost {
   margin-top: 8px;
@@ -5481,6 +5492,11 @@ body.report-open {
   pointer-events: none;
   line-height: normal;
 }
+.chat-yt-shorts-badge:empty,
+.is-media-image .chat-yt-shorts-badge,
+.is-media-video .chat-yt-shorts-badge {
+  display: none !important;
+}
 
 .chat-yt-iframe {
   width: 100%;
@@ -5571,19 +5587,15 @@ body.report-open {
 }
 
 /* Post / Feed ichidagi linkbox va media kartalar 100% to'liq kenglikda (full width) */
-:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-yt-card,
-:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-link-card,
-:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-yt-card.is-media-web {
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body, #feed, #profileGrid) .chat-yt-card,
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body, #feed, #profileGrid) .chat-link-card,
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body, #feed, #profileGrid) .chat-yt-card.is-media-web,
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body, #feed, #profileGrid) .chat-link-box {
   width: 100% !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
-}
-
-:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-link-box {
-  width: 100% !important;
-  box-sizing: border-box !important;
 }
 
 .chat-link-box {

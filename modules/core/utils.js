@@ -715,6 +715,13 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
   }
 
   if (type === 'web') {
+    const siteTitle = meta?.title ? esc(meta.title) : esc(domain);
+    const siteName = meta?.siteName ? esc(meta.siteName) : esc(domain);
+    const siteDesc = meta?.description ? `<div class="chat-link-desc" style="display:-webkit-box;">${esc(meta.description)}</div>` : `<div class="chat-link-desc" style="display:none;"></div>`;
+    const thumbHtml = meta?.image
+      ? `<div class="chat-link-thumb-wrap" style="display:block;"><img class="chat-media-thumb chat-link-thumb" src="${esc(meta.image)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>`
+      : `<div class="chat-link-thumb-wrap" style="display:none;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy" onload="this.parentElement.style.display='block'" onerror="this.parentElement.remove()"></div>`;
+
     return `<div class="chat-yt-card chat-link-card${standaloneCls} is-media-web" data-media-type="web">` +
       `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy havoladan nusxa olish">` +
         logoSvg +
@@ -725,11 +732,11 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
         `</span>` +
       `</div>` +
       `<div class="chat-link-box" data-preview-url="${cUrl}" onclick="window._chatOpenWebLink&&window._chatOpenWebLink('${cUrl}', event)">` +
-        `<div class="chat-link-thumb-wrap" style="display:none;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy" onload="this.parentElement.style.display='block'" onerror="this.parentElement.remove()"></div>` +
+        thumbHtml +
         `<div class="chat-link-info">` +
-          `<div class="chat-link-site">${esc(domain)}</div>` +
-          `<div class="chat-link-title">${esc(domain)}</div>` +
-          `<div class="chat-link-desc" style="display:none;"></div>` +
+          `<div class="chat-link-site">${siteName}</div>` +
+          `<div class="chat-link-title">${siteTitle}</div>` +
+          siteDesc +
         `</div>` +
       `</div>` +
       (badgeHtml || '') +

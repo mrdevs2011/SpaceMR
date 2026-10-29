@@ -318,7 +318,18 @@ function reconcileFeed(feedEl, html, posts) {
   let prev = null;
   for (const p of posts) {
     const id = String(p.id);
-    const el = existing.get(id) || fresh.get(id);
+    let el = existing.get(id);
+    const freshEl = fresh.get(id);
+    if (el && freshEl) {
+      // Post tahrirlangan yoki o'zgargan bo'lsa — DOM ni darhol yangilaymiz (Zero-Stale)
+      if (el._postSig !== freshEl.innerHTML) {
+        el.innerHTML = freshEl.innerHTML;
+        el._postSig = freshEl.innerHTML;
+      }
+    } else if (!el) {
+      el = freshEl;
+      if (el) el._postSig = el.innerHTML;
+    }
     if (!el) continue;
     const at = prev ? prev.nextElementSibling : feedEl.firstElementChild;
     if (at !== el) feedEl.insertBefore(el, at);

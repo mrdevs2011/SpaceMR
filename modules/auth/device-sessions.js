@@ -223,9 +223,9 @@ export async function checkDeviceRevoked() {
       .from('device_sessions')
       .select('revoked_at')
       .eq('device_id', deviceId)
-      .maybeSingle();
-    if (!error && data) {
-      return data.revoked_at !== null;
+      .order('created_at', { ascending: false });
+    if (!error && Array.isArray(data) && data.length) {
+      return data.some(r => r.revoked_at !== null);
     }
   } catch (_) {}
   return false;
@@ -238,7 +238,20 @@ export async function listDeviceSessions() {
     .is('revoked_at', null)
     .order('last_seen', { ascending: false });
   if (error) throw error;
-  return data || [];
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const mine = getDeviceId();
+  // Chiqarilgan (revoked), 30 kundan ortiq ko'rinmagan yoki dublikat qurilmalarni filtrlaymiz
+  const seen = new Set();
+  const list = [];
+  for (const r of (data || [])) {
+    if (r.revoked_at !== null) continue;
+    if (seen.has(r.device_id)) continue;
+    seen.add(r.device_id);
+    const seenMs = r.last_seen ? new Date(r.last_seen).getTime() : 0;
+    if (r.device_id !== mine && seenMs && seenMs < cutoff) continue;
+    list.push(r);
+  }
+  return list;
 }
 
 export async function revokeDevice(deviceId) {
@@ -251,20 +264,35 @@ export async function revokeDevice(deviceId) {
     if (!error) return data;
   } catch (_) {}
   try {
-    await sb.from('device_sessions').update({ revoked_at: new Date().toISOString() }).eq('device_id', deviceId);
+    const me = (await sb.auth.getUser())?.data?.user?.id;
+    let q = sb.from('device_sessions').update({ revoked_at: new Date().toISOString() }).eq('device_id', deviceId);
+    if (me) q = q.eq('user_id', me);
+    await q;
   } catch (_) {}
   return true;
 }
 
 export async function revokeAllOtherDevices() {
   const mine = getDeviceId();
-  const { data, error } = await sb.rpc('revoke_my_device_sessions', {
-    p_device_id: null,
-    p_all_others: true,
-    p_caller_device_id: mine,
-  });
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await sb.rpc('revoke_my_device_sessions', {
+      p_device_id: null,
+      p_all_others: true,
+      p_caller_device_id: mine,
+    });
+    if (!error) return data;
+  } catch (_) {}
+  try {
+    const me = (await sb.auth.getUser())?.data?.user?.id;
+    let q = sb.from('device_sessions')
+      .update({ revoked_at: new Date().toISOString() })
+      .neq('device_id', mine)
+      .is('revoked_at', null);
+    if (me) q = q.eq('user_id', me);
+    const { data: updated } = await q.select('device_id');
+    return { device_ids: (updated || []).map(r => r.device_id) };
+  } catch (_) {}
+  return { device_ids: [] };
 }
 
 /** Broadcast orqali boshqa qurilmalarga darhol chiqish signal */
