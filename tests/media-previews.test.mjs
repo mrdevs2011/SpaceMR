@@ -20,6 +20,14 @@ const utils = await import('../modules/core/utils.js');
 const bubble = await import('../modules/chat/components/message-bubble.js');
 
 console.log('--- 1. Testing parsePureMedia ---');
+// Pexels Photo & Video detection
+const pexPhoto = utils.parsePureMedia('https://www.pexels.com/photo/city-lights-during-night-time-13812189/');
+assert.equal(pexPhoto.type, 'image');
+assert.ok(pexPhoto.canonicalUrl.includes('images.pexels.com/photos/13812189'));
+
+const pexVid = utils.parsePureMedia('https://www.pexels.com/download/video/10085002/');
+assert.equal(pexVid.type, 'video');
+
 // Pure YouTube
 const yt1 = utils.parsePureMedia('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 assert.equal(yt1.type, 'youtube');
@@ -124,6 +132,8 @@ import { readFileSync } from 'node:fs';
 const featuresCss = readFileSync(new URL('../CSS/features.css', import.meta.url), 'utf8');
 assert.ok(featuresCss.includes('.chat-thread-hdr:not(.search-active) #threadMsgSearchBar'), 'CSS must explicitly hide search when not search-active');
 assert.ok(featuresCss.includes('.chat-thread-hdr.search-active #threadMsgSearchBar'), 'CSS must show search when search-active');
+assert.ok(featuresCss.includes('mark.chat-search-mark'), 'CSS must define slim search mark');
+assert.ok(featuresCss.includes('.chat-yt-card .cfm-media-badge'), 'Media card badge must be positioned for time/ticks');
 
 console.log('✓ CSS search bar states valid');
 

@@ -601,6 +601,10 @@ async function _forceSignOut() {
   _pendingForceLogout = false;
   _stopUserWatch();
   _hideMandatoryPasswordResetModal();
+  try {
+    const { revokeDevice, getDeviceId } = await import('./device-sessions.js');
+    await revokeDevice(getDeviceId());
+  } catch (_) {}
   try { await Promise.race([removePushToken(), new Promise(r => setTimeout(r, 800))]); } catch (_) {}
   try { clearAllCache(); } catch (_) {}
   try { await sb.auth.signOut({ scope: 'local' }); } catch (_) {}
@@ -966,13 +970,28 @@ async function _handleSession(session) {
   if (!_serverTimeSynced) await _syncServerTime();
 
   let p = null, fetchErr = null;
-  try { p = await _fetchProfile(user.id); } catch (err) { fetchErr = err; }
+  const cachedP = getCachedProfile?.(user.id);
+  if (cachedP && cachedP.approved !== false && !cachedP.blocked) {
+    p = cachedP;
+  }
+  try {
+    const liveP = await _fetchProfile(user.id);
+    if (liveP) {
+      p = liveP;
+      cacheProfile?.(user.id, liveP);
+    }
+  } catch (err) {
+    fetchErr = err;
+  }
 
   // Yangi signup: handle_new_user trigger biroz kechikishi mumkin — 3 marta qayta urin
   if (!p && !fetchErr && navigator.onLine) {
     for (let i = 0; i < 3 && !p; i++) {
       await new Promise(r => setTimeout(r, 400 * (i + 1)));
-      try { p = await _fetchProfile(user.id); } catch (err) { fetchErr = err; break; }
+      try {
+        p = await _fetchProfile(user.id);
+        if (p) cacheProfile?.(user.id, p);
+      } catch (err) { fetchErr = err; break; }
     }
   }
 
@@ -2212,6 +2231,10 @@ document.querySelectorAll('.pe-pwd-toggle').forEach(btn => {
 });
 
 export async function logOut() {
+  try {
+    const { revokeDevice, getDeviceId } = await import('./device-sessions.js');
+    await revokeDevice(getDeviceId());
+  } catch (_) {}
   try { await Promise.race([removePushToken(), new Promise(r => setTimeout(r, 1500))]); } catch (_) {}
   try { clearAllCache(); } catch (_) {}
   try { await sb.auth.signOut({ scope: 'local' }); } catch (_) {}

@@ -4617,12 +4617,12 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
   flex-shrink: 0;
 }
 
-/* Chat xabar ichidagi qidiruv natijalarini belgilash (<mark>) */
+/* Chat xabar ichidagi qidiruv natijalarini belgilash (<mark>) — ingichka, nafis, pufak chetlari yonmaydi */
 mark.chat-search-mark {
-  background: rgba(231, 233, 234, 0.22);
+  background: rgba(255, 255, 255, 0.28);
   color: inherit;
-  border-radius: 3px;
-  padding: 0 2px;
+  border-radius: 2px;
+  padding: 0 1px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
   transition: background 0.15s ease;
@@ -4630,18 +4630,15 @@ mark.chat-search-mark {
 mark.chat-search-mark.is-current {
   background: #f59e0b !important;
   color: #000000 !important;
-  font-weight: 700;
-  border-radius: 3px;
-  padding: 1px 4px;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.6);
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 2px;
+  box-shadow: none !important;
 }
-.chat-msg.msg-search-hit .chat-bubble {
-  outline: 1.5px solid rgba(113, 118, 123, 0.45);
-  outline-offset: 2px;
-}
+.chat-msg.msg-search-hit .chat-bubble,
 .chat-msg.msg-search-cur .chat-bubble {
-  outline: 2px solid #f59e0b;
-  outline-offset: 2px;
+  outline: none !important;
+  box-shadow: none !important;
 }
 .empty-cta--ghost {
   margin-top: 8px;
@@ -5220,6 +5217,7 @@ body.report-open {
 
 /* ═══ YouTube Video Card inside chat bubble ═══ */
 .chat-yt-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   margin: 6px 0;
@@ -5231,6 +5229,38 @@ body.report-open {
   border: 1px solid rgba(255, 255, 255, 0.12);
   user-select: none;
   box-sizing: border-box;
+}
+
+.chat-yt-card .cfm-media-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #ffffff !important;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.2;
+  z-index: 6;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.chat-yt-card .cfm-media-badge .chat-msg-time {
+  color: #ffffff !important;
+  font-weight: 500;
+  font-size: 11px;
+}
+.chat-yt-card .cfm-media-badge .msg-ticks {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 600;
+}
+.chat-yt-card .cfm-media-badge .msg-ticks.read {
+  color: #38bdf8 !important;
 }
 
 .chat-yt-card.is-shorts,

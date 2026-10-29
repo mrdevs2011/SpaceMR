@@ -44,6 +44,45 @@ export default async function handler(req, res) {
     return res.status(200).json(cached.data);
   }
 
+  // Maxsus platformalar uchun tezkor deterministik presetlar (Cloudflare bloklariga qaramasdan)
+  const host = targetUrl.hostname.toLowerCase().replace(/^www\./, '');
+  if (host === 'pexels.com') {
+    const photoMatch = targetUrl.pathname.match(/\/photo\/(?:([a-zA-Z0-9_-]+)-)?(\d+)\/?/i);
+    if (photoMatch) {
+      const slug = photoMatch[1] || '';
+      const pid = photoMatch[2];
+      const title = slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : `Pexels Photo ${pid}`;
+      const imgUrl = `https://images.pexels.com/photos/${pid}/pexels-photo-${pid}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+      const data = {
+        ok: true,
+        url: targetUrl.href,
+        domain: 'pexels.com',
+        siteName: 'Pexels',
+        title,
+        description: 'Pexels bepul sifatli fotosurati',
+        image: imgUrl,
+        type: 'photo'
+      };
+      cache.set(cacheKey, { exp: Date.now() + CACHE_MS, data });
+      return res.status(200).json(data);
+    }
+    const vidMatch = targetUrl.pathname.match(/\/(?:download\/video|video)\/(\d+)\/?/i);
+    if (vidMatch) {
+      const vidId = vidMatch[1];
+      const data = {
+        ok: true,
+        url: targetUrl.href,
+        domain: 'pexels.com',
+        siteName: 'Pexels',
+        title: `Pexels Video ${vidId}`,
+        description: 'Pexels bepul sifatli videosi',
+        type: 'video'
+      };
+      cache.set(cacheKey, { exp: Date.now() + CACHE_MS, data });
+      return res.status(200).json(data);
+    }
+  }
+
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 4000);
@@ -59,16 +98,21 @@ export default async function handler(req, res) {
     });
     clearTimeout(timer);
 
-    if (!resp.ok) {
-      const fallback = { ok: false, url: targetUrl.href, domain: targetUrl.hostname.replace(/^www\./, '') };
-      return res.status(200).json(fallback);
-    }
-
     const cType = (resp.headers.get('content-type') || '').toLowerCase();
     if (cType.startsWith('image/')) {
       const imgData = { ok: true, url: targetUrl.href, domain: targetUrl.hostname.replace(/^www\./, ''), image: targetUrl.href, type: 'image' };
       cache.set(cacheKey, { exp: Date.now() + CACHE_MS, data: imgData });
       return res.status(200).json(imgData);
+    }
+    if (cType.startsWith('video/')) {
+      const vidData = { ok: true, url: targetUrl.href, domain: targetUrl.hostname.replace(/^www\./, ''), type: 'video' };
+      cache.set(cacheKey, { exp: Date.now() + CACHE_MS, data: vidData });
+      return res.status(200).json(vidData);
+    }
+
+    if (!resp.ok) {
+      const fallback = { ok: false, url: targetUrl.href, domain: targetUrl.hostname.replace(/^www\./, '') };
+      return res.status(200).json(fallback);
     }
 
     // HTML ning dastlabki 70KB qismini o'qiymiz (head qismi yetarli)

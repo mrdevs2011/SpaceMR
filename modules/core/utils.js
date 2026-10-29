@@ -532,8 +532,9 @@ const YT_URL_RE = /(?:https?:\/\/)?(?:(?:(?:www\.|m\.)?youtube\.com\/(?:watch\?(
 const IG_RE = /(?:https?:\/\/)?(?:www\.)?instagr(?:\.am|am\.com)\/(p|reel|tv)\/([a-zA-Z0-9_-]+)(?:[/?&][^\s<"'\`)]*)?/gi;
 const TT_RE = /(?:https?:\/\/)?(?:(?:www\.|m\.)?tiktok\.com\/@[a-zA-Z0-9_.-]+\/video\/(\d+)|(?:vm|vt)\.tiktok\.com\/([a-zA-Z0-9_-]+)\/?|(?:www\.)?tiktok\.com\/t\/([a-zA-Z0-9_-]+)\/?)(?:[?&][^\s<"'\`)]*)?/gi;
 const FB_RE = /(?:https?:\/\/)?(?:(?:www\.|m\.|web\.)?facebook\.com\/(?:watch\/?\?(?:[^\s<"'\`)]*&)?v=(\d+)|reel\/(\d+)|[^\/\s<"'\`)]+\/videos\/(\d+))|fb\.watch\/([a-zA-Z0-9_-]+))(?:[?&][^\s<"'\`)]*)?/gi;
-const VID_RE = /https?:\/\/[^\s<"'\`)]+?\.(?:mp4|webm|mov|m4v)(?:\?[^\s<"'\`)]*)?/gi;
+const VID_RE = /https?:\/\/[^\s<"'\`)]+?(?:\.(?:mp4|webm|mov|m4v)|\/download\/video\/\d+\/?)(?:\?[^\s<"'\`)]*)?/gi;
 const IMG_RE = /https?:\/\/[^\s<"'\`)]+?\.(?:jpg|jpeg|png|webp|gif|avif)(?:\?[^\s<"'\`)]*)?/gi;
+const PEXELS_PHOTO_RE = /https?:\/\/(?:www\.)?pexels\.com\/photo\/(?:([a-zA-Z0-9_-]+)-)?(\d+)\/?/gi;
 
 export const PLATFORM_LOGOS = {
   youtube: `<svg class="chat-media-icon" viewBox="0 0 24 24" width="16" height="16" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
@@ -814,7 +815,7 @@ export function parsePureMedia(text) {
     }
   }
 
-  // 6) Direct Video
+  // 6) Direct Video (shu jumladan pexels download video)
   VID_RE.lastIndex = 0;
   const vidUrls = [...t.matchAll(VID_RE)];
   if (vidUrls.length === 1) {
@@ -822,6 +823,21 @@ export function parsePureMedia(text) {
     if (!t.replace(VID_RE, '').trim()) {
       const url = vidUrls[0][0];
       return { type: 'video', videoId: '', canonicalUrl: url, displayUrl: url, isShorts: false };
+    }
+  }
+
+  // 6.5) Pexels Photo (Cloudflare 403 to'sig'ini chetlab o'tish uchun to'g'ridan-to'g'ri CDN fallback)
+  PEXELS_PHOTO_RE.lastIndex = 0;
+  const pexUrls = [...t.matchAll(PEXELS_PHOTO_RE)];
+  if (pexUrls.length === 1) {
+    PEXELS_PHOTO_RE.lastIndex = 0;
+    if (!t.replace(PEXELS_PHOTO_RE, '').trim()) {
+      const pm = pexUrls[0];
+      const slug = pm[1] || '';
+      const pid = pm[2];
+      const title = slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Pexels Photo';
+      const imgUrl = `https://images.pexels.com/photos/${pid}/pexels-photo-${pid}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+      return { type: 'image', videoId: pid, canonicalUrl: imgUrl, displayUrl: pm[0], isShorts: false, meta: { title, sourceUrl: pm[0] } };
     }
   }
 
@@ -910,6 +926,14 @@ export function renderMarkdown(rawText, opts) {
   // Direct Image havolalari
   s = s.replace(IMG_RE, (match) => {
     const cardHtml = renderMediaCard({ type: 'image', canonicalUrl: match, displayUrl: match, isShorts: false });
+    const idx = _ytHold.push(cardHtml) - 1;
+    return '\n\u0000YT' + idx + '\u0000\n';
+  });
+
+  // Pexels Foto havolalari
+  s = s.replace(PEXELS_PHOTO_RE, (match, slug, pid) => {
+    const imgUrl = `https://images.pexels.com/photos/${pid}/pexels-photo-${pid}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+    const cardHtml = renderMediaCard({ type: 'image', canonicalUrl: imgUrl, displayUrl: match, isShorts: false });
     const idx = _ytHold.push(cardHtml) - 1;
     return '\n\u0000YT' + idx + '\u0000\n';
   });

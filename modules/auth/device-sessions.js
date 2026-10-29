@@ -233,13 +233,18 @@ export async function listDeviceSessions() {
 }
 
 export async function revokeDevice(deviceId) {
-  const { data, error } = await sb.rpc('revoke_my_device_sessions', {
-    p_device_id: deviceId,
-    p_all_others: false,
-    p_caller_device_id: getDeviceId(),
-  });
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await sb.rpc('revoke_my_device_sessions', {
+      p_device_id: deviceId,
+      p_all_others: false,
+      p_caller_device_id: getDeviceId(),
+    });
+    if (!error) return data;
+  } catch (_) {}
+  try {
+    await sb.from('device_sessions').update({ revoked_at: new Date().toISOString() }).eq('device_id', deviceId);
+  } catch (_) {}
+  return true;
 }
 
 export async function revokeAllOtherDevices() {

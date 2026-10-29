@@ -190,6 +190,31 @@ export async function enrichLinkPreviews(container) {
       return;
     }
 
+    // Brauzer ichidagi tezkor deterministik fallback (Cloudflare yoki tarmoq kechikishiga bog'liq emas)
+    if (url.includes('pexels.com/photo/')) {
+      const pm = url.match(/\/photo\/(?:([a-zA-Z0-9_-]+)-)?(\d+)\/?/i);
+      if (pm) {
+        const slug = pm[1] || '';
+        const pid = pm[2];
+        const title = slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Pexels Photo';
+        const image = `https://images.pexels.com/photos/${pid}/pexels-photo-${pid}.jpeg?auto=compress&cs=tinysrgb&w=800`;
+        const pexData = { ok: true, title, siteName: 'Pexels', image, description: 'Pexels bepul sifatli fotosurati' };
+        _linkPreviewCache.set(url, pexData);
+        applyData(box, pexData);
+        return;
+      }
+    }
+    if (url.includes('pexels.com/download/video/') || url.includes('pexels.com/video/')) {
+      const vm = url.match(/\/(?:download\/video|video)\/(\d+)\/?/i);
+      if (vm) {
+        const vidId = vm[1];
+        const pexData = { ok: true, title: `Pexels Video ${vidId}`, siteName: 'Pexels', description: 'Pexels bepul sifatli videosi' };
+        _linkPreviewCache.set(url, pexData);
+        applyData(box, pexData);
+        return;
+      }
+    }
+
     try {
       const resp = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);
       if (!resp.ok) {

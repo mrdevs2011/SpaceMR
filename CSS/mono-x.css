@@ -699,7 +699,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     scrollbar-width: thin;
   }
-  .right-rail[hidden] { display: none; }
+  .right-rail[hidden], #rightRail[hidden] { display: none !important; }
   .rr-settings-wrap { position: sticky; bottom: 0; margin-top: auto; padding: 12px 0 4px; background: transparent; z-index: 1; }
   .rr-settings-wrap[hidden] { display: none; }
   .rr-settings-btn {

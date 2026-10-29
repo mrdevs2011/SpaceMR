@@ -138,17 +138,37 @@ async function loadOnline() {
       .map(mapProfile)
       .filter(u => u && u.uid !== me && (isUidOnline(u.uid, isOnline(u.lastSeenAt))))
       .slice(0, MAX_ONLINE);
-    // Presence bo'yicha ham qo'shimcha (ro'yxatda yo'q lekin onlayn)
-    // (limit ichida qolamiz)
-    if (!online.length) {
-      box.innerHTML = '<div class="rr-empty">Hozircha hech kim onlayn emas</div>';
+
+    // Rightbar doimo to'liq va jonli bo'lishi uchun: agar onlayn 3 tadan kam bo'lsa,
+    // faol va tavsiya etilgan SpaceMR a'zolari bilan to'ldiriladi
+    let displayUsers = online;
+    let isSuggested = false;
+    if (displayUsers.length < 3) {
+      const suggested = (data || [])
+        .map(mapProfile)
+        .filter(u => u && u.uid !== me)
+        .slice(0, MAX_ONLINE);
+      if (suggested.length) {
+        displayUsers = suggested;
+        isSuggested = true;
+      }
+    }
+
+    const titleEl = document.querySelector('#rrOnline .rr-title');
+    if (titleEl) {
+      titleEl.textContent = isSuggested && !online.length ? 'Tavsiya etilganlar' : 'Onlayn';
+    }
+
+    if (!displayUsers.length) {
+      box.innerHTML = '<div class="rr-empty">Hozircha hech kim yo‘q</div>';
       return;
     }
-    box.innerHTML = online.map(u => {
+    box.innerHTML = displayUsers.map(u => {
       const name = u.fullName || u.username || 'Foydalanuvchi';
-      const sub = u.username ? '@' + u.username : 'onlayn';
+      const onlineState = isUidOnline(u.uid, isOnline(u.lastSeenAt));
+      const sub = u.username ? '@' + u.username : (onlineState ? 'onlayn' : 'SpaceMR a\'zosi');
       return `<button type="button" class="rr-row" data-rr-user="${esc(u.uid)}">
-        ${aviHtml(name, u.avatar, true)}
+        ${aviHtml(name, u.avatar, onlineState)}
         <span class="rr-meta"><div class="rr-name">${esc(name)}</div><div class="rr-sub">${esc(sub)}</div></span>
       </button>`;
     }).join('');
@@ -158,11 +178,19 @@ async function loadOnline() {
   }
 }
 
-function loadGroups() {
+async function loadGroups() {
   const box = $('rrGroupsList');
   if (!box) return;
   // Maxfiy guruhlar o'ng panelda ko'rinmaydi — faqat ommaviylar
-  const items = (groupListItems || []).filter(g => !g.isPrivate).slice(0, MAX_GROUPS);
+  let items = (groupListItems || []).filter(g => !g.isPrivate).slice(0, MAX_GROUPS);
+  if (!items.length) {
+    try {
+      const { data } = await sb.from('groups').select('id, name, avatar, members_count').limit(MAX_GROUPS);
+      if (data && data.length) {
+        items = data.map(g => ({ id: g.id, name: g.name, avatar: g.avatar, subscriberCount: g.members_count }));
+      }
+    } catch (_) {}
+  }
   if (!items.length) {
     box.innerHTML = '<div class="rr-empty">Hali guruh yo‘q</div>';
     return;
@@ -179,10 +207,18 @@ function loadGroups() {
   }).join('');
 }
 
-function loadRecent() {
+async function loadRecent() {
   const box = $('rrRecentList');
   if (!box) return;
-  const posts = (state.allPosts || []).slice(0, MAX_RECENT);
+  let posts = (state.allPosts || []).slice(0, MAX_RECENT);
+  if (!posts.length) {
+    try {
+      const { data } = await sb.from('posts').select('id, user_id, full_name, text, media_type, created_at').order('created_at', { ascending: false }).limit(MAX_RECENT);
+      if (data && data.length) {
+        posts = data.map(p => ({ id: p.id, userId: p.user_id, userFullName: p.full_name, text: p.text, mediaType: p.media_type }));
+      }
+    } catch (_) {}
+  }
   if (!posts.length) {
     box.innerHTML = '<div class="rr-empty">Hali yangilik yo‘q</div>';
     return;
