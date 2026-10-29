@@ -25,14 +25,14 @@ function showRail(on) {
   else el.setAttribute('hidden', '');
 }
 
-/** Admin users list: desktop ≥1200 → right-rail; mobil → actionsView host */
+/** Admin users list: desktop ≥1100 → right-rail; mobil → actionsView host */
 export function placeUsersAdmin(isDesktop, view) {
   const block = document.getElementById('usersAdminBlock');
   const mobileHost = document.getElementById('actionsUsersHost');
   const desktopHost = document.getElementById('rrUsersAdmin');
   const railEl = rail();
   if (!block || !desktopHost) return;
-  const desk = isDesktop ?? window.matchMedia('(min-width: 1200px)').matches;
+  const desk = isDesktop ?? window.matchMedia('(min-width: 1100px)').matches;
   const v = view ?? (state.view || 'home');
   const adminActions = v === 'actions' && desk && !!state.me?.uid;
   if (adminActions) {
@@ -51,47 +51,38 @@ export function placeUsersAdmin(isDesktop, view) {
 }
 
 function fit() {
-  // home, profile, saved, notifs va qidiruv (explore overlay) da — 3 ustun
   const view = state.view || 'home';
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
-  const isDesktop = window.matchMedia('(min-width: 1200px)').matches;
+  const isDesktop = window.matchMedia('(min-width: 1100px)').matches;
   rail()?.classList.toggle('rr-apps-mode', view === 'apps');
   placeUsersAdmin(isDesktop, view);
-  const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || view === 'apps' || view === 'actions' || exploreOpen;
-  showRail(
-    allowed &&
-    isDesktop &&
-    !!state.me?.uid
-  );
+  // Desktopda right-rail umuman yo'qolmaydi (bosh sahifada ham, profilda ham)
+  showRail(isDesktop);
+
   // Desktop: sozlamalar profil sahifasida doimo ochiq (ochish/yopish yo'q)
   const sw = $('rrSettingsWrap');
-  if (sw) sw.hidden = true; // tugma kerak emas — panel o'zi ochiq
+  if (sw) sw.hidden = true;
 
   const settingsOverlay = document.getElementById('settingsOverlay');
   const railEl = rail();
   if (isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement !== railEl) {
     railEl.appendChild(settingsOverlay);
   }
-  // Mobil/planshet: overlay yashirin (hidden) right-rail ichida qolib ketmasin — body ga qaytaramiz
+  // Mobil/planshet: overlay yashirin right-rail ichida qolib ketmasin
   if (!isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement === railEl) {
     document.body.appendChild(settingsOverlay);
     document.body.classList.remove('desktop-settings-pinned');
   }
-  if (settingsOverlay && state.me?.uid) {
-    // Kashf ochiq bo'lsa o'ng ustunda oddiy kartalar ko'rinadi (sozlamalar emas)
+  if (settingsOverlay) {
     if (isDesktop && view === 'profile' && !exploreOpen) {
       if (!settingsOverlay.classList.contains('show')) {
-        // Forma ma'lumotlarini to'ldirish (lazy)
         import('../auth/auth.js').then(m => {
           m.populateProfileForm?.();
         }).catch(() => {});
         settingsOverlay.classList.add('show');
-        document.body.classList.add('desktop-settings-pinned');
-      } else {
-        document.body.classList.add('desktop-settings-pinned');
       }
+      document.body.classList.add('desktop-settings-pinned');
     } else if (isDesktop) {
-      // Profil emas — yopamiz
       settingsOverlay.classList.remove('show');
       document.body.classList.remove('desktop-settings-pinned');
     }
@@ -242,7 +233,8 @@ function scheduleRefresh(delay = 200) {
 
 async function refresh() {
   fit();
-  if (!rail() || rail().hasAttribute('hidden')) return;
+  const isDesktop = window.matchMedia('(min-width: 1100px)').matches;
+  if (!rail() || (!isDesktop && rail().hasAttribute('hidden'))) return;
   if (cmtOpen()) return;
   // Admin actions: right-rail faqat users list — onlayn/guruh/so'nggi kerak emas
   if (rail()?.classList.contains('rr-actions-mode')) return;
