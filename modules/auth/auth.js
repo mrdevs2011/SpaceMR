@@ -1,7 +1,7 @@
 import { protectSecrets } from '../core/secrets.js';
 import { askPassword } from '../ui/password-confirm.js';
 import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, verifyPassword, SUPABASE_URL, SUPABASE_ANON_KEY } from '../core/config.js';
-import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
+import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm, safeStorage } from '../core/utils.js';
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
 import { getDeviceId, registerDeviceSession, checkDeviceRevoked, markPasswordLogin, getSecurityLockRemaining, formatLockRemaining } from './device-sessions.js';
