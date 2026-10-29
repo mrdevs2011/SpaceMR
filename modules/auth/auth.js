@@ -620,6 +620,7 @@ async function _forceSignOut() {
   state.me = null;
   _currentUid = null;
   _shownKey = null;
+  _entering = false;
   stopChatsWatcher();
   stopBus();
   stopCallWatcher();
@@ -869,6 +870,11 @@ function _startRealtimeUserWatch(me) {
     if (!navigator.onLine || isChecking) return;
     isChecking = true;
     try {
+      if (await checkDeviceRevoked()) {
+        toast('Bu qurilma hisobdan chiqarilgan', 'warning');
+        await _forceSignOut();
+        return;
+      }
       let p = null;
       try {
         p = await _fetchProfile(uid);
@@ -974,6 +980,10 @@ async function _handleSession(session) {
   if (cachedP && cachedP.approved !== false && !cachedP.blocked) {
     p = cachedP;
   }
+
+  // Qurilma hisobdan chiqarilganmi (Logout all sessions) parallel tekshiramiz — hech qanday qo'shimcha kechikishsiz
+  const isRevokedPromise = (navigator.onLine ? checkDeviceRevoked() : Promise.resolve(false)).catch(() => false);
+
   try {
     const liveP = await _fetchProfile(user.id);
     if (liveP) {
@@ -982,6 +992,17 @@ async function _handleSession(session) {
     }
   } catch (err) {
     fetchErr = err;
+  }
+
+  // Agar qurilma hisobdan chiqarilgan bo'lsa, ilova (home) ni UMUMAN ochmasdan darhol login ekranga o'tkazamiz
+  if (navigator.onLine) {
+    const isRevoked = await isRevokedPromise;
+    if (isRevoked) {
+      console.warn('[Auth] Qurilma sessiyasi chiqarilgan (boot tekshiruvi)');
+      toast('Bu qurilma hisobdan chiqarildi', 'warning');
+      await _forceSignOut();
+      return;
+    }
   }
 
   // Yangi signup: handle_new_user trigger biroz kechikishi mumkin — 3 marta qayta urin
@@ -1097,6 +1118,18 @@ async function _enterApp(user) {
   if (_entering) return;
   _entering = true;
   try {
+    // 0. Qurilma hisobdan chiqarilganmi tekshirish (onlayn bo'lsa) — ilova (home) ochilishidan OLDIN
+    if (navigator.onLine) {
+      try {
+        if (await checkDeviceRevoked()) {
+          _entering = false;
+          toast('Bu qurilma hisobdan chiqarildi', 'warning');
+          await _forceSignOut();
+          return;
+        }
+      } catch (_) {}
+    }
+
     const authWrap = $('authWrap');
     const app = $('app');
     if (authWrap) authWrap.classList.remove('show');
@@ -1129,14 +1162,7 @@ async function _enterApp(user) {
 
     startPresenceHeartbeat();
 
-    // Ulangan qurilmalar: sessiya yozish + revoke tekshiruvi
-    try {
-      if (await checkDeviceRevoked()) {
-        toast('Bu qurilma hisobdan chiqarilgan', 'warning');
-        await _forceSignOut();
-        return;
-      }
-    } catch (_) {}
+    // Ulangan qurilmalar: sessiya yozish
     try { registerDeviceSession().catch(() => {}); } catch (_) {}
 
 

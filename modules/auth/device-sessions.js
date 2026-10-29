@@ -213,13 +213,22 @@ export async function registerDeviceSession() {
 /** Boot: bu device revoke qilinganmi? */
 export async function checkDeviceRevoked() {
   const deviceId = getDeviceId();
+  if (!deviceId) return false;
   try {
     const { data, error } = await sb.rpc('is_my_device_revoked', { p_device_id: deviceId });
-    if (error) return false;
-    return data === true;
-  } catch (_) {
-    return false;
-  }
+    if (!error && typeof data === 'boolean') return data;
+  } catch (_) {}
+  try {
+    const { data, error } = await sb
+      .from('device_sessions')
+      .select('revoked_at')
+      .eq('device_id', deviceId)
+      .maybeSingle();
+    if (!error && data) {
+      return data.revoked_at !== null;
+    }
+  } catch (_) {}
+  return false;
 }
 
 export async function listDeviceSessions() {
