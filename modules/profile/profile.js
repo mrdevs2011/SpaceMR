@@ -219,12 +219,11 @@ export async function renderProfileGrid(posts) {
   if (Array.isArray(posts)) _pgAllPosts = posts;
   const list = _filterPgPosts(_pgAllPosts, _pgTab);
 
-  // X kabi: Rasmlar — kvadrat katakchalar (Media), qolgan tablar — lenta (post kartalari)
+  // Barcha tablar (jumladan Rasmlar ham) lenta (post kartalari) sifatida ko'rsatiladi — grid emas
   const grid = $('profileGrid');
-  const asList = _pgTab !== 'photos';
   if (grid) {
-    grid.classList.toggle('profile-grid--uniform', !asList);
-    grid.classList.toggle('profile-grid--list', asList);
+    grid.classList.remove('profile-grid--uniform');
+    grid.classList.add('profile-grid--list');
   }
 
   if (!list.length) {
@@ -242,29 +241,8 @@ export async function renderProfileGrid(posts) {
     }
   }));
 
-  if (asList) {
-    const { renderFeedTo } = await import('../feed/feed.js');
-    await renderFeedTo(grid, list);
-    return;
-  }
-
-  $('profileGrid').innerHTML = list.map(p => {
-    const isImg = !!(p.mediaUrl && p.mediaType?.startsWith('image'));
-    const isMedia = isImg;
-    let c = '';
-    if (isImg) c = `<img src="${esc(p.mediaUrl)}" loading="lazy" alt="">`;
-    else c = `<div class="grid-cell-txt">${esc((p.text||p.fileName||'').substring(0,80))}</div>`;
-    const kind = isMedia ? 'grid-cell--media' : 'grid-cell--text';
-    return `<div class="grid-cell ${kind}" data-id="${p.id}">${c}
-      <div class="grid-cell-overlay">
-        <div class="grid-stat">
-          <img src="./svg/extra/icon-6b67b8783b6a.svg" alt="" class="icon" width="13" height="13">
-          ${p.likes||0}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  document.querySelectorAll('.grid-cell').forEach(c => c.addEventListener('click', () => openDetail(c.dataset.id)));
+  const { renderFeedTo } = await import('../feed/feed.js');
+  await renderFeedTo(grid, list);
 }
 
 /* ── Post detail modal ───────────────────────────────────────────────── */
@@ -418,19 +396,17 @@ function _upGridHtml(posts, uid, tab) {
 async function _paintUpGrid(uid) {
   const grid = document.getElementById('upGrid');
   if (!grid) return;
-  const asList = _upTab !== 'photos';
   const list = _filterPgPosts(state.currentViewingUserPosts || [], _upTab);
-  grid.classList.toggle('up-grid--uniform', !asList);
-  grid.classList.toggle('up-grid--list', asList);
-  if (asList && list.length) {
-    const { renderFeedTo } = await import('../feed/feed.js');
-    await renderFeedTo(grid, list);
+  grid.classList.remove('up-grid--uniform');
+  grid.classList.add('up-grid--list');
+  if (!list.length) {
+    grid.innerHTML = _upTab === 'all'
+      ? '<div class="up-grid-empty"><div class="up-grid-empty-title">Ommaviy postlar yo\'q</div><div class="up-grid-empty-sub">Bu foydalanuvchi hali hech narsa joylamagan</div></div>'
+      : '<div class="up-grid-empty"><div class="up-grid-empty-title">Bu turdagi postlar yo\'q</div></div>';
     return;
   }
-  grid.innerHTML = _upGridHtml(state.currentViewingUserPosts || [], uid, _upTab);
-  grid.querySelectorAll('.up-grid-cell[data-id]').forEach(cell => {
-    cell.addEventListener('click', () => openDetail(cell.dataset.id));
-  });
+  const { renderFeedTo } = await import('../feed/feed.js');
+  await renderFeedTo(grid, list);
 }
 
 export async function openUserProfileModal(uid) {

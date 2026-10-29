@@ -97,8 +97,14 @@
 .aps-chip.on b { color: #536471; }
 .aps-chip.add { border-style: dashed; color: #a0a5aa; }
 
-/* ── DESKTOP: o'ng panel faqat ilovaga oid kartalar ── */
-.right-rail.rr-apps-mode > .rr-card { display: none; }
+/* ── DESKTOP: o'ng panel ilova kartalari ── */
+#rrApps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.right-rail.rr-apps-mode:not(:has(#rrApps:empty)) > .rr-card { display: none; }
 .rr-apps-card { padding: 12px 0 8px; border-bottom: 1px solid #16181c; }
 .rr-apps-card:last-child { border-bottom: 0; }
 .rr-ap-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 18px; }
@@ -192,7 +198,7 @@
 @keyframes apr-note-out { to { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; border-bottom-width: 0; } }
 
 /* ═══ Desktop markaz: kategoriya va ro'yxat sayqali ═══ */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   .aps:not(.apm) { padding: 0 4px 80px; }
   .aps:not(.apm) .aps-head { position: sticky; top: 0; z-index: 5; gap: 10px; padding: 14px 0 10px; background: rgba(0, 0, 0, 0.92); background: #000; }
   .aps:not(.apm) .aps-back { width: 38px; height: 38px; border: 1px solid #2f3336; }
@@ -572,7 +578,7 @@ html #confirmOverlay { z-index: 1800; }
 }
 
 /* ── DESKTOP sayqal ── */
-@media (min-width: 1200px) {
+@media (min-width: 1100px) {
   .aps:not(.apm):not(.apt) { max-width: 860px; padding-bottom: 64px; }
   .aps:not(.apm) .aps-title { font-size: 26px; }
   .aps:not(.apm) .aps-search input { height: 44px; border-radius: 16px; background: #101214; }

@@ -5570,6 +5570,22 @@ body.report-open {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Post / Feed ichidagi linkbox va media kartalar 100% to'liq kenglikda (full width) */
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-yt-card,
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-link-card,
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-yt-card.is-media-web {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+:is(.post, .post-card, .post-main, .post-caption, .feed, .feed-item, .post-detail, .dm-body) .chat-link-box {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .chat-link-box {
   display: flex;
   flex-direction: column;
