@@ -7,6 +7,7 @@ import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
 import './post-image-zoom.js';
+import './post-media-guard.js';
 import { cachedMediaUrlSync, resolvePublicMedia, prefetchMany } from '../core/store/media-cache.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
@@ -74,7 +75,7 @@ export function buildMedia(p) {
   if (isImg)
     return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(cached)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   if (isVid)
-    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video></div>`;
+    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000"></video></div>`;
   const _fext = (String(p.fileName || '').split('.').pop() || '').toUpperCase().slice(0, 6);
   const _fsub = [String(p.fileName || '').includes('.') ? _fext : '', p.fileSize ? fmtSz(p.fileSize) : ''].filter(Boolean).join(' · ');
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}" data-fv-url="${esc(p.mediaUrl)}" data-fv-name="${esc(p.fileName||'file')}" data-fv-mime="${esc(p.mediaType||'')}" data-fv-size="${+p.fileSize || 0}" role="button" tabindex="0">

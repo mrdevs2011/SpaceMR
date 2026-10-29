@@ -274,3 +274,20 @@ window.addEventListener('spacemr:resync', () => scheduleRefresh(0));
 document.addEventListener('profileChanged', () => {
   if (document.visibilityState === 'visible') loadOnline();
 });
+
+/* Kashf (searchOverlay) ochilganda/yopilganda rail darhol almashsin.
+   Overlay 'open' klassi qaysi yo'l bilan o'zgarmasin (tugma, URL /explore, yopish) —
+   oldin onRouteChange overlay ochilishidan OLDIN chaqirilib, profil sozlamalari rail'da qolib ketardi. */
+(function watchExplore() {
+  const ov = document.getElementById('searchOverlay');
+  if (!ov || ov._rrWatch) return;
+  ov._rrWatch = true;
+  let was = ov.classList.contains('open');
+  new MutationObserver(() => {
+    const now = ov.classList.contains('open');
+    if (now === was) return;
+    was = now;
+    onRouteChange();
+    scheduleRefresh(0);
+  }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+})();
