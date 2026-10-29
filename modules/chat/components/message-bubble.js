@@ -132,15 +132,55 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
   window._chatPlayYt = window._chatPlayMedia;
 }
 
+const _linkPreviewCache = new Map();
+
 export async function enrichLinkPreviews(container) {
   if (!container || typeof fetch === 'undefined') return;
   const linkBoxes = container.querySelectorAll('.chat-link-box[data-preview-url]:not(.preview-loaded):not(.preview-loading)');
   if (!linkBoxes.length) return;
 
+  const applyData = (box, data) => {
+    box.classList.add('preview-loaded');
+    if (!data || !data.ok) return;
+
+    const titleEl = box.querySelector('.chat-link-title');
+    const descEl = box.querySelector('.chat-link-desc');
+    const siteEl = box.querySelector('.chat-link-site');
+    const thumbWrap = box.querySelector('.chat-link-thumb-wrap');
+    const thumbImg = box.querySelector('.chat-link-thumb');
+
+    if (data.title && titleEl) {
+      titleEl.textContent = data.title;
+    }
+    if (data.description && descEl) {
+      descEl.textContent = data.description;
+      descEl.style.display = '-webkit-box';
+    }
+    if (data.siteName && siteEl) {
+      siteEl.textContent = data.siteName;
+    }
+    if (data.image && thumbWrap && thumbImg) {
+      thumbImg.src = data.image;
+      thumbWrap.style.display = 'block';
+    }
+    if (data.favicon) {
+      const headerIcon = box.closest('.chat-yt-card')?.querySelector('.chat-yt-header .chat-media-favicon');
+      if (headerIcon) {
+        headerIcon.src = data.favicon;
+      }
+    }
+  };
+
   linkBoxes.forEach(async (box) => {
     box.classList.add('preview-loading');
     const url = box.dataset.previewUrl;
     if (!url) return;
+
+    if (_linkPreviewCache.has(url)) {
+      applyData(box, _linkPreviewCache.get(url));
+      return;
+    }
+
     try {
       const resp = await fetch(`/api/preview?url=${encodeURIComponent(url)}`);
       if (!resp.ok) {
@@ -148,29 +188,8 @@ export async function enrichLinkPreviews(container) {
         return;
       }
       const data = await resp.json();
-      box.classList.add('preview-loaded');
-      if (!data || !data.ok) return;
-
-      const titleEl = box.querySelector('.chat-link-title');
-      const descEl = box.querySelector('.chat-link-desc');
-      const siteEl = box.querySelector('.chat-link-site');
-      const thumbWrap = box.querySelector('.chat-link-thumb-wrap');
-      const thumbImg = box.querySelector('.chat-link-thumb');
-
-      if (data.title && titleEl) {
-        titleEl.textContent = data.title;
-      }
-      if (data.description && descEl) {
-        descEl.textContent = data.description;
-        descEl.style.display = '-webkit-box';
-      }
-      if (data.siteName && siteEl) {
-        siteEl.textContent = data.siteName;
-      }
-      if (data.image && thumbWrap && thumbImg) {
-        thumbImg.src = data.image;
-        thumbWrap.style.display = 'block';
-      }
+      if (data) _linkPreviewCache.set(url, data);
+      applyData(box, data);
     } catch (_) {
       box.classList.add('preview-loaded');
     }

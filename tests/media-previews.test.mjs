@@ -71,10 +71,24 @@ const ytCard = utils.renderMediaCard({ type: 'youtube', videoId: 'dQw4w9WgXcQ', 
 assert.ok(ytCard.includes('chat-media-play-btn'), 'Should use chat-media-play-btn');
 assert.ok(ytCard.includes('chat-yt-standalone'), 'Should have chat-yt-standalone');
 
+// Test recognized platforms have dedicated SVG logos
+assert.equal(utils.getDomainPlatform('https://www.google.com/search?q=test'), 'google');
+assert.equal(utils.getDomainPlatform('https://wa.me/998901234567'), 'whatsapp');
+assert.equal(utils.getDomainPlatform('https://discord.gg/spacemr'), 'discord');
+assert.equal(utils.getDomainPlatform('https://yandex.uz'), 'yandex');
+assert.equal(utils.getDomainPlatform('https://kun.uz/news/123'), 'kun');
+assert.equal(utils.getDomainPlatform('https://daryo.uz/2026/10/29'), 'daryo');
+assert.equal(utils.getDomainPlatform('https://uzum.uz/product/123'), 'uzum');
+assert.equal(utils.getDomainPlatform('https://olx.uz/d/obyavlenie'), 'olx');
+
 const kunCard = utils.renderMediaCard({ type: 'web', canonicalUrl: 'https://kun.uz', displayUrl: 'https://kun.uz', standalone: true });
 assert.ok(kunCard.includes('chat-link-box'), 'Should contain chat-link-box');
-assert.ok(kunCard.includes('google.com/s2/favicons?domain=kun.uz'), 'Should use Google favicon');
-assert.ok(kunCard.includes('kun.uz'), 'Should display domain name');
+assert.ok(kunCard.includes('KUN'), 'Should display dedicated KUN logo');
+
+// For arbitrary worldwide site (e.g. unknown-site-xyz.org), verify multi-tier favicon fallback
+const arbCard = utils.renderMediaCard({ type: 'web', canonicalUrl: 'https://unknown-site-xyz.org', displayUrl: 'https://unknown-site-xyz.org', standalone: true });
+assert.ok(arbCard.includes('icons.duckduckgo.com/ip3/unknown-site-xyz.org.ico'), 'Tier 1: DuckDuckGo favicon CDN');
+assert.ok(arbCard.includes('google.com/s2/favicons?domain=unknown-site-xyz.org'), 'Tier 2: Google S2 64px fallback');
 
 console.log('✓ renderMediaCard test passed');
 
@@ -92,5 +106,13 @@ assert.ok(mdRes.includes('oxirida matn'), 'Should preserve suffix text');
 assert.ok(mdRes.includes('chat-link-box'), 'Should embed link preview card');
 
 console.log('✓ renderMarkdown test passed');
+
+console.log('--- 5. Testing search bar hidden state in CSS ---');
+import { readFileSync } from 'node:fs';
+const featuresCss = readFileSync(new URL('../CSS/features.css', import.meta.url), 'utf8');
+assert.ok(featuresCss.includes('.chat-thread-hdr:not(.search-active) #threadMsgSearchBar'), 'CSS must explicitly hide search when not search-active');
+assert.ok(featuresCss.includes('.chat-thread-hdr.search-active #threadMsgSearchBar'), 'CSS must show search when search-active');
+
+console.log('✓ CSS search bar states valid');
 
 console.log('ALL MEDIA PREVIEW TESTS PASSED SUCCESSFULLY!');

@@ -4500,10 +4500,18 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 
 
 /* Chat ichidagi xabarlarni qidirish — headerda, dark, minimalist, gray */
+.chat-thread-search-bar,
+.chat-thread-hdr:not(.search-active) #threadMsgSearchBar,
+.chat-thread-hdr:not(.search-active) .chat-thread-search-bar,
+.chat-thread-search-bar[hidden] {
+  display: none !important;
+}
+
 .chat-thread-hdr.search-active > :not(#threadMsgSearchBar) {
   display: none !important;
 }
-.chat-thread-hdr.search-active #threadMsgSearchBar {
+.chat-thread-hdr.search-active #threadMsgSearchBar,
+.chat-thread-hdr.search-active .chat-thread-search-bar {
   display: flex !important;
 }
 .chat-thread-hdr.search-active {
@@ -4511,7 +4519,6 @@ body.grp-perm-selected .grp-picker-row .grp-picker-write-tools {
 }
 
 .chat-thread-search-bar {
-  display: flex;
   align-items: center;
   width: 100%;
   gap: 6px;
@@ -5565,6 +5572,12 @@ body.report-open {
 }
 
 .chat-media-favicon {
+  width: 16px;
+  height: 16px;
   border-radius: 4px;
   object-fit: contain;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
 }

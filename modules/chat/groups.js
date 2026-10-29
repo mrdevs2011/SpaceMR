@@ -606,6 +606,7 @@ export async function openGroupThread(groupId) {
   modal.dataset.gid  = groupId;
 
   document.getElementById('chatHeaderDropdown')?.remove();
+  chatUI.closeThreadMsgSearch?.();
   chatUI.initChatHeaderMenu();
 
   // Header

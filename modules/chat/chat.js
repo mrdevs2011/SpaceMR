@@ -507,7 +507,10 @@ export function closeThreadMsgSearch() {
   const box = $('chatThreadMessages');
   if (hdr) hdr.classList.remove('search-active');
   const bar = document.getElementById('threadMsgSearchBar');
-  if (bar) bar.hidden = true;
+  if (bar) {
+    bar.hidden = true;
+    bar.style.display = 'none';
+  }
   clearThreadSearchMarks(box);
   const cnt = document.getElementById('threadMsgSearchCount');
   if (cnt) cnt.textContent = '';
@@ -560,6 +563,7 @@ export function openThreadMsgSearch() {
   }
 
   bar.hidden = false;
+  bar.style.display = 'flex';
   hdr.classList.add('search-active');
 
   const inp = bar.querySelector('#threadMsgSearchInput');
@@ -1819,6 +1823,7 @@ export async function openChatThread(uid) {
   try { const _m = document.getElementById('chatThreadModal'); if (_m) { delete _m.dataset.gid; } } catch (_) {}
   document.getElementById('groupJoinBar')?.remove();
   document.getElementById('chatHeaderDropdown')?.remove();
+  closeThreadMsgSearch();
   const inputRow = document.querySelector('.chat-thread-input-row');
   if (inputRow) inputRow.style.display = '';
   initChatHeaderMenu();

@@ -100,6 +100,29 @@ export default async function handler(req, res) {
 
     const siteName = pickMeta('og:site_name') || targetUrl.hostname.replace(/^www\./, '');
 
+    // Favicon & Icon extraction from HTML (apple-touch-icon 180x180, SVG icon, PNG favicon, shortcut icon)
+    let favicon = '';
+    const appleM = html.match(/<link[^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed)["'][^>]+href=["']([^"']+)["']/i) ||
+                   html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:apple-touch-icon|apple-touch-icon-precomposed)["']/i);
+    if (appleM && appleM[1]) {
+      favicon = decodeHtml(appleM[1]);
+    } else {
+      const iconM = html.match(/<link[^>]+rel=["'](?:shortcut\s+)?icon["'][^>]+href=["']([^"']+)["']/i) ||
+                    html.match(/<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:shortcut\s+)?icon["']/i);
+      if (iconM && iconM[1]) favicon = decodeHtml(iconM[1]);
+    }
+
+    if (favicon) {
+      try {
+        favicon = new URL(favicon, targetUrl.href).href;
+      } catch (_) {
+        favicon = '';
+      }
+    }
+    if (!favicon) {
+      favicon = `https://icons.duckduckgo.com/ip3/${targetUrl.hostname.replace(/^www\./, '')}.ico`;
+    }
+
     const result = {
       ok: true,
       url: targetUrl.href,
@@ -108,6 +131,7 @@ export default async function handler(req, res) {
       description: description ? description.slice(0, 240) : '',
       image: image || '',
       siteName: siteName ? siteName.slice(0, 60) : '',
+      favicon: favicon || '',
     };
 
     cache.set(cacheKey, { exp: Date.now() + CACHE_MS, data: result });
