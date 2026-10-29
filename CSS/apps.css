@@ -97,14 +97,8 @@
 .aps-chip.on b { color: #536471; }
 .aps-chip.add { border-style: dashed; color: #a0a5aa; }
 
-/* ── DESKTOP: o'ng panel ilova kartalari ── */
-#rrApps {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-.right-rail.rr-apps-mode:not(:has(#rrApps:empty)) > .rr-card { display: none; }
+/* ── DESKTOP: o'ng panel faqat ilovaga oid kartalar ── */
+.right-rail.rr-apps-mode > .rr-card { display: none; }
 .rr-apps-card { padding: 12px 0 8px; border-bottom: 1px solid #16181c; }
 .rr-apps-card:last-child { border-bottom: 0; }
 .rr-ap-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 18px; }

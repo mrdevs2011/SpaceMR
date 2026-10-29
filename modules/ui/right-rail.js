@@ -1,5 +1,5 @@
 /**
- * Right rail (desktop ≥1200px) — ~50 kishilik doira:
+ * Right rail (desktop ≥1100px; admin actions ≥1200px) — ~50 kishilik doira:
  * Onlayn, Guruhlar, So‘nggi faollik.
  * Yangilanish: postsUpdated / groupsUpdated hodisalari + 15s zaxira tick (o'z realtime kanali yo'q — roadmap 5.3).
  */
@@ -54,13 +54,14 @@ function fit() {
   // home, profile, saved, notifs va qidiruv (explore overlay) da — 3 ustun
   const view = state.view || 'home';
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
-  const isDesktop = window.matchMedia('(min-width: 1200px)').matches;
+  const isDesktop = window.matchMedia('(min-width: 1100px)').matches; // sidebar + markaz + rail
+  const isWide = window.matchMedia('(min-width: 1200px)').matches;    // admin (actions) uchun alohida 1100–1199 maket bor
   rail()?.classList.toggle('rr-apps-mode', view === 'apps');
-  placeUsersAdmin(isDesktop, view);
+  placeUsersAdmin(isWide, view);
   const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || view === 'apps' || view === 'actions' || exploreOpen;
   showRail(
     allowed &&
-    isDesktop &&
+    (view === 'actions' ? isWide : isDesktop) &&
     !!state.me?.uid
   );
   // Desktop: sozlamalar profil sahifasida doimo ochiq (ochish/yopish yo'q)

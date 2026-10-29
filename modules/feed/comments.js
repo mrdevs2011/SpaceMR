@@ -11,7 +11,7 @@ let _myName = null;
 let _mode = null; // 'inline' | 'rail'
 
 function isDesktopCmt() {
-  return window.matchMedia('(min-width: 1200px)').matches;
+  return window.matchMedia('(min-width: 1100px)').matches;
 }
 
 /* Yuborish tugmasi: matn bo'sh bo'lsa o'chiq (X kabi 50%) */

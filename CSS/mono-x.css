@@ -1939,12 +1939,12 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   }
 }
 
-/* O'rta desktop (1100–1259): to'liq yozuvli chap sidebar + markaz; o'ng rail yo'q (<1200) */
+/* O'rta desktop (1100–1259): to'liq yozuvli chap sidebar + markaz + o'ng rail (min 240px) */
 @media (min-width: 1100px) and (max-width: 1259px) {
   :root {
     --sidebar: 260px;
     --content-left: 260px;
-    --center-w: min(600px, calc(100vw - 260px - 24px));
+    --center-w: min(600px, calc(100vw - 260px - 272px));
   }
   nav.bot-nav {
     box-sizing: border-box;
