@@ -25,14 +25,14 @@ function showRail(on) {
   else el.setAttribute('hidden', '');
 }
 
-/** Admin users list: desktop ≥1100 → right-rail; mobil → actionsView host */
+/** Admin users list: desktop ≥1200 → right-rail; mobil → actionsView host */
 export function placeUsersAdmin(isDesktop, view) {
   const block = document.getElementById('usersAdminBlock');
   const mobileHost = document.getElementById('actionsUsersHost');
   const desktopHost = document.getElementById('rrUsersAdmin');
   const railEl = rail();
   if (!block || !desktopHost) return;
-  const desk = isDesktop ?? window.matchMedia('(min-width: 1100px)').matches;
+  const desk = isDesktop ?? window.matchMedia('(min-width: 1200px)').matches;
   const v = view ?? (state.view || 'home');
   const adminActions = v === 'actions' && desk && !!state.me?.uid;
   if (adminActions) {
@@ -51,38 +51,47 @@ export function placeUsersAdmin(isDesktop, view) {
 }
 
 function fit() {
+  // home, profile, saved, notifs va qidiruv (explore overlay) da — 3 ustun
   const view = state.view || 'home';
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
-  const isDesktop = window.matchMedia('(min-width: 1100px)').matches;
+  const isDesktop = window.matchMedia('(min-width: 1200px)').matches;
   rail()?.classList.toggle('rr-apps-mode', view === 'apps');
   placeUsersAdmin(isDesktop, view);
-  // Desktopda right-rail umuman yo'qolmaydi (bosh sahifada ham, profilda ham)
-  showRail(isDesktop);
-
+  const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || view === 'apps' || view === 'actions' || exploreOpen;
+  showRail(
+    allowed &&
+    isDesktop &&
+    !!state.me?.uid
+  );
   // Desktop: sozlamalar profil sahifasida doimo ochiq (ochish/yopish yo'q)
   const sw = $('rrSettingsWrap');
-  if (sw) sw.hidden = true;
+  if (sw) sw.hidden = true; // tugma kerak emas — panel o'zi ochiq
 
   const settingsOverlay = document.getElementById('settingsOverlay');
   const railEl = rail();
   if (isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement !== railEl) {
     railEl.appendChild(settingsOverlay);
   }
-  // Mobil/planshet: overlay yashirin right-rail ichida qolib ketmasin
+  // Mobil/planshet: overlay yashirin (hidden) right-rail ichida qolib ketmasin — body ga qaytaramiz
   if (!isDesktop && settingsOverlay && railEl && settingsOverlay.parentElement === railEl) {
     document.body.appendChild(settingsOverlay);
     document.body.classList.remove('desktop-settings-pinned');
   }
-  if (settingsOverlay) {
+  if (settingsOverlay && state.me?.uid) {
+    // Kashf ochiq bo'lsa o'ng ustunda oddiy kartalar ko'rinadi (sozlamalar emas)
     if (isDesktop && view === 'profile' && !exploreOpen) {
       if (!settingsOverlay.classList.contains('show')) {
+        // Forma ma'lumotlarini to'ldirish (lazy)
         import('../auth/auth.js').then(m => {
           m.populateProfileForm?.();
         }).catch(() => {});
         settingsOverlay.classList.add('show');
+        document.body.classList.add('desktop-settings-pinned');
+      } else {
+        document.body.classList.add('desktop-settings-pinned');
       }
-      document.body.classList.add('desktop-settings-pinned');
     } else if (isDesktop) {
+      // Profil emas — yopamiz
       settingsOverlay.classList.remove('show');
       document.body.classList.remove('desktop-settings-pinned');
     }
@@ -129,37 +138,17 @@ async function loadOnline() {
       .map(mapProfile)
       .filter(u => u && u.uid !== me && (isUidOnline(u.uid, isOnline(u.lastSeenAt))))
       .slice(0, MAX_ONLINE);
-
-    // Rightbar doimo to'liq va jonli bo'lishi uchun: agar onlayn 3 tadan kam bo'lsa,
-    // faol va tavsiya etilgan SpaceMR a'zolari bilan to'ldiriladi
-    let displayUsers = online;
-    let isSuggested = false;
-    if (displayUsers.length < 3) {
-      const suggested = (data || [])
-        .map(mapProfile)
-        .filter(u => u && u.uid !== me)
-        .slice(0, MAX_ONLINE);
-      if (suggested.length) {
-        displayUsers = suggested;
-        isSuggested = true;
-      }
-    }
-
-    const titleEl = document.querySelector('#rrOnline .rr-title');
-    if (titleEl) {
-      titleEl.textContent = isSuggested && !online.length ? 'Tavsiya etilganlar' : 'Onlayn';
-    }
-
-    if (!displayUsers.length) {
-      box.innerHTML = '<div class="rr-empty">Hozircha hech kim yo‘q</div>';
+    // Presence bo'yicha ham qo'shimcha (ro'yxatda yo'q lekin onlayn)
+    // (limit ichida qolamiz)
+    if (!online.length) {
+      box.innerHTML = '<div class="rr-empty">Hozircha hech kim onlayn emas</div>';
       return;
     }
-    box.innerHTML = displayUsers.map(u => {
+    box.innerHTML = online.map(u => {
       const name = u.fullName || u.username || 'Foydalanuvchi';
-      const onlineState = isUidOnline(u.uid, isOnline(u.lastSeenAt));
-      const sub = u.username ? '@' + u.username : (onlineState ? 'onlayn' : 'SpaceMR a\'zosi');
+      const sub = u.username ? '@' + u.username : 'onlayn';
       return `<button type="button" class="rr-row" data-rr-user="${esc(u.uid)}">
-        ${aviHtml(name, u.avatar, onlineState)}
+        ${aviHtml(name, u.avatar, true)}
         <span class="rr-meta"><div class="rr-name">${esc(name)}</div><div class="rr-sub">${esc(sub)}</div></span>
       </button>`;
     }).join('');
@@ -169,19 +158,11 @@ async function loadOnline() {
   }
 }
 
-async function loadGroups() {
+function loadGroups() {
   const box = $('rrGroupsList');
   if (!box) return;
   // Maxfiy guruhlar o'ng panelda ko'rinmaydi — faqat ommaviylar
-  let items = (groupListItems || []).filter(g => !g.isPrivate).slice(0, MAX_GROUPS);
-  if (!items.length) {
-    try {
-      const { data } = await sb.from('groups').select('id, name, avatar, members_count').limit(MAX_GROUPS);
-      if (data && data.length) {
-        items = data.map(g => ({ id: g.id, name: g.name, avatar: g.avatar, subscriberCount: g.members_count }));
-      }
-    } catch (_) {}
-  }
+  const items = (groupListItems || []).filter(g => !g.isPrivate).slice(0, MAX_GROUPS);
   if (!items.length) {
     box.innerHTML = '<div class="rr-empty">Hali guruh yo‘q</div>';
     return;
@@ -198,18 +179,10 @@ async function loadGroups() {
   }).join('');
 }
 
-async function loadRecent() {
+function loadRecent() {
   const box = $('rrRecentList');
   if (!box) return;
-  let posts = (state.allPosts || []).slice(0, MAX_RECENT);
-  if (!posts.length) {
-    try {
-      const { data } = await sb.from('posts').select('id, user_id, full_name, text, media_type, created_at').order('created_at', { ascending: false }).limit(MAX_RECENT);
-      if (data && data.length) {
-        posts = data.map(p => ({ id: p.id, userId: p.user_id, userFullName: p.full_name, text: p.text, mediaType: p.media_type }));
-      }
-    } catch (_) {}
-  }
+  const posts = (state.allPosts || []).slice(0, MAX_RECENT);
   if (!posts.length) {
     box.innerHTML = '<div class="rr-empty">Hali yangilik yo‘q</div>';
     return;
@@ -233,8 +206,7 @@ function scheduleRefresh(delay = 200) {
 
 async function refresh() {
   fit();
-  const isDesktop = window.matchMedia('(min-width: 1100px)').matches;
-  if (!rail() || (!isDesktop && rail().hasAttribute('hidden'))) return;
+  if (!rail() || rail().hasAttribute('hidden')) return;
   if (cmtOpen()) return;
   // Admin actions: right-rail faqat users list — onlayn/guruh/so'nggi kerak emas
   if (rail()?.classList.contains('rr-actions-mode')) return;

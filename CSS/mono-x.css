@@ -662,7 +662,7 @@ nav.bot-nav #createBtn.nav-center-btn *,
 /* DIET force dark canvas — oq fonni yo'qotish */
 html, body, #app, .app { background: var(--pal-black); background-color: var(--pal-black); color: var(--pal-gray-100); }
 .view.on, .feed, #homeView, #followingView, #reelsView, #profileView, #chatsView { background: transparent; }/* Right-rail — chegarali karta, feed bilan 16px oraliq */
-.right-rail { display: none !important; }
+.right-rail { display: none; }
 @media (min-width: 1100px) {
   :root { --center-w: 600px; }
   #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
@@ -673,8 +673,8 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     width: var(--center-w);
     max-width: var(--center-w);
   }
-  .right-rail, #rightRail {
-    display: flex !important;
+  .right-rail {
+    display: flex;
     flex-direction: column;
     gap: 12px;
     position: fixed;
@@ -699,6 +699,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     scrollbar-width: thin;
   }
+  .right-rail[hidden], #rightRail[hidden] { display: none !important; }
   .rr-settings-wrap { position: sticky; bottom: 0; margin-top: auto; padding: 12px 0 4px; background: transparent; z-index: 1; }
   .rr-settings-wrap[hidden] { display: none; }
   .rr-settings-btn {
@@ -2157,6 +2158,11 @@ body #toast {
     display: flex !important;
     flex-direction: column !important;
     gap: 14px !important;
+  }
+  /* Sozlamalar ochiq: right-rail yashirin (ustiga chiqadi) */
+  body:has(#settingsOverlay.show) #rightRail {
+    visibility: hidden;
+    pointer-events: none;
   }
 }
 

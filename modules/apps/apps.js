@@ -73,8 +73,8 @@ export function go(sub) {
 
 /* ── Chizish ────────────────────────────────────────────────────────── */
 
-/** phone <760, tablet 760–1099, desktop >=1100 (o'ng panel) */
-export const layout = () => window.matchMedia('(min-width: 1100px)').matches ? 'desktop' : window.matchMedia('(min-width: 760px)').matches ? 'tablet' : 'phone';
+/** phone <760, tablet 760–1199, desktop >=1200 (o'ng panel) */
+export const layout = () => window.matchMedia('(min-width: 1200px)').matches ? 'desktop' : window.matchMedia('(min-width: 760px)').matches ? 'tablet' : 'phone';
 const wide = () => layout() === 'desktop';
 let catFilter = '', rndId = '';
 const ctx = () => ({ cats, apps, owners, me: state.me, catById });
@@ -770,7 +770,7 @@ export function mountApps() {
     root?.addEventListener('input', onSearch);
     $('rrApps')?.addEventListener('click', e => handle(e, $('rrApps')));
     const onBp = () => { if (state.view === 'apps') render(); };
-    window.matchMedia('(min-width: 1100px)').addEventListener?.('change', onBp);
+    window.matchMedia('(min-width: 1200px)').addEventListener?.('change', onBp);
     window.matchMedia('(min-width: 760px)').addEventListener?.('change', onBp);
     document.addEventListener('click', onRunnerClick);
     window.addEventListener('apps:path', () => { if (state.view === 'apps') render(); });

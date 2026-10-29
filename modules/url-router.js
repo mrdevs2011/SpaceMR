@@ -162,7 +162,7 @@ async function ensureGroupMember(gid) {
   } catch (_) { return false; }
 }
 
-const isWideDesktop = () => window.matchMedia('(min-width: 1100px)').matches;
+const isWideDesktop = () => window.matchMedia('(min-width: 1200px)').matches;
 function settingsPinned() { return document.body.classList.contains('desktop-settings-pinned'); }
 
 // true = so'nggi qidiruv tarmoq/server xatosi bilan tugadi (bu "topilmadi" EMAS — 404 ko'rsatilmaydi)
@@ -691,7 +691,7 @@ async function _applyPathImpl(rawPath, { initial = false } = {}) {
       await closeThreadIfOpen();
       let baseView = route.overlay === 'groupcreate' ? 'chats'
         : (initial || getCurrentRoute() === 'actions' ? route.base : (getCurrentRoute() || route.base));
-      if (route.overlay === 'settings' && window.matchMedia('(min-width: 1100px)').matches) baseView = 'profile';
+      if (route.overlay === 'settings' && window.matchMedia('(min-width: 1200px)').matches) baseView = 'profile';
       if (getCurrentRoute() !== baseView) navigateTo(baseView, false);
       closeEverythingExcept(route.overlay);
       await openOverlay(route.overlay, route.section);

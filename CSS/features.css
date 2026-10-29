@@ -415,9 +415,12 @@
 #profileView { position: relative; z-index: 1; box-sizing: border-box; overflow-x: hidden; min-height: 100%; }
 #profileView.on { display: block; }
 @media (min-width: 1100px) {
-  #profileView.on { margin-left: var(--content-left, var(--sidebar, 68px)); width: var(--center-w, 600px); max-width: var(--center-w, 600px); margin-right: 0; padding-top: 0; }
+  #profileView.on { margin-left: var(--content-left, var(--sidebar, 68px)); width: calc(100% - var(--content-left, var(--sidebar, 68px))); max-width: 680px; padding-top: 0; }
   #profileView .profile-hdr { padding-top: 20px; padding-left: 16px; padding-right: 16px; }
   #profileView .profile-avi-row { margin-top: 0; }
+}
+@media (min-width: 1200px) {
+  #profileView.on { width: var(--center-w, 600px); max-width: var(--center-w, 600px); margin-right: 0; }
 }
 /* profileView padding — .view.on orqali boshqariladi (feed.css) */
 .profile-hdr { padding: 68px 16px 16px; }

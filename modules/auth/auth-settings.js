@@ -76,13 +76,13 @@ if (settingsBtn) {
     if (settingsOverlay) {
       settingsOverlay.classList.add('show');
       // Desktopda scroll qulflanmasin (side panel)
-      if (!window.matchMedia('(min-width: 1100px)').matches) lockScroll('settingsOverlay');
+      if (!window.matchMedia('(min-width: 1200px)').matches) lockScroll('settingsOverlay');
     }
   };
 }
 
 function isDesktopSettingsPinned() {
-  return window.matchMedia('(min-width: 1100px)').matches &&
+  return window.matchMedia('(min-width: 1200px)').matches &&
     (state.view === 'profile' || document.body.classList.contains('desktop-settings-pinned'));
 }
 
