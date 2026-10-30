@@ -751,8 +751,11 @@ async function _applyPathImpl(rawPath, { initial = false } = {}) {
       } else {
         const ref = route.ref || '';
         const isInvite = HEX64_RE.test(ref) || (/^[0-9a-f]{32,}$/i.test(ref) && !UUID_RE.test(ref));
-        // Avval resolve (tarmoq kutamiz), 404 faqat aniq yo'q bo'lsa
-        let gid = isInvite ? await gidByInvite(ref) : await groupIdByRef(ref);
+        // A'zo guruh UUID'si ro'yxat keshida bo'lsa metadata lookup'ni o'tkazamiz.
+        // A'zolik esa har doim serverda tasdiqlanadi (RLS/permission xavfsizligi).
+        const groupMod = await import('./chat/groups.js');
+        const cachedMember = !isInvite && UUID_RE.test(ref) && groupMod.hasCachedMemberGroup(ref);
+        let gid = isInvite ? await gidByInvite(ref) : (cachedMember ? ref : await groupIdByRef(ref));
         if (!gid && !isInvite && /^[0-9a-f]{16,}$/i.test(ref)) gid = await gidByInvite(ref);
         if (!gid) return missing();
         if (!isInvite && !(await ensureGroupMember(gid))) return deny();

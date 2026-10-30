@@ -58,26 +58,27 @@ function allGroups() {
 /* So'z bo'yicha serverdan qidirish: ism/username/guruh nomi — so'zning istalgan joyidan */
 function remoteSearch(raw) {
   clearTimeout(_rTimer);
-  const q = String(raw || '').trim().replace(/^@/, '');
+  const seq = ++_rSeq; // eski so'rovlar debounce oynasidayoq eskiradi
+  const q = String(raw || '').trim().replace(/^@/, '').slice(0, 80);
   if (!q) { remoteUsers = []; remoteGroups = []; return; }
   _rTimer = setTimeout(async () => {
-    const seq = ++_rSeq;
-    const like = q.replace(/[,()"]/g, ' ').trim().replace(/[\\%_]/g, m => '\\' + m);
-    if (!like) return;
-    try {
-      const { data } = await sb.from('profiles').select('*')
+    const like = q.replace(/[,()\"]/g, ' ').trim().replace(/[\\%_]/g, m => '\\' + m);
+    if (!like || seq !== _rSeq) return;
+    // Odam va guruh qidiruvi parallel: ikkinchi so'rov birinchisini kutmaydi.
+    const [peopleResult, groupsResult] = await Promise.allSettled([
+      sb.from('profiles').select('id, username, full_name, avatar, approval, blocked, created_at')
         .eq('approval', 'approved')
         .or(`username.ilike.%${like}%,full_name.ilike.%${like}%`)
-        .limit(40);
-      if (seq === _rSeq) remoteUsers = (data || []).map(mapProfile).filter(u => u && !u.blocked);
-    } catch (_) {}
-    try {
-      const m = await import('./chat/groups.js');
-      const g = await m.searchGroups(q);
-      if (seq === _rSeq) remoteGroups = g || [];
-    } catch (_) {}
-    if (seq === _rSeq && query && overlay.classList.contains('open')) render();
-  }, 220);
+        .limit(40),
+      import('./chat/groups.js').then(m => m.searchGroups(q)),
+    ]);
+    if (seq !== _rSeq) return;
+    if (peopleResult.status === 'fulfilled' && !peopleResult.value.error) {
+      remoteUsers = (peopleResult.value.data || []).map(mapProfile).filter(u => u && !u.blocked);
+    }
+    if (groupsResult.status === 'fulfilled') remoteGroups = groupsResult.value || [];
+    if (query && overlay.classList.contains('open')) render();
+  }, 160);
 }
 
 async function loadUsers() {
