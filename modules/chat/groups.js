@@ -100,8 +100,15 @@ let _gReadyRes = null;
 let _gReadyP = new Promise(r => { _gReadyRes = r; });
 export function groupsReady() { return _gReadyP; }
 
-async function _loadGroups() {
-  try { await _loadGroupsInner(); } finally { _gReadyRes?.(); }
+let _groupsLoadPromise = null;
+function _loadGroups() {
+  // Start/reconnect/timer bir vaqtda kelsa ham bitta DB round-trip ishlasin.
+  if (_groupsLoadPromise) return _groupsLoadPromise;
+  _groupsLoadPromise = (async () => {
+    try { await _loadGroupsInner(); }
+    finally { _gReadyRes?.(); _groupsLoadPromise = null; }
+  })();
+  return _groupsLoadPromise;
 }
 async function _loadGroupsInner() {
   const me = state.me?.uid;
@@ -539,7 +546,8 @@ export async function searchGroups(term) {
     if (!clean) return [];
     // Faqat OMMAVIY guruhlar nom/username bo'yicha; maxfiy hech qachon chiqmaydi
     const { data, error } = await sb.from('groups')
-      .select('*, group_members(user_id, role, unread_count, can_write)')
+      // Qidiruv kartasiga a'zolar ro'yxati kerak emas: katta nested joinni tarmoqdan olib tashlaymiz.
+      .select('id, type, name, avatar, description, owner_id, is_private, username, msg_permission, last_message, last_sender_id, last_message_at, created_at')
       .eq('is_private', false)
       .or(`username.ilike.%${clean}%,name.ilike.%${clean}%`)
       .limit(20);
@@ -2830,6 +2838,11 @@ export function injectGroupsDOM() {
    ───────────────────────────────────────────────────────────────────── */
 export function getGroupRows() {
   return groupListItems;
+}
+
+/** UUID deep-link allaqachon serverdan olingan a'zo guruh ro'yxatida bormi? */
+export function hasCachedMemberGroup(groupId) {
+  return !!groupId && groupListItems.some(g => g?.id === groupId);
 }
 
 export function getCurrentGroupId() { return _currentGroupId; }

@@ -257,25 +257,42 @@ export function fixVideoDuration(v) {
   });
 }
 
-/** Video elementga bir marta duration fix — progress oxirida qotib qolmasin. */
+/** Video elementga bitta duration-fix flight — parallel eventlar bir necha seek boshlamasin. */
+const _durationFixes = new WeakMap();
 export function ensureVideoDuration(v) {
-  if (!v || v.dataset.durFixed === '1') return;
-  const run = () => {
-    if (v.dataset.durFixed === '1') return;
-    if (isFinite(v.duration) && v.duration > 0) { v.dataset.durFixed = '1'; return; }
-    // Ijro paytida 1e101 seek — decoder qotadi; faqat pauzada tuzatamiz
-    if (!v.paused && !v.ended) {
-      const onPause = () => { v.removeEventListener('pause', onPause); run(); };
-      v.addEventListener('pause', onPause);
-      return;
-    }
-    fixVideoDuration(v).then((d) => {
+  if (!v || v.dataset.durFixed === '1') return Promise.resolve(0);
+  const active = _durationFixes.get(v);
+  if (active) return active;
+
+  const task = new Promise((resolve) => {
+    let settled = false;
+    const finish = (d) => {
+      if (settled) return;
+      settled = true;
+      v.removeEventListener('loadedmetadata', run);
+      v.removeEventListener('pause', run);
       if (d > 0) v.dataset.durFixed = '1';
       try { v.dispatchEvent(new Event('durationchange')); } catch (_) {}
-    });
-  };
-  if (v.readyState >= 1) run();
-  else v.addEventListener('loadedmetadata', run, { once: true });
+      resolve(d || 0);
+    };
+    const run = () => {
+      if (settled) return;
+      if (v.dataset.durFixed === '1') return finish(Number(v.duration) || 0);
+      if (isFinite(v.duration) && v.duration > 0) {
+        v.dataset.durFixed = '1';
+        return finish(v.duration);
+      }
+      // Decoder ishlayotgan paytda ulkan seek qilmaymiz; pause'da bitta marta urinib ko'ramiz.
+      if (!v.paused && !v.ended) return;
+      fixVideoDuration(v).then(finish, () => finish(0));
+    };
+    if (v.readyState >= 1) run();
+    else v.addEventListener('loadedmetadata', run, { once: true });
+    v.addEventListener('pause', run);
+  });
+  _durationFixes.set(v, task);
+  task.finally(() => { if (_durationFixes.get(v) === task) _durationFixes.delete(v); });
+  return task;
 }
 
 /** stalled/waiting — buffer to'lguncha kutib davom ettirish */
