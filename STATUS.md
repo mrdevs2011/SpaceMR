@@ -46,3 +46,9 @@ Sentry vs client_errors, beta ro'yxati, jonli RLS negativ test va zaxira tiklash
 | Klient | oflayn, shikoyat, onboarding, roadmap |
 
 Vercel Production avtomatik `main` deploy (agar ulangan bo'lsa).
+
+---
+### 2026-10-30 05:09
+- Qilindi: Discover va guruh qidiruvi parallel/stale-safe qilindi; group query payload va watcher duplicate so'rovlari qisqartirildi; UUID deep-link cache fast-path qo'shildi; video duration fix single-flight qilindi. 8 test fayli va production build o'tdi. Branch fix/discover-groups-video-stability, commit b8f8f407 GitHub'ga push qilindi.
+- Keyingi qadam: Preview deploy va real brauzer/telefon sinovi: Kashf ochilishi, SpaceMR guruhiga birinchi/ikkinchi kirish, 5-10 daqiqalik video playback, seek/progress/loading holati. Natijaga qarab regression test va main merge.
+- Git holati: b8f8f407 perf: stabilize discover group loading and video duration
