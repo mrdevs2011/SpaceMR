@@ -3428,7 +3428,11 @@ async function _hydrateChatPostCards(root) {
       if (!mediaWrap) continue;
       mediaWrap.removeAttribute('data-need-hydrate');
       mediaWrap.classList.remove('cpc-media-loading');
-      if (!url) { mediaWrap.innerHTML = ''; continue; }
+      if (!url) {
+        mediaWrap.remove();
+        card.dataset.cpcHydrated = '1';
+        continue;
+      }
       const _hk = _cpcKind(mt, [data.file_name, data.media_path]);
       if (_hk === 'file') {
         mediaWrap.className = 'cpc-file';
@@ -3537,14 +3541,14 @@ async function _hydrateChatPostAvatars(root) {
 }
 
 export function renderChatPostCard(ps) {
-  const p = ps.post || {};
-  const comment = (ps.comment || '').trim();
-  const authorName = esc(p.authorName || 'Foydalanuvchi');
-  const authorUser = p.authorUsername ? `@${esc(p.authorUsername)}` : '';
-  const authorAvi = _cpcCleanAvatar(p.authorAvatar);
-  const postText = (p.text || '').trim();
-  let mediaUrl = (p.mediaUrl || '').trim();
-  const mediaPath = (p.mediaPath || '').trim();
+  const p = (ps && ps.post) ? ps.post : (ps || {});
+  const comment = (ps?.comment || '').trim();
+  const authorName = esc(p.authorName || p.user?.name || 'Foydalanuvchi');
+  const authorUser = (p.authorUsername || p.user?.username) ? `@${esc(p.authorUsername || p.user?.username)}` : '';
+  const authorAvi = _cpcCleanAvatar(p.authorAvatar || p.user?.avatar);
+  const postText = (p.text || p.content || '').trim();
+  let mediaUrl = (p.mediaUrl || p.media_url || '').trim();
+  const mediaPath = (p.mediaPath || p.media_path || '').trim();
   // Path bor, URL yo'q — public URL yasaymiz
   if (!mediaUrl && mediaPath) {
     try {
@@ -3552,19 +3556,22 @@ export function renderChatPostCard(ps) {
       mediaUrl = mediaPublicUrl(mediaPath) || '';
     } catch (_) {}
   }
-  const mediaType = String(p.mediaType || '').toLowerCase();
+  const mediaType = String(p.mediaType || p.media_type || '').toLowerCase();
   // ID'lar inline onclick JS satriga tushadi — faqat UUID/raqam belgilariga ruxsat
   const postId = String(p.id || '').replace(/[^A-Za-z0-9_-]/g, '');
-  const userId = String(p.userId || '').replace(/[^A-Za-z0-9_-]/g, '');
+  const userId = String(p.userId || p.user_id || '').replace(/[^A-Za-z0-9_-]/g, '');
 
   const isPostDeleted = chatState._postExistenceMap.get(p.id) === false;
-  const isUserDeleted = chatState._userExistenceMap.get(p.userId) === false;
+  const isUserDeleted = chatState._userExistenceMap.get(p.userId || p.user_id) === false;
+
+  const hasMedia = Boolean(mediaUrl || mediaPath || (p.fileName && p.fileName.trim()) || (p.file_name && p.file_name.trim()) || (mediaType && !['text', 'none', 'null', 'undefined'].includes(mediaType)));
+  const isMinimalPayload = !postText && !mediaUrl && !mediaPath && !p.fileName && !p.file_name && !p.authorName && !p.user?.name;
 
   let mediaHtml = '';
-  if (!isPostDeleted && (mediaUrl || mediaPath || postId)) {
+  if (!isPostDeleted && (hasMedia || isMinimalPayload)) {
     const safeUrl = esc(mediaUrl);
-    const _fname = (p.fileName || '').trim() || _cpcBaseName(mediaPath) || _cpcBaseName(mediaUrl);
-    const _kind = _cpcKind(mediaType, [p.fileName, mediaPath, mediaUrl]);
+    const _fname = (p.fileName || p.file_name || '').trim() || _cpcBaseName(mediaPath) || _cpcBaseName(mediaUrl);
+    const _kind = _cpcKind(mediaType, [p.fileName, p.file_name, mediaPath, mediaUrl]);
     const isVid = _kind === 'video';
     const isAud = _kind === 'audio';
     const isFile = _kind === 'file';
@@ -3585,7 +3592,7 @@ export function renderChatPostCard(ps) {
       <div class="cpc-media" data-cpc-media="1" data-cpc-kind="image">
         <img src="${safeUrl}" alt="" loading="lazy" class="cpc-img" onerror="this.closest('[data-cpc-media]')?.setAttribute('data-need-hydrate','1')">
       </div>`;
-    } else {
+    } else if (hasMedia || isMinimalPayload) {
       // URL yo'q — hydrate qilamiz
       mediaHtml = `<div class="cpc-media cpc-media-loading" data-cpc-media="1" data-need-hydrate="1"></div>`;
     }

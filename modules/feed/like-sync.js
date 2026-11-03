@@ -7,7 +7,7 @@ const jobs = new Map(); // postId -> { server, want, onFail, meta }
 
 export function syncLike(postId, uid, wasLiked, want, onFail, meta) {
   const cur = jobs.get(postId);
-  if (cur) { cur.want = want; cur.onFail = onFail; return; }
+  if (cur) { cur.want = want; cur.onFail = onFail; if (meta) cur.meta = meta; return; }
   const j = { server: wasLiked, want, onFail, meta };
   jobs.set(postId, j);
   (async () => {

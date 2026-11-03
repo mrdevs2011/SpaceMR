@@ -47,7 +47,7 @@ const $ = id => document.getElementById(id);
 
 const VIEW_PATH = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications', apps: '/apps' };
 const NEXT_KEY = 'spacemr_next_path';
-const PROFILE_TABS = ['photos', 'videos', 'text', 'music'];   // 'all' = sukut (URL da yo'q)
+const PROFILE_TABS = ['photos', 'videos', 'text', 'music', 'files'];   // 'all' = sukut (URL da yo'q)
 const LAST_KEY = 'spacemr_last_path'; // kirgan foydalanuvchining oxirgi joyi (/login yozsa shu yerga qaytadi)
 const HEX64_RE = /^[0-9a-f]{64}$/i;
 const LEGACY_QS_RE = /[?&](g|u|join|join_group)=/i; // eski query havolalar — endi 404
@@ -351,7 +351,7 @@ function computeUrl() {
 }
 
 /* Bir "oila" ichidagi o'zgarish (tab almashtirish, qidiruv so'zi, izoh havolasi) tarixga yangi yozuv qo'shmaydi */
-const famOf = p => p.replace(/^(\/u\/[^/]+|\/profile)\/(photos|videos|text|music)$/, '$1').replace(/^(\/p\/[^/]+)\/comments$/i, '$1');
+const famOf = p => p.replace(/^(\/u\/[^/]+|\/profile)\/(photos|videos|text|music|files)$/, '$1').replace(/^(\/p\/[^/]+)\/comments$/i, '$1');
 
 export function setUrl(target, { replace = false } = {}) {
   const cur = location.pathname;

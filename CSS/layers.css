@@ -47,7 +47,7 @@ input::placeholder, textarea::placeholder { color: var(--text3); }
 /* ═══════════════════════════════════════════ Unified Icon System — 2026 minimalist line icons All inline SVG... */
 svg { color: inherit; }
 
-.nav-btn.on, .nav-btn.active, .act-btn.liked, .act-btn.active, .profile-grid-tab.active, .tab-btn.active, .admin-tab.active, .chat-search-btn.active, .icon-btn.active, .icon-btn.selected { color: var(--tg-primary-blue); }
+.nav-btn.on, .nav-btn.active, .act-btn.active, .profile-grid-tab.active, .tab-btn.active, .admin-tab.active, .chat-search-btn.active, .icon-btn.active, .icon-btn.selected { color: var(--tg-primary-blue); }
 
 /* ═══════════════════════════════════════════ 2. FEED IMPROVEMENTS — Gradient Border ═════════════... */
 /* Gradient border on post hover */

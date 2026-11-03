@@ -773,38 +773,61 @@ async function _flushSave(postId) {
 function paintLike(postId, on, n, btn, pop) {
   if (on) { state.myLikedPosts.add(postId); state._knownUnliked.delete(postId); }
   else    { state.myLikedPosts.delete(postId); state._knownUnliked.add(postId); }
-  const post = state.allPosts.find(p => p.id === postId);
+  const post = state.allPosts?.find(p => p.id === postId);
   if (post) post.likes = n;
   const btns = new Set(document.querySelectorAll(`.like-btn[data-id="${postId}"]`));
   if (btn) btns.add(btn);
+
+  // Post detail modal ochiq bo'lsa (#detailModal)
+  const dLike = document.getElementById('dmLikeBtn');
+  if (dLike && (dLike.dataset.id === postId || state.detailPostId === postId)) {
+    btns.add(dLike);
+  }
+
   btns.forEach(b => {
     b.classList.toggle('liked', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
     const svg = b.querySelector('svg');
-    svg?.setAttribute('fill', on ? '#f91880' : 'none');
-    svg?.setAttribute('stroke', on ? '#f91880' : 'currentColor');
-    // Yurak endi <img> — manbani almashtiramiz (faqat heart ikonkasi bo'lsa)
-    const im = b.querySelector('img.icon');
-    const cs = im?.getAttribute('src') || '';
-    if (im && cs.includes('/heart')) im.setAttribute('src', on ? './svg/social/heart-filled.svg' : './svg/social/heart.svg');
-    // Tugmaning o'z hisoblagichi (feed: #lc-<id>, profil detali: .dm-act-count)
+    if (svg) {
+      svg.setAttribute('fill', on ? '#f91880' : 'none');
+      svg.setAttribute('stroke', on ? '#f91880' : 'currentColor');
+      svg.style.color = on ? '#f91880' : '';
+    }
+    // Yurak <img> bo'lsa (yoki .icon) — manbani almashtiramiz
+    const im = b.querySelector('img.icon') || b.querySelector('img[src*="heart"]');
+    if (im) {
+      im.setAttribute('src', on ? './svg/social/heart-filled.svg' : './svg/social/heart.svg');
+      im.style.color = on ? '#f91880' : '';
+    }
+    // Tugmaning hisoblagichi
     const sp = b.querySelector('span');
     if (sp) sp.textContent = fmtCount(n);
     if (on && pop) { b.classList.add('like-pop'); setTimeout(() => b.classList.remove('like-pop'), 400); }
   });
+
+  // Statistika qatoridagi kichik yurak (#dmStatLike)
+  if (state.detailPostId === postId) {
+    const sh = document.querySelector('#dmStatLike img.icon');
+    if (sh) sh.setAttribute('src', on ? './svg/social/heart-filled.svg' : './svg/social/heart.svg');
+    const sc = document.getElementById('dmLikeCount');
+    if (sc) sc.textContent = fmtCount(n);
+  }
+
   // Bir post bir nechta view'da bo'lishi mumkin (ID takrorlanadi) — hammasini yangilaymiz
   document.querySelectorAll(`[id="lc-${postId}"]`).forEach(el => { el.textContent = fmtCount(n); });
 }
 
 export function doLike(postId, btn) {
   if (!state.me) return;
-  const wasLiked = state.myLikedPosts.has(postId);
-  const post     = state.allPosts.find(p => p.id === postId);
-  const lc       = document.getElementById(`lc-${postId}`);
-  const ownN     = parseInt(btn?.querySelector('span')?.textContent, 10);
-  // Saqlanganlar kabi allPosts'da yo'q postlar uchun — bosilgan tugmaning o'z hisoblagichidan (ID takrorlanishi mumkin)
-  const cur      = post?.likes ?? (Number.isFinite(ownN) ? ownN : (parseInt(lc?.textContent, 10) || 0));
-  const want     = !wasLiked;
-  const n        = Math.max(0, cur + (want ? 1 : -1));
+  // Agar foydalanuvchi bosgan tugmaning vizual holati bo'lsa — ko'rib turgan holat asosiy haqiqat
+  const isCurrentlyLiked = btn ? btn.classList.contains('liked') : state.myLikedPosts.has(postId);
+  const want = !isCurrentlyLiked;
+  const wasLiked = isCurrentlyLiked;
+  const post = state.allPosts?.find(p => p.id === postId);
+  const lc = document.getElementById(`lc-${postId}`);
+  const ownN = parseInt(btn?.querySelector('span')?.textContent, 10);
+  const cur = post?.likes ?? (Number.isFinite(ownN) ? ownN : (parseInt(lc?.textContent, 10) || 0));
+  const n = Math.max(0, cur + (want ? 1 : -1));
 
   // 1) UI — shu zahoti (0ms), tarmoq kutilmaydi; boshqalarga ham shu zahoti
   paintLike(postId, want, n, btn, true);

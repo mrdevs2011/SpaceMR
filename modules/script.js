@@ -115,10 +115,10 @@ import './ui/install-guide.js'; // yo'riqnoma (sozlamalar)
     haptic[type]?.();
   }, { passive: true });
 
-  // Like double-tap — success haptic (MutationObserver on like-btn.on)
+  // Like interaction — success haptic
   const likeObs = new MutationObserver(muts => {
     for (const m of muts) {
-      if (m.target.classList.contains('on')) haptic.success();
+      if (m.target.classList.contains('liked') || m.target.classList.contains('on')) haptic.success();
     }
   });
   document.querySelectorAll('.like-btn').forEach(el =>

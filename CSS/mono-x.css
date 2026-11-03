@@ -2722,6 +2722,14 @@ body #toast {
   background: #000000;
   border: 1px solid rgba(231, 233, 234, 0.1);
 }
+.cpc-media:empty {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
 .cpc-media img {
   width: 100%;
   height: 100%;
@@ -9240,6 +9248,14 @@ img[src*="/group-avatars/"] { background-color: #000 !important; }
 .chat-post-card .cpc-media-audio audio {
   width: 100%;
   height: 36px;
+}
+.chat-post-card .cpc-media:empty {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
 .chat-post-card .cpc-media-loading {
   min-height: 120px;
