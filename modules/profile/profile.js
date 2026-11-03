@@ -270,7 +270,9 @@ export async function openDetail(id) {
   state.detailPostId = id;   // URL: /p/<id>
 
   const [lR, cR, uR] = await Promise.all([
-    sb.from('post_likes').select('post_id', { count: 'exact', head: true }).eq('post_id', id).eq('user_id', state.me.uid),
+    state.me?.uid
+      ? sb.from('post_likes').select('post_id', { count: 'exact', head: true }).eq('post_id', id).eq('user_id', state.me.uid)
+      : Promise.resolve({ count: 0 }),
     sb.from('comments').select('id', { count: 'exact', head: true }).eq('post_id', id),
     sb.from('profiles').select('*').eq('id', p.userId).maybeSingle(),
   ]);

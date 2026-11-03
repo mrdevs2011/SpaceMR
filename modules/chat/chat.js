@@ -1486,7 +1486,7 @@ export function startChatsWatcher() {
     // qayta chizamiz (isOnline() joriy vaqtga qarab hisoblanadi).
     if (!chatState._presenceRepaintTick) {
       chatState._presenceRepaintTick = setInterval(async () => {
-        if (state.view !== 'chats') return;
+        if (document.hidden || state.view !== 'chats') return;
         await _refreshUsersPresence();
         if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
       }, 30000);
@@ -1941,7 +1941,9 @@ export async function openChatThread(uid) {
   // "Onlayn"dan "N daqiqa oldin"ga o'tishini ko'rsatish uchun har 20s da
   // matnni qayta hisoblaymiz (server yozuvi o'zgarmasa ham vaqt o'tadi).
   if (chatState._peerStatusTick) clearInterval(chatState._peerStatusTick);
-  if (!isSaved) chatState._peerStatusTick = setInterval(() => _paintPeerStatus(chatState._peerLastSeenAt), PEER_STATUS_MS);
+  if (!isSaved) chatState._peerStatusTick = setInterval(() => {
+    if (!document.hidden) _paintPeerStatus(chatState._peerLastSeenAt);
+  }, PEER_STATUS_MS);
 
   // "Yozmoqda..." — realtime broadcast (typing_until ustuni yo'q)
   chatState._peerTyping = false;

@@ -309,7 +309,7 @@ export function startGroupsWatcher() {
   // Realtime tinglovchilar alohida kanalda emas — chat.js 'chats-watcher' kanaliga
   // bindGroupsRealtime() orqali ulanadi (roadmap 5.3).
   // DELETE hodisalari filtr bilan kelmaydi (masalan guruhdan chiqarilish) — zaxira so'rov
-  _groupsTick = setInterval(_loadGroups, 60000);
+  _groupsTick = setInterval(() => { if (!document.hidden) _loadGroups(); }, 60000);
   _groupsUnsub = () => { clearTimeout(_groupsTimer); clearInterval(_groupsTick); _groupsTick = null; };
   _loadGroups();
 }

@@ -51,6 +51,7 @@ export async function renderStorageUsage(anchor) {
     if (!document.getElementById('actionsStorageInfo')) {
       clearInterval(_poll); _poll = null; return;
     }
+    if (document.hidden) return;
     refreshStorageUsage();
   }, 5000);
 }

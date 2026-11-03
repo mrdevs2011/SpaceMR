@@ -196,8 +196,10 @@ export async function renderFeedTo(feedEl, posts) {
   }
 
   // Like status cache dan foydalanish (local va Firestore postlar alohida collection)
-  const unknownPosts = posts.filter(p => !state.myLikedPosts.has(p.id) && !state._knownUnliked.has(p.id));
-  if (unknownPosts.length) {
+  const unknownPosts = state.me?.uid
+    ? posts.filter(p => !state.myLikedPosts.has(p.id) && !state._knownUnliked.has(p.id))
+    : [];
+  if (unknownPosts.length && state.me?.uid) {
     let likedRows = null;
     try {
       const { data, error } = await sb.from('post_likes').select('post_id')
@@ -231,8 +233,9 @@ export async function renderFeedTo(feedEl, posts) {
   for (const p of posts) {
     const u        = uMap[p.userId] || {};
     const liked    = likedSet.has(p.id);
-    const canDel   = state.me.uid === p.userId || isAdmin();
-    const isMine   = state.me.uid === p.userId;
+    const myUid    = state.me?.uid || null;
+    const canDel   = (myUid && myUid === p.userId) || isAdmin();
+    const isMine   = !!(myUid && myUid === p.userId);
     const saved    = state.mySavedPosts.has(p.id);
 
     html += `<div class="post" data-id="${p.id}">

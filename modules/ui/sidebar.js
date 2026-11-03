@@ -152,6 +152,6 @@ render();
 // state.me o'zgaganda yangilash (polling o'rniga event)
 document.addEventListener('profilesPreloaded', () => { _sig = ''; render(); });
 document.addEventListener('meUpdated', () => { _sig = ''; render(); });
-// Zaxira: juda sekin (batareya/CPU tejash)
-setInterval(() => { _sig = ''; render(); }, 30000);
+// Zaxira: juda sekin (batareya/CPU tejash, faqat oyna ko'ringanda)
+setInterval(() => { if (!document.hidden) { _sig = ''; render(); } }, 30000);
 export function refreshSidebarAccount() { _sig = ''; render(); }

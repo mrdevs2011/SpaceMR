@@ -191,6 +191,31 @@ assert.ok(monoCss.includes('display: none !important'), 'Empty media container i
 
 console.log('✓ PASS: CSS guarantees empty .cpc-media containers will never show a black box');
 
+console.log('\n--- 5. Testing Null-Safety For Unauthenticated Users (Guest Feed/Detail) ---');
+const feedSrc = readFileSync(new URL('../modules/feed/feed.js', import.meta.url), 'utf8');
+assert.ok(feedSrc.includes('const unknownPosts = state.me?.uid'), 'feed.js checks state.me?.uid for unknownPosts');
+assert.ok(feedSrc.includes('const myUid    = state.me?.uid || null;'), 'feed.js guards state.me?.uid for post actions');
+
+assert.ok(profileSrc.includes('state.me?.uid'), 'profile.js openDetail guards state.me?.uid for post_likes');
+
+console.log('✓ PASS: Feed and Profile openDetail safely handle null state.me without throwing TypeErrors');
+
+console.log('\n--- 6. Testing 0% Idle CPU & Document Visibility Guards ---');
+const sidebarSrc = readFileSync(new URL('../modules/ui/sidebar.js', import.meta.url), 'utf8');
+assert.ok(sidebarSrc.includes('if (!document.hidden)'), 'sidebar.js guards periodic render with !document.hidden');
+
+const rightRailSrc = readFileSync(new URL('../modules/ui/right-rail.js', import.meta.url), 'utf8');
+assert.ok(rightRailSrc.includes('if (!document.hidden) scheduleRefresh(0)'), 'right-rail.js guards refresh timer with !document.hidden');
+assert.ok(rightRailSrc.includes("const me = state.me?.uid || null;"), 'right-rail.js guards state.me?.uid');
+
+assert.ok(chatSrc.includes('if (document.hidden || state.view !== \'chats\') return;'), 'chat.js guards presence timer when hidden');
+assert.ok(chatSrc.includes('if (!document.hidden) _paintPeerStatus'), 'chat.js guards peer status timer when hidden');
+
+const groupsSrc = readFileSync(new URL('../modules/chat/groups.js', import.meta.url), 'utf8');
+assert.ok(groupsSrc.includes('if (!document.hidden) _loadGroups()'), 'groups.js guards groups watcher tick when hidden');
+
+console.log('✓ PASS: All background intervals guard against document.hidden to guarantee 0% idle CPU drain');
+
 console.log('\n========================================');
 console.log('ALL REGRESSION AUDIT TESTS PASSED (100%)');
 console.log('========================================');

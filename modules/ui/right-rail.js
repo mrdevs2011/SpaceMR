@@ -134,7 +134,7 @@ async function loadOnline() {
       .order('last_seen', { ascending: false })
       .limit(40);
     if (error) throw error;
-    const me = state.me.uid;
+    const me = state.me?.uid || null;
     const online = (data || [])
       .map(mapProfile)
       .filter(u => u && u.uid !== me && (isUidOnline(u.uid, isOnline(u.lastSeenAt))))
@@ -247,8 +247,8 @@ export function startRightRail() {
   document.addEventListener('postsUpdated', () => { if (!cmtOpen()) loadRecent(); });
   fit();
   refresh();
-  // Zaxira: realtime uzilsa ham 15s da yangilanadi (oldin 45s edi)
-  _tick = setInterval(() => scheduleRefresh(0), 45000);
+  // Zaxira: realtime uzilsa ham 45s da yangilanadi (tab ko'rinib turganda)
+  _tick = setInterval(() => { if (!document.hidden) scheduleRefresh(0); }, 45000);
 }
 
 export function stopRightRail() {
@@ -262,6 +262,7 @@ export function stopRightRail() {
 startRightRail();
 // fit() allaqachon onRouteChange/resize da chaqiriladi — 2s polling kerak emas
 document.addEventListener('profilesPreloaded', () => { if (state.me?.uid) fit(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && _started) scheduleRefresh(0); });
 
 
 /* Presence o'zgarganda onlayn ro'yxatni yangilash */
