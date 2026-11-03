@@ -18,6 +18,13 @@ assert.ok(!source.includes("from('story_views').upsert("), "Upsert requires an U
 assert.ok(source.includes("Hikoyani yuklab bo‘lmadi"));
 assert.ok(source.includes("Qayta urinish"));
 assert.ok(source.includes("encodeForSend(textOrEmoji)"));
+assert.ok(source.includes("border-radius: 50%;"), "Reaction containers must be perfectly circular");
+assert.ok(source.includes("backdrop-filter: blur(18px)"), "Story bottom panel must use a blurred glass surface");
+assert.ok(source.includes("position: absolute; right: 6px; top: 50%; transform: translateY(-50%);"), "Send plane must sit inside the reply input");
+assert.ok(!source.includes("svDelBtn") && !source.includes("sv-del-btn"), "Story viewer must not show a delete button");
+assert.ok(source.includes("sv-own-bar"), "Story views row must remain available below the reply area");
+assert.ok(source.includes('replyInp.disabled = isMine;'), "Own-story reply input must remain visible but disabled");
+assert.ok(source.includes("if (reactions) reactions.hidden = false;"), "Reaction row must stay visible in the shared bottom layout");
 console.log("STORIES REGRESSION: all checks passed");
 
 const reactionMigration = readFileSync(new URL("../supabase/migrations/107_story_reactions.sql", import.meta.url), "utf8");

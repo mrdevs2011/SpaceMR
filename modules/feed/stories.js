@@ -257,12 +257,14 @@ function ensureStoriesCss() {
 .sv-bottom {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   z-index: 6;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 65%, transparent 100%);
+  gap: 12px;
+  background: linear-gradient(0deg, rgba(12, 12, 18, .30), rgba(12, 12, 18, .08) 78%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
   pointer-events: auto;
 }
 @media (min-width: 700px) {
@@ -278,27 +280,23 @@ function ensureStoriesCss() {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  gap: 6px;
-  padding: 2px 0;
+  gap: 10px;
+  padding: 4px 2px;
 }
 .sv-react-chip {
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
-  padding: 5px 11px;
-  font-size: 19px;
+  width: 48px; height: 48px; min-width: 48px; flex: 0 0 48px;
+  padding: 0; box-sizing: border-box;
+  background: rgba(255, 255, 255, .075);
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 50%;
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
   cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  transition: transform .2s cubic-bezier(.175,.885,.32,1.275), background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.sv-react-chip:active {
-  transform: scale(1.18);
-  background: rgba(255, 255, 255, 0.32);
-}
+.sv-react-chip:active { transform: scale(.9); background: rgba(255,255,255,.18); }
 .sv-react-chip.is-selected {
   border-color: #c084fc;
   background: linear-gradient(145deg, rgba(168,85,247,.42), rgba(124,58,237,.24));
@@ -307,90 +305,66 @@ function ensureStoriesCss() {
 }
 .sv-react-chip.is-saving { opacity: .72; }
 .sv-react-chip.is-selected .sv-reaction-emoji { filter: drop-shadow(0 0 5px rgba(216,180,254,.8)); }
-.sv-reaction-emoji { width: 25px; height: 25px; display: block; object-fit: contain; pointer-events: none; }
+.sv-reaction-emoji { width: 27px; height: 27px; display: block; object-fit: contain; pointer-events: none; }
+.sv-react-chip:focus-visible { outline: 2px solid rgba(192,132,252,.95); outline-offset: 3px; }
+.sv-react-chip:disabled { cursor: default; opacity: .88; }
+.sv-reply-send:disabled { opacity: .55; cursor: default; box-shadow: none; }
 .sv-flying-emoji .emo-img { width: 48px; height: 48px; display: block; object-fit: contain; }
 .sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
 .sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
 @keyframes svSpin { to { transform: rotate(360deg); } }
 .sv-media-error button { border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 9px 16px; color: #fff; background: rgba(255,255,255,.12); font: inherit; cursor: pointer; pointer-events: auto; }
 .sv-views-badge svg { width: 17px; height: 17px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.sv-reply-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
+.sv-reply-row { position: relative; display: flex; align-items: center; width: 100%; }
 .sv-reply-input {
-  flex: 1;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 20px;
-  padding: 0 16px;
-  color: #fff;
-  font-size: 14px;
-  outline: none;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  display: block; box-sizing: border-box; width: 100%; height: 46px;
+  background: rgba(255,255,255,.075);
+  border: 1px solid rgba(255,255,255,.24); border-radius: 999px;
+  padding: 0 52px 0 17px; color: #fff; font-size: 14px; outline: none;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
 }
-.sv-reply-input::placeholder {
-  color: rgba(255, 255, 255, 0.65);
-}
+.sv-reply-input::placeholder { color: rgba(255,255,255,.62); }
 .sv-reply-input:focus {
-  border-color: #1d9bf0;
-  background: rgba(0, 0, 0, 0.65);
+  border-color: rgba(168,85,247,.78); background: rgba(255,255,255,.11);
+  box-shadow: 0 0 0 3px rgba(168,85,247,.12);
 }
 .sv-reply-send {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #1d9bf0;
-  border: none;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(29,155,240,.92); border: 1px solid rgba(255,255,255,.22);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  box-shadow: 0 2px 12px rgba(29,155,240,.22);
 }
-.sv-reply-send:active {
-  transform: scale(0.92);
-}
+.sv-reply-send:active { transform: translateY(-50%) scale(.9); }
+.sv-reply-send:hover { background: #279ff0; box-shadow: 0 2px 16px rgba(29,155,240,.4); }
+.sv-reply-send svg { width: 17px; height: 17px; display: block; }
 .sv-own-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 4px 6px;
+  justify-content: flex-start;
+  padding: 1px 7px 0;
   width: 100%;
 }
 .sv-views-badge {
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.sv-del-btn {
-  background: rgba(244, 33, 46, 0.2);
-  border: 1px solid rgba(244, 33, 46, 0.45);
-  color: #f4212e;
-  border-radius: 16px;
-  padding: 6px 14px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .82);
   display: flex;
   align-items: center;
-  gap: 6px;
-  cursor: pointer;
+  gap: 7px;
 }
 .sv-flying-emoji {
   position: absolute;
   left: 50%;
-  bottom: 80px;
+  bottom: 112px;
   transform: translateX(-50%);
-  font-size: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
   z-index: 20;
   animation: svFlyUp 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
@@ -459,10 +433,6 @@ function ensureDom() {
         </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
           <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
-          <button type="button" class="sv-del-btn" id="svDelBtn" aria-label="Storyni o'chirish">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            <span>O'chirish</span>
-          </button>
         </div>
       </div>
     `;
@@ -642,22 +612,6 @@ function ensureDom() {
           if (request === _reactionToken) paint(previous);
           console.warn('[stories] reaction save:', error?.message || error);
           toast('Reaksiyani saqlab bo‘lmadi', 'error');
-        }
-      });
-
-      $('svDelBtn')?.addEventListener('click', async e => {
-        e.stopPropagation();
-        const g = _groups[_viewerIdx];
-        const item = g?.items?.[_itemIdx];
-        if (!g || !item || !g.isMe) return;
-        if (!confirm("Ushbu hikoyani o'chirishni xohlaysizmi?")) return;
-        try {
-          await sb.from('stories').delete().eq('id', item.id);
-          toast("Hikoya o'chirildi", 'info');
-          closeViewer();
-          loadStories();
-        } catch (_) {
-          toast("O'chirib bo'lmadi", 'error');
         }
       });
 
@@ -1129,9 +1083,22 @@ async function showCurrent() {
   const replyInp = $('svReplyInput');
   if (replyInp) replyInp.value = '';
 
+  // Pastki panel layouti barcha storylarda bir xil: doira reaksiyalar → input → views.
+  // O'z storymda ham elementlar ko'rinadi, lekin o'ziga reaksiya/javob yuborish mantiqan o'chiriladi.
+  if (reactions) reactions.hidden = false;
+  if (replyRow) replyRow.hidden = false;
+  if (replyInp) {
+    replyInp.disabled = isMine;
+    replyInp.placeholder = isMine ? "O'z hikoyang" : 'Hikoyaga javob yozish...';
+  }
+  const replySend = $('svReplySend');
+  if (replySend) replySend.disabled = isMine;
+  if (reactions) reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+    button.disabled = isMine;
+    button.setAttribute('aria-disabled', String(isMine));
+  });
+
   if (isMine) {
-    if (reactions) reactions.hidden = true;
-    if (replyRow) replyRow.hidden = true;
     if (ownBar) {
       ownBar.hidden = false;
       const viewsBadge = $('svViewsBadge');
@@ -1150,8 +1117,6 @@ async function showCurrent() {
         });
     }
   } else {
-    if (reactions) reactions.hidden = false;
-    if (replyRow) replyRow.hidden = false;
     if (ownBar) ownBar.hidden = true;
   }
 
@@ -1162,6 +1127,7 @@ async function showCurrent() {
     reactions.querySelectorAll('.sv-react-chip').forEach(button => {
       button.classList.remove('is-selected', 'is-saving');
       button.disabled = false;
+      button.setAttribute('aria-disabled', 'false');
       button.setAttribute('aria-pressed', 'false');
     });
     const cachedReaction = _selectedStoryReaction.get(reactionStoryId) || null;
