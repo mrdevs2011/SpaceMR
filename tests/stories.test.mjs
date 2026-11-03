@@ -20,11 +20,12 @@ assert.ok(source.includes("Qayta urinish"));
 assert.ok(source.includes("encodeForSend(textOrEmoji)"));
 assert.ok(source.includes("border-radius: 50%;"), "Reaction containers must be perfectly circular");
 assert.ok(source.includes("backdrop-filter: blur(18px)"), "Story bottom panel must use a blurred glass surface");
-assert.ok(source.includes("position: absolute; right: 6px; top: 50%; transform: translateY(-50%);"), "Send plane must sit inside the reply input");
+assert.ok(!source.includes("svReplyInput") && !source.includes("svReplySend") && !source.includes("svReplyRow"), "Story viewer must not offer text comments or replies");
+assert.ok(!source.includes("sv-reply-input") && !source.includes("sv-reply-send"), "Reply input and send button styles must be removed");
 assert.ok(!source.includes("svDelBtn") && !source.includes("sv-del-btn"), "Story viewer must not show a delete button");
-assert.ok(source.includes("sv-own-bar"), "Story views row must remain available below the reply area");
-assert.ok(source.includes('replyInp.disabled = isMine;'), "Own-story reply input must remain visible but disabled");
+assert.ok(source.includes("sv-own-bar"), "Story views row must remain below the reaction row");
 assert.ok(source.includes("if (reactions) reactions.hidden = false;"), "Reaction row must stay visible in the shared bottom layout");
+assert.ok(source.includes("replyToStory(group.uid, story, next)"), "Emoji reactions must still notify the story author in chat");
 console.log("STORIES REGRESSION: all checks passed");
 
 const reactionMigration = readFileSync(new URL("../supabase/migrations/107_story_reactions.sql", import.meta.url), "utf8");

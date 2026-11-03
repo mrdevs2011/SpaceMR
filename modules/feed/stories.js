@@ -308,40 +308,12 @@ function ensureStoriesCss() {
 .sv-reaction-emoji { width: 27px; height: 27px; display: block; object-fit: contain; pointer-events: none; }
 .sv-react-chip:focus-visible { outline: 2px solid rgba(192,132,252,.95); outline-offset: 3px; }
 .sv-react-chip:disabled { cursor: default; opacity: .88; }
-.sv-reply-send:disabled { opacity: .55; cursor: default; box-shadow: none; }
 .sv-flying-emoji .emo-img { width: 48px; height: 48px; display: block; object-fit: contain; }
 .sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
 .sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
 @keyframes svSpin { to { transform: rotate(360deg); } }
 .sv-media-error button { border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 9px 16px; color: #fff; background: rgba(255,255,255,.12); font: inherit; cursor: pointer; pointer-events: auto; }
 .sv-views-badge svg { width: 17px; height: 17px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.sv-reply-row { position: relative; display: flex; align-items: center; width: 100%; }
-.sv-reply-input {
-  display: block; box-sizing: border-box; width: 100%; height: 46px;
-  background: rgba(255,255,255,.075);
-  border: 1px solid rgba(255,255,255,.24); border-radius: 999px;
-  padding: 0 52px 0 17px; color: #fff; font-size: 14px; outline: none;
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
-}
-.sv-reply-input::placeholder { color: rgba(255,255,255,.62); }
-.sv-reply-input:focus {
-  border-color: rgba(168,85,247,.78); background: rgba(255,255,255,.11);
-  box-shadow: 0 0 0 3px rgba(168,85,247,.12);
-}
-.sv-reply-send {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-  width: 34px; height: 34px; border-radius: 50%;
-  background: rgba(29,155,240,.92); border: 1px solid rgba(255,255,255,.22);
-  color: #fff; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
-  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
-  box-shadow: 0 2px 12px rgba(29,155,240,.22);
-}
-.sv-reply-send:active { transform: translateY(-50%) scale(.9); }
-.sv-reply-send:hover { background: #279ff0; box-shadow: 0 2px 16px rgba(29,155,240,.4); }
-.sv-reply-send svg { width: 17px; height: 17px; display: block; }
 .sv-own-bar {
   display: flex;
   align-items: center;
@@ -424,12 +396,6 @@ function ensureDom() {
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44f.png" aria-label="Qarsak"><img class="sv-reaction-emoji" src="/emoji/2d/1f44f.png" alt=""></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""></button>
-        </div>
-        <div class="sv-reply-row" id="svReplyRow">
-          <input type="text" class="sv-reply-input" id="svReplyInput" placeholder="Hikoyaga javob yozish..." maxlength="250" autocomplete="off">
-          <button type="button" class="sv-reply-send" id="svReplySend" aria-label="Yuborish">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-          </button>
         </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
           <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
@@ -539,22 +505,6 @@ function ensureDom() {
         }
       });
 
-      const replyInp = $('svReplyInput');
-      replyInp?.addEventListener('focus', () => freezeStory());
-      replyInp?.addEventListener('blur', () => {
-        if (!_isHolding) unfreezeStory();
-      });
-      replyInp?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          doSendReply(replyInp.value);
-        }
-      });
-      $('svReplySend')?.addEventListener('click', e => {
-        e.stopPropagation();
-        doSendReply(replyInp?.value);
-      });
-
       $('svReactions')?.addEventListener('click', async e => {
         const chip = e.target.closest('.sv-react-chip');
         if (!chip?.dataset.emoji) return;
@@ -615,27 +565,7 @@ function ensureDom() {
         }
       });
 
-      const doSendReply = async (txt) => {
-        txt = String(txt || '').trim();
-        if (!txt) return;
-        const g = _groups[_viewerIdx];
-        const item = g?.items?.[_itemIdx];
-        if (!g || !item || g.isMe) return;
 
-        if (replyInp) replyInp.value = '';
-        replyInp?.blur();
-        unfreezeStory();
-
-        spawnFlyingEmoji(txt);
-        try { window.haptic?.success?.(); } catch (_) {}
-
-        const ok = await replyToStory(g.uid, item, txt);
-        if (ok) {
-          toast("Javob jo'natildi", "success");
-        } else {
-          toast("Yuborib bo'lmadi", "error");
-        }
-      };
     }
 
     // Esc: hikoya ko'rgich eng ustki qatlam (shortcuts.js bilan umumiy navbat)
@@ -1019,8 +949,6 @@ function closeViewer() {
   if (media) {
     media.innerHTML = '';
   }
-  const replyInp = $('svReplyInput');
-  if (replyInp) replyInp.value = '';
   loadStories(); // ringlarni yangilash
 }
 
@@ -1079,20 +1007,7 @@ async function showCurrent() {
   const isMine = !!g.isMe;
   const ownBar = $('svOwnBar');
   const reactions = $('svReactions');
-  const replyRow = $('svReplyRow');
-  const replyInp = $('svReplyInput');
-  if (replyInp) replyInp.value = '';
-
-  // Pastki panel layouti barcha storylarda bir xil: doira reaksiyalar → input → views.
-  // O'z storymda ham elementlar ko'rinadi, lekin o'ziga reaksiya/javob yuborish mantiqan o'chiriladi.
   if (reactions) reactions.hidden = false;
-  if (replyRow) replyRow.hidden = false;
-  if (replyInp) {
-    replyInp.disabled = isMine;
-    replyInp.placeholder = isMine ? "O'z hikoyang" : 'Hikoyaga javob yozish...';
-  }
-  const replySend = $('svReplySend');
-  if (replySend) replySend.disabled = isMine;
   if (reactions) reactions.querySelectorAll('.sv-react-chip').forEach(button => {
     button.disabled = isMine;
     button.setAttribute('aria-disabled', String(isMine));
