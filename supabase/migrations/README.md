@@ -34,3 +34,7 @@ Bazada ISHGA TUSHIRILGAN SQL fayllar, tartib raqami bilan. Yangi bazada `000_sch
 - 064 (2026-10-05): xabar o'chirilganda chat/guruh ro'yxatidagi `last_message` prevyusi qayta hisoblanadi (`on_message_delete`, `on_group_message_delete` statement-level triggerlari) + bir martalik tuzatish. Bazada yurgizilgan (triggerlar bor, 2026-10-05 tekshirildi).
 - 069 (2026-10-05): ovozli xabar to'lqini serverda — `messages.waveform` va `group_messages.waveform` (smallint[], 0..31, 8..128 ta), faqat type='voice'. Yuklangan audio fayl (mp3...) type='file' bo'lib, to'lqinsiz (trigger null qiladi). type='voice' faqat chat-voice papkasidan. Ishga tushirish shart (Supabase SQL editor); klient migratsiyadan oldin ham ishlaydi (waveform ustuni yo'q bo'lsa qayta urinadi).
 - 070 (2026-10-05): `expire_stale_calls(p_max_seconds default 75)` — 'ringing' holatida osilib qolgan qo'ng'iroqlarni 'ended' qiladi (server zaxirasi; asosiy jiringlash chegarasi klientda CALL_RING_MAX_MS=45s). pg_cron bo'lsa har daqiqada avtomatik. Ishga tushirish shart (Supabase SQL editor).
+
+- 107 (2026-11-03): story_reactions — har foydalanuvchi/story uchun bitta PNG-path reaksiya, RLS (faqat o‘z reaksiyasini boshqarish va muddati o‘tmagan story), FK cascade va Realtime. Production bazada yurgizilgan.
+- 108 (2026-11-03): story reaction UPDATE policy ham is_approved() talab qiladi. Production bazada yurgizilgan.
+- 109 (2026-11-03): story_reactions SELECT faqat reaksiya muallifi yoki story egasiga ruxsat beradi.

@@ -35,6 +35,8 @@ let _startX = 0;
 let _startY = 0;
 let _bound = false;
 let _showToken = 0;   // eski yuklanish callbacklarini bekor qilish uchun
+let _reactionToken = 0;
+let _selectedStoryReaction = new Map();
 let _mediaTimeout = null;
 
 
@@ -286,7 +288,7 @@ function ensureStoriesCss() {
   padding: 5px 11px;
   font-size: 19px;
   cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   display: inline-flex;
@@ -297,6 +299,14 @@ function ensureStoriesCss() {
   transform: scale(1.18);
   background: rgba(255, 255, 255, 0.32);
 }
+.sv-react-chip.is-selected {
+  border-color: #c084fc;
+  background: linear-gradient(145deg, rgba(168,85,247,.42), rgba(124,58,237,.24));
+  box-shadow: 0 0 0 2px rgba(192,132,252,.22), 0 0 18px rgba(168,85,247,.34);
+  transform: translateY(-3px) scale(1.08);
+}
+.sv-react-chip.is-saving { opacity: .72; }
+.sv-react-chip.is-selected .sv-reaction-emoji { filter: drop-shadow(0 0 5px rgba(216,180,254,.8)); }
 .sv-reaction-emoji { width: 25px; height: 25px; display: block; object-fit: contain; pointer-events: none; }
 .sv-flying-emoji .emo-img { width: 48px; height: 48px; display: block; object-fit: contain; }
 .sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
@@ -435,11 +445,11 @@ function ensureDom() {
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
         <div class="sv-reactions" id="svReactions">
-          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""></button>
-          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""></button>
-          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
-          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f44f.png" aria-label="Qarsak"><img class="sv-reaction-emoji" src="/emoji/2d/1f44f.png" alt=""></button>
-          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44f.png" aria-label="Qarsak"><img class="sv-reaction-emoji" src="/emoji/2d/1f44f.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""></button>
         </div>
         <div class="sv-reply-row" id="svReplyRow">
           <input type="text" class="sv-reply-input" id="svReplyInput" placeholder="Hikoyaga javob yozish..." maxlength="250" autocomplete="off">
@@ -575,11 +585,63 @@ function ensureDom() {
         doSendReply(replyInp?.value);
       });
 
-      $('svReactions')?.addEventListener('click', e => {
+      $('svReactions')?.addEventListener('click', async e => {
         const chip = e.target.closest('.sv-react-chip');
-        if (chip && chip.dataset.emoji) {
-          e.stopPropagation();
-          doSendReply(chip.dataset.emoji);
+        if (!chip?.dataset.emoji) return;
+        e.stopPropagation();
+        const group = _groups[_viewerIdx];
+        const story = group?.items?.[_itemIdx];
+        if (!group || !story || group.isMe || !state.me?.uid) return;
+        const storyId = story.id;
+        const userId = state.me.uid;
+        const previous = _selectedStoryReaction.get(storyId) || null;
+        const next = previous === chip.dataset.emoji ? null : chip.dataset.emoji;
+        const request = ++_reactionToken;
+        const paint = value => {
+          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== storyId) return;
+          $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
+            const selected = button.dataset.emoji === value;
+            button.classList.toggle('is-selected', selected);
+            button.classList.remove('is-saving');
+            button.disabled = false;
+            button.setAttribute('aria-pressed', String(selected));
+          });
+        };
+        if (next) _selectedStoryReaction.set(storyId, next);
+        else _selectedStoryReaction.delete(storyId);
+        paint(next);
+        if (next) spawnFlyingEmoji(next);
+        try { window.haptic?.success?.(); } catch (_) {}
+        $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
+          button.disabled = true;
+          if (button.dataset.emoji === next || button.dataset.emoji === previous) button.classList.add('is-saving');
+        });
+        try {
+          let result;
+          if (next) {
+            result = await sb.from('story_reactions').upsert(
+              { story_id: storyId, user_id: userId, emoji: next },
+              { onConflict: 'story_id,user_id' }
+            );
+          } else {
+            result = await sb.from('story_reactions').delete().eq('story_id', storyId).eq('user_id', userId);
+          }
+          if (result?.error) throw result.error;
+          if (request === _reactionToken) paint(next);
+          if (next) {
+            const notified = await replyToStory(group.uid, story, next);
+            toast(notified ? 'Reaksiya saqlandi' : 'Reaksiya saqlandi, lekin chatga xabar yuborilmadi', notified ? 'success' : 'info');
+          } else {
+            toast('Reaksiya bekor qilindi', 'info');
+          }
+        } catch (error) {
+          if (_selectedStoryReaction.get(storyId) === next || (!_selectedStoryReaction.has(storyId) && next === null)) {
+            if (previous) _selectedStoryReaction.set(storyId, previous);
+            else _selectedStoryReaction.delete(storyId);
+          }
+          if (request === _reactionToken) paint(previous);
+          console.warn('[stories] reaction save:', error?.message || error);
+          toast('Reaksiyani saqlab bo‘lmadi', 'error');
         }
       });
 
@@ -1091,6 +1153,40 @@ async function showCurrent() {
     if (reactions) reactions.hidden = false;
     if (replyRow) replyRow.hidden = false;
     if (ownBar) ownBar.hidden = true;
+  }
+
+  const reactionStoryId = item.id;
+  const reactionUserId = state.me?.uid;
+  const reactionToken = ++_reactionToken;
+  if (reactions && !isMine) {
+    reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+      button.classList.remove('is-selected', 'is-saving');
+      button.disabled = false;
+      button.setAttribute('aria-pressed', 'false');
+    });
+    const cachedReaction = _selectedStoryReaction.get(reactionStoryId) || null;
+    if (cachedReaction) {
+      reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+        const selected = button.dataset.emoji === cachedReaction;
+        button.classList.toggle('is-selected', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      });
+    }
+    if (reactionUserId) {
+      sb.from('story_reactions').select('emoji').eq('story_id', reactionStoryId).eq('user_id', reactionUserId).maybeSingle()
+        .then(({ data, error }) => {
+          if (reactionToken !== _reactionToken || _groups[_viewerIdx]?.items?.[_itemIdx]?.id !== reactionStoryId) return;
+          if (error) { console.warn('[stories] reaction load:', error.message); return; }
+          const saved = data?.emoji || null;
+          if (saved) _selectedStoryReaction.set(reactionStoryId, saved);
+          else _selectedStoryReaction.delete(reactionStoryId);
+          reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+            const selected = button.dataset.emoji === saved;
+            button.classList.toggle('is-selected', selected);
+            button.setAttribute('aria-pressed', String(selected));
+          });
+        }).catch(error => console.warn('[stories] reaction load:', error?.message || error));
+    }
   }
 
   const media = $('svMedia');

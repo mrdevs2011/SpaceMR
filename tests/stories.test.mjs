@@ -19,3 +19,18 @@ assert.ok(source.includes("Hikoyani yuklab bo‘lmadi"));
 assert.ok(source.includes("Qayta urinish"));
 assert.ok(source.includes("encodeForSend(textOrEmoji)"));
 console.log("STORIES REGRESSION: all checks passed");
+
+const reactionMigration = readFileSync(new URL("../supabase/migrations/107_story_reactions.sql", import.meta.url), "utf8");
+const reactionPrivacyMigration = readFileSync(new URL("../supabase/migrations/109_story_reactions_private_reads.sql", import.meta.url), "utf8");
+assert.match(source, /from\('story_reactions'\)\.upsert\(/, "Story reactions must persist to their own table");
+assert.match(source, /from\('story_reactions'\)\.delete\(/, "Tapping the selected reaction again must remove it");
+assert.match(source, /is-selected/, "Selected reaction must have visible feedback");
+assert.match(source, /spawnFlyingEmoji\(next\)/, "New reaction must animate");
+assert.match(source, /aria-pressed/, "Reaction selection must be accessible");
+assert.match(reactionMigration, /primary key \(story_id, user_id\)/i);
+assert.match(reactionMigration, /enable row level security/i);
+assert.match(reactionMigration, /user_id = auth\.uid\(\)/i);
+assert.match(reactionMigration, /supabase_realtime/i);
+console.log("STORY REACTION UX + MIGRATION: all checks passed");
+assert.match(reactionPrivacyMigration, /user_id = auth\.uid\(\)/i);
+assert.match(reactionPrivacyMigration, /s\.user_id = auth\.uid\(\)/i);
