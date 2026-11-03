@@ -9796,3 +9796,303 @@ html body .md-spoiler:not(.revealed) * {
   padding: 0 !important;
   border-radius: 0 !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PIXEL-PERFECT ZERO-CLS SKELETON SYSTEM (FEED, CHATS, NOTIFS, PROFILE)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@keyframes skel-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skel-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 35%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.08) 65%,
+    rgba(255, 255, 255, 0.04) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skel-shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  border-radius: 4px;
+}
+
+[data-theme="light"] .skel-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.08) 35%,
+    rgba(0, 0, 0, 0.13) 50%,
+    rgba(0, 0, 0, 0.08) 65%,
+    rgba(0, 0, 0, 0.04) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* 1. Feed & Post Card Skeleton: 1px to 1px identical to .post */
+:is(#app, #searchOverlay, body) .post.post-skel {
+  display: grid !important;
+  grid-template-columns: 40px minmax(0, 1fr) !important;
+  column-gap: 8px !important;
+  padding: 12px 16px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line, #2f3336) !important;
+  border-radius: 0 !important;
+  background: var(--bg, #000) !important;
+  box-shadow: none !important;
+  position: relative !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .post-head {
+  display: contents !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-avi {
+  grid-column: 1 !important;
+  grid-row: 1 / span 2 !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  align-self: start !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-meta {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  padding-right: 36px !important;
+  height: 20px !important;
+  line-height: 20px !important;
+  overflow: hidden !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-meta-name {
+  width: 110px !important;
+  height: 13px !important;
+  border-radius: 4px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-meta-handle {
+  width: 65px !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-meta-dot {
+  color: var(--text3, #71767b) !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-meta-time {
+  width: 32px !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-main {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-caption-line {
+  height: 14px !important;
+  border-radius: 4px !important;
+  margin: 4px 0 6px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-media-box {
+  margin: 12px 0 0 !important;
+  border-radius: var(--radius, 16px) !important;
+  border: 1px solid var(--line, #2f3336) !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  background: var(--bg3, #16181c) !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-actions-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 12px 0 0 !important;
+  padding: 0 !important;
+  height: 20px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-act-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-act-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+
+:is(#app, #searchOverlay, body) .post.post-skel .skel-act-btn {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 4px !important;
+}
+
+/* 2. Chat Rows Skeleton: 1px to 1px identical to .chat-row */
+.chat-row-skel {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 16px !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.chat-row-skel .skel-chat-avi {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+
+.chat-row-skel .skel-chat-body {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+}
+
+.chat-row-skel .skel-chat-top {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.chat-row-skel .skel-chat-name {
+  width: 130px !important;
+  height: 14px !important;
+  border-radius: 4px !important;
+}
+
+.chat-row-skel .skel-chat-time {
+  width: 36px !important;
+  height: 11px !important;
+  border-radius: 4px !important;
+}
+
+.chat-row-skel .skel-chat-msg {
+  height: 12px !important;
+  border-radius: 4px !important;
+}
+
+/* 3. Notifications Skeleton: 1px to 1px identical to .nf-row */
+.nf-row-skel {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 12px !important;
+  border: none !important;
+  border-radius: var(--radius, 12px) !important;
+  background: transparent !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.nf-row-skel .skel-nf-avi {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+
+.nf-row-skel .skel-nf-main {
+  min-width: 0 !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.nf-row-skel .skel-nf-name {
+  width: 120px !important;
+  height: 14px !important;
+  border-radius: 4px !important;
+}
+
+.nf-row-skel .skel-nf-text {
+  width: 75% !important;
+  height: 12px !important;
+  border-radius: 4px !important;
+}
+
+.nf-row-skel .skel-nf-time {
+  width: 38px !important;
+  height: 11px !important;
+  border-radius: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+/* 4. Profile Modal Hero Skeleton */
+.skel-up-hero {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 12px 16px 0 !important;
+}
+
+.skel-up-avi {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 50% !important;
+  flex: none !important;
+}
+
+.skel-up-details {
+  padding: 12px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.skel-up-name {
+  width: 160px !important;
+  height: 18px !important;
+  border-radius: 4px !important;
+}
+
+.skel-up-handle {
+  width: 100px !important;
+  height: 14px !important;
+  border-radius: 4px !important;
+}
+
+.skel-up-bio {
+  width: 85% !important;
+  height: 14px !important;
+  border-radius: 4px !important;
+  margin-top: 4px !important;
+}

@@ -184,6 +184,12 @@ async function _paintProfile(ud) {
     }
   }
 
+  const grid = $('profileGrid');
+  if (grid && !grid.querySelector('.post')) {
+    const { paintFeedSkeleton } = await import('../feed/feed.js');
+    paintFeedSkeleton(grid, 2);
+  }
+
   const myP = await _fetchUserPosts(state.me.uid, false);
   $('statPosts').textContent     = myP.length;
   $('statLikes').textContent     = myP.reduce((s,p) => s+(p.likes||0), 0);
@@ -258,14 +264,30 @@ export async function openDetail(id) {
     p.mediaUrl = await getMediaUrl(p);
   }
 
+  const hasMedia = !!(p.mediaUrl || p.mediaPath || p.storageIndex);
+  const ratio = (p.mediaWidth && p.mediaHeight)
+    ? `${p.mediaWidth} / ${p.mediaHeight}`
+    : ((p.mediaType || '').startsWith('video') ? '16 / 9' : (hasMedia ? '4 / 3' : ''));
+
   $('detailContent').innerHTML = `
     <div class="dm-handle"></div>
     <div class="d-flex items-center gap-10px p-14px-16px-10px">
-      <div class="w-38px h-38px brr-50pct bg-bg3 flex-shrink-0"></div>
-      <div class="flex-1"><div class="h-12px w-120px bg-bg3 brr-4px mb-6px"></div><div class="h-10px w-80px bg-bg3 brr-4px"></div></div>
+      <div class="w-38px h-38px brr-50pct skel-shimmer flex-shrink-0"></div>
+      <div class="flex-1"><div class="h-12px w-120px skel-shimmer brr-4px mb-6px"></div><div class="h-10px w-80px skel-shimmer brr-4px"></div></div>
     </div>
-    <div class="w-full aspect-1 bg-bg3"></div>
-    <div class="h-60px"></div>`;
+    <div style="padding: 0 16px; margin-bottom: 12px;">
+      <div class="h-14px w-90pct skel-shimmer brr-4px" style="margin-bottom: 6px;"></div>
+      <div class="h-14px w-65pct skel-shimmer brr-4px"></div>
+    </div>
+    ${hasMedia ? `<div class="w-full skel-shimmer" style="aspect-ratio: ${ratio}; border-radius: var(--radius);"></div>` : ''}
+    <div style="height: 48px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 18px;">
+        <div class="w-20px h-20px brr-4px skel-shimmer"></div>
+        <div class="w-20px h-20px brr-4px skel-shimmer"></div>
+        <div class="w-20px h-20px brr-4px skel-shimmer"></div>
+      </div>
+      <div class="w-20px h-20px brr-4px skel-shimmer"></div>
+    </div>`;
   $('detailModal').classList.add('show');
   state.detailPostId = id;   // URL: /p/<id>
 
@@ -426,7 +448,25 @@ export async function openUserProfileModal(uid) {
   state.currentViewingUserId = uid;
   _upTab = 'all';
   $('userProfileModal').classList.add('show');
-  $('upBody').innerHTML = '<div class="spin-wrap pt-80px"><div class="spinner"></div></div>';
+  $('upBody').innerHTML = `
+    <div class="skel-up-hero">
+      <div class="skel-up-avi skel-shimmer"></div>
+      <div class="w-100px h-36px brr-999px skel-shimmer"></div>
+    </div>
+    <div class="skel-up-details">
+      <div class="skel-up-name skel-shimmer"></div>
+      <div class="skel-up-handle skel-shimmer"></div>
+      <div class="skel-up-bio skel-shimmer"></div>
+    </div>
+    <div class="w-full d-flex gap-8px p-12px-16px" style="border-bottom: 1px solid var(--line);">
+      <div class="w-50px h-16px skel-shimmer brr-4px"></div>
+      <div class="w-50px h-16px skel-shimmer brr-4px"></div>
+      <div class="w-50px h-16px skel-shimmer brr-4px"></div>
+    </div>
+    <div class="post post-skel" style="border-bottom:none">
+      <div class="post-head"><div class="avi skel-avi skel-shimmer"></div><div class="post-meta skel-meta"><div class="skel-meta-name skel-shimmer"></div></div></div>
+      <div class="post-main skel-main"><div class="skel-caption-line skel-shimmer" style="width:80%"></div><div class="skel-media-box skel-shimmer" style="aspect-ratio:16/9"></div></div>
+    </div>`;
   await renderUserProfileModal(uid);
 }
 

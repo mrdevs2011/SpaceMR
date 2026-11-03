@@ -138,7 +138,17 @@ function listHtml() {
 
   let html = '';
   if (pe.length)    html += section('Odamlar', pe.slice(0, 40).map(personRow).join(''), !posts.length && !groups.length);
-  else if (!q && !usersOk) html += section('Odamlar', empty('Yuklanmoqda…'));
+  else if (!q && !usersOk) {
+    const skel = Array.from({ length: 3 }, () => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;">
+        <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0" class="skel-shimmer"></div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+          <div style="width:110px;height:14px;border-radius:4px" class="skel-shimmer"></div>
+          <div style="width:70px;height:11px;border-radius:4px" class="skel-shimmer"></div>
+        </div>
+      </div>`).join('');
+    html += section('Odamlar', skel);
+  }
   if (groups.length) html += section('Guruhlar', groups.slice(0, 30).map(groupRow).join(''), !posts.length);
   _postsToPaint = posts.slice(0, q ? 40 : 15);
   // X kabi: postlar to'liq post kartasi bo'lib chiqadi (lenta bilan bir xil)

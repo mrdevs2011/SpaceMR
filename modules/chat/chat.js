@@ -833,6 +833,22 @@ export function initChatHeaderMenu() {
 }
 window._initChatHeaderMenu = initChatHeaderMenu;
 
+/* ── Chat skeleton yuklanishi (1px to 1px .chat-row bilan bir xil layout) ── */
+export function paintChatSkeleton(wrap, n = 6) {
+  if (!wrap) return;
+  const row = () => `<div class="chat-row-skel" aria-hidden="true">
+    <div class="skel-chat-avi skel-shimmer"></div>
+    <div class="skel-chat-body">
+      <div class="skel-chat-top">
+        <div class="skel-chat-name skel-shimmer"></div>
+        <div class="skel-chat-time skel-shimmer"></div>
+      </div>
+      <div class="skel-chat-msg skel-shimmer" style="width: 70%;"></div>
+    </div>
+  </div>`;
+  wrap.innerHTML = Array.from({ length: n }, row).join('');
+}
+
 /* ── Spinner (qidiruv yuklanishi) ─────────────────────────────────────── */
 function _paintSearchSpinner() {
   const root = $('chatsListWrap');
@@ -843,7 +859,7 @@ function _paintSearchSpinner() {
     rowsWrap.id = 'chatRowsWrap';
     root.appendChild(rowsWrap);
   }
-  rowsWrap.innerHTML = '<div class="spin-wrap"><div class="spinner"></div></div>';
+  paintChatSkeleton(rowsWrap, 4);
 }
 
 /* ── Paint only user rows (for search results / contacts) ────────────── */
@@ -852,7 +868,7 @@ function _paintUserRows(users, animate = false) {
   if (!root) return;
 
   // Spinner yoki bo'sh placeholder ni o'chiramiz
-  root.querySelectorAll('.spin-wrap, .empty').forEach(el => el.remove());
+  root.querySelectorAll('.spin-wrap, .empty, .chat-row-skel').forEach(el => el.remove());
 
   let rowsWrap = document.getElementById('chatRowsWrap');
   if (!rowsWrap) {
@@ -1532,10 +1548,10 @@ export async function renderChatsList() {
         chatState._usersCache = cached.users;
         paintChatsList(cached.users, chatState._latestChatMap || {});
       } else {
-        root.innerHTML = `<div class="spin-wrap chat-thread-spin"><div class="spinner"></div></div>`;
+        paintChatSkeleton(root, 6);
       }
     } catch (_) {
-      root.innerHTML = `<div class="spin-wrap chat-thread-spin"><div class="spinner"></div></div>`;
+      paintChatSkeleton(root, 6);
     }
   }
 

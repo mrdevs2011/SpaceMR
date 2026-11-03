@@ -36,11 +36,26 @@ async function names(ids) {
   return new Map((data || []).map(r => [r.id, mapProfile(r)]));
 }
 
+export function paintNotifsSkeleton(box, n = 5) {
+  if (!box) return;
+  const row = () => `<div class="nf-row-skel" aria-hidden="true">
+    <div class="skel-nf-avi skel-shimmer"></div>
+    <div class="skel-nf-main">
+      <div class="skel-nf-top" style="display:flex;justify-content:space-between;align-items:center">
+        <div class="skel-nf-name skel-shimmer"></div>
+        <div class="skel-nf-time skel-shimmer"></div>
+      </div>
+      <div class="skel-nf-text skel-shimmer"></div>
+    </div>
+  </div>`;
+  box.innerHTML = Array.from({ length: n }, row).join('');
+}
+
 export async function loadNotifs({ silent = false } = {}) {
   const box = $('notifsList');
   const me = state.me?.uid;
   if (!box || !me) return;
-  if (!silent || !box.children.length) box.innerHTML = '<div class="spin-wrap pt-40px"><div class="spinner"></div></div>';
+  if (!silent || !box.children.length) paintNotifsSkeleton(box, 5);
   const items = [];
   try {
     const { data: msgs } = await sb.from('messages')

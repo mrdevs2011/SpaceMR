@@ -2,7 +2,7 @@
  * Saqlanganlar — saqlangan postlar sahifasi (/saved)
  */
 import { sb, state, mapPost } from '../core/config.js';
-import { renderFeedTo } from '../feed/feed.js';
+import { renderFeedTo, paintFeedSkeleton } from '../feed/feed.js';
 import { navigateTo } from '../router.js';
 
 const $ = id => document.getElementById(id);
@@ -26,7 +26,7 @@ async function load() {
   if (!feed) return;
   if (!state.me) { if (!feed.querySelector('.post')) feed.innerHTML = EMPTY; return; }
   const seq = ++_seq;
-  if (!feed.querySelector('.post')) feed.innerHTML = '<div class="spin-wrap"><div class="spinner"></div></div>';
+  if (!feed.querySelector('.post')) paintFeedSkeleton(feed, 3);
   let rows = [];
   try {
     const { data, error } = await withTimeout(sb.from('saved_posts')

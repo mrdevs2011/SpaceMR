@@ -277,7 +277,7 @@ export function isAdmin() {
 
 // State
 export const state = {
-  me: null, allPosts: [], tab: 'all', search: '', view: 'home',
+  me: null, allPosts: [], postsLoaded: false, tab: 'all', search: '', view: 'home',
   selFile: null, _objUrl: null, visibleN: 10, loadingMore: false,
   reelObs: null, viewedSet: new Set(),
   myLikedPosts: new Set(), _knownUnliked: new Set(), cmtPostId: null,

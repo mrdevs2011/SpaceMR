@@ -1233,6 +1233,8 @@ async function _preloadForSplash(uid) {
         }).filter(Boolean);
         if (posts.length) {
           state.allPosts = posts;
+          state.postsLoaded = true;
+          window.__postsLoaded = true;
           try { cachePosts(uid, posts); } catch (_) {}
           try { import('../feed/feed.js').then(m => m.warmFeedMedia?.(posts)); } catch (_) {}
           if (state.view === 'home') _cb.renderFeed?.();
@@ -1400,6 +1402,8 @@ export function listenPosts() {
   const _cachedPosts = getCachedPosts(myUid);
   if (_cachedPosts && _cachedPosts.length) {
     state.allPosts = _cachedPosts;
+    state.postsLoaded = true;
+    window.__postsLoaded = true;
     _lastPostIds = _cachedPosts.map(p => p.id).join(',');
     if (state.view === 'home')    _cb.renderFeed?.();
     if (state.view === 'reels')   _cb.renderReels?.();
@@ -1523,6 +1527,8 @@ export function listenPosts() {
       for (const [id, p] of byId) if ((p.createdAt || 0) >= oldest && !ids.has(id)) byId.delete(id);
     }
     for (const p of fetched) byId.set(p.id, p);
+    state.postsLoaded = true;
+    window.__postsLoaded = true;
     if (data && data.length < POST_LIMIT) { window.__feedFullyLoaded = true; window.__feedNeedsEmptyRender = true; }
     else window.__feedFullyLoaded = false;
     _scheduleRender();
