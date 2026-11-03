@@ -8,7 +8,6 @@ import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
 import { fixVideoDuration } from '../core/video-policy.js';
-import { emojiImg, emojiHtml, encodeForSend, isEmojiPath } from '../ui/emoji-img.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
 
@@ -35,8 +34,6 @@ let _startX = 0;
 let _startY = 0;
 let _bound = false;
 let _showToken = 0;   // eski yuklanish callbacklarini bekor qilish uchun
-let _reactionToken = 0;
-let _selectedStoryReaction = new Map();
 let _mediaTimeout = null;
 
 
@@ -276,38 +273,6 @@ function ensureStoriesCss() {
     bottom: 4%;
   }
 }
-.sv-reactions {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 10px;
-  padding: 4px 2px;
-}
-.sv-react-chip {
-  width: 48px; height: 48px; min-width: 48px; flex: 0 0 48px;
-  padding: 0; box-sizing: border-box;
-  background: rgba(255, 255, 255, .075);
-  border: 1px solid rgba(255, 255, 255, .22);
-  border-radius: 50%;
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
-  cursor: pointer;
-  transition: transform .2s cubic-bezier(.175,.885,.32,1.275), background .2s ease, border-color .2s ease, box-shadow .2s ease;
-  user-select: none; -webkit-tap-highlight-color: transparent;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.sv-react-chip:active { transform: scale(.9); background: rgba(255,255,255,.18); }
-.sv-react-chip.is-selected {
-  border-color: #c084fc;
-  background: linear-gradient(145deg, rgba(168,85,247,.42), rgba(124,58,237,.24));
-  box-shadow: 0 0 0 2px rgba(192,132,252,.22), 0 0 18px rgba(168,85,247,.34);
-  transform: translateY(-3px) scale(1.08);
-}
-.sv-react-chip.is-saving { opacity: .72; }
-.sv-react-chip.is-selected .sv-reaction-emoji { filter: drop-shadow(0 0 5px rgba(216,180,254,.8)); }
-.sv-reaction-emoji { width: 27px; height: 27px; display: block; object-fit: contain; pointer-events: none; }
-.sv-react-chip:focus-visible { outline: 2px solid rgba(192,132,252,.95); outline-offset: 3px; }
-.sv-react-chip:disabled { cursor: default; opacity: .88; }
 .sv-flying-emoji .emo-img { width: 48px; height: 48px; display: block; object-fit: contain; }
 .sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
 .sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
@@ -329,23 +294,7 @@ function ensureStoriesCss() {
   align-items: center;
   gap: 7px;
 }
-.sv-flying-emoji {
-  position: absolute;
-  left: 50%;
-  bottom: 112px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 20;
-  animation: svFlyUp 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-}
-@keyframes svFlyUp {
-  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0.9; }
-  50% { transform: translate(-50%, -140px) scale(1.3); opacity: 1; }
-  100% { transform: translate(-50%, -280px) scale(1.5); opacity: 0; }
-}
+
 
 `;
   document.head.appendChild(s);
@@ -390,13 +339,6 @@ function ensureDom() {
       <div class="sv-media" id="svMedia"></div>
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
-        <div class="sv-reactions" id="svReactions">
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44f.png" aria-label="Qarsak"><img class="sv-reaction-emoji" src="/emoji/2d/1f44f.png" alt=""></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""></button>
-        </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
           <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
         </div>
@@ -505,65 +447,7 @@ function ensureDom() {
         }
       });
 
-      $('svReactions')?.addEventListener('click', async e => {
-        const chip = e.target.closest('.sv-react-chip');
-        if (!chip?.dataset.emoji) return;
-        e.stopPropagation();
-        const group = _groups[_viewerIdx];
-        const story = group?.items?.[_itemIdx];
-        if (!group || !story || group.isMe || !state.me?.uid) return;
-        const storyId = story.id;
-        const userId = state.me.uid;
-        const previous = _selectedStoryReaction.get(storyId) || null;
-        const next = previous === chip.dataset.emoji ? null : chip.dataset.emoji;
-        const request = ++_reactionToken;
-        const paint = value => {
-          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== storyId) return;
-          $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
-            const selected = button.dataset.emoji === value;
-            button.classList.toggle('is-selected', selected);
-            button.classList.remove('is-saving');
-            button.disabled = false;
-            button.setAttribute('aria-pressed', String(selected));
-          });
-        };
-        if (next) _selectedStoryReaction.set(storyId, next);
-        else _selectedStoryReaction.delete(storyId);
-        paint(next);
-        if (next) spawnFlyingEmoji(next);
-        try { window.haptic?.success?.(); } catch (_) {}
-        $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
-          button.disabled = true;
-          if (button.dataset.emoji === next || button.dataset.emoji === previous) button.classList.add('is-saving');
-        });
-        try {
-          let result;
-          if (next) {
-            result = await sb.from('story_reactions').upsert(
-              { story_id: storyId, user_id: userId, emoji: next },
-              { onConflict: 'story_id,user_id' }
-            );
-          } else {
-            result = await sb.from('story_reactions').delete().eq('story_id', storyId).eq('user_id', userId);
-          }
-          if (result?.error) throw result.error;
-          if (request === _reactionToken) paint(next);
-          if (next) {
-            const notified = await replyToStory(group.uid, story, next);
-            toast(notified ? 'Reaksiya saqlandi' : 'Reaksiya saqlandi, lekin chatga xabar yuborilmadi', notified ? 'success' : 'info');
-          } else {
-            toast('Reaksiya bekor qilindi', 'info');
-          }
-        } catch (error) {
-          if (_selectedStoryReaction.get(storyId) === next || (!_selectedStoryReaction.has(storyId) && next === null)) {
-            if (previous) _selectedStoryReaction.set(storyId, previous);
-            else _selectedStoryReaction.delete(storyId);
-          }
-          if (request === _reactionToken) paint(previous);
-          console.warn('[stories] reaction save:', error?.message || error);
-          toast('Reaksiyani saqlab bo‘lmadi', 'error');
-        }
-      });
+
 
 
     }
@@ -1006,12 +890,7 @@ async function showCurrent() {
 
   const isMine = !!g.isMe;
   const ownBar = $('svOwnBar');
-  const reactions = $('svReactions');
-  if (reactions) reactions.hidden = false;
-  if (reactions) reactions.querySelectorAll('.sv-react-chip').forEach(button => {
-    button.disabled = isMine;
-    button.setAttribute('aria-disabled', String(isMine));
-  });
+
 
   if (isMine) {
     if (ownBar) {
@@ -1035,40 +914,7 @@ async function showCurrent() {
     if (ownBar) ownBar.hidden = true;
   }
 
-  const reactionStoryId = item.id;
-  const reactionUserId = state.me?.uid;
-  const reactionToken = ++_reactionToken;
-  if (reactions && !isMine) {
-    reactions.querySelectorAll('.sv-react-chip').forEach(button => {
-      button.classList.remove('is-selected', 'is-saving');
-      button.disabled = false;
-      button.setAttribute('aria-disabled', 'false');
-      button.setAttribute('aria-pressed', 'false');
-    });
-    const cachedReaction = _selectedStoryReaction.get(reactionStoryId) || null;
-    if (cachedReaction) {
-      reactions.querySelectorAll('.sv-react-chip').forEach(button => {
-        const selected = button.dataset.emoji === cachedReaction;
-        button.classList.toggle('is-selected', selected);
-        button.setAttribute('aria-pressed', String(selected));
-      });
-    }
-    if (reactionUserId) {
-      sb.from('story_reactions').select('emoji').eq('story_id', reactionStoryId).eq('user_id', reactionUserId).maybeSingle()
-        .then(({ data, error }) => {
-          if (reactionToken !== _reactionToken || _groups[_viewerIdx]?.items?.[_itemIdx]?.id !== reactionStoryId) return;
-          if (error) { console.warn('[stories] reaction load:', error.message); return; }
-          const saved = data?.emoji || null;
-          if (saved) _selectedStoryReaction.set(reactionStoryId, saved);
-          else _selectedStoryReaction.delete(reactionStoryId);
-          reactions.querySelectorAll('.sv-react-chip').forEach(button => {
-            const selected = button.dataset.emoji === saved;
-            button.classList.toggle('is-selected', selected);
-            button.setAttribute('aria-pressed', String(selected));
-          });
-        }).catch(error => console.warn('[stories] reaction load:', error?.message || error));
-    }
-  }
+
 
   const media = $('svMedia');
   media.innerHTML = '';
@@ -1227,41 +1073,4 @@ function step(dir, manual = false) {
 export function initStories() {
   ensureDom();
   loadStories();
-}
-
-function spawnFlyingEmoji(emoji) {
-  const v = $('storyViewer'); if (!v) return;
-  const el = document.createElement('div'); el.className = 'sv-flying-emoji';
-  el.innerHTML = isEmojiPath(emoji) ? emojiImg(emoji) : emojiHtml(esc(emoji));
-  v.appendChild(el); setTimeout(() => el.remove(), 850);
-}
-
-export async function replyToStory(authorUid, storyItem, textOrEmoji) {
-  if (!state.me?.uid || !authorUid || !textOrEmoji) return false;
-  const me = state.me.uid;
-  if (authorUid === me) return false;
-
-  const reaction = isEmojiPath(textOrEmoji) ? '[[' + textOrEmoji + ']]' : encodeForSend(textOrEmoji);
-  const content = '[[emoji/2d/1f4f8.png]] Hikoyaga munosabat: ' + reaction;
-  try {
-    const { data: chatId, error: cErr } = await sb.rpc('get_or_create_chat', { p_other: authorUid });
-    if (cErr || !chatId) {
-      console.warn('[stories] get_or_create_chat error:', cErr?.message);
-      return false;
-    }
-    const id = (crypto.randomUUID ? crypto.randomUUID() : ('msg_' + Date.now() + Math.random().toString(36).slice(2)));
-    const { error: mErr } = await sb.from('messages').insert({
-      id,
-      chat_id: chatId,
-      sender_id: me,
-      type: 'text',
-      text: content,
-      created_at: new Date().toISOString()
-    });
-    if (mErr) throw mErr;
-    return true;
-  } catch (e) {
-    console.warn('[stories] reply error:', e?.message || e);
-    return false;
-  }
 }
