@@ -4,6 +4,7 @@
  */
 import { sb, state, mapProfile, mediaPublicUrl } from '../core/config.js';
 import { $, esc, defAvi } from '../core/utils.js';
+import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
 import { fixVideoDuration } from '../core/video-policy.js';
@@ -249,6 +250,138 @@ function ensureStoriesCss() {
   .sv-next { right: calc(50% - min(210px, 46vw)); left: auto; }
 }
 
+.sv-bottom {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 65%, transparent 100%);
+  pointer-events: auto;
+}
+@media (min-width: 700px) {
+  .sv-bottom {
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(420px, 92vw);
+    border-radius: 0 0 28px 28px;
+    bottom: 4%;
+  }
+}
+.sv-reactions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 2px 0;
+}
+.sv-react-chip {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  padding: 5px 11px;
+  font-size: 19px;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sv-react-chip:active {
+  transform: scale(1.35);
+  background: rgba(255, 255, 255, 0.32);
+}
+.sv-reply-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.sv-reply-input {
+  flex: 1;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  padding: 0 16px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.sv-reply-input::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+.sv-reply-input:focus {
+  border-color: #1d9bf0;
+  background: rgba(0, 0, 0, 0.65);
+}
+.sv-reply-send {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1d9bf0;
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.sv-reply-send:active {
+  transform: scale(0.92);
+}
+.sv-own-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  width: 100%;
+}
+.sv-views-badge {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sv-del-btn {
+  background: rgba(244, 33, 46, 0.2);
+  border: 1px solid rgba(244, 33, 46, 0.45);
+  color: #f4212e;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.sv-flying-emoji {
+  position: absolute;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
+  font-size: 44px;
+  pointer-events: none;
+  z-index: 20;
+  animation: svFlyUp 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes svFlyUp {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0.9; }
+  50% { transform: translate(-50%, -140px) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -280px) scale(1.5); opacity: 0; }
+}
+
 `;
   document.head.appendChild(s);
 }
@@ -291,6 +424,28 @@ function ensureDom() {
       </div>
       <div class="sv-media" id="svMedia"></div>
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
+      <div class="sv-bottom" id="svBottom">
+        <div class="sv-reactions" id="svReactions">
+          <button type="button" class="sv-react-chip" data-emoji="❤️" aria-label="Sevgi">❤️</button>
+          <button type="button" class="sv-react-chip" data-emoji="🔥" aria-label="Olov">🔥</button>
+          <button type="button" class="sv-react-chip" data-emoji="😂" aria-label="Kulgu">😂</button>
+          <button type="button" class="sv-react-chip" data-emoji="👏" aria-label="Qarsak">👏</button>
+          <button type="button" class="sv-react-chip" data-emoji="😮" aria-label="Hayrat">😮</button>
+        </div>
+        <div class="sv-reply-row" id="svReplyRow">
+          <input type="text" class="sv-reply-input" id="svReplyInput" placeholder="Hikoyaga javob yozish..." maxlength="250" autocomplete="off">
+          <button type="button" class="sv-reply-send" id="svReplySend" aria-label="Yuborish">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+        <div class="sv-own-bar" id="svOwnBar" hidden>
+          <span class="sv-views-badge" id="svViewsBadge">👁️ 0 ko'rildi</span>
+          <button type="button" class="sv-del-btn" id="svDelBtn" aria-label="Storyni o'chirish">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>O'chirish</span>
+          </button>
+        </div>
+      </div>
     `;
     document.body.appendChild(v);
   }
@@ -338,7 +493,7 @@ function ensureDom() {
     if (v) {
       v.addEventListener('pointerdown', e => {
         if (e.button && e.button !== 0) return;
-        if (e.target.closest('#svClose') || e.target.closest('.sv-user')) return;
+        if (e.target.closest('#svClose') || e.target.closest('.sv-user') || e.target.closest('#svBottom')) return;
         _isHolding = false;
         _startX = e.clientX;
         _startY = e.clientY;
@@ -366,7 +521,7 @@ function ensureDom() {
           _endHold();
           return;
         }
-        if (e.target.closest('#svClose') || e.target.closest('.sv-user')) return;
+        if (e.target.closest('#svClose') || e.target.closest('.sv-user') || e.target.closest('#svBottom')) return;
         // Bir marta qisqa bosish: chap/o'ng navigatsiya
         const mediaEl = $('svMedia') || v;
         const rect = mediaEl.getBoundingClientRect();
@@ -394,6 +549,68 @@ function ensureDom() {
           _endHold();
         }
       });
+
+      const replyInp = $('svReplyInput');
+      replyInp?.addEventListener('focus', () => freezeStory());
+      replyInp?.addEventListener('blur', () => {
+        if (!_isHolding) unfreezeStory();
+      });
+      replyInp?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          doSendReply(replyInp.value);
+        }
+      });
+      $('svReplySend')?.addEventListener('click', e => {
+        e.stopPropagation();
+        doSendReply(replyInp?.value);
+      });
+
+      $('svReactions')?.addEventListener('click', e => {
+        const chip = e.target.closest('.sv-react-chip');
+        if (chip && chip.dataset.emoji) {
+          e.stopPropagation();
+          doSendReply(chip.dataset.emoji);
+        }
+      });
+
+      $('svDelBtn')?.addEventListener('click', async e => {
+        e.stopPropagation();
+        const g = _groups[_viewerIdx];
+        const item = g?.items?.[_itemIdx];
+        if (!g || !item || !g.isMe) return;
+        if (!confirm("Ushbu hikoyani o'chirishni xohlaysizmi?")) return;
+        try {
+          await sb.from('stories').delete().eq('id', item.id);
+          toast("Hikoya o'chirildi", 'info');
+          closeViewer();
+          loadStories();
+        } catch (_) {
+          toast("O'chirib bo'lmadi", 'error');
+        }
+      });
+
+      const doSendReply = async (txt) => {
+        txt = String(txt || '').trim();
+        if (!txt) return;
+        const g = _groups[_viewerIdx];
+        const item = g?.items?.[_itemIdx];
+        if (!g || !item || g.isMe) return;
+
+        if (replyInp) replyInp.value = '';
+        replyInp?.blur();
+        unfreezeStory();
+
+        spawnFlyingEmoji(txt);
+        try { window.haptic?.success?.(); } catch (_) {}
+
+        const ok = await replyToStory(g.uid, item, txt);
+        if (ok) {
+          toast("Javob jo'natildi 🚀", "success");
+        } else {
+          toast("Yuborib bo'lmadi", "error");
+        }
+      };
     }
 
     // Esc: hikoya ko'rgich eng ustki qatlam (shortcuts.js bilan umumiy navbat)
@@ -775,6 +992,8 @@ function closeViewer() {
   if (media) {
     media.innerHTML = '';
   }
+  const replyInp = $('svReplyInput');
+  if (replyInp) replyInp.value = '';
   loadStories(); // ringlarni yangilash
 }
 
@@ -829,6 +1048,31 @@ async function showCurrent() {
   $('svName').textContent = g.name;
   $('svTime').textContent = fmtAgo(item.createdAt) + ' · ' + fmtClock(item.createdAt);
   $('svAvi').innerHTML = `<img src="${esc(g.avatar)}" alt="" onerror="this.style.display='none'">`;
+
+  const isMine = !!g.isMe;
+  const ownBar = $('svOwnBar');
+  const reactions = $('svReactions');
+  const replyRow = $('svReplyRow');
+  const replyInp = $('svReplyInput');
+  if (replyInp) replyInp.value = '';
+
+  if (isMine) {
+    if (reactions) reactions.hidden = true;
+    if (replyRow) replyRow.hidden = true;
+    if (ownBar) {
+      ownBar.hidden = false;
+      const viewsBadge = $('svViewsBadge');
+      if (viewsBadge) viewsBadge.textContent = "👁️ ...";
+      sb.from('story_views').select('id', { count: 'exact', head: true }).eq('story_id', item.id)
+        .then(({ count }) => {
+          if (viewsBadge) viewsBadge.textContent = `👁️ ${count || 0} ta ko'rildi`;
+        }).catch(() => {});
+    }
+  } else {
+    if (reactions) reactions.hidden = false;
+    if (replyRow) replyRow.hidden = false;
+    if (ownBar) ownBar.hidden = true;
+  }
 
   const media = $('svMedia');
   media.innerHTML = '';
@@ -970,4 +1214,43 @@ function step(dir, manual = false) {
 export function initStories() {
   ensureDom();
   loadStories();
+}
+
+function spawnFlyingEmoji(emoji) {
+  const v = $('storyViewer');
+  if (!v) return;
+  const el = document.createElement('div');
+  el.className = 'sv-flying-emoji';
+  el.textContent = emoji;
+  v.appendChild(el);
+  setTimeout(() => el.remove(), 850);
+}
+
+export async function replyToStory(authorUid, storyItem, textOrEmoji) {
+  if (!state.me?.uid || !authorUid || !textOrEmoji) return false;
+  const me = state.me.uid;
+  if (authorUid === me) return false;
+
+  const content = `📸 Hikoyaga munosabat: ${textOrEmoji}`;
+  try {
+    const { data: chatId, error: cErr } = await sb.rpc('get_or_create_chat', { p_other: authorUid });
+    if (cErr || !chatId) {
+      console.warn('[stories] get_or_create_chat error:', cErr?.message);
+      return false;
+    }
+    const id = (crypto.randomUUID ? crypto.randomUUID() : ('msg_' + Date.now() + Math.random().toString(36).slice(2)));
+    const { error: mErr } = await sb.from('messages').insert({
+      id,
+      chat_id: chatId,
+      sender_id: me,
+      type: 'text',
+      text: content,
+      created_at: new Date().toISOString()
+    });
+    if (mErr) throw mErr;
+    return true;
+  } catch (e) {
+    console.warn('[stories] reply error:', e?.message || e);
+    return false;
+  }
 }

@@ -582,19 +582,57 @@ export async function openPostLink(postId, cmtId = null, opts = {}) {
 
 /* Event delegation — har feed konteyner uchun bir marta (#feed, #savedFeed, ...) */
 const _feedBoundEls = new WeakSet();
+let _lastMediaTapTime = 0;
+let _lastMediaTapEl = null;
+let _mediaSingleTapTimer = null;
+
+function showDoubleTapHeart(media) {
+  if (!media) return;
+  const h = document.createElement('div');
+  h.className = 'double-tap-heart';
+  h.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+  media.appendChild(h);
+  try { window.haptic?.success?.(); } catch (_) {}
+  setTimeout(() => h.remove(), 750);
+}
+
 function bindFeedEvents(feedEl) {
   if (!feedEl || _feedBoundEls.has(feedEl)) return;
   _feedBoundEls.add(feedEl);
   feedEl.addEventListener('click', async (e) => {
     const t = e.target;
-    // Post rasm → lightbox (chatdagi kabi zoom)
+    // Post rasm → double tap to like (Instagram reflex); single tap → lightbox zoom
     const media = t.closest('.post-media');
     if (media && (media.dataset.type === 'image' || media.querySelector('img'))) {
       const url = media.dataset.url || media.querySelector('img')?.currentSrc || media.querySelector('img')?.src;
       if (url && !t.closest('video, a, button')) {
         e.preventDefault();
         e.stopPropagation();
-        openZoom(url, 'image');
+
+        const now = Date.now();
+        const isDouble = (_lastMediaTapEl === media && (now - _lastMediaTapTime) < 300);
+        _lastMediaTapTime = now;
+        _lastMediaTapEl = media;
+
+        if (isDouble) {
+          clearTimeout(_mediaSingleTapTimer);
+          _lastMediaTapTime = 0;
+          _lastMediaTapEl = null;
+          const pe = media.closest('.post');
+          const postId = pe?.dataset.id;
+          const likeBtn = pe?.querySelector('.like-btn');
+          if (postId) {
+            if (!state.myLikedPosts.has(postId)) {
+              doLike(postId, likeBtn);
+            }
+            showDoubleTapHeart(media);
+          }
+          return;
+        }
+
+        _mediaSingleTapTimer = setTimeout(() => {
+          openZoom(url, 'image');
+        }, 300);
         return;
       }
     }

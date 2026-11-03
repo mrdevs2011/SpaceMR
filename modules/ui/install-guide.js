@@ -252,11 +252,11 @@ let card = null;
 function dismissCard() { card?.remove(); card = null; }
 
 export function maybeShowGuideCard() {
-  if (!IS_MOBILE || card) return;
+  if (card) return;
   const standalone = isStandalone();
   let kind = null;
-  if (!standalone && !lsGet(LS_CARD)) kind = 'install';
-  else if (standalone && 'Notification' in window && Notification.permission === 'default' && !lsGet(LS_NOTIF_CARD)) kind = 'notif';
+  if (!standalone && IS_MOBILE && !lsGet(LS_CARD)) kind = 'install';
+  else if ('Notification' in window && Notification.permission === 'default' && !lsGet(LS_NOTIF_CARD)) kind = 'notif';
   if (!kind) return;
 
   setTimeout(() => {
@@ -270,7 +270,7 @@ export function maybeShowGuideCard() {
       <div class="ig-card-ico">${isInstall ? I.install : I.bell}</div>
       <div class="ig-card-txt">
         <strong>${isInstall ? "Ilovani o'rnating" : 'Bildirishnomani yoqing'}</strong>
-        <span>${isInstall ? "Tezroq ochiladi, bildirishnoma keladi" : "Xabar va qo'ng'iroqlarni o'tkazib yubormang"}</span>
+        <span>${isInstall ? "Tezroq ochiladi, bildirishnoma keladi" : "Yangi xabar va hikoyalarni o'tkazib yubormang"}</span>
       </div>
       <button type="button" class="ig-card-go">${isInstall ? "Ko'rsatma" : 'Yoqish'}</button>
       <button type="button" class="ig-card-x" aria-label="Yopish"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
@@ -283,7 +283,7 @@ export function maybeShowGuideCard() {
       dismissCard();
       await enableNotifs(null);
     };
-  }, 8000);
+  }, 2500);
 }
 
 /* ── O'rnatilganmi: login tugma yashirin, sozlamalar tugmasi kulrang ── */
