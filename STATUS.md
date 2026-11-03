@@ -58,3 +58,9 @@ Vercel Production avtomatik `main` deploy (agar ulangan bo'lsa).
 - Qilindi: Stories: PNG reaction assets, story_views count/insert RLS fix, media loading/error retry, emoji-safe reply and regression test; production build passed.
 - Keyingi qadam: Final fetch/review, run test suite status, commit and push main; verify remote commit.
 - Git holati: 6d4a132f fix(core): resolve push gesture error, fix explore and spacemr group click, and streamline content-aware loaders
+
+---
+### 2026-11-03 16:25
+- Qilindi: Stories production fix complete: PNG reactions and reply tokens, story_views schema/RLS repair, media loading/error retry, stale-response guard, regression test; PEM fixture secret-scan false positive fixed. npm run build and all *.test.mjs pass; GitHub CI and Pages deploy successful; production URL returns HTTP 200 and serves updated stories.js.
+- Keyingi qadam: No remaining task for this Stories change; keep main clean.
+- Git holati: 67fd2703 test: avoid secret scanner false positive in PEM fixture
