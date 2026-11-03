@@ -40,6 +40,29 @@
     }
   ],
   "id": "/",
+  "shortcuts": [
+    {
+      "name": "Suhbatlar",
+      "short_name": "Suhbatlar",
+      "description": "Xabarlar va guruhlar",
+      "url": "/chats",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Bildirishnomalar",
+      "short_name": "Xabarnoma",
+      "description": "Yangi bildirishnomalar",
+      "url": "/notifications",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Saqlanganlar",
+      "short_name": "Saqlangan",
+      "description": "Saqlangan postlar",
+      "url": "/saved",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
   "related_applications": [
     {
       "platform": "webapp",
