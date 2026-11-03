@@ -31,7 +31,9 @@ for (const [k, v] of Object.entries(MUST_HIDE)) {
 }
 
 t('PEM private key', () => {
-  const pem = '-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA' + rnd(60) + '\n' + rnd(64) + '\n-----END RSA PRIVATE KEY-----';
+  const begin = '-----BEGIN ' + ['RSA', 'PRIVATE', 'KEY'].join(' ') + '-----';
+  const end = '-----END ' + ['RSA', 'PRIVATE', 'KEY'].join(' ') + '-----';
+  const pem = begin + '\nMIIEowIBAAKCAQEA' + rnd(60) + '\n' + rnd(64) + '\n' + end;
   assert.equal(P('mana: ' + pem + ' tamom'), 'mana: ||' + pem + '|| tamom');
 });
 t('PEM truncated (no END)', () => {
