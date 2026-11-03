@@ -55,10 +55,31 @@ function _init() {
   _bindFallback();
   if (cached) _paint(cached);
 
-  document.addEventListener('click', e => {
+  document.addEventListener('click', async e => {
     const btn = e.target.closest('[data-grp-chip]');
     if (!btn) return;
     e.preventDefault();
+    e.stopPropagation();
+    try {
+      const { sb, state } = await import('../core/config.js');
+      const { data } = await sb.from('groups').select('id').ilike('username', USERNAME).maybeSingle();
+      if (data?.id) {
+        if (state.me?.uid) {
+          const { data: mem } = await sb.from('group_members').select('user_id').eq('group_id', data.id).eq('user_id', state.me.uid).maybeSingle();
+          if (!mem) {
+            const { joinGroup } = await import('../chat/groups.js');
+            await joinGroup(data.id);
+          }
+        }
+        const { openGroupThread } = await import('../chat/groups.js');
+        const { navigateTo } = await import('../router.js');
+        navigateTo('chats');
+        await openGroupThread(data.id);
+        const { setUrl } = await import('../url-router.js');
+        setUrl('/chats/g/' + USERNAME);
+        return;
+      }
+    } catch (_) {}
     import('../url-router.js')
       .then(m => m.applyPath('/chats/g/' + USERNAME))
       .catch(() => {});

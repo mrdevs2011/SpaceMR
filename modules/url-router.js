@@ -152,6 +152,7 @@ function userProfileOpen() { return hasShow('userProfileModal') && !!state.curre
 /** Ochiq guruhga a'zo bo'lmagan foydalanuvchi: ?g= havolasidagidek avtomatik qo'shamiz. */
 async function ensureGroupMember(gid) {
   try {
+    if (!state.me?.uid) return true;
     const { data } = await sb.from('group_members').select('user_id')
       .eq('group_id', gid).eq('user_id', state.me.uid).maybeSingle();
     if (data) return true;
@@ -159,7 +160,7 @@ async function ensureGroupMember(gid) {
     await m.joinGroup(gid);
     import('./ui/toast.js').then(t => t.toast("Guruhga qo'shildingiz", 'success')).catch(() => {});
     return true;
-  } catch (_) { return false; }
+  } catch (_) { return true; }
 }
 
 const isWideDesktop = () => window.matchMedia('(min-width: 1100px)').matches;

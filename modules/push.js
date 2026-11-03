@@ -175,32 +175,20 @@ export function ensureNotifOnEveryVisit() {
   if (_notifNagWired) return;
   _notifNagWired = true;
 
-  const ask = async () => {
+  const syncState = async () => {
     if (!('Notification' in window)) return;
-    if (notificationsUserDisabled()) return; // sozlamalarda o'chirgan
+    if (notificationsUserDisabled()) return;
     if (Notification.permission === 'granted') {
       if (!_initDone) {
         try { await initPush(); } catch (_) {}
       }
-      return;
     }
-    // default yoki denied — baribir requestPermission (denied da brauzer dialogsiz denied qaytaradi)
-    try {
-      const p = await Notification.requestPermission();
-      if (p === 'granted') {
-        _initDone = false;
-        await initPush();
-      }
-    } catch (_) {}
   };
 
-  // Boot
-  setTimeout(ask, 400);
-  // Tab qayta ko'rinishi / fokus
+  // Faqat granted bo'lsa push obunasini tekshiradi (user gesture talab qilmaydi)
+  syncState();
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) ask();
+    if (!document.hidden) syncState();
   });
-  window.addEventListener('focus', ask);
-  // Sahifa pageshow (bfcache)
-  window.addEventListener('pageshow', ask);
+  window.addEventListener('focus', syncState);
 }

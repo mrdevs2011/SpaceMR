@@ -345,9 +345,15 @@ if (sbSearchInput) sbSearchInput.oninput = e => handleSearchInput(e.target.value
   }
   const explore = document.getElementById('hdrExploreBtn');
   if (explore) {
-    explore.addEventListener('click', () => {
-      document.getElementById('hdrSearchBtn')?.click()
-        || document.getElementById('sbSearchToggle')?.click();
+    explore.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const overlay = document.getElementById('searchOverlay');
+      if (overlay?.classList.contains('open')) {
+        document.getElementById('searchOverlayClose')?.click();
+      } else {
+        const { applyPath } = await import('../url-router.js');
+        applyPath('/explore');
+      }
     });
   }
   const notif = document.getElementById('hdrNotifBtn');

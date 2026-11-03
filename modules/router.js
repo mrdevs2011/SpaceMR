@@ -286,7 +286,7 @@ let _activeRoute = 'home';
 
 /** Bir marta bind qilinadi (initRouter da), tab o'zgarganda DOM ga tegmaymiz */
 function _initSearchHandlers() {
-  const hdrSearchBtn  = $('hdrSearchBtn');
+  const hdrSearchBtn  = $('hdrSearchBtn') || $('hdrExploreBtn');
   const sbSearchToggle = $('sbSearchToggle');
 
   function handleSearchClick(e) {
@@ -298,6 +298,7 @@ function _initSearchHandlers() {
       overlay.classList.remove('open');
       sbSearchToggle?.classList.remove('search-active');
       hdrSearchBtn?.classList.remove('search-active');
+      $('hdrExploreBtn')?.classList.remove('search-active');
       const si = document.getElementById('searchInput');
       if (si) si.value = '';
       window.dispatchEvent(new CustomEvent('spacemr:route'));
@@ -306,7 +307,7 @@ function _initSearchHandlers() {
         overlay.classList.add('open');
         sbSearchToggle?.classList.add('search-active');
         hdrSearchBtn?.classList.add('search-active');
-        // Explore input avtomatik fokuslanmasin
+        $('hdrExploreBtn')?.classList.add('search-active');
       });
     }
     import('./ui/right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
@@ -314,6 +315,7 @@ function _initSearchHandlers() {
 
   if (hdrSearchBtn)   hdrSearchBtn.addEventListener('click', handleSearchClick);
   if (sbSearchToggle) sbSearchToggle.addEventListener('click', handleSearchClick);
+  $('hdrExploreBtn')?.addEventListener('click', handleSearchClick);
 }
 
 /** Profile view da qidiruv inputini ochadi/yopadi */

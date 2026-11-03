@@ -112,41 +112,17 @@ async function appendPostsToFeed(feedEl, newPosts) {
 }
 
 
-/** ROADMAP 2 — yuklanish skeleti (1px to 1px post kartasi bilan bir xil layout) */
-export function paintFeedSkeleton(feedEl, n = 3) {
+/** Silliq va nozik yuklanish shadow/shimmeri */
+export function paintFeedSkeleton(feedEl) {
   if (!feedEl) return;
-  const ratios = ['16 / 9', '4 / 3', null];
-  const row = (idx) => {
-    const ratio = ratios[idx % ratios.length];
-    return `<div class="post post-skel" aria-hidden="true">
-      <div class="post-head">
-        <div class="avi skel-avi skel-shimmer"></div>
-        <div class="post-meta skel-meta">
-          <div class="skel-meta-name skel-shimmer"></div>
-          <div class="skel-meta-handle skel-shimmer"></div>
-          <span class="skel-meta-dot">·</span>
-          <div class="skel-meta-time skel-shimmer"></div>
-        </div>
-      </div>
-      <div class="post-main skel-main">
-        <div class="skel-caption-line skel-shimmer" style="width: 88%;"></div>
-        <div class="skel-caption-line skel-shimmer" style="width: 62%;"></div>
-        ${ratio ? `<div class="skel-media-box skel-shimmer" style="aspect-ratio: ${ratio};"></div>` : ''}
-        <div class="post-actions skel-actions-row">
-          <div class="post-actions-left skel-act-left">
-            <div class="skel-act-btn skel-shimmer"></div>
-            <div class="skel-act-btn skel-shimmer"></div>
-            <div class="skel-act-btn skel-shimmer"></div>
-          </div>
-          <div class="post-actions-right skel-act-right">
-            <div class="skel-act-btn skel-shimmer"></div>
-            <div class="skel-act-btn skel-shimmer"></div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  };
-  feedEl.innerHTML = Array.from({ length: n }, (_, i) => row(i)).join('');
+  feedEl.innerHTML = `<div class="feed-shadow-placeholder" aria-hidden="true" style="padding: 16px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; opacity: 0.75;">
+    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg3, #16181c);" class="skel-shimmer flex-shrink-0"></div>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+      <div style="width: 140px; height: 14px; border-radius: 4px; background: var(--bg3, #16181c);" class="skel-shimmer"></div>
+      <div style="width: 85%; height: 12px; border-radius: 4px; background: var(--bg3, #16181c);" class="skel-shimmer"></div>
+      <div style="width: 60%; height: 12px; border-radius: 4px; background: var(--bg3, #16181c);" class="skel-shimmer"></div>
+    </div>
+  </div>`;
 }
 
 export async function renderFeedTo(feedEl, posts) {
@@ -328,7 +304,7 @@ export async function renderFeedTo(feedEl, posts) {
 function reconcileFeed(feedEl, html, posts) {
   const existing = new Map();
   for (const el of Array.from(feedEl.children)) {
-    if (el.classList.contains('post') && !el.classList.contains('post-skel') && el.dataset.id) existing.set(el.dataset.id, el);
+    if (el.classList.contains('post') && el.dataset.id) existing.set(el.dataset.id, el);
   }
   if (!existing.size) { feedEl.innerHTML = html; return; }   // birinchi chizish / bo'sh holat
 
@@ -336,12 +312,12 @@ function reconcileFeed(feedEl, html, posts) {
   tpl.innerHTML = html;
   const fresh = new Map();
   for (const el of Array.from(tpl.content.children)) {
-    if (el.classList.contains('post') && !el.classList.contains('post-skel') && el.dataset.id) fresh.set(el.dataset.id, el);
+    if (el.classList.contains('post') && el.dataset.id) fresh.set(el.dataset.id, el);
   }
 
-  // Spinner / skeleton / bo'sh holat kabi post bo'lmaganlarni olib tashlaymiz (renderFeed qayta qo'shadi)
+  // Placeholder / bo'sh holat kabi post bo'lmaganlarni olib tashlaymiz
   for (const el of Array.from(feedEl.children)) {
-    if (!el.classList.contains('post') || el.classList.contains('post-skel')) el.remove();
+    if (!el.classList.contains('post')) el.remove();
   }
   const wanted = new Set(posts.map(p => String(p.id)));
   existing.forEach((el, id) => { if (!wanted.has(id)) el.remove(); });
@@ -1101,10 +1077,10 @@ export async function renderFeed() {
   const _snap = (!targetId && state.view === 'home') ? captureScrollAnchor(feedEl) : null;
   if (_snap?.h > 0 && feedEl) feedEl.style.minHeight = _snap.h + 'px';
 
-  // Birinchi renderda yoki postlar hali yuklanmagan bo'lsa — aniq skeleton ko'rsatamiz
-  const hasRealPosts = !!feedEl?.querySelector('.post:not(.post-skel)');
+  // Birinchi renderda yoki postlar hali yuklanmagan bo'lsa
+  const hasRealPosts = !!feedEl?.querySelector('.post');
   if (!hasRealPosts && !posts.length) {
-    paintFeedSkeleton(feedEl, 3);
+    paintFeedSkeleton(feedEl);
     if (!state.postsLoaded && !window.__postsLoaded && !state.search) return;
   }
   _feedFirstRender = false;
