@@ -52,3 +52,9 @@ Vercel Production avtomatik `main` deploy (agar ulangan bo'lsa).
 - Qilindi: Discover va guruh qidiruvi parallel/stale-safe qilindi; group query payload va watcher duplicate so'rovlari qisqartirildi; UUID deep-link cache fast-path qo'shildi; video duration fix single-flight qilindi. 8 test fayli va production build o'tdi. Branch fix/discover-groups-video-stability, commit b8f8f407 GitHub'ga push qilindi.
 - Keyingi qadam: Preview deploy va real brauzer/telefon sinovi: Kashf ochilishi, SpaceMR guruhiga birinchi/ikkinchi kirish, 5-10 daqiqalik video playback, seek/progress/loading holati. Natijaga qarab regression test va main merge.
 - Git holati: b8f8f407 perf: stabilize discover group loading and video duration
+
+---
+### 2026-11-03 16:20
+- Qilindi: Stories: PNG reaction assets, story_views count/insert RLS fix, media loading/error retry, emoji-safe reply and regression test; production build passed.
+- Keyingi qadam: Final fetch/review, run test suite status, commit and push main; verify remote commit.
+- Git holati: 6d4a132f fix(core): resolve push gesture error, fix explore and spacemr group click, and streamline content-aware loaders

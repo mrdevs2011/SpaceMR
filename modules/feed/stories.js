@@ -8,6 +8,7 @@ import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
 import { fixVideoDuration } from '../core/video-policy.js';
+import { emojiImg, emojiHtml, encodeForSend, isEmojiPath } from '../ui/emoji-img.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
 
@@ -34,6 +35,7 @@ let _startX = 0;
 let _startY = 0;
 let _bound = false;
 let _showToken = 0;   // eski yuklanish callbacklarini bekor qilish uchun
+let _mediaTimeout = null;
 
 
 function ensureStoriesCss() {
@@ -292,9 +294,16 @@ function ensureStoriesCss() {
   justify-content: center;
 }
 .sv-react-chip:active {
-  transform: scale(1.35);
+  transform: scale(1.18);
   background: rgba(255, 255, 255, 0.32);
 }
+.sv-reaction-emoji { width: 25px; height: 25px; display: block; object-fit: contain; pointer-events: none; }
+.sv-flying-emoji .emo-img { width: 48px; height: 48px; display: block; object-fit: contain; }
+.sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
+.sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
+@keyframes svSpin { to { transform: rotate(360deg); } }
+.sv-media-error button { border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 9px 16px; color: #fff; background: rgba(255,255,255,.12); font: inherit; cursor: pointer; pointer-events: auto; }
+.sv-views-badge svg { width: 17px; height: 17px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.8; }
 .sv-reply-row {
   display: flex;
   align-items: center;
@@ -426,11 +435,11 @@ function ensureDom() {
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
         <div class="sv-reactions" id="svReactions">
-          <button type="button" class="sv-react-chip" data-emoji="❤️" aria-label="Sevgi">❤️</button>
-          <button type="button" class="sv-react-chip" data-emoji="🔥" aria-label="Olov">🔥</button>
-          <button type="button" class="sv-react-chip" data-emoji="😂" aria-label="Kulgu">😂</button>
-          <button type="button" class="sv-react-chip" data-emoji="👏" aria-label="Qarsak">👏</button>
-          <button type="button" class="sv-react-chip" data-emoji="😮" aria-label="Hayrat">😮</button>
+          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""></button>
+          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""></button>
+          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
+          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f44f.png" aria-label="Qarsak"><img class="sv-reaction-emoji" src="/emoji/2d/1f44f.png" alt=""></button>
+          <button type="button" class="sv-react-chip" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""></button>
         </div>
         <div class="sv-reply-row" id="svReplyRow">
           <input type="text" class="sv-reply-input" id="svReplyInput" placeholder="Hikoyaga javob yozish..." maxlength="250" autocomplete="off">
@@ -439,7 +448,7 @@ function ensureDom() {
           </button>
         </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
-          <span class="sv-views-badge" id="svViewsBadge">👁️ 0 ko'rildi</span>
+          <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
           <button type="button" class="sv-del-btn" id="svDelBtn" aria-label="Storyni o'chirish">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
             <span>O'chirish</span>
@@ -606,7 +615,7 @@ function ensureDom() {
 
         const ok = await replyToStory(g.uid, item, txt);
         if (ok) {
-          toast("Javob jo'natildi 🚀", "success");
+          toast("Javob jo'natildi", "success");
         } else {
           toast("Yuborib bo'lmadi", "error");
         }
@@ -976,6 +985,8 @@ function unfreezeStory() {
 }
 
 function closeViewer() {
+  clearTimeout(_mediaTimeout);
+  ++_showToken;
   clearTimeout(_holdTimer);
   _isHolding = false;
   _paused = false;
@@ -1062,11 +1073,19 @@ async function showCurrent() {
     if (ownBar) {
       ownBar.hidden = false;
       const viewsBadge = $('svViewsBadge');
-      if (viewsBadge) viewsBadge.textContent = "👁️ ...";
-      sb.from('story_views').select('id', { count: 'exact', head: true }).eq('story_id', item.id)
-        .then(({ count }) => {
-          if (viewsBadge) viewsBadge.textContent = `👁️ ${count || 0} ta ko'rildi`;
-        }).catch(() => {});
+      const countEl = viewsBadge?.querySelector('.sv-views-count');
+      const countStoryId = item.id;
+      if (countEl) countEl.textContent = '…';
+      sb.from('story_views').select('story_id', { count: 'exact', head: true }).eq('story_id', countStoryId)
+        .then(({ count, error }) => {
+          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
+          if (error) { console.warn('[stories] views count:', error.message); if (countEl) countEl.textContent = '—'; return; }
+          if (countEl) countEl.textContent = String(count ?? 0);
+        }).catch(err => {
+          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
+          console.warn('[stories] views count:', err?.message || err);
+          if (countEl) countEl.textContent = '—';
+        });
     }
   } else {
     if (reactions) reactions.hidden = false;
@@ -1076,6 +1095,11 @@ async function showCurrent() {
 
   const media = $('svMedia');
   media.innerHTML = '';
+  clearTimeout(_mediaTimeout);
+  const loading = document.createElement('div');
+  loading.className = 'sv-media-loading';
+  loading.innerHTML = '<span class="sv-loading-spinner" aria-hidden="true"></span><span>Hikoya yuklanmoqda…</span>';
+  media.appendChild(loading);
   let duration = STORY_MS;
   const isVideo = String(item.mediaType || '').startsWith('video');
 
@@ -1109,8 +1133,23 @@ async function showCurrent() {
   // Progress faqat media tayyor bo'lgandan KEYIN boshlanadi
   const n = g.items.length;
   buildProgress(n, _itemIdx, 0);
+  const showMediaFailure = () => {
+    if (token !== _showToken) return;
+    clearTimeout(_mediaTimeout); loading.remove(); el.style.display = 'none';
+    if (media.querySelector('.sv-media-error')) return;
+    const box = document.createElement('div'); box.className = 'sv-media-error';
+    box.addEventListener('pointerdown', e => e.stopPropagation());
+    box.addEventListener('pointerup', e => e.stopPropagation());
+    box.innerHTML = '<svg viewBox="0 0 48 48" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="7" width="38" height="34" rx="5"/><circle cx="17" cy="19" r="3"/><path d="m7 35 11-10 7 6 5-5 11 10M24 14v9m0 5v.5"/></svg><span>Hikoyani yuklab bo‘lmadi</span>';
+    const retry = document.createElement('button'); retry.type = 'button'; retry.textContent = 'Qayta urinish';
+    retry.addEventListener('pointerdown', e => e.stopPropagation());
+    retry.addEventListener('pointerup', e => e.stopPropagation());
+    retry.addEventListener('click', e => { e.stopPropagation(); showCurrent(); });
+    box.appendChild(retry); media.appendChild(box);
+  };
   const startProgress = () => {
     if (token !== _showToken) return;
+    clearTimeout(_mediaTimeout); loading.remove();
     el.style.opacity = '1';
     _startedAt = performance.now();
     _elapsed = 0; _rate = 1; _lastTs = performance.now();
@@ -1150,15 +1189,16 @@ async function showCurrent() {
       el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
       startProgress();
     };
-    el.onerror = startProgress;
+    el.onerror = showMediaFailure;
     el.src = src;
-    if (el.readyState >= 1) begin();
+    if (el.readyState >= 2) begin();
     else el.addEventListener('loadeddata', begin, { once: true });
   } else {
     el.onload = startProgress;
-    el.onerror = startProgress;
+    el.onerror = showMediaFailure;
     el.src = src;
   }
+  _mediaTimeout = setTimeout(showMediaFailure, 15000);
 
   // Keyingi story mediasini oldindan yuklab qo'yish
   const nextItem = g.items[_itemIdx + 1] || _groups[_viewerIdx + 1]?.items?.[0];
@@ -1169,16 +1209,12 @@ async function showCurrent() {
 }
 
 async function markViewed(item) {
-  if (!state.me || item.seen) return;
+  if (!state.me?.uid || item.seen) return;
   item.seen = true;
   try {
-    await sb.from('story_views').upsert({
-      story_id: item.id,
-      user_id: state.me.uid,
-      viewed_at: new Date().toISOString(),
-    });
-  } catch (_) {}
-  // Update hasUnseen on group
+    const { error } = await sb.from('story_views').insert({ story_id: item.id, user_id: state.me.uid, viewed_at: new Date().toISOString() });
+    if (error && error.code !== '23505') throw error;
+  } catch (err) { item.seen = false; console.warn('[stories] mark viewed:', err?.message || err); return; }
   const g = _groups[_viewerIdx];
   if (g) g.hasUnseen = g.items.some(i => !i.seen);
   saveSnapshot(state.me.uid, _groups);
@@ -1217,13 +1253,10 @@ export function initStories() {
 }
 
 function spawnFlyingEmoji(emoji) {
-  const v = $('storyViewer');
-  if (!v) return;
-  const el = document.createElement('div');
-  el.className = 'sv-flying-emoji';
-  el.textContent = emoji;
-  v.appendChild(el);
-  setTimeout(() => el.remove(), 850);
+  const v = $('storyViewer'); if (!v) return;
+  const el = document.createElement('div'); el.className = 'sv-flying-emoji';
+  el.innerHTML = isEmojiPath(emoji) ? emojiImg(emoji) : emojiHtml(esc(emoji));
+  v.appendChild(el); setTimeout(() => el.remove(), 850);
 }
 
 export async function replyToStory(authorUid, storyItem, textOrEmoji) {
@@ -1231,7 +1264,8 @@ export async function replyToStory(authorUid, storyItem, textOrEmoji) {
   const me = state.me.uid;
   if (authorUid === me) return false;
 
-  const content = `📸 Hikoyaga munosabat: ${textOrEmoji}`;
+  const reaction = isEmojiPath(textOrEmoji) ? '[[' + textOrEmoji + ']]' : encodeForSend(textOrEmoji);
+  const content = '[[emoji/2d/1f4f8.png]] Hikoyaga munosabat: ' + reaction;
   try {
     const { data: chatId, error: cErr } = await sb.rpc('get_or_create_chat', { p_other: authorUid });
     if (cErr || !chatId) {
