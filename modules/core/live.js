@@ -86,8 +86,8 @@ export function initLive() {
 
   const reloadStories = debounce(() => import('../feed/stories.js').then(m => m.loadStories()).catch(() => {}), 600);
   const reloadNotifs  = debounce(() => {
-    if (visible($('notifsList'))) import('../ui/notifs.js').then(m => m.loadNotifs({ silent: true })).catch(() => {});
-  }, 400);
+    import('../ui/notifs.js').then(m => m.loadNotifs({ silent: true })).catch(() => {});
+  }, 500);
   const reloadSaved   = debounce(() => {
     if (state.view === 'saved') import('../profile/view-saved.js').then(m => m.initView()).catch(() => {});
   }, 300);
@@ -102,8 +102,13 @@ export function initLive() {
   _chans.push(sb.channel('live-notifs')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, reloadNotifs)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'group_messages' }, reloadNotifs)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, reloadNotifs)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'post_likes' }, reloadNotifs)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `user_id=eq.${me}` }, reloadNotifs)
     .subscribe());
+
+  // Dastlabki badge: notification sahifasini ochmasdan ham sonni yangilab turadi.
+  import('../ui/notifs.js').then(m => m.loadNotifs({ silent: true })).catch(() => {});
 
   // Saqlanganlar: boshqa qurilmada saqlash/olib tashlash
   _chans.push(sb.channel('live-saved')

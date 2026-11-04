@@ -22,6 +22,9 @@ const EMO_ANY = /\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3|\uFE0F|
   groups: [{ id: "g1", name: `Oila ${HEART}`, type: "group", avatar: null }],
   group_members: [{ group_id: "g1", user_id: "u1" }, { group_id: "g1", user_id: "u2" }],
   push_tokens: [{ token: '{"e":1}', user_id: "u2", origin: "https://spacemr.vercel.app" }],
+  posts: [{ id: "p1", user_id: "u2", media_path: "u2/posts/photo.jpg" }],
+  post_likes: [{ post_id: "p1", user_id: "u1", created_at: new Date().toISOString() }],
+  comments: [{ id: "cm1", post_id: "p1", user_id: "u1", text: "Zo‘r post", created_at: new Date().toISOString() }],
 };
 
 async function push(table: string, record: any) {
@@ -71,6 +74,28 @@ p = await push("group_messages", { group_id: "g1", sender_id: "u1", type: "text"
 eq("guruh emoji-only", p.body, "Ali: Emoji"); eq("guruh emoji image", p.image, "https://spacemr.vercel.app/emoji/2d/1f602.png");
 p = await push("calls", { id: "k1", status: "ringing", caller_id: "u1", callee_id: "u2" });
 eq("qo'ng'iroq", p.body, "Qo'ng'iroq qilmoqda..."); noEmoji("qo'ng'iroq", p); eq("qo'ng'iroq sarlavha", p.title, "Ali");
+
+// Social push: JWT actor tekshiriladi, recipient faqat post egasidan olinadi.
+async function social(event: string, extra: any = {}, token = "valid-user-token") {
+  sent.length = 0;
+  const res = await handler(new Request("http://f", {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ kind: "social", event, postId: "p1", ...extra }),
+  }));
+  return { res, payload: sent[0]?.payload };
+}
+let sr = await social("like");
+eq("social like status", sr.res.status, 200);
+eq("social like type", sr.payload?.type, "social");
+eq("social like title", sr.payload?.title, "Ali");
+eq("social like body", sr.payload?.body, "Postingizga yoqdi");
+eq("social like target", sr.payload?.postId, "p1");
+sr = await social("like"); eq("duplicate like suppressed", sent.length, 0);
+sr = await social("comment", { commentId: "cm1" });
+eq("social comment body", sr.payload?.body, "Izoh: Zo‘r post");
+sr = await social("like", {}, "bad-token");
+eq("social invalid JWT", sr.res.status, 401); eq("invalid JWT no push", sent.length, 0);
 
 eq("cleanPushText stray", cleanPushText("a\uFE0F\u200Db").text, "ab");
 eq("xavfli kalit rad", cleanPushText("[[emoji/2d/../x.png]]").hadEmoji, false);

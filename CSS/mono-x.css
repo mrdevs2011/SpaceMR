@@ -8167,6 +8167,11 @@ body::-webkit-scrollbar,
 }
 .nf-row:hover { background: rgba(231, 233, 234, 0.05); }
 .nf-avi { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #16181c; }
+.nf-avatar-wrap { position: relative; display: inline-flex; flex: 0 0 44px; width: 44px; height: 44px; }
+.nf-activity-icon { position: absolute; right: -3px; bottom: -3px; width: 19px; height: 19px; display: grid; place-items: center; border: 2px solid var(--bg,#000); border-radius: 50%; background: #f4212e; color: #fff; font-size: 11px; line-height: 1; }
+.nf-activity-icon.comment { background: var(--blue,#1d9bf0); }
+.nf-row.nf-unread { background: rgba(29,155,240,.075); }
+.nf-unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue,#1d9bf0); flex: 0 0 7px; }
 .nf-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .nf-name { font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nf-text { font-size: 13px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

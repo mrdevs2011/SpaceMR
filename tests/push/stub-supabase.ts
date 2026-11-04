@@ -2,6 +2,8 @@
 export function createClient() {
   const db = () => (globalThis as any).__DB as Record<string, any[]>;
   return {
+    auth: { getUser: async (token: string) => ({ data: { user: token === 'valid-user-token' ? { id: 'u1' } : null }, error: token === 'valid-user-token' ? null : new Error('invalid token') }) },
+    storage: { from: (_bucket: string) => ({ getPublicUrl: (path: string) => ({ data: { publicUrl: `https://spacemr.vercel.app/storage/${path}` } }) }) },
     from(table: string) {
       let rows = [...(db()[table] ?? [])];
       const q: any = {

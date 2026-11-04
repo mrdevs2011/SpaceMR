@@ -31,7 +31,7 @@ function revokeObjUrl() {
 function _measureSelectedMedia(file, objUrl) {
   state._selMediaW = null;
   state._selMediaH = null;
-  if (file.type.startsWith('image')) {
+  if (isImageFile(file)) {
     const img = new Image();
     img.onload = () => {
       // Foydalanuvchi shu orada faylni almashtirgan/tozalagan bo'lishi mumkin
@@ -133,7 +133,7 @@ export function pickFile(f) {
   $('uploadBtn').disabled = false;
   $('previewArea').style.display = 'block';
 
-  if (f.type.startsWith('image')) {
+  if (isImageFile(f)) {
     $('previewArea').innerHTML = `<div class="preview-wrap"><img src="${esc(state._objUrl)}"><button class="preview-clear" data-action="clear-file">
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
     </button></div>`;
@@ -205,7 +205,7 @@ async function _prepareUploadFile(file, label, mode = 'post') {
     return res.file;
   }
   // Rasm — story uchun kuchliroq siqish
-  if (file.type.startsWith('image/')) {
+  if (isImageFile(file)) {
     try {
       const compressed = await compressImage(file, { preset: isStory ? 'story' : 'post' });
       if (compressed !== file) console.info('[compress] image:', fmtSz(file.size), '→', fmtSz(compressed.size), compressed.type);
@@ -437,12 +437,28 @@ export async function submitPost() {
       if (capEl && !capEl.value.trim()) capEl.value = caption;
     }
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    const status = Number(err?.status || 0);
+    const uploadMessage = status === 400 || status === 415
+      ? 'Server rasm formatini qabul qilmadi'
+      : status === 401 ? 'Sessiya tugagan — qayta kirib ko‘r'
+      : status === 403 ? 'Yuklashga ruxsat berilmadi'
+      : status === 413 ? 'Rasm hajmi juda katta'
+      : status === 429 ? 'Juda ko‘p urinish — biroz kut'
+      : status >= 500 ? 'Serverda vaqtinchalik xato — qayta urinib ko‘r'
+      : /vaqti tugadi/i.test(err?.message || '') ? 'Yuklash vaqti tugadi — internetni tekshir'
+      : /tarmoq/i.test(err?.message || '') ? 'Internet bilan aloqa uzildi'
+      : 'Rasm yuklanmadi — qayta urinib ko‘r';
     const msg = offline
       ? "Internet yo'q — matn qoralama sifatida saqlandi"
-      : (hasFile ? 'Yuklash amalga oshmadi' : 'Post joylanmadi');
+      : (hasFile ? uploadMessage : 'Post joylanmadi');
     if (hasFile) floatBarDone(false);
     toast(msg, 'error');
     if (localBlob) try { URL.revokeObjectURL(localBlob); } catch (_) {}
+    // Upload muvaffaqiyatsiz bo‘lsa, foydalanuvchi tanlagan rasmni yo‘qotmaymiz.
+    if (hasFile && fileRef) {
+      try { pickFile(fileRef); } catch (restoreErr) { console.warn('[upload] faylni qayta tiklab bo‘lmadi:', restoreErr); }
+    }
+    console.error('[post] submit failed:', err?.message || err, err);
   } finally {
     _submitBusy = false;
     $('uploadBtn').disabled = false;

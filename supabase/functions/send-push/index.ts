@@ -18,7 +18,13 @@ webpush.setVapidDetails(
 // aks holda bitta xabar har domen uchun alohida bildirishnoma bo'lib, 3 marta keladi.
 const CANON_ORIGIN = (Deno.env.get("PUSH_CANONICAL_ORIGIN") ?? "https://spacemr.vercel.app").replace(/\/$/, "");
 
-const ok = (b = "ok") => new Response(b, { status: 200 });
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, apikey, x-client-info, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const ok = (b = "ok") => new Response(b, { status: 200, headers: corsHeaders });
+const recentSocialPush = new Map<string, number>();
 
 /** bo'sh joylarni yig'ib, uzun matnni "…" bilan qisqartiradi */
 function clip(s: string, n = 110): string {
@@ -92,12 +98,70 @@ function shareImage(r: any): string | undefined {
 }
 
 Deno.serve(async (req) => {
-  if (req.headers.get("x-webhook-secret") !== Deno.env.get("PUSH_WEBHOOK_SECRET")) {
-    return new Response("forbidden", { status: 403 });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return new Response("method not allowed", { status: 405, headers: corsHeaders });
 
+  const isWebhook = req.headers.get("x-webhook-secret") === Deno.env.get("PUSH_WEBHOOK_SECRET");
   let body: any;
   try { body = await req.json(); } catch { return ok("bad json"); }
+
+  // Social push: ilova muvaffaqiyatli like/comment yozilgach JWT bilan chaqiradi.
+  // Actor va event serverda qayta tekshiriladi; client recipient yoki matnni belgilay olmaydi.
+  if (body?.kind === "social") {
+    const bearer = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+    if (!bearer || isWebhook) return new Response("unauthorized", { status: 401, headers: corsHeaders });
+    const { data: authData, error: authError } = await sb.auth.getUser(bearer);
+    const actorId = authData?.user?.id;
+    if (authError || !actorId) return new Response("unauthorized", { status: 401, headers: corsHeaders });
+
+    const event = body.event;
+    const postId = String(body.postId || "");
+    if (!postId || !["like", "comment"].includes(event)) return ok("invalid social event");
+    const { data: post } = await sb.from("posts").select("id, user_id, media_path, media_type").eq("id", postId).maybeSingle();
+    if (!post || post.user_id === actorId) return ok("no recipient");
+
+    let commentText = "";
+    let eventKey = "";
+    if (event === "like") {
+      const { data: like } = await sb.from("post_likes").select("post_id, created_at").eq("post_id", postId).eq("user_id", actorId).maybeSingle();
+      if (!like) return ok("like not found");
+      eventKey = `like:${postId}:${actorId}:${like.created_at || ""}`;
+    } else {
+      const commentId = String(body.commentId || "");
+      const { data: comment } = await sb.from("comments").select("id, text").eq("id", commentId).eq("post_id", postId).eq("user_id", actorId).maybeSingle();
+      if (!comment) return ok("comment not found");
+      eventKey = `comment:${commentId}`;
+      commentText = clip(maskSpoilers(String(comment.text || "")), 90);
+    }
+    const now = Date.now();
+    for (const [key, at] of recentSocialPush) if (now - at > 10 * 60_000) recentSocialPush.delete(key);
+    if (recentSocialPush.has(eventKey)) return ok("duplicate social event");
+    recentSocialPush.set(eventKey, now);
+
+    const { data: actor } = await sb.from("profiles").select("full_name, avatar").eq("id", actorId).maybeSingle();
+    const actorName = plain(actor?.full_name, "SpaceMR");
+    const { data: subscriptions } = await sb.from("push_tokens").select("token, user_id, origin").eq("user_id", post.user_id);
+    const canon = (subscriptions || []).some(t => t.origin === CANON_ORIGIN);
+    const rows = (subscriptions || []).filter(t => !canon || t.origin === CANON_ORIGIN);
+    const image = post.media_path && String(post.media_type || "").startsWith("image/")
+      ? sb.storage.from("media").getPublicUrl(post.media_path).data?.publicUrl : undefined;
+    const payload = JSON.stringify({
+      type: "social", title: actorName,
+      body: event === "like" ? "Postingizga yoqdi" : `Izoh: ${commentText || "Yangi izoh"}`,
+      icon: typeof actor?.avatar === "string" && actor.avatar.startsWith("https://") ? actor.avatar : undefined,
+      image: typeof image === "string" && image.startsWith("https://") ? image : undefined,
+      fromUid: actorId, postId, commentId: event === "comment" ? String(body.commentId) : undefined,
+    });
+    const dead: string[] = [];
+    await Promise.all(rows.map(async ({ token }) => {
+      try { await webpush.sendNotification(JSON.parse(token), payload, { TTL: 3600, urgency: "normal" }); }
+      catch (e: any) { if (e?.statusCode === 404 || e?.statusCode === 410) dead.push(token); else console.error("[send-push social]", e?.statusCode, e?.body ?? e?.message); }
+    }));
+    if (dead.length) await sb.from("push_tokens").delete().in("token", dead);
+    return ok(`social sent ${rows.length - dead.length}`);
+  }
+
+  if (!isWebhook) return new Response("forbidden", { status: 403, headers: corsHeaders });
   const { type, table, record: r } = body ?? {};
   if (type !== "INSERT" || !r) return ok("skip");
 

@@ -70,7 +70,7 @@ self.addEventListener('push', (event) => {
       image,   // ulashilgan post rasmi yoki (faqat emoji xabarda) emoji PNG'i
       lang:  'uz',
       timestamp: Date.now(),
-      tag:   isCall ? 'spacemr-call' : (data.chatId || data.groupId || data.fromUid || 'spacemr'),
+      tag:   isCall ? 'spacemr-call' : (data.type === 'social' ? `spacemr-social-${data.postId || data.fromUid || 'activity'}` : (data.chatId || data.groupId || data.fromUid || 'spacemr')),
       renotify: !isCall,
       data:  { url: '/', ...data },
       // Qo'ng'iroqda kuchli tebranish pattern
@@ -96,7 +96,9 @@ self.addEventListener('notificationclick', (event) => {
 
   // URL ga action ni parametr sifatida qo'shamiz — sayt ochilganda qayta ishlaydi
   let openUrl = url;
-  if (data.type === 'call' && data.fromUid) {
+  if (data.type === 'social' && data.postId) {
+    openUrl = `/p/${encodeURIComponent(data.postId)}${data.commentId ? '/comments' : ''}`;
+  } else if (data.type === 'call' && data.fromUid) {
     openUrl = action === 'reject'
       ? `/?call_action=reject&from=${data.fromUid}`
       : `/?call_action=accept&from=${data.fromUid}`;
@@ -106,7 +108,13 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const client of list) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.postMessage({ type: 'CALL_ACTION', action, data });
+          if (data.type === 'call') {
+            client.postMessage({ type: 'CALL_ACTION', action, data });
+            return client.focus();
+          }
+          if (data.type === 'social' && typeof client.navigate === 'function') {
+            return client.navigate(new URL(openUrl, self.location.origin).href).then(next => next?.focus?.() || client.focus());
+          }
           return client.focus();
         }
       }

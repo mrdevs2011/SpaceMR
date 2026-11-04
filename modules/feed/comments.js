@@ -527,6 +527,9 @@ async function sendComment(mode) {
     try {
       const { error } = await sb.from('comments').insert({ id, post_id: postId, user_id: uid, user_name: name, text });
       if (error) throw error;
+      sb.functions.invoke('send-push', { body: { kind: 'social', event: 'comment', postId, commentId: id } })
+        .then(({ error: pushError }) => { if (pushError) console.warn('[Push] comment:', pushError.message); })
+        .catch(pushErr => console.warn('[Push] comment:', pushErr?.message || pushErr));
       _pendingCmts.delete(id);
       const n = (_cmtCache && _cmtCache.postId === postId) ? _cmtCache.cmts.length
         : (state.allPosts.find(p => p.id === postId)?.commentCount || 0);

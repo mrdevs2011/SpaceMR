@@ -191,12 +191,20 @@ function _xhrUpload(url, file, token, onProgress) {
       if (xhr.status >= 200 && xhr.status < 300) {
         try { resolve(JSON.parse(xhr.responseText || '{}')); }
         catch (_) { resolve({}); }
-      } else {
-        reject(new Error('Yuklash xatosi ' + xhr.status));
+        return;
       }
+      let detail = '';
+      try {
+        const body = JSON.parse(xhr.responseText || '{}');
+        detail = body.message || body.error_description || body.error || body.msg || '';
+      } catch (_) { detail = String(xhr.responseText || '').slice(0, 180); }
+      const error = new Error(`Storage HTTP ${xhr.status}${detail ? ': ' + detail : ''}`);
+      error.status = xhr.status;
+      reject(error);
     };
-    xhr.onerror = () => reject(new Error('Tarmoq xatosi'));
+    xhr.onerror = () => reject(new Error('Tarmoq bilan aloqa uzildi'));
     xhr.ontimeout = () => reject(new Error('Yuklash vaqti tugadi'));
+    xhr.onabort = () => reject(new Error('Yuklash bekor qilindi'));
     xhr.send(file);
   });
 }
@@ -207,24 +215,39 @@ export async function uploadViaController(file, folder = 'posts', opts = {}) {
   try {
     if (!state.me) throw new Error('Tizimga kirilmagan');
     assertAllowedUpload(file, folder);
-    const safeName = file.name.replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
+    const originalName = String(file.name || 'upload.bin');
+    const ext = originalName.toLowerCase().split('.').pop();
+    const inferredMime = ({ jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif', bmp: 'image/bmp' })[ext];
+    if (inferredMime && (!file.type || file.type === 'application/octet-stream' || file.type === 'binary/octet-stream')) {
+      file = new File([file], originalName, { type: inferredMime, lastModified: file.lastModified || Date.now() });
+    }
+    const safeName = originalName.replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
     const path = `${state.me.uid}/${folder}/${Date.now()}_${(crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))}_${safeName}`;
     const { data: sess } = await sb.auth.getSession();
-    const token = sess?.session?.access_token;
+    let token = sess?.session?.access_token;
     if (!token) throw new Error('Tizimga kirilmagan');
     const url = `${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path.split('/').map(encodeURIComponent).join('/')}`;
     const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
     let lastErr = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         await _xhrUpload(url, file, token, onProgress);
         return { path, url: mediaPublicUrl(path) };
       } catch (e) {
         lastErr = e;
-        if (attempt === 0) await new Promise(r => setTimeout(r, 600));
+        if (e?.status === 401 && attempt < 2) {
+          const { data: refreshed, error: refreshError } = await sb.auth.refreshSession();
+          if (!refreshError && refreshed?.session?.access_token) {
+            token = refreshed.session.access_token;
+            continue;
+          }
+        }
+        const retryable = !e?.status || e.status === 408 || e.status === 429 || e.status >= 500;
+        if (!retryable || attempt >= 2) break;
+        await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
       }
     }
-    console.error('Storage:', lastErr);
+    console.error('[Storage upload]', lastErr);
     throw lastErr || new Error('Yuklash amalga oshmadi');
   } finally {
     if (track) endUpload();

@@ -39,10 +39,12 @@ export function isSvgFile(file) {
   return /\.svg$/i.test(_n(file));
 }
 export function isImageFile(file) {
-  if (!file) return false;
+  if (!file || isSvgFile(file)) return false;
   const t = _t(file);
-  if (isSvgFile(file)) return false;
-  return t.startsWith('image/') || (!t && IMAGE_EXT.test(_n(file)));
+  if (t.startsWith('video/') || t.startsWith('audio/')) return false;
+  if (t.startsWith('image/')) return true;
+  // Ayrim mobil brauzerlar rasm uchun application/octet-stream yoki bo‘sh MIME qaytaradi.
+  return (!t || t === 'application/octet-stream' || t === 'binary/octet-stream') && IMAGE_EXT.test(_n(file));
 }
 
 /** Chat/guruh fayl biriktirish: hamma narsa (video ham, fayl sifatida). */

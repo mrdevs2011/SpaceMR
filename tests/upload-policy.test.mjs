@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { isImageFile, isVideoFile, isAllowedUpload } from '../modules/core/upload-policy.js';
+const file = (name, type = '') => ({ name, type });
+assert.equal(isImageFile(file('IMG_01.HEIC', '')), true);
+assert.equal(isImageFile(file('photo.jpg', 'application/octet-stream')), true);
+assert.equal(isImageFile(file('photo.webp', 'image/webp')), true);
+assert.equal(isImageFile(file('fake.jpg', 'video/mp4')), false);
+assert.equal(isImageFile(file('file.pdf', 'application/pdf')), false);
+assert.equal(isImageFile(file('vector.svg', 'image/svg+xml')), false);
+assert.equal(isVideoFile(file('clip.mov', 'application/octet-stream')), true);
+assert.equal(isAllowedUpload(file('photo.jpg', 'application/octet-stream')), true);
+console.log('8/8 upload policy OK');
