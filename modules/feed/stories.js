@@ -289,10 +289,192 @@ function ensureStoriesCss() {
 .sv-views-badge {
   font-size: 13px;
   font-weight: 500;
-  color: rgba(255, 255, 255, .82);
-  display: flex;
+  color: rgba(255, 255, 255, .88);
+  display: inline-flex;
   align-items: center;
   gap: 7px;
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .16);
+  padding: 6px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s ease, transform .1s ease;
+}
+.sv-views-badge:hover {
+  background: rgba(255, 255, 255, .20);
+}
+.sv-views-badge:active {
+  transform: scale(.96);
+}
+.sv-viewers-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10005;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sv-viewers-modal[hidden] {
+  display: none !important;
+}
+.sv-viewers-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.sv-viewers-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 72vh;
+  background: #14161f;
+  color: #fff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, .6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-bottom: none;
+  animation: svSheetUp .22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 600px) {
+  .sv-viewers-modal {
+    align-items: center;
+    padding: 20px;
+  }
+  .sv-viewers-sheet {
+    border-radius: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+    max-height: 80vh;
+  }
+}
+@keyframes svSheetUp {
+  from { transform: translateY(100%); opacity: .8; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sv-viewers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+.sv-viewers-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sv-viewers-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.sv-viewers-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(168, 85, 247, .2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, .3);
+  padding: 2px 8px;
+  border-radius: 999px;
+  min-width: 22px;
+}
+.sv-viewers-close {
+  background: rgba(255, 255, 255, .1);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color .15s ease;
+}
+.sv-viewers-close:hover {
+  background: rgba(255, 255, 255, .2);
+}
+.sv-viewers-list {
+  padding: 8px 12px 24px;
+  overflow-y: auto;
+  max-height: calc(72vh - 65px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sv-viewers-loading, .sv-viewers-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, .6);
+  font-size: 14px;
+}
+.sv-viewers-empty-icon {
+  opacity: .4;
+  color: #fff;
+}
+.sv-viewer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+.sv-viewer-row:hover {
+  background: rgba(255, 255, 255, .08);
+}
+.sv-viewer-row:active {
+  background: rgba(255, 255, 255, .14);
+}
+.sv-viewer-avi {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 42px;
+  background: rgba(255, 255, 255, .08);
+}
+.sv-viewer-avi img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sv-viewer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.sv-viewer-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sv-viewer-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, .55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 
@@ -353,6 +535,13 @@ function ensureDom() {
     $('svClose')?.addEventListener('click', e => {
       e.stopPropagation();
       closeViewer();
+    });
+
+    $('svViewsBadge')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const currentItem = _groups[_viewerIdx]?.items?.[_itemIdx];
+      if (!currentItem?.id) return;
+      openStoryViewersModal(currentItem.id);
     });
 
     // Avatar / ism bosilsa — egasining profiliga o'tish (o'z storym bo'lsa — mening profilim)
@@ -452,6 +641,7 @@ function ensureDom() {
 
     }
 
+    onEsc(910, () => { const m = $('svViewersModal'); if (!m || m.hidden) return false; closeStoryViewersModal(); return true; });
     // Esc: hikoya ko'rgich eng ustki qatlam (shortcuts.js bilan umumiy navbat)
     onEsc(900, () => { const v = $('storyViewer'); if (!v || v.hidden) return false; closeViewer(); return true; });
     document.addEventListener('keydown', e => {
@@ -814,7 +1004,143 @@ function unfreezeStory() {
   try { const v = _storyVideo(); if (v) v.play().catch(() => {}); } catch (_) {}
 }
 
+function closeStoryViewersModal() {
+  const m = $('svViewersModal');
+  if (m && !m.hidden) {
+    m.hidden = true;
+    const v = $('storyViewer');
+    if (v && !v.hidden) unfreezeStory();
+  }
+}
+
+async function openStoryViewersModal(storyId) {
+  freezeStory();
+  let modal = $('svViewersModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'svViewersModal';
+    modal.className = 'sv-viewers-modal';
+    modal.innerHTML = `
+      <div class="sv-viewers-backdrop" id="svViewersBackdrop"></div>
+      <div class="sv-viewers-sheet">
+        <div class="sv-viewers-header">
+          <div class="sv-viewers-title-wrap">
+            <h3 class="sv-viewers-title">Hikoyani ko'rganlar</h3>
+            <span class="sv-viewers-badge-pill" id="svViewersBadgePill">0</span>
+          </div>
+          <button type="button" class="sv-viewers-close" id="svViewersClose" aria-label="Yopish">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="sv-viewers-list" id="svViewersList">
+          <div class="sv-viewers-loading"><span class="sv-loading-spinner" aria-hidden="true"></span><span>Yuklanmoqda…</span></div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#svViewersBackdrop')?.addEventListener('click', closeStoryViewersModal);
+    modal.querySelector('#svViewersClose')?.addEventListener('click', closeStoryViewersModal);
+  }
+
+  modal.hidden = false;
+  const listEl = modal.querySelector('#svViewersList');
+  const pillEl = modal.querySelector('#svViewersBadgePill');
+  if (listEl) {
+    listEl.innerHTML = '<div class="sv-viewers-loading"><span class="sv-loading-spinner" aria-hidden="true"></span><span>Yuklanmoqda…</span></div>';
+  }
+
+  try {
+    const { data, count, error } = await sb.from('story_views')
+      .select('story_id, user_id, viewed_at', { count: 'exact' })
+      .eq('story_id', storyId)
+      .order('viewed_at', { ascending: false });
+
+    if (error) throw error;
+    const views = data || [];
+    const totalCount = (typeof count === 'number' && !isNaN(count)) ? count : views.length;
+    if (pillEl) pillEl.textContent = String(totalCount);
+
+    const cur = _groups[_viewerIdx]?.items?.[_itemIdx];
+    if (cur && cur.id === storyId) {
+      cur.viewsCount = totalCount;
+      const countEl = $('svViewsBadge')?.querySelector('.sv-views-count');
+      if (countEl) countEl.textContent = String(totalCount);
+    }
+
+    if (!views.length) {
+      if (listEl) {
+        listEl.innerHTML = `
+          <div class="sv-viewers-empty">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" class="sv-viewers-empty-icon"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <p>Hozircha hech kim ko'rmagan</p>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    const uids = [...new Set(views.map(v => v.user_id).filter(Boolean))];
+    const { data: profs } = uids.length
+      ? await sb.from('profiles').select('id, full_name, username, avatar').in('id', uids)
+      : { data: [] };
+
+    const pMap = new Map((profs || []).map(p => [p.id, p]));
+
+    if (listEl) {
+      listEl.innerHTML = views.map(v => {
+        const p = pMap.get(v.user_id) || {};
+        const name = p.full_name || p.username || 'Foydalanuvchi';
+        const uname = p.username ? `@${p.username}` : '';
+        const timeAgo = v.viewed_at ? fmtAgo(v.viewed_at) : '';
+        const avi = p.avatar || defAvi(name);
+        return `
+          <div class="sv-viewer-row" data-uid="${esc(v.user_id)}">
+            <div class="sv-viewer-avi">
+              <img src="${esc(avi)}" alt="" onerror="this.src='${esc(defAvi(name))}'">
+            </div>
+            <div class="sv-viewer-info">
+              <div class="sv-viewer-name">${esc(name)}</div>
+              <div class="sv-viewer-meta">${esc(uname)}${uname && timeAgo ? ' · ' : ''}${esc(timeAgo)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listEl.querySelectorAll('.sv-viewer-row').forEach(row => {
+        row.addEventListener('click', async () => {
+          const uid = row.getAttribute('data-uid');
+          if (!uid) return;
+          closeStoryViewersModal();
+          closeViewer();
+          try {
+            if (uid === state.me?.uid) {
+              const { navigateTo } = await import('../router.js');
+              navigateTo('profile');
+            } else {
+              const { openUserProfileModal } = await import('../profile/profile.js');
+              openUserProfileModal(uid);
+            }
+          } catch (err) {
+            console.warn('[stories] viewer profiliga o\'tish:', err?.message || err);
+          }
+        });
+      });
+    }
+  } catch (err) {
+    console.warn('[stories] viewers fetch failed:', err?.message || err);
+    if (listEl) {
+      listEl.innerHTML = `
+        <div class="sv-viewers-empty">
+          <p>Ro'yxatni yuklab bo'lmadi</p>
+        </div>
+      `;
+    }
+  }
+}
+
 function closeViewer() {
+  closeStoryViewersModal();
   clearTimeout(_mediaTimeout);
   ++_showToken;
   clearTimeout(_holdTimer);
@@ -888,7 +1214,7 @@ async function showCurrent() {
   $('svTime').textContent = fmtAgo(item.createdAt) + ' · ' + fmtClock(item.createdAt);
   $('svAvi').innerHTML = `<img src="${esc(g.avatar)}" alt="" onerror="this.style.display='none'">`;
 
-  const isMine = !!g.isMe;
+  const isMine = !!g.isMe || (!!state.me?.uid && g.uid === state.me.uid);
   const ownBar = $('svOwnBar');
 
 
@@ -898,16 +1224,24 @@ async function showCurrent() {
       const viewsBadge = $('svViewsBadge');
       const countEl = viewsBadge?.querySelector('.sv-views-count');
       const countStoryId = item.id;
-      if (countEl) countEl.textContent = '…';
-      sb.from('story_views').select('story_id', { count: 'exact', head: true }).eq('story_id', countStoryId)
-        .then(({ count, error }) => {
+      if (countEl) countEl.textContent = (item.viewsCount != null) ? String(item.viewsCount) : '0';
+      sb.from('story_views').select('story_id', { count: 'exact' }).eq('story_id', countStoryId)
+        .then(({ data, count, error }) => {
           if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
-          if (error) { console.warn('[stories] views count:', error.message); if (countEl) countEl.textContent = '—'; return; }
-          if (countEl) countEl.textContent = String(count ?? 0);
+          if (error) {
+            console.warn('[stories] views count:', error.message || error);
+            if (countEl && item.viewsCount == null) countEl.textContent = '0';
+            return;
+          }
+          const realCount = (typeof count === 'number' && !isNaN(count))
+            ? count
+            : (Array.isArray(data) ? data.length : 0);
+          item.viewsCount = realCount;
+          if (countEl) countEl.textContent = String(realCount);
         }).catch(err => {
           if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
           console.warn('[stories] views count:', err?.message || err);
-          if (countEl) countEl.textContent = '—';
+          if (countEl && item.viewsCount == null) countEl.textContent = '0';
         });
     }
   } else {
@@ -1032,13 +1366,13 @@ async function showCurrent() {
 }
 
 async function markViewed(item) {
-  if (!state.me?.uid || item.seen) return;
+  const g = _groups[_viewerIdx];
+  if (!state.me?.uid || item.seen || g?.isMe || (g?.uid && g.uid === state.me.uid)) return;
   item.seen = true;
   try {
     const { error } = await sb.from('story_views').insert({ story_id: item.id, user_id: state.me.uid, viewed_at: new Date().toISOString() });
     if (error && error.code !== '23505') throw error;
   } catch (err) { item.seen = false; console.warn('[stories] mark viewed:', err?.message || err); return; }
-  const g = _groups[_viewerIdx];
   if (g) g.hasUnseen = g.items.some(i => !i.seen);
   saveSnapshot(state.me.uid, _groups);
 }
