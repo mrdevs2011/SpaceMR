@@ -3,18 +3,22 @@
  *
  * Firebase/FCM yo'q: brauzerning o'z Push API'si ishlatiladi. Obuna (subscription)
  * `push_tokens` jadvaliga register_push_token RPC orqali yoziladi, yuborishni
- * Edge Function (supabase/functions/send-push) bajaradi.
+ * Chat/call push eski Edge Function'da qoladi; like/comment alohida Vercel API orqali yuboriladi.
  *
  * Android: sayt yopiq bo'lsa ham xabar keladi.
  * Desktop: brauzer ochiq bo'lsa keladi.
  *
  * VAPID_PUBLIC_KEY — ochiq kalit (maxfiy emas). Maxfiy kalit FAQAT Supabase
- * Edge Function secret'ida turadi (README: supabase/functions/send-push/README.md).
+ * Chat/call uchun eski VAPID kalit saqlanadi. Social push o'z alohida worker/keypair'iga ega.
  */
 
 import { sb, state } from './core/config.js';
 
 export const VAPID_PUBLIC_KEY = 'BC7D7mT0RhLjM8kes8iFCvavCiTY5crwYaXzGeuEIRclNoRmIDAg0QTpgfbGvefGmprso8bqiArQ3a1kz33FOt0';
+
+// Alohida VAPID juftligi: eski chat/call subscription va Edge secret'iga tegmaydi.
+const SOCIAL_VAPID_PUBLIC_KEY = 'BA_VRFyejzm1adqnb7yF_4c9Z8lBUa1LRVyy4ykErOOAQzYdWQe-Gfd0_QCAKQ5sNHnEQKjxGaHC9BhTTJbDviY';
+const SOCIAL_PUSH_ORIGIN = 'https://spacemr.vercel.app#social-v2';
 
 // Foydalanuvchi "Sozlamalar" ekranidan bildirishnomalarni o'chirib qo'ysa,
 // keyingi kirishlarda initPush() avtomatik chaqirilmasligi uchun localStorage
@@ -59,6 +63,49 @@ function _platform() {
   if (/android/i.test(ua)) return 'android';
   if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
   return 'web';
+}
+
+/** Like/comment uchun alohida worker va VAPID obunasi. Eski root workerga tegmaydi. */
+async function _initSocialPush(uid) {
+  try {
+    const reg = await navigator.serviceWorker.register('/social-push/sw.js', { scope: '/social-push/' });
+    await reg.update().catch(() => {});
+    const key = _b64urlToBytes(SOCIAL_VAPID_PUBLIC_KEY);
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && !_sameKey(sub, key)) {
+      await sub.unsubscribe().catch(() => {});
+      sub = null;
+    }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+    if (!sub) return;
+    const { error } = await sb.rpc('register_push_token', {
+      p_token: JSON.stringify(sub.toJSON()),
+      p_platform: _platform(),
+      p_origin: SOCIAL_PUSH_ORIGIN,
+    });
+    if (error) throw error;
+  } catch (error) {
+    // Ikkilamchi kanal xatosi asosiy chat/call push'ni buzmasin.
+    console.warn('[Push] social channel unavailable:', error?.message || 'registration failed');
+  }
+}
+
+/** Social eventni JWT bilan Vercel serverless endpointiga yuboradi. */
+export async function sendSocialPush(event, postId, commentId) {
+  const { data } = await sb.auth.getSession();
+  const token = data?.session?.access_token;
+  if (!token) return;
+  const response = await fetch('/api/social-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ kind: 'social', event, postId, ...(commentId ? { commentId } : {}) }),
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    throw new Error(result.error || `HTTP ${response.status}`);
+  }
+  return response.json().catch(() => ({}));
 }
 
 /** Service Worker'ni ro'yxatdan o'tkazish */
@@ -118,6 +165,8 @@ export async function initPush() {
     });
     if (error) throw error;
 
+    // Ikkinchi worker eski subscriptionni almashtirmaydi.
+    await _initSocialPush(uid);
     _initDone = true;
   } catch (e) {
     const msg = e?.message || String(e);
@@ -141,6 +190,15 @@ export async function removePushToken() {
         await sb.from('push_tokens').delete().eq('token', JSON.stringify(sub.toJSON()));
       }
       await sub.unsubscribe().catch(() => {});
+    }
+    // Social worker alohida registration: logoutda uning tokeni ham o'chadi.
+    const socialReg = await navigator.serviceWorker?.getRegistration('/social-push/');
+    const socialSub = socialReg ? await socialReg.pushManager.getSubscription() : null;
+    if (socialSub) {
+      if (state.me?.uid) {
+        await sb.from('push_tokens').delete().eq('token', JSON.stringify(socialSub.toJSON()));
+      }
+      await socialSub.unsubscribe().catch(() => {});
     }
   } catch {
     // Jimgina

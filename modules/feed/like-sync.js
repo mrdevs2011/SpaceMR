@@ -2,6 +2,7 @@
    Bir post uchun bir vaqtda bitta so'rov; tez-tez bosilsa faqat oxirgi istalgan holat yuboriladi.
    Xato bo'lsa — onFail(serverHolati, meta) bilan UI serverdagi haqiqiy holatga qaytariladi. */
 import { sb } from '../core/config.js';
+import { sendSocialPush } from '../push.js';
 
 const jobs = new Map(); // postId -> { server, want, onFail, meta }
 
@@ -17,8 +18,7 @@ export function syncLike(postId, uid, wasLiked, want, onFail, meta) {
         if (target) {
           const { error } = await sb.from('post_likes').insert({ post_id: postId, user_id: uid });
           if (error && error.code !== '23505') throw error; // 23505 = allaqachon like
-          if (!error) sb.functions.invoke('send-push', { body: { kind: 'social', event: 'like', postId } })
-            .then(({ error: pushError }) => { if (pushError) console.warn('[Push] like:', pushError.message); })
+          if (!error) sendSocialPush('like', postId)
             .catch(e => console.warn('[Push] like:', e?.message || e));
         } else {
           const { error } = await sb.from('post_likes').delete().eq('post_id', postId).eq('user_id', uid);

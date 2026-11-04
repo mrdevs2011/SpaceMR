@@ -1,3 +1,4 @@
+import { sendSocialPush } from '../push.js';
 import { protectSecrets } from '../core/secrets.js';
 import { sb, state, isAdmin, getMediaUrl, mapProfile } from '../core/config.js';
 import { $, esc, renderMarkdown, markdownToPlain, defAvi, fmtCount, fmt } from '../core/utils.js';
@@ -527,8 +528,7 @@ async function sendComment(mode) {
     try {
       const { error } = await sb.from('comments').insert({ id, post_id: postId, user_id: uid, user_name: name, text });
       if (error) throw error;
-      sb.functions.invoke('send-push', { body: { kind: 'social', event: 'comment', postId, commentId: id } })
-        .then(({ error: pushError }) => { if (pushError) console.warn('[Push] comment:', pushError.message); })
+      sendSocialPush('comment', postId, id)
         .catch(pushErr => console.warn('[Push] comment:', pushErr?.message || pushErr));
       _pendingCmts.delete(id);
       const n = (_cmtCache && _cmtCache.postId === postId) ? _cmtCache.cmts.length
