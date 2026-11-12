@@ -659,7 +659,7 @@ function delApp(id) {
   if (!a || !canEdit(a.owner_id)) return;
   showConfirm(`"${a.name}" ilovasi butunlay o'chiriladi.`, async () => {
     const { error } = await sb.from('apps').delete().eq('id', id);
-    if (error) { alert(dbErr(error)); return; }
+    if (error) { toast(dbErr(error), 'error'); return; }
     const c = catById(a.category_id);
     closeRunner(); loaded = false; await load(true);
     go(c ? c.slug : '');
@@ -669,10 +669,10 @@ function delApp(id) {
 function delCat(id) {
   const c = cats.find(x => x.id === id);
   if (!c || !canEdit(c.owner_id)) return;
-  if (apps.some(a => a.category_id === id)) { alert('Kategoriyada ilovalar bor — avval ularni o\'chiring.'); return; }
+  if (apps.some(a => a.category_id === id)) { toast('Kategoriyada ilovalar bor — avval ularni o\'chiring.', 'warn'); return; }
   showConfirm(`"${c.name}" kategoriyasi o'chiriladi.`, async () => {
     const { error } = await sb.from('app_categories').delete().eq('id', id);
-    if (error) { alert(dbErr(error)); return; }
+    if (error) { toast(dbErr(error), 'error'); return; }
     loaded = false; await load(true); go('');
   }, 'Kategoriyani o\'chirish', 'O\'chirish');
 }

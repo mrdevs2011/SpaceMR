@@ -410,20 +410,22 @@ function _openChatContextMenu(row) {
 
   overlay.querySelector('#chatCtxDelete')?.addEventListener('click', () => {
     close();
-    if (!confirm("Ushbu suhbatni o'chirmoqchimisiz?")) return;
-    _deleteChatForMe(id);
-    toast("Suhbat o'chirildi", "info");
-    paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+    showConfirm("Ushbu suhbatni o'chirmoqchimisiz?", () => {
+      _deleteChatForMe(id);
+      toast("Suhbat o'chirildi", "info");
+      paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+    }, "Suhbatni o'chirish", "O'chirish");
   });
 
   overlay.querySelector('#chatCtxLeave')?.addEventListener('click', async () => {
     close();
-    if (!confirm("Guruhdan chiqmoqchimisiz?")) return;
-    try {
-      await leaveGroup(id);
-      toast("Guruhdan chiqdingiz", "info");
-      paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
-    } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
+    showConfirm("Guruhdan chiqmoqchimisiz?", async () => {
+      try {
+        await leaveGroup(id);
+        toast("Guruhdan chiqdingiz", "info");
+        paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
+      } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
+    }, "Guruhdan chiqish", "Chiqish");
   });
 }
 
@@ -769,46 +771,47 @@ export function initChatHeaderMenu() {
       } catch (_) {}
     });
 
-    drop.querySelector('#chmClearSaved')?.addEventListener('click', async (ev) => {
+    drop.querySelector('#chmClearSaved')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
       drop.remove();
       const chatId = state.currentChatId;
       const uid = state.currentChatUid;
-      // Saqlangan xabarlar: o'zim bilan chat — tarixni tozalash (suhbatdan chiqish emas)
       if (!chatId) return;
-      if (!confirm("Saqlangan xabarlar tarixini tozalaysizmi? Barcha xabarlar o'chadi.")) return;
-      try {
-        const meId = state.me?.uid || state.me?.id;
-        let q = sb.from('messages').delete().eq('chat_id', chatId);
-        if (meId) q = q.eq('sender_id', meId);
-        const { error } = await q;
-        if (error) throw error;
-        chatState._curMsgs = [];
-        try { cacheThreadMessages(chatId, []); } catch (_) {}   // kesh qolsa keyingi ochishda xabarlar qaytadi
-        paintMessages([]);
-        const c = chatState._latestChatMap?.[uid];
-        if (c) { c.lastMessage = ''; c.lastMessageAt = 0; c.lastSenderId = null; c.lastMessageId = null; }
-        try { localStorage.removeItem('thread_' + chatId); } catch (_) {}
-        toast('Tarix tozalandi', 'success');
-        if (state.view === 'chats') renderChatsList();
-      } catch (err) {
-        toast('Tarix tozalanmadi: ' + (err?.message || 'xato'), 'error');
-      }
+      showConfirm("Saqlangan xabarlar tarixini tozalaysizmi? Barcha xabarlar o'chadi.", async () => {
+        try {
+          const meId = state.me?.uid || state.me?.id;
+          let q = sb.from('messages').delete().eq('chat_id', chatId);
+          if (meId) q = q.eq('sender_id', meId);
+          const { error } = await q;
+          if (error) throw error;
+          chatState._curMsgs = [];
+          try { cacheThreadMessages(chatId, []); } catch (_) {}   // kesh qolsa keyingi ochishda xabarlar qaytadi
+          paintMessages([]);
+          const c = chatState._latestChatMap?.[uid];
+          if (c) { c.lastMessage = ''; c.lastMessageAt = 0; c.lastSenderId = null; c.lastMessageId = null; }
+          try { localStorage.removeItem('thread_' + chatId); } catch (_) {}
+          toast('Tarix tozalandi', 'success');
+          if (state.view === 'chats') renderChatsList();
+        } catch (err) {
+          toast('Tarix tozalanmadi: ' + (err?.message || 'xato'), 'error');
+        }
+      }, "Tarixni tozalash", "Tozalash");
     });
 
-    drop.querySelector('#chmLeaveGroup')?.addEventListener('click', async (ev) => {
+    drop.querySelector('#chmLeaveGroup')?.addEventListener('click', (ev) => {
       ev.stopPropagation();
       drop.remove();
       const gid = getCurrentGroupId() || document.getElementById('chatThreadModal')?.dataset?.gid;
       if (!gid) return;
-      if (!confirm("Guruhdan chiqmoqchimisiz?")) return;
-      try {
-        await leaveGroup(gid);
-        $('chatThreadModal')?.classList.remove('show');
-        closeGroupThread();
-        toast("Guruhdan chiqdingiz", "info");
-        if (state.view === 'chats') renderChatsList();
-      } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
+      showConfirm("Guruhdan chiqmoqchimisiz?", async () => {
+        try {
+          await leaveGroup(gid);
+          $('chatThreadModal')?.classList.remove('show');
+          closeGroupThread();
+          toast("Guruhdan chiqdingiz", "info");
+          if (state.view === 'chats') renderChatsList();
+        } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
+      }, "Guruhdan chiqish", "Chiqish");
     });
 
     drop.querySelector('#chmDeleteChat')?.addEventListener('click', (ev) => {
@@ -816,11 +819,12 @@ export function initChatHeaderMenu() {
       drop.remove();
       const uid = state.currentChatUid;
       if (!uid) return;
-      if (!confirm("Suhbatdan chiqmoqchimisiz?")) return;
-      _deleteChatForMe(uid);
-      closeChatThread();
-      toast("Suhbatdan chiqildi", "info");
-      if (state.view === 'chats') renderChatsList();
+      showConfirm("Suhbatdan chiqmoqchimisiz?", () => {
+        _deleteChatForMe(uid);
+        closeChatThread();
+        toast("Suhbatdan chiqildi", "info");
+        if (state.view === 'chats') renderChatsList();
+      }, "Suhbatdan chiqish", "Chiqish");
     });
   });
 
@@ -978,7 +982,7 @@ import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
   mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
 } from '../core/config.js';
-import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia, lockScroll, unlockScroll } from '../core/utils.js';
+import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
 import { mark, armFlashDetector, syncPath } from '../core/perf.js';
 import { initMsgMenu, msgMenuAfterPaint, msgMenuReset, isEditing, commitEdit } from './msg-menu.js';

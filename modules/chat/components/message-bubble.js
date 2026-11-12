@@ -613,7 +613,9 @@ if (!window.__chatNoteBound) {
 export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state }) {
   const readyCls = typeof waveReadyClass === 'function' ? waveReadyClass(voiceMedia.url, barCount) : '';
   const safePath = String(voiceMedia.path || '').replace(/"/g, '"');
-  return `<div class="chat-voice-msg" data-url="${safeUrl}" data-path="${safePath}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${state.currentChatId||''}" data-chat-uid="${state.currentChatUid||''}" data-name="${_mpName}">
+  const kind = state?.currentChatKind || 'dm';
+  const cid = (kind === 'group' ? (document.getElementById('chatThreadModal')?.dataset?.gid || state?.currentGroupId || '') : (state?.currentChatId || ''));
+  return `<div class="chat-voice-msg" data-url="${safeUrl}" data-path="${safePath}" data-dur="${voiceMedia.duration||0}" data-bar-count="${barCount}" data-chat-id="${cid}" data-chat-uid="${state?.currentChatUid||''}" data-chat-kind="${kind}" data-name="${_mpName}">
     <button class="cvm-play" onclick="window._chatPlayVoice(this)">
       <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
     </button>
@@ -723,8 +725,10 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     /* Yuklangan audio fayl (mp3...) — TO'LQIN YO'Q: Telegramdagidek play + nom + oddiy progress chiziq.
        To'lqin faqat yozib olingan ovozli xabar (type='voice') uchun. Pleyer mantig'i umumiy (chat-voice-player.js). */
     const _title = esc(String(m.fileName || 'Audio').replace(/\.[^.]+$/, '') || 'Audio');
+    const _chatKind = state?.currentChatKind || 'dm';
+    const _chatCid = (_chatKind === 'group' ? (document.getElementById('chatThreadModal')?.dataset?.gid || state?.currentGroupId || '') : (state?.currentChatId || ''));
     bubbleContent = `<div class="cfm-file-wrap cfm-audio-wrap">
-      <div class="chat-voice-msg cvm-file" data-url="${safeUrl}" data-dur="0" data-name="${_title}" data-fv-url="${safeUrl}" data-fv-name="${fname}" data-fv-mime="${esc(m.mediaType || 'audio/mpeg')}" data-fv-size="${+m.fileSize || 0}">
+      <div class="chat-voice-msg cvm-file" data-url="${safeUrl}" data-dur="0" data-name="${_title}" data-chat-id="${_chatCid}" data-chat-uid="${state?.currentChatUid||''}" data-chat-kind="${_chatKind}" data-fv-url="${safeUrl}" data-fv-name="${fname}" data-fv-mime="${esc(m.mediaType || 'audio/mpeg')}" data-fv-size="${+m.fileSize || 0}">
         <button class="cvm-play" type="button" onclick="window._chatPlayVoice(this)" aria-label="Ijro etish">
           <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
         </button>
@@ -882,7 +886,7 @@ export function generateOptimisticVoiceHtml({
 }) {
   return `<div class="chat-bubble">
     <div class="chat-bubble-wrap">
-      <div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${Math.round(duration || 0)}" data-bar-count="${barCount}" data-chat-id="${chatId || ''}" data-chat-uid="${chatUid || ''}" data-name="Siz">
+      <div class="chat-voice-msg" data-url="${safeUrl}" data-dur="${Math.round(duration || 0)}" data-bar-count="${barCount}" data-chat-id="${chatId || ''}" data-chat-uid="${chatUid || ''}" data-chat-kind="${state?.currentChatKind || 'dm'}" data-name="Siz">
         <button class="cvm-play" onclick="window._chatPlayVoice(this)">
           <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
         </button>

@@ -1210,11 +1210,13 @@ export function showConfirm(msg, onOk, title = 'Aniqmi?', okLabel = 'Mayli', onC
   confirmMsg.textContent   = msg;
   ok.textContent = okLabel; // klon ham shu matnni oladi
   confirmOverlay.classList.add('show');
-  const close  = () => confirmOverlay.classList.remove('show');
+  lockScroll('confirmOverlay');
+  const close  = () => { confirmOverlay.classList.remove('show'); unlockScroll('confirmOverlay'); };
   const newOk  = ok.cloneNode(true);
   ok.parentNode.replaceChild(newOk, ok);
   newOk.onclick  = () => { close(); onOk(); };
   cancel.onclick = () => { close(); onCancel?.(); };
+  confirmOverlay.onclick = (e) => { if (e.target === confirmOverlay) { close(); onCancel?.(); } };
 }
 
 /* ── Heart burst animation ────────────────────────────────────────────── */

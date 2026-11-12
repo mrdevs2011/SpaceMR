@@ -299,6 +299,7 @@ let _activeUrl      = '';
 let _activeTotal    = 0;
 let _activeChatId   = null;
 let _activeChatUid  = null;
+let _activeChatKind = null;
 let _activeName     = '';
 let _activeLoading  = false;
 let _activeBars     = null;
@@ -664,9 +665,10 @@ window._chatPlayVoice = async function(btn) {
   _activeBtn     = btn;
   _activeUrl     = url;
   _activeTotal   = parseFloat(wrap.dataset.dur || '0') || 0;
-  _activeChatId  = wrap.dataset.chatId || state.currentChatId || null;
-  _activeChatUid = wrap.dataset.chatUid || state.currentChatUid || null;
-  _activeName    = wrap.dataset.name || 'Ovozli xabar';
+  _activeChatId   = wrap.dataset.chatId || (state.currentChatKind === 'group' ? (document.getElementById('chatThreadModal')?.dataset?.gid || state.currentGroupId) : state.currentChatId) || null;
+  _activeChatUid  = wrap.dataset.chatUid || state.currentChatUid || null;
+  _activeChatKind = wrap.dataset.chatKind || state.currentChatKind || 'dm';
+  _activeName     = wrap.dataset.name || 'Ovozli xabar';
 
   // AudioContext'ni foydalanuvchi bosishi (gesture) ichida yaratib/uyg'otamiz —
   // aks holda iOS/Safari'da suspended qolib, EQ ulangan audio jim bo'lib qoladi.
@@ -796,8 +798,13 @@ window._chatPlayVoice = async function(btn) {
 
 /* ── Voice mini-player — chatdan chiqib ketilsa ham ijro davom etadi ── */
 function _isVoiceOwnerChatOpen() {
-  const threadOpen = $('chatThreadModal')?.classList.contains('show');
-  return !!(threadOpen && state.currentChatId && state.currentChatId === _activeChatId);
+  const modal = $('chatThreadModal');
+  const threadOpen = modal?.classList.contains('show');
+  if (!threadOpen) return false;
+  if (_activeChatKind === 'group') {
+    return !!(_activeChatId && modal?.dataset?.gid === _activeChatId);
+  }
+  return !!(state.currentChatId && state.currentChatId === _activeChatId);
 }
 
 export function _syncMiniPlayer() {
@@ -830,14 +837,20 @@ $('vmpPlay')?.addEventListener('click', (e) => {
 $('vmpClose')?.addEventListener('click', (e) => {
   e.stopPropagation();
   _stopActive();
-  _activeChatId  = null;
-  _activeChatUid = null;
+  _activeChatId   = null;
+  _activeChatUid  = null;
+  _activeChatKind = null;
   _syncMiniPlayer();
 });
 
 // Bar bosilganda — ovoz chiqayotgan chatga qaytamiz
-$('voiceMiniPlayer')?.addEventListener('click', () => {
-  if (_activeChatUid && typeof _openChatCb === 'function') _openChatCb(_activeChatUid);
+$('voiceMiniPlayer')?.addEventListener('click', async () => {
+  if (_activeChatKind === 'group' && _activeChatId) {
+    const { applyPath } = await import('../url-router.js');
+    applyPath('/chats/g/' + encodeURIComponent(_activeChatId));
+  } else if (_activeChatUid && typeof _openChatCb === 'function') {
+    _openChatCb(_activeChatUid);
+  }
 });
 
 const PLAY_ICON  = `<img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">`;
