@@ -6,7 +6,7 @@
  * Hamma (tasdiqlangan) foydalanuvchi ko'radi va ishlatadi; tahrirlash/o'chirish faqat egasi (yoki admin).
  */
 import { sb, state } from '../core/config.js';
-import { esc, showConfirm } from '../core/utils.js';
+import { esc, showConfirm, lockScroll, unlockScroll } from '../core/utils.js';
 import { runApp } from './runner.js';
 import { extractLogo } from './logo-extract.js';
 import { highlight } from './code-hl.js';
@@ -286,7 +286,10 @@ function slugHint(el, slug, exceptId) {
   el.textContent = 'Bo\'sh'; el.className = 'apf-hint ok'; return true;
 }
 
-function closeForm(id) { $(id)?.remove(); }
+function closeForm(id) {
+  unlockScroll(id);
+  $(id)?.remove();
+}
 
 function dbErr(e) {
   const m = String(e?.message || e || '');
@@ -376,6 +379,7 @@ async function openAppForm(editId, presetCat) {
   if (!cats.length) { openCatForm(null, true); return; }
   const ov = document.createElement('div');
   ov.className = 'apf-ov'; ov.id = 'appFormOverlay';
+  lockScroll('appFormOverlay');
   ov.innerHTML = `<div class="apf" role="dialog" aria-modal="true">
     <div class="apf-h"><b>${a ? 'Ilovani tahrirlash' : 'Yangi ilova'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <label class="apf-l">Nomi<input id="afName" maxlength="40" autocomplete="off" value="${esc(a?.name || '')}" placeholder="Mening o'yinim"></label>
@@ -615,6 +619,7 @@ function openCatForm(editId, fromEmpty, onDone) {
   if (editId && (!c || !canEdit(c.owner_id))) return;
   const ov = document.createElement('div');
   ov.className = 'apf-ov'; ov.id = 'appCatOverlay';
+  lockScroll('appCatOverlay');
   ov.innerHTML = `<div class="apf" role="dialog" aria-modal="true">
     <div class="apf-h"><b>${c ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya'}</b><button type="button" class="apf-x" data-f="close" aria-label="Yopish"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <label class="apf-l">Nomi<input id="acName" maxlength="40" autocomplete="off" value="${esc(c?.name || '')}" placeholder="Maktab"></label>

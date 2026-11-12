@@ -4,7 +4,7 @@
  */
 
 import { sb, state, isAdmin, fetchAllRows, mapProfile, mapPost, ts, purgeUserMedia } from '../core/config.js';
-import { $, esc } from '../core/utils.js';
+import { $, esc, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { adminResetPassword } from '../admin/admin-reset-password.js';
 
@@ -268,6 +268,7 @@ function _openDeleteModal(uid, name) {
   $('uaModalConfirm').className  = 'ua-modal-confirm ua-modal-confirm--danger';
   $('uaModalConfirm').disabled   = false;
   $('uaActionModal').classList.add('show');
+  lockScroll('uaActionModal');
 }
 
 function _openBlockModal(uid, name, isBlocked) {
@@ -302,12 +303,14 @@ function _openBlockModal(uid, name, isBlocked) {
   }
   $('uaModalConfirm').disabled = false;
   $('uaActionModal').classList.add('show');
+  lockScroll('uaActionModal');
 }
 
 function _closeModal() {
   _pendingAction = null;
   const modal = $('uaActionModal');
   if (modal) modal.classList.remove('show');
+  unlockScroll('uaActionModal');
 }
 
 async function _confirmAction() {

@@ -2,7 +2,7 @@
  * chat-voice-record.js — hold-to-talk yozish, mikrofon ruxsati, pulse UI
  * chat.js dan ehtiyotkor ajratilgan. Playback/waveform chat.js da qoladi.
  */
-import { $ } from '../core/utils.js';
+import { $, lockScroll, unlockScroll } from '../core/utils.js';
 import { videoNoteFileName } from './components/video-note.js';
 import { mediaErrorKind, trackSupportsTorch, trackMaybeTorch, setTorch, probeInputDevices, listCameras, waitTrackTorchReady } from './camera-access.js';
 import { toast } from '../ui/toast.js';
@@ -894,7 +894,10 @@ function _showMicPermCard({ msg, hint, onAllow } = {}) {
     if (hint) { hintEl.hidden = false; hintEl.textContent = hint; }
     else { hintEl.hidden = true; hintEl.textContent = ''; }
   }
-  const close = () => ov.classList.remove('show');
+  const close = () => {
+    unlockScroll('micPermOverlay');
+    ov.classList.remove('show');
+  };
   // clone to drop old listeners
   const newAllow = allowBtn.cloneNode(true);
   allowBtn.parentNode.replaceChild(newAllow, allowBtn);
@@ -915,6 +918,7 @@ function _showMicPermCard({ msg, hint, onAllow } = {}) {
   };
   newCancel.onclick = close;
   ov.onclick = (e) => { if (e.target === ov) close(); };
+  lockScroll('micPermOverlay');
   ov.classList.add('show');
 }
 

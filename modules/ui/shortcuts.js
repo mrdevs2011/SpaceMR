@@ -24,7 +24,17 @@ import { toast } from './toast.js';
 import { closeChatThread } from '../chat/chat.js';
 import { escLocals } from './esc-stack.js';
 
-const isOpen = el => !!el && (el.classList.contains('show') || el.classList.contains('open') || el.style.display === 'flex' || el.style.display === 'block' || el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture');
+const isOpen = el => {
+  if (!el || el.hidden) return false;
+  if (el.classList.contains('show') || el.classList.contains('open')) return true;
+  if (el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture' || el.id === 'cmViewer' || el.id === 'pwConfirmOverlay' || el.id === 'appFormOverlay' || el.id === 'appCatOverlay' || el.id === 'grpJoinOverlay' || el.id === 'uaActionModal' || el.id === 'micPermOverlay') return true;
+  try {
+    const cs = window.getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
+  } catch (_) {
+    return el.style.display === 'flex' || el.style.display === 'block';
+  }
+};
 
 /* Backdrop bosilganda yopiladigan overlaylar uchun */
 const backdrop = id => () => {
@@ -38,12 +48,19 @@ const backdrop = id => () => {
 const CLOSERS = [
   ['camCapture',             () => document.querySelector('#camCapture .cc-close')?.click()],
   ['chatCtxOverlay',         () => $('chatCtxOverlay')?.remove()],
+  ['pwConfirmOverlay',       () => { $('pwcCancel')?.click(); $('pwConfirmOverlay')?.remove(); return true; }],
   ['confirmOverlay',         () => $('confirmCancelBtn')?.click()],
+  ['micPermOverlay',         () => { $('micPermCancelBtn')?.click(); $('micPermOverlay')?.remove(); return true; }],
   ['zoomModal',              () => $('zoomClose')?.click()],
+  ['cmViewer',               () => { document.querySelector('#cmViewer .zoom-x')?.click(); $('cmViewer')?.remove(); return true; }],
+  ['grpJoinOverlay',         () => { document.querySelector('#grpJoinOverlay .grp-join-close')?.click(); $('grpJoinOverlay')?.remove(); return true; }],
   ['grpAddUserOverlay',      backdrop('grpAddUserOverlay')],
   ['grpCreateFormOverlay',   backdrop('grpCreateFormOverlay')],
   ['grpInfoOverlay',         backdrop('grpInfoOverlay')],
   ['grpEditOverlay',         backdrop('grpEditOverlay')],
+  ['appCatOverlay',          () => { document.querySelector('#appCatOverlay [data-f="close"]')?.click(); $('appCatOverlay')?.remove(); return true; }],
+  ['appFormOverlay',         () => { document.querySelector('#appFormOverlay [data-f="close"]')?.click(); $('appFormOverlay')?.remove(); return true; }],
+  ['uaActionModal',          () => { $('uaModalCancel')?.click(); $('uaActionModal')?.remove(); return true; }],
   ['uploadOverlay',          () => $('cancelUpload')?.click()],
   ['cmtModal',               () => $('cmtModalClose')?.click()],
   ['reelCapSheet',           backdrop('reelCapSheet')],

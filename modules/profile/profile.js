@@ -576,6 +576,7 @@ export async function renderUserProfileModal(uid) {
 }
 
 export function closeUserProfileModal() {
+  document.dispatchEvent(new CustomEvent('chatmedia:close'));
   state.currentViewingUserId    = null;
   state.currentViewingUserPosts = [];
   $('userProfileModal')?.classList.remove('show');

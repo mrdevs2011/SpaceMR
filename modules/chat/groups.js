@@ -1932,6 +1932,7 @@ export function openJoinGroupModal() {
       <button type="button" class="grp-join-submit" id="grpJoinSubmit" disabled hidden>Qo'shilish</button>
     </div>`;
   document.body.appendChild(ov);
+  lockScroll('grpJoinOverlay');
   requestAnimationFrame(() => ov.classList.add('show'));
   const inp = ov.querySelector('#grpJoinInput');
   const st = ov.querySelector('#grpJoinStatus');
@@ -1943,7 +1944,11 @@ export function openJoinGroupModal() {
   let searchSeq = 0;
   // Havola (http…, "/" bor) yoki uzun kod (hex) — maxfiy/aniq qo'shilish; qolgani — ommaviy guruhlarni nom/@username bo'yicha qidirish
   const isTokenLike = raw => /^https?:\/\//i.test(raw) || raw.includes('/') || /^[a-f0-9]{32,}$/i.test(raw);
-  const close = () => { ov.classList.remove('show'); setTimeout(() => ov.remove(), 150); };
+  const close = () => {
+    unlockScroll('grpJoinOverlay');
+    ov.classList.remove('show');
+    setTimeout(() => ov.remove(), 150);
+  };
   ov.querySelector('.grp-join-close').onclick = close;
   ov.addEventListener('click', e => { if (e.target === ov) close(); });
   const setStatus = (msg, ok) => {

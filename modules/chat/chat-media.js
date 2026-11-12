@@ -63,8 +63,8 @@ function _ensureBound() {
     const au = e.target.closest('[data-cm-audio]');
     if (au) return _toggleAudio(+au.dataset.cmAudio);
   });
-  document.getElementById('upBack')?.addEventListener('click', () => { if (_active) _deactivate(); });
-  $modal().addEventListener('click', e => { if (_active && e.target === $modal()) _deactivate(); });
+  document.getElementById('upBack')?.addEventListener('click', () => { if (_active) closeChatMedia(); });
+  $modal().addEventListener('click', e => { if (_active && e.target === $modal()) closeChatMedia(); });
   document.addEventListener('chatmedia:close', closeChatMedia);
   // Rasm ko'rish oynasi (z 600) profil sahifasidan (500) ustida; profilning o'zi shortcuts.js da (userProfileModal)
   onEsc(600, () => {

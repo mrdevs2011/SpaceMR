@@ -2,7 +2,7 @@
  * file-viewer.js — SpaceMR ichida fayl ochish (matn, kod, jadval, media, PDF,
  * DOCX/XLSX/PPTX/ODT, ZIP daraxt, RTF). Kutubxonasiz ZIP+OOXML.
  */
-import { esc, fmtSz, dlFile, renderMarkdown } from '../core/utils.js';
+import { esc, fmtSz, dlFile, renderMarkdown, lockScroll, unlockScroll } from '../core/utils.js';
 import { runApp } from '../apps/runner.js';
 import { fileIconSvg } from '../core/file-icons.js';
 import { toast } from './toast.js';
@@ -844,6 +844,7 @@ export function openFileViewer(f = {}) {
   const slug = previewSlug(name, url);
   savePreviewMeta(slug, { url, name, mime, size });
   if (!f._fromHash) setPreviewHash(slug);
+  lockScroll('fileViewer');
 
   const el = document.createElement('div');
   el.className = 'fv';
@@ -889,6 +890,7 @@ export function openFileViewer(f = {}) {
     if (blobUrl) { try { URL.revokeObjectURL(blobUrl); } catch (_) {} }
     for (const u of blobUrls) { try { URL.revokeObjectURL(u); } catch (_) {} }
     el.remove();
+    unlockScroll('fileViewer');
     if (cur && cur.el === el) cur = null;
     if (!fromPop) clearPreviewHash();
   };

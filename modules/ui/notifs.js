@@ -170,14 +170,20 @@ async function openItem(kind, ref, msgId) {
     await openPostLink(ref, kind === 'comment' ? msgId : null, { comments: kind === 'comment' });
     return;
   }
-  const { navigateTo } = await import('../router.js');
-  navigateTo('chats');
+  const { applyPath } = await import('../url-router.js');
   if (kind === 'group') {
-    const g = await import('../chat/groups.js');
-    await g.openGroupThread(ref);
+    applyPath('/chats/g/' + encodeURIComponent(ref));
   } else {
-    const c = await import('../chat/chat.js');
-    await c.openChatThread(ref);
+    const { dmToken } = await import('../chat/chat.js');
+    const token = dmToken(ref);
+    if (token) {
+      applyPath('/chats/u/' + encodeURIComponent(token));
+    } else {
+      const { navigateTo } = await import('../router.js');
+      navigateTo('chats');
+      const c = await import('../chat/chat.js');
+      await c.openChatThread(ref);
+    }
   }
   const q = CSS.escape(String(msgId));
   let n = 0;
@@ -196,6 +202,13 @@ export function initNotifs() {
   document.getElementById('notifsList')?.addEventListener('click', e => {
     const row = e.target.closest('.nf-row');
     if (!row) return;
+    if (row.classList.contains('nf-unread')) {
+      row.classList.remove('nf-unread');
+      row.querySelector('.nf-unread-dot')?.remove();
+      const me = state.me?.uid;
+      const ts = Number(row.dataset.ts);
+      if (me && ts) setSeenAt(me, ts);
+    }
     openItem(row.dataset.kind, row.dataset.ref, row.dataset.mid);
   });
 }

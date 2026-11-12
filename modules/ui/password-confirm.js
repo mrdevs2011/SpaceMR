@@ -4,6 +4,7 @@
  * Tekshiruv vaqtinchalik klientda (verifyPassword) — joriy sessiya buzilmaydi.
  */
 import { sb, state, verifyPassword } from '../core/config.js';
+import { lockScroll, unlockScroll } from '../core/utils.js';
 
 export function askPassword({
   title = 'Parolni kiriting',
@@ -14,6 +15,7 @@ export function askPassword({
     const ov = document.createElement('div');
     ov.id = 'pwConfirmOverlay';
     ov.className = 'overlay show';
+    lockScroll('pwConfirmOverlay');
     ov.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">
       <div class="sheet-title"></div>
       <div class="fs-14px c-text2-theme mb-20px tac"></div>
@@ -31,8 +33,13 @@ export function askPassword({
     const inp = ov.querySelector('#pwcInp');
     const err = ov.querySelector('#pwcErr');
     const ok  = ov.querySelector('#pwcOk');
-    const done = (v) => { ov.remove(); resolve(v); };
+    const done = (v) => {
+      unlockScroll('pwConfirmOverlay');
+      ov.remove();
+      resolve(v);
+    };
     ov.querySelector('#pwcCancel').onclick = () => done(false);
+    ov.onclick = e => { if (e.target === ov) done(false); };
     setTimeout(() => inp.focus(), 50);
     const submit = async () => {
       const pwd = inp.value;
