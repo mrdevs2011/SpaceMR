@@ -20,9 +20,11 @@ if (!window.__postImgZoomBound) {
     if (e.target?.closest?.('input, textarea, select, [contenteditable="true"], button, a')) return;
     const media = e.target?.closest?.('.post-media');
     if (!media || media.dataset.type === 'video') return;
-    const url = media.dataset.url || media.querySelector('img')?.src;
+    const img = media.querySelector('img');
+    const url = media.dataset.url || img?.currentSrc || img?.src;
     if (!url) return;
     e.preventDefault();
+    e.stopPropagation();
     openZoom(url, 'image');
   }, true);
 }

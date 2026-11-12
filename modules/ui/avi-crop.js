@@ -5,6 +5,7 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 import { lockScroll, unlockScroll } from '../core/utils.js';
+import { onEsc } from './esc-stack.js';
 
 const MAX_EDGE = 2048; // to'liq rasm max tomoni (siqish uchun)
 
@@ -154,6 +155,12 @@ function _bindOnce() {
   // backdrop click
   $('aviCropModal')?.addEventListener('click', (e) => {
     if (e.target === $('aviCropModal')) _close(null);
+  });
+  onEsc(10001, () => {
+    const modal = $('aviCropModal');
+    if (!modal || modal.style.display === 'none') return false;
+    _close(null);
+    return true;
   });
 }
 

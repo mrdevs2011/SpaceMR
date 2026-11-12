@@ -1587,6 +1587,7 @@ function _applyScrollLock() {
   document.body.style.position = 'fixed';
   document.body.style.top = `-${_scrollY}px`;
   document.body.style.width = '100%';
+  try { window.dispatchEvent(new CustomEvent('spacemr:scrolllock', { detail: { locked: true } })); } catch (_) {}
 }
 
 function _releaseScrollLock(restore) {
@@ -1597,6 +1598,7 @@ function _releaseScrollLock(restore) {
   document.body.style.top = '';
   document.body.style.width = '';
   if (restore) window.scrollTo(0, _scrollY);
+  try { window.dispatchEvent(new CustomEvent('spacemr:scrolllock', { detail: { locked: false } })); } catch (_) {}
 }
 
 /** Body scrollini bloklash — modal/sheet ochilganda. key = qulf egasi (masalan overlay id). */

@@ -53,20 +53,44 @@ if (typeof document !== 'undefined' && !window.__postMediaGuard) {
     o.observe(v);
   }
 
-  /* Tab/sahifa almashganda: ko'rinmaydigan (display:none / faol bo'lmagan .view) videolar pauza */
+  /* Modal yoki qoplama ochiqligini tekshirish */
+  function isModalActive() {
+    return !!(
+      document.body.style.position === 'fixed' ||
+      document.getElementById('storyViewer')?.classList?.contains('open') ||
+      document.getElementById('incomingCallModal')?.classList?.contains('show') ||
+      document.getElementById('callActiveModal')?.classList?.contains('show') ||
+      document.getElementById('camCapture')?.classList?.contains('open') ||
+      document.getElementById('uploadOverlay')?.classList?.contains('open') ||
+      document.getElementById('zoomModal')?.classList?.contains('open') ||
+      document.getElementById('cmViewer')?.classList?.contains('open') ||
+      document.getElementById('appRunner')?.classList?.contains('open')
+    );
+  }
+
+  /* Tab/sahifa almashganda: ko'rinmaydigan (display:none / faol bo'lmagan .view) yoki modal ostidagi videolar pauza */
   function pauseHidden() {
+    const modalBlocked = isModalActive();
     document.querySelectorAll(SEL).forEach((v) => {
       if (!isPlaying(v)) return;
+      if (modalBlocked) { pauseVideo(v); return; }
       const view = v.closest('.view');
       const hidden = v.getClientRects().length === 0 || (view && !view.classList.contains('on'));
       if (hidden) pauseVideo(v);
     });
   }
   window.addEventListener('spacemr:route', () => { setTimeout(pauseHidden, 120); });
+  window.addEventListener('spacemr:scrolllock', (e) => {
+    if (e?.detail?.locked) pauseHidden();
+  });
 
   document.addEventListener('play', (e) => {
     const v = e.target;
-    if (!isPostVideo(v)) return;
+    if (!isPostVideo(v)) {
+      // Feed tashqarisidagi video (story, chat media, qo'ng'iroq) ijro etilsa — feed videolarini to'xtatamiz
+      pauseAll();
+      return;
+    }
     pauseOthers(v);
     watch(v);
   }, true);
