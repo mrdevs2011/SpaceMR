@@ -194,11 +194,44 @@ function ensureDom() {
           return;
         }
         if (e.target.closest('#svClose') || e.target.closest('.sv-user') || e.target.closest('#svBottom')) return;
+
+        const dx = e.clientX - _startX;
+        const dy = e.clientY - _startY;
+
+        // Swipe pastga: story'ni yopish (Instagram/Telegram standart imo-ishorasi)
+        if (dy > 60 && Math.abs(dy) > Math.abs(dx)) {
+          closeViewer();
+          return;
+        }
+        // Swipe chapga/o'ngga: boshqa foydalanuvchining hikoyasiga o'tish
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+          if (dx < 0) {
+            // Chapga surish -> keyingi foydalanuvchi
+            if (_viewerIdx < _groups.length - 1) {
+              _viewerIdx++;
+              _itemIdx = 0;
+              showCurrent();
+            } else {
+              closeViewer();
+            }
+          } else {
+            // O'ngga surish -> oldingi foydalanuvchi
+            if (_viewerIdx > 0) {
+              _viewerIdx--;
+              _itemIdx = 0;
+              showCurrent();
+            }
+          }
+          return;
+        }
+
+        // Agar ozgina siljigan bo'lsa (drag), tasodifiy tap bo'lib ketmasin
+        if (Math.abs(dx) > 15 || Math.abs(dy) > 15) return;
+
         // Bir marta qisqa bosish: chap/o'ng navigatsiya
         const mediaEl = $('svMedia') || v;
         const rect = mediaEl.getBoundingClientRect();
         const ratio = (e.clientX - rect.left) / (rect.width || 1);
-        // Tap: oldingi/keyingi bor bo'lsa o'tadi, yo'q bo'lsa hech narsa qilmaydi
         if (ratio < 0.40) {
           step(-1, true);
         } else {
