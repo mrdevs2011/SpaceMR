@@ -3218,6 +3218,13 @@ function setChatFile(file) {
       return;
     }
     const objUrl = URL.createObjectURL(file);
+    if (isImg) {
+      const probe = new Image();
+      probe.onload = () => {
+        try { rememberImgRatio(probe); } catch (_) {}
+      };
+      probe.src = objUrl;
+    }
     const idx = chatState._chatSelFiles.length;
     chatState._chatSelFiles.push({ file, objUrl });
     _renderCfpTray();
@@ -4099,8 +4106,8 @@ initAttachMenu({
   onPick: f => { setChatFile(f); $('chatThreadInput')?.focus({ preventScroll: true }); },
 });
 $('chatFileInput')?.addEventListener('change', e => {
-  const f = e.target.files?.[0];
-  if (f) setChatFile(f);
+  const files = [...(e.target.files || [])];
+  files.forEach(f => setChatFile(f));
 });
 $('cfpRemove')?.addEventListener('click', clearChatFile);
 $('cfpMedia')?.addEventListener('click', (e) => {

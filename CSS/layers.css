@@ -288,7 +288,7 @@ svg { color: inherit; }
   height: 18px;
   padding: 0 5px;
   background: var(--blue);
-  border-radius: var(--radius);
+  border-radius: 999px;
   font-size: 10px;
   font-weight: 700;
   color: var(--pal-white);

@@ -297,7 +297,7 @@ export async function sendVoiceMessage(blob, duration) {
 export async function sendChatFile(fileOverride = null, captionOverride = null) {
   const file = fileOverride || chatState._chatSelFile;
   if (!file || !state.me) return;
-  if (!rateOk('file', 5, 30000)) return;
+  if (!rateOk('file', 30, 30000)) return;
 
   const caption = protectSecrets((captionOverride !== null && captionOverride !== undefined
     ? captionOverride
@@ -322,14 +322,34 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
   const id = _uuid();
   const nowMs = Date.now();
   const pendingId = id; // dedup uchun haqiqiy id
-  _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
+  const isMedia = (file.type || '').startsWith('image/') || (file.type || '').startsWith('video/');
+  let localUrl = '';
+  if (isMedia) {
+    try { localUrl = URL.createObjectURL(file); } catch (_) {}
+  }
+
+  // Optimistik xabar — foydalanuvchi o'z rasmini/faylini shu zahoti ekranda ko'radi
+  const localMsg = {
+    id, chatId, senderId: state.me.uid, type: 'file', text: caption || null,
+    mediaPath: null, mediaUrl: localUrl || '', mediaType: file.type || null,
+    fileName: file.name, fileSize: file.size, duration: null,
+    status: 'sending', readAt: null, editedAt: null, createdAt: nowMs, _at: nowMs,
+    replyTo: _fReplyTo,
+    replyPreview: _fReply ? { name: _fReply.name, text: _fReply.preview, type: _fReply.type } : null,
+  };
+  chatState._rtLocal.set(id, localMsg);
+  chatUI.paintMessages([...chatState._curMsgs, localMsg]);
+
+  if (!isMedia) {
+    _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
+  }
 
   try {
     const result = await uploadViaControllerProgress(file, 'chat-files', pct => {
       _updatePendingProgress(pendingId, pct);
     });
 
-    _removePendingBubble(pendingId);
+    if (!isMedia) _removePendingBubble(pendingId);
 
     const { error } = await sb.from('messages').insert({
       id, chat_id: chatId, sender_id: state.me.uid, type: 'file',
@@ -339,6 +359,14 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
       reply_to: _fReplyTo,
     });
     if (error) throw error;
+
+    // Sent status va to'g'ri media_path bilan optimistik xabarni yangilash
+    chatState._curMsgs = chatState._curMsgs.map(m =>
+      m.id === id ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || localUrl } : m
+    );
+    if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(id, 'sent');
+    else chatUI.paintMessages(chatState._curMsgs);
+
     const previewText = fileMsgPreview({ caption: maskSpoilers(caption), fileName: file.name });
     // Tezkor yo'l: peer darhol ko'rsin
     if (chatState._rt && chatState._rtChatId === chatId) {
@@ -359,7 +387,10 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
 
   } catch (err) {
     console.error('File send failed:', err);
-    _removePendingBubble(pendingId);
+    if (!isMedia) _removePendingBubble(pendingId);
+    chatState._rtLocal.delete(id);
+    chatUI.paintMessages(chatState._curMsgs.filter(m => m.id !== id));
+    try { if (localUrl) URL.revokeObjectURL(localUrl); } catch (_) {}
     const inp = $('chatThreadInput');
     if (inp && caption) { inp.value = caption; chatUI.updateVoiceSendBtn(); }
     toast('Fayl yuborilmadi', 'error');

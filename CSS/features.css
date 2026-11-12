@@ -495,10 +495,12 @@
 #userProfileModal.show { display: block; }
 .up-back {
   position: fixed;
-  top: 14px;
+  top: max(14px, env(safe-area-inset-top, 14px));
   left: 14px;
-  background: var(--pal-black);
-  border: 1px solid var(--pal-legacy-26262c);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   width: 38px;
   height: 38px;
@@ -507,12 +509,12 @@
   justify-content: center;
   cursor: pointer;
   z-index: 351;
-  
   color: var(--pal-white);
+  transition: background .15s ease, transform .12s ease;
 }
-.up-back:hover { background: var(--pal-black); }
+.up-back:hover { background: rgba(0, 0, 0, 0.85); transform: scale(1.05); }
 .up-body { padding-bottom: 60px; }
-.up-head { display: flex; justify-content: center; padding-top: 64px; }
+.up-head { display: flex; justify-content: center; padding-top: max(64px, calc(52px + env(safe-area-inset-top, 0px))); }
 .up-avi-wrap { position: relative; z-index: 2; }
 .up-avi { width: 90px; height: 90px; border-radius: 50%; background: var(--bg4); overflow: hidden; border: 3.5px solid var(--bg); box-shadow: 0 4px 20px var(--pal-black); display: flex; align-items: center; justify-content: center; }
 .up-avi img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1247,12 +1249,12 @@
 .chat-row-time { font-size: 11px; color: var(--text3); flex-shrink: 0; white-space: nowrap; }
 /* Unread row — badge with +N count (per-conversation). Uses the app's * own blue accent rather than alarm-red... */
 .chat-row-badge {
-  min-width: 22px;
-  height: 22px;
+  min-width: 20px;
+  height: 20px;
   padding: 0 6px;
   background: var(--blue);
-  border-radius: var(--radius);
-  font-size: 11.5px;
+  border-radius: 999px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--pal-white);
   display: flex;
@@ -2064,7 +2066,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   display: flex;
   flex-direction: column;
   width: fit-content;
-  max-width: min(340px, 75vw);
+  max-width: min(360px, 80vw);
   min-height: auto;
 }
 
@@ -2078,9 +2080,9 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   border-radius: var(--radius);
 }
 
-.cfm-img-link { display: block; border-radius: var(--radius); overflow: hidden; line-height: 0; }
+.cfm-img-link { display: block; width: fit-content; max-width: 100%; border-radius: var(--radius); overflow: hidden; line-height: 0; }
 .cfm-img-link:hover { opacity: 1; }
-.cfm-img-preview { display: block; width: auto; height: auto; max-width: min(340px, 75vw); max-height: 440px; object-fit: contain; border-radius: var(--radius); background: transparent; }
+.cfm-img-preview { display: block; width: auto; height: auto; max-width: min(360px, 80vw); max-height: 520px; object-fit: contain; border-radius: var(--radius); background: transparent; }
 .cfm-vid-box { position: relative; width: 100%; max-width: 280px; max-height: 340px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: var(--bg3, #16181c); }
 .cfm-vid { display: block; width: 100%; height: 100%; object-fit: cover; }
 .cfm-note-wrap { width: 220px; height: 220px; aspect-ratio: 1 / 1; position: relative; }
@@ -2092,10 +2094,12 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   position: absolute;
   right: 6px;
   bottom: 6px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   color: #e7e9ea !important;
   padding: 2px 7px;
-  border-radius: var(--radius);
+  border-radius: 999px;
   font-size: 11px;
   line-height: 1.2;
   margin: 0 !important;

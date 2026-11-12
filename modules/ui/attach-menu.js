@@ -89,7 +89,8 @@ export function initAttachMenu({
   const mediaPicker = _makePicker(mediaAccept, onPick, true /* multiple */);
   const filePicker = _makePicker(
     fileAccept || fileInput?.getAttribute('accept') || '',
-    onPick
+    onPick,
+    true /* multiple */
   );
 
   function openMenu(opts) {
