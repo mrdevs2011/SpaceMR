@@ -1,6 +1,6 @@
 import { sb, state, getMediaUrl, uploadViaController, mapProfile, mapPost } from '../core/config.js';
 import { $, esc, fmt, fmtSz, defAvi,
-         openZoom, renderSpoilers }      from '../core/utils.js';
+         openZoom, renderSpoilers, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast }                         from '../ui/toast.js';
 
 /** profiles qatori (eski users/{uid} hujjatiga o'xshash) */
@@ -448,6 +448,7 @@ export async function openUserProfileModal(uid) {
   state.currentViewingUserId = uid;
   _upTab = 'all';
   $('userProfileModal').classList.add('show');
+  lockScroll('userProfileModal');
   $('upBody').innerHTML = `
     <div class="skel-up-hero">
       <div class="skel-up-avi skel-shimmer"></div>
@@ -570,11 +571,13 @@ $('upBack').onclick = () => {
   state.currentViewingUserId    = null;
   state.currentViewingUserPosts = [];
   $('userProfileModal').classList.remove('show');
+  unlockScroll('userProfileModal');
 };
 $('userProfileModal').addEventListener('click', e => {
   if (e.target === $('userProfileModal')) {
     state.currentViewingUserId    = null;
     state.currentViewingUserPosts = [];
     $('userProfileModal').classList.remove('show');
+    unlockScroll('userProfileModal');
   }
 });

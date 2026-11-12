@@ -3,7 +3,7 @@
    (Barchasi / Photos / Musics / Files) — lekin ostidagi medialar u odamning postlari emas,
    aynan shu suhbatda ikkalamiz ulashgan rasm, musiqa va fayllar. */
 import { sb, mapMessage } from '../core/config.js';
-import { esc, fmtSz, defAvi } from '../core/utils.js';
+import { esc, fmtSz, defAvi, dlFile, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { ensureVideoDuration } from '../core/video-policy.js';
@@ -263,7 +263,7 @@ function _ensureViewer() {
   if (_viewer) return _viewer;
   _viewer = document.createElement('div');
   _viewer.id = 'cmViewer';
-  _viewer.addEventListener('click', e => { if (!e.target.closest('img, video')) _closeViewer(); });
+  _viewer.addEventListener('click', e => { if (!e.target.closest('img, video, .zoom-x, .zoom-dl')) _closeViewer(); });
   document.body.appendChild(_viewer);
   return _viewer;
 }
@@ -271,9 +271,24 @@ function _openViewer(i) {
   const m = _data.media[i];
   if (!m) return;
   const v = _ensureViewer();
-  v.innerHTML = m.kind === 'video'
-    ? `<video src="${esc(_url(m))}" controls autoplay playsinline></video>`
-    : `<img src="${esc(_url(m))}" alt="">`;
+  const url = esc(_url(m));
+  const rawUrl = _url(m);
+  const fname = esc(m.fileName || (m.kind === 'video' ? 'video.mp4' : 'image.jpg'));
+  v.innerHTML = `
+    <button class="zoom-x" type="button" aria-label="Yopish" title="Yopish">
+      <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
+    </button>
+    <button class="zoom-dl" type="button" aria-label="Yuklab olish" title="Yuklab olish">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>
+    </button>
+    ${m.kind === 'video'
+      ? `<video src="${url}" controls autoplay playsinline></video>`
+      : `<img src="${url}" alt="">`}`;
+  v.querySelector('.zoom-x')?.addEventListener('click', (e) => { e.stopPropagation(); _closeViewer(); });
+  v.querySelector('.zoom-dl')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dlFile(rawUrl, m.fileName || (m.kind === 'video' ? 'video.mp4' : 'image.jpg'));
+  });
   v.classList.add('show');
   if (m.kind === 'video') {
     const vid = v.querySelector('video');
@@ -300,11 +315,12 @@ export async function openChatMedia({ chatId, name, avatar, uid } = {}) {
   $body().innerHTML = '<div class="spin-wrap pt-80px"><div class="spinner"></div></div>';
   $modal().scrollTop = 0;
   $modal().classList.add('show');
+  lockScroll('userProfileModal');
 
   // Suhbatdoshning @username i — profil sarlavhasida ko'rinsin
   const unameP = uid ? sb.from('profiles').select('username').eq('id', uid).maybeSingle().then(r => r?.data?.username || '', () => '') : Promise.resolve('');
   const { data, error } = await sb.from('messages').select('*')
-    .eq('chat_id', chatId).eq('type', 'file')
+    .eq('chat_id', chatId).not('media_path', 'is', null)
     .order('created_at', { ascending: false }).limit(LIMIT);
   const username = await unameP;
   if (my !== _token || !_active) return;
@@ -328,4 +344,5 @@ export function closeChatMedia() {
   if (!_active) return;
   _deactivate();
   $modal()?.classList.remove('show');
+  unlockScroll('userProfileModal');
 }

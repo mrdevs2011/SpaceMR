@@ -39,7 +39,7 @@ import {
   uploadViaControllerProgress, ensureChatsView,
 } from './chat-shared.js';
 import { chatUI } from './chat-state.js';
-import { isEditing, commitEdit, getReplying, cancelReply } from './msg-menu.js';
+import { isEditing, commitEdit, getReplying, cancelReply, msgMenuReset } from './msg-menu.js';
 
 /* ─────────────────────────────────────────────────────────────────────
    STATE
@@ -655,6 +655,16 @@ export async function openGroupThread(groupId) {
   _applyGroupComposer(groupData);
   chatUI.updatePostAttachBar();
 
+  let draft = '';
+  try { draft = getDraft('grp:' + groupId) || ''; } catch (_) {}
+  const inp = $('chatThreadInput');
+  if (inp) {
+    inp.value = draft;
+    setTimeout(() => {
+      if (typeof chatUI.updateVoiceSendBtn === 'function') chatUI.updateVoiceSendBtn();
+    }, 50);
+  }
+
   // Info button (tap header → group info)
   $('chatThreadAvi').style.cursor  = 'pointer';
   $('chatThreadName').style.cursor = 'pointer';
@@ -869,6 +879,7 @@ export async function openGroupThread(groupId) {
 }
 
 export function closeGroupThread() {
+  try { msgMenuReset(); } catch (_) {}
   try { chatUI.closeThreadMsgSearch?.(); } catch (_) {}
   _gTyp.forEach(t => clearTimeout(t)); _gTyp.clear(); clearTimeout(_gTypTimer); _gSetTyping(false);
   if (_groupThreadUnsub) { _groupThreadUnsub(); _groupThreadUnsub = null; }

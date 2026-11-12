@@ -978,7 +978,7 @@ import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
   mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
 } from '../core/config.js';
-import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia } from '../core/utils.js';
+import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
 import { mark, armFlashDetector, syncPath } from '../core/perf.js';
 import { initMsgMenu, msgMenuAfterPaint, msgMenuReset, isEditing, commitEdit } from './msg-menu.js';
@@ -1830,6 +1830,7 @@ export async function openChatThread(uid) {
 
   _injectPresenceCSS();
   $('chatThreadModal').classList.add('show');
+  lockScroll('chatThreadModal');
   $('chatThreadModal').classList.toggle('is-saved', isSaved);
   $('chatThreadName').textContent   = '...';
   $('chatThreadAvi').innerHTML      = '';
@@ -1894,17 +1895,20 @@ export async function openChatThread(uid) {
   try { updateVoiceSendBtn(); } catch(_) {}
 
   const videoBtn = $('chatVideoCallBtn');
-  if (videoBtn) videoBtn.style.display = '';
   const voiceCallBtn = $('chatVoiceCallBtn');
-  if (voiceCallBtn) voiceCallBtn.style.display = '';
   if (isSaved) {
+    if (videoBtn) videoBtn.style.display = 'none';
+    if (voiceCallBtn) voiceCallBtn.style.display = 'none';
     $('chatThreadName').textContent = SAVED_NAME;
     $('chatThreadAvi').innerHTML = `<img src="${SAVED_AVATAR}" alt="">`;
     const _st = $('chatTypingStatus'); if (_st) { _st.textContent = ''; _st.classList.remove('online'); }
     chatState._peerLastSeenAt = null;
     chatState._otherUserAvi = SAVED_AVATAR;
     chatState._otherUserUid = uid;
-  } else try {
+  } else {
+    if (videoBtn) videoBtn.style.display = '';
+    if (voiceCallBtn) voiceCallBtn.style.display = '';
+    try {
     const { data: prow } = await sb.from('profiles').select('id, username, full_name, avatar, last_seen, approval, blocked').eq('id', uid).maybeSingle();
     if (_stale()) return; // boshqa chatga o'tilgan — sarlavhani buzmaymiz
     const ud = mapProfile(prow) || {};
@@ -3167,6 +3171,7 @@ export function closeChatThread() {
   clearChatFile();
   const hint = document.getElementById('chatClipHint');
   if (hint) hint.style.display = 'none';
+  unlockScroll('chatThreadModal');
   const modal = $('chatThreadModal');
   if (modal) {
     modal.classList.remove('show');

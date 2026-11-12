@@ -3,7 +3,7 @@
  * Feed yuqorisida horizontal strip (mobile + desktop).
  */
 import { sb, state, mapProfile, mediaPublicUrl } from '../core/config.js';
-import { $, esc, defAvi } from '../core/utils.js';
+import { $, esc, defAvi, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
@@ -625,7 +625,7 @@ function openViewer(groupIdx, itemIdx) {
   const v = $('storyViewer');
   if (!v) return;
   v.hidden = false;
-  document.body.style.overflow = 'hidden';
+  lockScroll('storyViewer');
   state.storyUid = _groups[groupIdx]?.uid || null;   // URL: /s/<username>
   window.dispatchEvent(new Event('spacemr:route'));
   showCurrent();
@@ -829,7 +829,7 @@ function closeViewer() {
   const v = $('storyViewer');
   if (v) v.hidden = true;
   state.storyUid = null;
-  document.body.style.overflow = '';
+  unlockScroll('storyViewer');
   disposeStoryMedia();
   loadStories(); // ringlarni yangilash
 }
@@ -1063,6 +1063,7 @@ async function showCurrent() {
     el.onload = startProgress;
     el.onerror = showMediaFailure;
     el.src = src;
+    if (el.complete && el.naturalWidth > 0) startProgress();
   }
   _mediaTimeout = setTimeout(showMediaFailure, 15000);
 
