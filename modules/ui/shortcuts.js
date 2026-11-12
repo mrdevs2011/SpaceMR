@@ -24,7 +24,7 @@ import { toast } from './toast.js';
 import { closeChatThread } from '../chat/chat.js';
 import { escLocals } from './esc-stack.js';
 
-const isOpen = el => !!el && (el.classList.contains('show') || el.classList.contains('open') || el.style.display === 'flex' || el.style.display === 'block' || el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay'));
+const isOpen = el => !!el && (el.classList.contains('show') || el.classList.contains('open') || el.style.display === 'flex' || el.style.display === 'block' || el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture');
 
 /* Backdrop bosilganda yopiladigan overlaylar uchun */
 const backdrop = id => () => {
@@ -36,6 +36,7 @@ const backdrop = id => () => {
 
 /* Ochiq oynalar. Qaysi biri ustda ekani z-index bo'yicha ish vaqtida aniqlanadi (closeTopmost) */
 const CLOSERS = [
+  ['camCapture',             () => document.querySelector('#camCapture .cc-close')?.click()],
   ['chatCtxOverlay',         () => $('chatCtxOverlay')?.remove()],
   ['confirmOverlay',         () => $('confirmCancelBtn')?.click()],
   ['zoomModal',              () => $('zoomClose')?.click()],

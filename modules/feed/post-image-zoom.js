@@ -17,6 +17,7 @@ if (!window.__postImgZoomBound) {
   }, true);
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target?.closest?.('input, textarea, select, [contenteditable="true"], button, a')) return;
     const media = e.target?.closest?.('.post-media');
     if (!media || media.dataset.type === 'video') return;
     const url = media.dataset.url || media.querySelector('img')?.src;

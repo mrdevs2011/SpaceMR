@@ -162,7 +162,15 @@ export function pickFile(f) {
 }
 
 /* ── Caption input → enable/disable Post btn ─────────────────────────── */
-$('captionInput').addEventListener('input', () => { refreshPostBtn(); setDraft(_composerMode === 'story' ? 'story' : 'post', $('captionInput').value); });
+$('captionInput').addEventListener('input', () => {
+  refreshPostBtn();
+  const val = $('captionInput').value;
+  if (_composerMode === 'story') {
+    setDraft('story', val);
+  } else {
+    _savePostDraft(val);
+  }
+});
 
 /* ── Preview click (clear yoki kattalashtirib ko'rish) ─────────────── */
 $('previewArea').addEventListener('click', e => {
@@ -517,17 +525,17 @@ export function openComposer() {
   ov.classList.add('show');
   lockScroll('uploadOverlay');
   resetUpload();
+  const draft = _loadPostDraft();
+  const cap = $('captionInput');
+  if (draft && cap) {
+    cap.value = draft;
+    refreshPostBtn();
+  }
   loadComposerAvi();
   try { window.dispatchEvent(new CustomEvent('spacemr:route')); } catch (_) {}
 }
 /* Story "+" bosilganda: fayl menejerini darhol ochmaymiz — post kabi composer kartasi ochiladi */
 export function openStoryComposer() {
-  try {
-    const sd = getDraft('story');
-    const cap = $('captionInput');
-    if (sd && cap && !cap.value.trim()) cap.value = sd;
-  } catch (_) {}
-
   if (!state.me) return;
   const ov = raiseUploadOverlay();
   if (!ov) return;
@@ -535,6 +543,14 @@ export function openStoryComposer() {
   lockScroll('uploadOverlay');
   resetUpload();
   _setComposerMode('story');
+  try {
+    const sd = getDraft('story');
+    const cap = $('captionInput');
+    if (sd && cap) {
+      cap.value = sd;
+      refreshPostBtn();
+    }
+  } catch (_) {}
   const ub = $('uploadBtn');
   if (ub) ub.textContent = 'Hikoya';
   loadComposerAvi();
