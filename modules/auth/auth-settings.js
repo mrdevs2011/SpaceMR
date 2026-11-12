@@ -77,6 +77,7 @@ if (settingsBtn) {
       settingsOverlay.classList.add('show');
       // Desktopda scroll qulflanmasin (side panel)
       if (!window.matchMedia('(min-width: 1100px)').matches) lockScroll('settingsOverlay');
+      try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
     }
   };
 }
@@ -93,7 +94,11 @@ if (closeSettingsBtn) {
     if (isDesktopSettingsPinned()) return;
     $('settingsMoreMenu')?.classList.remove('show');
     const settingsOverlay = $('settingsOverlay');
-    if (settingsOverlay) { settingsOverlay.classList.remove('show'); unlockScroll('settingsOverlay'); }
+    if (settingsOverlay) {
+      settingsOverlay.classList.remove('show');
+      unlockScroll('settingsOverlay');
+      try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
+    }
   };
 }
 
@@ -105,6 +110,7 @@ if (settingsOverlay) {
       $('settingsMoreMenu')?.classList.remove('show');
       settingsOverlay.classList.remove('show');
       unlockScroll('settingsOverlay');
+      try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
     }
   };
 }
@@ -130,6 +136,7 @@ if (settingsOverlay) {
       el.classList.toggle('open', on);
       el.querySelector('.pe-acc-toggle')?.setAttribute('aria-expanded', on ? 'true' : 'false');
     });
+    try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
   });
 })();
 

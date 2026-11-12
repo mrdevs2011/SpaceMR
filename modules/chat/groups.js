@@ -628,6 +628,7 @@ export async function openGroupThread(groupId) {
   lockScroll('chatThreadModal');
   modal.dataset.kind = groupData.type;
   modal.dataset.gid  = groupId;
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 
   document.getElementById('chatHeaderDropdown')?.remove();
   chatUI.closeThreadMsgSearch?.();
@@ -929,6 +930,7 @@ export function closeGroupThread() {
   _currentGroupData = null;
   state.currentChatKind = 'dm';
   unlockScroll('chatThreadModal'); // Modal yopildi — body scrollini qayta ochamiz
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 }
 
 /* ─────────────────────────────────────────────────────────────────────

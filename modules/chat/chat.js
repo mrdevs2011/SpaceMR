@@ -1848,6 +1848,7 @@ export async function openChatThread(uid) {
   updatePostAttachBar();
 
   state.currentChatUid = uid;
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
   let chatId = chatState._latestChatMap[uid]?.id;
   if (!chatId || !_UUID_RE.test(chatId)) {
     const { data, error } = await sb.rpc('get_or_create_chat', { p_other: uid });
@@ -1928,6 +1929,7 @@ export async function openChatThread(uid) {
     chatState._otherUserAvi = defAvi('U');
     chatState._otherUserUid = uid;
   }
+}
 
   // Onlayn holatni real vaqtda kuzatib turish — peer user hujjatidagi
   // `lastSeenAt` heartbeat orqali yangilanganda darhol sarlavhada ko'rinsin.
@@ -3186,6 +3188,7 @@ export function closeChatThread() {
   // Ovoz hali ijro etilayotgan bo'lsa — endi bu chat yopilgani uchun
   // mini-pleer bar ko'rinishi kerak (ovozning o'zi to'xtamaydi).
   try { _syncMiniPlayer(); } catch (_) {}
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 }
 
 /* ── Send message ────────────────────────────────────────────────────── */
@@ -3913,6 +3916,7 @@ initMsgMenu({
   reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) { _dmGone.clear(); chatState._reloadThread(); } },
   onMessageEdited: (id, text) => {
     const isGrp = state.currentChatKind && state.currentChatKind !== 'dm';
+    const preview = String(text || '').slice(0, 120);
     if (!isGrp) {
       if (Array.isArray(chatState._curMsgs)) {
         chatState._curMsgs = chatState._curMsgs.map(m => String(m.id) === String(id) ? { ...m, text, editedAt: Date.now() } : m);
@@ -3922,8 +3926,22 @@ initMsgMenu({
       if (cm) {
         const last = chatState._curMsgs?.[chatState._curMsgs.length - 1];
         if (last && String(last.id) === String(id)) {
-          cm.lastMessage = humanMsgPreview({ ...last, text }).slice(0, 120);
+          cm.lastMessage = preview;
+          if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
         }
+      }
+    } else {
+      const msgs = chatState._curMsgs || [];
+      const last = msgs[msgs.length - 1];
+      if (last && String(last.id) === String(id)) {
+        try {
+          const gid = state.currentChatId || document.getElementById('chatThreadModal')?.dataset?.gid;
+          import('./groups.js').then(m => {
+            const g = m.getGroupRows?.().find(x => String(x.id) === String(gid));
+            if (g) { g.lastMessage = preview; }
+            if (state.view === 'chats') document.dispatchEvent(new CustomEvent('groupsUpdated'));
+          }).catch(() => {});
+        } catch (_) {}
       }
     }
   },
@@ -3976,30 +3994,7 @@ initMsgMenu({
     const { data, error } = await sb.rpc('get_or_create_chat', { p_other: uid });
     return error ? null : data;
   },
-  // Tahrir: chats list prevyusini darhol yangila
-  onMessageEdited: (id, text) => {
-    const msgs = chatState._curMsgs || [];
-    const last = msgs[msgs.length - 1];
-    if (!last || String(last.id) !== String(id)) return;
-    const preview = String(text || '').slice(0, 120);
-    if (state.currentChatKind === 'group') {
-      try {
-        const gid = state.currentChatId || document.getElementById('chatThreadModal')?.dataset?.gid;
-        // groups map lastMessage
-        import('./groups.js').then(m => {
-          const g = m.getGroupRows?.().find(x => String(x.id) === String(gid));
-          if (g) { g.lastMessage = preview; }
-          if (state.view === 'chats') document.dispatchEvent(new CustomEvent('groupsUpdated'));
-        }).catch(() => {});
-      } catch (_) {}
-    } else {
-      const cm = chatState._latestChatMap?.[state.currentChatUid];
-      if (cm) {
-        cm.lastMessage = preview;
-        if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
-      }
-    }
-  },
+
 });
 $('chatThreadModal').addEventListener('click', e => {
   if (e.target === $('chatThreadModal')) closeChatThread();

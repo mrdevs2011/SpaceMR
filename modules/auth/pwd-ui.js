@@ -23,6 +23,7 @@ export function bindEye(root) {
       btn.innerHTML = show ? EYE_OFF : EYE;
       btn.setAttribute('aria-label', show ? 'Parolni yashirish' : "Parolni ko'rsatish");
       inp.focus();
+      try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (_) {}
     });
   });
 }
