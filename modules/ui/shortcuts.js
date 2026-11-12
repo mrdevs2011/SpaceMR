@@ -242,6 +242,7 @@ document.addEventListener('keydown', e => {
   // Tasdiq oynasi / modallar: Enter = asosiy tugma
   if (!onButton) {
     if (isOpen($('confirmOverlay'))) { e.preventDefault(); $('confirmOkBtn')?.click(); return; }
+    if (isOpen($('pwConfirmOverlay'))) { e.preventDefault(); $('pwcOk')?.click(); return; }
     if (isOpen($('regRecoveryModal'))) {
       e.preventDefault();
       const inputStep = $('regRecoveryStepInput');

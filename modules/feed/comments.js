@@ -1,7 +1,7 @@
 import { sendSocialPush } from '../push.js';
 import { protectSecrets } from '../core/secrets.js';
 import { sb, state, isAdmin, getMediaUrl, mapProfile } from '../core/config.js';
-import { $, esc, renderMarkdown, markdownToPlain, defAvi, fmtCount, fmt } from '../core/utils.js';
+import { $, esc, renderMarkdown, markdownToPlain, defAvi, fmtCount, fmt, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast }                   from '../ui/toast.js';
 import { rateOk }                   from '../core/rate-limit.js';
 import { busEmit, busOn }          from '../core/rt-bus.js';
@@ -134,6 +134,17 @@ function findVisiblePost(postId) {
   return null;
 }
 
+export function closeSheetCmt() {
+  const m = $('cmtModal');
+  if (m) m.classList.remove('show');
+  unlockScroll('cmtModal');
+  if (_mode === 'modal') {
+    state.cmtPostId = null;
+    _mode = null;
+  }
+  _routeKick();
+}
+
 /* Post lentada ko'rinmasa (masalan profil gridi → detail modal) — pastdan chiqadigan eski izohlar oynasi */
 async function openSheetCmt(postId) {
   closeAllInline();
@@ -147,6 +158,7 @@ async function openSheetCmt(postId) {
   const list = $('cmtModalList');
   if (list) list.innerHTML = loadingHtml();
   m.classList.add('show');
+  lockScroll('cmtModal');
   _routeKick();
   await loadComments(postId, 'cmtModalList');
 }
@@ -154,7 +166,7 @@ async function openSheetCmt(postId) {
 /* ── Open: routes mobile → inline, desktop → right rail ───────────────── */
 export async function openCmtModal(postId) {
   // Hide old bottom-sheet modal always
-  $('cmtModal')?.classList.remove('show');
+  closeSheetCmt();
 
   // Desktop/right-rail mavjud bo'lsa — rail; aks holda mobile kabi inline (parity)
   if (isDesktopCmt() && document.getElementById('rightRail') && !document.getElementById('rightRail').hidden) {
@@ -568,10 +580,10 @@ if ($('cmtModalInput')) {
     cnt.className = 'cmt-char-count' + (len >= 270 ? (len >= 300 ? ' over' : ' warn') : '');
   });
 }
-if ($('cmtModalClose')) $('cmtModalClose').onclick = () => $('cmtModal')?.classList.remove('show');
+if ($('cmtModalClose')) $('cmtModalClose').onclick = closeSheetCmt;
 if ($('cmtModal')) {
   $('cmtModal').addEventListener('click', e => {
-    if (e.target === $('cmtModal')) $('cmtModal').classList.remove('show');
+    if (e.target === $('cmtModal')) closeSheetCmt();
   });
 }
 

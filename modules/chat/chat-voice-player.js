@@ -848,8 +848,15 @@ $('voiceMiniPlayer')?.addEventListener('click', async () => {
   if (_activeChatKind === 'group' && _activeChatId) {
     const { applyPath } = await import('../url-router.js');
     applyPath('/chats/g/' + encodeURIComponent(_activeChatId));
-  } else if (_activeChatUid && typeof _openChatCb === 'function') {
-    _openChatCb(_activeChatUid);
+  } else if (_activeChatUid) {
+    const { applyPath } = await import('../url-router.js');
+    const { dmToken } = await import('./chat.js');
+    const token = dmToken(_activeChatUid);
+    if (token) {
+      applyPath('/chats/u/' + encodeURIComponent(token));
+    } else if (typeof _openChatCb === 'function') {
+      _openChatCb(_activeChatUid);
+    }
   }
 });
 

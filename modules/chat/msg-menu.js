@@ -1326,6 +1326,7 @@ export function initMsgMenu(opts) {
   onEsc(365, () => {
     if (selMode) { exitSelect(); return true; }
     if (editing) { cancelEdit(true); return true; }
+    if (replying) { cancelReply(false); return true; }
     return false;
   });
   window.addEventListener('resize', () => { if (menu?.contains(document.activeElement)) return; closeMenu(); });
