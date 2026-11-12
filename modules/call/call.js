@@ -331,9 +331,10 @@ let _ringbackLoop = null;
 function _playRingback() {
   _stopRingback();
   try {
-    _ringbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _ringbackCtx = _getSharedAudioCtx();
+    if (_ringbackCtx?.state === 'suspended') _ringbackCtx.resume().catch(() => {});
     function _beep() {
-      if (!_ringbackCtx) return;
+      if (!_ringbackCtx || _ringbackCtx.state === 'closed') return;
       const osc  = _ringbackCtx.createOscillator();
       const gain = _ringbackCtx.createGain();
       osc.connect(gain); gain.connect(_audOut(_ringbackCtx));
@@ -352,7 +353,7 @@ function _playRingback() {
 
 function _stopRingback() {
   clearInterval(_ringbackLoop); _ringbackLoop = null;
-  if (_ringbackCtx) { try { _ringbackCtx.close(); } catch(_){} _ringbackCtx = null; }
+  _ringbackCtx = null;
 }
 
 /* ─── INCOMING RINGTONE (qabul qiluvchi uchun) ──────────────────────── */
@@ -366,14 +367,15 @@ function _startRingtone() {
   // So'zsiz marimba/music-box melodiyasi (WebAudio, fayl kerak emas): pentatonika, har ~3.2s da takrorlanadi.
   // Eslatma: veb-ilova qurilmaning tizim ringtone'ini o'qiy olmaydi — shuning uchun doim shu melodiya.
   try {
-    _ringCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (_ringCtx.state === 'suspended') _ringCtx.resume().catch(() => {});
+    _ringCtx = _getSharedAudioCtx();
+    if (_ringCtx?.state === 'suspended') _ringCtx.resume().catch(() => {});
 
     const MELODY = [ // [chastota Hz, boshlanish s]
       [659.25, 0.00], [783.99, 0.20], [1046.5, 0.40], [783.99, 0.70],
       [659.25, 0.90], [783.99, 1.10], [1174.66, 1.30], [1046.5, 1.70],
     ];
     function _marimba(freq, t) {
+      if (!_ringCtx || _ringCtx.state === 'closed') return;
       const g = _ringCtx.createGain();
       g.connect(_audOut(_ringCtx));
       g.gain.setValueAtTime(0, t);
@@ -390,7 +392,7 @@ function _startRingtone() {
       });
     }
     function _ringOnce() {
-      if (!_ringCtx) return;
+      if (!_ringCtx || _ringCtx.state === 'closed') return;
       const t0 = _ringCtx.currentTime + 0.02;
       MELODY.forEach(([f, dt]) => _marimba(f, t0 + dt));
     }
@@ -412,10 +414,7 @@ function _startRingtone() {
 function _stopRingtone() {
   clearInterval(_ringLoop);   _ringLoop = null;
   clearInterval(_ringVibrate); _ringVibrate = null;
-  if (_ringCtx) {
-    try { _ringCtx.close(); } catch (_) {}
-    _ringCtx = null;
-  }
+  _ringCtx = null;
   if (navigator.vibrate) navigator.vibrate(0); // tebranishni to'xtatish
 }
 

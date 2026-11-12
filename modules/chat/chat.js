@@ -4010,8 +4010,14 @@ window.addEventListener('spacemr:draft', (e) => {
 loadDrafts().then(() => { try { renderChatsList(); } catch (_) {} }).catch(() => {});
 
 $('chatThreadInput').addEventListener('keydown', e => {
-  // Desktop: Enter = yuborish, Shift+Enter = yangi qator. Telefon (sensorli): Enter = yangi qator, yuborish tugma bilan.
-  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && !window.matchMedia('(pointer: coarse)').matches) { e.preventDefault(); handleSendAction(); }
+  if (e.isComposing) return;
+  // Desktop: Enter = yuborish, Shift+Enter = yangi qator. Ctrl+Enter / Cmd+Enter = har doim yuborish.
+  const isPlainEnter = e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !window.matchMedia('(pointer: coarse)').matches;
+  const isCtrlEnter = e.key === 'Enter' && (e.ctrlKey || e.metaKey);
+  if (isPlainEnter || isCtrlEnter) {
+    e.preventDefault();
+    handleSendAction();
+  }
 });
 
 /* ── Composer emoji tugmasi — matn maydoni ichida chapda (Telegram
