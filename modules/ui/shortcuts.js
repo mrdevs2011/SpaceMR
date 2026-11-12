@@ -50,7 +50,7 @@ const CLOSERS = [
   ['settingsOverlay',        backdrop('settingsOverlay')],
   ['searchOverlay',          () => $('searchOverlayClose')?.click()],
   ['userProfileModal',       () => $('upBack')?.click()],
-  ['detailModal',            () => $('detailModal')?.classList.remove('show')],
+  ['detailModal',            () => { import('../profile/profile.js').then(m => m.closeDetail?.()).catch(() => {}); return true; }],
   ['sbSearchPanel',          () => $('sbSearchPanel')?.classList.remove('show')],
   ['settingsMoreMenu',       () => $('settingsMoreMenu')?.classList.remove('show')],
   ['chatThreadModal',        () => closeChatThread()],

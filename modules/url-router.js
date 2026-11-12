@@ -432,7 +432,7 @@ function hasAnyOverlay() {
 }
 
 function closeEverythingExcept(keep) {
-  if (hasShow('detailModal')) $('detailModal').classList.remove('show');
+  if (hasShow('detailModal')) import('./profile/profile.js').then(m => m.closeDetail?.()).catch(() => {});
   const sv = $('storyViewer');
   if (keep !== 'story' && sv && !sv.hidden) import('./feed/stories.js').then(m => m.closeStoryViewer?.()).catch(() => {});
   if (keep !== 'userprofile' && hasShow('userProfileModal')) $('upBack')?.click();

@@ -256,6 +256,12 @@ export async function renderProfileGrid(posts) {
 }
 
 /* ── Post detail modal ───────────────────────────────────────────────── */
+export function closeDetail() {
+  state.detailPostId = null;
+  $('detailModal')?.classList.remove('show');
+  unlockScroll('detailModal');
+}
+
 export async function openDetail(id) {
   const p = state.allPosts.find(x => x.id === id); if (!p) return;
 
@@ -289,6 +295,7 @@ export async function openDetail(id) {
       <div class="w-20px h-20px brr-4px skel-shimmer"></div>
     </div>`;
   $('detailModal').classList.add('show');
+  lockScroll('detailModal');
   state.detailPostId = id;   // URL: /p/<id>
 
   const [lR, cR, uR] = await Promise.all([
@@ -349,10 +356,6 @@ export async function openDetail(id) {
         <img src="./svg/extra/icon-fb3793816331.svg" alt="" class="icon" width="20" height="20">
       </button>` : ''}
     </div>`;
-
-  const closeDetail = () => {
-    $('detailModal').classList.remove('show');
-  };
 
   $('dmClose').onclick = closeDetail;
   $('detailModal').onclick = e => { if (e.target === $('detailModal')) closeDetail(); };
@@ -540,11 +543,16 @@ export async function renderUserProfileModal(uid) {
   const upChatBtn = document.getElementById('upChatBtn');
   if (upChatBtn) {
     upChatBtn.addEventListener('click', async () => {
-      $('userProfileModal').classList.remove('show');
-      const { switchView } = await import('../ui/ui.js');
-      switchView('chats');
-      const { openChatThread } = await import('../chat/chat.js');
-      openChatThread(uid);
+      closeUserProfileModal();
+      const { applyPath } = await import('../url-router.js');
+      const { dmToken } = await import('../chat/chat.js');
+      const token = dmToken(uid);
+      if (token) {
+        applyPath('/chats/u/' + encodeURIComponent(token));
+      } else {
+        const { openChatThread } = await import('../chat/chat.js');
+        openChatThread(uid);
+      }
     });
   }
 
@@ -567,17 +575,14 @@ export async function renderUserProfileModal(uid) {
   });
 }
 
-$('upBack').onclick = () => {
+export function closeUserProfileModal() {
   state.currentViewingUserId    = null;
   state.currentViewingUserPosts = [];
-  $('userProfileModal').classList.remove('show');
+  $('userProfileModal')?.classList.remove('show');
   unlockScroll('userProfileModal');
-};
+}
+
+$('upBack').onclick = closeUserProfileModal;
 $('userProfileModal').addEventListener('click', e => {
-  if (e.target === $('userProfileModal')) {
-    state.currentViewingUserId    = null;
-    state.currentViewingUserPosts = [];
-    $('userProfileModal').classList.remove('show');
-    unlockScroll('userProfileModal');
-  }
+  if (e.target === $('userProfileModal')) closeUserProfileModal();
 });
