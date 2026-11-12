@@ -3659,9 +3659,11 @@ a, .md-link { color: var(--x-blue) !important; }
 #chatThreadModal .chat-msg.mine .chat-bubble a,
 #chatThreadModal .chat-msg.mine .chat-bubble .md-link,
 #chatThreadModal .chat-msg.mine .chat-bubble .md-mention,
+#chatThreadModal .chat-msg.mine .chat-bubble .md-tag,
 .chat-msg.mine .chat-bubble a,
 .chat-msg.mine .chat-bubble .md-link,
-.chat-msg.mine .chat-bubble .md-mention {
+.chat-msg.mine .chat-bubble .md-mention,
+.chat-msg.mine .chat-bubble .md-tag {
   color: #ffffff !important;
   text-decoration: underline;
   text-underline-offset: 2px;

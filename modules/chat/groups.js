@@ -40,6 +40,7 @@ import {
 } from './chat-shared.js';
 import { chatUI } from './chat-state.js';
 import { isEditing, commitEdit, getReplying, cancelReply, msgMenuReset } from './msg-menu.js';
+import { forceStopVoiceRecording } from './chat-voice-record.js';
 
 /* ─────────────────────────────────────────────────────────────────────
    STATE
@@ -879,6 +880,7 @@ export async function openGroupThread(groupId) {
 }
 
 export function closeGroupThread() {
+  try { forceStopVoiceRecording(); } catch (_) {}
   try { msgMenuReset(); } catch (_) {}
   try { chatUI.closeThreadMsgSearch?.(); } catch (_) {}
   _gTyp.forEach(t => clearTimeout(t)); _gTyp.clear(); clearTimeout(_gTypTimer); _gSetTyping(false);
@@ -1130,6 +1132,16 @@ export async function sendGroupMessage(opts) {
     const red = redactSpoilersForStorage(finalMsgText);
     finalMsgText = red.text;
     _spoilerSecrets = red.secrets;
+  } else if (postShare && userText) {
+    try {
+      const o = JSON.parse(finalMsgText);
+      if (o && o.comment) {
+        const red = redactSpoilersForStorage(o.comment);
+        o.comment = red.text;
+        _spoilerSecrets = red.secrets;
+        finalMsgText = JSON.stringify(o);
+      }
+    } catch (_) {}
   }
 
   const replyInfo = getReplying();

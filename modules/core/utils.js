@@ -1061,7 +1061,8 @@ export function renderMarkdown(rawText, opts) {
     return '\u0000TH' + idx + '\u0000';
   });
 
-  s = s.replace(/(^|\s)@([a-zA-Z0-9_.]+)(?=\s|[.,!?]|$)/g, '$1<span class="md-mention" onclick="window.dispatchEvent(new CustomEvent(\'open-mention\', {detail: \'$2\'}))">@$2</span>');
+  s = s.replace(/(^|[\s(\["'])@([a-zA-Z0-9_.]+)(?=[\s.,!?)\]"']|$)/g, '$1<span class="md-mention" onclick="window.dispatchEvent(new CustomEvent(\'open-mention\', {detail: \'$2\'}))">@$2</span>');
+  s = s.replace(/(^|[\s(\["'])#([a-zA-Z0-9_\u0400-\u04FF]+)(?=[\s.,!?)\]"']|$)/g, '$1<span class="md-tag" onclick="window.dispatchEvent(new CustomEvent(\'open-tag\', {detail: \'$2\'}))">#$2</span>');
 
   s = s.replace(/\u0000TH(\d+)\u0000/g, (_m, idx) => htmlTags2[parseInt(idx, 10)]);
 
@@ -1744,6 +1745,8 @@ export function renderSpoilers(rawText) {
     return '\u0000SP' + idx + '\u0000';
   });
   s = esc(s);
+  s = s.replace(/(^|[\s(\["'])@([a-zA-Z0-9_.]+)(?=[\s.,!?)\]"']|$)/g, '$1<span class="md-mention" onclick="window.dispatchEvent(new CustomEvent(\'open-mention\', {detail: \'$2\'}))">@$2</span>');
+  s = s.replace(/(^|[\s(\["'])#([a-zA-Z0-9_\u0400-\u04FF]+)(?=[\s.,!?)\]"']|$)/g, '$1<span class="md-tag" onclick="window.dispatchEvent(new CustomEvent(\'open-tag\', {detail: \'$2\'}))">#$2</span>');
   return s.replace(/\u0000SP(\d+)\u0000/g, (_m, i) => hold[parseInt(i, 10)] || '');
 }
 

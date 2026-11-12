@@ -3119,12 +3119,14 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 .chat-msg .md-spoiler:not(.revealed) {
   max-width: 100%;
 }
-.md-mention {
+.md-mention,
+.md-tag {
   color: var(--accent, #1d9bf0);
   cursor: pointer;
   font-weight: 500;
 }
-.md-mention:hover {
+.md-mention:hover,
+.md-tag:hover {
   text-decoration: underline;
 }
 .md-table-wrap {

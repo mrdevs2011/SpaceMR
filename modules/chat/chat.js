@@ -3783,7 +3783,7 @@ export function renderChatPostCard(ps) {
             <div class="cpc-avi-placeholder">${esc((p.authorName || 'F').trim().charAt(0).toUpperCase() || 'F')}</div>
             ${authorAvi ? `<img src="${esc(authorAvi)}" alt="" onerror="var a=this.parentNode;this.remove();a&&a.setAttribute('data-need-avi','1');window._cpcAviFix&&window._cpcAviFix()">` : ''}
           </div>
-          <div class="cpc-author-meta">
+          <div class="cpc-author-meta${isUserDeleted ? '' : ' cpc-avi-link'}" ${isUserDeleted ? '' : `data-uid="${userId}" role="button" tabindex="0" title="Profil"`} style="${isUserDeleted ? '' : 'cursor:pointer'}">
             <span class="cpc-author-name${isUserDeleted ? ' is-deleted' : ''}">${authorName}${isUserDeleted ? ' <span class="cpc-del-tag">(O\'chirilgan hisob)</span>' : ''}</span>
             ${authorUser ? `<span class="cpc-author-handle${isUserDeleted ? ' is-deleted' : ''}">${authorUser}</span>` : ''}
           </div>

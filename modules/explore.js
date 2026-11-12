@@ -205,7 +205,20 @@ if (overlay && input && body) {
   let wasOpen = false;
   new MutationObserver(() => {
     const open = overlay.classList.contains('open');
-    if (open && !wasOpen) { reset(); render(); loadUsers(); loadLocalGroups().then(() => { if (overlay.classList.contains('open')) render(); }); }
+    if (open && !wasOpen) {
+      const q = (input?.value || state.exploreQuery || '').trim();
+      if (!q) {
+        reset();
+      } else {
+        query = q;
+        if (input && input.value !== q) input.value = q;
+        remoteSearch(q);
+        syncQuery();
+      }
+      render();
+      loadUsers();
+      loadLocalGroups().then(() => { if (overlay.classList.contains('open')) render(); });
+    }
     wasOpen = open;
   }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
 

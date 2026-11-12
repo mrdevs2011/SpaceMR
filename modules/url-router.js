@@ -698,7 +698,7 @@ async function _applyPathImpl(rawPath, { initial = false } = {}) {
       closeEverythingExcept(route.overlay);
       await openOverlay(route.overlay, route.section);
       if (route.overlay === 'explore') {
-        const q = new URLSearchParams(location.search).get('q') || '';
+        const q = new URLSearchParams(rawPath.includes('?') ? rawPath.slice(rawPath.indexOf('?')) : location.search).get('q') || '';
         setTimeout(() => window.dispatchEvent(new CustomEvent('explore:commit', { detail: q })), 60);
       }
       updateTitle(cleanPath(rawPath));
@@ -901,6 +901,22 @@ export function initUrlRouter() {
 
   document.addEventListener('groupsUpdated', () => _gnameCache.clear());
   window.addEventListener('spacemr:route', schedule);
+
+  window.addEventListener('open-mention', (e) => {
+    const uname = String(e?.detail || '').replace(/^@/, '').trim();
+    if (!uname) return;
+    const path = '/u/' + encodeURIComponent(uname);
+    setUrl(path);
+    applyPath(path);
+  });
+
+  window.addEventListener('open-tag', (e) => {
+    const tag = String(e?.detail || '').replace(/^#/, '').trim();
+    if (!tag) return;
+    const path = '/explore?q=' + encodeURIComponent('#' + tag);
+    setUrl(path);
+    applyPath(path);
+  });
 
   const mo = new MutationObserver(() => { detectAuth(); schedule(); });
   mo.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class', 'data-gid', 'hidden'] });
