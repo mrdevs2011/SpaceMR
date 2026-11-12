@@ -204,6 +204,7 @@ function closeRunner() {
   runnerName = "";
   if (runner) { try { runner.destroy(); } catch (_) {} runner = null; }
   runnerId = '';
+  unlockScroll('appRunner');
   $('appRunner')?.remove();
 }
 
@@ -226,6 +227,7 @@ async function openRunner(a, c) {
     </div>
     <div class="apr-body"><div class="spin-wrap"><div class="spinner"></div></div></div>`;
   document.body.appendChild(el);
+  lockScroll('appRunner');
   const body = el.querySelector('.apr-body');
   const { data, error } = await sb.from('apps').select('html').eq('id', a.id).maybeSingle();
   if (runnerId !== a.id || !el.isConnected) return;   // bu orada yopilgan

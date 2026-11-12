@@ -27,7 +27,7 @@ import { escLocals } from './esc-stack.js';
 const isOpen = el => {
   if (!el || el.hidden) return false;
   if (el.classList.contains('show') || el.classList.contains('open')) return true;
-  if (el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture' || el.id === 'cmViewer' || el.id === 'pwConfirmOverlay' || el.id === 'appFormOverlay' || el.id === 'appCatOverlay' || el.id === 'grpJoinOverlay' || el.id === 'uaActionModal' || el.id === 'micPermOverlay' || el.id === 'incomingCallModal' || el.id === 'callActiveModal' || el.id === 'guideOverlay' || el.id === 'svViewersModal' || el.id === 'storyViewer' || el.id === 'recoveryModal') return true;
+  if (el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture' || el.id === 'cmViewer' || el.id === 'pwConfirmOverlay' || el.id === 'appFormOverlay' || el.id === 'appCatOverlay' || el.id === 'grpJoinOverlay' || el.id === 'uaActionModal' || el.id === 'micPermOverlay' || el.id === 'incomingCallModal' || el.id === 'callActiveModal' || el.id === 'guideOverlay' || el.id === 'svViewersModal' || el.id === 'storyViewer' || el.id === 'recoveryModal' || el.id === 'appRunner') return true;
   try {
     const cs = window.getComputedStyle(el);
     return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
@@ -78,6 +78,7 @@ const CLOSERS = [
   ['adminResetPwdOverlay',   () => $('adminResetCancelBtn')?.click()],
   ['guideOverlay',           () => { (document.getElementById('igCloseBtn') || document.getElementById('guideOverlay'))?.click(); return true; }],
   ['recoveryModal',          () => { (document.getElementById('recoveryBackBtn') || document.getElementById('recoveryModal'))?.click(); return true; }],
+  ['appRunner',              () => { document.querySelector('#appRunner [data-act="run-back"]')?.click(); return true; }],
   ['svViewersModal',         () => { document.getElementById('svViewersClose')?.click(); return true; }],
   ['storyViewer',            () => { document.getElementById('svClose')?.click(); return true; }],
 ];
