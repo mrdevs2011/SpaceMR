@@ -1296,6 +1296,9 @@
 .chat-bubble { position: relative; padding: 7px 12px 7px 12px; border-radius: var(--radius); font-size: 14px; line-height: 1.45; word-break: break-word; max-width: 100%; display: inline-block; }
 .chat-msg.mine .chat-bubble { background: #2f3336; color: var(--pal-white); border-bottom-right-radius: 5px; }
 .chat-msg.theirs .chat-bubble { background: var(--pal-gray-800); color: var(--text); border-bottom-left-radius: 5px; }
+.chat-msg.emoji-only .chat-bubble,
+.chat-msg .chat-bubble.emoji-only,
+.chat-bubble.emoji-only { background: none !important; background-color: transparent !important; box-shadow: none !important; border: none !important; padding: 0 !important; border-radius: 0 !important; }
 /* Text + meta inline (Telegram trick) */
 .chat-bubble-text { white-space: pre-wrap; word-break: break-word; padding-right: 0; }
 /* Wrap text & meta together — meta floats to bottom-right */

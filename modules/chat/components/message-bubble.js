@@ -761,6 +761,9 @@ export function generateTextBubble({ m, postShare, renderChatPostCard, wrapEmoji
     bubbleContent = renderChatPostCard(postShare);
   } else {
     emoCls = emojiOnlyClass(m.text);   // 1–3 ta emoji (bubblesiz) bo'lsa — 3D rasm, aks holda 2D
+    if (emoCls) {
+      bubbleClassExtra = emoCls;
+    }
     bubbleContent = `<div class="chat-bubble-text">${wrapEmojiNoSelect(renderMarkdown(m.text || '', { messageId: m.id, scope: (m.groupId || m.group_id) ? 'group' : 'dm' }), emoCls ? '3d' : '2d')}</div>`;
   }
   return { bubbleClassExtra, bubbleContent, emoCls };
