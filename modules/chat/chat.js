@@ -4151,8 +4151,72 @@ document.addEventListener('paste', async e => {
       setChatFile(named);
     }
   });
+  const hint = document.getElementById('chatClipHint');
+  if (hint) hint.style.display = 'none';
   $('chatThreadInput')?.focus({ preventScroll: true });
 });
+
+// Mobil & Desktop: Clipboard screenshot tezkor pill/taklif paneli
+(function() {
+  const hint = document.getElementById('chatClipHint');
+  const btn = document.getElementById('chatClipBtn');
+  const close = document.getElementById('chatClipClose');
+  const inp = document.getElementById('chatThreadInput');
+  let _lastClipBlob = null;
+
+  async function _probeClipboard() {
+    if (!navigator.clipboard?.read) return;
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imgType = item.types?.find(t => t.startsWith('image/'));
+        if (imgType) {
+          const blob = await item.getType(imgType);
+          _lastClipBlob = blob;
+          if (hint) hint.style.display = 'flex';
+          return;
+        }
+      }
+    } catch (_) {}
+    if (hint) hint.style.display = 'none';
+  }
+
+  btn?.addEventListener('click', async () => {
+    try {
+      let file = null;
+      if (_lastClipBlob) {
+        file = new File([_lastClipBlob], `screenshot_${Date.now()}.png`, { type: _lastClipBlob.type || 'image/png' });
+      } else if (navigator.clipboard?.read) {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const imgType = item.types?.find(t => t.startsWith('image/'));
+          if (imgType) {
+            const blob = await item.getType(imgType);
+            file = new File([blob], `screenshot_${Date.now()}.png`, { type: imgType });
+            break;
+          }
+        }
+      }
+      if (file) {
+        setChatFile(file);
+        if (hint) hint.style.display = 'none';
+        _lastClipBlob = null;
+        inp?.focus({ preventScroll: true });
+      }
+    } catch (err) {
+      console.warn('[clip] read error:', err);
+    }
+  });
+
+  close?.addEventListener('click', () => {
+    if (hint) hint.style.display = 'none';
+    _lastClipBlob = null;
+  });
+
+  inp?.addEventListener('focus', () => {
+    _probeClipboard().catch(() => {});
+  });
+})();
 
 
 

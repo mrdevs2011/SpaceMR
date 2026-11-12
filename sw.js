@@ -302,20 +302,39 @@ self.addEventListener('fetch', (event) => {
         const title = formData.get('title') || '';
         const text = formData.get('text') || '';
         const sharedUrl = formData.get('url') || '';
-        // Fayl ma'lumotlarini localStorage ga saqlash (app ochilganda oladi)
+
         if (files && files.length > 0) {
-          // Service worker localStoragega kira olmaydi, shuning uchun client ga xabar junatamiz
+          // 1) Fayllarni ochilayotgan sahifa olishi uchun Cache storage'da saqlaymiz
+          try {
+            const shareCache = await caches.open('pwa-share-target');
+            const items = [];
+            for (let i = 0; i < files.length; i++) {
+              const f = files[i];
+              const key = '/_shared_file_' + i;
+              items.push({ key, name: f.name, type: f.type, size: f.size });
+              await shareCache.put(key, new Response(f, {
+                headers: { 'content-type': f.type || 'application/octet-stream' }
+              }));
+            }
+            await shareCache.put('/_shared_manifest', new Response(JSON.stringify({ items, title, text, url: sharedUrl }), {
+              headers: { 'content-type': 'application/json' }
+            }));
+          } catch (_) {}
+
+          // 2) Ochiq oynalar bo'lsa darhol xabar yuboramiz
           const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-          const fileDataPromises = files.map(async (file) => {
-            const ab = await file.arrayBuffer();
-            return { name: file.name, type: file.type, size: file.size, data: Array.from(new Uint8Array(ab)) };
-          });
-          const fileDataArr = await Promise.all(fileDataPromises);
-          clients.forEach(client => {
-            client.postMessage({ type: 'SHARE_TARGET_FILES', files: fileDataArr, title, text, url: sharedUrl });
-          });
+          if (clients.length) {
+            const fileDataPromises = files.map(async (file) => {
+              const ab = await file.arrayBuffer();
+              return { name: file.name, type: file.type, size: file.size, data: Array.from(new Uint8Array(ab)) };
+            });
+            const fileDataArr = await Promise.all(fileDataPromises);
+            clients.forEach(client => {
+              client.postMessage({ type: 'SHARE_TARGET_FILES', files: fileDataArr, title, text, url: sharedUrl });
+            });
+          }
         }
-        // App ga redirect — fayllar yuboriladi
+        // App ga redirect — fayllar ochiladi
         return Response.redirect('/?share=1', 303);
       } catch (err) {
         return Response.redirect('/', 303);

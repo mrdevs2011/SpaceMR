@@ -4544,6 +4544,44 @@ input[type="file"] {
   display: block;
 }
 
+.chat-clip-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: rgba(29, 155, 240, 0.08);
+  border-top: 1px solid rgba(29, 155, 240, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.chat-clip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--blue, #1d9bf0);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.35);
+  transition: transform .12s ease, background .12s ease;
+}
+.chat-clip-btn:active { transform: scale(0.96); }
+.chat-clip-btn svg { flex-shrink: 0; }
+.chat-clip-close {
+  background: transparent;
+  border: none;
+  color: var(--text3, #888);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 50%;
+  line-height: 1;
+}
+.chat-clip-close:hover { color: #fff; }
+
 .chat-file-msg {
   display: flex;
   align-items: center;

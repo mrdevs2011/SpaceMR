@@ -1211,11 +1211,37 @@ export async function sendGroupFile(file, caption = '') {
   const _fReplyTo = _fReply?.id ? String(_fReply.id) : null;
   if (_fReply) cancelReply(false);
   const id = _gUuid();
+  const nowMs = Date.now();
   const pendingId = id;
-  _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
+  const isMedia = (file.type || '').startsWith('image/') || (file.type || '').startsWith('video/');
+  let localUrl = '';
+  if (isMedia) {
+    try { localUrl = URL.createObjectURL(file); } catch (_) {}
+  }
+
+  // Guruhda optimistik xabar — rasm/fayl shu zahoti ko'rinadi
+  const localMsg = mapMessage({
+    id, group_id: groupId, sender_id: state.me.uid, type: 'file',
+    media_path: null, media_url: localUrl || '', media_type: file.type || null,
+    file_name: file.name, file_size: file.size,
+    text: captionText || null, reply_to: _fReplyTo,
+    created_at: new Date(nowMs).toISOString(),
+    status: 'sending'
+  });
+  if (localMsg) {
+    localMsg.replyPreview = _fReply ? { name: _fReply.name, text: _fReply.preview, type: _fReply.type } : null;
+    _gMsgs = [..._gMsgs, localMsg];
+    chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+  }
+
+  if (!isMedia) {
+    _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
+  }
+
   try {
     const result = await uploadViaControllerProgress(file, 'group-files', pct => _updatePendingProgress(pendingId, pct));
-    _removePendingBubble(pendingId);
+    if (!isMedia) _removePendingBubble(pendingId);
+
     const { error } = await sb.from('group_messages').insert({
       id, group_id: groupId, sender_id: state.me.uid, type: 'file',
       media_path: result.path, media_type: file.type || null,
@@ -1224,6 +1250,13 @@ export async function sendGroupFile(file, caption = '') {
       reply_to: _fReplyTo,
     });
     if (error) throw error;
+
+    _gMsgs = _gMsgs.map(m =>
+      m.id === id ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || localUrl } : m
+    );
+    if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(id, 'sent');
+    else chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+
     const previewText = fileMsgPreview({ caption: maskSpoilers(captionText), fileName: file.name });
     _gRt?.send({
       id, type: 'file', text: captionText || null,
@@ -1235,7 +1268,10 @@ export async function sendGroupFile(file, caption = '') {
     _reloadGroupThread && _reloadGroupThread();
   } catch (err) {
     console.error('[Groups] file send failed:', err);
-    _removePendingBubble(pendingId);
+    if (!isMedia) _removePendingBubble(pendingId);
+    _gMsgs = _gMsgs.filter(m => m.id !== id);
+    chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+    if (localUrl) { try { URL.revokeObjectURL(localUrl); } catch (_) {} }
     const inp = $('chatThreadInput');
     if (inp && captionText) { inp.value = captionText; chatUI.updateVoiceSendBtn(); }
     toast('Fayl yuborilmadi', 'error');
