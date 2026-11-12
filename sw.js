@@ -331,8 +331,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  let path = '';
-  try { path = new URL(url).pathname; } catch (_) { return; }
+  if (!path) {
+    try { path = new URL(url).pathname; } catch (_) { return; }
+  }
 
   // Emoji — alohida kesh
   if (path.startsWith('/emoji/')) {

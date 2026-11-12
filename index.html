@@ -1646,6 +1646,15 @@ html[data-nf],html[data-nf] body{background:#000000}
           sessionStorage.setItem('spacemr_sw_ver', String(ev.data.version || ''));
           if (_hadControllerOnLoad) _safeSwReload('activated');
         }
+        if (ev.data && ev.data.type === 'SHARE_TARGET_FILES') {
+          var files = (ev.data.files || []).map(function(fd) {
+            var u8 = new Uint8Array(fd.data || []);
+            return new File([u8], fd.name || 'file', { type: fd.type || 'application/octet-stream' });
+          });
+          files.forEach(function(f) {
+            document.dispatchEvent(new CustomEvent('chat:attach-file', { detail: { file: f } }));
+          });
+        }
       } catch (_) {}
     });
 

@@ -3285,6 +3285,20 @@ function _renderCfpTray() {
       _removeCfpItem(idx);
     });
   });
+
+  // Thumbnail bosilganda to'liq ekranda ko'rish (zoom)
+  tray.querySelectorAll('.cfp-tray-thumb').forEach(thumb => {
+    thumb.addEventListener('click', e => {
+      e.stopPropagation();
+      const parent = thumb.closest('.cfp-tray-item');
+      const idx = parseInt(parent?.dataset.idx, 10);
+      const item = (chatState._chatSelFiles || [])[idx];
+      if (item?.objUrl) {
+        const isVid = (item.file.type || '').toLowerCase().startsWith('video/');
+        import('../core/utils.js').then(u => u.openZoom(item.objUrl, isVid ? 'video' : 'image')).catch(() => {});
+      }
+    });
+  });
 }
 
 function _removeCfpItem(idx) {
