@@ -2,8 +2,8 @@
  * Stories — Instagram uslubida 24 soatlik hikoyalar.
  * Feed yuqorisida horizontal strip (mobile + desktop).
  */
-import { sb, state, mapProfile, mediaPublicUrl } from '../core/config.js';
-import { $, esc, defAvi, lockScroll, unlockScroll } from '../core/utils.js';
+import { sb, state, mapProfile, mediaPublicUrl, MEDIA_BUCKET } from '../core/config.js';
+import { $, esc, defAvi, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
@@ -94,9 +94,14 @@ function ensureDom() {
             <div class="sv-time" id="svTime"></div>
           </div>
         </div>
-        <button type="button" class="sv-close" id="svClose" aria-label="Yopish">
-          <img src="./svg/action/close.svg" alt="" class="icon" width="22" height="22">
-        </button>
+        <div class="sv-top-actions" style="display:flex;align-items:center;gap:4px;pointer-events:auto">
+          <button type="button" class="sv-close sv-delete" id="svDelete" hidden aria-label="O'chirish" title="Hikoyani o'chirish">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+          </button>
+          <button type="button" class="sv-close" id="svClose" aria-label="Yopish">
+            <img src="./svg/action/close.svg" alt="" class="icon" width="22" height="22">
+          </button>
+        </div>
       </div>
       <div class="sv-media" id="svMedia"></div>
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
@@ -121,6 +126,38 @@ function ensureDom() {
     $('svClose')?.addEventListener('click', e => {
       e.stopPropagation();
       closeViewer();
+    });
+
+    $('svDelete')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const group = _groups[_viewerIdx];
+      const item = group?.items?.[_itemIdx];
+      if (!group || !item || !group.isMe) return;
+      freezeStory();
+      showConfirm("Ushbu hikoyani o'chirmoqchimisiz?", async () => {
+        try {
+          const { error } = await sb.from('stories').delete().eq('id', item.id);
+          if (error) throw error;
+          if (item.mediaPath) {
+            sb.storage.from(MEDIA_BUCKET).remove([item.mediaPath]).catch(() => {});
+          }
+          toast("Hikoya o'chirildi", "success");
+          group.items.splice(_itemIdx, 1);
+          if (!group.items.length) {
+            _groups.splice(_viewerIdx, 1);
+            closeViewer();
+          } else {
+            if (_itemIdx >= group.items.length) _itemIdx = group.items.length - 1;
+            showCurrent();
+          }
+          loadStories();
+        } catch (err) {
+          toast("Hikoyani o'chirib bo'lmadi", "error");
+          unfreezeStory();
+        }
+      }, "Hikoyani o'chirish", "O'chirish", () => {
+        unfreezeStory();
+      });
     });
 
     $('svViewsBadge')?.addEventListener('click', e => {
@@ -888,6 +925,8 @@ async function showCurrent() {
 
   const isMine = !!g.isMe || (!!state.me?.uid && g.uid === state.me.uid);
   const ownBar = $('svOwnBar');
+  const delBtn = $('svDelete');
+  if (delBtn) delBtn.hidden = !isMine;
 
 
   if (isMine) {
