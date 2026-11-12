@@ -1890,9 +1890,7 @@ export async function openChatThread(uid) {
   // Reset voice/file state (functions defined below, safe after page load)
   try { forceStopVoiceRecording(); } catch(_) {}
   $('chatVoiceBtn')?.classList.remove('active');
-  chatState._chatSelFile = null;
-  $('chatFilePreview')?.classList.remove('active');
-  $('chatFileInput') && ($('chatFileInput').value = '');
+  clearChatFile();
   try { updateVoiceSendBtn(); } catch(_) {}
 
   const videoBtn = $('chatVideoCallBtn');
@@ -3166,6 +3164,9 @@ export function closeChatThread() {
   }
   state.currentChatUid = null;
   state.currentChatId  = null;
+  clearChatFile();
+  const hint = document.getElementById('chatClipHint');
+  if (hint) hint.style.display = 'none';
   const modal = $('chatThreadModal');
   if (modal) {
     modal.classList.remove('show');

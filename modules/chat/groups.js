@@ -605,6 +605,7 @@ export async function openGroupThread(groupId) {
 
   _currentGroupId   = groupId;
   _currentGroupData = groupData;
+  try { chatUI.clearChatFile?.(); } catch (_) {}
   state.currentChatKind = groupData.type; // har doim 'group' (kanal turi olib tashlangan, 3.2)
 
   const modal = $('chatThreadModal');

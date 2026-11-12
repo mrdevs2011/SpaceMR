@@ -48,8 +48,8 @@ function _measureSelectedMedia(file, objUrl) {
    Video (yuklangan yoki kameradan) core/video-policy.js orqali kamera standartiga keltiriladi:
    1 daqiqa, 720p, 30 fps, 2.5 Mbps, 30 MB. */
 const STORY_CAPTION_MAX = 200;
-const _POST_ACCEPT = $('fileInput').accept;
-const _POST_PLACEHOLDER = $('captionInput').placeholder;
+const _POST_ACCEPT = $('fileInput')?.accept || '';
+const _POST_PLACEHOLDER = $('captionInput')?.placeholder || "Nimalar bo'lyapti?";
 let _composerMode = 'post';
 
 function _setComposerMode(mode) {
