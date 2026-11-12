@@ -649,7 +649,7 @@
 .settings-back:hover { background: var(--bg5); }
 .settings-hdr-title { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; flex: 1; }
 .settings-hdr-spacer { width: 34px; flex-shrink: 0; }
-.settings-body { flex: 1; overflow-y: auto; padding: 16px 20px max(28px, env(safe-area-inset-bottom)); }
+.settings-body { flex: 1; overflow-y: auto; padding: 16px 20px max(28px, env(safe-area-inset-bottom, 0px)); }
 /* Profil kartasi — Sozlamalar sahifasi tepasida, bosilganda Profilni tahrirlash varag'i ochiladi (Telegram'da... */
 .settings-profile-card { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 4px; background: none; border: none; cursor: pointer; text-align: left; font-family: var(--font);  border-radius: var(--radius); }
 .settings-profile-card:hover { background: var(--pal-gray-900); }
@@ -736,7 +736,7 @@
 }
 @media (max-width: 1099px) {
   .nav-center-btn { display: none; }
-  .bot-nav { justify-content: space-around; padding-bottom: max(env(safe-area-inset-bottom), 8px); }
+  .bot-nav { justify-content: space-around; padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
 }
 /* Specular highlight on create button */
 .nav-center-btn::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%; background: var(--pal-legacy-3f3f44); border-radius: 50% 50% 0 0; pointer-events: none; }
@@ -754,7 +754,7 @@
   border: 0.5px solid var(--glass-border);
   border-bottom: none;
   border-radius: var(--radius) var(--radius) 0 0;
-  padding: 8px 20px max(28px, env(safe-area-inset-bottom));
+  padding: 8px 20px max(28px, env(safe-area-inset-bottom, 0px));
   max-height: 90dvh;
   overflow-y: auto;
   position: relative;
@@ -982,21 +982,19 @@
   pointer-events: auto;
 }
 #zoomImg:active { cursor: grabbing; }
-/* Post rasm: X tugmasi yo'q — tashqariga bosib yopiladi */
-#zoomModal.zoom-image .zoom-x { display: none !important; }
-#zoomModal.zoom-avatar .zoom-x { display: none !important; }
 .post-media { cursor: zoom-in; }
 .post-media[data-type="image"] { cursor: zoom-in; }
 .post-media[data-type="image"]:hover { filter: brightness(1.03); }
 .post-media[data-type="video"] { cursor: default; }
 .post-media img { pointer-events: none; } /* click .post-media ga tushadi */
 
-.zoom-x {
+.zoom-x, .zoom-dl {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--glass-mid);
-  border: 0.5px solid var(--glass-border);
+  top: max(16px, env(safe-area-inset-top, 0px));
+  background: var(--glass-mid, rgba(255, 255, 255, 0.15));
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 0.5px solid var(--glass-border, rgba(255, 255, 255, 0.2));
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -1005,9 +1003,14 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: var(--specular-top), var(--liquid-shadow-sm);
-  z-index: 2;
+  z-index: 10;
+  color: #ffffff;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-.zoom-x:hover { background: var(--glass-heavy); }
+.zoom-x { right: max(16px, env(safe-area-inset-right, 0px)); }
+.zoom-dl { right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); }
+.zoom-x:hover, .zoom-dl:hover { background: var(--glass-heavy, rgba(255, 255, 255, 0.25)); transform: scale(1.05); }
+.zoom-x:active, .zoom-dl:active { transform: scale(0.95); }
 /* ═══════════════════════ DETAIL MODAL ═══════════════════════ */
 #detailModal { position: fixed; inset: 0; display: none; align-items: flex-end; justify-content: center; background: var(--pal-black); }
 #detailModal.show { display: flex; }
@@ -1052,7 +1055,7 @@
 .dm-caption { padding: 10px 16px 6px; font-size: 13.5px; line-height: 1.5; color: var(--text); }
 .dm-stats { padding: 6px 16px 10px; display: flex; gap: 14px; font-size: 12px; color: var(--text3); }
 .dm-stat-item { display: flex; align-items: center; gap: 4px; }
-.dm-actions { display: flex; border-top: 0.5px solid var(--glass-border); padding: 2px 0 max(env(safe-area-inset-bottom), 8px); }
+.dm-actions { display: flex; border-top: 0.5px solid var(--glass-border); padding: 2px 0 max(env(safe-area-inset-bottom, 0px), 8px); }
 .dm-act {
   flex: 1;
   background: none;
@@ -2478,7 +2481,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 .chat-msg.theirs .chat-bubble { box-shadow: none; border: none; }
 .chat-msg.mine .chat-bubble:has(.chat-img-msg), .chat-msg.theirs .chat-bubble:has(.chat-img-msg) { padding: 3px; border-radius: var(--radius); }
 /* Input row — clean, chegrasiz */
-.chat-thread-input-row { background: var(--bg); border-top: none; box-shadow: none; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom)); gap: 6px; }
+.chat-thread-input-row { background: var(--bg); border-top: none; box-shadow: none; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); gap: 6px; }
 .chat-thread-input { background: var(--bg3); border: none; border-radius: var(--radius); padding: 10px 16px; font-size: 14px; color: var(--text); }
 .chat-thread-input:focus { outline: none; }
 /* Attach & voice buttons — clean */
@@ -2725,7 +2728,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 }
 .gi-back-btn:hover { background: var(--pal-black); }
 /* Scrollable body */
-.gi-body { display: flex; flex-direction: column; min-height: 100%; padding-bottom: max(32px, env(safe-area-inset-bottom)); }
+.gi-body { display: flex; flex-direction: column; min-height: 100%; padding-bottom: max(32px, env(safe-area-inset-bottom, 0px)); }
 /* Avatar header */
 .gi-head { display: flex; justify-content: center; padding-top: 64px; flex-shrink: 0; }
 .gi-avi-wrap { position: relative; z-index: 3; }
@@ -2808,7 +2811,7 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 }
 
 /* ─── chat-media: DM "Media / Musiqa / Fayllar" paneli (chat-media.js) ─── */
-#cmContent .cm-rows { margin: 0 -20px; width: calc(100% + 40px); text-align: left; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+#cmContent .cm-rows { margin: 0 -20px; width: calc(100% + 40px); text-align: left; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
 #cmContent .cm-rows + .up-grid, #cmContent .up-grid + .cm-rows { margin-top: 8px; }
 #cmContent .cm-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: var(--text); text-decoration: none; cursor: pointer; }
 #cmContent .cm-row:hover, #cmContent .cm-row.playing { background: var(--bg3); }
@@ -4927,7 +4930,7 @@ mark.chat-search-mark.is-current {
   border-radius: 20px 20px 0 0;
   border: 1px solid #2f3336;
   border-bottom: none;
-  padding: 18px 18px max(22px, env(safe-area-inset-bottom));
+  padding: 18px 18px max(22px, env(safe-area-inset-bottom, 0px));
   color: #e7e9ea;
   box-shadow: 0 -8px 40px rgba(0,0,0,.5);
   scrollbar-width: thin;

@@ -5273,7 +5273,7 @@ a.cfm-name--link:hover {
   border-top: none;
   box-shadow: none;
   padding: 8px 10px;
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   gap: 6px;
 }
 

@@ -1123,12 +1123,23 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
   const t = e.target;
   if (!t || !t.closest) return;
+  const dlBtn = t.closest('.cfm-dl, .file-dl, .cm-dl, .fv-dlbtn');
+  if (dlBtn) {
+    const box = dlBtn.closest('[data-fv-url], [data-url]');
+    const url = (box && (box.dataset.fvUrl || box.dataset.url)) || dlBtn.getAttribute('href');
+    const name = (box && (box.dataset.fvName || box.dataset.name)) || dlBtn.getAttribute('download') || 'file';
+    if (url && url !== '#' && !url.startsWith('javascript:')) {
+      e.preventDefault();
+      e.stopPropagation();
+      dlFile(url, name);
+      return;
+    }
+  }
   const box = t.closest('[data-fv-url]');
   if (!box) return;
   const f = { url: box.dataset.fvUrl, name: box.dataset.fvName, mime: box.dataset.fvMime, size: box.dataset.fvSize };
   if (!f.url) return;
   e.preventDefault();
   e.stopPropagation();
-  if (t.closest('.cfm-dl, .file-dl, .cm-dl, .fv-dlbtn')) dlFile(f.url, f.name || 'file');
-  else openFileViewer(f);
+  openFileViewer(f);
 }, true);

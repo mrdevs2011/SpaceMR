@@ -75,7 +75,8 @@ function ensureRailCmt() {
       cnt.className = 'cmt-char-count' + (len >= 270 ? (len >= 300 ? ' over' : ' warn') : '');
     });
     $('rrCmtInput')?.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
         e.preventDefault();
         sendComment('rail');
       }
@@ -219,7 +220,8 @@ async function openInlineCmt(postId) {
     cnt.className = 'cmt-char-count' + (len >= 270 ? (len >= 300 ? ' over' : ' warn') : '');
   });
   $('inlineCmtInput')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
       sendComment('inline');
     }

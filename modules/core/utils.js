@@ -1378,6 +1378,19 @@ function _bindZoomOnce() {
   const zoomClose = $('zoomClose');
   if (zoomClose) zoomClose.onclick = (e) => { e.stopPropagation(); _zClose(); };
 
+  const zoomDl = $('zoomDl');
+  if (zoomDl) {
+    zoomDl.onclick = (e) => {
+      e.stopPropagation();
+      const vid = $('zoomVideo');
+      const isVid = zm.classList.contains('zoom-video') && vid && vid.style.display !== 'none';
+      const url = isVid ? vid.src : im.src;
+      if (!url) return;
+      const ext = isVid ? 'mp4' : 'jpg';
+      dlFile(url, `spacemr_${Date.now()}.${ext}`);
+    };
+  }
+
   // Fon bosilsa yopish (rasm emas)
   zm.addEventListener('click', e => {
     if (e.target === zm && !_z.didDrag) _zClose();

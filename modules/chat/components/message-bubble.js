@@ -724,7 +724,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
        To'lqin faqat yozib olingan ovozli xabar (type='voice') uchun. Pleyer mantig'i umumiy (chat-voice-player.js). */
     const _title = esc(String(m.fileName || 'Audio').replace(/\.[^.]+$/, '') || 'Audio');
     bubbleContent = `<div class="cfm-file-wrap cfm-audio-wrap">
-      <div class="chat-voice-msg cvm-file" data-url="${safeUrl}" data-dur="0" data-name="${_title}">
+      <div class="chat-voice-msg cvm-file" data-url="${safeUrl}" data-dur="0" data-name="${_title}" data-fv-url="${safeUrl}" data-fv-name="${fname}" data-fv-mime="${esc(m.mediaType || 'audio/mpeg')}" data-fv-size="${+m.fileSize || 0}">
         <button class="cvm-play" type="button" onclick="window._chatPlayVoice(this)" aria-label="Ijro etish">
           <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
         </button>

@@ -440,7 +440,7 @@ function menuHtml(m) {
   if (kind === 'image' && mUrl && !onCap) h += it('copyimg', IC.copy, 'Rasmni nusxalash');           // rasm ustida: matn o'rniga rasm
   else if (hasText && !hasHiddenSpoiler(m.id) && (isDM() || kind) && !isGif && (!kind || onCap)) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');   // izoh ustida: matn
   if (kind && mUrl && !onCap) h += it('dl', IC.dl, DL_LABEL[kind]);   // izoh (matn) ustida — yuklash yo'q, faqat matnni nusxalash
-  if (mine && m.type === 'text' && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
+  if (mine && ['text', 'image', 'video', 'file'].includes(m.type || 'text') && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('fwd', IC.fwd, 'Uzatish');
   if (canDel(m)) h += it('del', IC.del, 'O‘chirish', 'danger');
   h += it('sel', IC.sel, 'Tanlash');
@@ -723,7 +723,7 @@ function startEdit(m) {
   inp.focus();
   try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (_) {}
   $('chatReplyName').textContent = 'Tahrirlash';
-  $('chatReplyText').textContent = editing.text.slice(0, 140);
+  $('chatReplyText').textContent = editing.text.slice(0, 140) || (m.mediaPath || m.fileName ? (m.fileName || 'Media izohi') : 'Xabar');
   $('chatReplyBar').classList.add('active');
 }
 
@@ -740,10 +740,15 @@ export function cancelEdit(clearInput = true) {
 export async function commitEdit(rawText) {
   const ed = editing;
   if (!ed) return false;
+  const m = msgOf(ed.id);
+  const hasMedia = !!(m?.mediaPath || m?.media_url || m?.mediaType || m?.fileName);
   const plain = protectSecrets((rawText || '').trim());
-  if (!plain) return true;
+  if (!plain && !hasMedia) {
+    toast('Xabar matni bo‘sh bo‘lishi mumkin emas', 'info');
+    return true;
+  }
   if (plain === (ed.text || '').trim()) { cancelEdit(true); return true; }
-  const text = encodeForSend(plain);
+  const text = plain ? encodeForSend(plain) : null;
   const { data: _upRows, error } = await sb.from(tbl())
     .update({ text, edited_at: new Date().toISOString() }).eq('id', ed.id).select('id');
   if (error || !(_upRows || []).length) {   // RLS jim 0 qator / xabar allaqachon o'chirilgan — "tahrirlandi" deb aldamaymiz
@@ -835,7 +840,8 @@ function paintSel(keepEmpty) {
   selBar.querySelector('[data-sb="del"]').hidden = !allMine || ![...sel].every(id => canDel(msgOf(id)));
   selBar.querySelector('[data-sb="copy"]').hidden = hasCall || !allMine || [...sel].some(hasHiddenSpoiler) || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
-  selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && one && one.type === 'text' && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
+  const isEditable = one && ['text', 'image', 'video', 'file'].includes(one.type || 'text');
+  selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && isEditable && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
 }
 
 /* Uzatilayotgan xabarning ASL manbasi: guruhdan bo'lsa — guruh, aks holda — yuboruvchi odam.

@@ -142,7 +142,21 @@ async function _loadGroupsInner() {
   // Ochiq guruh ro'yxatdan yo'qoldi — o'chirilgan bo'lishi mumkin (realtime hodisa o'tib ketgan bo'lsa ham ushlaymiz)
   if (_currentGroupId && !_latestGroupMap[_currentGroupId]) _verifyCurrentGroupExists(_currentGroupId);
   // Thread ochiq bo'lsa — admin sozlamani o'zgartirgan bo'lishi mumkin: input qatorini qayta hisoblaymiz
-  if (_currentGroupId && _currentGroupData) _applyGroupComposer(_currentGroupData);
+  if (_currentGroupId && _currentGroupData) {
+    _applyGroupComposer(_currentGroupData);
+    const nEl = document.getElementById('chatThreadName');
+    if (nEl && _currentGroupData.name && nEl.textContent !== _currentGroupData.name) {
+      nEl.textContent = _currentGroupData.name;
+    }
+    const aEl = document.getElementById('chatThreadAvi');
+    if (aEl && _currentGroupData.avatar) {
+      const im = aEl.querySelector('img');
+      if (im && im.src !== _currentGroupData.avatar) im.src = _currentGroupData.avatar;
+    }
+    if (typeof _setGroupPeopleLabel === 'function' && Array.isArray(_currentGroupData.members)) {
+      _setGroupPeopleLabel(_currentGroupData.members.length);
+    }
+  }
   // Notify chat.js list to repaint
   if (state.view === 'chats') document.dispatchEvent(new CustomEvent('groupsUpdated'));
   handleGroupDeepLinks();
@@ -809,7 +823,16 @@ export async function openGroupThread(groupId) {
   gch.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'group_members', filter: `group_id=eq.${groupId}` }, (p) => {
       if (_gDead || _currentGroupId !== groupId || !_gLoaded) return;
       const r = p.new;
-      if (!r || r.user_id === state.me?.uid || !r.last_read_at) return;
+      if (!r) return;
+      if (r.user_id === state.me?.uid) {
+        if ('can_write' in r && _currentGroupData) {
+          _currentGroupData.canWrite = r.can_write !== false;
+          _currentGroupData._canWriteAt = Date.now();
+          _applyGroupComposer(_currentGroupData);
+        }
+        return;
+      }
+      if (!r.last_read_at) return;
       const t = Date.parse(r.last_read_at) || 0;
       if (t <= _gReadMax) return;
       _gReadMax = t;
@@ -1122,6 +1145,11 @@ export async function sendGroupMessage(opts) {
   paintGroupMessages(_gMsgs, groupData);
   _gRt?.send(mid, finalMsgText);
   groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: mid, text: previewText.slice(0, 120), ts: nowMs });
+  if (_latestGroupMap[groupId]) {
+    _latestGroupMap[groupId].lastMessage = previewText.slice(0, 120);
+    _latestGroupMap[groupId].lastMessageAt = nowMs;
+    _latestGroupMap[groupId].lastSenderId = state.me.uid;
+  }
 
   try {
     const { error } = await sb.from('group_messages')
@@ -1266,6 +1294,11 @@ export async function sendGroupFile(file, caption = '') {
       replyTo: _fReplyTo,
     });
     groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id, text: previewText.slice(0, 120), ts: Date.now() });
+    if (_latestGroupMap[groupId]) {
+      _latestGroupMap[groupId].lastMessage = previewText.slice(0, 120);
+      _latestGroupMap[groupId].lastMessageAt = Date.now();
+      _latestGroupMap[groupId].lastSenderId = state.me.uid;
+    }
     _reloadGroupThread && _reloadGroupThread();
   } catch (err) {
     console.error('[Groups] file send failed:', err);
@@ -1337,6 +1370,11 @@ export async function sendGroupVoice(blob, duration) {
       waveform: waveform || null,
     });
     groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: mid, text: 'Ovozli xabar', ts: Date.now() });
+    if (_latestGroupMap[groupId]) {
+      _latestGroupMap[groupId].lastMessage = 'Ovozli xabar';
+      _latestGroupMap[groupId].lastMessageAt = Date.now();
+      _latestGroupMap[groupId].lastSenderId = state.me.uid;
+    }
     _gMsgs = _gMsgs.map(m => m.id === mid ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || m.mediaUrl } : m);
     if (_currentGroupId === groupId) paintGroupMessages(_gMsgs, groupData);
     _reloadGroupThread && _reloadGroupThread();
@@ -2761,7 +2799,7 @@ export function injectGroupsDOM() {
 
     <!-- GROUP/CHANNEL EDIT OVERLAY -->
     <div class="overlay" id="grpEditOverlay">
-      <div class="sheet" style="padding-bottom: max(32px, env(safe-area-inset-bottom))">
+      <div class="sheet" style="padding-bottom: max(32px, env(safe-area-inset-bottom, 0px))">
         <div class="sheet-handle"></div>
         <div class="sheet-title" id="grpEditTitle">Guruhni sozlash</div>
 

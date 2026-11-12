@@ -3902,6 +3902,22 @@ initMsgMenu({
   // Moderator: sayt admini yoki shu guruhning owner/admini — boshqalarning xabarini ham o'chira oladi
   canModerate: () => isAdmin() || (state.currentChatKind === 'group' && !!chatUI.isGroupModerator?.()),
   reload: () => { if (state.currentChatKind && state.currentChatKind !== 'dm') reloadGroupThread(); else if (chatState._reloadThread) { _dmGone.clear(); chatState._reloadThread(); } },
+  onMessageEdited: (id, text) => {
+    const isGrp = state.currentChatKind && state.currentChatKind !== 'dm';
+    if (!isGrp) {
+      if (Array.isArray(chatState._curMsgs)) {
+        chatState._curMsgs = chatState._curMsgs.map(m => String(m.id) === String(id) ? { ...m, text, editedAt: Date.now() } : m);
+        paintMessages(chatState._curMsgs);
+      }
+      const cm = chatState._latestChatMap?.[state.currentChatUid];
+      if (cm) {
+        const last = chatState._curMsgs?.[chatState._curMsgs.length - 1];
+        if (last && String(last.id) === String(id)) {
+          cm.lastMessage = humanMsgPreview({ ...last, text }).slice(0, 120);
+        }
+      }
+    }
+  },
   markSent: (id) => {
     const conf = chatState._rtLocal.get(id);
     if (conf) { conf.status = 'sent'; conf._at = Date.now(); chatState._rtLocal.set(id, conf); }
