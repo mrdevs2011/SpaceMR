@@ -9,6 +9,7 @@ import { initStories, loadStories } from '../feed/stories.js';
 import { navigateTo } from '../router.js';
 
 let _homeReady = false;
+let _authTimer = null;
 
 export function initView() {
 
@@ -22,23 +23,25 @@ export function initView() {
 
   // Feed + stories — me hali kelmagan bo'lsa ham keyinroq uriniladi
   const boot = () => {
-    if (!state.me) return false;
+    if (state.view !== 'home' || !state.me) return false;
     state.visibleN = 10;
     initStories();
     renderFeed();
     return true;
   };
   if (!boot()) {
-    // Auth kechikishi: 200ms oralatib 15 marta (3s) urinib ko'ramiz
+    if (_authTimer) clearInterval(_authTimer);
     let n = 0;
-    const t = setInterval(() => {
+    _authTimer = setInterval(() => {
       n++;
-      if (boot() || n >= 15) clearInterval(t);
+      if (state.view !== 'home') { clearInterval(_authTimer); _authTimer = null; return; }
+      if (boot() || n >= 15) { clearInterval(_authTimer); _authTimer = null; }
     }, 200);
   }
 }
 
 export function destroyView() {
+  if (_authTimer) { clearInterval(_authTimer); _authTimer = null; }
   // Scroll listener'ni o'chirish — boshqa view'da trigger bo'lmasin
   window.onscroll = null;
 }

@@ -357,9 +357,11 @@ function ensureDom() {
     // Esc: hikoya ko'rgich eng ustki qatlam (shortcuts.js bilan umumiy navbat)
     onEsc(900, () => { const v = $('storyViewer'); if (!v || v.hidden) return false; closeViewer(); return true; });
     document.addEventListener('keydown', e => {
-      if ($('storyViewer')?.hidden) return;
-      if (e.key === 'ArrowRight') step(1, true);
-      if (e.key === 'ArrowLeft') step(-1, true);
+      const v = $('storyViewer');
+      if (!v || v.hidden) return;
+      if (e.target?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); step(1, true); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1, true); }
     });
   }
 }

@@ -349,7 +349,7 @@ function _cmtCount(postId, n) {
   if (ccSpan) ccSpan.textContent = fmtCount(n);
   const rcc = document.querySelector(`.rcmt-${postId}`);
   if (rcc) rcc.textContent = `${n}`;
-  const post = state.allPosts.find(p => p.id === postId);
+  const post = state.allPosts?.find(p => p.id === postId);
   if (post) post.commentCount = n;
 }
 function _paintCmts(postId, listId, cmts, aMap) {
@@ -439,7 +439,7 @@ async function loadComments(postId, listId) {
     const ccSpanFeed = document.getElementById(`cc-${postId}`);
     if (ccSpanFeed) ccSpanFeed.textContent = fmtCount(cmts.length);
 
-    const post = state.allPosts.find(p => p.id === postId);
+    const post = state.allPosts?.find(p => p.id === postId);
     if (post) post.commentCount = cmts.length;
 
     if (!cmts.length) {
@@ -557,7 +557,7 @@ async function sendComment(mode) {
     _paintCmts(postId, listId, cmts, _cmtCache.aMap);
     _cmtCount(postId, cmts.length);
   } else {
-    _cmtCount(postId, (state.allPosts.find(p => p.id === postId)?.commentCount || 0) + 1);
+    _cmtCount(postId, (state.allPosts?.find(p => p.id === postId)?.commentCount || 0) + 1);
   }
   toast('Izoh qo\'shildi', 'success');
 
@@ -570,7 +570,7 @@ async function sendComment(mode) {
         .catch(pushErr => console.warn('[Push] comment:', pushErr?.message || pushErr));
       _pendingCmts.delete(id);
       const n = (_cmtCache && _cmtCache.postId === postId) ? _cmtCache.cmts.length
-        : (state.allPosts.find(p => p.id === postId)?.commentCount || 0);
+        : (state.allPosts?.find(p => p.id === postId)?.commentCount || 0);
       busEmit('cmt', { op: 'add', postId, n, avatar: av, row: mine });
       if (!base && $(listId)) loadComments(postId, listId);
     } catch (e) {

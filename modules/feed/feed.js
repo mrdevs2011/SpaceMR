@@ -11,6 +11,7 @@ import './post-media-guard.js';
 import { cachedMediaUrlSync, resolvePublicMedia, prefetchMany } from '../core/store/media-cache.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
+import { onEsc } from '../ui/esc-stack.js';
 // Feed/upload native <video controls>: WebM duration Infinity → progress oxirida qotadi
 if (typeof window !== 'undefined') {
   window.__fixVidDur = function (v) {
@@ -26,7 +27,7 @@ if (typeof window !== 'undefined') {
 
 
 export function filtered() {
-  let p = [...state.allPosts];
+  let p = [...(state.allPosts || [])];
   // Firestore postlar: isPublic === true bo'lsa hammaga, aks holda faqat egasiga
   p = p.filter(x => {
     if (x.userId === state.me?.uid) return true; // o'z postlari har doim ko'rinadi
@@ -565,6 +566,7 @@ export function scrollToPostFromHash() {
         const { data: postRow } = await sb.from('posts').select('*').eq('id', targetId).maybeSingle();
         if (postRow) {
           const p = mapPost(postRow);
+          if (!state.allPosts) state.allPosts = [];
           if (!state.allPosts.some(x => x.id === p.id)) {
             state.allPosts.unshift(p);
             await renderFeed();
@@ -920,7 +922,12 @@ function closePostMenu() {
   window.removeEventListener('scroll', closePostMenu, true);
   window.removeEventListener('resize', closePostMenu);
 }
-function _postMenuKey(e) { if (e.key === 'Escape') { e.stopPropagation(); closePostMenu(); } }
+function _postMenuKey(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePostMenu(); } }
+onEsc(410, () => {
+  if (!_postMenu) return false;
+  closePostMenu();
+  return true;
+});
 
 export async function copyText(text, okMsg = 'Nusxalandi') {
   try {
@@ -997,7 +1004,7 @@ export async function doDelete(id) {
       import('../admin/admin-storage.js').then(m => m.refreshStorageUsage?.()).catch(() => {});
     }).catch(() => {});
   }
-  state.allPosts = state.allPosts.filter(p => p.id !== id);
+  state.allPosts = (state.allPosts || []).filter(p => p.id !== id);
   document.querySelector(`.post[data-id="${id}"]`)?.remove();
   document.querySelector(`.grid-cell[data-id="${id}"]`)?.remove();
   busEmit('post', { op: 'del', id });
