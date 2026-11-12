@@ -97,14 +97,14 @@ async function _transcode(file, meta, onProgress, preset = null) {
   const bitrate = preset?.bitrate || VIDEO_BITRATE;
   const fps = preset?.fps || VIDEO_FPS;
   const { v, dispose } = _el(file);
-  let ac = null, timer = null, rec = null;
+  let ac = null, timer = null, rec = null, vstream = null, canvas = null;
   try {
     await _waitMeta(v);
     const { w, h } = _fit(v.videoWidth, v.videoHeight, maxW, maxH);
-    const canvas = document.createElement('canvas');
+    canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d', { alpha: false });
-    const vstream = canvas.captureStream(fps);
+    vstream = canvas.captureStream(fps);
 
     // Audio: MediaElementSource → MediaStreamDestination (dinamikka chiqmaydi, jim yoziladi)
     let atrack = null;
@@ -174,6 +174,8 @@ async function _transcode(file, meta, onProgress, preset = null) {
     if (timer) { try { cancelAnimationFrame(timer); } catch (_) { try { clearInterval(timer); } catch (_) {} } }
     try { if (rec && rec.state !== 'inactive') rec.stop(); } catch (_) {}
     try { ac && ac.close(); } catch (_) {}
+    try { vstream && vstream.getTracks().forEach(t => t.stop()); } catch (_) {}
+    try { if (canvas) { canvas.width = 0; canvas.height = 0; } } catch (_) {}
     dispose();
   }
 }
