@@ -4,6 +4,7 @@
 import { sb, state } from '../core/config.js';
 import { $, esc, showConfirm } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
+import { onEsc } from '../ui/esc-stack.js';
 
 const DEVICE_ID_KEY = 'spacemr_device_id';
 
@@ -365,6 +366,14 @@ function closeDeviceMenus() {
   $('devicesBox')?.classList.remove('dev-menu-open');
   _menuOpenId = null;
 }
+
+onEsc(380, () => {
+  if (document.querySelector('.dev-menu.show')) {
+    closeDeviceMenus();
+    return true;
+  }
+  return false;
+});
 
 function renderAdvanced(row) {
   const lines = [

@@ -290,6 +290,7 @@ function _openViewer(i) {
     dlFile(rawUrl, m.fileName || (m.kind === 'video' ? 'video.mp4' : 'image.jpg'));
   });
   v.classList.add('show');
+  lockScroll('cmViewer');
   if (m.kind === 'video') {
     const vid = v.querySelector('video');
     if (vid) ensureVideoDuration(vid);
@@ -298,6 +299,7 @@ function _openViewer(i) {
 function _closeViewer() {
   if (!_viewer) return;
   _viewer.classList.remove('show');
+  unlockScroll('cmViewer');
   try { _viewer.querySelector('video')?.pause(); } catch (_) {}
   _viewer.innerHTML = '';
 }

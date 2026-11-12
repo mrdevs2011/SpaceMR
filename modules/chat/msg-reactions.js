@@ -9,6 +9,7 @@ import { sb, state } from '../core/config.js';
 import { esc, defAvi } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { emojiImg, warmEmoji, emojiPath, toKey, keyToGlyph } from '../ui/emoji-img.js';
+import { onEsc } from '../ui/esc-stack.js';
 
 export const QUICK = ['2764', '1f44d', '1f44e', '1f525', '1f970', '1f44f', '1f601'];   // kalitlar (hex) — kodda emoji belgisi yo'q
 /** Reaksiyaga arziydigan tanlangan emojilar (menyu qatori + chevron paneli) */
@@ -287,6 +288,14 @@ export function reactHoverHide() {
   hRow = null;
 }
 const hideHover = reactHoverHide;
+
+onEsc(370, () => {
+  if (hp?.classList.contains('show') || hb?.classList.contains('show')) {
+    reactHoverHide();
+    return true;
+  }
+  return false;
+});
 
 /* ── Hayot sikli ───────────────────────────────────────────────────── */
 export function reactInit(boxEl) {

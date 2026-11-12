@@ -6,6 +6,7 @@ import { $, lockScroll, unlockScroll } from '../core/utils.js';
 import { videoNoteFileName } from './components/video-note.js';
 import { mediaErrorKind, trackSupportsTorch, trackMaybeTorch, setTorch, probeInputDevices, listCameras, waitTrackTorchReady } from './camera-access.js';
 import { toast } from '../ui/toast.js';
+import { onEsc } from '../ui/esc-stack.js';
 
 let _onVoiceRecorded = null;
 let _isComposerBusy = null;
@@ -1557,3 +1558,17 @@ export function forceStopVoiceRecording() {
   cancelVideoRecording();
   _abortVoiceUi();
 }
+
+onEsc(360, () => {
+  if (_vidActive) {
+    cancelVideoRecording();
+    $('chatVoiceBtn')?.classList.remove('recording', 'cancelling', 'vn-locked');
+    return true;
+  }
+  if (_mediaRec && _mediaRec.state !== 'inactive') {
+    cancelRecording();
+    $('chatVoiceBtn')?.classList.remove('recording', 'cancelling', 'vn-locked');
+    return true;
+  }
+  return false;
+});
