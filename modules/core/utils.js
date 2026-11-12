@@ -1178,7 +1178,7 @@ export function formatLastSeen(lastSeenAt) {
   return `oxirgi marta ${d.getDate()}-${MONTHS[d.getMonth()]}${yr} ${timeStr} da faol edi`;
 }
 export const initL  = n  => (n && n[0] ? n[0].toUpperCase() : 'U');
-export const uToEmail = u => `${u.toLowerCase().replace(/[^a-z0-9_]/g,'')}@gmail.com`;
+export const uToEmail = u => `${u.toLowerCase().replace(/[^a-z0-9_]/g, '')}@spacemr.internal`;
 export const clr    = n  => {
   const c = ['#202327','#2f3336','#71767b'];
   return c[Math.abs((n||'').length) % c.length];

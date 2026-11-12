@@ -200,7 +200,7 @@ async function _emailForLogin(cleaned) {
   } catch (e) {
     console.warn('[auth] email_for_username:', e?.message || e);
   }
-  // 2) Fallback: ro'yxatdan o'tishdagi format (username@gmail.com)
+  // 2) Fallback: ro'yxatdan o'tishdagi format (username@spacemr.internal)
   return uToEmail(cleaned);
 }
 

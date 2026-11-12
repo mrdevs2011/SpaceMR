@@ -634,8 +634,8 @@ window._chatPlayVoice = async function(btn) {
   const path = wrap?.dataset?.path || '';
   if (!url && path) {
     try {
-      const { mediaPublicUrl } = await import('../core/config.js');
-      url = mediaPublicUrl(path) || '';
+      const { mediaSecureUrl, mediaPublicUrl } = await import('../core/config.js');
+      url = (await mediaSecureUrl(path)) || mediaPublicUrl(path) || '';
       if (url) wrap.dataset.url = url;
     } catch (_) {}
   }

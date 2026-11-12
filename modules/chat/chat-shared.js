@@ -9,7 +9,7 @@
 import { splitFwd } from '../core/fwd.js';
 import { maskSpoilers } from '../core/secrets.js';
 import "./chat-pin.js";
-import { sb, state, uploadViaController, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
+import { sb, state, uploadViaController, mediaSecureUrl, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime, parsePureYouTube, parsePureMedia } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { assertAllowedUpload } from '../core/upload-policy.js';
@@ -240,10 +240,11 @@ export async function uploadViaControllerProgress(file, folder, onProgress) {
     const fallback = () => uploadViaController(file, folder, { track: false })
       .then(res => { if (onProgress) onProgress(100); done(resolve)(res); })
       .catch(done(reject));
-    xhr.onload = () => {
+    xhr.onload = async () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         if (onProgress) onProgress(100);
-        done(resolve)({ path, url: mediaPublicUrl(path) });
+        const signedUrl = await mediaSecureUrl(path);
+        done(resolve)({ path, url: signedUrl || mediaPublicUrl(path) });
       } else fallback();
     };
     xhr.onerror = fallback;

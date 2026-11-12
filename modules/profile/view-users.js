@@ -455,52 +455,9 @@ async function _doReject(btn, uid, name) {
 /* ── "Kutayotgan foydalanuvchilar" tezkor mini-bo'lim ──
  * actionsView boshida — scroll qilmasdan tasdiqlash/rad etish uchun.
  * ── */
-function _ensurePendingMiniCSS() {
-  if (document.getElementById('pending-mini-css')) return;
-  const s = document.createElement('style');
-  s.id = 'pending-mini-css';
-  s.textContent = `
-.pmini-wrap { margin: 0 16px 8px; display: flex; flex-direction: column; gap: 8px; }
-.pmini-empty {
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 28px;
-  padding: 16px; text-align: center; color: var(--text3); font-size: 13px;
-}
-.pmini-locked {
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 28px;
-  padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; cursor: pointer;
-}
-.pmini-locked-count { font-size: 13px; font-weight: 700; color: var(--text); }
-.pmini-locked-hint { font-size: 12px; color: var(--blue,#e7e9ea); font-weight: 600; white-space: nowrap; }
-.pmini-card {
-  background: var(--bg2); border: 1px solid var(--line); border-radius: 28px;
-  padding: 12px; display: flex; align-items: center; gap: 10px;
-}
-.pmini-avi { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--bg3); }
-.pmini-avi-placeholder {
-  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
-  background: var(--bg3); color: var(--text2); display: flex; align-items: center;
-  justify-content: center; font-weight: 700; font-size: 15px;
-}
-.pmini-info { flex: 1; min-width: 0; }
-.pmini-name { font-size: 13px; font-weight: 700; color: var(--text); }
-.pmini-sub { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
-.pmini-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.pmini-approve-btn, .pmini-reject-btn {
-  border: none; border-radius: 28px; font-family: var(--font); font-size: 12px; font-weight: 600;
-  padding: 7px 11px; cursor: pointer;  white-space: nowrap;
-}
-.pmini-approve-btn { background: var(--green,#00ba7c); color: #e7e9ea; }
-.pmini-reject-btn { background: color-mix(in srgb, var(--red,#f4212e) 15%, transparent); color: var(--red,#f4212e); }
-.pmini-approve-btn:disabled, .pmini-reject-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-`;
-  document.head.appendChild(s);
-}
-
 function _renderPendingMini(users) {
   const section = document.getElementById('actionsPendingSection');
   if (!section) return;
-  _ensurePendingMiniCSS();
 
   const pending = (users || []).filter(u => u.approved === false && !u.blocked);
 

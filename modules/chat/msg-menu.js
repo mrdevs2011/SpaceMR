@@ -4,7 +4,7 @@
    DM chat (#chatThreadMessages) uchun. Xabarlar har realtime o'zgarishda qayta chizilgani uchun
    holat (tanlov, ochiq menyu) xabar ID'lari bo'yicha saqlanadi va msgMenuAfterPaint() bilan tiklanadi. */
 import { protectSecrets } from '../core/secrets.js';
-import { sb, state, mediaPublicUrl } from '../core/config.js';
+import { sb, state, mediaSecureUrlSync, mediaPublicUrl } from '../core/config.js';
 import { toast } from '../ui/toast.js';
 import { $, esc, defAvi, showConfirm, copyToClipboard, smoothScrollIntoView, markdownToPlain } from '../core/utils.js';
 import { onEsc } from '../ui/esc-stack.js';
@@ -80,7 +80,7 @@ function mediaKind(m) {
   if (mime.startsWith('audio/') || AUD_X.includes(ext)) return 'audio';
   return null;   // oddiy fayl — o'z yuklash tugmasi bor
 }
-const mediaUrlOf = m => (m?.mediaUrl || (m?.mediaPath ? mediaPublicUrl(m.mediaPath) : '') || '').trim();
+const mediaUrlOf = m => (m?.mediaUrl || (m?.mediaPath ? (mediaSecureUrlSync(m.mediaPath) || mediaPublicUrl(m.mediaPath)) : '') || '').trim();
 const DL_LABEL = { image: 'Rasmni yuklash', video: 'Videoni yuklash', vnote: 'Rolikni yuklash', voice: 'Ovozli xabarni yuklash', audio: 'Audioni yuklash' };
 
 /** Menyu qaysi joyda ochilgani: izoh (caption) ustida bo'lsa — matnni nusxalash, aks holda rasm/media */

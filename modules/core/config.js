@@ -1,8 +1,7 @@
 /**
- * SpaceMR — config.js (Supabase)
- * Bitta Supabase client + state + Firestore-uslubidagi ma'lumotni
- * (camelCase, createdAt = epoch-ms number) Supabase qatorlaridan yasovchi mapperlar.
- * Mapperlar qolgan modullarni bosqichma-bosqich ko'chirish imkonini beradi.
+ * SpaceMR — config.js (Supabase & PostgreSQL Models)
+ * Supabase client, unified state, typed PostgreSQL object models,
+ * and high-performance secure private media storage pipeline.
  */
 
 import { createClient } from '../vendor/vendor-supabase.js';
@@ -66,26 +65,53 @@ export function toIso(v) {
   return ms == null ? null : new Date(ms).toISOString();
 }
 
-/* ── Storage ─────────────────────────────────────────────────────────── */
-export function mediaPublicUrl(path) {
-  if (!path) return null;
-  return sb.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+/* ── Storage (Private Signed URL LRU Pipeline) ───────────────────────── */
+const _signedUrlCache = new Map(); // path -> { url, exp }
+
+/** Synchronous check for hot cached signed URL */
+export function mediaSecureUrlSync(path) {
+  if (!path) return '';
+  const now = Date.now();
+  const cached = _signedUrlCache.get(path);
+  if (cached && cached.exp > now + 60000) return cached.url;
+  return '';
 }
 
-/** Private bucket / CORS muammosida — imzolangan vaqtinchalik URL */
-export async function mediaSignedUrl(path, expiresSec = 3600) {
+/**
+ * Dynamic short-lived Signed URL pipeline with LRU memory caching
+ * @param {string} path - Object path inside media bucket
+ * @param {number} [ttlSec=3600] - URL validity in seconds
+ */
+export async function mediaSecureUrl(path, ttlSec = 3600) {
   if (!path) return null;
+  const now = Date.now();
+  const cached = _signedUrlCache.get(path);
+  if (cached && cached.exp > now + 60000) return cached.url;
   try {
-    const { data, error } = await sb.storage.from(MEDIA_BUCKET).createSignedUrl(path, expiresSec);
-    if (error) { console.warn('[media] signedUrl:', error.message); return null; }
-    return data?.signedUrl || null;
-  } catch (e) {
-    console.warn('[media] signedUrl:', e?.message || e);
+    const { data, error } = await sb.storage.from(MEDIA_BUCKET).createSignedUrl(path, ttlSec);
+    if (error) { console.warn('[storage] signedUrl error:', error); return null; }
+    _signedUrlCache.set(path, { url: data.signedUrl, exp: now + ttlSec * 1000 });
+    return data.signedUrl;
+  } catch (err) {
+    console.warn('[storage] signedUrl exception:', err);
     return null;
   }
 }
 
-/* ── Mapperlar (DB qatori → eski Firestore ko'rinishi) ──────────────── */
+/**
+ * @deprecated Deprecated: bucket is private. Use mediaSecureUrl() instead.
+ * Retained for graceful backwards compatibility.
+ */
+export function mediaPublicUrl(path) {
+  if (!path) return null;
+  const cached = _signedUrlCache.get(path);
+  if (cached && cached.exp > Date.now()) return cached.url;
+  return sb.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+export const mediaSignedUrl = mediaSecureUrl;
+
+/* ── Typed PostgreSQL Object Models & Mappers ───────────────────────── */
 
 function parseProfileWebsites(raw) {
   if (!raw) return [];
@@ -138,7 +164,7 @@ export function mapPost(r) {
     userFullName: r.user_full_name || '',
     text: r.text,
     mediaPath: r.media_path,
-    mediaUrl: mediaPublicUrl(r.media_path),
+    mediaUrl: mediaSecureUrlSync(r.media_path) || mediaPublicUrl(r.media_path),
     mediaType: r.media_type,
     mediaWidth: r.media_width,
     mediaHeight: r.media_height,
@@ -152,10 +178,15 @@ export function mapPost(r) {
   };
 }
 
-/** Post uchun media URL (mapPost allaqachon mediaUrl beradi) */
+/** Post uchun media URL */
 export async function getMediaUrl(post) {
-  if (post.mediaUrl) return post.mediaUrl;
-  return mediaPublicUrl(post.mediaPath);
+  if (!post) return null;
+  const path = post.mediaPath || post.media_path;
+  if (path) {
+    const url = await mediaSecureUrl(path);
+    if (url) return url;
+  }
+  return post.mediaUrl || post.media_url || mediaPublicUrl(path);
 }
 
 /** Global upload lock — Ctrl+R / F5 ni bloklash uchun */
@@ -232,7 +263,8 @@ export async function uploadViaController(file, folder = 'posts', opts = {}) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         await _xhrUpload(url, file, token, onProgress);
-        return { path, url: mediaPublicUrl(path) };
+        const secUrl = await mediaSecureUrl(path);
+        return { path, url: secUrl || mediaPublicUrl(path) };
       } catch (e) {
         lastErr = e;
         if (e?.status === 401 && attempt < 2) {
@@ -335,7 +367,7 @@ export async function verifyPassword(email, password) {
   return true;
 }
 
-/** chats qatori (+ chat_members embed) → eski Firestore ko'rinishi */
+/** chats qatori (+ chat_members embed) → ChatModel */
 export function mapChat(r) {
   if (!r) return null;
   const unread = {};
@@ -353,7 +385,7 @@ export function mapChat(r) {
   };
 }
 
-/** messages qatori → eski Firestore ko'rinishi */
+/** messages qatori → MessageModel */
 export function mapMessage(r) {
   if (!r) return null;
   const _f = splitFwd(r.text);
@@ -369,7 +401,7 @@ export function mapMessage(r) {
     fwdKind: _f.kind || '',
     fwdId: _f.id || '',
     mediaPath: r.media_path,
-    mediaUrl: mediaPublicUrl(r.media_path) || '',
+    mediaUrl: mediaSecureUrlSync(r.media_path) || mediaPublicUrl(r.media_path) || '',
     mediaType: r.media_type,
     fileName: r.file_name,
     fileSize: r.file_size,
@@ -383,7 +415,7 @@ export function mapMessage(r) {
   };
 }
 
-/** groups qatori (+ group_members embed) → eski Firestore ko'rinishi */
+/** groups qatori (+ group_members embed) → GroupModel */
 export function mapGroup(r) {
   if (!r) return null;
   const members = [], adminIds = [], unread = {};

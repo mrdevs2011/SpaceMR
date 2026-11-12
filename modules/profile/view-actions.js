@@ -11,107 +11,9 @@ import { showConfirm, esc } from '../core/utils.js';
 let _initialized = false;
 let _noticeUnsub    = null;
 
-/* ── CSS ── */
-function _injectCSS() {
-  if (document.getElementById('actions-view-css')) return;
-  const s = document.createElement('style');
-  s.id = 'actions-view-css';
-  s.textContent = `
-#actionsView { background: var(--bg); }
-
-.actions-divider {
-  display: flex; align-items: center; gap: 10px;
-  padding: 20px 16px 10px; margin-top: 4px;
-}
-.actions-divider::before, .actions-divider::after {
-  content: ''; flex: 1; height: 1px; background: var(--line);
-}
-.actions-divider-label {
-  font-size: 12px; font-weight: 700; color: var(--text2);
-  letter-spacing: 0.3px; white-space: nowrap; padding: 0 4px;
-}
-
-/* ── Broadcast UI ── */
-.bc-wrap {
-  margin: 0 16px 8px;
-  background: var(--bg2);
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.bc-row {
-  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-}
-.bc-input {
-  flex: 1; min-width: 0;
-  background: var(--bg3);
-  border: 1px solid var(--line2);
-  border-radius: 28px;
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 13px;
-  padding: 9px 12px;
-  outline: none;
-
-}
-.bc-input:focus { border-color: var(--blue); }
-.bc-input::placeholder { color: var(--text3); }
-.bc-select {
-  background: var(--bg3);
-  border: 1px solid var(--line2);
-  border-radius: 28px;
-  color: var(--text2);
-  font-family: var(--font);
-  font-size: 12px;
-  padding: 9px 10px;
-  outline: none;
-  cursor: pointer;
-}
-.bc-send-btn {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--blue);
-  color: #e7e9ea;
-  border: none;
-  border-radius: 28px;
-  font-family: var(--font);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 9px 16px;
-  cursor: pointer;
-
-  white-space: nowrap;
-}
-.bc-send-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.bc-send-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-.bc-result {
-  font-size: 12px;
-  color: var(--text3);
-  min-height: 16px;
-}
-.bc-result.ok  { color: var(--green); }
-.bc-result.err { color: var(--red); }
-
-/* ── Bo'sh holat ── */
-.bc-empty {
-  background: var(--bg2);
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: 18px 16px;
-  text-align: center;
-  color: var(--text3);
-  font-size: 13px;
-}
-`;
-  document.head.appendChild(s);
-}
-
 /* ── initView ── */
 export async function initView() {
   if (!isAdmin()) return;
-  _injectCSS();
 
   // Har kirishda admin login + parol (server tekshiradi). Bekor qilinsa — bosh sahifa.
   const view = document.getElementById('actionsView');
@@ -178,39 +80,6 @@ function _initBroadcast() {
       </button>
     </div>
   `;
-
-  // Extra CSS
-  if (!document.getElementById('bc-notice-css')) {
-    const s = document.createElement('style');
-    s.id = 'bc-notice-css';
-    s.textContent = `
-.bc-textarea { resize: vertical; min-height: 70px; }
-.bc-current-wrap {
-  margin: 0 16px 12px;
-  background: color-mix(in srgb, var(--blue) 10%, var(--bg2));
-  border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent);
-  border-radius: 28px;
-  padding: 12px 14px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.bc-current-label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; }
-.bc-current-card { font-size: 13px; color: var(--text); line-height: 1.45; word-break: break-word; }
-.bc-current-target { font-size: 11px; color: var(--blue); margin-top: 4px; }
-.bc-del-btn {
-  display: flex; align-items: center; gap: 6px;
-  align-self: flex-start;
-  background: color-mix(in srgb, var(--red,#f4212e) 15%, transparent);
-  color: var(--red,#f4212e);
-  border: 1px solid color-mix(in srgb, var(--red,#f4212e) 35%, transparent);
-  border-radius: 28px;
-  font-family: var(--font); font-size: 12px; font-weight: 600;
-  padding: 6px 12px; cursor: pointer;
-
-}
-.bc-del-btn:hover { opacity: 0.75; }
-`;
-    document.head.appendChild(s);
-  }
 
   const bodyEl   = document.getElementById('bcBody');
   const targetEl = document.getElementById('bcTarget');

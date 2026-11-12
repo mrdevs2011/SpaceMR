@@ -3,7 +3,7 @@ import { esc } from '../core/utils.js';
  * call.js — faqat WebRTC call engine + chat.js dan re-export
  * 
  * MUHIM: Oldingi versiyada call.js chat.js bilan bir xil kodni o'z ichida 
- * takrorlagan, natijada barcha Firestore listener'lar IKKI MARTA ishga tushar,
+ * takrorlagan, natijada barcha Supabase listener'lar IKKI MARTA ishga tushar,
  * RAM va CPU ikki barobar sarflanardi. Endi faqat call-specific kod bu yerda.
  */
 
@@ -25,7 +25,7 @@ import { toast } from '../ui/toast.js';
 import { sendCallLog } from '../chat/chat-actions.js';
 import { TURN_URLS, TURN_USERNAME, TURN_CREDENTIAL } from '../core/env.js';
 
-/* calls qatori (snake_case) → eski Firestore ko'rinishi */
+/* calls qatori (snake_case) → client modeli */
 function mapCall(r) {
   if (!r) return null;
   return {
@@ -131,8 +131,17 @@ function _tryRestartIce() {
   return false;
 }
 
+async function _pingCallPresence() {
+  if (!_callId || !state.me?.uid) return;
+  try {
+    await sb.from('calls').select('id, status').eq('id', _callId).maybeSingle();
+  } catch (_) {}
+}
+
 function _scheduleIceRecovery(reason, isFailed = false) {
   if (_ending || !_pc) return;
+  _pingCallPresence();
+  _tryRestartIce();
   // Allaqachon timer bor — qayta boshlamaymiz (spam yo'q)
   if (_iceRecTimer && !isFailed) return;
 
@@ -146,6 +155,7 @@ function _scheduleIceRecovery(reason, isFailed = false) {
     }
     _iceRecAttempts++;
     console.warn('[call] ICE recovery', reason, 'attempt', _iceRecAttempts, 'pc=', st, 'ice=', ice);
+    _pingCallPresence();
     _tryRestartIce();
 
     if (_iceRecAttempts >= ICE_REC_MAX) {
@@ -153,13 +163,12 @@ function _scheduleIceRecovery(reason, isFailed = false) {
       _hardEnd(reason + '-giveup');
       return;
     }
-    // Keyingi urinish
-    _iceRecTimer = setTimeout(attempt, isFailed ? 6000 : 10000);
+    // Keyingi urinish: 12 soniyali qayta ulanish davri
+    _iceRecTimer = setTimeout(attempt, 12000);
   };
 
-  // disconnected: 12s kutamiz (vaqtinchalik tarmoq tebranishi)
-  // failed: 1.5s dan keyin birinchi restart
-  const delay = isFailed ? 1500 : 12000;
+  // 12-second reconnection grace period before terminating calls
+  const delay = 12000;
   if (_iceRecTimer) clearTimeout(_iceRecTimer);
   _iceRecTimer = setTimeout(attempt, delay);
 }
@@ -514,6 +523,36 @@ function _getSharedAudioCtx() {
     _sharedAudioCtx.resume().catch(() => {});
   }
   return _sharedAudioCtx;
+}
+
+let _audioContextWarmed = false;
+export function _warmAudioContext() {
+  if (_audioContextWarmed) return;
+  const ctx = _getSharedAudioCtx();
+  if (ctx) {
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => {
+        _audioContextWarmed = true;
+      }).catch(() => {});
+    } else if (ctx.state === 'running') {
+      _audioContextWarmed = true;
+    }
+    try {
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch (_) {}
+  }
+}
+
+if (typeof window !== 'undefined') {
+  ['touchstart', 'touchend', 'click'].forEach(evt => {
+    window.addEventListener(evt, () => {
+      _warmAudioContext();
+    }, { passive: true, once: false });
+  });
 }
 
 // Ilova fonga o'tib qaytganda (ekran qulflanishi, boshqa ilova, tab
@@ -1072,6 +1111,30 @@ async function _initiateCallImpl(isVideo) {
   _callId = callId;
   _callAnswerSeen = false;
 
+  // Immediate high-urgency Web Push notification (urgency: 'high', TTL: 30) to wake up locked/sleeping recipient device
+  try {
+    fetch(`${sb.supabaseUrl}/functions/v1/send-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${_accessToken || sb.supabaseKey}`
+      },
+      body: JSON.stringify({
+        table: 'calls',
+        type: 'INSERT',
+        record: {
+          id: callId,
+          caller_id: state.me.uid,
+          callee_id: uid,
+          status: 'ringing',
+          type: isVideo ? 'video' : 'voice'
+        },
+        urgency: 'high',
+        TTL: 30
+      })
+    }).catch(() => {});
+  } catch (_) {}
+
   // Maksimal jiringlash vaqti: javob bo'lmasa avtomatik tugatamiz
   _clearCallerRingTimer();
   _callerRingTimer = setTimeout(async () => {
@@ -1567,4 +1630,12 @@ window.addEventListener('offline', () => {
   _scheduleIceRecovery('offline', false);
   // Max 20s offline bo'lsa recovery o'zi tugatadi (attemptlar)
 });
-window.addEventListener('online', () => { flushPendingCallEnd(); });
+window.addEventListener('online', () => {
+  flushPendingCallEnd();
+  if (_pc && _callId && !_ending) {
+    console.warn('[call] network online transition detected, triggering ICE restart and peer ping');
+    _pingCallPresence();
+    _tryRestartIce();
+    _scheduleIceRecovery('network-online-handover');
+  }
+});

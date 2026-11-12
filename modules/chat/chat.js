@@ -970,32 +970,13 @@ function _paintUserRows(users, animate = false) {
 }
 
 /**
- * MRdatabase — Suhbatlar (1-on-1 DM)
- * Suhbatlar ro'yxati: barcha ro'yxatdan o'tgan userlar
- * Chat thread: real vaqtli xabarlashish (Firestore onSnapshot)
- *
- * Firestore schema:
- *   chats/{chatId} {
- *     participants:[uidA,uidB], lastMessage, lastSenderId, lastMessageAt,
- *     unreadCount: { [uid]: number }   // har bir ishtirokchi uchun alohida hisob
- *   }
- *   chats/{chatId}/messages/{msgId} {
- *     senderId, text, createdAt,
- *     status: 'sent' | 'read',         // 1 ptichka / 2 ptichka uchun
- *     readAt                           // o'qilgan vaqt (status='read' bo'lganda)
- *   }
- *   chatId = [uidA, uidB] tartiblanib '_' bilan birlashtiriladi (har doim bitta xat ID)
- *
- * NOT: agar real qurilmada ptichkalar 1dan 2ga o'tmasa — Firestore Security
- * Rules'ni tekshiring. messages/{msgId} hujjatini OLDIN faqat senderId yozgan,
- * endi esa qabul qiluvchi (boshqa ishtirokchi) ham shu hujjatni "status: read"
- * qilib yangilashi kerak — demak update qoidasi faqat
- * `senderId == request.auth.uid` bilan emas, balki ikkala ishtirokchiga ham
- * ruxsat berishi kerak (masalan: request.auth.uid in get(parent chat).data.participants).
+ * SpaceMR — Suhbatlar (1-on-1 DM & Group Messaging)
+ * Realtime messaging, incremental prepend pagination, and secure media hydration
+ * backed by PostgreSQL relational schema.
  */
 import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
-  mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
+  mediaSecureUrl, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
 } from '../core/config.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
@@ -1177,7 +1158,7 @@ function _rtIncoming(m) {
     id: m.id, chatId: chatState._rtChatId, senderId: state.currentChatUid, type,
     text: m.text || null,
     mediaPath,
-    mediaUrl: mediaPath ? (mediaPublicUrl(mediaPath) || '') : '',
+    mediaUrl: mediaPath ? (mediaSecureUrlSync(mediaPath) || mediaPublicUrl(mediaPath) || '') : '',
     mediaType: m.mediaType || null,
     fileName: m.fileName || null,
     fileSize: m.fileSize ?? null,
@@ -1260,7 +1241,7 @@ function updateChatBadge(count) {
 
 /** Admin userni o'chirgan/bloklaganda chaqiriladi — hotira ichidagi va
  * localStorage'dagi kontaktlar (suhbat boshlash) keshini bekor qilib,
- * ro'yxatni Firestore'dan qayta yuklaydi (5 daqiqa kutilmaydi). */
+ * ro'yxatni PostgreSQL'dan qayta yuklaydi (5 daqiqa kutilmaydi). */
 export async function invalidateChatsUsersCache() {
   if (state.me?.uid) invalidateChatsListCache(state.me.uid);
   chatState._usersCache = null;
@@ -2612,11 +2593,43 @@ async function _loadOlderMessages(box) {
       return;
     }
     const merged = fresh.concat(cur);
-    // paintMessages o'zi anchor bilan joyini saqlaydi (pastda emas)
-    // Scroll inertia uzilmasin deb qisqa vaqt scroll hodisasini e'tiborsiz qoldiramiz
+    chatState._curMsgs = merged;
     chatState._olderIgnoreUntil = Date.now() + 250;
-    paintMessages(merged);
+
+    // 1. Measure prevScrollHeight = box.scrollHeight and prevScrollTop = box.scrollTop
+    const prevScrollHeight = box.scrollHeight;
+    const prevScrollTop = box.scrollTop;
+
+    // 2. Render only the newly fetched older batch into a DocumentFragment
+    const frag = document.createDocumentFragment();
+    const temp = document.createElement('div');
+    const freshParts = fresh.map((m, idx) => _renderMessageHtml(m, idx, fresh, null, { noAnim: true, baseline: true }));
+    temp.innerHTML = freshParts.join('');
+
+    const partsMap = box._parts instanceof Map ? box._parts : new Map();
+    const newParts = new Map();
+    const childNodes = Array.from(temp.children);
+    fresh.forEach((m, idx) => {
+      const key = String(m.id || ('fresh_' + idx));
+      const child = childNodes[idx];
+      if (child) {
+        newParts.set(key, { html: freshParts[idx], nodes: [child] });
+        frag.appendChild(child);
+      }
+    });
+    box._parts = new Map([...newParts, ...partsMap]);
+
+    // 3. Prepend the fragment to the top of #chatThreadMessages
+    box.prepend(frag);
+
+    // 4. Immediately recalculate: box.scrollTop = prevScrollTop + (box.scrollHeight - prevScrollHeight)
+    box.scrollTop = prevScrollTop + (box.scrollHeight - prevScrollHeight);
+
+    msgMenuAfterPaint();
+    _observeMessagesForRead();
     try { cacheThreadMessages(chatId, merged); } catch (_) {}
+    try { _hydrateChatPostCards(box); } catch (_) {}
+    try { _hydrateChatPostAvatars(box); } catch (_) {}
   } catch (e) {
     console.warn('[Chat] older load', e?.message || e);
   } finally {
@@ -2837,6 +2850,153 @@ export async function revealDmMessage(id) {
   return true;
 }
 
+function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
+  const mine = m.senderId === state.me?.uid;
+  const time = fmtTime(m.createdAt);
+  let _leaveTxt = '';
+  if (typeof m.text === 'string') {
+    const _sysEn = / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/;
+    const _sysUz = / (guruhga qo'shildi|guruhdan chiqdi|guruh nomini o'zgartirdi|guruh rasmini o'zgartirdi|guruh usernameini o'zgartirdi)$/;
+    if (_sysEn.test(m.text) || _sysUz.test(m.text)) {
+      _leaveTxt = m.text
+        .replace(/ joined the group$/, " guruhga qo'shildi")
+        .replace(/ left the group$/, ' guruhdan chiqdi')
+        .replace(/ changed the group photo$/, " guruh rasmini o'zgartirdi")
+        .replace(/ changed the group username$/, " guruh usernameini o'zgartirdi")
+        .replace(/ changed the group name$/, " guruh nomini o'zgartirdi");
+    }
+  }
+  if (_leaveTxt) {
+    const prevMsg0 = msgs[idx - 1];
+    const curDate0 = _toDateSafe(m.createdAt);
+    const prevDate0 = prevMsg0 ? _toDateSafe(prevMsg0.createdAt) : null;
+    const dateSep0 = curDate0 && (!prevDate0 || !_isSameDay(curDate0, prevDate0))
+      ? `<div class="chat-date-sep"><span>${_dateSepLabel(m.createdAt)}</span></div>` : '';
+    if (m.id) chatState._seenMsgIds.add(m.id);
+    return `${dateSep0}<div class="chat-msg chat-sys" data-id="${esc(m.id)}" data-sender="${esc(m.senderId || '')}"><span class="chat-sys-pill">${esc(_leaveTxt)}</span></div>`;
+  }
+  let bubbleContent = '';
+  let emoCls = '';
+  let bubbleClassExtra = '';
+  let metaOutside = true;
+
+  if (m.type === 'voice') {
+    /* ── Voice message ── */
+    const _dur = Math.max(0, Number(m.duration) || 0);
+    const _vUrl = getLocalVoiceUrl(m.id) || m.mediaUrl || (m.mediaPath ? (mediaSecureUrlSync(m.mediaPath) || mediaPublicUrl(m.mediaPath) || '') : '') || '';
+    const voiceMedia = { url: _vUrl, path: m.mediaPath || '', duration: _dur };
+    const dur = _dur ? fmtVoiceDur(_dur) : '0:00';
+    const barCount = _voiceBarCount(_dur);
+    const safeUrl = (_vUrl || '').replace(/"/g, '"');
+    if (Array.isArray(m.waveform) && m.waveform.length && _vUrl) primeWaveform(_vUrl, barCount, m.waveform);
+    const _mpName = (mine ? 'Siz' : (grp ? (grp.names?.[m.senderId]?.fullName || 'Ovozli xabar') : ($('chatThreadName')?.textContent || 'Ovozli xabar'))).replace(/"/g, '&quot;');
+    bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state });
+  } else if (m.type === 'file') {
+    /* ── File message ── */
+    const fname = esc(m.fileName || 'file');
+    const fsz = m.fileSize ? fmtSz(m.fileSize) : '';
+    const safeUrl = (m.mediaUrl || '').replace(/"/g, '&quot;');
+    const _ext = (m.fileName || '').toLowerCase().split('.').pop() || '';
+    const _mime = (m.mediaType || '').toLowerCase();
+    const _isImage = _mime.startsWith('image') || ['jpg','jpeg','png','gif','webp','avif'].includes(_ext);
+    const hasCaption = !!(m.text && m.text.trim());
+    const captionHtml = hasCaption ? `<div class="chat-bubble-text cfm-caption">${renderMarkdown(m.text)}</div>` : '';
+    
+    const bData = generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when: `${_dateSepLabel(m.createdAt)}, ${time}`, dm: !grp });
+    bubbleClassExtra = bData.bubbleClassExtra;
+    metaOutside = bData.metaOutside;
+    bubbleContent = bData.bubbleContent;
+  } else {
+    /* ── Text message ── */
+    const callLog = grp ? null : parseCallLog(m.text);
+    if (callLog) {
+      /* ── Qo'ng'iroq yozuvi ── */
+      const cData = generateCallBubble({ cl: callLog, mine, time });
+      bubbleClassExtra = cData.bubbleClassExtra;
+      bubbleContent = cData.bubbleContent;
+      metaOutside = false;
+    } else {
+      const postShare = parsePostShare(m.text);
+      const gif = postShare ? null : parseGif(m.text);
+      const pureMedia = (postShare || gif) ? null : parsePureMedia(m.text);
+      let bData;
+      if (gif) {
+        bData = generateGifBubble({ gif, m, time, mine, renderTicks, dm: !grp });
+        metaOutside = false;
+      } else if (pureMedia) {
+        bData = generateMediaBubble({ media: pureMedia, m, time, mine, renderTicks, dm: !grp });
+        metaOutside = false;
+      } else {
+        bData = generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
+        emoCls = bData.emoCls;
+      }
+      bubbleClassExtra = bData.bubbleClassExtra;
+      bubbleContent = bData.bubbleContent;
+    }
+  }
+
+  let isNew = false, animStyle = '';
+  if (m.id && !opts.noAnim) {
+    const _nowT = Date.now();
+    if (!chatState._seenMsgIds.has(m.id)) {
+      chatState._seenMsgIds.add(m.id);
+      if (!opts.baseline && _isFreshMsg(m)) {
+        chatState._msgAnimStart.set(m.id, _nowT);
+        isNew = true;
+        if (opts.trackNew) {
+          opts.trackNew.any = true;
+          if (mine) opts.trackNew.mine = true;
+        }
+      }
+    } else {
+      const _t0 = chatState._msgAnimStart.get(m.id);
+      if (_t0 && _nowT - _t0 < MSG_ANIM_MS) {
+        isNew = true;
+        animStyle = ` style="animation-delay:-${_nowT - _t0}ms"`;
+      }
+    }
+  } else if (m.id) {
+    chatState._seenMsgIds.add(m.id);
+  }
+
+  let gHead = '';
+  if (grp && !mine) {
+    const sn = grp.names?.[m.senderId]?.fullName || 'Foydalanuvchi';
+    const _role = grp.names?.[m.senderId]?.role;
+    gHead = `<div class="grp-sender-name" data-uid="${esc(m.senderId)}"><span class="grp-sn-text">${esc(sn)}</span>${_role ? `<span class="grp-role">${_role === 'owner' ? 'owner' : 'admin'}</span>` : ''}</div>`;
+  }
+
+  let dateSep = '';
+  const prevMsg = msgs[idx - 1];
+  const curDate = _toDateSafe(m.createdAt);
+  const prevDate = prevMsg ? _toDateSafe(prevMsg.createdAt) : null;
+  if (curDate && (!prevDate || !_isSameDay(curDate, prevDate))) {
+    dateSep = `<div class="chat-date-sep"><span>${_dateSepLabel(m.createdAt)}</span></div>`;
+  }
+
+  let gAvi = '';
+  if (grp && !mine) {
+    if (!prevMsg || prevMsg.senderId !== m.senderId || dateSep) {
+      const _pr = grp.names?.[m.senderId] || {};
+      const _nm = _pr.fullName || 'Foydalanuvchi';
+      gAvi = `<button type="button" class="msg-avi-btn grp-avi" data-uid="${esc(m.senderId)}" title="${esc(_nm)}" aria-label="${esc(_nm)}"><img src="${esc(_pr.avatar || defAvi(_nm))}" data-n="${esc(_nm)}" alt="" loading="lazy" draggable="false"></button>`;
+    } else {
+      gAvi = '<span class="grp-avi-gap" aria-hidden="true"></span>';
+    }
+  }
+
+  const outerMeta = metaOutside ? `<span class="chat-msg-meta">
+    ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
+    ${mine ? renderTicks(m.status) : ''}
+  </span>` : '';
+
+  const replyHtml = _fwdHeaderHtml(m) + _replyQuoteHtml(m, msgs, grp);
+  const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead, replyHtml });
+  return assembleMessageHtml({
+    dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml, gAvi,
+  });
+}
+
 export function paintMessages(msgs, grp = null) {
   const box = $('chatThreadMessages');
   if (!box) return;
@@ -2859,165 +3019,21 @@ export function paintMessages(msgs, grp = null) {
   }
 
   const prevCount = box.querySelectorAll('.chat-msg').length;
-  // Foydalanuvchi pastda (eng oxirgi xabarlarda) turganini tekshiramiz
-  // threshold: pastdan 120px uzoqda bo'lsa "pastda" hisoblanadi
   const isAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120 || !!(box._smoothUntil && Date.now() < box._smoothUntil);
   const isInitialLoad = prevCount === 0 && !/^#m-/.test(location.hash);
   _bindPinTracking(box);
-  const _baseline = !chatState._seenBaselineDone;   // shu chatning birinchi chizilishi — animatsiyasiz
+  const _baseline = !chatState._seenBaselineDone;
   chatState._seenBaselineDone = true;
 
   const _dsStarted = _dissolvePrepare(box, new Set(msgs.map(m => String(m.id))), !_baseline);
-  // Yuqorida turgan bo'lsak: ko'rinib turgan birinchi xabarni "langar" qilib eslab qolamiz,
-  // qayta chizilgach shu xabarni oldingi joyiga qaytaramiz (sakrash bo'lmasin)
   const _anchor = (!isAtBottom && !isInitialLoad) ? _captureMsgAnchor(box) : null;
-  let _anyNewMsg = false;  // shu chizishda yangi (ilgari chizilmagan) xabar — kelgan yoki o'zimniki — paydo bo'ldimi
-  let _myNewMsg = false;   // shu chizishda MENING yangi (ilgari chizilmagan) xabarim paydo bo'ldimi
-  const _parts = msgs.map((m, idx) => {
-    const mine = m.senderId === state.me?.uid;
-    const time = fmtTime(m.createdAt);
-    let _leaveTxt = '';
-    if (typeof m.text === 'string') {
-      const _sysEn = / (joined the group|left the group|changed the group photo|changed the group username|changed the group name)$/;
-      const _sysUz = / (guruhga qo'shildi|guruhdan chiqdi|guruh nomini o'zgartirdi|guruh rasmini o'zgartirdi|guruh usernameini o'zgartirdi)$/;
-      if (_sysEn.test(m.text) || _sysUz.test(m.text)) {
-        _leaveTxt = m.text
-          .replace(/ joined the group$/, " guruhga qo'shildi")
-          .replace(/ left the group$/, ' guruhdan chiqdi')
-          .replace(/ changed the group photo$/, " guruh rasmini o'zgartirdi")
-          .replace(/ changed the group username$/, " guruh usernameini o'zgartirdi")
-          .replace(/ changed the group name$/, " guruh nomini o'zgartirdi");
-      }
-    }
-    if (_leaveTxt) {
-      const prevMsg0 = msgs[idx - 1];
-      const curDate0 = _toDateSafe(m.createdAt);
-      const prevDate0 = prevMsg0 ? _toDateSafe(prevMsg0.createdAt) : null;
-      const dateSep0 = curDate0 && (!prevDate0 || !_isSameDay(curDate0, prevDate0))
-        ? `<div class="chat-date-sep"><span>${_dateSepLabel(m.createdAt)}</span></div>` : '';
-      if (m.id) chatState._seenMsgIds.add(m.id);
-      return `${dateSep0}<div class="chat-msg chat-sys" data-id="${esc(m.id)}" data-sender="${esc(m.senderId || '')}"><span class="chat-sys-pill">${esc(_leaveTxt)}</span></div>`;
-    }
-    let bubbleContent = '';
-    let emoCls = '';
-    let bubbleClassExtra = '';
-    let metaOutside = true;
-
-    if (m.type === 'voice') {
-      /* ── Voice message ── */
-      const _dur = Math.max(0, Number(m.duration) || 0);
-      const _vUrl = getLocalVoiceUrl(m.id) || m.mediaUrl || (m.mediaPath ? (mediaPublicUrl(m.mediaPath) || '') : '') || '';
-      const voiceMedia = { url: _vUrl, path: m.mediaPath || '', duration: _dur };
-      const dur = _dur ? fmtVoiceDur(_dur) : '0:00';
-      const barCount = _voiceBarCount(_dur);
-      const safeUrl = (_vUrl || '').replace(/"/g, '"');
-      // Server waveform: decode/fetch kerak emas
-      if (Array.isArray(m.waveform) && m.waveform.length && _vUrl) primeWaveform(_vUrl, barCount, m.waveform);
-      const _mpName = (mine ? 'Siz' : (grp ? (grp.names?.[m.senderId]?.fullName || 'Ovozli xabar') : ($('chatThreadName')?.textContent || 'Ovozli xabar'))).replace(/"/g, '&quot;');
-      bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state });
-    } else if (m.type === 'file') {
-      /* ── File message ── */
-      const fname = esc(m.fileName || 'file');
-      const fsz = m.fileSize ? fmtSz(m.fileSize) : '';
-      const safeUrl = (m.mediaUrl || '').replace(/"/g, '&quot;');
-      const _ext = (m.fileName || '').toLowerCase().split('.').pop() || '';
-      const _mime = (m.mediaType || '').toLowerCase();
-      const _isImage = _mime.startsWith('image') || ['jpg','jpeg','png','gif','webp','avif'].includes(_ext);
-      const hasCaption = !!(m.text && m.text.trim());
-      const captionHtml = hasCaption ? `<div class="chat-bubble-text cfm-caption">${renderMarkdown(m.text)}</div>` : '';
-      
-      const bData = generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when: `${_dateSepLabel(m.createdAt)}, ${time}`, dm: !grp });
-      bubbleClassExtra = bData.bubbleClassExtra;
-      metaOutside = bData.metaOutside;
-      bubbleContent = bData.bubbleContent;
-    } else {
-      /* ── Text message ── */
-      const callLog = grp ? null : parseCallLog(m.text);
-      if (callLog) {
-        /* ── Qo'ng'iroq yozuvi ── */
-        const cData = generateCallBubble({ cl: callLog, mine, time });
-        bubbleClassExtra = cData.bubbleClassExtra;
-        bubbleContent = cData.bubbleContent;
-        metaOutside = false;
-      } else {
-        const postShare = parsePostShare(m.text);
-        const gif = postShare ? null : parseGif(m.text);
-        const pureMedia = (postShare || gif) ? null : parsePureMedia(m.text);
-        let bData;
-        if (gif) {
-          bData = generateGifBubble({ gif, m, time, mine, renderTicks, dm: !grp });
-          metaOutside = false;
-        } else if (pureMedia) {
-          bData = generateMediaBubble({ media: pureMedia, m, time, mine, renderTicks, dm: !grp });
-          metaOutside = false;
-        } else {
-          bData = generateTextBubble({ m, postShare, renderChatPostCard, wrapEmojiNoSelect, renderMarkdown, emojiOnlyClass });
-          emoCls = bData.emoCls;
-        }
-        bubbleClassExtra = bData.bubbleClassExtra;
-        bubbleContent = bData.bubbleContent;
-      }
-    }
-
-    // ID asosida "yangi"lik: shu xabar ID'si ilgari chizilmagan bo'lsagina
-    // bounce animatsiyasi beriladi (status/audioUrl kabi maydon
-    // yangilanishlari eski xabarlarni qayta "bounce" qilib yubormaydi).
-    let isNew = false, animStyle = '';
-    if (m.id) {
-      const _nowT = Date.now();
-      if (!chatState._seenMsgIds.has(m.id)) {
-        chatState._seenMsgIds.add(m.id);
-        // yangi xabar (kelgan ham, o'zimniki ham; id bir xil bo'lgani uchun optimistik->server almashinuvda qayta o'ynamaydi)
-        if (!_baseline && _isFreshMsg(m)) { chatState._msgAnimStart.set(m.id, _nowT); isNew = true; _anyNewMsg = true; if (mine) _myNewMsg = true; }
-      } else {
-        // animatsiya payti repaint bo'lsa (status/tick) — to'xtab qolmasin, qolgan joyidan davom etsin
-        const _t0 = chatState._msgAnimStart.get(m.id);
-        if (_t0 && _nowT - _t0 < MSG_ANIM_MS) { isNew = true; animStyle = ` style="animation-delay:-${_nowT - _t0}ms"`; }
-      }
-    }
-
-    // Guruh: faqat boshqa foydalanuvchi xabarlarida yuboruvchi ismi
-    let gHead = '';
-    if (grp && !mine) {
-      const sn = grp.names?.[m.senderId]?.fullName || 'Foydalanuvchi';
-      const _role = grp.names?.[m.senderId]?.role;
-      gHead = `<div class="grp-sender-name" data-uid="${esc(m.senderId)}"><span class="grp-sn-text">${esc(sn)}</span>${_role ? `<span class="grp-role">${_role === 'owner' ? 'owner' : 'admin'}</span>` : ''}</div>`;
-    }
-
-    // Kun almashgan bo'lsa — Telegram uslubidagi "Bugun"/"Kecha"/sana pill'i
-    let dateSep = '';
-    const prevMsg = msgs[idx - 1];
-    const curDate  = _toDateSafe(m.createdAt);
-    const prevDate = prevMsg ? _toDateSafe(prevMsg.createdAt) : null;
-    if (curDate && (!prevDate || !_isSameDay(curDate, prevDate))) {
-      dateSep = `<div class="chat-date-sep"><span>${_dateSepLabel(m.createdAt)}</span></div>`;
-    }
-
-    // Guruh: yuboruvchi avatari — shu odamning ketma-ket xabarlari seriyasining BIRINCHI xabarida (qolganlarida bo'sh joy)
-    let gAvi = '';
-    if (grp && !mine) {
-      if (!prevMsg || prevMsg.senderId !== m.senderId || dateSep) {
-        const _pr = grp.names?.[m.senderId] || {};
-        const _nm = _pr.fullName || 'Foydalanuvchi';
-        gAvi = `<button type="button" class="msg-avi-btn grp-avi" data-uid="${esc(m.senderId)}" title="${esc(_nm)}" aria-label="${esc(_nm)}"><img src="${esc(_pr.avatar || defAvi(_nm))}" data-n="${esc(_nm)}" alt="" loading="lazy" draggable="false"></button>`;
-      } else {
-        gAvi = '<span class="grp-avi-gap" aria-hidden="true"></span>';
-      }
-    }
-
-    const outerMeta = metaOutside ? `<span class="chat-msg-meta">
-      ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
-      ${mine ? renderTicks(m.status) : ''}
-    </span>` : '';
-
-    const replyHtml = _fwdHeaderHtml(m) + _replyQuoteHtml(m, msgs, grp);
-    const bubbleHtml = wrapChatBubble({ bubbleContent, bubbleClassExtra, outerMeta, gHead, replyHtml });
-    return assembleMessageHtml({
-      dateSep, mine, isNew, emoCls, msgId: m.id || '', animStyle, bubbleHtml, gAvi,
-    });
-  });
-  // Butun DOM'ni qayta yozmaymiz: o'zgarmagan xabarlar o'sha elementlarida qoladi
-  // (rasm/avatar qayta yuklanmaydi, miltillash va sakrash yo'q). Faqat o'zgarganlari almashadi.
+  const trackNew = { any: false, mine: false };
+  const _parts = msgs.map((m, idx) => _renderMessageHtml(m, idx, msgs, grp, {
+    baseline: _baseline,
+    trackNew,
+  }));
+  const _anyNewMsg = trackNew.any;
+  const _myNewMsg = trackNew.mine;
   _patchMessages(box, _parts, msgs.map(m => String(m.id || '')));
 
   _dissolveRestore(box, _dsStarted);
@@ -3067,7 +3083,7 @@ export function paintMessages(msgs, grp = null) {
   // Voice xabarlar uchun — haqiqiy waveform balandliklarini fonda yuklaymiz
   _hydrateVoiceWaveforms(box);
 
-  // BUG FIX: paintMessages() har qanday Firestore yozuvida (masalan
+  // BUG FIX: paintMessages() har qanday Supabase yozuvida (masalan
   // _attachSecondaryVoice orqali fon rejimida ikkinchi jins ovozi
   // qo'shilganda) butun DOM'ni qayta chizadi. Agar shu paytda audio
   // fonda ijro etilayotgan bo'lsa (_activeAudio), eski <button> DOM
@@ -3398,12 +3414,10 @@ function _updatePostCardsInDOM() {
 
 
 function requireMediaUrl() {
-  // config.js dagi mediaPublicUrl — circular import oldini olish uchun lazy
   return { mediaPublicUrl: (path) => {
     try {
       if (!path) return '';
-      // sb global import orqali
-      return sb.storage.from('media').getPublicUrl(path).data.publicUrl || '';
+      return mediaSecureUrlSync(path) || mediaPublicUrl(path) || '';
     } catch (_) { return ''; }
   }};
 }
@@ -3440,7 +3454,7 @@ async function _hydrateChatPostCards(root) {
       }
       chatState._postExistenceMap.set(postId, true);
       const url = data.media_path
-        ? (sb.storage.from('media').getPublicUrl(data.media_path).data.publicUrl || '')
+        ? ((await mediaSecureUrl(data.media_path)) || mediaPublicUrl(data.media_path) || '')
         : '';
       const mt = String(data.media_type || '').toLowerCase();
       if (!mediaWrap) continue;
@@ -3567,11 +3581,10 @@ export function renderChatPostCard(ps) {
   const postText = (p.text || p.content || '').trim();
   let mediaUrl = (p.mediaUrl || p.media_url || '').trim();
   const mediaPath = (p.mediaPath || p.media_path || '').trim();
-  // Path bor, URL yo'q — public URL yasaymiz
+  // Path bor, URL yo'q — secure/public URL yasaymiz
   if (!mediaUrl && mediaPath) {
     try {
-      const { mediaPublicUrl } = requireMediaUrl();
-      mediaUrl = mediaPublicUrl(mediaPath) || '';
+      mediaUrl = mediaSecureUrlSync(mediaPath) || mediaPublicUrl(mediaPath) || '';
     } catch (_) {}
   }
   const mediaType = String(p.mediaType || p.media_type || '').toLowerCase();

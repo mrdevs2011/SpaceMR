@@ -34,456 +34,36 @@ let _startX = 0;
 let _startY = 0;
 let _bound = false;
 let _showToken = 0;   // eski yuklanish callbacklarini bekor qilish uchun
+let _reactionToken = 0;
+let _selectedStoryReaction = new Map();
 let _mediaTimeout = null;
 
-
-function ensureStoriesCss() {
-  const _old = document.getElementById('stories-bar-css'); if (_old) _old.remove();
-  const s = document.createElement('style');
-  s.id = 'stories-bar-css'; // v2 full viewer
-  s.textContent = `
-.stories-bar {
-  display: block;
-  width: 100%;
-  padding: 10px 0 6px;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
-  position: relative;
-  z-index: 2;
-}
-.stories-track {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 4px 12px 8px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.stories-track::-webkit-scrollbar { display: none; }
-.story-item {
-  flex: 0 0 auto;
-  width: 72px;
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: var(--text);
-  font-family: var(--font);
-  position: relative;
-}
-.story-loading { display: flex; align-items: center; padding: 18px 16px; }
-.story-loading .spinner { width: 24px; height: 24px; margin: 0; }
-.story-ring {
-  width: 64px; height: 64px; border-radius: 50%;
-  padding: 2px;
-  display: grid; place-items: center;
-  position: relative;
-  background: var(--bg3);
-}
-.story-ring--new {
-  background: linear-gradient(135deg, #ffd400, #f91880 55%, #1d9bf0);
-}
-.story-ring--seen { background: var(--line2, #2f3336); }
-.story-ring--add { background: var(--bg3); border: 1px dashed var(--line2); }
-.story-ring img, .story-ring > img {
-  width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
-  background: var(--bg2);
-}
-.story-plus {
-  position: absolute; right: -2px; bottom: -2px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--blue, #1d9bf0); color: #e7e9ea;
-  font-size: 16px; line-height: 18px; text-align: center;
-  border: 2px solid var(--bg);
-  z-index: 2;
-  pointer-events: auto;
-  box-sizing: border-box;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 600;
-}
-.story-label {
-  font-size: 11px; max-width: 72px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap; color: var(--text2);
-}
-/* Skeleton: haqiqiy story-item bilan BIR XIL o'lcham/layout — yuklanganda faqat ichi almashadi, siljish yo'q */
-.story-item--skel { cursor: default; pointer-events: none; }
-.story-ring--skel, .story-skel-bar {
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--line2, #2f3336) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  animation: storySkel 1.3s ease-in-out infinite;
-}
-.story-skel-bar { display: inline-block; width: 44px; border-radius: 28px; }
-@keyframes storySkel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .story-ring--skel, .story-skel-bar { animation: none; } }
-.story-viewer {
-  position: fixed; inset: 0; z-index: 10000;
-  background: #000000;
-  display: flex; flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  font-family: var(--font, system-ui, sans-serif);
-  color: #e7e9ea;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-.story-viewer[hidden] { display: none !important; }
-
-.sv-progress {
-  position: absolute; top: 0; left: 0; right: 0;
-  display: flex; gap: 4px;
-  padding: max(10px, env(safe-area-inset-top)) 12px 0;
-  z-index: 5;
-}
-.sv-seg {
-  flex: 1; height: 2.5px; border-radius: 28px;
-  background: rgba(231, 233, 234, 0.2);
-  overflow: hidden;
-}
-.sv-seg-fill {
-  height: 100%; width: 0%;
-  background: #e7e9ea;
-  border-radius: 28px;
+function disposeStoryMedia() {
+  const media = $('svMedia');
+  if (!media) return;
+  media.querySelectorAll('video').forEach(videoEl => {
+    try {
+      videoEl.pause();
+      videoEl.removeAttribute('src');
+      videoEl.load();
+    } catch (_) {}
+  });
+  media.innerHTML = '';
 }
 
-.sv-top {
-  position: absolute; top: 0; left: 0; right: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: max(22px, calc(env(safe-area-inset-top) + 14px)) 12px 12px;
-  z-index: 5;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
-  pointer-events: none;
-}
-.sv-user {
-  display: flex; align-items: center; gap: 10px;
-  min-width: 0; pointer-events: auto;
-}
-.sv-avi {
-  width: 36px; height: 36px; border-radius: 50%;
-  overflow: hidden; flex-shrink: 0;
-  background: #202327; border: 1.5px solid rgba(231, 233, 234, 0.2);
-}
-.sv-user { cursor: pointer; }
-.sv-avi img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
-}
-.sv-meta { min-width: 0; }
-.sv-name {
-  font-size: 14px; font-weight: 700; line-height: 1.2;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 180px;
-}
-.sv-time {
-  font-size: 12px; color: rgba(231, 233, 234, 0.8); margin-top: 1px;
-}
-.sv-close {
-  width: 40px; height: 40px; border: none; border-radius: 50%;
-  background: transparent; color: #e7e9ea; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: auto; flex-shrink: 0;
-}
-.sv-close:hover { background: rgba(231, 233, 234, 0.1); }
-
-.sv-media {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: #000000;
-  z-index: 1;
-  user-select: none; -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  pointer-events: none;
-}
-.sv-media img, .sv-media video {
-  max-width: 100%; max-height: 100%;
-  width: 100%; height: 100%;
-  object-fit: contain;
-  display: block;
-  background: #000;
-  user-select: none; -webkit-user-select: none;
-  -webkit-touch-callout: none; -webkit-user-drag: none;
-  pointer-events: none;
-}
-
-.sv-caption {
-  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-  padding: 56px 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  color: #e7e9ea; font-size: 16px; line-height: 1.4; text-align: center;
-  white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none;
-  user-select: none; -webkit-user-select: none;
-}
-
-.sv-nav {
-  position: absolute; top: 0; bottom: 0;
-  width: 35%; z-index: 3; cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none; -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-.sv-prev { left: 0; }
-.sv-next { right: 0; }
-
-@media (min-width: 700px) {
-  .story-viewer { background: #000000; }
-  .sv-media {
-    inset: 4% auto;
-    left: 50%; transform: translateX(-50%);
-    width: min(420px, 92vw);
-    height: 92%;
-    border-radius: 28px;
-    overflow: hidden;
-    background: #000000;
+function spawnFlyingEmoji(emoji) {
+  const v = $('storyViewer'); if (!v) return;
+  const el = document.createElement('div'); el.className = 'sv-flying-emoji';
+  if (emoji && (emoji.includes('.png') || emoji.includes('/'))) {
+    const src = emoji.startsWith('/') ? emoji : ('/' + emoji);
+    el.innerHTML = `<img class="sv-reaction-emoji" src="${src}" style="width:48px;height:48px;" alt="">`;
+  } else {
+    el.textContent = emoji || '❤️';
   }
-  .sv-progress {
-    left: 50%; transform: translateX(-50%);
-    width: min(420px, 92vw);
-  }
-  .sv-top {
-    left: 50%; transform: translateX(-50%);
-    width: min(420px, 92vw);
-    border-radius: 28px 12px 0 0;
-  }
-  .sv-nav { width: 28%; }
-  .sv-prev { left: calc(50% - min(210px, 46vw)); }
-  .sv-next { right: calc(50% - min(210px, 46vw)); left: auto; }
-}
-
-.sv-bottom {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  background: linear-gradient(0deg, rgba(12, 12, 18, .30), rgba(12, 12, 18, .08) 78%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
-  backdrop-filter: blur(18px) saturate(135%);
-  pointer-events: auto;
-}
-@media (min-width: 700px) {
-  .sv-bottom {
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(420px, 92vw);
-    border-radius: 0 0 28px 28px;
-    bottom: 4%;
-  }
-}
-.sv-flying-emoji .emo-img { width: 48px; height: 48px; display: block; object-fit: contain; }
-.sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
-.sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
-@keyframes svSpin { to { transform: rotate(360deg); } }
-.sv-media-error button { border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 9px 16px; color: #fff; background: rgba(255,255,255,.12); font: inherit; cursor: pointer; pointer-events: auto; }
-.sv-views-badge svg { width: 17px; height: 17px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.sv-own-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 1px 7px 0;
-  width: 100%;
-}
-.sv-views-badge {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, .88);
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: rgba(255, 255, 255, .12);
-  border: 1px solid rgba(255, 255, 255, .16);
-  padding: 6px 13px;
-  border-radius: 999px;
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color .15s ease, transform .1s ease;
-}
-.sv-views-badge:hover {
-  background: rgba(255, 255, 255, .20);
-}
-.sv-views-badge:active {
-  transform: scale(.96);
-}
-.sv-viewers-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 10005;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-.sv-viewers-modal[hidden] {
-  display: none !important;
-}
-.sv-viewers-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, .65);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-}
-.sv-viewers-sheet {
-  position: relative;
-  width: 100%;
-  max-width: 460px;
-  max-height: 72vh;
-  background: #14161f;
-  color: #fff;
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -4px 32px rgba(0, 0, 0, .6);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .1);
-  border-bottom: none;
-  animation: svSheetUp .22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@media (min-width: 600px) {
-  .sv-viewers-modal {
-    align-items: center;
-    padding: 20px;
-  }
-  .sv-viewers-sheet {
-    border-radius: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, .1);
-    max-height: 80vh;
-  }
-}
-@keyframes svSheetUp {
-  from { transform: translateY(100%); opacity: .8; }
-  to { transform: translateY(0); opacity: 1; }
-}
-.sv-viewers-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
-}
-.sv-viewers-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.sv-viewers-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-}
-.sv-viewers-badge-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  background: rgba(168, 85, 247, .2);
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, .3);
-  padding: 2px 8px;
-  border-radius: 999px;
-  min-width: 22px;
-}
-.sv-viewers-close {
-  background: rgba(255, 255, 255, .1);
-  border: none;
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color .15s ease;
-}
-.sv-viewers-close:hover {
-  background: rgba(255, 255, 255, .2);
-}
-.sv-viewers-list {
-  padding: 8px 12px 24px;
-  overflow-y: auto;
-  max-height: calc(72vh - 65px);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.sv-viewers-loading, .sv-viewers-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 40px 20px;
-  color: rgba(255, 255, 255, .6);
-  font-size: 14px;
-}
-.sv-viewers-empty-icon {
-  opacity: .4;
-  color: #fff;
-}
-.sv-viewer-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color .15s ease;
-}
-.sv-viewer-row:hover {
-  background: rgba(255, 255, 255, .08);
-}
-.sv-viewer-row:active {
-  background: rgba(255, 255, 255, .14);
-}
-.sv-viewer-avi {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex: 0 0 42px;
-  background: rgba(255, 255, 255, .08);
-}
-.sv-viewer-avi img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.sv-viewer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-.sv-viewer-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sv-viewer-meta {
-  font-size: 12px;
-  color: rgba(255, 255, 255, .55);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-`;
-  document.head.appendChild(s);
+  v.appendChild(el); setTimeout(() => el.remove(), 850);
 }
 
 function ensureDom() {
-  ensureStoriesCss();
   if ($('storiesBar')) return;
   const home = $('homeView');
   if (!home) return;
@@ -521,6 +101,12 @@ function ensureDom() {
       <div class="sv-media" id="svMedia"></div>
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
+        <div class="sv-reactions" id="svReactions">
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44d.png" aria-label="Like"><img class="sv-reaction-emoji" src="/emoji/2d/1f44d.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
+        </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
           <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
         </div>
@@ -633,6 +219,62 @@ function ensureDom() {
         if (_isHolding) {
           _isHolding = false;
           _endHold();
+        }
+      });
+
+      $('svReactions')?.addEventListener('click', async e => {
+        const chip = e.target.closest('.sv-react-chip');
+        if (!chip?.dataset.emoji) return;
+        e.stopPropagation();
+        const group = _groups[_viewerIdx];
+        const story = group?.items?.[_itemIdx];
+        if (!group || !story || group.isMe || !state.me?.uid) return;
+        const storyId = story.id;
+        const userId = state.me.uid;
+        const previous = _selectedStoryReaction.get(storyId) || null;
+        const next = previous === chip.dataset.emoji ? null : chip.dataset.emoji;
+        const request = ++_reactionToken;
+        const paint = value => {
+          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== storyId) return;
+          $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
+            const selected = button.dataset.emoji === value;
+            button.classList.toggle('is-selected', selected);
+            button.classList.remove('is-saving');
+            button.disabled = false;
+            button.setAttribute('aria-pressed', String(selected));
+          });
+        };
+        if (next) _selectedStoryReaction.set(storyId, next);
+        else _selectedStoryReaction.delete(storyId);
+        paint(next);
+        if (next) spawnFlyingEmoji(next);
+        try { window.haptic?.success?.(); } catch (_) {}
+        $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
+          button.disabled = true;
+          if (button.dataset.emoji === next || button.dataset.emoji === previous) button.classList.add('is-saving');
+        });
+        try {
+          const { error } = await sb.from('story_views').upsert({
+            story_id: storyId,
+            user_id: userId,
+            reaction: next,
+            viewed_at: new Date().toISOString()
+          }, { onConflict: 'story_id,user_id' });
+          if (error) throw error;
+          if (request === _reactionToken) paint(next);
+          if (next) {
+            toast('Reaksiya saqlandi', 'success');
+          } else {
+            toast('Reaksiya bekor qilindi', 'info');
+          }
+        } catch (error) {
+          if (_selectedStoryReaction.get(storyId) === next || (!_selectedStoryReaction.has(storyId) && next === null)) {
+            if (previous) _selectedStoryReaction.set(storyId, previous);
+            else _selectedStoryReaction.delete(storyId);
+          }
+          if (request === _reactionToken) paint(previous);
+          console.warn('[stories] reaction save:', error?.message || error);
+          toast('Reaksiyani saqlab bo‘lmadi', 'error');
         }
       });
 
@@ -1155,10 +797,7 @@ function closeViewer() {
   if (v) v.hidden = true;
   state.storyUid = null;
   document.body.style.overflow = '';
-  const media = $('svMedia');
-  if (media) {
-    media.innerHTML = '';
-  }
+  disposeStoryMedia();
   loadStories(); // ringlarni yangilash
 }
 
@@ -1248,10 +887,47 @@ async function showCurrent() {
     if (ownBar) ownBar.hidden = true;
   }
 
+  const reactionStoryId = item.id;
+  const reactionUserId = state.me?.uid;
+  const reactionToken = ++_reactionToken;
+  const reactions = $('svReactions');
+  if (reactions) {
+    reactions.hidden = isMine;
+    if (!isMine) {
+      reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+        button.classList.remove('is-selected', 'is-saving');
+        button.disabled = false;
+        button.setAttribute('aria-disabled', 'false');
+        button.setAttribute('aria-pressed', 'false');
+      });
+      const cachedReaction = _selectedStoryReaction.get(reactionStoryId) || null;
+      if (cachedReaction) {
+        reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+          const selected = button.dataset.emoji === cachedReaction;
+          button.classList.toggle('is-selected', selected);
+          button.setAttribute('aria-pressed', String(selected));
+        });
+      }
+      if (reactionUserId) {
+        sb.from('story_views').select('reaction').eq('story_id', reactionStoryId).eq('user_id', reactionUserId).maybeSingle()
+          .then(({ data, error }) => {
+            if (reactionToken !== _reactionToken || _groups[_viewerIdx]?.items?.[_itemIdx]?.id !== reactionStoryId) return;
+            if (error) { console.warn('[stories] reaction load:', error.message); return; }
+            const saved = data?.reaction || null;
+            if (saved) _selectedStoryReaction.set(reactionStoryId, saved);
+            else _selectedStoryReaction.delete(reactionStoryId);
+            reactions.querySelectorAll('.sv-react-chip').forEach(button => {
+              const selected = button.dataset.emoji === saved;
+              button.classList.toggle('is-selected', selected);
+              button.setAttribute('aria-pressed', String(selected));
+            });
+          }).catch(error => console.warn('[stories] reaction load:', error?.message || error));
+      }
+    }
+  }
 
-
+  disposeStoryMedia();
   const media = $('svMedia');
-  media.innerHTML = '';
   clearTimeout(_mediaTimeout);
   const loading = document.createElement('div');
   loading.className = 'sv-media-loading';

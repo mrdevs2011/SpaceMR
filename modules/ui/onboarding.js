@@ -42,27 +42,8 @@ function paint(step) {
   </div>`;
 }
 
-function ensureCss() {
-  if (document.getElementById('obStyle')) return;
-  const st = document.createElement('style');
-  st.id = 'obStyle';
-  st.textContent = `
-#onboardOverlay{position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:24px;}
-.ob-card{max-width:360px;width:100%;background:#16181c;border:1px solid #2f3336;border-radius:16px;padding:24px 22px 20px;color:#e7e9ea;}
-.ob-step{font-size:12px;color:#71767b;margin-bottom:8px;font-weight:600;}
-.ob-title{font-size:22px;font-weight:800;margin:0 0 10px;letter-spacing:-.3px;}
-.ob-body{font-size:15px;line-height:1.45;color:#c8cdd0;margin:0 0 22px;}
-.ob-actions{display:flex;gap:10px;justify-content:flex-end;}
-.ob-btn{height:44px;min-width:44px;padding:0 18px;border-radius:999px;font:600 14px system-ui,sans-serif;cursor:pointer;border:0;}
-.ob-skip{background:transparent;color:#71767b;border:1px solid #2f3336;}
-.ob-next{background:#e7e9ea;color:#000;}
-`;
-  document.head.appendChild(st);
-}
-
 export function startOnboarding(force) {
   if (!force && isDone()) return;
-  ensureCss();
   let step = 0;
   let root = document.getElementById('onboardOverlay');
   if (!root) {

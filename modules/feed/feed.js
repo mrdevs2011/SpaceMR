@@ -1,5 +1,5 @@
 import { busEmit } from '../core/rt-bus.js';
-import { sb, state, CAP_LIMIT, getMediaUrl, isAdmin, mapProfile, mapPost, MEDIA_BUCKET } from '../core/config.js';
+import { sb, state, CAP_LIMIT, getMediaUrl, mediaSecureUrl, isAdmin, mapProfile, mapPost, MEDIA_BUCKET } from '../core/config.js';
 import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          showConfirm,
          dlFile, openZoom, showHeartBurst, fmtCount, smoothScrollIntoView, markdownToPlain} from '../core/utils.js';
@@ -92,6 +92,10 @@ async function appendPostsToFeed(feedEl, newPosts) {
 
   // Media URL larni olish
   await Promise.all(newPosts.map(async p => {
+    if (p.mediaPath) {
+      const url = await mediaSecureUrl(p.mediaPath);
+      if (url) p.mediaUrl = url;
+    }
     if (!p.mediaUrl && (p.mediaPath || p.storageIndex)) {
       p.mediaUrl = await getMediaUrl(p);
     }
@@ -220,6 +224,10 @@ export async function renderFeedTo(feedEl, posts) {
 
   // Multi-Supabase: Har bir post uchun mediaUrl yaratish (backward compatibility)
   await Promise.all(posts.map(async p => {
+    if (p.mediaPath) {
+      const url = await mediaSecureUrl(p.mediaPath);
+      if (url) p.mediaUrl = url;
+    }
     if (!p.mediaUrl && (p.mediaPath || p.storageIndex)) {
       p.mediaUrl = await getMediaUrl(p);
     }
@@ -600,7 +608,9 @@ function showDoubleTapHeart(media) {
 }
 
 function bindFeedEvents(feedEl) {
-  if (!feedEl || _feedBoundEls.has(feedEl)) return;
+  if (!feedEl) return;
+  observeFeedVideos(feedEl);
+  if (_feedBoundEls.has(feedEl)) return;
   _feedBoundEls.add(feedEl);
   feedEl.addEventListener('click', async (e) => {
     const t = e.target;
@@ -1206,4 +1216,34 @@ export function hydratePostMediaCache(root) {
       }
     }).catch(() => {});
   });
+}
+
+let _feedVideoObserver = null;
+export function observeFeedVideos(root) {
+  if (!root || typeof IntersectionObserver === 'undefined') return;
+  if (!_feedVideoObserver) {
+    _feedVideoObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const videoEl = entry.target;
+        if (!entry.isIntersecting) {
+          // Hardware video decoder leak disposal on scroll past
+          const currentSrc = videoEl.getAttribute('src') || videoEl.src;
+          if (currentSrc) {
+            videoEl.dataset.feedVideoSrc = currentSrc;
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            videoEl.load();
+          }
+        } else {
+          // Re-entering viewport: restore media src
+          if (videoEl.dataset.feedVideoSrc && !videoEl.getAttribute('src')) {
+            videoEl.src = videoEl.dataset.feedVideoSrc;
+            videoEl.load();
+          }
+        }
+      });
+    }, { rootMargin: '250px 0px 250px 0px' });
+  }
+  const vids = root.querySelectorAll('video');
+  vids.forEach(v => _feedVideoObserver.observe(v));
 }
