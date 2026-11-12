@@ -3,7 +3,7 @@
  * auth.js dan ehtiyotkor ajratilgan.
  */
 import { sb } from '../core/config.js';
-import { $, esc } from '../core/utils.js';
+import { $, esc, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { bindEye, bindMeter, shake } from './pwd-ui.js';
 import { markPasswordLogin } from './device-sessions.js';
@@ -116,6 +116,7 @@ if (forgotPasswordBtn) {
 
 /* ── Parolni tiklash oynasi (3 qadam: email → kod → yangi parol) ───── */
 const recoveryModal = $('recoveryModal');
+recoveryModal?.addEventListener('click', e => { if (e.target === recoveryModal) closeRecoveryModal(); });
 const rcCard = $('rcCard');
 const rcTitle = $('rcTitle');
 const rcDots = $('rcDots');
@@ -263,6 +264,7 @@ export function openRecoveryModal(username, maskedEmail, prefilledCode = '') {
   recoveryNewPwdInp?.dispatchEvent(new Event('input'));
 
   recoveryModal.style.display = 'flex';
+  lockScroll('recoveryModal');
 
   if (prefilledCode) {
     // parol maydoniga yozilgan kod allaqachon tasdiqlangan — to'g'ridan-to'g'ri 3-qadam
@@ -277,6 +279,7 @@ export function openRecoveryModal(username, maskedEmail, prefilledCode = '') {
 
 function closeRecoveryModal() {
   if (recoveryModal) recoveryModal.style.display = 'none';
+  unlockScroll('recoveryModal');
   if (_resendTimer) { clearInterval(_resendTimer); _resendTimer = null; }
   clearErr();
 }
