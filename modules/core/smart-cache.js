@@ -46,6 +46,13 @@ class SmartCacheSystem {
   /** L0 xotiraga yozish */
   set(key, data, { ttl = 300000, rev = null } = {}) {
     const hash = fastHash(data);
+    if (this.l0.size >= 250) {
+      let count = 0;
+      for (const k of this.l0.keys()) {
+        this.l0.delete(k);
+        if (++count >= 50) break;
+      }
+    }
     this.l0.set(key, {
       data,
       hash,
@@ -129,6 +136,13 @@ class SmartCacheSystem {
   patchEntity(type, id, delta) {
     if (!id || !this.entityStore[type]) return;
     const store = this.entityStore[type];
+    if (store.size >= 500) {
+      let count = 0;
+      for (const k of store.keys()) {
+        store.delete(k);
+        if (++count >= 100) break;
+      }
+    }
     const existing = store.get(String(id)) || {};
     const updated = { ...existing, ...delta, _rev: Date.now() };
     store.set(String(id), updated);
