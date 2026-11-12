@@ -515,7 +515,6 @@ function raiseUploadOverlay() {
   ov.style.zIndex = '2147483000';
   ov.style.alignItems = 'center';
   ov.style.justifyContent = 'center';
-  ov.style.justifyContent = 'center';
   return ov;
 }
 

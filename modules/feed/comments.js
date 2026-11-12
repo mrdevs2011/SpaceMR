@@ -3,8 +3,9 @@ import { protectSecrets } from '../core/secrets.js';
 import { sb, state, isAdmin, getMediaUrl, mapProfile } from '../core/config.js';
 import { $, esc, renderMarkdown, markdownToPlain, defAvi, fmtCount, fmt, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast }                   from '../ui/toast.js';
-import { rateOk }                   from '../core/rate-limit.js';
+import { rateOk }                  from '../core/rate-limit.js';
 import { busEmit, busOn }          from '../core/rt-bus.js';
+import { onEsc }                   from '../ui/esc-stack.js';
 
 /* ── Duplicate load oldini olish ──────────────────────────────────────── */
 let _loading = false;
@@ -33,9 +34,20 @@ function emptyHtml() {
 }
 
 /* ── Close any open inline panels ─────────────────────────────────────── */
-function closeAllInline() {
+export function closeAllInline() {
   document.querySelectorAll('.post-cmt-panel').forEach(el => el.remove());
+  if (_mode === 'inline') {
+    state.cmtPostId = null;
+    _mode = null;
+    _routeKick();
+  }
 }
+
+onEsc(350, () => {
+  if (_mode === 'inline') { closeAllInline(); return true; }
+  if (_mode === 'rail') { closeRailCmt(); return true; }
+  return false;
+});
 
 /* ── Right rail: ensure comments container exists ─────────────────────── */
 function ensureRailCmt() {
@@ -75,6 +87,11 @@ function ensureRailCmt() {
       cnt.className = 'cmt-char-count' + (len >= 270 ? (len >= 300 ? ' over' : ' warn') : '');
     });
     $('rrCmtInput')?.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeRailCmt();
+        return;
+      }
       const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
       if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
         e.preventDefault();
@@ -232,6 +249,11 @@ async function openInlineCmt(postId) {
     cnt.className = 'cmt-char-count' + (len >= 270 ? (len >= 300 ? ' over' : ' warn') : '');
   });
   $('inlineCmtInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeAllInline();
+      return;
+    }
     const isMobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
     if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();

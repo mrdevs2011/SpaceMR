@@ -37,6 +37,7 @@ function hasTransparency(source) {
     if (!ctx) return false;
     ctx.drawImage(source, 0, 0, 48, 48);
     const data = ctx.getImageData(0, 0, 48, 48).data;
+    sample.width = 0; sample.height = 0;
     for (let i = 3; i < data.length; i += 4) if (data[i] < 250) return true;
   } catch (_) {}
   return false;
@@ -82,6 +83,7 @@ export async function compressImage(file, opts = {}) {
     const transparent = hasTransparency(source);
     const mime = transparent ? 'image/png' : 'image/jpeg';
     const blob = await canvasBlob(canvas, mime, transparent ? undefined : quality);
+    canvas.width = 0; canvas.height = 0;
     if (!blob || !blob.size) return file;
 
     // Faylni ozgina kichraytirish uchun sifatni yo‘qotmaymiz; faqat katta tejash bo‘lsa almashtiramiz.

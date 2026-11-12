@@ -4,7 +4,7 @@
  *  • Sozlamalar: #guideOpenBtn → pastdan chiqadigan overlay
  *  • Kirgandan keyin mobil: bir martalik karta
  */
-import { $ } from '../core/utils.js';
+import { $, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from './toast.js';
 import { setNotificationsEnabled } from '../push.js';
 
@@ -216,6 +216,7 @@ function openGuideOverlay() {
   overlay.innerHTML = `<div class="ig-sheet" role="dialog" aria-modal="true">${guideBodyHtml()}</div>`;
   bindGuideButtons();
   overlay.classList.add('show');
+  lockScroll('guideOverlay');
 }
 
 async function enableNotifs(btn) {
@@ -245,6 +246,7 @@ export function closeGuide() {
     closeGuideInAuth();
   }
   overlay?.classList.remove('show');
+  unlockScroll('guideOverlay');
 }
 
 /* ── Bir martalik karta (faqat telefonda, app ichida) ── */

@@ -1,4 +1,6 @@
 // Tarmoq kiritish/chiqarish (Bandwidth) limiti menejeri (49 MB/daqiqa)
+import { lockScroll, unlockScroll } from './utils.js';
+
 const LIMIT_BYTES = Math.floor(49 * 1024 * 1024); // 49 MB
 const WINDOW_MS = 60 * 1000; // 1 minut
 
@@ -80,12 +82,14 @@ export function initQuota() {
       document.body.appendChild(b);
     }
     b.style.display = 'flex';
+    lockScroll('quotaBlocker');
     if (!checkTimer) checkTimer = setInterval(checkLimit, 1000);
   }
 
   function hideBlocker() {
     const b = document.getElementById('quotaBlocker');
     if (b) b.style.display = 'none';
+    unlockScroll('quotaBlocker');
     if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
   }
 

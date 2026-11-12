@@ -869,6 +869,7 @@ function closeViewer() {
   unlockScroll('storyViewer');
   disposeStoryMedia();
   loadStories(); // ringlarni yangilash
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 }
 
 function buildProgress(n, active, ratio) {
@@ -898,6 +899,10 @@ async function showCurrent() {
 
   const g = _groups[_viewerIdx];
   if (!g || !g.items.length) { closeViewer(); return; }
+  if (g.uid && state.storyUid !== g.uid) {
+    state.storyUid = g.uid;
+    try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
+  }
   if (_itemIdx >= g.items.length) {
     // next group
     if (_viewerIdx + 1 < _groups.length && _groups[_viewerIdx + 1].items.length) {

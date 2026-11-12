@@ -4,6 +4,7 @@
  * Tekshiruv serverda: RPC admin_verify_password (059 migratsiya).
  */
 import { sb, state } from '../core/config.js';
+import { lockScroll, unlockScroll } from '../core/utils.js';
 
 let _open = null; // bir vaqtda faqat bitta oyna
 
@@ -49,6 +50,7 @@ export function askAdmin({ title = 'Boshqaruv paneli', sub = 'Davom etish uchun 
 
     const finish = (val) => {
       document.removeEventListener('keydown', onKey, true);
+      unlockScroll('admGate');
       el.remove();
       _open = null;
       resolve(val);
@@ -56,6 +58,7 @@ export function askAdmin({ title = 'Boshqaruv paneli', sub = 'Davom etish uchun 
     const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); finish(null); } };
     _open = { cancel: () => finish(null) };
 
+    el.onclick = (e) => { if (e.target === el) finish(null); };
     el.querySelector('.adm-gate-cancel').onclick = () => finish(null);
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -78,6 +81,7 @@ export function askAdmin({ title = 'Boshqaruv paneli', sub = 'Davom etish uchun 
     };
 
     document.addEventListener('keydown', onKey, true);
+    lockScroll('admGate');
     document.body.appendChild(el);
     setTimeout(() => p.focus(), 30);
   });

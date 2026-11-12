@@ -159,7 +159,7 @@ export function adminResetPassword(uid, displayName) {
         if (subtitleEl) {
           if (data?.masked_email) {
             subtitleEl.textContent =
-              `Tiklash kodi tayyorlandi. Foydalanuvchida zaxira email bor (${esc(data.masked_email)}). ` +
+              `Tiklash kodi tayyorlandi. Foydalanuvchida zaxira email bor (${data.masked_email}). ` +
               `Siz uni to'g'ridan-to'g'ri uning pochtasiga yuborishingiz yoki kodni o'ziga berishingiz mumkin:`;
           } else {
             subtitleEl.textContent =
