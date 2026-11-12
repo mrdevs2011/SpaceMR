@@ -260,6 +260,7 @@ export function closeDetail() {
   state.detailPostId = null;
   $('detailModal')?.classList.remove('show');
   unlockScroll('detailModal');
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 }
 
 export async function openDetail(id) {
@@ -297,6 +298,7 @@ export async function openDetail(id) {
   $('detailModal').classList.add('show');
   lockScroll('detailModal');
   state.detailPostId = id;   // URL: /p/<id>
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 
   const [lR, cR, uR] = await Promise.all([
     state.me?.uid
@@ -581,6 +583,7 @@ export function closeUserProfileModal() {
   state.currentViewingUserPosts = [];
   $('userProfileModal')?.classList.remove('show');
   unlockScroll('userProfileModal');
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 }
 
 $('upBack').onclick = closeUserProfileModal;
