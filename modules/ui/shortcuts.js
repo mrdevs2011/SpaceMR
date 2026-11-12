@@ -27,7 +27,7 @@ import { escLocals } from './esc-stack.js';
 const isOpen = el => {
   if (!el || el.hidden) return false;
   if (el.classList.contains('show') || el.classList.contains('open')) return true;
-  if (el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture' || el.id === 'cmViewer' || el.id === 'pwConfirmOverlay' || el.id === 'appFormOverlay' || el.id === 'appCatOverlay' || el.id === 'grpJoinOverlay' || el.id === 'uaActionModal' || el.id === 'micPermOverlay') return true;
+  if (el.id === 'chatCtxOverlay' || el.classList.contains('chat-ctx-overlay') || el.id === 'camCapture' || el.id === 'cmViewer' || el.id === 'pwConfirmOverlay' || el.id === 'appFormOverlay' || el.id === 'appCatOverlay' || el.id === 'grpJoinOverlay' || el.id === 'uaActionModal' || el.id === 'micPermOverlay' || el.id === 'incomingCallModal' || el.id === 'callActiveModal') return true;
   try {
     const cs = window.getComputedStyle(el);
     return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0';
@@ -46,6 +46,8 @@ const backdrop = id => () => {
 
 /* Ochiq oynalar. Qaysi biri ustda ekani z-index bo'yicha ish vaqtida aniqlanadi (closeTopmost) */
 const CLOSERS = [
+  ['incomingCallModal',      () => { document.getElementById('incomingCallReject')?.click(); return true; }],
+  ['callActiveModal',        () => { (document.getElementById('callEndBtn') || document.getElementById('callHangupBtn'))?.click(); return true; }],
   ['camCapture',             () => document.querySelector('#camCapture .cc-close')?.click()],
   ['chatCtxOverlay',         () => $('chatCtxOverlay')?.remove()],
   ['pwConfirmOverlay',       () => { $('pwcCancel')?.click(); $('pwConfirmOverlay')?.remove(); return true; }],

@@ -1,4 +1,3 @@
-import { esc } from '../core/utils.js';
 /**
  * call.js — faqat WebRTC call engine + chat.js dan re-export
  * 
@@ -20,7 +19,7 @@ export {
 } from '../chat/chat.js';
 
 import { sb, state } from '../core/config.js';
-import { $ } from '../core/utils.js';
+import { $, esc, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { sendCallLog } from '../chat/chat-actions.js';
 import { TURN_URLS, TURN_USERNAME, TURN_CREDENTIAL } from '../core/env.js';
@@ -734,11 +733,18 @@ function _showActiveCallModal(otherName, otherAvi, isVideo, statusText) {
   _remoteHasVideo = false;
   _setVideoModeUI(!!isVideo);
 
+  lockScroll('callActiveModal');
   modal?.classList.add('show');
 }
 
 function _hideActiveCallModal() {
+  unlockScroll('callActiveModal');
   document.getElementById('callActiveModal')?.classList.remove('show', 'video-mode', 'connected');
+}
+
+function _hideIncomingCallModal() {
+  unlockScroll('incomingCallModal');
+  document.getElementById('incomingCallModal')?.classList.remove('show');
 }
 
 /* ── JIRINGLASH VAQTI — BITTA joyda. Shu vaqt ichida javob bo'lmasa qo'ng'iroq avtomatik tugaydi
@@ -787,7 +793,7 @@ async function _endCall(notify = true, endSound = null) {
   if (ra) ra.srcObject = null;
 
   _hideActiveCallModal();
-  document.getElementById('incomingCallModal')?.classList.remove('show');
+  _hideIncomingCallModal();
 
   // Avval status=ended (boshqa tab/PWA/domain ringing ni to'xtatadi), keyin delete
   const idToDelete = _callId;
@@ -1196,7 +1202,7 @@ async function _acceptIncomingCall(callData, callId) {
   _callId      = callId;
   _facingMode  = 'user';
 
-  document.getElementById('incomingCallModal')?.classList.remove('show');
+  _hideIncomingCallModal();
 
   // Ovoz/video yozish faol bo'lsa darhol to'xtatamiz
   try { import('../chat/chat-voice-record.js').then(m => m.forceStopVoiceRecording?.()).catch(() => {}); } catch (_) {}
@@ -1295,7 +1301,7 @@ function _cleanCallModal() {
   if (_autoRejectTimer) { clearTimeout(_autoRejectTimer); _autoRejectTimer = null; }
   _activeCallDocId = null;
   _stopRingtone();
-  document.getElementById('incomingCallModal')?.classList.remove('show');
+  _hideIncomingCallModal();
 }
 
 // 'ringing' holatida shuncha vaqtdan eski yozuvlar (chaqiruvchi ilovasi yopilib qolgan) e'tiborga olinmaydi
@@ -1343,6 +1349,7 @@ async function _handleIncomingRow(data) {
   if (aviEl)  aviEl.innerHTML = _avatarHTML(callerName, callerAvi);
   _setCallBg(modal, callerAvi);
 
+  lockScroll('incomingCallModal');
   modal?.classList.add('show');
   _startRingtone();
 
@@ -1460,7 +1467,7 @@ document.getElementById('callEndBtn')?.addEventListener('click', () => {
   _stopRingtone();
   const id = _callId;
   _hideActiveCallModal();
-  document.getElementById('incomingCallModal')?.classList.remove('show');
+  _hideIncomingCallModal();
   if (id) {
     try { _updateCall(id, { status: 'ended' }); } catch (_) {}
     try { _beaconEnd(id); } catch (_) {}
