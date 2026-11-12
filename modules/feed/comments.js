@@ -106,10 +106,12 @@ function closeRailCmt() {
 async function fillMyAvi(targetId) {
   const el = $(targetId);
   if (!el || !state.me) return;
+  const initialAv = state.me.avatar || defAvi(state.me.name || 'U');
+  el.innerHTML = `<img class="w-full h-full object-cover brr-50pct" src="${esc(initialAv)}" onerror="this.classList.add('d-none')">`;
   try {
     const { data } = await sb.from('profiles').select('full_name,avatar').eq('id', state.me.uid).maybeSingle();
     if (data?.full_name) _myName = data.full_name;
-    const av = data?.avatar || defAvi(data?.full_name || 'U');
+    const av = data?.avatar || defAvi(data?.full_name || state.me.name || 'U');
     el.innerHTML = `<img class="w-full h-full object-cover brr-50pct" src="${esc(av)}" onerror="this.classList.add('d-none')">`;
   } catch (_) {}
 }

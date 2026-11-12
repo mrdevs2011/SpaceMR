@@ -4582,6 +4582,27 @@ input[type="file"] {
 }
 .chat-clip-close:hover { color: #fff; }
 
+.act-btn.views-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: default;
+  user-select: none;
+  opacity: 0.82;
+  font-size: 13px;
+  color: var(--text3);
+}
+.act-btn.views-btn svg {
+  stroke: var(--text3);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.act-btn.views-btn span {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 .chat-file-msg {
   display: flex;
   align-items: center;
