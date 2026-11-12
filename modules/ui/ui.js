@@ -1,6 +1,5 @@
-import { esc } from '../core/utils.js';
+import { $, esc, lockScroll, unlockScroll } from '../core/utils.js';
 import { state, sb }                               from '../core/config.js';
-import { $ }                                       from '../core/utils.js';
 
 /* ══════════════════════════════════════════════════════════════════════
    SEARCH OVERLAY — unified mobile + desktop
@@ -12,6 +11,7 @@ const searchInput    = $('searchInput');
 
 function openSearchOverlay() {
   searchOverlay?.classList.add('open');
+  lockScroll('searchOverlay');
   // Explore ochilganda input avtomatik fokuslanmasin
   sbSearchToggle?.classList.add('search-active');
   // URL: /explore (float emas — to'liq sahifa)
@@ -26,6 +26,7 @@ function openSearchOverlay() {
 
 function closeSearchOverlay() {
   searchOverlay?.classList.remove('open');
+  unlockScroll('searchOverlay');
   sbSearchToggle?.classList.remove('search-active');
   import('./right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   if (searchInput) { searchInput.value = ''; _doSearch(''); }

@@ -238,16 +238,10 @@ if (overlay && input && body) {
   body.addEventListener('click', async e => {
     $('searchSuggestions')?.classList.remove('show');
 
-    const post = e.target.closest('[data-post]');
-    if (post) {
-      const id = post.dataset.post;
-      closeOverlay();
-      const m = await import('./profile/profile.js');
-      m.openDetail?.(id);
-      return;
-    }
+    // Post kartasi ichidagi amallar (like, izoh, zoom, menyu) feed.js tomonidan boshqariladi
+    if (e.target.closest('.exp-posts-feed')) return;
 
-    const gr = e.target.closest('[data-gid]');
+    const gr = e.target.closest('.exp-item[data-gid]');
     if (gr) {
       const gid = gr.dataset.gid;
       closeOverlay();
@@ -256,7 +250,7 @@ if (overlay && input && body) {
       return;
     }
 
-    const u = e.target.closest('[data-uid]');
+    const u = e.target.closest('.exp-item[data-uid]');
     if (u) {
       const uid = u.dataset.uid;
       closeOverlay();

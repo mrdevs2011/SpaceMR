@@ -41,6 +41,7 @@ import {
 import { chatUI } from './chat-state.js';
 import { isEditing, commitEdit, getReplying, cancelReply, msgMenuReset } from './msg-menu.js';
 import { forceStopVoiceRecording } from './chat-voice-record.js';
+import { onEsc } from '../ui/esc-stack.js';
 
 /* ─────────────────────────────────────────────────────────────────────
    STATE
@@ -1430,6 +1431,7 @@ export async function openGroupInfo(groupId) {
 
   // Open panel immediately with loading state
   panel.classList.add('show');
+  lockScroll('grpInfoOverlay');
 
   /* ── Hero section ─────────────────────────── */
   const av = g.avatar || defAvi(g.name || 'G');
@@ -1773,6 +1775,7 @@ export async function openGroupEdit(groupId, g) {
   pickerSection.innerHTML = '<div class="spin-wrap pt-20px"><div class="spinner"></div></div>';
 
   overlay.classList.add('show');
+  lockScroll('grpCreateFormOverlay');
 
   const [users] = await Promise.all([
     _loadContactsForPicker(),
@@ -1865,6 +1868,7 @@ async function _submitGroupEdit(groupId) {
       lastMessage: notices[0] || '',
     });
     overlay.classList.remove('show');
+    unlockScroll('grpCreateFormOverlay');
     overlay.dataset.editMode = '';
     toast(removeFail ? `Guruh yangilandi, ${removeFail} ta a'zoni chiqarib bo'lmadi` : 'Guruh yangilandi', removeFail ? 'error' : 'success');
     openGroupInfo(groupId);
@@ -1914,6 +1918,15 @@ export function openCreateChoice() {
     else if (it.dataset.act === 'join') openJoinGroupModal();
   });
 }
+
+onEsc(390, () => {
+  const m = document.getElementById('chatsAddMenu');
+  if (m) {
+    m.remove();
+    return true;
+  }
+  return false;
+});
 
 export function openJoinGroupModal() {
   document.getElementById('grpJoinOverlay')?.remove();
@@ -2152,6 +2165,7 @@ export function openCreateForm(type) {
   overlay.querySelector('.grp-form-avi-placeholder').style.display = '';
 
   overlay.classList.add('show');
+  lockScroll('grpCreateFormOverlay');
 }
 
 async function _loadUsersForPicker() {
@@ -2442,6 +2456,7 @@ export function openAddUserByUsername() {
   err.textContent = '';
   err.style.display = 'none';
   overlay.classList.add('show');
+  lockScroll('grpAddUserOverlay');
   setTimeout(() => inp.focus(), FOCUS_DELAY_MS);
 }
 
@@ -2468,6 +2483,7 @@ async function _submitAddUserByUsername() {
       return;
     }
     overlay.classList.remove('show');
+    unlockScroll('grpAddUserOverlay');
     const { openChatThread } = await import('./chat.js');
     toast(`@${found.username} bilan suhbat ochildi`, 'success');
     setTimeout(() => openChatThread(found.uid), OPEN_CHAT_DELAY_MS);
@@ -2520,6 +2536,7 @@ export async function openMemberPicker(groupId, mode) {
   _renderMemberPicker(pickerSection, users, { existingMembers });
 
   overlay.classList.add('show');
+  lockScroll('grpCreateFormOverlay');
 }
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -2540,6 +2557,7 @@ export async function submitCreateGroup() {
       await _addMembers(addMode, added);
       await _joinedNotices(addMode, added);
       overlay.classList.remove('show');
+      unlockScroll('grpCreateFormOverlay');
       overlay.dataset.addMode = '';
       // Reset hidden elements
       overlay.querySelector('.grp-form-avi-wrap').style.display = '';
@@ -2598,6 +2616,7 @@ export async function submitCreateGroup() {
     }
     await _loadGroups();
     overlay.classList.remove('show');
+    unlockScroll('grpCreateFormOverlay');
     toast('Guruh yaratildi!', 'success');
     setTimeout(() => openGroupThread(newId), 100);
   } catch(err) {
@@ -2909,8 +2928,10 @@ export function injectGroupsDOM() {
 
   // Wire events
   document.getElementById('grpAddUserSubmitBtn').onclick = _submitAddUserByUsername;
-  document.getElementById('grpAddUserCancelBtn').onclick = () =>
+  document.getElementById('grpAddUserCancelBtn').onclick = () => {
     document.getElementById('grpAddUserOverlay').classList.remove('show');
+    unlockScroll('grpAddUserOverlay');
+  };
   document.getElementById('grpAddUserInput')
 
   /* Faqat wrap'ga: #grpFormAvi uning ichida, bosish bubble bo'lib shu yerga keladi.
@@ -2922,6 +2943,7 @@ export function injectGroupsDOM() {
     const ov = document.getElementById('grpCreateFormOverlay');
     const editId = ov.dataset.editMode;
     ov.classList.remove('show');
+    unlockScroll('grpCreateFormOverlay');
     ov.dataset.addMode = '';
     ov.dataset.editMode = '';
     if (editId && ev && ev.isTrusted) openGroupInfo(editId);
@@ -2931,8 +2953,10 @@ export function injectGroupsDOM() {
   };
 
   // Close info panel
-  document.getElementById('grpInfoCloseBtn').onclick = () =>
+  document.getElementById('grpInfoCloseBtn').onclick = () => {
     document.getElementById('grpInfoOverlay').classList.remove('show');
+    unlockScroll('grpInfoOverlay');
+  };
 
   // Backdrop click closes
   ['grpAddUserOverlay','grpCreateFormOverlay','grpInfoOverlay','grpEditOverlay'].forEach(id => {
