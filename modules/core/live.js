@@ -144,3 +144,5 @@ export function initLive() {
   // Hikoya muddati tugashi ko'rinib borsin (24 soat) — 5 daqiqada bir, faqat ko'rinib turganda
   _tick = setInterval(() => { if (!document.hidden) reloadStories(); }, 5 * 60e3);
 }
+
+window.addEventListener('pagehide', () => stopLive());
