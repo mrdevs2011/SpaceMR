@@ -286,7 +286,7 @@ let _activeRoute = 'home';
 
 /** Bir marta bind qilinadi (initRouter da), tab o'zgarganda DOM ga tegmaymiz */
 function _initSearchHandlers() {
-  const hdrSearchBtn  = $('hdrSearchBtn') || $('hdrExploreBtn');
+  const hdrSearchBtn = $('hdrSearchBtn') || $('hdrExploreBtn');
   const sbSearchToggle = $('sbSearchToggle');
 
   function handleSearchClick(e) {
@@ -313,9 +313,8 @@ function _initSearchHandlers() {
     import('./ui/right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   }
 
-  if (hdrSearchBtn)   hdrSearchBtn.addEventListener('click', handleSearchClick);
+  if (hdrSearchBtn) hdrSearchBtn.addEventListener('click', handleSearchClick);
   if (sbSearchToggle) sbSearchToggle.addEventListener('click', handleSearchClick);
-  $('hdrExploreBtn')?.addEventListener('click', handleSearchClick);
 }
 
 /** Profile view da qidiruv inputini ochadi/yopadi */

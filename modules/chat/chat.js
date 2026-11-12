@@ -976,7 +976,7 @@ function _paintUserRows(users, animate = false) {
  */
 import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
-  mediaSecureUrl, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
+  mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
 } from '../core/config.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
@@ -2083,6 +2083,10 @@ export async function openChatThread(uid) {
       }
       return;
     }
+    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    if (paths.length) {
+      try { await mediaSecureUrls(paths); } catch (_) {}
+    }
     const msgs = (data || []).map(mapMessage).reverse();
     chatState._hasMoreOlder = (data || []).length >= MSG_LIMIT;
     if (msgs.length) chatState._oldestTs = msgs[0].createdAt;
@@ -2107,7 +2111,7 @@ export async function openChatThread(uid) {
   };
   const schedThread = () => { clearTimeout(_tTimer); _tTimer = setTimeout(loadThread, 0); };
   // Realtime: INSERT/UPDATE; DELETE — ff_sync_v2 da tombstone kanaliga o'tkazilgan (P8)
-  const applyThreadPayload = (p) => {
+  const applyThreadPayload = async (p) => {
     if (_tDead || state.currentChatId !== chatId) return;
     if (!_tLoaded) { schedThread(); return; }
     const ev = p.eventType;
@@ -2122,6 +2126,9 @@ export async function openChatThread(uid) {
       paintMessages(chatState._curMsgs.filter(x => x.id !== delId));
       cacheThreadMessages(chatId, chatState._curMsgs.filter(x => x.id !== delId));
       return;
+    }
+    if (p.new?.media_path) {
+      try { await mediaSecureUrls([p.new.media_path]); } catch (_) {}
     }
     const m = mapMessage(p.new);
     if (!m || !m.id) { schedThread(); return; }
@@ -2579,6 +2586,10 @@ async function _loadOlderMessages(box) {
       .order('created_at', { ascending: false })
       .limit(OLDER_PAGE);
     if (error || state.currentChatId !== chatId) return;
+    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    if (paths.length) {
+      try { await mediaSecureUrls(paths); } catch (_) {}
+    }
     const older = (data || []).map(mapMessage).reverse();
     if (!older.length) {
       chatState._hasMoreOlder = false;
@@ -3192,31 +3203,35 @@ function setChatFile(file) {
     import('../ui/toast.js').then(m => m.toast('Fayl hajmi 50 MB dan oshmasligi kerak', 'error'));
     return;
   }
-  _cfpRevoke();
-  chatState._chatSelFile = file;
 
-  const card = $('cfpCard');
-  const mediaEl = $('cfpMedia');
-  const fileEl = $('cfpFile');
   const mime = (file.type || '').toLowerCase();
   const isImg = mime.startsWith('image/');
   const isVid = mime.startsWith('video/');
   const isMedia = isImg || isVid;
 
-  if (card) card.classList.toggle('cfp-card--media', isMedia);
-  if (card) card.classList.toggle('cfp-card--file', !isMedia);
-
-  if (isMedia && mediaEl) {
-    const url = URL.createObjectURL(file);
-    chatState._cfpObjectUrl = url;
-    mediaEl.hidden = false;
-    if (fileEl) fileEl.hidden = true;
-    if (isImg) {
-      mediaEl.innerHTML = `<img src="${url}" alt="" class="cfp-thumb" style="cursor: pointer;" title="Kattalashtirish">`;
-    } else {
-      mediaEl.innerHTML = `<video src="${url}#t=0.1" class="cfp-thumb" muted playsinline preload="metadata" style="cursor: pointer;" title="Ko'rish"></video><span class="cfp-vid-badge" aria-hidden="true"></span>`;
+  if (isMedia) {
+    // Rasm/video → multi-tray ga qo'sh
+    if (!Array.isArray(chatState._chatSelFiles)) chatState._chatSelFiles = [];
+    // Max 10 ta
+    if (chatState._chatSelFiles.length >= 10) {
+      import('../ui/toast.js').then(m => m.toast('Maksimal 10 ta fayl', 'warn'));
+      return;
     }
+    const objUrl = URL.createObjectURL(file);
+    const idx = chatState._chatSelFiles.length;
+    chatState._chatSelFiles.push({ file, objUrl });
+    _renderCfpTray();
+    // Birinchi fayl bo'lsa eski _chatSelFile ni ham yangilaymiz (boshqa joy ishlatadi)
+    if (idx === 0) chatState._chatSelFile = file;
   } else {
+    // Fayl (doc/audio) → eski single-card
+    _cfpRevoke();
+    chatState._chatSelFile = file;
+    chatState._chatSelFiles = [];
+    const card = $('cfpCard');
+    if (card) card.style.display = '';
+    const fileEl = $('cfpFile');
+    const mediaEl = $('cfpMedia');
     if (mediaEl) { mediaEl.hidden = true; mediaEl.innerHTML = ''; }
     if (fileEl) fileEl.hidden = false;
     const name = file.name || 'Fayl';
@@ -3225,15 +3240,81 @@ function setChatFile(file) {
     if ($('cfpName')) $('cfpName').textContent = name.length > 28 ? name.slice(0, 26) + '…' : name;
     if ($('cfpSize')) $('cfpSize').textContent = fmtSz(file.size);
     if ($('cfpBadge')) $('cfpBadge').textContent = ext;
+    $('chatFilePreview')?.classList.add('active');
   }
 
+  updateVoiceSendBtn();
+}
+
+function _renderCfpTray() {
+  const tray = $('cfpTray');
+  if (!tray) return;
+  const files = chatState._chatSelFiles || [];
+  if (!files.length) {
+    tray.innerHTML = '';
+    $('chatFilePreview')?.classList.remove('active');
+    return;
+  }
+  tray.innerHTML = files.map((item, i) => {
+    const mime = (item.file.type || '').toLowerCase();
+    const isImg = mime.startsWith('image/');
+    const name = item.file.name || '';
+    const fmtd = fmtSz(item.file.size);
+    if (isImg) {
+      return `<div class="cfp-tray-item" data-idx="${i}">
+        <img src="${item.objUrl}" alt="${name}" class="cfp-tray-thumb">
+        <button type="button" class="cfp-tray-rm" data-idx="${i}" aria-label="Olib tashlash">✕</button>
+        <span class="cfp-tray-sz">${fmtd}</span>
+      </div>`;
+    } else {
+      return `<div class="cfp-tray-item cfp-tray-item--vid" data-idx="${i}">
+        <video src="${item.objUrl}#t=0.1" class="cfp-tray-thumb" muted playsinline preload="metadata"></video>
+        <span class="cfp-tray-vid-icon">▶</span>
+        <button type="button" class="cfp-tray-rm" data-idx="${i}" aria-label="Olib tashlash">✕</button>
+        <span class="cfp-tray-sz">${fmtd}</span>
+      </div>`;
+    }
+  }).join('');
   $('chatFilePreview')?.classList.add('active');
+
+  // X tugmalarini bind qilamiz
+  tray.querySelectorAll('.cfp-tray-rm').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx, 10);
+      _removeCfpItem(idx);
+    });
+  });
+}
+
+function _removeCfpItem(idx) {
+  const files = chatState._chatSelFiles || [];
+  if (idx < 0 || idx >= files.length) return;
+  const item = files[idx];
+  if (item?.objUrl) { try { URL.revokeObjectURL(item.objUrl); } catch (_) {} }
+  files.splice(idx, 1);
+  chatState._chatSelFiles = files;
+  if (files.length === 0) {
+    chatState._chatSelFile = null;
+  } else {
+    chatState._chatSelFile = files[0]?.file || null;
+  }
+  _renderCfpTray();
   updateVoiceSendBtn();
 }
 
 export function clearChatFile() {
+  // Tray fayllarini tozalash
+  (chatState._chatSelFiles || []).forEach(item => {
+    if (item?.objUrl) { try { URL.revokeObjectURL(item.objUrl); } catch (_) {} }
+  });
+  chatState._chatSelFiles = [];
   chatState._chatSelFile = null;
   _cfpRevoke();
+  const tray = $('cfpTray');
+  if (tray) tray.innerHTML = '';
+  const card = $('cfpCard');
+  if (card) card.style.display = 'none';
   const mediaEl = $('cfpMedia');
   if (mediaEl) { mediaEl.hidden = true; mediaEl.innerHTML = ''; }
   const fileEl = $('cfpFile');
@@ -3738,7 +3819,7 @@ export function updateVoiceSendBtn() {
   autoGrowChatInput();
   const inp  = $('chatThreadInput');
   const hasText = inp?.value?.trim().length > 0;
-  const hasFile = !!chatState._chatSelFile;
+  const hasFile = !!(chatState._chatSelFile || (chatState._chatSelFiles?.length > 0));
   const hasPost = !!chatState._pendingPostShare;
   const showSend = hasText || hasFile || hasPost || !canRecordMedia();   // mic ham, kamera ham yo'q → doim yuborish tugmasi
   const mic  = $('chatVoiceBtn').querySelector('.icon-mic');
@@ -3937,7 +4018,7 @@ initChatVoiceRecording({
   onDevicesChange: () => { try { updateVoiceSendBtn(); } catch (_) {} },
   isComposerBusy: () => {
     const hasText = !!$('chatThreadInput')?.value?.trim();
-    return hasText || !!chatState._chatSelFile || !!chatState._pendingPostShare;
+    return hasText || !!chatState._chatSelFile || !!(chatState._chatSelFiles?.length) || !!chatState._pendingPostShare;
   },
   onSendAction: () => { handleSendAction(); },
 });
@@ -4021,6 +4102,28 @@ document.addEventListener('chat:attach-file', e => {
   const f = e.detail?.file;
   if (!f || !$('chatFilePreview')) return;
   setChatFile(f);
+  $('chatThreadInput')?.focus({ preventScroll: true });
+});
+
+// Clipboard paste / screenshot insert (mobil keyboard "Insert from..." / desktop Ctrl+V)
+document.addEventListener('paste', async e => {
+  // Faqat chat oynasi ochiq bo'lganda
+  const modal = document.getElementById('chatThreadModal');
+  if (!modal || !modal.classList.contains('show')) return;
+  const items = e.clipboardData?.items || [];
+  const imgItems = [...items].filter(i => i.kind === 'file' && i.type.startsWith('image/'));
+  if (!imgItems.length) return;
+  e.preventDefault();
+  imgItems.forEach(item => {
+    const file = item.getAsFile();
+    if (file) {
+      // Nomi bo'lmasa vaqtinchalik nom beramiz
+      const named = file.name && file.name !== 'image.png'
+        ? file
+        : new File([file], `screenshot_${Date.now()}.png`, { type: file.type });
+      setChatFile(named);
+    }
+  });
   $('chatThreadInput')?.focus({ preventScroll: true });
 });
 

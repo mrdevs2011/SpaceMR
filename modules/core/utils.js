@@ -1032,8 +1032,13 @@ export function renderMarkdown(rawText, opts) {
 
   /* spoilers already vaulted above */
 
-  s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+?)(?:\s+"[^"]*")?\)/g,
-    '<a href="$2" class="md-link" target="_blank" rel="noopener noreferrer">$1</a>');
+  s = s.replace(/\[([^\]\n]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (_m, txt, u) => {
+    let finalUrl = u.trim();
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(finalUrl)) {
+      finalUrl = 'https://' + finalUrl;
+    }
+    return `<a href="${esc(finalUrl)}" class="md-link" target="_blank" rel="noopener noreferrer">${txt}</a>`;
+  });
 
   const htmlTags = [];
   s = s.replace(/<[^>]+>/g, m => {
@@ -1098,7 +1103,8 @@ export function renderMarkdown(rawText, opts) {
 
   s = s.replace(/~~([^~\n]+)~~/g, '<del class="md-del">$1</del>');
   s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-  s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+  s = s.replace(/__([^_\n]+)__/g, '<u>$1</u>');
+  s = s.replace(/--([^-\n]+)--/g, '<u>$1</u>');
   s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
   s = s.replace(/(^|[^\w])_([^_\n]+)_(?!\w)/g, '$1<em>$2</em>');
 

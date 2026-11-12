@@ -4851,7 +4851,9 @@ a.cfm-name--link:hover {
   position: relative;
   display: flex;
   flex-direction: column;
-  max-width: 280px;
+  width: fit-content;
+  max-width: min(340px, 75vw);
+  min-height: auto;
 }
 
 .cfm-media-wrap--standalone {
@@ -4877,10 +4879,11 @@ a.cfm-name--link:hover {
 
 .cfm-img-preview {
   display: block;
-  width: 100%;
-  max-width: 280px;
-  max-height: 340px;
-  object-fit: cover;
+  width: auto;
+  height: auto;
+  max-width: min(340px, 75vw);
+  max-height: 440px;
+  object-fit: contain;
   border-radius: var(--radius);
   background: transparent;
 }

@@ -1046,8 +1046,10 @@ async function markViewed(item) {
   if (!state.me?.uid || item.seen || g?.isMe || (g?.uid && g.uid === state.me.uid)) return;
   item.seen = true;
   try {
-    const { error } = await sb.from('story_views').insert({ story_id: item.id, user_id: state.me.uid, viewed_at: new Date().toISOString() });
-    if (error && error.code !== '23505') throw error;
+    const { error } = await sb.from('story_views').upsert(
+      { story_id: item.id, user_id: state.me.uid, viewed_at: new Date().toISOString() },
+      { onConflict: 'story_id,user_id', ignoreDuplicates: true }
+    );
   } catch (err) { item.seen = false; console.warn('[stories] mark viewed:', err?.message || err); return; }
   if (g) g.hasUnseen = g.items.some(i => !i.seen);
   saveSnapshot(state.me.uid, _groups);

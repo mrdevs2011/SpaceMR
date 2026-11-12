@@ -291,6 +291,39 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = req.url;
 
+  // PWA Share Target — gallery/files app dan fayllar ulashilganda ushlaymiz
+  let path = '';
+  try { path = new URL(url).pathname; } catch (_) {}
+  if (req.method === 'POST' && path === '/share-target') {
+    event.respondWith((async () => {
+      try {
+        const formData = await req.formData();
+        const files = formData.getAll('files');
+        const title = formData.get('title') || '';
+        const text = formData.get('text') || '';
+        const sharedUrl = formData.get('url') || '';
+        // Fayl ma'lumotlarini localStorage ga saqlash (app ochilganda oladi)
+        if (files && files.length > 0) {
+          // Service worker localStoragega kira olmaydi, shuning uchun client ga xabar junatamiz
+          const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+          const fileDataPromises = files.map(async (file) => {
+            const ab = await file.arrayBuffer();
+            return { name: file.name, type: file.type, size: file.size, data: Array.from(new Uint8Array(ab)) };
+          });
+          const fileDataArr = await Promise.all(fileDataPromises);
+          clients.forEach(client => {
+            client.postMessage({ type: 'SHARE_TARGET_FILES', files: fileDataArr, title, text, url: sharedUrl });
+          });
+        }
+        // App ga redirect — fayllar yuboriladi
+        return Response.redirect('/?share=1', 303);
+      } catch (err) {
+        return Response.redirect('/', 303);
+      }
+    })());
+    return;
+  }
+
   if (_isBypassed(url) || req.method !== 'GET') return;
 
   if (req.headers.has('range')) {

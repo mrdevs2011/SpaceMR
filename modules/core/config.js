@@ -99,6 +99,43 @@ export async function mediaSecureUrl(path, ttlSec = 3600) {
 }
 
 /**
+ * Batch short-lived Signed URLs for high-frequency media lists (feed, chat threads)
+ * @param {string[]} paths - Object paths inside media bucket
+ * @param {number} [ttlSec=3600]
+ */
+export async function mediaSecureUrls(paths, ttlSec = 3600) {
+  if (!Array.isArray(paths) || !paths.length) return {};
+  const now = Date.now();
+  const missing = [];
+  const result = {};
+  for (const p of paths) {
+    if (!p) continue;
+    const cached = _signedUrlCache.get(p);
+    if (cached && cached.exp > now + 60000) {
+      result[p] = cached.url;
+    } else {
+      missing.push(p);
+    }
+  }
+  if (!missing.length) return result;
+  try {
+    const { data, error } = await sb.storage.from(MEDIA_BUCKET).createSignedUrls(missing, ttlSec);
+    if (!error && Array.isArray(data)) {
+      data.forEach((item, idx) => {
+        const pathKey = item?.path || missing[idx];
+        if (item?.signedUrl && pathKey) {
+          _signedUrlCache.set(pathKey, { url: item.signedUrl, exp: now + ttlSec * 1000 });
+          result[pathKey] = item.signedUrl;
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('[storage] mediaSecureUrls error:', e);
+  }
+  return result;
+}
+
+/**
  * @deprecated Deprecated: bucket is private. Use mediaSecureUrl() instead.
  * Retained for graceful backwards compatibility.
  */
@@ -174,6 +211,7 @@ export function mapPost(r) {
     isMaxPrivate: r.is_max_private === true,
     likes: r.likes_count || 0,
     commentCount: r.comment_count || 0,
+    viewsCount: r.views_count || 0,
     createdAt: ts(r.created_at),
   };
 }

@@ -1,6 +1,6 @@
 import { protectSecrets } from '../core/secrets.js';
 import { askPassword } from '../ui/password-confirm.js';
-import { sb, state, uploadViaController, mapProfile, mapPost, purgeUserMedia, verifyPassword, SUPABASE_URL, SUPABASE_ANON_KEY } from '../core/config.js';
+import { sb, state, uploadViaController, mapProfile, mapPost, mediaSecureUrls, purgeUserMedia, verifyPassword, SUPABASE_URL, SUPABASE_ANON_KEY } from '../core/config.js';
 import { $, esc, defAvi, uToEmail, lockScroll, unlockScroll, showConfirm, safeStorage } from '../core/utils.js';
 import { toast }                       from '../ui/toast.js';
 import { initPush, removePushToken, areNotificationsEnabled, setNotificationsEnabled, notificationsUserDisabled } from '../push.js';
@@ -1493,6 +1493,11 @@ export function listenPosts() {
         .limit(10);
       if (error || !data || data.length === 0) { window.__feedFullyLoaded = true; document.dispatchEvent(new CustomEvent('postsUpdated')); return false; }
       
+      const paths = (data || []).map(r => r.media_path).filter(Boolean);
+      if (paths.length) {
+        try { await mediaSecureUrls(paths); } catch (_) {}
+      }
+
       let added = 0;
       for (const r of data) {
         if (!byId.has(r.id)) {
@@ -1516,6 +1521,10 @@ export function listenPosts() {
       .order('created_at', { ascending: false })
       .limit(POST_LIMIT);
     if (error) { console.warn('[Auth] Posts yuklashda xato:', error.message); return; }
+    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    if (paths.length) {
+      try { await mediaSecureUrls(paths); } catch (_) {}
+    }
     const fetched = (data || []).map(mapPost);
     if (fetched.length < POST_LIMIT) {
       byId.clear();                       // butun ro'yxat shu — to'liq almashtiramiz

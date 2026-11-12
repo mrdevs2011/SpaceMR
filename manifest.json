@@ -68,5 +68,21 @@
       "platform": "webapp",
       "url": "https://spacemr.vercel.app/manifest.json"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["image/*", "video/*", "application/pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".mov"]
+        }
+      ]
+    }
+  }
 }

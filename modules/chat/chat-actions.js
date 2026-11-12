@@ -373,7 +373,11 @@ export async function handleSendAction() {
   _sendLock = true;
   const scope = _draftScope();
   try {
-    if (chatState._chatSelFile) {
+    const multiFiles = chatState._chatSelFiles;
+    const hasMulti = Array.isArray(multiFiles) && multiFiles.length > 0;
+    const hasSingle = !hasMulti && !!chatState._chatSelFile;
+
+    if (hasMulti || hasSingle) {
       const inp = $('chatThreadInput');
       const text = inp ? inp.value.trim() : '';
       if (inp) {
@@ -381,7 +385,20 @@ export async function handleSendAction() {
         inp.style.height = '';
       }
       chatUI.updateVoiceSendBtn();
-      await sendChatFile(null, text);
+
+      if (hasMulti) {
+        // Multi-file: birinchi fayl caption bilan, qolganlari caption-siz
+        const filesToSend = [...multiFiles.map(f => f.file)];
+        // State ni tozalash
+        chatUI.clearChatFile();
+        for (let i = 0; i < filesToSend.length; i++) {
+          const caption = i === 0 ? text : '';
+          await sendChatFile(filesToSend[i], caption);
+        }
+      } else {
+        await sendChatFile(null, text);
+      }
+
       if (inp && inp.value.trim()) setDraft(scope, inp.value);
       else clearDraft(scope);
     } else {

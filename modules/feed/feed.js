@@ -282,6 +282,13 @@ export async function renderFeedTo(feedEl, posts) {
               aria-label="Suhbatga ulashish">
               <img src="./svg/extra/icon-22a55ac71fee.svg" alt="" class="icon" width="18" height="18">
             </button>
+            <div class="act-btn views-btn left-four"
+              data-id="${p.id}"
+              title="Ko'rishlar soni"
+              aria-label="Ko'rishlar soni">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span id="vc-${p.id}">${fmtCount(p.viewsCount || 0)}</span>
+            </div>
           </div>
           <div class="post-actions-right">
             <button class="act-btn link-btn right-one"
@@ -610,6 +617,7 @@ function showDoubleTapHeart(media) {
 function bindFeedEvents(feedEl) {
   if (!feedEl) return;
   observeFeedVideos(feedEl);
+  observeFeedPostViews(feedEl);
   if (_feedBoundEls.has(feedEl)) return;
   _feedBoundEls.add(feedEl);
   feedEl.addEventListener('click', async (e) => {
@@ -1246,4 +1254,34 @@ export function observeFeedVideos(root) {
   }
   const vids = root.querySelectorAll('video');
   vids.forEach(v => _feedVideoObserver.observe(v));
+}
+
+const _viewedPostIds = new Set();
+export function recordPostView(postId) {
+  if (!postId || !state.me?.uid || _viewedPostIds.has(postId)) return;
+  _viewedPostIds.add(postId);
+  sb.rpc('increment_post_views', { p_post_id: postId }).then(({ data, error }) => {
+    if (!error && typeof data === 'number') {
+      const p = state.allPosts?.find(x => x.id === postId);
+      if (p) p.viewsCount = data;
+      const el = document.getElementById(`vc-${postId}`);
+      if (el) el.textContent = fmtCount(data);
+    }
+  }).catch(err => console.warn('[post view] record error:', err?.message || err));
+}
+
+let _feedViewsObserver = null;
+export function observeFeedPostViews(root) {
+  if (!root || typeof IntersectionObserver === 'undefined') return;
+  if (!_feedViewsObserver) {
+    _feedViewsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+          const pid = entry.target.dataset?.id;
+          if (pid) recordPostView(pid);
+        }
+      });
+    }, { threshold: 0.4 });
+  }
+  root.querySelectorAll('.post[data-id]').forEach(p => _feedViewsObserver.observe(p));
 }

@@ -36,18 +36,25 @@ function _stylePicker(inp) {
   ].join(';');
 }
 
-function _makePicker(accept, onFile) {
+function _makePicker(accept, onFile, multiple = false) {
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = accept || '';
+  if (multiple) inp.multiple = true;
   inp.id = 'am-pick-' + (++_uid);
   inp.setAttribute('aria-hidden', 'true');
   _stylePicker(inp);
   document.body.appendChild(inp);
   inp.addEventListener('change', () => {
-    const f = inp.files?.[0];
-    inp.value = '';
-    if (f) onFile(f);
+    if (multiple) {
+      const files = [...(inp.files || [])];
+      inp.value = '';
+      files.forEach(f => onFile(f));
+    } else {
+      const f = inp.files?.[0];
+      inp.value = '';
+      if (f) onFile(f);
+    }
   });
   return inp;
 }
@@ -79,7 +86,7 @@ export function initAttachMenu({
 }) {
   if (!btn || typeof onPick !== 'function') return;
 
-  const mediaPicker = _makePicker(mediaAccept, onPick);
+  const mediaPicker = _makePicker(mediaAccept, onPick, true /* multiple */);
   const filePicker = _makePicker(
     fileAccept || fileInput?.getAttribute('accept') || '',
     onPick

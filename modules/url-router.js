@@ -487,6 +487,7 @@ async function openOverlay(name, section) {
         ov.classList.add('open');
         $('sbSearchToggle')?.classList.add('search-active');
         $('hdrSearchBtn')?.classList.add('search-active');
+        $('hdrExploreBtn')?.classList.add('search-active');
         setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
       }
     }

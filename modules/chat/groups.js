@@ -21,7 +21,7 @@
  */
 
 import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
-import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, ts, MEDIA_BUCKET } from '../core/config.js';
+import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, mediaSecureUrls, ts, MEDIA_BUCKET } from '../core/config.js';
 import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
@@ -735,6 +735,10 @@ export async function openGroupThread(groupId) {
       console.warn('[Groups] thread error:', error.message);
       $('chatThreadMessages').innerHTML = `<div class="empty pt-30vh tac"><div class="fs-13px c-text2">Xabarlar yuklanmadi</div></div>`;
       return;
+    }
+    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    if (paths.length) {
+      try { await mediaSecureUrls(paths); } catch (_) {}
     }
     const msgs = (data || []).map(mapMessage).reverse().filter(m => !_gGone.has(String(m.id)));   // so'rov o'chirishdan oldin ketgan bo'lsa ham qaytmasin
     // Hali bazadan tasdiqlanmagan (optimistik) xabarlarni yo'qotmaymiz

@@ -24,6 +24,28 @@ export function rememberImgRatio(img) {
     sessionStorage.setItem(_DIMS_KEY, JSON.stringify(arr));
   } catch (_) {}
 }
+
+if (typeof window !== 'undefined' && !window._chatMediaError) {
+  window._chatMediaError = async function(img) {
+    if (!img || img.dataset.retried) return;
+    img.dataset.retried = '1';
+    let path = img.dataset.mediaPath;
+    if (!path && img.src) {
+      const m = img.src.match(/\/object\/(?:public\/|sign\/)?media\/(.+?)(?:\?|$)/);
+      if (m && m[1]) path = decodeURIComponent(m[1]);
+    }
+    if (!path) return;
+    try {
+      const { mediaSecureUrl } = await import('../../core/config.js');
+      const fresh = await mediaSecureUrl(path);
+      if (fresh) {
+        img.src = fresh;
+        const link = img.closest('.cfm-img-link');
+        if (link) link.href = fresh;
+      }
+    } catch (_) {}
+  };
+}
 /* ── YouTube Video Cards (inline player + copy source) ─────────────────── */
 if (typeof window !== 'undefined' && !window._chatYtBound) {
   window._chatYtBound = true;
@@ -136,13 +158,28 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
   window._chatPlayYt = window._chatPlayMedia;
 
   window._chatOpenWebLink = function (url, e) {
+    if (e) {
+      try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+    }
     const thumb = e?.target?.closest?.('.chat-link-thumb');
     if (thumb && thumb.src) {
       if (typeof window.openZoom === 'function') window.openZoom(thumb.src, 'image');
       else import('../../core/utils.js').then(u => u.openZoom(thumb.src, 'image')).catch(() => {});
       return;
     }
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    if (url) {
+      try {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 120);
+      } catch (_) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
   };
 }
 
@@ -659,14 +696,14 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
   } else if (_isImage) {
     if (dm) {
       _dmMedia(`<a href="${safeUrl}" class="cfm-img-link"${_ttl}>
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
+          <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
         </a>`);
     } else if (!hasCaption) {
       bubbleClassExtra = ' bubble-media-only';
       metaOutside = false;
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone">
         <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
+          <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
         </a>
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
@@ -677,7 +714,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       bubbleClassExtra = ' bubble-media-caption';
       bubbleContent = `<div class="cfm-media-wrap">
         <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)">
+          <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
         </a>
         ${captionHtml}
       </div>`;
