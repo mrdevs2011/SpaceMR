@@ -185,6 +185,7 @@ async function openItem(kind, ref, msgId) {
       await c.openChatThread(ref);
     }
   }
+  if (!msgId) return;
   const q = CSS.escape(String(msgId));
   let n = 0;
   const tick = () => {
@@ -208,6 +209,16 @@ export function initNotifs() {
       const me = state.me?.uid;
       const ts = Number(row.dataset.ts);
       if (me && ts) setSeenAt(me, ts);
+      ['hdrNotifBadge', 'sbNotifBadge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || el.classList.contains('d-none')) return;
+        const cur = parseInt(el.textContent, 10);
+        if (Number.isFinite(cur) && cur > 0) {
+          const next = cur - 1;
+          if (next <= 0) { el.textContent = ''; el.classList.add('d-none'); }
+          else el.textContent = next > 99 ? '99+' : String(next);
+        }
+      });
     }
     openItem(row.dataset.kind, row.dataset.ref, row.dataset.mid);
   });

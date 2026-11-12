@@ -81,6 +81,7 @@ function _bindProfileTabs() {
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     renderProfileGrid(_pgAllPosts);
+    try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
   });
 }
 
@@ -454,6 +455,7 @@ export async function openUserProfileModal(uid) {
   _upTab = 'all';
   $('userProfileModal').classList.add('show');
   lockScroll('userProfileModal');
+  try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
   $('upBody').innerHTML = `
     <div class="skel-up-hero">
       <div class="skel-up-avi skel-shimmer"></div>
@@ -574,6 +576,7 @@ export async function renderUserProfileModal(uid) {
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     _paintUpGrid(uid);
+    try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
   });
 }
 
