@@ -1,5 +1,6 @@
 /* location-helper.js — Geolocation orqali joylashuvni olish va jo‘natish yordamchisi */
 import { toast } from './toast.js';
+import { isPermissionAllowed } from '../settings/permissions.js';
 
 /**
  * Reverse geocoding (OpenStreetMap Nominatim orqali shahar / tuman nomini aniqlash)
@@ -35,6 +36,10 @@ async function reverseGeocode(lat, lon) {
  * @param {(loc: { lat: number, lon: number, title: string, address: string }) => void} onLocation
  */
 export function requestAndSendLocation(onLocation) {
+  if (!isPermissionAllowed('geolocation')) {
+    toast("Sozlamalar → Ruxsatlar bo'limidan joylashuvga ruxsat bering", 'warn');
+    return;
+  }
   if (!navigator.geolocation) {
     toast('Qurilmangizda lokatsiya (GPS) qo‘llab-quvvatlanmaydi', 'error');
     return;

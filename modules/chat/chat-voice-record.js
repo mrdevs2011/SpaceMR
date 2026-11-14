@@ -7,6 +7,7 @@ import { videoNoteFileName } from './components/video-note.js';
 import { mediaErrorKind, trackSupportsTorch, trackMaybeTorch, setTorch, probeInputDevices, listCameras, waitTrackTorchReady } from './camera-access.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
+import { isPermissionAllowed } from '../settings/permissions.js';
 
 let _onVoiceRecorded = null;
 let _isComposerBusy = null;
@@ -620,6 +621,12 @@ function _voiceCancelLocked() {
 }
 
 async function startVideoRecording() {
+  if (!isPermissionAllowed('camera')) {
+    _abortVoiceUi?.();
+    _vidStopAll?.();
+    toast("Sozlamalar → Ruxsatlar bo'limidan kameraga ruxsat bering", 'warn');
+    return;
+  }
   _voiceStopRequested = false;
   _vidChunks = [];
   _vidFacing = 'user'; _vidTorchOn = false; _vidSwitching = false;
@@ -1061,6 +1068,11 @@ function _scheduleVoiceMaxStop(ms = VOICE_MAX_SEC * 1000) {
 }
 
 async function startRecording() {
+  if (!isPermissionAllowed('microphone')) {
+    _abortVoiceUi();
+    toast("Sozlamalar → Ruxsatlar bo'limidan mikrofonga ruxsat bering", 'warn');
+    return;
+  }
   _voiceStopRequested = false;
   _voiceLocked = false;
   _recChunks = [];

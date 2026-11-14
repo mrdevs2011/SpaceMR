@@ -2041,7 +2041,6 @@ export async function openChatThread(uid) {
       if (!m?.id || have.has(m.id) || dead.has(m.id)) continue;
       if (m.chatId && m.chatId !== chatId) continue;
       if (chatState._rtLocal.has(m.id) || String(m.id).startsWith('tmp') || m.status === 'sending') continue;
-      if (minTs && (m.createdAt || 0) < minTs) continue;
       list.push(m); have.add(m.id); extra = true;
     }
     if (extra) list.sort(_cmpMsg);
@@ -2108,8 +2107,8 @@ export async function openChatThread(uid) {
     const msgs = (data || []).map(mapMessage).reverse();
     keepOptimisticMedia(msgs, chatState._curMsgs);
     chatState._hasMoreOlder = (data || []).length >= MSG_LIMIT;
+    _mergeLive(msgs, null);
     if (msgs.length) chatState._oldestTs = msgs[0].createdAt;
-    _mergeLive(msgs, null, msgs.length ? (msgs[0].createdAt || 0) : 0);
     markNetworkReady(_pgKey);
     tryOpenPaint(_pgKey);
     paintMessages(_rtMerge(msgs.slice()));
@@ -2602,34 +2601,50 @@ function _syncJumpBottom(box) {
 
 /** Scroll yuqoriga qilganda eski xabarlarni yuklaydi va joyini saqlaydi */
 async function _loadOlderMessages(box) {
-  if (chatState._loadingOlder || !chatState._hasMoreOlder || !state.currentChatId) return;
+  if (chatState._loadingOlder || !chatState._hasMoreOlder) return;
   // Qisqa cooldown: ketma-ket yuklash scroll ni ushlab turmasin
   const now = Date.now();
   if (chatState._olderCooldown && now < chatState._olderCooldown) return;
-  const chatId = state.currentChatId;
+  const isGroup = state.currentChatKind && state.currentChatKind !== 'dm';
+  const targetId = isGroup ? (state.currentChatId || window._currentGroupId || document.getElementById('chatThreadModal')?.dataset?.gid) : state.currentChatId;
+  if (!targetId) return;
+
   const cur = chatState._curMsgs || [];
   if (!cur.length) return;
-  const oldest = cur[0];
-  const beforeMs = oldest?.createdAt;
-  if (!beforeMs) return;
-  // createdAt epoch-ms, created_at esa timestamptz — ISO ga aylantiramiz
-  const before = new Date(beforeMs).toISOString();
+  let minTs = Infinity;
+  let oldest = null;
+  for (const m of cur) {
+    if (m?.createdAt && m.createdAt < minTs) {
+      minTs = m.createdAt;
+      oldest = m;
+    }
+  }
+  if (minTs === Infinity) return;
+  // createdAt epoch-ms, created_at esa timestamptz — ISO ga aylantiramiz (agar raw mavjud bo'lsa to'g'ridan-to'g'ri ishlatamiz)
+  const before = oldest?.rawCreatedAt || new Date(minTs).toISOString();
 
   chatState._loadingOlder = true;
   chatState._olderCooldown = now + 400;
-  const cols = 'id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq';
+  const tbl = isGroup ? 'group_messages' : 'messages';
+  const idCol = isGroup ? 'group_id' : 'chat_id';
+  const cols = isGroup ?
+    'id, group_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, edited_at, created_at, reply_to, waveform, seq' :
+    'id, chat_id, sender_id, type, text, media_path, media_type, file_name, file_size, duration, status, read_at, edited_at, created_at, reply_to, waveform, seq';
   try {
-    const { data, error } = await sb.from('messages').select(cols)
-      .eq('chat_id', chatId)
+    const { data, error } = await sb.from(tbl).select(cols)
+      .eq(idCol, targetId)
       .lt('created_at', before)
       .order('created_at', { ascending: false })
       .limit(OLDER_PAGE);
-    if (error || state.currentChatId !== chatId) return;
+    if (error || (state.currentChatId && state.currentChatId !== targetId)) return;
     const paths = extractRowMediaPaths(data);
     if (paths.length) {
       try { await mediaSecureUrls(paths); } catch (_) {}
     }
-    const older = (data || []).map(mapMessage).reverse();
+    let older = (data || []).map(mapMessage).reverse();
+    if (isGroup && typeof _gGone !== 'undefined' && _gGone?.size) {
+      older = older.filter(m => !_gGone.has(String(m.id)));
+    }
     keepOptimisticMedia(older, chatState._curMsgs);
     if (!older.length) {
       chatState._hasMoreOlder = false;
@@ -2645,6 +2660,9 @@ async function _loadOlderMessages(box) {
     }
     const merged = fresh.concat(cur);
     chatState._curMsgs = merged;
+    if (isGroup) {
+      try { if (typeof window._setGroupMsgs === 'function') window._setGroupMsgs(merged); } catch (_) {}
+    }
     chatState._olderIgnoreUntil = Date.now() + 250;
 
     // 1. Measure prevScrollHeight = box.scrollHeight and prevScrollTop = box.scrollTop
@@ -2654,7 +2672,8 @@ async function _loadOlderMessages(box) {
     // 2. Render only the newly fetched older batch into a DocumentFragment
     const frag = document.createDocumentFragment();
     const temp = document.createElement('div');
-    const freshParts = fresh.map((m, idx) => _renderMessageHtml(m, idx, fresh, null, { noAnim: true, baseline: true }));
+    const grp = isGroup ? { names: chatUI.groupNames ? chatUI.groupNames() : {} } : null;
+    const freshParts = fresh.map((m, idx) => _renderMessageHtml(m, idx, fresh, grp, { noAnim: true, baseline: true }));
     temp.innerHTML = freshParts.join('');
 
     const partsMap = box._parts instanceof Map ? box._parts : new Map();
@@ -2673,12 +2692,21 @@ async function _loadOlderMessages(box) {
     // 3. Prepend the fragment to the top of #chatThreadMessages
     box.prepend(frag);
 
+    // Ortiqcha takroriy sana ajratgichni olib tashlash (agar ulanish nuqtasi bir xil kunda bo'lsa)
+    try {
+      const firstCurEl = box.querySelector(`.chat-msg[data-msg-id="${cur[0]?.id}"]`);
+      const prevSep = firstCurEl?.previousElementSibling;
+      if (prevSep && prevSep.classList.contains('chat-date-sep') && _isSameDay(_toDateSafe(fresh[fresh.length - 1]?.createdAt), _toDateSafe(cur[0]?.createdAt))) {
+        prevSep.remove();
+      }
+    } catch (_) {}
+
     // 4. Immediately recalculate: box.scrollTop = prevScrollTop + (box.scrollHeight - prevScrollHeight)
     box.scrollTop = prevScrollTop + (box.scrollHeight - prevScrollHeight);
 
     msgMenuAfterPaint();
     _observeMessagesForRead();
-    try { cacheThreadMessages(chatId, merged); } catch (_) {}
+    try { cacheThreadMessages(targetId, merged); } catch (_) {}
     try { _hydrateChatPostCards(box); } catch (_) {}
     try { _hydrateChatPostAvatars(box); } catch (_) {}
   } catch (e) {
@@ -2700,8 +2728,8 @@ function _bindPinTracking(box) {
     _scrollT = setTimeout(() => {
       _scrollT = 0;
       if (chatState._olderIgnoreUntil && Date.now() < chatState._olderIgnoreUntil) return;
-      // Juda tepada bo'lsagina (inertia uzilmasin)
-      if (box.scrollTop < 40 && !chatState._loadingOlder && chatState._hasMoreOlder && state.currentChatId) {
+      // Juda tepada bo'lsagina (120px — mobilda inersiyani o'tkazib yubormaslik uchun)
+      if (box.scrollTop < 120 && !chatState._loadingOlder && chatState._hasMoreOlder && (state.currentChatId || state.currentChatKind === 'group')) {
         _loadOlderMessages(box);
       }
     }, 80);

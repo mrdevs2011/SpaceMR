@@ -6550,4 +6550,272 @@ svg.sv-reaction-emoji { overflow: visible !important; }
   text-align: center;
 }
 
+/* ==========================================================================
+   SpaceMR Settings: Permissions (Ruxsatlar) Section & Cards
+   Telegram / Apple Settings modern clean aesthetic
+   ========================================================================== */
+
+.perm-header-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(29, 155, 240, 0.22), rgba(0, 186, 124, 0.22));
+  border: 1px solid rgba(29, 155, 240, 0.35);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.perm-header-badge .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.pe-acc-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.pe-acc-main-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--pal-white, #e7e9ea);
+  line-height: 1.25;
+}
+
+.pe-acc-sub-title {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--pal-gray-500, #71767b);
+  line-height: 1.25;
+}
+
+.perm-intro-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(29, 155, 240, 0.08);
+  border: 1px solid rgba(29, 155, 240, 0.18);
+  margin-bottom: 14px;
+}
+
+.perm-intro-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(29, 155, 240, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.perm-intro-icon .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.perm-intro-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.perm-intro-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pal-white, #e7e9ea);
+  margin-bottom: 2px;
+}
+
+.perm-intro-desc {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--pal-gray-500, #71767b);
+}
+
+.perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.perm-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--pal-gray-800, #202327);
+  border-radius: 16px;
+  padding: 14px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.perm-card:hover {
+  border-color: var(--pal-gray-700, #2f3336);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.perm-card-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.perm-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.perm-icon-wrap .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.perm-badge-mic {
+  background: rgba(244, 33, 46, 0.12);
+  border: 1px solid rgba(244, 33, 46, 0.25);
+}
+
+.perm-badge-cam {
+  background: rgba(29, 155, 240, 0.12);
+  border: 1px solid rgba(29, 155, 240, 0.25);
+}
+
+.perm-badge-bell {
+  background: rgba(255, 173, 31, 0.12);
+  border: 1px solid rgba(255, 173, 31, 0.25);
+}
+
+.perm-badge-geo {
+  background: rgba(0, 186, 124, 0.12);
+  border: 1px solid rgba(0, 186, 124, 0.25);
+}
+
+.perm-badge-clip {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.perm-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.perm-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+
+.perm-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--pal-white, #e7e9ea);
+}
+
+.perm-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 12px;
+  line-height: 1.2;
+}
+
+.perm-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.perm-state-granted {
+  background: rgba(0, 186, 124, 0.12);
+  color: #00ba7c;
+  border: 1px solid rgba(0, 186, 124, 0.25);
+}
+.perm-state-granted .perm-dot {
+  background: #00ba7c;
+  box-shadow: 0 0 6px rgba(0, 186, 124, 0.7);
+}
+
+.perm-state-denied {
+  background: rgba(244, 33, 46, 0.12);
+  color: #f4212e;
+  border: 1px solid rgba(244, 33, 46, 0.25);
+}
+.perm-state-denied .perm-dot {
+  background: #f4212e;
+}
+
+.perm-state-off {
+  background: rgba(113, 118, 123, 0.12);
+  color: var(--pal-gray-500, #71767b);
+  border: 1px solid rgba(113, 118, 123, 0.22);
+}
+.perm-state-off .perm-dot {
+  background: var(--pal-gray-500, #71767b);
+}
+
+.perm-state-prompt {
+  background: rgba(255, 173, 31, 0.12);
+  color: #ffad1f;
+  border: 1px solid rgba(255, 173, 31, 0.25);
+}
+.perm-state-prompt .perm-dot {
+  background: #ffad1f;
+}
+
+.perm-short-desc {
+  font-size: 12px;
+  color: var(--pal-gray-500, #71767b);
+  line-height: 1.35;
+}
+
+.perm-switch {
+  margin-left: 4px;
+}
+
+.perm-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.perm-detail-row {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--pal-gray-500, #71767b);
+}
+
+.perm-detail-label {
+  font-weight: 600;
+  color: var(--pal-gray-100, #e7e9ea);
+  margin-right: 4px;
+}
+
+.perm-detail-sec {
+  color: rgba(231, 233, 234, 0.7);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+
 

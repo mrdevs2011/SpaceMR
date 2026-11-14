@@ -23,6 +23,7 @@ import { $, esc, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { sendCallLog } from '../chat/chat-actions.js';
 import { TURN_URLS, TURN_USERNAME, TURN_CREDENTIAL } from '../core/env.js';
+import { isPermissionAllowed } from '../settings/permissions.js';
 
 /* calls qatori (snake_case) → client modeli */
 function mapCall(r) {
@@ -1024,6 +1025,16 @@ async function initiateCall(isVideo) {
 async function _initiateCallImpl(isVideo) {
   const uid = state.currentChatUid;
   if (!uid || !state.me || uid === state.me.uid) return;
+
+  if (!isPermissionAllowed('microphone')) {
+    toast("Sozlamalar → Ruxsatlar bo'limidan mikrofonga ruxsat bering", 'warn');
+    return;
+  }
+  if (isVideo && !isPermissionAllowed('camera')) {
+    toast("Sozlamalar → Ruxsatlar bo'limidan kameraga ruxsat bering", 'warn');
+    return;
+  }
+
   // Ikki marta bosish / parallel tab — bitta faol qo'ng'iroq
   if (_pc || _callId || _ending) {
     toast("Allaqachon qo'ng'iroqdasiz", 'error');
@@ -1363,6 +1374,10 @@ async function _handleIncomingRow(data) {
 
   // Qabul qilish
   _boundAccept = async () => {
+    if (!isPermissionAllowed('microphone')) {
+      toast("Sozlamalar → Ruxsatlar bo'limidan mikrofonga ruxsat bering", 'warn');
+      return;
+    }
     _cleanCallModal();
     await _acceptIncomingCall(data, data.id);
   };

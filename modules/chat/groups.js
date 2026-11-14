@@ -23,6 +23,8 @@
 import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
 import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, mediaSecureUrls, ts, MEDIA_BUCKET } from '../core/config.js';
 import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
+import { cacheThreadMessages, getCachedThreadMessages } from '../core/local-cache.js';
+import { chatState } from './chat-state.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, lockScroll, unlockScroll, isOnline, isActiveUser, showConfirm } from '../core/utils.js';
 import { toast }                                    from '../ui/toast.js';
 import { getDraft, clearDraft } from '../core/drafts.js';
@@ -55,6 +57,10 @@ let _currentGroupId  = null;
 let _currentGroupData = null;
 import { markDissolve } from '../ui/dissolve.js';
 let _gMsgs = [];            // joriy guruh threadidagi xabarlar (realtime payload shu ro'yxatga qo'llanadi)
+if (typeof window !== 'undefined') {
+  window._setGroupMsgs = (msgs) => { _gMsgs = msgs; };
+  window._getGroupMsgs = () => _gMsgs;
+}
 let _gLoaded = false;
 let _gReadMax = 0;          // boshqa a'zolardan biri o'qigan eng so'nggi vaqt (ms) — 062 (last_read_at)
 let _gRt = null;            // guruh uchun WebRTC mesh (zaxira: broadcast)
@@ -629,6 +635,7 @@ export async function openGroupThread(groupId) {
   _currentGroupId   = groupId;
   _currentGroupData = groupData;
   try { chatUI.clearChatFile?.(); } catch (_) {}
+  state.currentChatId   = groupId;
   state.currentChatKind = groupData.type; // har doim 'group' (kanal turi olib tashlangan, 3.2)
 
   const modal = $('chatThreadModal');
@@ -800,7 +807,7 @@ export async function openGroupThread(groupId) {
   };
   const sched = () => { clearTimeout(_gTimer); _gTimer = setTimeout(loadMsgs, 0); };
   // Realtime payload'ni qayta yuklamasdan shu zahoti qo'llaymiz
-  const applyGroupPayload = (p) => {
+  const applyGroupPayload = async (p) => {
     if (_gDead || _currentGroupId !== groupId) return;
     if (!_gLoaded) { sched(); return; }
     if (p.eventType === 'DELETE') {

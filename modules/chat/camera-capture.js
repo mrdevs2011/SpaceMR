@@ -1,5 +1,6 @@
 /* camera-capture.js — SpaceMR kamera: foto/video, review (retake / paperplane send). */
 import { toast } from '../ui/toast.js';
+import { isPermissionAllowed } from '../settings/permissions.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
   trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced, waitTrackTorchReady,
@@ -102,6 +103,11 @@ export async function openCameraCapture(options = {}) {
   let finishRef = null;
 
   try {
+    if (!isPermissionAllowed('camera')) {
+      toast("Sozlamalar → Ruxsatlar bo'limidan kameraga ruxsat bering", 'warn');
+      return null;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia) {
       toast('Kamera bu brauzerda mavjud emas', 'error');
       return null;

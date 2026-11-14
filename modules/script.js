@@ -17,6 +17,7 @@ import './ui/spacemr-group-chip.js'; // SpaceMR Group tugmasi (mobil header + de
 import './core/offline.js'; // oflayn banner — ROADMAP 4
 import './ui/onboarding.js';
 import './ui/file-viewer.js'; // fayl ochish oynasi (matn/kod/jadval/rasm/video/audio/PDF)
+import './settings/settings.js'; // SpaceMR Sozlamalar: Ruxsatlar va boshqaruv
 
 try { if (typeof window !== 'undefined') { window.__spacemrBootOk = true; window.__spacemrScriptLoaded = true; } } catch (_) {}
 

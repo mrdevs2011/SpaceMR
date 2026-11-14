@@ -1076,6 +1076,36 @@ html[data-nf],html[data-nf] body{background:#000000}
       </div>
     </div>
 
+    <!-- Ruxsatlar (Ilova ruxsatlari / Permissions) (accordion) -->
+    <div class="pe-card-group pe-accordion" data-pe-acc="permissions" id="permissionsGroup">
+      <button type="button" class="pe-group-title pe-acc-toggle" aria-expanded="false" id="permissionsAccToggle">
+        <span class="pe-acc-left">
+          <span class="pe-acc-badge-icon perm-header-badge">
+            <img src="./svg/auth/shield.svg" alt="" class="icon" width="15" height="15">
+          </span>
+          <span class="pe-acc-title-wrap">
+            <span class="pe-acc-main-title">Ruxsatlar</span>
+            <span class="pe-acc-sub-title">Kamera, mikrofon, bildirishnomalar va boshqalar</span>
+          </span>
+        </span>
+        <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon pe-acc-chevron" width="16" height="16">
+      </button>
+      <div class="pe-acc-body">
+        <div class="perm-intro-banner">
+          <div class="perm-intro-icon">
+            <img src="./svg/auth/shield.svg" alt="" class="icon" width="20" height="20">
+          </div>
+          <div class="perm-intro-text">
+            <div class="perm-intro-title">Ilova ruxsatlari va maxfiylik</div>
+            <div class="perm-intro-desc">SpaceMR ruxsatlarni faqat siz tegishli funksiyani ishlatganingizda faollashtiradi. Barcha ma'lumotlaringiz shifrlangan va maxfiy saqlanadi.</div>
+          </div>
+        </div>
+        <div class="perm-list" id="permissionsList">
+          <!-- JS orqali dinamik chiziladi va jonli yangilanadi -->
+        </div>
+      </div>
+    </div>
+
     <div class="settings-section-label">Bildirishnomalar</div>
     <div class="settings-row">
       <div class="settings-row-text">
@@ -1598,6 +1628,7 @@ html[data-nf],html[data-nf] body{background:#000000}
 
 <script type="module" src="./modules/core/error-log.js"></script>
 <script type="module" src="./modules/core/no-autocomplete.js"></script>
+<script type="module" src="./modules/settings/settings.js"></script>
 <script type="module" src="./modules/script.js"></script>
 <script type="module" src="./app.js"></script>
 

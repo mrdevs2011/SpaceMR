@@ -1679,6 +1679,12 @@ export const fmtCount = n => {
 export async function copyToClipboard(text) {
   if (!text) return;
   try {
+    if (localStorage.getItem('smr_perm_clipboard') === 'off') {
+      import('../ui/toast.js').then(m => m.toast?.("Sozlamalar → Ruxsatlar bo'limidan klipbordga ruxsat bering", 'warn'));
+      return;
+    }
+  } catch (_) {}
+  try {
     await navigator.clipboard.writeText(text);
   } catch {
     const ta = Object.assign(document.createElement('textarea'), {

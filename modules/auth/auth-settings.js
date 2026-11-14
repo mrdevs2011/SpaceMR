@@ -11,6 +11,7 @@ import { removePushToken, areNotificationsEnabled, setNotificationsEnabled } fro
 import { clearAllCache, clearRuntimeCache, getCachedProfile } from '../core/local-cache.js';
 import { isEphemeralDevice, setEphemeralDevice, flagsSnapshot } from '../core/store/flags.js';
 import { initDeviceSessionsUi, paintDevicesList } from './device-sessions.js';
+import { renderPermissionsUI } from '../settings/permissions.js';
 
 /* ── Sozlamalar (Settings) sheet — bildirishnoma + hisobni o'chirish ── */
 
@@ -71,6 +72,7 @@ if (settingsBtn) {
   settingsBtn.onclick = () => {
     if (typeof _populateProfileForm === 'function') _populateProfileForm();
     applyNotifToggleUI();
+    try { renderPermissionsUI(); } catch (_) {}
     $('settingsMoreMenu')?.classList.remove('show');
     const settingsOverlay = $('settingsOverlay');
     if (settingsOverlay) {
