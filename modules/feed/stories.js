@@ -54,6 +54,30 @@ export function formatCompactNumber(n) {
   return `${val}M`;
 }
 
+export function getReactionSvg(emoji) {
+  if (!emoji) return '';
+  const k = String(emoji).toLowerCase();
+  if (k.includes('2764') || k.includes('heart') || k.includes('love') || k === '❤️') {
+    return `<svg class="sv-reaction-emoji" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svHeartGrad" x1="18" y1="4" x2="18" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ff3b5c"/><stop offset="100%" stop-color="#e0123c"/></linearGradient></defs><path d="M18 31.25C17.45 31.25 17 31.05 16.6 30.65C10.75 24.85 4 19.35 4 12.5C4 7.8 7.8 4 12.5 4C15.2 4 17.15 5.2 18 6.4C18.85 5.2 20.8 4 23.5 4C28.2 4 32 7.8 32 12.5C32 19.35 25.25 24.85 19.4 30.65C19 31.05 18.55 31.25 18 31.25Z" fill="url(#svHeartGrad)"/><path d="M12.5 6C9.25 6 6.5 8.75 6.5 12C6.5 14.5 8 17.5 11 21C11.5 21.5 12 20.5 12 19.5C12 16.5 13.5 14.5 15.5 14C16 13.9 16.2 13.3 15.8 13C14.8 12.2 14.3 11.2 14.3 10C14.3 7.8 13.5 6 12.5 6Z" fill="#ff758f" opacity="0.6"/></svg>`;
+  }
+  if (k.includes('1f525') || k.includes('fire') || k.includes('flame') || k === '🔥') {
+    return `<svg class="sv-reaction-emoji" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svFireOuter" x1="18" y1="3" x2="18" y2="33" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ff7a00"/><stop offset="50%" stop-color="#ff3300"/><stop offset="100%" stop-color="#d61a00"/></linearGradient><linearGradient id="svFireInner" x1="18" y1="12" x2="18" y2="33" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffee55"/><stop offset="100%" stop-color="#ffaa00"/></linearGradient></defs><path d="M19.5 3C19.5 7.5 16.5 10 14 12.5C11 15.5 9 19 9 23.5C9 28.5 13 33 18.5 33C24.5 33 28 28.5 28 23C28 16.5 22.5 11.5 21.5 8C21.2 6.5 21.5 4.5 19.5 3Z" fill="url(#svFireOuter)"/><path d="M18.5 14C18.5 17 16 19 14.5 21C13.5 22.5 13 24 13 26C13 29 15.5 31.5 18.5 31.5C21.5 31.5 23.5 29 23.5 25.5C23.5 21.5 20.5 18 20 16C19.7 15 19.5 14.5 18.5 14Z" fill="url(#svFireInner)"/></svg>`;
+  }
+  if (k.includes('1f602') || k.includes('joy') || k.includes('laugh') || k === '😂') {
+    return `<svg class="sv-reaction-emoji" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svFaceGrad" x1="18" y1="2" x2="18" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffdb4d"/><stop offset="100%" stop-color="#f5a623"/></linearGradient><linearGradient id="svTearGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4dc9ff"/><stop offset="100%" stop-color="#0088e8"/></linearGradient></defs><circle cx="18" cy="18" r="16" fill="url(#svFaceGrad)"/><path d="M8.5 14.5C10 11.8 13.5 11.8 15 14.5" stroke="#4a2600" stroke-width="2.5" stroke-linecap="round"/><path d="M21 14.5C22.5 11.8 26 11.8 27.5 14.5" stroke="#4a2600" stroke-width="2.5" stroke-linecap="round"/><path d="M10 20C10 26.5 14 29 18 29C22 29 26 26.5 26 20H10Z" fill="#7a1400"/><path d="M10.8 20C11.5 22 14.5 23 18 23C21.5 23 24.5 22 25.2 20H10.8Z" fill="#ffffff"/><path d="M6 16C5 18 5 21 7 22C8.5 22 9.5 20.5 9 18.5C8.5 16.5 7 15 6 16Z" fill="url(#svTearGrad)"/><path d="M30 16C31 18 31 21 29 22C27.5 22 26.5 20.5 27 18.5C27.5 16.5 29 15 30 16Z" fill="url(#svTearGrad)"/></svg>`;
+  }
+  if (k.includes('1f62e') || k.includes('wow') || k.includes('open_mouth') || k === '😮') {
+    return `<svg class="sv-reaction-emoji" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svFaceGrad2" x1="18" y1="2" x2="18" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffdb4d"/><stop offset="100%" stop-color="#f5a623"/></linearGradient></defs><circle cx="18" cy="18" r="16" fill="url(#svFaceGrad2)"/><path d="M10 10C11.5 8.5 14.5 8.5 16 10" stroke="#4a2600" stroke-width="2.2" stroke-linecap="round"/><path d="M20 10C21.5 8.5 24.5 8.5 26 10" stroke="#4a2600" stroke-width="2.2" stroke-linecap="round"/><circle cx="13" cy="14.5" r="2.8" fill="#4a2600"/><circle cx="23" cy="14.5" r="2.8" fill="#4a2600"/><ellipse cx="18" cy="24" rx="4.5" ry="5.5" fill="#521d00"/></svg>`;
+  }
+  if (k.includes('1f622') || k.includes('sad') || k.includes('cry') || k === '😢') {
+    return `<svg class="sv-reaction-emoji" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svFaceGrad3" x1="18" y1="2" x2="18" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffdb4d"/><stop offset="100%" stop-color="#f5a623"/></linearGradient><linearGradient id="svSadTear" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4dc9ff"/><stop offset="100%" stop-color="#0088e8"/></linearGradient></defs><circle cx="18" cy="18" r="16" fill="url(#svFaceGrad3)"/><path d="M9.5 11C11.5 12 14.5 11.5 15.5 10" stroke="#4a2600" stroke-width="2.2" stroke-linecap="round"/><path d="M26.5 11C24.5 12 21.5 11.5 20.5 10" stroke="#4a2600" stroke-width="2.2" stroke-linecap="round"/><circle cx="13" cy="15" r="2.6" fill="#4a2600"/><circle cx="23" cy="15" r="2.6" fill="#4a2600"/><path d="M13 25C14.5 22.5 21.5 22.5 23 25" stroke="#4a2600" stroke-width="2.5" stroke-linecap="round"/><path d="M11.5 17C10.5 18.5 10.5 21 12 22C13.5 22 14.2 20.5 13.5 19C13 17.5 12 16 11.5 17Z" fill="url(#svSadTear)"/></svg>`;
+  }
+  if (k.includes('1f44d') || k.includes('like') || k.includes('thumbs') || k === '👍') {
+    return `<svg class="sv-reaction-emoji" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="svThumbGrad" x1="18" y1="4" x2="18" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffd043"/><stop offset="100%" stop-color="#f5a623"/></linearGradient></defs><path d="M12 14.5V29C12 29.8 11.3 30.5 10.5 30.5H7.5C6.7 30.5 6 29.8 6 29V14.5C6 13.7 6.7 13 7.5 13H10.5C11.3 13 12 13.7 12 14.5Z" fill="#f5a623"/><path d="M13 15C13 15 15.5 10 16.5 7.5C17.5 5 19 4 20.5 4C22 4 23 5.5 22.5 8C22 10.5 21 12.5 21 13H28C29.6 13 31 14.3 30.8 16L29.3 25C29.1 26.2 28 27.2 26.8 27.2H17C15 27.2 13.5 26 13 24.5V15Z" fill="url(#svThumbGrad)"/><path d="M20 17H27M20 20.5H26.5M20 24H25.5" stroke="#d98211" stroke-width="1.2" stroke-linecap="round" opacity="0.65"/></svg>`;
+  }
+  return '';
+}
+
 function renderStoryReactions(storyId) {
   const curItem = _groups[_viewerIdx]?.items?.[_itemIdx];
   if (!curItem || curItem.id !== storyId) return;
@@ -65,7 +89,7 @@ function renderStoryReactions(storyId) {
 
   container.querySelectorAll('.sv-react-chip').forEach(button => {
     const emoji = button.dataset.emoji;
-    const isSelected = !!currentSelection && emoji === currentSelection;
+    const isSelected = !!currentSelection && (emoji === currentSelection || (currentSelection.includes(emoji.replace('emoji/2d/', '').replace('.png', ''))));
     button.classList.toggle('is-selected', isSelected);
     button.classList.remove('is-saving');
     button.disabled = false;
@@ -74,7 +98,15 @@ function renderStoryReactions(storyId) {
     const countEl = button.querySelector('.sv-react-count');
     if (countEl) {
       const c = Number(counts[emoji]) || 0;
-      countEl.textContent = formatCompactNumber(c);
+      if (c > 0) {
+        countEl.textContent = formatCompactNumber(c);
+        countEl.style.opacity = '1';
+        countEl.classList.remove('is-zero');
+      } else {
+        countEl.textContent = '0';
+        countEl.style.opacity = '0';
+        countEl.classList.add('is-zero');
+      }
     }
   });
 }
@@ -104,7 +136,12 @@ function spawnFlyingEmoji(emoji) {
     el.style.setProperty('--fly-x', `${offsetX}px`);
     el.style.setProperty('--fly-scale', `${scale}`);
     el.style.animationDelay = `${delay}ms`;
-    if (emoji && (emoji.includes('.png') || emoji.includes('/') || emoji.includes('.webp'))) {
+    const svg = getReactionSvg(emoji);
+    if (svg) {
+      el.innerHTML = svg;
+      const s = el.querySelector('svg');
+      if (s) { s.style.width = '42px'; s.style.height = '42px'; s.style.filter = 'drop-shadow(0 4px 14px rgba(0,0,0,0.5))'; }
+    } else if (emoji && (emoji.includes('.png') || emoji.includes('/') || emoji.includes('.webp'))) {
       const src = emoji.startsWith('/') ? emoji : ('/' + emoji);
       el.innerHTML = `<img class="sv-reaction-emoji" src="${src}" style="width:44px;height:44px;object-fit:contain;pointer-events:none;" alt="">`;
     } else {
@@ -159,12 +196,12 @@ function ensureDom() {
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
         <div class="sv-reactions" id="svReactions">
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""><span class="sv-react-count">0</span></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""><span class="sv-react-count">0</span></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""><span class="sv-react-count">0</span></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""><span class="sv-react-count">0</span></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f622.png" aria-label="Qayg'u"><img class="sv-reaction-emoji" src="/emoji/2d/1f622.png" alt=""><span class="sv-react-count">0</span></button>
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44d.png" aria-label="Like"><img class="sv-reaction-emoji" src="/emoji/2d/1f44d.png" alt=""><span class="sv-react-count">0</span></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi">${getReactionSvg('2764')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov">${getReactionSvg('1f525')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu">${getReactionSvg('1f602')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat">${getReactionSvg('1f62e')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f622.png" aria-label="Qayg'u">${getReactionSvg('1f622')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44d.png" aria-label="Like">${getReactionSvg('1f44d')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
         </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
           <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
@@ -386,7 +423,7 @@ function ensureDom() {
         e.stopPropagation();
         const group = _groups[_viewerIdx];
         const story = group?.items?.[_itemIdx];
-        if (!group || !story || group.isMe || !state.me?.uid) return;
+        if (!group || !story || !state.me?.uid) return;
         const storyId = story.id;
         const userId = state.me.uid;
         const clickedEmoji = chip.dataset.emoji;
@@ -412,12 +449,7 @@ function ensureDom() {
         if (next) spawnFlyingEmoji(next);
         try { window.haptic?.success?.(); } catch (_) {}
 
-        $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(button => {
-          button.disabled = true;
-          if (button.dataset.emoji === next || button.dataset.emoji === previous) {
-            button.classList.add('is-saving');
-          }
-        });
+        chip.classList.add('is-saving');
 
         try {
           const { error } = await sb.from('story_views').upsert({
@@ -427,7 +459,22 @@ function ensureDom() {
             viewed_at: new Date().toISOString()
           }, { onConflict: 'story_id,user_id' });
 
-          if (error) throw error;
+          if (error) {
+            // PostgREST upsert fallback: update first, if 0 rows, insert
+            const { data: updData, error: updErr } = await sb.from('story_views')
+              .update({ reaction: next, viewed_at: new Date().toISOString() })
+              .eq('story_id', storyId)
+              .eq('user_id', userId)
+              .select('story_id');
+            if (updErr || !updData?.length) {
+              await sb.from('story_views').insert({
+                story_id: storyId,
+                user_id: userId,
+                reaction: next,
+                viewed_at: new Date().toISOString()
+              });
+            }
+          }
           if (request === _reactionToken) renderStoryReactions(storyId);
           if (next) {
             toast('Reaksiya saqlandi', 'success');
@@ -451,6 +498,12 @@ function ensureDom() {
           if (request === _reactionToken) renderStoryReactions(storyId);
           console.warn('[stories] reaction save:', error?.message || error);
           toast('Reaksiyani saqlab bo‘lmadi', 'error');
+        } finally {
+          chip.classList.remove('is-saving');
+          $('svReactions')?.querySelectorAll('.sv-react-chip').forEach(b => {
+            b.disabled = false;
+            b.classList.remove('is-saving');
+          });
         }
       });
 
@@ -914,7 +967,10 @@ async function openStoryViewersModal(storyId) {
         const uname = p.username ? `@${p.username}` : '';
         const timeAgo = v.viewed_at ? fmtAgo(v.viewed_at) : '';
         const avi = p.avatar || defAvi(name);
-        const reactionImg = v.reaction ? `<img class="sv-reaction-emoji" src="${v.reaction.startsWith('/') ? esc(v.reaction) : ('/' + esc(v.reaction))}" alt="" style="width:20px;height:20px;margin-left:auto;flex-shrink:0;">` : '';
+        const rxSvg = v.reaction ? getReactionSvg(v.reaction) : '';
+        const reactionImg = rxSvg
+          ? `<div style="width:22px;height:22px;margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;">${rxSvg}</div>`
+          : (v.reaction ? `<img class="sv-reaction-emoji" src="${v.reaction.startsWith('/') ? esc(v.reaction) : ('/' + esc(v.reaction))}" alt="" style="width:20px;height:20px;margin-left:auto;flex-shrink:0;">` : '');
         return `
           <div class="sv-viewer-row" data-uid="${esc(v.user_id)}">
             <div class="sv-viewer-avi">
@@ -1081,8 +1137,8 @@ async function showCurrent() {
   if (reactions) {
     reactions.hidden = false;
     reactions.querySelectorAll('.sv-react-chip').forEach(button => {
-      button.style.pointerEvents = isMine ? 'none' : 'auto';
-      button.style.cursor = isMine ? 'default' : 'pointer';
+      button.style.pointerEvents = 'auto';
+      button.style.cursor = 'pointer';
     });
     renderStoryReactions(reactionStoryId);
 

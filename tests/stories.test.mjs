@@ -14,4 +14,15 @@ assert.ok(source.includes("sv-own-bar"), "Story views row must remain in the bot
 assert.ok(source.includes("from('story_views').upsert("), "Reaction updates must use atomic upsert on story_views");
 assert.ok(source.includes("Hikoyani yuklab bo‘lmadi"));
 assert.ok(source.includes("Qayta urinish"));
+
+import { getReactionSvg } from "../modules/feed/stories.js";
+assert.ok(getReactionSvg("2764").includes("<svg"), "Heart reaction must be SVG");
+assert.ok(getReactionSvg("1f525").includes("<svg"), "Fire reaction must be SVG");
+assert.ok(getReactionSvg("1f602").includes("<svg"), "Laugh reaction must be SVG");
+assert.ok(getReactionSvg("1f62e").includes("<svg"), "Surprise reaction must be SVG");
+assert.ok(getReactionSvg("1f622").includes("<svg"), "Sad reaction must be SVG");
+assert.ok(getReactionSvg("1f44d").includes("<svg"), "Like reaction must be SVG");
+assert.ok(source.includes("is-zero") && source.includes("opacity = '0'"), "Zero count reactions must have opacity 0");
+assert.ok(!source.includes("group.isMe || !state.me?.uid) return;"), "Story owner must be able to react");
+
 console.log("STORIES REGRESSION: all checks passed");

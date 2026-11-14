@@ -6132,7 +6132,10 @@ body.report-open {
 .sv-react-chip.is-selected::after { content: ''; position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #1d9bf0; box-shadow: 0 0 6px 1px #1d9bf0, 0 0 10px rgba(29, 155, 240, 0.85); }
 .sv-react-chip.is-saving { opacity: 0.65; pointer-events: none; }
 .sv-reaction-emoji { width: 30px; height: 30px; display: block; object-fit: contain; pointer-events: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35)); transition: transform .2s ease; }
-.sv-react-count { font-size: 11px; font-weight: 700; line-height: 1; color: rgba(255, 255, 255, 0.85); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); pointer-events: none; letter-spacing: -0.2px; transition: color .2s ease, text-shadow .2s ease; }
+svg.sv-reaction-emoji { overflow: visible; }
+.sv-react-count { font-size: 11px; font-weight: 700; line-height: 1; color: rgba(255, 255, 255, 0.85); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); pointer-events: none; letter-spacing: -0.2px; transition: color .2s ease, text-shadow .2s ease, opacity .2s ease; }
+.sv-react-count.is-zero,
+.sv-react-count[data-zero="true"] { opacity: 0 !important; visibility: hidden; }
 .sv-react-chip.is-selected .sv-react-count { color: #1d9bf0; text-shadow: 0 0 8px rgba(29, 155, 240, 0.8), 0 1px 4px rgba(0, 0, 0, 0.9); }
 .sv-media-loading, .sv-media-error { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: rgba(255,255,255,.78); font-size: 14px; text-align: center; padding: 24px; pointer-events: auto; }
 .sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
