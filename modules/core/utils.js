@@ -1399,3 +1399,13 @@ export function markdownToPlain(rawText, opts) {
   s = s.replace(/\u0000K(\d+)\u0000/g, (_m, i) => keep[parseInt(i, 10)]);
   return s.trim();
 }
+
+/** Mobil yoki planshet qurilma ekanligini aniqlash */
+export function isMobileOrTabletDevice() {
+  if (typeof window === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isTouchUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
+  const isSmallTouch = !!(window.matchMedia && window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches);
+  return isTouchUa || isSmallTouch;
+}
+

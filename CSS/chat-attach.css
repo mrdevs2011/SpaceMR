@@ -116,6 +116,40 @@
   display: flex; align-items: center; justify-content: center;
   transition: border-color .15s ease, transform .1s ease;
 }
+#camCapture .cc-gallery-btn {
+  position: absolute;
+  left: max(28px, env(safe-area-inset-left, 24px));
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  z-index: 3;
+  -webkit-tap-highlight-color: transparent;
+}
+#camCapture .cc-gallery-btn[hidden] {
+  display: none !important;
+}
+#camCapture .cc-gallery-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: #fff;
+}
+#camCapture .cc-gallery-btn:active {
+  transform: scale(0.92);
+}
+#camCapture .cc-gallery-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke: #fff;
+}
 #camCapture .cc-shutter-inner {
   display: block; width: 60px; height: 60px;
   border-radius: 50%; background: #fff;

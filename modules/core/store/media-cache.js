@@ -132,7 +132,7 @@ export function getMediaAspectStyle(pathOrUrl, width, height, fallback = '') {
   if (fallback) {
     return ` style="${fallback}"`;
   }
-  return '';
+  return ' style="min-width: 220px; min-height: 160px;"';
 }
 
 async function _getOpfs() {

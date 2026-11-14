@@ -3,7 +3,7 @@
  * Feed yuqorisida horizontal strip (mobile + desktop).
  */
 import { sb, state, mapProfile, mediaPublicUrl, MEDIA_BUCKET } from '../core/config.js';
-import { $, esc, defAvi, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
+import { $, esc, defAvi, lockScroll, unlockScroll, showConfirm, isMobileOrTabletDevice } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired, evictItem } from './story-cache.js';
@@ -800,9 +800,26 @@ function renderBar() {
   }
 }
 
-/* Story qo'shish: fayl menejeri emas, post kabi composer kartasi ochiladi (modules/upload.js) */
-function openStoryAdd() {
-  import('./upload.js').then(m => m.openStoryComposer()).catch(e => console.error(e));
+/* Story qo'shish: mobile/tabletda to'g'ridan-to'g'ri kamera ochiladi, desktopda composer kartasi */
+export async function openStoryAdd() {
+  if (isMobileOrTabletDevice()) {
+    try {
+      const { openCameraCapture } = await import('../chat/camera-capture.js');
+      const file = await openCameraCapture({ forStory: true });
+      if (file) {
+        const { openStoryComposer, pickFile } = await import('./upload.js');
+        openStoryComposer();
+        pickFile(file);
+      }
+    } catch (err) {
+      console.warn('[stories] camera open error, fallback to composer:', err);
+      const { openStoryComposer } = await import('./upload.js');
+      openStoryComposer();
+    }
+  } else {
+    const { openStoryComposer } = await import('./upload.js');
+    openStoryComposer();
+  }
 }
 
 /** Foydalanuvchining hikoyalarini ochadi (URL: /s/<username>). Hikoya bo'lmasa false. */

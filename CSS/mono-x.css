@@ -5817,7 +5817,6 @@ a.cfm-name--link:hover {
   border-radius: 9999px;
   color: rgba(255, 255, 255, 0.82);
 }
-}
 
 #chatThreadModal .chat-bubble {
   border-radius: 16px;
@@ -7189,9 +7188,23 @@ html.is-desktop .chat-msg .chat-bubble-text {
 
 
 /* ═══ 1v1 chat: rasm/video pufakka o'ralmaydi — faqat 1.5px border (pufak faqat guruhlarda) ═══ */
-.cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: 14px; overflow: hidden; width: fit-content; max-width: min(360px, 80vw); }
+.cfm-media-dm {
+  box-sizing: border-box;
+  border: 1.5px solid rgba(231, 233, 234, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  width: fit-content;
+  min-width: min(240px, 72vw) !important;
+  max-width: min(360px, 80vw);
+  min-height: 180px !important;
+  background: rgba(255, 255, 255, 0.05);
+}
 .chat-msg.mine .cfm-media-dm { border-color: rgba(29, 155, 240, 0.55); }
-.cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview { border-radius: 0; }
+.cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview {
+  border-radius: 0;
+  min-width: min(240px, 72vw) !important;
+  min-height: 180px !important;
+}
 /* DM albomlar: kollaj hech qachon 0px yoki 1 ta ingichka vertikal chiziq bo'lib qolmasin */
 .cfm-media-dm.cfm-album-wrap,
 .cfm-media-dm--cap.cfm-album-wrap,

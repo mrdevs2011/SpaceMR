@@ -22,6 +22,7 @@ const SVG = {
   video: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>',
   retake: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   send: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3.4 20.6L21 12 3.4 3.4l.1 6.8L15 12 3.5 13.8z"/></svg>',
+  gallery: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
 };
 
 function _constraints(deviceId, facing, withAudio) {
@@ -137,6 +138,7 @@ export async function openCameraCapture(options = {}) {
         </div>
       </div>
       <div class="cc-bottom">
+        <button type="button" class="cc-gallery-btn" aria-label="Media va Galereya" title="Galereya">${SVG.gallery}</button>
         <button type="button" class="cc-shutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
         <div class="cc-review" hidden>
           <button type="button" class="cc-btn cc-retake" aria-label="Qayta olish">${SVG.retake}</button>
@@ -158,6 +160,7 @@ export async function openCameraCapture(options = {}) {
     const reviewEl = ov.querySelector('.cc-review');
     const flipBtn = ov.querySelector('.cc-flip');
     const freezeEl = ov.querySelector('.cc-freeze');
+    const galleryBtn = ov.querySelector('.cc-gallery-btn');
 
     const vTrack = () => stream?.getVideoTracks?.()[0] || null;
 
@@ -386,6 +389,7 @@ export async function openCameraCapture(options = {}) {
 
       // top X: yozishda yashirin; live + review da ko'rinadi
       closeBtn.hidden = recording || reviewing;
+      if (galleryBtn) galleryBtn.hidden = recording || reviewing;
 
       if (recording) {
         modesEl.setAttribute('hidden', '');
@@ -413,6 +417,33 @@ export async function openCameraCapture(options = {}) {
       }
     };
     syncUi();
+
+    if (galleryBtn) {
+      initAttachMenu({
+        btn: galleryBtn,
+        onPick: (file) => {
+          try { closeAttachMenu(); } catch (_) {}
+          if (file) enterReview(file);
+        },
+        showCamera: false,
+        showFile: false,
+        showMedia: true,
+        showPoll: false,
+        showLocation: false,
+        mediaAccept: 'image/*,video/*',
+        getOptions: () => ({
+          context: 'story_camera',
+          isStoryCamera: true,
+          isStory: true,
+          showCamera: false,
+          showFile: false,
+          showMedia: true,
+          showPoll: false,
+          showLocation: false,
+          mediaAccept: 'image/*,video/*',
+        }),
+      });
+    }
 
     const enterReview = (file) => {
       if (!file) return;
@@ -622,6 +653,7 @@ export async function openCameraCapture(options = {}) {
         document.removeEventListener('keydown', onKey, true);
         stopRecTimer();
         clearPending();
+        try { closeAttachMenu(); } catch (_) {}
         try { if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop(); } catch (_) {}
         try { setTorch(vTrack(), false); } catch (_) {}
         teardownRec();

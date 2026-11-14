@@ -1482,9 +1482,15 @@ img.msg-ticks,
 }
 #chatThreadMessages {
   overflow-anchor: auto;
-  overflow-y: scroll !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
+  scrollbar-width: none !important;
+}
+#chatThreadMessages::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 /* Sana ajratuvchi — Telegram uslubidagi suzuvchi pill ("Bugun"/"Kecha") */
 .chat-date-sep { margin: 10px 0 8px; }

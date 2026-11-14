@@ -306,7 +306,7 @@ async function _saveRecentMedia(files) {
 }
 
 /** Mobil yoki planshet qurilma ekanligini aniqlash */
-function isMobileOrTabletDevice() {
+export function isMobileOrTabletDevice() {
   if (typeof window === 'undefined') return false;
   const ua = navigator.userAgent || '';
   const isTouchUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
@@ -532,7 +532,7 @@ export function initAttachMenu({
   function _bindDrawerGestures(drawer, overlay, ctx) {
     if (!drawer || !overlay) return;
 
-    const isStory = ctx === 'story';
+    const isStory = ctx === 'story' || ctx === 'story_camera';
     const isPost = ctx === 'post';
 
     // Chat holat mashinasi: 'half' (50vh) va 'full' (92vh)
@@ -780,10 +780,12 @@ export function initAttachMenu({
     const canPoll = dynamicOpts.showPoll ?? showPoll;
     const canLoc = dynamicOpts.showLocation ?? showLocation;
 
-    // Kontekstni aniqlash: Story vs Post vs Chat
+    // Kontekstni aniqlash: Story vs Post vs Chat vs Story Camera
     let ctx = dynamicOpts.context;
     if (!ctx) {
-      if (
+      if (dynamicOpts.isStoryCamera) {
+        ctx = 'story_camera';
+      } else if (
         dynamicOpts.isStory ||
         btn?.closest?.('#storyUpload') ||
         btn?.id === 'storyUpload' ||
@@ -803,12 +805,15 @@ export function initAttachMenu({
       }
     }
 
-    const isStory = ctx === 'story';
+    const isStoryCamera = ctx === 'story_camera' || !!dynamicOpts.isStoryCamera;
+    const isStory = ctx === 'story' || isStoryCamera;
     const isPost = ctx === 'post';
     const isFullscreen = isStory || isPost || dynamicOpts.fullscreen || (dynamicOpts.mode === 'fullscreen');
 
     let drawerClass = 'attach-drawer';
-    if (isStory) {
+    if (isStoryCamera) {
+      drawerClass += ' attach-drawer--story attach-drawer--story-camera attach-drawer--fullscreen';
+    } else if (isStory) {
       drawerClass += ' attach-drawer--story attach-drawer--fullscreen';
     } else if (isPost) {
       drawerClass += ' attach-drawer--post attach-drawer--fullscreen';
@@ -840,10 +845,12 @@ export function initAttachMenu({
 
         <!-- 1. Oxirgilar Gridi -->
         <div class="attach-media-grid" id="amRecentsPanel">
+          ${!isStoryCamera ? `
           <div class="attach-grid-item live-cam-tile" id="amLiveCamTile" role="button" tabindex="0" title="Kamera">
             <video class="live-cam-video" autoplay playsinline muted style="display:none;"></video>
             <div class="live-cam-fallback">${SVG.camera}</div>
           </div>
+          ` : ''}
 
           <!-- 2-slot: Galereyadan tanlash plitkasi -->
           <div class="attach-grid-item gallery-picker-tile am-gallery-entry-tile" id="amGalleryPickerTile" role="button" tabindex="0" title="Galereyadan tanlash">
