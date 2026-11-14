@@ -2906,6 +2906,7 @@ function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
   let emoCls = '';
   let bubbleClassExtra = '';
   let metaOutside = true;
+  let isPollMsg = false;
 
   if (m.type === 'voice') {
     /* ── Voice message ── */
@@ -2953,6 +2954,7 @@ function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
       const gif = postShare ? null : parseGif(m.text);
       const loc = (postShare || gif) ? null : parseLocation(m.text);
       const poll = (postShare || gif || loc) ? null : parsePoll(m.text);
+      if (poll) isPollMsg = true;
       const pureMedia = (postShare || gif || loc || poll) ? null : parsePureMedia(m.text);
       let bData;
       if (gif) {
@@ -3026,8 +3028,9 @@ function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
     }
   }
 
+  const showEdited = m.editedAt && !isPollMsg;
   const outerMeta = metaOutside ? `<span class="chat-msg-meta">
-    ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
+    ${showEdited ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
     ${mine ? renderTicks(m.status) : ''}
   </span>` : '';
 
@@ -4298,7 +4301,7 @@ window._handlePollVote = async function(msgId, optId, evt) {
   try {
     const isGrp = !!(msg.groupId || msg.group_id || (state.currentChatKind && state.currentChatKind !== 'dm'));
     const tbl = isGrp ? 'group_messages' : 'messages';
-    await sb.from(tbl).update({ text: newText, edited_at: new Date().toISOString() }).eq('id', msgId);
+    await sb.from(tbl).update({ text: newText }).eq('id', msgId);
     if (chatState._rt && chatState._rtChatId === state.currentChatId) {
       chatState._rt.send(msgId, newText);
     }

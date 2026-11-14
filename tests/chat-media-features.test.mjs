@@ -93,6 +93,21 @@ assert.ok(!locBubble.bubbleContent.includes("title: 'Oltinko'l"), 'Should never 
 assert.ok(locBubble.bubbleContent.includes('window.__openSmartMap'));
 console.log('✓ PASS: Location bubble renders safely without quote escaping errors and binds smart maps');
 
+console.log('--- 10. Testing Poll Vote Edited Status & Kashf Tab Route ---');
+import fs from 'node:fs';
+const chatSource = fs.readFileSync(new URL('../modules/chat/chat.js', import.meta.url), 'utf8');
+assert.ok(chatSource.includes('const showEdited = m.editedAt && !isPollMsg;'), 'Poll message must not display tahrirlangan badge');
+assert.ok(!chatSource.includes('await sb.from(tbl).update({ text: newText, edited_at: new Date().toISOString() })'), 'Poll vote must not set edited_at');
+console.log('✓ PASS: Poll votes do not trigger edited status');
+
+console.log('--- 11. Testing Kashf Navigation Tab ---');
+const routerSource = fs.readFileSync(new URL('../modules/router.js', import.meta.url), 'utf8');
+const indexSource = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+assert.ok(routerSource.includes("'explore':"), 'routes must include explore');
+assert.ok(routerSource.includes("ALLOWED_ROUTES = ['home', 'explore'"), 'ALLOWED_ROUTES must include explore');
+assert.ok(indexSource.includes('id="sbSearchToggle" data-v="explore"'), 'sbSearchToggle must have data-v="explore"');
+console.log('✓ PASS: Kashf tab is properly defined in router and navigation bar');
+
 console.log('====================================================');
 console.log('ALL CHAT MEDIA & UI REGRESSION CHECKS PASSED (100%)');
 console.log('====================================================');

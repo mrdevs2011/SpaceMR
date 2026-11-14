@@ -18,6 +18,10 @@ const routes = {
     view: 'homeView',
     title: 'Bosh sahifa'
   },
+  'explore': {
+    view: 'searchOverlay',
+    title: 'Kashf'
+  },
   'profile': {
     view: 'profileView',
     title: 'Profil'
@@ -49,7 +53,7 @@ const routes = {
 };
 
 // Allowed route names for security
-const ALLOWED_ROUTES = ['home', 'profile', 'chats', 'login', 'actions', 'saved', 'notifs', 'apps'];
+const ALLOWED_ROUTES = ['home', 'explore', 'profile', 'chats', 'login', 'actions', 'saved', 'notifs', 'apps'];
 
 /* ═══════════════════════════════════════════════════════════════════════
    CURRENT STATE
@@ -63,7 +67,7 @@ let isInitialized = false;
    Barchasi routes at root (/) - no subpaths
    ═══════════════════════════════════════════════════════════════════════ */
 
-const VIEW_URL = { home: '/home', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications', apps: '/apps' };
+const VIEW_URL = { home: '/home', explore: '/explore', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications', apps: '/apps' };
 
 export function navigateTo(routeName, pushState = true) {
   const route = routes[routeName];
@@ -110,7 +114,7 @@ export function navigateTo(routeName, pushState = true) {
     'grpEditOverlay',
     // Search panel
     'sbSearchPanel',
-    'searchOverlay',
+    ...(routeName === 'explore' ? [] : ['searchOverlay']),
   ];
   modalsToClose.forEach(id => {
     const el = document.getElementById(id);
@@ -198,6 +202,20 @@ async function switchView(prevRoute, routeName) {
   });
 
   // Show target view — rAF orqali fade animatsiyasi ishlaydi (display:none -> block -> opacity)
+  if (routeName === 'explore') {
+    const ov = $('searchOverlay');
+    if (ov) {
+      ov.classList.add('open');
+      const sbSearchToggle = $('sbSearchToggle');
+      sbSearchToggle?.classList.add('search-active', 'on');
+      $('hdrExploreBtn')?.classList.add('search-active');
+      setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
+    }
+  } else {
+    const ov = $('searchOverlay');
+    if (ov && ov.classList.contains('open')) ov.classList.remove('open');
+  }
+
   const targetView = $(`${routeName}View`);
   if (targetView) {
     // display:none holidan chiqarish uchun bir frame kutamiz, so'ng .on qo'shamiz
@@ -286,34 +304,25 @@ let _activeRoute = 'home';
 
 /** Bir marta bind qilinadi (initRouter da), tab o'zgarganda DOM ga tegmaymiz */
 function _initSearchHandlers() {
-  const hdrSearchBtn = $('hdrSearchBtn') || $('hdrExploreBtn');
+  const hdrExploreBtn = $('hdrExploreBtn') || $('hdrSearchBtn');
   const sbSearchToggle = $('sbSearchToggle');
 
   function handleSearchClick(e) {
-    e.stopPropagation();
-    // Explore — to'liq sahifa + /explore URL (float modal emas)
-    const overlay = document.getElementById('searchOverlay');
-    if (!overlay) return;
-    if (overlay.classList.contains('open')) {
-      overlay.classList.remove('open');
-      sbSearchToggle?.classList.remove('search-active');
-      hdrSearchBtn?.classList.remove('search-active');
-      $('hdrExploreBtn')?.classList.remove('search-active');
-      const si = document.getElementById('searchInput');
-      if (si) si.value = '';
-      window.dispatchEvent(new CustomEvent('spacemr:route'));
-    } else {
-      import('./url-router.js').then(m => m.applyPath('/explore')).catch(() => {
-        overlay.classList.add('open');
-        sbSearchToggle?.classList.add('search-active');
-        hdrSearchBtn?.classList.add('search-active');
-        $('hdrExploreBtn')?.classList.add('search-active');
-      });
+    if (e) {
+      e.preventDefault?.();
+      e.stopPropagation?.();
     }
-    import('./ui/right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
+    const overlay = document.getElementById('searchOverlay');
+    if (currentRoute === 'explore' || overlay?.classList.contains('open')) {
+      overlay?.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('searchInput')?.focus();
+      return;
+    }
+    navigateTo('explore');
   }
 
-  if (hdrSearchBtn) hdrSearchBtn.addEventListener('click', handleSearchClick);
+  if (hdrExploreBtn) hdrExploreBtn.addEventListener('click', handleSearchClick);
+  if ($('hdrExploreBtn') && $('hdrExploreBtn') !== hdrExploreBtn) $('hdrExploreBtn').addEventListener('click', handleSearchClick);
   if (sbSearchToggle) sbSearchToggle.addEventListener('click', handleSearchClick);
 }
 

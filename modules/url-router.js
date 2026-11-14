@@ -482,15 +482,17 @@ async function openOverlay(name, section) {
     return;
   }
   if (name === 'explore') {
-    if (!hasShow('searchOverlay', 'open')) {
-      const ov = document.getElementById('searchOverlay');
-      if (ov) {
-        ov.classList.add('open');
-        $('sbSearchToggle')?.classList.add('search-active');
-        $('hdrSearchBtn')?.classList.add('search-active');
-        $('hdrExploreBtn')?.classList.add('search-active');
-        setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
-      }
+    const ov = document.getElementById('searchOverlay');
+    if (ov) {
+      ov.classList.add('open');
+      const sbSearchToggle = $('sbSearchToggle');
+      sbSearchToggle?.classList.add('search-active', 'on');
+      $('hdrSearchBtn')?.classList.add('search-active');
+      $('hdrExploreBtn')?.classList.add('search-active');
+      document.querySelectorAll('.nav-btn[data-v]').forEach(b => {
+        if (b !== sbSearchToggle) b.classList.remove('on');
+      });
+      setTimeout(() => document.getElementById('searchInput')?.focus(), 60);
     }
     return;
   }

@@ -25,7 +25,7 @@ function openSearchOverlay() {
 
 function closeSearchOverlay() {
   searchOverlay?.classList.remove('open');
-  sbSearchToggle?.classList.remove('search-active');
+  sbSearchToggle?.classList.remove('search-active', 'on');
   import('./right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   if (searchInput) { searchInput.value = ''; _doSearch(''); }
   // Explore yopilganda oldingi URL ga qaytish — url-router computeUrl + schedule
