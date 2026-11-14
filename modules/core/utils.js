@@ -1293,13 +1293,15 @@ function _zSkipPop() {
 }
 
 /* Telefondagi/brauzerdagi "orqaga": zoom ochiq bo'lsa — faqat zoom yopiladi, sahifa emas */
-window.addEventListener('popstate', () => {
-  const zm = document.getElementById('zoomModal');
-  if (zm && zm.classList.contains('show') && !(history.state && history.state.zoom)) {
-    _zSkipPop();
-    _zClose(true);
-  }
-}, true);
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    const zm = document.getElementById('zoomModal');
+    if (zm && zm.classList.contains('show') && !(history.state && history.state.zoom)) {
+      _zSkipPop();
+      _zClose(true);
+    }
+  }, true);
+}
 
 function _zDist(t) {
   const a = t[0], b = t[1];
