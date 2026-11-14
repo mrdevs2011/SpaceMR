@@ -490,6 +490,8 @@ export function mapMessage(r) {
     setMediaDimensions(r.media_path, msgW, msgH);
   }
 
+  const isPoll = typeof rawText === 'string' && rawText.startsWith('{') && (rawText.includes('"__poll"') || (rawText.includes('"question"') && rawText.includes('"options"')));
+
   return {
     id: r.id,
     chatId: r.chat_id || r.group_id || null,
@@ -514,7 +516,7 @@ export function mapMessage(r) {
     waveform: Array.isArray(r.waveform) && r.waveform.length ? r.waveform : null,
     status: r.status,
     readAt: ts(r.read_at),
-    editedAt: ts(r.edited_at),
+    editedAt: isPoll ? null : ts(r.edited_at),
     createdAt: ts(r.created_at),
     replyTo: r.reply_to || null,
   };

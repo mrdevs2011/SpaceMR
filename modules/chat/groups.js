@@ -1321,6 +1321,7 @@ export async function sendGroupAlbum(mediaFiles, caption = '') {
   // 2) Ketma-ket (sequential) upload navbati
   for (let i = 0; i < albumItems.length; i++) {
     const item = albumItems[i];
+    if (item.status === 'cancelled') continue;
     try {
       const res = await enqueueSequentialUpload({
         id: item.id,
@@ -1333,7 +1334,7 @@ export async function sendGroupAlbum(mediaFiles, caption = '') {
       item.url = res.url || item.url;
     } catch (err) {
       console.warn(`Group album item [${i}] failed:`, err?.message || err);
-      item.status = 'failed';
+      item.status = (err?.name === 'AbortError' || err?.message?.includes('cancelled')) ? 'cancelled' : 'failed';
     }
   }
 
@@ -1352,6 +1353,7 @@ export async function sendGroupAlbum(mediaFiles, caption = '') {
     items: successfulItems.map(it => ({
       id: it.id,
       path: it.path,
+      url: it.url || null,
       type: it.type,
       name: it.name,
       size: it.size,

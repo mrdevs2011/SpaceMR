@@ -36,13 +36,11 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
   }
 }
 html.is-desktop #chatThreadMessages .chat-msg[data-msg-id] {
-  -webkit-user-select: auto !important;
-  user-select: auto !important;
+  -webkit-user-select: auto;
+  user-select: auto;
 }
-html.is-desktop #chatThreadMessages .chat-bubble,
-html.is-desktop #chatThreadMessages .chat-bubble *:not(button):not(.chat-msg-meta):not(.msg-avi-btn):not(.loc-action-btn):not(.loc-action-btn *):not(.loc-map-preview):not(.loc-map-preview *):not(.poll-bubble-card):not(.poll-bubble-card *):not(.poll-item):not(.poll-item *):not(.poll-radio):not(.poll-radio *):not(.poll-chk):not(.poll-chk *):not(.poll-quiz-badge):not(.poll-quiz-badge *):not(.poll-vote-btn):not(.poll-vote-btn *),
-html.is-desktop .chat-bubble-text,
-html.is-desktop .chat-bubble-text *,
+html.is-desktop #chatThreadMessages .chat-bubble-text,
+html.is-desktop #chatThreadMessages .chat-bubble-text *,
 html.is-desktop .cfm-caption,
 html.is-desktop .cfm-caption *,
 html.is-desktop .post-text,
@@ -57,6 +55,14 @@ html.is-desktop .pf-bio * {
 }
 
 /* Xarita va marshrut tugmalari doimo cursor: pointer va bosiladigan bo'lsin */
+#chatThreadMessages .loc-action-btn,
+#chatThreadMessages .loc-action-btn *,
+#chatThreadMessages .loc-btn-view,
+#chatThreadMessages .loc-btn-view *,
+#chatThreadMessages .loc-btn-start,
+#chatThreadMessages .loc-btn-start *,
+#chatThreadMessages .loc-map-preview,
+#chatThreadMessages .loc-map-preview *,
 .loc-action-btn,
 .loc-action-btn *,
 .loc-btn-view,
@@ -72,6 +78,27 @@ html.is-desktop .pf-bio * {
 }
 
 /* So'rovnoma va viktorina variantlari doimo cursor: pointer va tanlanmasin */
+#chatThreadMessages .poll-bubble-card,
+#chatThreadMessages .poll-bubble-card *,
+#chatThreadMessages .poll-item,
+#chatThreadMessages .poll-item *,
+#chatThreadMessages .poll-item-row,
+#chatThreadMessages .poll-item-row *,
+#chatThreadMessages .poll-item-left,
+#chatThreadMessages .poll-item-left *,
+#chatThreadMessages .poll-item-text,
+#chatThreadMessages .poll-item-pct,
+#chatThreadMessages .poll-radio,
+#chatThreadMessages .poll-radio *,
+#chatThreadMessages .poll-chk,
+#chatThreadMessages .poll-chk *,
+#chatThreadMessages .poll-quiz-badge,
+#chatThreadMessages .poll-quiz-badge *,
+#chatThreadMessages .poll-vote-btn,
+#chatThreadMessages .poll-vote-btn *,
+#chatThreadMessages .poll-bottom-bar,
+#chatThreadMessages .poll-bottom-bar *,
+#chatThreadMessages .poll-votes-count,
 .poll-bubble-card,
 .poll-bubble-card *,
 .poll-item,
@@ -89,7 +116,10 @@ html.is-desktop .pf-bio * {
 .poll-quiz-badge,
 .poll-quiz-badge *,
 .poll-vote-btn,
-.poll-vote-btn * {
+.poll-vote-btn *,
+.poll-bottom-bar,
+.poll-bottom-bar *,
+.poll-votes-count {
   cursor: pointer !important;
   -webkit-user-select: none !important;
   user-select: none !important;

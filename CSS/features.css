@@ -6226,19 +6226,21 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 
 /* ── Telegram Multi-Media Kollaj Albomi (.chat-album-grid) ── */
 .cfm-album-wrap {
-  width: 100%;
+  width: min(340px, 78vw);
   max-width: 380px;
+  min-width: 240px;
   position: relative;
   border-radius: 14px;
 }
 .chat-album-grid {
   display: grid;
-  gap: 1.5px;
+  gap: 1.5px !important;
   border-radius: 14px;
   overflow: hidden;
   position: relative;
   width: 100%;
-  background: transparent;
+  min-width: 240px;
+  background: rgba(255, 255, 255, 0.04);
   user-select: none;
 }
 .chat-album-item {
@@ -6261,6 +6263,7 @@ svg.sv-reaction-emoji { overflow: visible !important; }
   display: block;
   border-radius: 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
   transition: transform 0.22s ease;
 }
 .chat-album-item:hover img,

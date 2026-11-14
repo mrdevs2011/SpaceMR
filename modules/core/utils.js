@@ -719,8 +719,9 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
         `</span>` +
       `</div>` +
       `<div class="chat-media-img-wrap media-blur-box" style="aspect-ratio:16/9;width:100%;" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
-        `<img class="chat-media-thumb" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">${badgeHtml || ''}` +
+        `<img class="chat-media-thumb" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">` +
       `</div>` +
+      (badgeHtml || '') +
     `</div>`;
   }
 

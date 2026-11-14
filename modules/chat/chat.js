@@ -3248,6 +3248,16 @@ function setChatFile(file) {
     return;
   }
 
+  // Duplikat fayllarni tekshirish (aynan bir xil fayl yoki bir xil hajm va nom qayta tushmasin)
+  const isDup = chatState._chatSelFiles.some(item => {
+    const f = item.file;
+    if (!f) return false;
+    if (f === file) return true;
+    if (f.size === file.size && f.name === file.name && f.type === file.type) return true;
+    return false;
+  });
+  if (isDup) return;
+
   const mime = (file.type || '').toLowerCase();
   const isImg = mime.startsWith('image/');
   const isVid = mime.startsWith('video/');
@@ -3929,6 +3939,10 @@ document.addEventListener('chat:upload-cancelled', e => {
       const idx = m.items.findIndex(it => it.id === uploadId || `${m.id}_${it.id}` === uploadId);
       if (idx !== -1) {
         changed = true;
+        const localAlb = chatState._rtLocal.get(m.id);
+        if (localAlb && Array.isArray(localAlb.items)) {
+          localAlb.items = localAlb.items.filter(it => it.id !== uploadId && `${m.id}_${it.id}` !== uploadId);
+        }
         const newItems = [...m.items];
         newItems.splice(idx, 1);
         if (newItems.length === 0) return null;
@@ -4419,24 +4433,30 @@ document.addEventListener('chat:attach-file', e => {
 });
 
 // Clipboard paste / screenshot insert (mobil keyboard "Insert from..." / desktop Ctrl+V)
+let _lastChatPasteTime = 0;
 document.addEventListener('paste', async e => {
   // Faqat chat oynasi ochiq bo'lganda
   const modal = document.getElementById('chatThreadModal');
   if (!modal || !modal.classList.contains('show')) return;
+  const now = Date.now();
+  if (now - _lastChatPasteTime < 350) return; // 350ms ichida duplikat hodisani e'tiborsiz qoldirish
   const items = e.clipboardData?.items || [];
   const imgItems = [...items].filter(i => i.kind === 'file' && i.type.startsWith('image/'));
   if (!imgItems.length) return;
   e.preventDefault();
-  imgItems.forEach(item => {
+  _lastChatPasteTime = now;
+  const seenSizes = new Set();
+  for (const item of imgItems) {
     const file = item.getAsFile();
-    if (file) {
-      // Nomi bo'lmasa vaqtinchalik nom beramiz
-      const named = file.name && file.name !== 'image.png'
-        ? file
-        : new File([file], `screenshot_${Date.now()}.png`, { type: file.type });
-      setChatFile(named);
-    }
-  });
+    if (!file || !(file.size > 0)) continue;
+    if (seenSizes.has(file.size)) continue;
+    seenSizes.add(file.size);
+    // Nomi bo'lmasa vaqtinchalik nom beramiz
+    const named = file.name && file.name !== 'image.png'
+      ? file
+      : new File([file], `screenshot_${Date.now()}.png`, { type: file.type });
+    setChatFile(named);
+  }
   const hint = document.getElementById('chatClipHint');
   if (hint) hint.style.display = 'none';
   $('chatThreadInput')?.focus({ preventScroll: true });

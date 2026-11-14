@@ -1440,11 +1440,10 @@
   padding: 4px 6px;
   font-style: italic;
 }
-}
 .chat-msg.theirs .poll-sub,
 .chat-msg.theirs .poll-bottom-bar,
 .chat-msg.theirs .poll-votes-count {
-  color: rgba(255, 255, 255, 0.78) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
 }
 
 /* ── Viktorina (Quiz) rejimi modal radio buttoni ── */
