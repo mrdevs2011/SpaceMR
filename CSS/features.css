@@ -6489,6 +6489,7 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 .perm-header-badge .icon {
   width: 15px;
   height: 15px;
+  filter: brightness(0) invert(1) !important;
 }
 
 .pe-acc-title-wrap {
@@ -6537,6 +6538,7 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 .perm-intro-icon .icon {
   width: 18px;
   height: 18px;
+  filter: brightness(0) invert(1) !important;
 }
 
 .perm-intro-text {
