@@ -1,5 +1,5 @@
 import { sb, state, getMediaUrl, uploadViaController, mapProfile, mapPost, cachedMediaUrlSync } from '../core/config.js';
-import { $, esc, fmt, fmtSz, defAvi,
+import { $, esc, fmt, fmtSz, fmtCount, defAvi,
          openZoom, renderSpoilers, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast }                         from '../ui/toast.js';
 
@@ -300,6 +300,7 @@ export async function openDetail(id) {
   lockScroll('detailModal');
   state.detailPostId = id;   // URL: /p/<id>
   try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
+  import('../feed/feed.js').then(m => m.recordPostView(id)).catch(() => {});
 
   const [lR, cR, uR] = await Promise.all([
     state.me?.uid
@@ -331,6 +332,7 @@ export async function openDetail(id) {
         <div class="dm-name dm-name-link" data-uid="${p.userId}">${esc(ud.fullName||'Noma\'lum')}</div>
         <div class="dm-time">${fmt(p.createdAt)}</div>
       </div>
+      <div class="post-head-views dm-head-views" title="Ko'rishlar soni"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="post-views-count" data-post-vc="${id}">${fmtCount(p.viewsCount || 0)}</span></div>
       <button class="dm-close" id="dmClose"><img src="./svg/action/close.svg" alt="" class="icon" width="14" height="14"></button>
     </div>
     ${mediaHtml}
@@ -340,6 +342,7 @@ export async function openDetail(id) {
           ? '<img src="./svg/social/heart-filled.svg" alt="" class="icon" width="13" height="13">'
           : '<img src="./svg/social/heart.svg" alt="" class="icon" width="13" height="13">'} <span id="dmLikeCount">${p.likes||0}</span></span>
       <span class="dm-stat-item"><img src="./svg/extra/icon-838eb192325a.svg" alt="" class="icon" width="13" height="13"> ${cmtCount}</span>
+      <span class="dm-stat-item" title="Ko'rishlar soni"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:middle;margin-right:2px"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> <span class="post-views-count" data-post-vc="${id}" id="dmViewCount">${fmtCount(p.viewsCount || 0)}</span></span>
     </div>
     <div class="dm-actions">
       <button class="dm-act like-btn${isLiked?' liked':''}" id="dmLikeBtn" data-id="${id}" aria-label="Yoqtirish">

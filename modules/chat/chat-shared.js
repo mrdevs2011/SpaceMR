@@ -373,6 +373,66 @@ export {
   hasActiveUpload,
 } from './chat-upload-queue.js';
 
+/**
+ * DB qatorlaridan barcha media yo'llarni (yakka media_path va JSON albom elementlari path lari)
+ * xavfsiz ajratib olish — mediaSecureUrls orqali private signed URL larni oldindan keshga olish uchun.
+ */
+export function extractRowMediaPaths(rows) {
+  const paths = [];
+  const list = Array.isArray(rows) ? rows : (rows ? [rows] : []);
+  for (const r of list) {
+    if (!r) continue;
+    if (r.media_path) paths.push(r.media_path);
+    if (r.text && typeof r.text === 'string' && r.text.includes('"__album"')) {
+      try {
+        const p = JSON.parse(r.text.trim());
+        if (p && Array.isArray(p.items)) {
+          for (const it of p.items) {
+            if (it && it.path) paths.push(it.path);
+          }
+        }
+      } catch (_) {}
+    }
+  }
+  return Array.from(new Set(paths));
+}
+
+/**
+ * Optimistik albom va media elementlari (local blob URL va yuklangan res.url)
+ * DB dan yangi ma'lumotlar kelganda darhol saqlab qolinishi (url/mediaUrl bo'shab qolmasligi) uchun.
+ */
+export function keepOptimisticMedia(list, live) {
+  if (!list || !live || !live.length) return list;
+  const mp = new Map();
+  for (const m of live) if (m?.id) mp.set(String(m.id), m);
+  for (let i = 0; i < list.length; i++) {
+    const l = list[i];
+    if (!l) continue;
+    const v = mp.get(String(l.id));
+    if (!v) continue;
+    if (Array.isArray(l.items) && l.items.length) {
+      const vItems = Array.isArray(v.items) ? v.items : [];
+      l.items = l.items.map((it, idx) => {
+        const prevIt = vItems.find(p => (p.id && p.id === it.id) || (p.path && p.path === it.path)) || vItems[idx];
+        if (prevIt) {
+          const keepUrl = it.url || it.mediaUrl || prevIt.url || prevIt.mediaUrl || '';
+          return {
+            ...it,
+            url: keepUrl,
+            mediaUrl: it.mediaUrl || keepUrl,
+            file: it.file || prevIt.file,
+          };
+        }
+        return it;
+      });
+    }
+    if (!l.mediaUrl && v.mediaUrl) {
+      l.mediaUrl = v.mediaUrl;
+    }
+  }
+  return list;
+}
+
 
 /**
  * Chat/guruh oynasi (#chatThreadModal) faqat Chatlar sahifasi ichida to'g'ri joylashadi

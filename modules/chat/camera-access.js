@@ -102,6 +102,8 @@ export function trackSupportsTorch(track) {
     if ('torch' in caps) return !!caps.torch;
     const fl = caps.fillLightMode;
     if (Array.isArray(fl) && (fl.includes('torch') || fl.includes('flash'))) return true;
+    const st = track.getSettings?.() || {};
+    if ('torch' in st) return true;
   } catch (_) {}
   return false;
 }
@@ -138,19 +140,8 @@ export async function applyTrackAdvanced(track, patch) {
   return false;
 }
 
-function _torchSettings(track) {
-  try { return track.getSettings?.() || {}; } catch (_) { return {}; }
-}
-
-function _torchVerified(track, want) {
-  const st = _torchSettings(track);
-  if ('torch' in st) return st.torch === want;
-  // settings da torch yo'q — ba'zi Android applyConstraints throw qilmasa ham ishlaydi
-  return null; // noma'lum
-}
-
 /**
- * Fonarni yoqish/o'chirish — bir necha usul (Chrome Android, WebView).
+ * Fonarni yoqish/o'chirish — kechiktirishsiz (0ms reaktiv), Chrome Android & WebView.
  * @returns {Promise<boolean>}
  */
 export async function setTorch(track, on) {
@@ -159,43 +150,34 @@ export async function setTorch(track, on) {
   const prev = _adv.get(track) || {};
   const zoom = prev.zoom;
 
-  const attempts = [];
-
-  // 1) Faqat torch (advanced) — eng ishonchli Chrome Android
-  attempts.push(async () => {
-    await track.applyConstraints({ advanced: [{ torch: want }] });
-  });
-  // 2) To'g'ridan-to'g'ri
-  attempts.push(async () => {
-    await track.applyConstraints({ torch: want });
-  });
-  // 3) Zoom bilan birga (oldingi zoom yo'qolmasin)
-  if (zoom != null) {
-    attempts.push(async () => {
-      await track.applyConstraints({ advanced: [{ torch: want }, { zoom }] });
-    });
-  }
-  // 4) ImageCapture fillLightMode (ba'zi qurilmalar)
-  attempts.push(async () => {
-    if (typeof ImageCapture === 'undefined') throw new Error('no ImageCapture');
-    const ic = new ImageCapture(track);
-    if (typeof ic.setOptions !== 'function') throw new Error('no setOptions');
-    await ic.setOptions({ fillLightMode: want ? 'torch' : 'off' });
-  });
-
-  for (let i = 0; i < attempts.length; i++) {
+  // 1) Asosiy Chrome Android usuli: advanced constraint (zoom saqlanadi)
+  try {
+    const advanced = zoom != null ? [{ torch: want }, { zoom }] : [{ torch: want }];
+    await track.applyConstraints({ advanced });
+    _adv.set(track, { ...prev, torch: want, ...(zoom != null ? { zoom } : {}) });
+    return true;
+  } catch (err1) {
+    // Zoom bilan xatolik bersa, faqat torch bilan urinib ko'rish
     try {
-      await attempts[i]();
-      await new Promise(r => setTimeout(r, 40));
-      const v = _torchVerified(track, want);
-      if (v === false) continue; // aniq ishlamadi — keyingi usul
-      _adv.set(track, { ...prev, torch: want, ...(zoom != null ? { zoom } : {}) });
+      await track.applyConstraints({ advanced: [{ torch: want }] });
+      _adv.set(track, { ...prev, torch: want });
       return true;
-    } catch (err) {
-      console.warn('[setTorch] usul', i + 1, err?.name || err?.message || err);
+    } catch (err2) {
+      // 2) ImageCapture fallback (ba'zi Samsung / Chromium webviewlar)
+      if (typeof ImageCapture !== 'undefined') {
+        try {
+          const ic = new ImageCapture(track);
+          if (typeof ic.setOptions === 'function') {
+            await ic.setOptions({ fillLightMode: want ? 'torch' : 'off' });
+            _adv.set(track, { ...prev, torch: want });
+            return true;
+          }
+        } catch (_) {}
+      }
+      console.warn('[setTorch] failed:', err2?.name || err2?.message || err2);
+      return false;
     }
   }
-  return false;
 }
 
 /** Track tayyor bo'lgach capabilities qayta o'qish (kechikish) */

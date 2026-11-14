@@ -37,6 +37,7 @@ import {
   _toDateSafe, _isSameDay, _dateSepLabel,
   _showPendingBubble, _updatePendingProgress, _removePendingBubble,
   uploadViaControllerProgress, ensureChatsView, enqueueSequentialUpload,
+  extractRowMediaPaths, keepOptimisticMedia,
 } from './chat-shared.js';
 import { chatUI } from './chat-state.js';
 import { isEditing, commitEdit, getReplying, cancelReply, msgMenuReset } from './msg-menu.js';
@@ -770,11 +771,12 @@ export async function openGroupThread(groupId) {
       $('chatThreadMessages').innerHTML = `<div class="empty pt-30vh tac"><div class="fs-13px c-text2">Xabarlar yuklanmadi</div></div>`;
       return;
     }
-    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    const paths = extractRowMediaPaths(data);
     if (paths.length) {
       try { await mediaSecureUrls(paths); } catch (_) {}
     }
     const msgs = (data || []).map(mapMessage).reverse().filter(m => !_gGone.has(String(m.id)));   // so'rov o'chirishdan oldin ketgan bo'lsa ham qaytmasin
+    keepOptimisticMedia(msgs, _gMsgs);
     // Hali bazadan tasdiqlanmagan (optimistik) xabarlarni yo'qotmaymiz
     if (_gPending.size) {
       const have = new Set(msgs.map(m => m.id));
@@ -810,6 +812,10 @@ export async function openGroupThread(groupId) {
       markDissolve([did]);
       _gMsgs = _gMsgs.filter(x => x.id !== did);
     } else {
+      const pPaths = extractRowMediaPaths(p.new);
+      if (pPaths.length) {
+        try { await mediaSecureUrls(pPaths); } catch (_) {}
+      }
       const m = mapMessage(p.new);
       if (!m || !m.id) { sched(); return; }
       if (_gGone.has(String(m.id))) return;   // allaqachon o'chirilgan xabarning kech kelgan nusxasi
@@ -817,9 +823,27 @@ export async function openGroupThread(groupId) {
       const i = _gMsgs.findIndex(x => String(x.id) === String(m.id));
       if (i >= 0) {
         const prev = _gMsgs[i];
+        let mergedItems = m.items;
+        if (Array.isArray(m.items) && Array.isArray(prev?.items)) {
+          mergedItems = m.items.map((it, idx) => {
+            const prevIt = prev.items.find(pIt => (pIt.id && pIt.id === it.id) || (pIt.path && pIt.path === it.path)) || prev.items[idx];
+            if (prevIt) {
+              const keepUrl = it.url || it.mediaUrl || prevIt.url || prevIt.mediaUrl || '';
+              return {
+                ...it,
+                url: keepUrl,
+                mediaUrl: it.mediaUrl || keepUrl,
+                file: it.file || prevIt.file,
+              };
+            }
+            return it;
+          });
+        }
         _gMsgs = _gMsgs.slice();
         _gMsgs[i] = {
           ...m,
+          items: mergedItems || m.items || prev?.items,
+          mediaUrl: m.mediaUrl || prev?.mediaUrl || '',
           replyTo: m.replyTo || prev.replyTo || null,
           replyPreview: m.replyPreview || prev.replyPreview || null,
         };
@@ -1332,6 +1356,7 @@ export async function sendGroupAlbum(mediaFiles, caption = '') {
       item.status = 'sent';
       item.path = res.path;
       item.url = res.url || item.url;
+      item.mediaUrl = res.url || item.mediaUrl || item.url;
     } catch (err) {
       console.warn(`Group album item [${i}] failed:`, err?.message || err);
       item.status = (err?.name === 'AbortError' || err?.message?.includes('cancelled')) ? 'cancelled' : 'failed';

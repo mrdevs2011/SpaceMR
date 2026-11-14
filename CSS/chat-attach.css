@@ -171,6 +171,8 @@
   z-index: 1;
 }
 #camCapture .cc-preview-vid { object-fit: contain; }
+#camCapture .cc-preview-img.mirror { transform: scaleX(-1); }
+#camCapture .cc-preview-vid.mirror { transform: scaleX(-1); }
 #camCapture .cc-review {
   display: flex;
   align-items: center;
@@ -377,6 +379,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transform: scaleX(-1);
 }
 .live-cam-fallback {
   position: absolute;
@@ -389,41 +392,52 @@
 }
 
 /* 2-slot: Galereyadan tanlash plitkasi */
-.gallery-picker-tile {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1.5px dashed rgba(255, 255, 255, 0.22);
+.gallery-picker-tile,
+.am-gallery-entry-tile {
+  background: rgba(29, 155, 240, 0.08);
+  border: 1.5px dashed rgba(29, 155, 240, 0.45);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 6px;
+  gap: 4px;
+  padding: 8px 4px;
+  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
 }
-.gallery-picker-tile:hover {
-  background: rgba(255, 255, 255, 0.08);
+.gallery-picker-tile:hover,
+.am-gallery-entry-tile:hover {
+  background: rgba(29, 155, 240, 0.16);
   border-color: var(--blue, #1d9bf0);
+  transform: translateY(-2px);
 }
-.gallery-picker-tile .grid-tile-icon-wrap {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #007aff, #00c6ff);
+.gallery-picker-tile:active,
+.am-gallery-entry-tile:active {
+  transform: scale(0.96);
+}
+.gallery-picker-tile .grid-tile-icon-wrap,
+.am-gallery-entry-tile .grid-tile-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1d9bf0, #0088cc);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 2px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 12px rgba(29, 155, 240, 0.35);
 }
-.gallery-picker-tile .grid-tile-name {
-  font-size: 11.5px;
+.gallery-picker-tile .grid-tile-name,
+.am-gallery-entry-tile .grid-tile-name {
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
   line-height: 1.2;
 }
-.gallery-picker-tile .grid-tile-hint {
-  font-size: 9.5px;
-  color: var(--text3, rgba(255, 255, 255, 0.5));
+.gallery-picker-tile .grid-tile-hint,
+.am-gallery-entry-tile .grid-tile-hint {
+  font-size: 10px;
+  color: var(--text3, rgba(255, 255, 255, 0.65));
 }
 
 .gallery-empty-tile {
@@ -470,21 +484,25 @@
 }
 .media-tile-vid-badge {
   position: absolute;
-  bottom: 5px;
-  left: 5px;
+  bottom: 6px;
+  left: 6px;
   background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #fff;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   pointer-events: none;
   z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.media-tile-vid-badge svg {
+  flex-shrink: 0;
 }
 
 /* Telegram uslubidagi doiraviy tanlash indikatori (1, 2, 3...) */
@@ -506,6 +524,7 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  pointer-events: none;
   z-index: 3;
   padding: 0;
   box-sizing: border-box;

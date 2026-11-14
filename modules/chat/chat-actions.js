@@ -351,6 +351,7 @@ export async function sendChatAlbum(mediaFiles, captionOverride = '') {
       item.status = 'sent';
       item.path = res.path;
       item.url = res.url || item.url;
+      item.mediaUrl = res.url || item.mediaUrl || item.url;
     } catch (err) {
       console.warn(`Album item [${i}] upload failed:`, err?.message || err);
       item.status = (err?.name === 'AbortError' || err?.message?.includes('cancelled')) ? 'cancelled' : 'failed';
@@ -399,6 +400,7 @@ export async function sendChatAlbum(mediaFiles, captionOverride = '') {
 
     optimisticMsg.status = 'sent';
     optimisticMsg.items = successfulItems;
+    chatState._rtLocal.set(albumId, { ...optimisticMsg, status: 'sent', items: successfulItems });
     chatState._curMsgs = chatState._curMsgs.map(m => m.id === albumId ? { ...m, status: 'sent', items: successfulItems } : m);
     if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(albumId, 'sent');
     else chatUI.paintMessages(chatState._curMsgs);

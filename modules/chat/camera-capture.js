@@ -361,8 +361,10 @@ export async function openCameraCapture(options = {}) {
       pendingUrl = null;
       pendingFile = null;
       prevImg.hidden = true;
+      prevImg.classList.remove('mirror');
       prevImg.removeAttribute('src');
       prevVid.hidden = true;
+      prevVid.classList.remove('mirror');
       prevVid.removeAttribute('src');
       prevVid.pause();
     };
@@ -413,13 +415,16 @@ export async function openCameraCapture(options = {}) {
       pendingUrl = URL.createObjectURL(file);
       reviewing = true;
       recording = false;
+      const isUserFace = facing === 'user';
       if (file.type.startsWith('video/')) {
         prevVid.src = pendingUrl;
         prevVid.hidden = false;
+        prevVid.classList.toggle('mirror', isUserFace);
         prevVid.play().catch(() => {});
       } else {
         prevImg.src = pendingUrl;
         prevImg.hidden = false;
+        prevImg.classList.toggle('mirror', isUserFace);
       }
       try { setTorch(vTrack(), false); } catch (_) {}
       torchOn = false;
@@ -675,22 +680,21 @@ export async function openCameraCapture(options = {}) {
           toast("Fonarni yoqish uchun orqa kameraga o'ting", 'error');
           return;
         }
-        if (!trackSupportsTorch(tr)) await waitTrackTorchReady(tr, 600);
         const want = !torchOn;
-        let ok = await setTorch(tr, want);
-        if (!ok) {
-          await new Promise(r => setTimeout(r, 150));
-          tr = vTrack();
-          ok = await setTorch(tr, want);
-        }
-        if (!ok) {
+        torchOn = want;
+        if (want) hasTorchDevice = true;
+        refreshFlash(); // 0ms darhol UI yangilansin
+
+        setTorch(tr, want).then(ok => {
+          if (!ok) {
+            torchOn = false;
+            refreshFlash();
+            toast("Fonarni yoqib bo'lmadi. Orqa kamera + Chrome (HTTPS) kerak", 'error');
+          }
+        }).catch(() => {
           torchOn = false;
-          toast("Fonarni yoqib bo'lmadi. Orqa kamera + Chrome (HTTPS) kerak", 'error');
-        } else {
-          torchOn = want;
-          if (want) hasTorchDevice = true;
-        }
-        refreshFlash();
+          refreshFlash();
+        });
       });
       modesEl.addEventListener('click', e => {
         const b = e.target.closest('.cc-mode');

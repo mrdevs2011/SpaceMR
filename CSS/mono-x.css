@@ -229,6 +229,42 @@ a { color: var(--link); }
   color: var(--red, #e7e9ea);
 }
 .post-more-btn:hover { color: var(--x-blue, var(--text)); }
+.post-head-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text3, #71767b);
+  margin-left: auto;
+  margin-right: 6px;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: pointer;
+  line-height: 1;
+  transition: color .15s ease;
+}
+.post-head-views:hover {
+  color: var(--x-blue, #1d9bf0);
+}
+.post-head-views svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform .15s ease;
+}
+.post-head-views:hover svg {
+  stroke: currentColor;
+  transform: scale(1.08);
+}
+.post-head-views .post-views-count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
+}
 .post-main {
   width: 100%;
   min-width: 0;
@@ -4248,8 +4284,9 @@ input[type="file"] {
 .chat-thread-messages {
   flex: 1 1 0%;
   min-height: 0 !important;
-  overflow-y: auto !important;
+  overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
   overscroll-behavior-y: contain;
   padding: 12px 12px 8px;
   display: flex;
@@ -6675,7 +6712,7 @@ body::-webkit-scrollbar,
 :is(#app, #searchOverlay) .post > .post-head > .post-meta {
   grid-column: 2; grid-row: 1;
   display: flex; align-items: baseline; gap: 4px; min-width: 0;
-  padding-right: 36px; height: 20px; line-height: 20px; overflow: hidden;
+  padding-right: 110px; height: 20px; line-height: 20px; overflow: hidden;
   font-size: 15px;
 }
 :is(#app, #searchOverlay) .post .post-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
@@ -6684,6 +6721,10 @@ body::-webkit-scrollbar,
 :is(#app, #searchOverlay) .post .post-time { display: inline; font-size: 15px; font-weight: 400; color: var(--text3); white-space: nowrap; margin: 0; font-family: var(--font); }
 :is(#app, #searchOverlay) .post .post-user { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 :is(#app, #searchOverlay) .post .post-time, :is(#app, #searchOverlay) .post .post-dot { flex: none; }
+:is(#app, #searchOverlay) .post > .post-head > .post-head-views {
+  position: absolute; top: 15px; right: 44px;
+  margin: 0; height: 20px; z-index: 1;
+}
 :is(#app, #searchOverlay) .post > .post-head > :is(.post-del-btn, .post-more-btn) {
   position: absolute; top: 8px; right: 8px;
   width: 34px; height: 34px; border-radius: 50%;
@@ -7097,6 +7138,22 @@ html.is-desktop .chat-msg .chat-bubble-text,
 .cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: var(--radius); overflow: hidden; width: fit-content; max-width: min(360px, 80vw); }
 .chat-msg.mine .cfm-media-dm { border-color: rgba(29, 155, 240, 0.55); }
 .cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview { border-radius: 0; }
+/* DM albomlar: kollaj hech qachon 0px yoki 1 ta ingichka vertikal chiziq bo'lib qolmasin */
+.cfm-media-dm.cfm-album-wrap,
+.cfm-media-dm--cap.cfm-album-wrap,
+.cfm-album-wrap,
+.bubble-album-dm,
+.chat-msg .chat-bubble.bubble-album,
+.chat-msg .chat-bubble.bubble-album-dm {
+  min-width: 260px !important;
+  width: min(360px, 80vw) !important;
+  max-width: min(360px, 80vw) !important;
+}
+.chat-album-grid {
+  min-width: 260px !important;
+  width: 100% !important;
+  min-height: 260px;
+}
 /* DM + caption: tashqi pufak fonisiz — border cfm-media-dm da, o'rtada radius yo'q */
 #chatThreadModal .chat-msg .chat-bubble.bubble-media-dm.bubble-media-caption {
   background: transparent !important;
@@ -7153,9 +7210,12 @@ html.is-desktop .chat-msg .chat-bubble-text,
 .chat-msg.theirs .cvm-ring-path { color: var(--x-blue, var(--blue, #1d9bf0)); }
 
 /* Mobil: chat ro'yxatida gorizontal scroll bo'lmasin (overflow-y:auto bo'lsa overflow-x ham auto bo'lib qoladi) */
-#chatThreadModal .chat-thread-messages {
+#chatThreadModal .chat-thread-messages,
+#chatThreadMessages {
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
 }
 
 /* Mobil: profillarda gorizontal scroll yo'q — tablar ekranga sig'adi, modal yon tomonga surilmaydi */

@@ -135,6 +135,65 @@ assert.ok(featuresCssSource.includes('.media-blur-box > img:not(.msg-ticks)'), '
 assert.ok(featuresCssSource.includes('.msg-ticks,\nimg.msg-ticks'), 'Explicit 18x11 size for read ticks');
 console.log('✓ PASS: Giant ticks prevention verified in CSS');
 
+console.log('--- 16. Testing Mobile Attach Drawer Gallery Grid & Video Support ---');
+assert.ok(attachSource.includes('amGalleryPickerTile'), 'Gallery picker tile element must exist in grid');
+assert.ok(attachSource.includes('am-gallery-entry-tile'), 'am-gallery-entry-tile class must exist');
+assert.ok(attachSource.includes('_getVideoDuration'), '_getVideoDuration must be defined for video support');
+assert.ok(attachSource.includes('_formatDuration'), '_formatDuration must be defined for duration badges');
+assert.ok(attachSource.includes('media-tile-vid-badge'), 'media-tile-vid-badge must be rendered for videos');
+
+const chatAttachCss = fs.readFileSync(new URL('../CSS/chat-attach.css', import.meta.url), 'utf8');
+assert.ok(chatAttachCss.includes('.am-gallery-entry-tile'), '.am-gallery-entry-tile style must exist in chat-attach.css');
+assert.ok(chatAttachCss.includes('.media-tile-vid-badge'), '.media-tile-vid-badge style must exist in chat-attach.css');
+assert.ok(chatAttachCss.includes('grid-template-columns: repeat(3, 1fr)'), 'attach-media-grid must have 3 columns');
+console.log('✓ PASS: Mobile attach drawer gallery tile, video badges, and 3-column grid verified');
+
+console.log('--- 17. Testing Album Bubble Strict Dimensions & Collapse Prevention ---');
+assert.ok(featuresCssSource.includes('min-width: 260px !important'), 'features.css must enforce min-width: 260px on cfm-album-wrap and chat-album-grid');
+assert.ok(featuresCssSource.includes('width: min(360px, 80vw) !important'), 'features.css must enforce width: min(360px, 80vw) on cfm-album-wrap');
+assert.ok(featuresCssSource.includes('height: 260px'), 'features.css must set fallback grid height 260px to prevent 0px vertical line collapse');
+assert.ok(monoCss.includes('.cfm-media-dm.cfm-album-wrap'), 'mono-x.css must protect cfm-media-dm album wrappers from shrinking to fit-content 0px');
+assert.ok(monoCss.includes('min-width: 260px !important'), 'mono-x.css must enforce min-width: 260px on albums');
+console.log('✓ PASS: Album bubble strict dimensions and collapse prevention verified');
+
+console.log('--- 18. Testing Album Media Paths Extraction & Optimistic Preservation ---');
+import { extractRowMediaPaths, keepOptimisticMedia } from '../modules/chat/chat-shared.js';
+const mockRows = [
+  { media_path: 'user/chat/cover.jpg', text: JSON.stringify({ __album: true, items: [{ path: 'user/chat/item1.jpg' }, { path: 'user/chat/item2.mp4' }] }) },
+  { media_path: 'user/chat/single.png', text: 'Hello' }
+];
+const extracted = extractRowMediaPaths(mockRows);
+assert.deepEqual(extracted, ['user/chat/cover.jpg', 'user/chat/item1.jpg', 'user/chat/item2.mp4', 'user/chat/single.png']);
+
+const liveMsgs = [{
+  id: 'album_1',
+  items: [
+    { id: 'item_1', url: 'blob:http://localhost/1', mediaUrl: 'blob:http://localhost/1' },
+    { id: 'item_2', url: 'blob:http://localhost/2', mediaUrl: 'blob:http://localhost/2' }
+  ]
+}];
+const dbMsgs = [{
+  id: 'album_1',
+  items: [
+    { id: 'item_1', url: '', mediaUrl: '', path: 'user/chat/item1.jpg' },
+    { id: 'item_2', url: '', mediaUrl: '', path: 'user/chat/item2.jpg' }
+  ]
+}];
+keepOptimisticMedia(dbMsgs, liveMsgs);
+assert.equal(dbMsgs[0].items[0].url, 'blob:http://localhost/1', 'Optimistic blob URL must be retained');
+assert.equal(dbMsgs[0].items[1].url, 'blob:http://localhost/2', 'Optimistic blob URL must be retained');
+console.log('✓ PASS: Album media paths extraction and optimistic preservation verified');
+
+console.log('--- 19. Testing Mobile Scroll Enhancements & Scroll Lock Watchdog ---');
+assert.ok(baseCss.includes('touch-action: pan-y !important'), 'base.css must define touch-action: pan-y for chatThreadMessages');
+assert.ok(baseCss.includes('-webkit-overflow-scrolling: touch !important'), 'base.css must define -webkit-overflow-scrolling: touch for chatThreadMessages');
+assert.ok(baseCss.includes('overflow-y: scroll !important'), 'base.css must define overflow-y: scroll for chatThreadMessages');
+assert.ok(featuresCssSource.includes('touch-action: pan-y !important'), 'features.css must include touch-action: pan-y');
+assert.ok(monoCss.includes('touch-action: pan-y !important'), 'mono-x.css must include touch-action: pan-y');
+import { syncScrollLock } from '../modules/core/utils.js';
+assert.equal(typeof syncScrollLock, 'function', 'syncScrollLock watchdog function must be exported');
+console.log('✓ PASS: Mobile scroll momentum, touch-action pan-y, and scroll-lock watchdog verified');
+
 console.log('====================================================');
 console.log('ALL CHAT MEDIA & UI REGRESSION CHECKS PASSED (100%)');
 console.log('====================================================');

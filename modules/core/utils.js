@@ -709,58 +709,26 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
   const badgeDom = badgeText ? `<span class="chat-yt-shorts-badge">${badgeText}</span>` : '';
 
   if (type === 'image') {
-    return `<div class="chat-yt-card${standaloneCls} is-media-image" data-media-type="image">` +
-      `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy rasm havolasidan nusxa olish">` +
-        logoSvg +
-        `<span class="chat-yt-url">${dUrl}</span>` +
-        `<span class="chat-yt-copy-badge">` +
-          `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
-          `<span class="chat-yt-copy-text">Nusxa</span>` +
-        `</span>` +
-      `</div>` +
-      `<div class="chat-media-img-wrap media-blur-box" style="aspect-ratio:16/9;width:100%;" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
-        `<img class="chat-media-thumb" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">` +
-      `</div>` +
+    return `<div class="chat-media-pure-wrap media-blur-box" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
+      `<img class="chat-media-pure-img" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">` +
       (badgeHtml || '') +
     `</div>`;
   }
 
   if (type === 'web') {
-    const siteTitle = meta?.title ? esc(meta.title) : esc(domain);
-    const siteName = meta?.siteName ? esc(meta.siteName) : esc(domain);
-    const siteDesc = meta?.description ? `<div class="chat-link-desc" style="display:-webkit-box;">${esc(meta.description)}</div>` : `<div class="chat-link-desc" style="display:none;"></div>`;
-    const thumbHtml = meta?.image
-      ? `<div class="chat-link-thumb-wrap media-blur-box" style="display:block;aspect-ratio:1/1;width:56px;height:56px;flex-shrink:0;"><img class="chat-media-thumb chat-link-thumb" src="${esc(meta.image)}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')" onerror="this.parentElement.remove()"></div>`
-      : `<div class="chat-link-thumb-wrap media-blur-box" style="display:none;aspect-ratio:1/1;width:56px;height:56px;flex-shrink:0;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy" onload="this.classList.add('loaded');this.parentElement.style.display='block';this.closest('.media-blur-box')?.classList.add('loaded')" onerror="this.parentElement.remove()"></div>`;
-
-    return `<div class="chat-yt-card chat-link-card${standaloneCls} is-media-web" data-media-type="web">` +
-      `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy havoladan nusxa olish">` +
-        logoSvg +
-        `<span class="chat-yt-url">${dUrl}</span>` +
-        `<span class="chat-yt-copy-badge">` +
-          `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
-          `<span class="chat-yt-copy-text">Nusxa</span>` +
-        `</span>` +
-      `</div>` +
-      `<div class="chat-link-box" data-preview-url="${cUrl}" onclick="window._chatOpenWebLink&&window._chatOpenWebLink('${cUrl}', event)">` +
-        thumbHtml +
-        `<div class="chat-link-info">` +
-          `<div class="chat-link-site">${siteName}</div>` +
-          `<div class="chat-link-title">${siteTitle}</div>` +
-          siteDesc +
-        `</div>` +
-      `</div>` +
-      (badgeHtml || '') +
-    `</div>`;
+    return `<a href="${cUrl}" target="_blank" rel="noopener noreferrer" class="chat-text-link md-link">${dUrl}</a>`;
   }
 
   let boxContent = '';
   if (type === 'video') {
-    boxContent = `<video class="chat-media-video" src="${cUrl}" preload="metadata" playsinline muted onloadedmetadata="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')"></video>` +
-      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
+    boxContent = `<div class="chat-media-pure-wrap media-blur-box" data-media-type="video" data-url="${cUrl}">` +
+      `<video class="chat-media-video chat-media-pure-vid" src="${cUrl}" preload="metadata" playsinline muted onloadedmetadata="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')"></video>` +
+      `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish" onclick="window._chatPlayMedia&&window._chatPlayMedia(this.parentElement)">` +
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
       `</button>` +
-      badgeDom + (badgeHtml || '');
+      (badgeHtml || '') +
+    `</div>`;
+    return boxContent;
   } else if (type === 'youtube') {
     boxContent = `<img class="chat-yt-thumb" src="https://i.ytimg.com/vi/${vId}/hqdefault.jpg" alt="YouTube video" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')" onerror="this.src='https://i.ytimg.com/vi/${vId}/0.jpg'">` +
       `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
@@ -1059,9 +1027,7 @@ export function renderMarkdown(rawText, opts) {
 
   // \u0000 (placeholder) va qo'shtirnoqlarda to'xtaydi — aks holda tayyor <a> tegi href ichiga tushib, atribut in'ektsiyasi bo'ladi
   s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, (match) => {
-    const cardHtml = renderMediaCard({ type: 'web', canonicalUrl: match, displayUrl: match, isShorts: false });
-    const idx = _ytHold.push(cardHtml) - 1;
-    return '\n\u0000YT' + idx + '\u0000\n';
+    return `<a href="${esc(match)}" class="chat-text-link md-link" target="_blank" rel="noopener noreferrer">${esc(match)}</a>`;
   });
 
   s = s.replace(/\u0000TG(\d+)\u0000/g, (_m, idx) => htmlTags[parseInt(idx, 10)]);
@@ -1599,15 +1565,29 @@ function _pruneDeadScrollLocks() {
       _scrollLocks.delete(key);
       continue;
     }
-    if (el.hidden) {
+    if (el.hidden || el.getAttribute('aria-hidden') === 'true') {
       _scrollLocks.delete(key);
       continue;
     }
-    const isShown = el.classList.contains('show') || el.classList.contains('open') || el.classList.contains('active') ||
-      (el.style.display !== '' && el.style.display !== 'none');
+    let isShown = false;
+    try {
+      const cs = window.getComputedStyle ? window.getComputedStyle(el) : null;
+      if (cs && (cs.display === 'none' || cs.visibility === 'hidden' || (parseFloat(cs.opacity) === 0 && !el.classList.contains('show')))) {
+        isShown = false;
+      } else {
+        isShown = el.classList.contains('show') || el.classList.contains('open') || el.classList.contains('active') ||
+          (el.style.display !== '' && el.style.display !== 'none') || (el.offsetWidth > 0 || el.offsetHeight > 0);
+      }
+    } catch (_) {
+      isShown = el.classList.contains('show') || el.classList.contains('open') || el.classList.contains('active');
+    }
     if (!isShown) {
       _scrollLocks.delete(key);
     }
+  }
+  // Agar DOM da birorta ham ochiq modal/overlay bo'lmasa, anonim qulfni ham tozalash
+  if (_scrollLocks.size === 0) {
+    _scrollLockAnon = 0;
   }
   if (_scrollLockAnon < 0) _scrollLockAnon = 0;
 }
@@ -1636,8 +1616,20 @@ function _releaseScrollLock(restore) {
   document.body.style.top = '';
   document.body.style.width = '';
   document.documentElement.style.overflow = '';
+  document.documentElement.style.position = '';
   if (restore && _scrollY > 0) window.scrollTo(0, _scrollY);
   try { window.dispatchEvent(new CustomEvent('spacemr:scrolllock', { detail: { locked: false } })); } catch (_) {}
+}
+
+/** Body/HTML scroll holatini tekshirish va qulflanmagan bo'lsa darhol bo'shatish */
+export function syncScrollLock() {
+  if (typeof document === 'undefined') return;
+  const total = _scrollLockTotal();
+  if (total === 0) {
+    if (_scrollLockApplied || document.body.classList.contains('scroll-locked') || document.documentElement.classList.contains('scroll-locked')) {
+      _releaseScrollLock(false);
+    }
+  }
 }
 
 /** Body scrollini bloklash — modal/sheet ochilganda. key = qulf egasi (masalan overlay id). */
@@ -1661,19 +1653,17 @@ export function resetScrollLock() {
 }
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('spacemr:route', () => {
-    if (_scrollLockTotal() === 0 && _scrollLockApplied) {
-      _releaseScrollLock(false);
-    }
-  });
+  window.addEventListener('spacemr:route', () => syncScrollLock());
+  window.addEventListener('popstate', () => syncScrollLock());
+  window.addEventListener('hashchange', () => syncScrollLock());
 
   // Mobile / Desktop scroll watchdog: agar DOMda hech qanday modal ochiq bo'lmasa,
-  // lekin qulf "oqib" qolgan bo'lsa, birinchi teginishdayoq scroll qulfi darhol yechiladi
-  document.addEventListener('touchstart', () => {
-    if (_scrollLockApplied && _scrollLockTotal() === 0) {
-      _releaseScrollLock(false);
-    }
-  }, { passive: true });
+  // lekin qulf "oqib" qolgan bo'lsa, touch/pointer/wheel teginishdayoq scroll qulfi darhol yechiladi
+  ['touchstart', 'pointerdown', 'wheel'].forEach(evt => {
+    document.addEventListener(evt, () => {
+      syncScrollLock();
+    }, { passive: true });
+  });
 }
 
 /** 1234 -> "1.2K", 0 -> "" (X uslubi) */

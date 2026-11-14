@@ -464,7 +464,7 @@ export function mapMessage(r) {
   }
 
   const items = parsedAlbum ? parsedAlbum.items.map(it => {
-    const rawU = it.url || (it.path ? (cachedMediaUrlSync(it.path) || mediaSecureUrlSync(it.path) || mediaPublicUrl(it.path) || '') : '');
+    const rawU = it.url || it.mediaUrl || (it.path ? (cachedMediaUrlSync(it.path) || mediaSecureUrlSync(it.path) || mediaPublicUrl(it.path) || '') : '');
     let itemW = it.width || it.w || null;
     let itemH = it.height || it.h || null;
     if ((!itemW || !itemH) && (it.path || rawU)) {
@@ -473,9 +473,11 @@ export function mapMessage(r) {
     } else if (itemW && itemH) {
       setMediaDimensions(it.path || rawU, itemW, itemH);
     }
+    const finalUrl = rawU || it.url || it.mediaUrl || '';
     return {
       ...it,
-      mediaUrl: rawU,
+      url: finalUrl,
+      mediaUrl: finalUrl,
       width: itemW,
       height: itemH,
     };

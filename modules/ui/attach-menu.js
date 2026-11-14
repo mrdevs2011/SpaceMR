@@ -32,6 +32,14 @@ async function _resolveFile(item) {
   if (item.file instanceof File || item.file instanceof Blob) {
     return item.file;
   }
+  if (item.thumbDataUrl && item.thumbDataUrl.startsWith('data:')) {
+    try {
+      const res = await fetch(item.thumbDataUrl);
+      const blob = await res.blob();
+      const ext = (blob.type || '').includes('png') ? 'png' : ((blob.type || '').includes('webp') ? 'webp' : 'jpg');
+      return new File([blob], item.name || `photo_${Date.now()}.${ext}`, { type: blob.type || item.type || 'image/jpeg' });
+    } catch (_) {}
+  }
   if (item.thumbUrl) {
     try {
       const res = await fetch(item.thumbUrl, { mode: 'cors' });
@@ -77,41 +85,142 @@ function _getAttachDb() {
   return _attachDbPromise;
 }
 
-async function _makeThumbnail(file) {
-  if (!file || !file.type || !file.type.startsWith('image/')) return '';
+function _formatDuration(sec) {
+  if (!sec || isNaN(sec) || sec <= 0) return '';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+async function _getVideoDuration(file) {
+  if (!file || !file.type || !file.type.startsWith('video/')) return 0;
   return new Promise(resolve => {
     try {
       const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        try {
-          URL.revokeObjectURL(url);
-          const maxDim = 200;
-          let w = img.width || 100, h = img.height || 100;
-          if (w > h) {
-            if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-          } else {
-            if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
-        } catch (_) {
-          resolve('');
-        }
-      };
-      img.onerror = () => {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      const timer = setTimeout(() => {
         try { URL.revokeObjectURL(url); } catch (_) {}
-        resolve('');
+        resolve(0);
+      }, 1200);
+      v.onloadedmetadata = () => {
+        clearTimeout(timer);
+        const d = Math.round(v.duration || 0);
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        resolve(d);
       };
-      img.src = url;
+      v.onerror = () => {
+        clearTimeout(timer);
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        resolve(0);
+      };
+      v.src = url;
     } catch (_) {
-      resolve('');
+      resolve(0);
     }
   });
+}
+
+async function _makeThumbnail(file) {
+  if (!file || !file.type) return '';
+
+  if (file.type.startsWith('image/')) {
+    return new Promise(resolve => {
+      try {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            URL.revokeObjectURL(url);
+            const maxDim = 200;
+            let w = img.width || 100, h = img.height || 100;
+            if (w > h) {
+              if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            } else {
+              if (h > maxDim) { w = Math.round((h * maxDim) / h); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+          } catch (_) {
+            resolve('');
+          }
+        };
+        img.onerror = () => {
+          try { URL.revokeObjectURL(url); } catch (_) {}
+          resolve('');
+        };
+        img.src = url;
+      } catch (_) {
+        resolve('');
+      }
+    });
+  }
+
+  if (file.type.startsWith('video/')) {
+    return new Promise(resolve => {
+      try {
+        const url = URL.createObjectURL(file);
+        const video = document.createElement('video');
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+        let done = false;
+        const cleanup = () => {
+          if (done) return;
+          done = true;
+          try { URL.revokeObjectURL(url); } catch (_) {}
+          try { video.removeAttribute('src'); video.load(); } catch (_) {}
+        };
+        const timer = setTimeout(() => {
+          cleanup();
+          resolve('');
+        }, 1400);
+
+        video.onloadeddata = () => {
+          try {
+            video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
+          } catch (_) {}
+        };
+        video.onseeked = () => {
+          try {
+            clearTimeout(timer);
+            const maxDim = 200;
+            let w = video.videoWidth || 160, h = video.videoHeight || 90;
+            if (w > h) {
+              if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            } else {
+              if (h > maxDim) { w = Math.round((h * maxDim) / h); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            cleanup();
+            resolve(dataUrl);
+          } catch (_) {
+            cleanup();
+            resolve('');
+          }
+        };
+        video.onerror = () => {
+          clearTimeout(timer);
+          cleanup();
+          resolve('');
+        };
+        video.src = url;
+      } catch (_) {
+        resolve('');
+      }
+    });
+  }
+
+  return '';
 }
 
 async function _loadRecentMedia() {
@@ -130,13 +239,27 @@ async function _loadRecentMedia() {
   }
 }
 
+// Boshlang'ich keshni xotiraga tezkor 0ms yuklash
+if (typeof indexedDB !== 'undefined') {
+  _loadRecentMedia().then(cached => {
+    if (Array.isArray(cached) && cached.length) {
+      _memRecentFiles.length = 0;
+      _memRecentFiles.push(...cached);
+    }
+  }).catch(() => {});
+}
+
 async function _saveRecentMedia(files) {
   if (!Array.isArray(files) || !files.length) return;
   for (const f of files) {
     if (!f) continue;
     let thumbDataUrl = '';
+    let duration = 0;
     try {
       thumbDataUrl = await _makeThumbnail(f);
+      if (f.type && f.type.startsWith('video/')) {
+        duration = await _getVideoDuration(f);
+      }
     } catch (_) {}
 
     const item = {
@@ -144,18 +267,25 @@ async function _saveRecentMedia(files) {
       name: f.name || 'media',
       type: f.type || 'image/jpeg',
       size: f.size || 0,
+      duration: duration || 0,
+      durationText: _formatDuration(duration),
       thumbDataUrl: thumbDataUrl,
       file: f,
       time: Date.now(),
     };
+
+    // Dublikatlarni tozalash
+    const existIdx = _memRecentFiles.findIndex(m => m.name === item.name && m.size === item.size);
+    if (existIdx >= 0) _memRecentFiles.splice(existIdx, 1);
+
     _memRecentFiles.unshift(item);
     if (_memRecentFiles.length > 48) _memRecentFiles.pop();
+
     try {
       const db = await _getAttachDb();
       const tx = db.transaction(ATTACH_STORE, 'readwrite');
       tx.objectStore(ATTACH_STORE).put(item);
     } catch (_) {
-      // Agar File serialize bo'lmasa, thumbnail bilan saqlaymiz
       try {
         const db = await _getAttachDb();
         const tx = db.transaction(ATTACH_STORE, 'readwrite');
@@ -218,6 +348,8 @@ function _createHiddenInput(accept, multiple, onPick) {
       _drawerPickerCallback(files);
       return;
     }
+    const mediaFiles = files.filter(f => f && (f.type?.startsWith('image/') || f.type?.startsWith('video/')));
+    if (mediaFiles.length) _saveRecentMedia(mediaFiles);
     files.forEach(f => {
       if (typeof onPick === 'function') onPick(f);
     });
@@ -400,6 +532,13 @@ export function initAttachMenu({
             <div class="live-cam-fallback">${SVG.camera}</div>
           </div>
 
+          <!-- 2-slot: Galereyadan tanlash plitkasi -->
+          <div class="attach-grid-item gallery-picker-tile am-gallery-entry-tile" id="amGalleryPickerTile" role="button" tabindex="0" title="Galereyadan tanlash">
+            <div class="grid-tile-icon-wrap">${SVG.gallery}</div>
+            <div class="grid-tile-name">Galereya</div>
+            <div class="grid-tile-hint">Barcha media</div>
+          </div>
+
           <!-- Media fotosuratlar va videolar shu yerga yuklanadi -->
           <div id="amMediaItemsSlot" style="display:contents;"></div>
         </div>
@@ -466,6 +605,12 @@ export function initAttachMenu({
     const bottomPills = overlay.querySelector('#amBottomPills');
     const galleryTile = overlay.querySelector('#amGalleryPickerTile');
 
+    galleryTile?.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      galleryPicker.click();
+    });
+
     // Tanlangan fayllar xaritasi (id -> File)
     const selectedMap = new Map();
     let currentMediaList = [];
@@ -525,10 +670,11 @@ export function initAttachMenu({
         const isVid = (item.type || '').startsWith('video/');
         const selIdx = Array.from(selectedMap.keys()).indexOf(item.id);
         const isSel = selIdx >= 0;
+        const durText = item.durationText || (isVid ? 'Video' : '');
         return `
           <div class="attach-grid-item media-photo-tile ${isSel ? 'selected' : ''}" data-media-id="${item.id}" role="button" tabindex="0">
-            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="media" loading="lazy">
-            ${isVid ? `<div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Video</div>` : ''}
+            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="${item.name || 'media'}" loading="lazy">
+            ${isVid ? `<div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span>${durText}</span></div>` : ''}
             <button type="button" class="media-tile-check ${isSel ? 'checked' : ''}" aria-label="Tanlash">
               ${isSel ? `<span class="check-num">${selIdx + 1}</span>` : ''}
             </button>
@@ -547,10 +693,8 @@ export function initAttachMenu({
       });
     }
 
-    // Recent mediani IDB keshdan darhol chizish (hech qanday soxta demo rasmlarsiz)
-    _loadRecentMedia().then(cachedList => {
-      if (!_activeDrawer) return;
-      const prepared = cachedList.map(rec => {
+    function prepareItems(rawList) {
+      return (rawList || []).map(rec => {
         const f = rec.file || rec;
         let thumbUrl = rec.thumbDataUrl || '';
         if (!thumbUrl && rec.file) {
@@ -567,24 +711,47 @@ export function initAttachMenu({
           thumbUrl,
           type: rec.type || (rec.file && rec.file.type) || 'image/jpeg',
           name: rec.name || (rec.file && rec.file.name) || 'media',
+          duration: rec.duration || 0,
+          durationText: rec.durationText || _formatDuration(rec.duration),
         };
       }).filter(x => !!x.thumbUrl);
+    }
 
-      // Faqat haqiqiy qurilma mediani ko'rsatamiz
-      renderMediaGridItems(prepared);
+    // 0ms da xotiradagi keshni chizamiz
+    if (_memRecentFiles.length > 0) {
+      renderMediaGridItems(prepareItems(_memRecentFiles));
+    }
+
+    // Recent mediani IDB keshdan darhol chizish / yangilash
+    _loadRecentMedia().then(cachedList => {
+      if (!_activeDrawer) return;
+      if (Array.isArray(cachedList) && cachedList.length) {
+        _memRecentFiles.length = 0;
+        _memRecentFiles.push(...cachedList);
+        const prepared = prepareItems(cachedList);
+        const selectedArr = Array.from(selectedMap.values());
+        const merged = [...selectedArr, ...prepared.filter(p => !selectedMap.has(p.id))];
+        renderMediaGridItems(merged.length ? merged : prepared);
+        updateSelectionUI();
+      }
     });
 
     // File pickerdan fayllar tanlanganda ushbu drawer ichiga kiritish
     _drawerPickerCallback = async (pickedFiles) => {
-      if (!pickedFiles.length) return;
+      if (!pickedFiles || !pickedFiles.length) return;
       await _saveRecentMedia(pickedFiles);
 
-      const newItems = pickedFiles.map(f => {
+      const newItems = [];
+      for (const f of pickedFiles) {
         let thumbUrl = '';
         try {
           thumbUrl = URL.createObjectURL(f);
           _activeObjectUrls.add(thumbUrl);
         } catch (_) {}
+        let duration = 0;
+        if (f.type && f.type.startsWith('video/')) {
+          try { duration = await _getVideoDuration(f); } catch (_) {}
+        }
         const id = 'am_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
         const itemObj = {
           id,
@@ -592,13 +759,20 @@ export function initAttachMenu({
           thumbUrl,
           type: f.type || 'image/jpeg',
           name: f.name || 'media',
+          duration,
+          durationText: _formatDuration(duration),
         };
-        // Yangi tanlanganlarni avtomatik belgilab qo'yish
-        selectedMap.set(id, itemObj);
-        return itemObj;
-      }).filter(x => !!x.thumbUrl);
+        // Yangi tanlanganlarni avtomatik belgilab qo'yish (maksimal 10 ta)
+        if (selectedMap.size < 10) {
+          selectedMap.set(id, itemObj);
+        }
+        newItems.push(itemObj);
+      }
 
-      const combined = [...newItems, ...currentMediaList];
+      const filteredCurrent = currentMediaList.filter(
+        c => !newItems.some(n => n.name === c.name && n.file?.size === c.file?.size)
+      );
+      const combined = [...newItems, ...filteredCurrent];
       renderMediaGridItems(combined);
       updateSelectionUI();
     };
@@ -666,13 +840,12 @@ export function initAttachMenu({
       });
     });
 
-    // Galereya doiraviy tugmasi
+    // Galereya doiraviy tugmasi — drawer ochiq qolib, tanlangan fayllar bevosita drawer gridiga keladi
     const galBtn = overlay.querySelector('#amPillGallery');
     galBtn?.addEventListener('click', e => {
       e.preventDefault();
       e.stopPropagation();
       galleryPicker.click();
-      closeAttachMenu();
     });
 
     // Musiqa doiraviy tugmasi

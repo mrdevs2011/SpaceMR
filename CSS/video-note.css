@@ -21,11 +21,19 @@
 
 /* Pastki input composer va record bar rolik paytida overlay ustida 100% tiniq va faol */
 body.vn-rec #chatThreadInputRow,
-body.vn-rec .chat-thread-composer,
+body.vn-rec .chat-thread-composer {
+  z-index: 10020 !important;
+  position: relative;
+  filter: none !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
 body.vn-rec #chatRecordBar,
 body.vn-rec .chat-record-bar {
   z-index: 10020 !important;
-  position: relative;
+  position: absolute !important;
+  left: 12px !important;
+  right: 58px !important;
   filter: none !important;
   opacity: 1 !important;
   pointer-events: auto !important;
@@ -34,6 +42,9 @@ body.vn-rec #chatRecordBar.active,
 body.vn-rec .chat-record-bar.active {
   display: flex !important;
   z-index: 10030 !important;
+  position: absolute !important;
+  left: 12px !important;
+  right: 58px !important;
   pointer-events: auto !important;
 }
 
@@ -58,7 +69,9 @@ body.vn-rec .chat-voice-btn.vn-locked {
 /* Timer/bekor — biroz ko'rinsin, lekin asosiy float tugma */
 body.vn-rec .chat-record-bar.active {
   z-index: 10030 !important;
-  position: relative;
+  position: absolute !important;
+  left: 12px !important;
+  right: 58px !important;
   filter: none !important;
   opacity: 1 !important;
 }

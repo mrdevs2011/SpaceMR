@@ -1056,6 +1056,8 @@ import {
   _updatePendingProgress,
   _removePendingBubble,
   uploadViaControllerProgress,
+  extractRowMediaPaths,
+  keepOptimisticMedia,
   _uuid, getChatFileIcon, ensureChatsView } from './chat-shared.js';
 import { isAllowedChatFile as isAllowedUpload, UPLOAD_DENIED_MSG } from '../core/upload-policy.js';
 // Re-export shared helpers so existing importers of chat.js keep working
@@ -2099,11 +2101,12 @@ export async function openChatThread(uid) {
       }
       return;
     }
-    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    const paths = extractRowMediaPaths(data);
     if (paths.length) {
       try { await mediaSecureUrls(paths); } catch (_) {}
     }
     const msgs = (data || []).map(mapMessage).reverse();
+    keepOptimisticMedia(msgs, chatState._curMsgs);
     chatState._hasMoreOlder = (data || []).length >= MSG_LIMIT;
     if (msgs.length) chatState._oldestTs = msgs[0].createdAt;
     _mergeLive(msgs, null, msgs.length ? (msgs[0].createdAt || 0) : 0);
@@ -2143,8 +2146,9 @@ export async function openChatThread(uid) {
       cacheThreadMessages(chatId, chatState._curMsgs.filter(x => x.id !== delId));
       return;
     }
-    if (p.new?.media_path) {
-      try { await mediaSecureUrls([p.new.media_path]); } catch (_) {}
+    const pPaths = extractRowMediaPaths(p.new);
+    if (pPaths.length) {
+      try { await mediaSecureUrls(pPaths); } catch (_) {}
     }
     const m = mapMessage(p.new);
     if (!m || !m.id) { schedThread(); return; }
@@ -2170,9 +2174,28 @@ export async function openChatThread(uid) {
           return;
         }
       }
+      // Optimistik albom elementlarini (local blob url va res.url) DB qatori kelganda saqlab qolamiz
+      let mergedItems = m.items;
+      if (Array.isArray(m.items) && Array.isArray(prev?.items)) {
+        mergedItems = m.items.map((it, idx) => {
+          const prevIt = prev.items.find(pIt => (pIt.id && pIt.id === it.id) || (pIt.path && pIt.path === it.path)) || prev.items[idx];
+          if (prevIt) {
+            const keepUrl = it.url || it.mediaUrl || prevIt.url || prevIt.mediaUrl || '';
+            return {
+              ...it,
+              url: keepUrl,
+              mediaUrl: it.mediaUrl || keepUrl,
+              file: it.file || prevIt.file,
+            };
+          }
+          return it;
+        });
+      }
       // replyPreview ni saqlab qolamiz (server mapMessage da yo'q)
       list[i] = {
         ...m,
+        items: mergedItems || m.items || prev.items,
+        mediaUrl: m.mediaUrl || prev.mediaUrl || '',
         replyTo: m.replyTo || prev.replyTo || null,
         replyPreview: m.replyPreview || prev.replyPreview || null,
       };
@@ -2602,11 +2625,12 @@ async function _loadOlderMessages(box) {
       .order('created_at', { ascending: false })
       .limit(OLDER_PAGE);
     if (error || state.currentChatId !== chatId) return;
-    const paths = (data || []).map(r => r.media_path).filter(Boolean);
+    const paths = extractRowMediaPaths(data);
     if (paths.length) {
       try { await mediaSecureUrls(paths); } catch (_) {}
     }
     const older = (data || []).map(mapMessage).reverse();
+    keepOptimisticMedia(older, chatState._curMsgs);
     if (!older.length) {
       chatState._hasMoreOlder = false;
       return;

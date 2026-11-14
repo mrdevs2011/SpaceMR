@@ -252,6 +252,7 @@ export async function renderFeedTo(feedEl, posts) {
           <span class="post-dot">·</span>
           <span class="post-time" style="cursor:pointer" title="Postni ochish">${fmt(p.createdAt)}</span>
         </div>
+        <div class="post-head-views" title="Ko'rishlar soni"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="post-views-count" data-post-vc="${p.id}">${fmtCount(p.viewsCount || 0)}</span></div>
         <button class="post-more-btn" data-id="${p.id}" data-uid="${p.userId}" data-can-del="${canDel ? '1' : ''}" title="Yana" aria-label="Yana" aria-haspopup="menu">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
       </div>
@@ -668,6 +669,11 @@ function bindFeedEvents(feedEl) {
       const pe = tm.closest('.post');
       if (pe?.dataset.id) { e.stopPropagation(); openPostLink(pe.dataset.id); return; }
     }
+    const pv = t.closest('.post-head-views');
+    if (pv) {
+      const pe = pv.closest('.post');
+      if (pe?.dataset.id) { e.stopPropagation(); openPostLink(pe.dataset.id); return; }
+    }
     const link = t.closest('.link-btn');
     if (link) { e.stopPropagation(); copyPostLink(link.dataset.id); return; }
     const share = t.closest('.share-btn');
@@ -1022,6 +1028,13 @@ export function patchCounts(posts) {
     const rcc = document.querySelector(`.rcmt-${p.id}`);
     if (rcc) rcc.textContent = `${p.commentCount || 0}`;
 
+    // Views count
+    const vc = document.getElementById(`vc-${p.id}`);
+    if (vc) vc.textContent = fmtCount(p.viewsCount || 0);
+    document.querySelectorAll(`[data-post-vc="${p.id}"]`).forEach(sp => {
+      sp.textContent = fmtCount(p.viewsCount || 0);
+    });
+
   });
 }
 
@@ -1264,8 +1277,14 @@ export function recordPostView(postId) {
     if (!error && typeof data === 'number') {
       const p = state.allPosts?.find(x => x.id === postId);
       if (p) p.viewsCount = data;
+      const formatted = fmtCount(data);
       const el = document.getElementById(`vc-${postId}`);
-      if (el) el.textContent = fmtCount(data);
+      if (el) el.textContent = formatted;
+      document.querySelectorAll(`[data-post-vc="${postId}"]`).forEach(sp => {
+        sp.textContent = formatted;
+      });
+      const dmEl = document.getElementById('dmViewCount');
+      if (dmEl) dmEl.textContent = formatted;
     }
   }).catch(err => console.warn('[post view] record error:', err?.message || err));
 }
