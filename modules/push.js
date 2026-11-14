@@ -132,8 +132,15 @@ export async function initPush() {
   if (!_swReg) return;
 
   try {
-    // denied bo'lsa ham so'raymiz (brauzer dialogini qayta ochishga harakat)
-    const permission = await Notification.requestPermission();
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      // Foydalanuvchi imo-ishorasisiz (user gesture) brauzer ruxsat oynasini bloklaydi
+      if (typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
+        try { permission = await Notification.requestPermission(); } catch (_) { return; }
+      } else {
+        return;
+      }
+    }
     if (permission !== 'granted') return;
 
     const uid = state.me?.uid;

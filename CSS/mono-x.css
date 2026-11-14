@@ -8487,10 +8487,22 @@ body.report-open { overflow: auto !important; }
 .view.on {
   display: block !important;
   visibility: visible !important;
-  position: static !important;
   pointer-events: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-  touch-action: pan-y !important;
+  touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 1100px) {
+  #chatsView.on {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: var(--sidebar) !important;
+    width: var(--chats-w) !important;
+    height: auto !important;
+    margin-left: 0 !important;
+    z-index: 2 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
 }
