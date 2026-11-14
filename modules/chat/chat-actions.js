@@ -45,21 +45,7 @@ export async function sendChatMessage(opts) {
     ? JSON.stringify({ __postShare: true, post: postShare, comment: encodeForSend(userText) })
     : (gifText != null ? userText : encodeForSend(userText));
   let _spoilerSecrets = [];
-  if (gifText == null && !postShare) {
-    const red = redactSpoilersForStorage(finalMsgText);
-    finalMsgText = red.text;
-    _spoilerSecrets = red.secrets;
-  } else if (postShare && userText) {
-    try {
-      const o = JSON.parse(finalMsgText);
-      if (o && o.comment) {
-        const red = redactSpoilersForStorage(o.comment);
-        o.comment = red.text;
-        _spoilerSecrets = red.secrets;
-        finalMsgText = JSON.stringify(o);
-      }
-    } catch (_) {}
-  }
+  // Spoilers are preserved as client-side blurred markdown (Telegram style), no redaction needed
 
   const replyInfo = getReplying();
   const replyToId = replyInfo?.id ? String(replyInfo.id) : null;

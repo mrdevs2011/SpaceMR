@@ -141,10 +141,13 @@ function spoilerLineBarsHtml(metrics) {
 function spoilerPlaceholder(rawInner, meta) {
   meta = meta || {};
   const text = String(rawInner ?? '');
-  let metrics;
   if (text) {
-    metrics = spoilerLineMetrics(text);
-  } else if (meta.lineCh && meta.lineCh.length) {
+    const id = 'sp' + (++_spoilerSeq);
+    _spoilerVault.set(id, text);
+    return '<span class="md-spoiler" data-sid="' + id + '" role="button" tabindex="0" title="Yashirin matn">' + esc(text) + '</span>';
+  }
+  let metrics;
+  if (meta.lineCh && meta.lineCh.length) {
     metrics = meta.lineCh.map(ch => ({ ch: Math.max(2, Number(ch) || 2), line: '' }));
   } else {
     metrics = [{ ch: Math.max(2, meta.ch != null ? Number(meta.ch) : 4), line: '' }];
@@ -467,10 +470,17 @@ export function bindSpoilerUI() {
   const act = (el) => {
     if (!el || !el.classList.contains('md-spoiler')) return;
     const now = Date.now();
-    if (now - _lastSpoilerAct < 350) return; // click+pointerup double-fire
+    if (now - _lastSpoilerAct < 250) return; // click+pointerup double-fire
     _lastSpoilerAct = now;
-    if (el.classList.contains('revealed')) hideSpoilerEl(el);
-    else revealSpoilerEl(el);
+    if (el.classList.contains('revealed')) {
+      el.classList.remove('revealed');
+    } else {
+      if (el.getAttribute('data-msg') && !el.textContent.trim()) {
+        revealSpoilerEl(el);
+      } else {
+        el.classList.add('revealed');
+      }
+    }
   };
   const isShortTap = (e, down) => {
     if (!down) return false;
@@ -1610,15 +1620,16 @@ function _applyScrollLock() {
   if (_scrollLockApplied) return;
   _scrollLockApplied = true;
   _scrollY = window.scrollY || 0;
+  document.body.classList.add('scroll-locked');
+  document.documentElement.classList.add('scroll-locked');
   document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${_scrollY}px`;
-  document.body.style.width = '100%';
   try { window.dispatchEvent(new CustomEvent('spacemr:scrolllock', { detail: { locked: true } })); } catch (_) {}
 }
 
 function _releaseScrollLock(restore) {
   _scrollLockApplied = false;
+  document.body.classList.remove('scroll-locked');
+  document.documentElement.classList.remove('scroll-locked');
   document.body.style.overflow = '';
   document.body.style.position = '';
   document.body.style.top = '';

@@ -8014,88 +8014,33 @@ body.report-open { overflow: auto !important; }
   #chatsView .chat-row { min-width: 0; }
 }
 
-/* ═══ Spoiler = SHAFFOF (blur yo'q): fon to'liq ko'rinadi, chetlari aniq.
-   Maxfiy matn DOM da yo'q (vault) + rangi ham transparent — orqadan hech narsa ko'rinmaydi. ═══ */
+/* ═══ Spoiler: Telegram-style client-side blur ═══ */
 html body .md-spoiler:not(.revealed) {
-  --sp-rgb: 231, 233, 234;
-  overflow: visible !important;
-  position: relative !important;
-}
-html body .chat-msg.mine .md-spoiler:not(.revealed) { --sp-rgb: 255, 255, 255; }
-
-/* Qatorlar faqat o'lcham uchun — o'zlari ko'rinmaydi */
-html body .md-spoiler:not(.revealed) .md-spoiler-line,
-html body .md-spoiler.md-spoiler-block:not(.revealed) .md-spoiler-line {
-  position: relative !important;
-  overflow: visible !important;
-  background: none !important;
-  background-color: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-}
-html body .md-spoiler:not(.revealed) .md-spoiler-line::before {
-  display: none !important;
-  content: none !important;
-}
-
-/* To'liq shaffof qatlam: blur yo'q, mask yo'q, fon ko'rinib turadi */
-html body .md-spoiler:not(.revealed)::before,
-html body .chat-msg .md-spoiler:not(.revealed)::before,
-html body .chat-msg.mine .md-spoiler:not(.revealed)::before,
-html body .chat-msg.theirs .md-spoiler:not(.revealed)::before {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  inset: 0.05em 0.05em !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 12px !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  -webkit-mask-image: none !important;
-  mask-image: none !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-html body .md-spoiler.md-spoiler-block:not(.revealed)::before,
-html body .chat-msg .md-spoiler.md-spoiler-block:not(.revealed)::before {
-  display: block !important;
-  content: "" !important;
-}
-
-/* Multi-line: qatorlar yopishib bitta massaga aylanadi */
-html body .md-spoiler.md-spoiler-block:not(.revealed) {
-  overflow: visible !important;
-  gap: 0 !important;
-  height: auto !important;
-  max-height: none !important;
-  position: relative !important;
-}
-html body .chat-msg .md-spoiler.md-spoiler-block:not(.revealed),
-html body .chat-bubble .md-spoiler.md-spoiler-block:not(.revealed),
-html body .chat-bubble-text .md-spoiler.md-spoiler-block:not(.revealed) {
-  overflow: visible !important;
-  height: auto !important;
-  gap: 0 !important;
-}
-/* features.css dagi display:none ni yengamiz */
-html body .md-spoiler.md-spoiler-block:not(.revealed)::before {
-  display: block !important;
-}
-
-/* Kafolat: yopiq spoiler ichidagi hech qanday matn/soya ko'rinmasin */
-html body .md-spoiler:not(.revealed),
-html body .md-spoiler:not(.revealed) * {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  text-shadow: none !important;
-  -webkit-user-select: none !important;
+  filter: blur(6px) !important;
+  -webkit-filter: blur(6px) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  cursor: pointer !important;
   user-select: none !important;
+  -webkit-user-select: none !important;
+  border-radius: 4px;
+}
+html body .md-spoiler:not(.revealed)::before {
+  display: none !important;
+}
+html body .md-spoiler.revealed {
+  filter: none !important;
+  -webkit-filter: none !important;
+  background: transparent !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  cursor: text !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+html body .md-spoiler.revealed::before {
+  display: none !important;
 }
 
 /* Media faqat o'zi bo'lganda (matnsiz pure YouTube, TikTok, Instagram, Facebook, link, rasm, video) — mutlaqo pufaksiz (erkin) */

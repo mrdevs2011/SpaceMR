@@ -81,6 +81,32 @@ export function requestAndSendLocation(onLocation) {
 }
 
 /**
+ * PWA yoki brauzerdan tashqi ilova / brauzerni 100% ishonchli ochish
+ */
+export function openExternalUrl(url) {
+  if (!url) return;
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer external';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch (_) {}
+    }, 150);
+    return;
+  } catch (_) {}
+  try {
+    const w = window.open(url, '_blank', 'noopener,noreferrer');
+    if (w) return;
+  } catch (_) {}
+  try {
+    window.location.href = url;
+  } catch (_) {}
+}
+
+/**
  * Foydalanuvchi qurilmasiga mos xaritalar ilovasini ochish yoki navigatsiyani boshlash:
  * - Apple (iPhone/iPad/Mac): Apple Maps (maps:// yoki maps.apple.com)
  * - Android / Desktop:
@@ -98,28 +124,29 @@ export function openSmartMapLocation(lat, lon, { navigate = false, title = '' } 
   const isApple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua);
   const isAndroid = /Android/i.test(ua);
   const isMobile = isApple || isAndroid;
+  const isStandalone = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!navigator.standalone;
 
   if (isApple) {
     if (navigate) {
       // Apple Maps: marshrut (navigatsiya) boshlash
       const appUrl = `maps://?daddr=${nLat},${nLon}&dirflg=d`;
       const webUrl = `https://maps.apple.com/?daddr=${nLat},${nLon}&dirflg=d`;
-      if (isMobile) {
+      if (isMobile && !isStandalone) {
         window.location.href = appUrl;
-        setTimeout(() => { window.open(webUrl, '_blank'); }, 700);
+        setTimeout(() => { openExternalUrl(webUrl); }, 700);
       } else {
-        window.open(webUrl, '_blank');
+        openExternalUrl(webUrl);
       }
     } else {
       // Apple Maps: joylashuvni ko'rish
       const q = encodeURIComponent(title || 'Joylashuv');
       const appUrl = `maps://?ll=${nLat},${nLon}&q=${q}`;
       const webUrl = `https://maps.apple.com/?ll=${nLat},${nLon}&q=${q}`;
-      if (isMobile) {
+      if (isMobile && !isStandalone) {
         window.location.href = appUrl;
-        setTimeout(() => { window.open(webUrl, '_blank'); }, 700);
+        setTimeout(() => { openExternalUrl(webUrl); }, 700);
       } else {
-        window.open(webUrl, '_blank');
+        openExternalUrl(webUrl);
       }
     }
     return;
@@ -133,35 +160,35 @@ export function openSmartMapLocation(lat, lon, { navigate = false, title = '' } 
     const googleApp = `google.navigation:q=${nLat},${nLon}&mode=d`;
     const googleWeb = `https://www.google.com/maps/dir/?api=1&destination=${nLat},${nLon}`;
 
-    if (isMobile) {
+    if (isMobile && !isStandalone) {
       const t0 = Date.now();
       window.location.href = yandexApp;
       setTimeout(() => {
         if (Date.now() - t0 < 1200) {
           window.location.href = googleApp;
           setTimeout(() => {
-            window.open(yandexWeb, '_blank');
+            openExternalUrl(yandexWeb);
           }, 600);
         }
       }, 600);
     } else {
-      window.open(yandexWeb, '_blank');
+      openExternalUrl(yandexWeb);
     }
   } else {
     // Xaritada ko'rish
     const yandexApp = `yandexmaps://maps.yandex.ru/?pt=${nLon},${nLat}&z=16&l=map`;
     const yandexWeb = `https://yandex.ru/maps/?pt=${nLon},${nLat}&z=16&l=map`;
 
-    if (isMobile) {
+    if (isMobile && !isStandalone) {
       const t0 = Date.now();
       window.location.href = yandexApp;
       setTimeout(() => {
         if (Date.now() - t0 < 1200) {
-          window.open(yandexWeb, '_blank');
+          openExternalUrl(yandexWeb);
         }
       }, 600);
     } else {
-      window.open(yandexWeb, '_blank');
+      openExternalUrl(yandexWeb);
     }
   }
 }

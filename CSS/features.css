@@ -3138,103 +3138,45 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 }
 /* Spoiler: matn DOM da yo'q — bir qator yoki ko'p qator (har qator o'z uzunligi) */
 .md-spoiler {
-  cursor: pointer;
-  border-radius: 6px;
-  padding: 0;
+  cursor: pointer !important;
+  border-radius: 4px;
+  padding: 0 4px;
   display: inline-block;
-  vertical-align: -0.12em;
-  width: calc(var(--spoiler-ch, 4) * 1ch);
-  max-width: 100%;
-  min-width: 2ch;
-  height: 1.2em;
-  line-height: 1.2em;
+  vertical-align: baseline;
   box-sizing: border-box;
   position: relative;
-  background: transparent;
-  -webkit-user-select: none !important;
-  user-select: none !important;
-  -webkit-touch-callout: none !important;
+  transition: filter 0.2s ease, background 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   pointer-events: auto !important;
   touch-action: manipulation;
-  z-index: 1;
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  text-shadow: none !important;
 }
-.md-spoiler::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  background-color: rgba(231, 233, 234, 0.42);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(231, 233, 234, 0.25) 0 3px,
-    transparent 3px 6px
-  );
-  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.18);
-  pointer-events: none;
+.md-spoiler:not(.revealed) {
+  filter: blur(6px) !important;
+  -webkit-filter: blur(6px) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  cursor: pointer !important;
 }
-/* Ko'p qator: har qator o'z kengligida, matn shakliga mos */
-.md-spoiler.md-spoiler-block {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.28em;
-  width: auto !important;
-  min-width: 0 !important;
-  height: auto !important;
-  max-width: 100%;
-  vertical-align: top;
-  line-height: 1.2;
-}
-.md-spoiler.md-spoiler-block.revealed::before {
-  display: none !important;
-}
-.md-spoiler.md-spoiler-block:not(.revealed)::before {
-  /* soft cloud mono-x da */
-}
-.md-spoiler-line {
-  display: block;
-  height: 1.2em;
-  line-height: 1.2em;
-  border-radius: 6px;
-  box-sizing: border-box;
-  max-width: 100%;
-  background-color: rgba(231, 233, 234, 0.42);
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(231, 233, 234, 0.25) 0 3px,
-    transparent 3px 6px
-  );
-  box-shadow: inset 0 0 0 1px rgba(231, 233, 234, 0.18);
-  pointer-events: none;
-}
-.md-spoiler:not(.revealed) .md-spoiler-line {
-  display: block !important;
-  visibility: visible !important;
-  color: transparent !important;
-}
-.md-spoiler:not(.revealed) *:not(.md-spoiler-line) {
+.md-spoiler:not(.revealed)::before {
   display: none !important;
 }
 .md-spoiler.revealed {
-  display: inline-block;
-  width: auto !important;
-  min-width: 0 !important;
-  height: auto;
-  line-height: inherit;
-  padding: 0;
-  background: transparent;
-  position: static;
+  filter: none !important;
+  -webkit-filter: none !important;
+  background: transparent !important;
   color: inherit !important;
   -webkit-text-fill-color: inherit !important;
-  -webkit-user-select: text !important;
   user-select: text !important;
-  z-index: auto;
-  white-space: pre-wrap !important;
-  word-break: break-word;
+  -webkit-user-select: text !important;
+  cursor: text !important;
+  padding: 0;
+  display: inline;
+}
+.md-spoiler.revealed::before {
+  display: none !important;
 }
 .md-spoiler.revealed::before {
   display: none !important;
@@ -3623,8 +3565,8 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 .chat-thread-messages,
 .feed-scroll,
 #feedList {
-  /* scroll parent: layout/paint contain — overflow scroll ishlashi uchun strict emas */
-  contain: layout paint;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 /* Animatsiyalar GPU da */
 .chat-msg.anim-in,
@@ -3636,8 +3578,6 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 
 /* ═══ ULTRA-SMOOTH UI (SpaceMR max perf) ═══ */
 #feed, #feedList, .feed-scroll {
-  content-visibility: auto;
-  contain: layout paint style;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
 }
@@ -5425,47 +5365,18 @@ body.report-open {
 }
 
 
-/* ===== Chat spoiler: bubble color must not leak text; bar always visible ===== */
+/* ===== Chat spoiler: Telegram-style client-side blur ===== */
 .chat-msg .md-spoiler:not(.revealed),
 .chat-bubble .md-spoiler:not(.revealed),
 .chat-bubble-text .md-spoiler:not(.revealed),
 #chatThreadMessages .md-spoiler:not(.revealed) {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  text-shadow: none !important;
-  background: transparent !important;
-  font-size: inherit !important;
-  /* multi-line barlar kesilmasin — single-line uchun ham blur cheti ko'rinsin */
-  overflow: visible !important;
-}
-.chat-msg .md-spoiler.md-spoiler-block:not(.revealed),
-.chat-bubble .md-spoiler.md-spoiler-block:not(.revealed),
-.chat-bubble-text .md-spoiler.md-spoiler-block:not(.revealed) {
-  height: auto !important;
-  max-height: none !important;
-  gap: 0.2em !important;
-}
-.chat-msg.mine .md-spoiler-line {
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
-/* ::before — mono-x soft cloud, bu yerda ustiga yozilmasin */
-.chat-msg.mine .md-spoiler:not(.revealed)::before {
-  box-shadow: none !important;
-}
-.chat-msg.theirs .md-spoiler-line {
-  background-color: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-}
-.chat-msg.theirs .md-spoiler:not(.revealed)::before {
-  box-shadow: none !important;
-}
-/* Empty vault placeholder still needs hit area */
-.chat-msg .md-spoiler:not(.revealed) {
-  min-height: 1.2em;
-  min-width: 3ch;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  filter: blur(6px) !important;
+  -webkit-filter: blur(6px) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-radius: 4px;
+  cursor: pointer !important;
 }
 
 

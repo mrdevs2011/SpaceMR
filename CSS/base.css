@@ -40,7 +40,7 @@ html.is-desktop #chatThreadMessages .chat-msg[data-msg-id] {
   user-select: auto !important;
 }
 html.is-desktop #chatThreadMessages .chat-bubble,
-html.is-desktop #chatThreadMessages .chat-bubble *:not(button):not(.chat-msg-meta):not(.msg-avi-btn):not(.loc-action-btn):not(.loc-action-btn *):not(.loc-map-preview):not(.loc-map-preview *):not(.poll-vote-btn):not(.poll-vote-btn *),
+html.is-desktop #chatThreadMessages .chat-bubble *:not(button):not(.chat-msg-meta):not(.msg-avi-btn):not(.loc-action-btn):not(.loc-action-btn *):not(.loc-map-preview):not(.loc-map-preview *):not(.poll-bubble-card):not(.poll-bubble-card *):not(.poll-item):not(.poll-item *):not(.poll-radio):not(.poll-radio *):not(.poll-chk):not(.poll-chk *):not(.poll-quiz-badge):not(.poll-quiz-badge *):not(.poll-vote-btn):not(.poll-vote-btn *),
 html.is-desktop .chat-bubble-text,
 html.is-desktop .chat-bubble-text *,
 html.is-desktop .cfm-caption,
@@ -69,6 +69,37 @@ html.is-desktop .pf-bio * {
   -webkit-user-select: none !important;
   user-select: none !important;
   pointer-events: auto !important;
+}
+
+/* So'rovnoma va viktorina variantlari doimo cursor: pointer va tanlanmasin */
+.poll-bubble-card,
+.poll-bubble-card *,
+.poll-item,
+.poll-item *,
+.poll-item-row,
+.poll-item-row *,
+.poll-item-left,
+.poll-item-left *,
+.poll-item-text,
+.poll-item-pct,
+.poll-radio,
+.poll-radio *,
+.poll-chk,
+.poll-chk *,
+.poll-quiz-badge,
+.poll-quiz-badge *,
+.poll-vote-btn,
+.poll-vote-btn * {
+  cursor: pointer !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Silliq va xavfsiz scroll-lock (body.position=fixed xatosini bartaraf etish) */
+html.scroll-locked,
+body.scroll-locked {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
 }
 /* ─── splash ─── */
 /* ═══════════════════════ SPLASH SCREEN — Minimal ═══════════════════════ */

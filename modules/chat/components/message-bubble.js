@@ -1053,7 +1053,7 @@ export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = fals
             ${checkIcon}
             <span class="poll-item-text">${text}</span>
           </div>
-          ${showResults ? `<span class="poll-item-pct">${pct}%</span>` : ''}
+          ${showResults ? `<span class="poll-item-pct" role="button" tabindex="0" title="${count} ta ovoz" onclick="event.stopPropagation(); window._showPollVotersById && window._showPollVotersById('${esc(m.id)}', '${optId}', event)">${count > 0 ? `${count} ta • ` : ''}${pct}%</span>` : ''}
         </div>
       </div>`;
   }).join('');

@@ -4206,6 +4206,35 @@ export async function sendPollMessage(poll) {
 }
 
 /* So‘rovnomaga (Poll) ovoz berish hodisasi */
+window._showPollVotersById = function(msgId, optId, evt) {
+  if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+  const msg = (chatState._curMsgs || []).find(x => String(x.id) === String(msgId));
+  if (!msg) return;
+  const poll = parsePoll(msg.text);
+  if (!poll) return;
+  const opt = (poll.options || []).find(o => String(o.id) === String(optId));
+  if (!opt) return;
+
+  if (poll.anonymous) {
+    import('../ui/toast.js').then(m => m.toast('Bu anonim so‘rovnoma — ovoz berganlar ro‘yxati yashirilgan', 'info'));
+    return;
+  }
+  const voters = Array.isArray(opt.voters) ? opt.voters : [];
+  if (!voters.length) {
+    import('../ui/toast.js').then(m => m.toast(`«${opt.text}» variantiga hali hech kim ovoz bermagan`, 'info'));
+    return;
+  }
+  const gNames = (typeof chatUI.groupNames === 'function') ? chatUI.groupNames() : {};
+  const names = voters.map(uid => {
+    if (uid === state.me?.uid) return 'Siz';
+    if (gNames && gNames[uid]?.fullName) return gNames[uid].fullName;
+    if (chatState._curPeer && chatState._curPeer.id === uid) return chatState._curPeer.display_name || 'Suhbatdosh';
+    return 'Foydalanuvchi';
+  });
+  const listStr = names.slice(0, 5).join(', ') + (names.length > 5 ? ` va yana ${names.length - 5} kishi` : '');
+  import('../ui/toast.js').then(m => m.toast(`«${opt.text}» (${voters.length} ta ovoz): ${listStr}`, 'info', 3500));
+};
+
 window._handlePollVote = async function(msgId, optId, evt) {
   if (evt) { evt.preventDefault(); evt.stopPropagation(); }
   const uid = state.me?.uid;
@@ -4220,11 +4249,18 @@ window._handlePollVote = async function(msgId, optId, evt) {
 
   const voters = Array.isArray(opt.voters) ? opt.voters : [];
   const hasVotedThis = voters.includes(uid);
+  const alreadyVotedAny = poll.options.some(o => (o.voters || []).includes(uid));
 
   if (poll.isQuiz) {
     // Viktorina rejimida faqat 1 marta javob tanlanadi va javob ochiladi
-    const alreadyVotedAny = poll.options.some(o => (o.voters || []).includes(uid));
-    if (alreadyVotedAny) return;
+    if (alreadyVotedAny) {
+      if (poll.anonymous) {
+        import('../ui/toast.js').then(m => m.toast('Viktorinada javob berib bo‘lingan (Anonim)', 'info'));
+      } else {
+        window._showPollVotersById && window._showPollVotersById(msgId, optId, evt);
+      }
+      return;
+    }
     opt.voters.push(uid);
   } else if (poll.multiple) {
     if (hasVotedThis) {
@@ -4251,8 +4287,12 @@ window._handlePollVote = async function(msgId, optId, evt) {
   const newText = JSON.stringify({ ...poll, __poll: true });
   msg.text = newText;
 
-  // Mahalliy xabarlar ro‘yxatini darhol chizish
-  paintMessages([...chatState._curMsgs]);
+  // Mahalliy xabarlar ro‘yxatini darhol chizish (guruh va DM ni to'g'ri inobatga olgan holda)
+  if (state.currentChatKind === 'group' && typeof chatUI.paintGroupThread === 'function') {
+    chatUI.paintGroupThread(chatState._curMsgs, chatUI.groupNames ? chatUI.groupNames() : {});
+  } else {
+    paintMessages([...chatState._curMsgs]);
+  }
 
   // DB update
   try {
