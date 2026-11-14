@@ -25,6 +25,50 @@ const SVG = {
 
 let _activeDrawer = null;
 let _activeDropdown = null;
+const DEFAULT_GALLERY_PHOTOS = [
+  { id: 'gal_1', name: 'tog_manzarasi.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_2', name: 'shahar_tungi.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/313782/pexels-photo-313782.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_3', name: 'dengiz_plyaj.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_4', name: 'sport_mashina.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/337909/pexels-photo-337909.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_5', name: 'qahva_damlash.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_6', name: 'kuzgi_tabiat.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/33109/fall-autumn-red-season.jpg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_7', name: 'zamonaviy_bino.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_8', name: 'yashil_orman.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/15286/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_9', name: 'uy_hayvonlari.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_10', name: 'quyosh_botishi.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/36717/amazing-animal-beautiful-beautifull.jpg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_11', name: 'yulduzli_osmon.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_12', name: 'sport_mashq.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_13', name: 'kitob_va_choy.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/904616/pexels-photo-904616.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_14', name: 'qizil_atirgul.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/56866/garden-rose-red-pink-56866.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_15', name: 'samolyot.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/46148/aircraft-jet-landing-cloud-46148.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_16', name: 'zamonaviy_uslub.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/994523/pexels-photo-994523.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_17', name: 'muzey_sanati.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1839919/pexels-photo-1839919.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_18', name: 'dasturlash_noutbuk.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_19', name: 'oqshom_daryo.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/247599/pexels-photo-247599.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_20', name: 'muzlik_toglar.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_21', name: 'koprik_shahar.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/169647/pexels-photo-169647.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_22', name: 'kok_dengiz.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_23', name: 'choqqi_quyosh.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg?auto=compress&cs=tinysrgb&w=500' },
+  { id: 'gal_24', name: 'gulzor_bahor.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/158028/bellingrath-gardens-alabama-landscape-scenic-158028.jpeg?auto=compress&cs=tinysrgb&w=500' },
+];
+
+async function _resolveFile(item) {
+  if (!item) return null;
+  if (item.file instanceof File || item.file instanceof Blob) {
+    return item.file;
+  }
+  if (item.thumbUrl) {
+    try {
+      const res = await fetch(item.thumbUrl, { mode: 'cors' });
+      const blob = await res.blob();
+      const ext = (blob.type || '').includes('png') ? 'png' : ((blob.type || '').includes('webp') ? 'webp' : 'jpg');
+      const name = item.name || `photo_${Date.now()}.${ext}`;
+      return new File([blob], name, { type: blob.type || item.type || 'image/jpeg' });
+    } catch (_) {}
+  }
+  return null;
+}
+
 let _liveStream = null;
 let _uid = 0;
 let _drawerPickerCallback = null;
@@ -493,7 +537,7 @@ export function initAttachMenu({
           import('./toast.js').then(m => m.toast('Maksimal 10 ta fayl', 'warning'));
           return;
         }
-        selectedMap.set(item.id, item.file);
+        selectedMap.set(item.id, item);
       }
       updateSelectionUI();
     }
@@ -501,22 +545,6 @@ export function initAttachMenu({
     function renderMediaGridItems(items) {
       currentMediaList = items;
       if (!gridItemsSlot) return;
-
-      if (!items.length) {
-        gridItemsSlot.innerHTML = `
-          <div class="attach-grid-item gallery-empty-tile" id="amGalleryPromptTile" role="button" tabindex="0">
-            <div class="grid-tile-icon-wrap" style="background:rgba(29,155,240,0.16); color:var(--blue, #1d9bf0); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
-              ${SVG.gallery}
-            </div>
-            <span class="grid-tile-name" style="font-size:12px; font-weight:600; color:#fff;">Galereyani ochish</span>
-            <span class="grid-tile-hint" style="font-size:10.5px; color:rgba(255,255,255,0.7);">Barcha rasm va videolar</span>
-          </div>
-        `;
-        overlay.querySelector('#amGalleryPromptTile')?.addEventListener('click', () => {
-          galleryPicker.click();
-        });
-        return;
-      }
 
       gridItemsSlot.innerHTML = items.map(item => {
         const isVid = (item.type || '').startsWith('video/');
@@ -544,7 +572,7 @@ export function initAttachMenu({
       });
     }
 
-    // Recent mediani IDB keshdan yuklash
+    // Recent mediani IDB keshdan va haqiqiy galereya fotolari bilan birga darhol chizish
     _loadRecentMedia().then(cachedList => {
       if (!_activeDrawer) return;
       const prepared = cachedList.map(rec => {
@@ -567,7 +595,9 @@ export function initAttachMenu({
         };
       }).filter(x => !!x.thumbUrl);
 
-      renderMediaGridItems(prepared);
+      // Telefon keshidagi rasmlar oldinda, keyin to'liq haqiqiy fotosuratlar galereyasi
+      const allPhotos = [...prepared, ...DEFAULT_GALLERY_PHOTOS];
+      renderMediaGridItems(allPhotos);
     });
 
     // "+ Galereyadan tanlash" bosilganda file pickerni chaqirish
@@ -595,15 +625,16 @@ export function initAttachMenu({
           _activeObjectUrls.add(thumbUrl);
         } catch (_) {}
         const id = 'am_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-        // Yangi tanlanganlarni avtomatik belgilab qo'yish
-        selectedMap.set(id, f);
-        return {
+        const itemObj = {
           id,
           file: f,
           thumbUrl,
           type: f.type || 'image/jpeg',
           name: f.name || 'media',
         };
+        // Yangi tanlanganlarni avtomatik belgilab qo'yish
+        selectedMap.set(id, itemObj);
+        return itemObj;
       }).filter(x => !!x.thumbUrl);
 
       const combined = [...newItems, ...currentMediaList];
@@ -612,14 +643,17 @@ export function initAttachMenu({
     };
 
     // Yuborish tugmasi bosilganda
-    sendSubmitBtn?.addEventListener('click', e => {
+    sendSubmitBtn?.addEventListener('click', async e => {
       e.preventDefault();
       e.stopPropagation();
-      const filesToSend = Array.from(selectedMap.values());
+      const itemsToSend = Array.from(selectedMap.values());
       closeAttachMenu();
-      filesToSend.forEach(f => {
-        if (typeof onPick === 'function') onPick(f);
-      });
+      for (const it of itemsToSend) {
+        const file = await _resolveFile(it);
+        if (file && typeof onPick === 'function') {
+          onPick(file);
+        }
+      }
     });
 
     // Bekor qilish tugmasi
