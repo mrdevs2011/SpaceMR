@@ -58,6 +58,43 @@ function _getAttachDb() {
   return _attachDbPromise;
 }
 
+async function _makeThumbnail(file) {
+  if (!file || !file.type || !file.type.startsWith('image/')) return '';
+  return new Promise(resolve => {
+    try {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          URL.revokeObjectURL(url);
+          const maxDim = 200;
+          let w = img.width || 100, h = img.height || 100;
+          if (w > h) {
+            if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          } else {
+            if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        } catch (_) {
+          resolve('');
+        }
+      };
+      img.onerror = () => {
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        resolve('');
+      };
+      img.src = url;
+    } catch (_) {
+      resolve('');
+    }
+  });
+}
+
 async function _loadRecentMedia() {
   try {
     const db = await _getAttachDb();
@@ -68,9 +105,9 @@ async function _loadRecentMedia() {
       req.onerror = () => reject(req.error);
     });
     rows.sort((a, b) => (b.time || 0) - (a.time || 0));
-    return rows.slice(0, 36);
+    return rows.slice(0, 48);
   } catch (_) {
-    return _memRecentFiles.slice(0, 36);
+    return _memRecentFiles.slice(0, 48);
   }
 }
 
@@ -78,21 +115,34 @@ async function _saveRecentMedia(files) {
   if (!Array.isArray(files) || !files.length) return;
   for (const f of files) {
     if (!f) continue;
+    let thumbDataUrl = '';
+    try {
+      thumbDataUrl = await _makeThumbnail(f);
+    } catch (_) {}
+
     const item = {
       id: 'am_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
       name: f.name || 'media',
       type: f.type || 'image/jpeg',
       size: f.size || 0,
+      thumbDataUrl: thumbDataUrl,
       file: f,
       time: Date.now(),
     };
     _memRecentFiles.unshift(item);
-    if (_memRecentFiles.length > 36) _memRecentFiles.pop();
+    if (_memRecentFiles.length > 48) _memRecentFiles.pop();
     try {
       const db = await _getAttachDb();
       const tx = db.transaction(ATTACH_STORE, 'readwrite');
       tx.objectStore(ATTACH_STORE).put(item);
-    } catch (_) {}
+    } catch (_) {
+      // Agar File serialize bo'lmasa, thumbnail bilan saqlaymiz
+      try {
+        const db = await _getAttachDb();
+        const tx = db.transaction(ATTACH_STORE, 'readwrite');
+        tx.objectStore(ATTACH_STORE).put({ ...item, file: null });
+      } catch (_2) {}
+    }
   }
 }
 
@@ -455,10 +505,11 @@ export function initAttachMenu({
       if (!items.length) {
         gridItemsSlot.innerHTML = `
           <div class="attach-grid-item gallery-empty-tile" id="amGalleryPromptTile" role="button" tabindex="0">
-            <div class="grid-tile-icon-wrap" style="background:rgba(255,255,255,0.06); color:var(--text3, #888); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+            <div class="grid-tile-icon-wrap" style="background:rgba(29,155,240,0.16); color:var(--blue, #1d9bf0); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
               ${SVG.gallery}
             </div>
-            <span class="grid-tile-name" style="font-size:11px; color:var(--text3, #888);">Rasmlar tanlang</span>
+            <span class="grid-tile-name" style="font-size:12px; font-weight:600; color:#fff;">Galereyani ochish</span>
+            <span class="grid-tile-hint" style="font-size:10.5px; color:rgba(255,255,255,0.7);">Barcha rasm va videolar</span>
           </div>
         `;
         overlay.querySelector('#amGalleryPromptTile')?.addEventListener('click', () => {
@@ -498,19 +549,21 @@ export function initAttachMenu({
       if (!_activeDrawer) return;
       const prepared = cachedList.map(rec => {
         const f = rec.file || rec;
-        let thumbUrl = '';
-        try {
-          thumbUrl = URL.createObjectURL(f);
-          _activeObjectUrls.add(thumbUrl);
-        } catch (_) {
-          thumbUrl = '';
+        let thumbUrl = rec.thumbDataUrl || '';
+        if (!thumbUrl && rec.file) {
+          try {
+            thumbUrl = URL.createObjectURL(rec.file);
+            _activeObjectUrls.add(thumbUrl);
+          } catch (_) {
+            thumbUrl = '';
+          }
         }
         return {
           id: rec.id || ('am_' + Math.random().toString(36).slice(2, 7)),
-          file: f,
+          file: rec.file,
           thumbUrl,
-          type: f.type || rec.type || 'image/jpeg',
-          name: f.name || rec.name || 'media',
+          type: rec.type || (rec.file && rec.file.type) || 'image/jpeg',
+          name: rec.name || (rec.file && rec.file.name) || 'media',
         };
       }).filter(x => !!x.thumbUrl);
 
@@ -664,21 +717,19 @@ export function initAttachMenu({
 
       let acquiredStream = null;
       if (hasCam) {
-        // Avval kameraga ruxsat so'raladi
         try {
           acquiredStream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } },
             audio: false,
           });
         } catch (err) {
-          console.warn('[AttachMenu] Camera permission denied:', err);
-          const { toast } = await import('./toast.js');
-          toast('Kameraga ruxsat berilmadi. Panelni ochish uchun kameraga ruxsat zarur', 'error');
-          return; // Kameraga ruxsat bermasa — attach menu OCHILMAYDI!
+          console.warn('[AttachMenu] Camera permission denied or not available:', err);
+          hasCam = false;
+          acquiredStream = null;
         }
       }
 
-      // Agar kamera bo'lmasa, ruxsat so'ralmasdan to'g'ridan-to'g'ri ochiladi
+      // Panel har doim ochiladi — kamera ruxsat bermagan bo'lsa ham galereya va media ko'rinadi!
       openMobileDrawer(dyn, acquiredStream, hasCam);
     } else {
       openDesktopDropdown(dyn);

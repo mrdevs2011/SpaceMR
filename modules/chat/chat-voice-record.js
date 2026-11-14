@@ -316,7 +316,46 @@ function _vnFloatRecordBtn(on) {
   }
 }
 
+let _recHistoryPushed = false;
+function _pushRecHistory() {
+  if (_recHistoryPushed) return;
+  try {
+    if (typeof history !== 'undefined' && history.pushState) {
+      history.pushState({ _spacemr_rec: true }, '');
+      _recHistoryPushed = true;
+    }
+  } catch (_) {}
+}
+
+function _cleanRecHistory() {
+  if (!_recHistoryPushed) return;
+  _recHistoryPushed = false;
+  try {
+    if (typeof history !== 'undefined' && history.state && history.state._spacemr_rec) {
+      history.back();
+    }
+  } catch (_) {}
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', (e) => {
+    if (_recHistoryPushed || _vidActive || _vidLocked || _isHoldingVoice || _voiceLocked) {
+      _recHistoryPushed = false;
+      if (_vidActive || _vidLocked) {
+        cancelVideoRecording();
+        toast('Video xabar bekor qilindi');
+      }
+      if (_voiceLocked || _isHoldingVoice) {
+        cancelRecording();
+        toast('Ovozli xabar bekor qilindi');
+      }
+      _finishHoldRef?.();
+    }
+  });
+}
+
 function _showVidPreview(stream) {
+  _pushRecHistory();
   let el = document.getElementById('vnotePreview');
   if (!el) {
     el = document.createElement('div');
@@ -708,6 +747,7 @@ function stopVideoRecording() {
     _vidStopAll();
   }
   _stopPulse();
+  _cleanRecHistory();
 }
 
 function cancelVideoRecording() {
@@ -726,6 +766,7 @@ function cancelVideoRecording() {
   _vidStopAll();
   _vidChunks = [];
   _stopPulse();
+  _cleanRecHistory();
 }
 
 function _showRecordBar() {
@@ -1024,6 +1065,7 @@ async function startRecording() {
   _voiceLocked = false;
   _recChunks = [];
   _recStartTs = performance.now();
+  _pushRecHistory();
 
   // Ruxsat holatini tekshirish — denied bo'lsa darhol o'z cardimizni ko'rsatamiz
   const perm = await _queryMicPermission();
@@ -1135,6 +1177,7 @@ function stopRecording() {
   }
   _stopPulse();
   _voiceResetLockUi();
+  _cleanRecHistory();
 }
 
 function cancelRecording() {
@@ -1155,6 +1198,7 @@ function cancelRecording() {
   _recChunks = [];
   _stopPulse();
   _voiceResetLockUi();
+  _cleanRecHistory();
 }
 
 /* ── Hold-to-talk: Telegram-style real amplitude pulse (voice + rolik) ── */
@@ -1421,6 +1465,14 @@ if (_vBtn) {
       const lp = Math.max(0, Math.min(1, (_voiceStartY - e.clientY) / _VID_LOCK_DIST));
       _setLockProgress(lp);
       if (lp >= 1) {
+        if (_vidHoldTimer) {
+          clearTimeout(_vidHoldTimer);
+          _vidHoldTimer = null;
+          _vidActive = true;
+          _vBtn.classList.add('recording');
+          _showRecordBar();
+          startVideoRecording();
+        }
         if (_vidActive) { _lockVideo(); return; }
         if (_mediaRec && _mediaRec.state !== 'inactive') { _lockVoice(); return; }
       }
@@ -1431,6 +1483,10 @@ if (_vBtn) {
     const full = _applyVoiceCancelProgress(progress);
     _voiceCancelled = full;
     _vBtn.classList.toggle('cancelling', full);
+    if (full && _vidHoldTimer) {
+      clearTimeout(_vidHoldTimer);
+      _vidHoldTimer = null;
+    }
   });
 
   const _finishVoiceHold = () => {
