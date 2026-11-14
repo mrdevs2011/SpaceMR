@@ -99,11 +99,70 @@ export function parseGif(raw) {
   return null;
 }
 
+/* ── Joylashuv (Location) xabar: {"__location":true,"lat":...,"lon":...,"title":...,"address":...} ── */
+export function parseLocation(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const t = raw.trim();
+  if (!t.startsWith('{') || !t.includes('"__location"')) return null;
+  try {
+    const p = JSON.parse(t);
+    if (p && (p.__location === true || p.__location === 'true') && typeof p.lat === 'number' && typeof p.lon === 'number') {
+      return {
+        lat: p.lat,
+        lon: p.lon,
+        title: typeof p.title === 'string' && p.title.trim() ? p.title.trim() : 'Joylashuv',
+        address: typeof p.address === 'string' ? p.address.trim() : '',
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
+/* ── So\'rovnoma (Poll) xabar: {"__poll":true,"id":...,"question":...,"options":[...],"multiple":...,"anonymous":...} ── */
+export function parsePoll(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const t = raw.trim();
+  if (!t.startsWith('{') || !t.includes('"__poll"')) return null;
+  try {
+    const p = JSON.parse(t);
+    if (p && (p.__poll === true || p.__poll === 'true') && typeof p.question === 'string' && Array.isArray(p.options)) {
+      return {
+        id: p.id || ('poll_' + Date.now()),
+        question: p.question,
+        options: p.options.map((opt, i) => ({
+          id: opt.id || ('opt_' + i),
+          text: String(opt.text || ''),
+          voters: Array.isArray(opt.voters) ? opt.voters : [],
+        })),
+        anonymous: !!p.anonymous,
+        multiple: !!p.multiple,
+        totalVotes: Number(p.totalVotes) || 0,
+        creatorId: p.creatorId || null,
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
 /** Chat prevyusi: hech qachon JSON/URL ko'rsatilmasin */
 export function formatLastMessageText(raw, mine = false) {
   if (!raw) return '';
   { const _f = splitFwd(raw); if (_f.name) { raw = _f.text; if (!String(raw).trim()) return 'Uzatilgan xabar'; } }
+  if (typeof raw === 'string' && raw.includes('"__album"')) {
+    try {
+      const p = JSON.parse(raw.trim());
+      if (p && p.__album) {
+        if (p.caption && String(p.caption).trim()) return maskSpoilers(String(p.caption).trim());
+        const count = Array.isArray(p.items) ? p.items.length : 0;
+        return count ? `Albom (${count} ta media)` : 'Albom';
+      }
+    } catch (_) { return 'Albom'; }
+  }
   if (parseGif(raw)) return 'GIF';
+  const loc = parseLocation(raw);
+  if (loc) return '📍 ' + (loc.title || 'Joylashuv');
+  const poll = parsePoll(raw);
+  if (poll) return '📊 So\'rovnoma: ' + poll.question;
   const pm = parsePureMedia(raw);
   if (pm) {
     if (pm.type === 'youtube') return pm.isShorts ? 'YouTube Shorts' : 'YouTube video';
@@ -124,7 +183,7 @@ export function formatLastMessageText(raw, mine = false) {
   }
   const t = String(raw).trim();
   // JSON / ichki format — foydalanuvchiga ko'rsatilmasin
-  if (t.startsWith('{') && (t.includes('"__gif"') || t.includes('"__postShare"') || t.includes('"__callLog"'))) {
+  if (t.startsWith('{') && (t.includes('"__gif"') || t.includes('"__postShare"') || t.includes('"__callLog"') || t.includes('"__location"') || t.includes('"__poll"'))) {
     return 'Xabar';
   }
   // Yalang'och media URL
@@ -153,6 +212,10 @@ export function humanMsgPreview(m) {
   const raw = m.text || '';
   const nice = formatLastMessageText(raw, false);
   if (nice && nice !== raw) return nice;
+  const loc = parseLocation(raw);
+  if (loc) return '📍 ' + (loc.title || 'Joylashuv');
+  const poll = parsePoll(raw);
+  if (poll) return '📊 ' + poll.question;
   const t = String(raw).replace(/\s+/g, ' ').trim();
   if (!t) return 'Xabar';
   if (t.startsWith('{') && t.includes('"__')) return 'Xabar';
@@ -212,22 +275,42 @@ export function _removePendingBubble(id) {
   if (el) el.remove();
 }
 
-/* ── XHR upload with progress ─────────────────────────────────────────── */
+/* ── XHR upload with progress + AbortSignal ──────────────────────────── */
 
-export async function uploadViaControllerProgress(file, folder, onProgress) {
+export async function uploadViaControllerProgress(file, folder, onProgress, abortSignal = null) {
+  if (abortSignal?.aborted) throw new DOMException('Upload aborted', 'AbortError');
   const { data: { session } } = await sb.auth.getSession();
   const token = session?.access_token;
   if (!token || !state.me) throw new Error('Tizimga kirilmagan');
   assertAllowedUpload(file, folder); // video taqiq; story/avatar faqat rasm
 
-  const safeName = file.name.replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
+  const safeName = (file.name || 'file').replace(/[^\w.\-]/g, '_').replace(/_+/g, '_');
   const path = `${state.me.uid}/${folder}/${Date.now()}_${(crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2))}_${safeName}`;
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path}`;
 
   beginUpload();
   return new Promise((resolve, reject) => {
-    const done = (fn) => (v) => { endUpload(); fn(v); };
+    let settled = false;
+    const done = (fn) => (v) => {
+      if (settled) return;
+      settled = true;
+      endUpload();
+      fn(v);
+    };
+
     const xhr = new XMLHttpRequest();
+
+    if (abortSignal) {
+      if (abortSignal.aborted) {
+        done(reject)(new DOMException('Upload aborted', 'AbortError'));
+        return;
+      }
+      abortSignal.addEventListener('abort', () => {
+        try { xhr.abort(); } catch (_) {}
+        done(reject)(new DOMException('Upload aborted', 'AbortError'));
+      }, { once: true });
+    }
+
     xhr.open('POST', uploadUrl);
     xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
@@ -235,12 +318,23 @@ export async function uploadViaControllerProgress(file, folder, onProgress) {
     xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
     xhr.upload.onprogress = e => {
+      if (abortSignal?.aborted) return;
       if (e.lengthComputable && onProgress) onProgress((e.loaded / e.total) * 100);
     };
-    const fallback = () => uploadViaController(file, folder, { track: false })
-      .then(res => { if (onProgress) onProgress(100); done(resolve)(res); })
-      .catch(done(reject));
+    const fallback = () => {
+      if (abortSignal?.aborted) {
+        done(reject)(new DOMException('Upload aborted', 'AbortError'));
+        return;
+      }
+      uploadViaController(file, folder, { track: false })
+        .then(res => { if (onProgress) onProgress(100); done(resolve)(res); })
+        .catch(done(reject));
+    };
     xhr.onload = async () => {
+      if (abortSignal?.aborted) {
+        done(reject)(new DOMException('Upload aborted', 'AbortError'));
+        return;
+      }
       if (xhr.status >= 200 && xhr.status < 300) {
         if (onProgress) onProgress(100);
         const signedUrl = await mediaSecureUrl(path);
@@ -253,6 +347,16 @@ export async function uploadViaControllerProgress(file, folder, onProgress) {
 }
 
 export const _uuid = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+
+// Re-export Telegram progress & upload queue helpers
+export {
+  renderUploadRingHtml,
+  updateUploadProgress,
+  markUploadCompleted,
+  cancelUpload,
+  enqueueSequentialUpload,
+  hasActiveUpload,
+} from './chat-upload-queue.js';
 
 
 /**

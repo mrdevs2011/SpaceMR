@@ -1,6 +1,6 @@
 import './chat-image-zoom.js';
 import { esc, renderYouTubeCard, renderMediaCard } from '../../core/utils.js';
-import { getChatFileIcon, callLogInfo, fmtCallDur } from '../chat-shared.js';
+import { getChatFileIcon, callLogInfo, fmtCallDur, renderUploadRingHtml } from '../chat-shared.js';
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
 import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
 
@@ -624,6 +624,56 @@ export function generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpNam
   </div>`;
 }
 
+export function generateAlbumBubble({ m, time, mine, renderTicks, dm = false, renderMarkdown = null }) {
+  const items = Array.isArray(m.items) ? m.items : [];
+  const count = items.length;
+  const hasCaption = !!(m.text && String(m.text).trim());
+  const captionHtml = hasCaption
+    ? `<div class="chat-bubble-text cfm-caption">${typeof renderMarkdown === 'function' ? renderMarkdown(m.text) : esc(m.text)}</div>`
+    : '';
+
+  const itemsHtml = items.map((it, idx) => {
+    const rawUrl = it.url || it.mediaUrl || it.objUrl || '';
+    const safeUrl = esc(rawUrl);
+    const isVideo = (it.type || '').toLowerCase().startsWith('video') || /\.(mp4|webm|mov)(\?|$)/i.test(rawUrl);
+    const fname = esc(it.name || it.fileName || (isVideo ? 'video.mp4' : 'image.jpg'));
+    const isUploading = it.status === 'uploading' || it.status === 'sending' || ((m.status === 'sending' || m.status === 'uploading') && !it.path);
+    const uploadId = it.id || `${m.id}_${idx}`;
+
+    const ringHtml = isUploading ? renderUploadRingHtml(uploadId, it.progress || 0) : '';
+
+    return `<div class="chat-album-item${isVideo ? ' chat-album-item--video' : ''}" data-album-id="${esc(m.id)}" data-media-idx="${idx}" data-url="${safeUrl}" data-type="${isVideo ? 'video' : 'image'}" data-name="${fname}">
+      ${isVideo
+        ? `<video src="${safeUrl}#t=0.1" preload="metadata" playsinline muted disablepictureinpicture></video><span class="cm-vbadge" aria-hidden="true"></span>`
+        : `<img src="${safeUrl}" alt="${fname}" loading="lazy" onload="this.classList.add('loaded')">`
+      }
+      ${ringHtml}
+    </div>`;
+  }).join('');
+
+  const gridHtml = `<div class="chat-album-grid" data-count="${count}" data-album-id="${esc(m.id)}">
+    ${itemsHtml}
+    <span class="chat-msg-meta cfm-media-badge">
+      ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
+      ${mine ? renderTicks(m.status) : ''}
+    </span>
+  </div>`;
+
+  const bubbleClassExtra = dm
+    ? (hasCaption ? ' bubble-media-caption bubble-media-dm bubble-album-dm' : ' bubble-media-only bubble-media-dm bubble-album-dm')
+    : (hasCaption ? ' bubble-media-caption bubble-album' : ' bubble-media-only bubble-album');
+
+  const bubbleContent = hasCaption
+    ? `<div class="cfm-media-wrap cfm-media-dm cfm-media-dm--cap cfm-album-wrap">${gridHtml}${captionHtml}</div>`
+    : `<div class="cfm-media-wrap cfm-media-wrap--standalone cfm-media-dm cfm-album-wrap">${gridHtml}</div>`;
+
+  return {
+    bubbleClassExtra,
+    metaOutside: false,
+    bubbleContent,
+  };
+}
+
 export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaption, captionHtml, time, mine, renderTicks, when = '', dm = false }) {
   const _ttl = when ? ` title="${esc(when)}"` : '';
   let bubbleClassExtra = '';
@@ -634,7 +684,8 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
   const _mimeL = String(m.mediaType || '').toLowerCase();
   const _isAudio = !_isImage && !_mimeL.startsWith('video') && (_mimeL.startsWith('audio') || AUD_EXT.includes(_ext));
   const _isVideo = !_isImage && !_isAudio && (_mimeL.startsWith('video') || VID_EXT.includes(_ext));
-
+  const isUploading = m.status === 'uploading' || m.status === 'sending';
+  const ringHtml = isUploading ? renderUploadRingHtml(m.id, m.progress || 0) : '';
 
   /* 1v1 chat: rasm/video pufakka o'ralmaydi — faqat yupqa border. Izoh bo'lsa, u alohida kichik pufakda pastda.
      (Pufakka o'rash faqat guruhlar uchun.) */
@@ -647,6 +698,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     if (hasCaption) {
       bubbleContent = `<div class="cfm-media-wrap cfm-media-dm cfm-media-dm--cap${extraWrapCls}">
         ${inner}
+        ${ringHtml}
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
           ${mine ? renderTicks(m.status) : ''}
@@ -656,6 +708,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     } else {
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone cfm-media-dm${extraWrapCls}">
         ${inner}
+        ${ringHtml}
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
           ${mine ? renderTicks(m.status) : ''}
@@ -683,6 +736,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       metaOutside = false;
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone cfm-vid-wrap">
         ${vid}
+        ${ringHtml}
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
           ${mine ? renderTicks(m.status) : ''}
@@ -692,6 +746,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       bubbleClassExtra = ' bubble-media-caption';
       bubbleContent = `<div class="cfm-media-wrap cfm-vid-wrap">
         ${vid}
+        ${ringHtml}
         ${captionHtml}
       </div>`;
     }
@@ -707,6 +762,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
         <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
           <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
         </a>
+        ${ringHtml}
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
           ${mine ? renderTicks(m.status) : ''}
@@ -718,6 +774,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
         <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
           <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
         </a>
+        ${ringHtml}
         ${captionHtml}
       </div>`;
     }
@@ -729,9 +786,9 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     const _chatCid = (_chatKind === 'group' ? (document.getElementById('chatThreadModal')?.dataset?.gid || state?.currentGroupId || '') : (state?.currentChatId || ''));
     bubbleContent = `<div class="cfm-file-wrap cfm-audio-wrap">
       <div class="chat-voice-msg cvm-file" data-url="${safeUrl}" data-dur="0" data-name="${_title}" data-chat-id="${_chatCid}" data-chat-uid="${state?.currentChatUid||''}" data-chat-kind="${_chatKind}" data-fv-url="${safeUrl}" data-fv-name="${fname}" data-fv-mime="${esc(m.mediaType || 'audio/mpeg')}" data-fv-size="${+m.fileSize || 0}">
-        <button class="cvm-play" type="button" onclick="window._chatPlayVoice(this)" aria-label="Ijro etish">
+        ${isUploading ? renderUploadRingHtml(m.id, m.progress || 0, true) : `<button class="cvm-play" type="button" onclick="window._chatPlayVoice(this)" aria-label="Ijro etish">
           <img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">
-        </button>
+        </button>`}
         <div class="cvm-fmeta">
           <div class="cvm-ftitle">${_title}</div>
           <div class="cvm-track" role="slider" aria-label="Ijro joyi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i class="cvm-track-fill"></i></div>
@@ -744,10 +801,13 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       ${captionHtml}
     </div>`;
   } else {
-    // Other files
+    // Other files (doc, pdf, zip...)
     bubbleContent = `<div class="cfm-file-wrap">
       <div class="chat-file-msg" data-fv-url="${safeUrl}" data-fv-name="${fname}" data-fv-mime="${esc(m.mediaType || '')}" data-fv-size="${+m.fileSize || 0}">
-        <div class="cfm-icon">${getChatFileIcon(m.fileName, m.mediaType)}</div>
+        ${isUploading
+          ? renderUploadRingHtml(m.id, m.progress || 0, true)
+          : `<div class="cfm-icon">${getChatFileIcon(m.fileName, m.mediaType)}</div>`
+        }
         <div class="cfm-info">
           <a class="cfm-name cfm-name--link" href="${safeUrl}" title="Ochish">${fname}</a>
           ${fsz ? `<div class="cfm-size">${fsz}</div>` : ''}
@@ -759,7 +819,12 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       ${captionHtml}
     </div>`;
   }
-  return { bubbleClassExtra, metaOutside, bubbleContent };
+
+  return {
+    bubbleClassExtra,
+    metaOutside,
+    bubbleContent,
+  };
 }
 
 /* ── Qo'ng'iroq yozuvi pufagi (Telegram uslubi): sarlavha + o'q + vaqt, davomiylik + o'ng tomonda trubka ── */
@@ -851,6 +916,108 @@ export function generateMediaBubble({ media, m, time, mine, renderTicks, dm = fa
 
 export function generateYouTubeBubble(opts) {
   return generateMediaBubble({ media: opts.yt || opts.media, ...opts });
+}
+
+/** ── Telegram uslubidagi Lokatsiya (Location) Bubble ── */
+export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = false }) {
+  const lat = Number(loc.lat) || 0;
+  const lon = Number(loc.lon) || 0;
+  const title = esc(loc.title || 'Joylashuv');
+  const addr = esc(loc.address || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
+  const gmaps = `https://www.google.com/maps?q=${lat},${lon}`;
+  const yandexStatic = `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=15&l=map&size=420,180&pt=${lon},${lat},pm2rdm`;
+
+  const bubbleContent = `
+    <div class="loc-bubble-card">
+      <a href="${gmaps}" target="_blank" rel="noopener noreferrer" class="loc-map-preview" title="Xaritada ochish">
+        <img class="loc-static-img" src="${yandexStatic}" alt="Xarita" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="loc-fallback-map" style="display:none">
+          <div class="loc-pin-pulse"></div>
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="#ff3b30"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        </div>
+      </a>
+      <div class="loc-body">
+        <div class="loc-details">
+          <div class="loc-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="loc-pin-icon"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <span>${title}</span>
+          </div>
+          <div class="loc-address">${addr}</div>
+        </div>
+        <a href="${gmaps}" target="_blank" rel="noopener noreferrer" class="loc-action-btn">
+          <span>Xaritada ko‘rish</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>`;
+
+  return {
+    bubbleClassExtra: ' bubble-location' + (dm ? ' bubble-location-dm' : ''),
+    metaOutside: true,
+    bubbleContent,
+  };
+}
+
+/** ── Telegram uslubidagi interaktiv So‘rovnoma (Poll) Bubble ── */
+export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = false, currentUid = null }) {
+  const q = esc(poll.question || 'So‘rovnoma');
+  const isAnon = !!poll.anonymous;
+  const isMulti = !!poll.multiple;
+  const total = Number(poll.totalVotes) || 0;
+  const opts = Array.isArray(poll.options) ? poll.options : [];
+  const hasUserVoted = currentUid ? opts.some(o => (o.voters || []).includes(currentUid)) : false;
+  const showResults = hasUserVoted || (mine && total > 0);
+
+  const subText = `${isAnon ? 'Anonim so‘rovnoma' : 'Ochiq so‘rovnoma'}${isMulti ? ' • Bir nechta javob' : ''}`;
+
+  const optionsHtml = opts.map((opt, i) => {
+    const optId = esc(opt.id || ('opt_' + i));
+    const text = esc(opt.text || '');
+    const voters = Array.isArray(opt.voters) ? opt.voters : [];
+    const isVoted = currentUid ? voters.includes(currentUid) : false;
+    const count = voters.length;
+    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+    const checkIcon = isMulti
+      ? `<div class="poll-chk ${isVoted ? 'voted' : ''}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>`
+      : `<div class="poll-radio ${isVoted ? 'voted' : ''}"><div class="poll-radio-dot"></div></div>`;
+
+    return `
+      <div class="poll-item ${isVoted ? 'is-voted' : ''} ${showResults ? 'has-results' : ''}"
+           role="button" tabindex="0"
+           onclick="window._handlePollVote && window._handlePollVote('${esc(m.id)}', '${optId}', event)">
+        ${showResults ? `<div class="poll-bar-fill" style="width:${pct}%"></div>` : ''}
+        <div class="poll-item-row">
+          <div class="poll-item-left">
+            ${checkIcon}
+            <span class="poll-item-text">${text}</span>
+          </div>
+          ${showResults ? `<span class="poll-item-pct">${pct}%</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  const voteCountText = total > 0 ? `${total} ta ovoz` : 'Hali ovoz berilmagan';
+
+  const bubbleContent = `
+    <div class="poll-bubble-card">
+      <div class="poll-header">
+        <div class="poll-title">${q}</div>
+        <div class="poll-sub">${subText}</div>
+      </div>
+      <div class="poll-options-list">
+        ${optionsHtml}
+      </div>
+      <div class="poll-bottom-bar">
+        <span class="poll-votes-count">${voteCountText}</span>
+      </div>
+    </div>`;
+
+  return {
+    bubbleClassExtra: ' bubble-poll' + (dm ? ' bubble-poll-dm' : ''),
+    metaOutside: true,
+    bubbleContent,
+  };
 }
 
 /** Outer bubble shell — DM va guruh uchun bir xil */

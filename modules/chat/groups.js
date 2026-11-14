@@ -36,7 +36,7 @@ import { busOn, groupJoin, groupInboxSend, isUidOnline } from '../core/rt-bus.js
 import {
   _toDateSafe, _isSameDay, _dateSepLabel,
   _showPendingBubble, _updatePendingProgress, _removePendingBubble,
-  uploadViaControllerProgress, ensureChatsView,
+  uploadViaControllerProgress, ensureChatsView, enqueueSequentialUpload,
 } from './chat-shared.js';
 import { chatUI } from './chat-state.js';
 import { isEditing, commitEdit, getReplying, cancelReply, msgMenuReset } from './msg-menu.js';
@@ -1270,6 +1270,130 @@ export async function retryFailedGroupMessage(msgId) {
   }
 }
 
+export async function sendGroupAlbum(mediaFiles, caption = '') {
+  if (!_currentGroupId || !state.me || !mediaFiles || !mediaFiles.length) return;
+  if (!(await _guardWrite())) return;
+  const groupId = _currentGroupId;
+  const captionText = protectSecrets((typeof caption === 'string' ? caption : '').trim());
+  const _fReply = getReplying();
+  const _fReplyTo = _fReply?.id ? String(_fReply.id) : null;
+  if (_fReply) cancelReply(false);
+  const albumId = _gUuid();
+  const nowMs = Date.now();
+
+  // 1) 0ms: Optimistik albom xabari guruhda
+  const albumItems = mediaFiles.map((file, idx) => {
+    const isVid = (file.type || '').startsWith('video/');
+    let objUrl = '';
+    try { objUrl = URL.createObjectURL(file); } catch (_) {}
+    return {
+      id: `${albumId}_${idx}`,
+      file,
+      url: objUrl,
+      mediaUrl: objUrl,
+      type: file.type || (isVid ? 'video/mp4' : 'image/jpeg'),
+      name: file.name || (isVid ? 'video.mp4' : 'image.jpg'),
+      size: file.size || 0,
+      status: 'uploading',
+      progress: 0,
+      path: null,
+    };
+  });
+
+  const localMsg = mapMessage({
+    id: albumId, group_id: groupId, sender_id: state.me.uid, type: 'file',
+    media_path: null, media_url: albumItems[0]?.url || '', media_type: albumItems[0]?.type || null,
+    file_name: albumItems[0]?.name || 'album', file_size: 0,
+    text: JSON.stringify({ __album: true, albumId, caption: captionText, items: albumItems }),
+    reply_to: _fReplyTo,
+    created_at: new Date(nowMs).toISOString(),
+    status: 'sending'
+  });
+  if (localMsg) {
+    localMsg.type = 'album';
+    localMsg.albumId = albumId;
+    localMsg.items = albumItems;
+    localMsg.replyPreview = _fReply ? { name: _fReply.name, text: _fReply.preview, type: _fReply.type } : null;
+    _gMsgs = [..._gMsgs, localMsg];
+    chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+  }
+
+  // 2) Ketma-ket (sequential) upload navbati
+  for (let i = 0; i < albumItems.length; i++) {
+    const item = albumItems[i];
+    try {
+      const res = await enqueueSequentialUpload({
+        id: item.id,
+        file: item.file,
+        folder: 'group-files',
+        onProgress: pct => { item.progress = pct; },
+      });
+      item.status = 'sent';
+      item.path = res.path;
+      item.url = res.url || item.url;
+    } catch (err) {
+      console.warn(`Group album item [${i}] failed:`, err?.message || err);
+      item.status = 'failed';
+    }
+  }
+
+  const successfulItems = albumItems.filter(it => it.status === 'sent' && it.path);
+  if (!successfulItems.length) {
+    _gMsgs = _gMsgs.filter(m => m.id !== albumId);
+    chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+    toast('Albom yuklanmadi', 'error');
+    return;
+  }
+
+  const payloadText = JSON.stringify({
+    __album: true,
+    albumId,
+    caption: captionText || '',
+    items: successfulItems.map(it => ({
+      id: it.id,
+      path: it.path,
+      type: it.type,
+      name: it.name,
+      size: it.size,
+    })),
+  });
+
+  try {
+    const coverPath = successfulItems[0]?.path || null;
+    const { error } = await sb.from('group_messages').insert({
+      id: albumId, group_id: groupId, sender_id: state.me.uid, type: 'file',
+      media_path: coverPath, media_type: successfulItems[0]?.type || 'image/jpeg',
+      file_name: successfulItems[0]?.name || 'album',
+      file_size: successfulItems.reduce((acc, it) => acc + (it.size || 0), 0),
+      text: payloadText,
+      reply_to: _fReplyTo,
+    });
+    if (error) throw error;
+
+    _gMsgs = _gMsgs.map(m =>
+      m.id === albumId ? { ...m, status: 'sent', items: successfulItems, mediaPath: coverPath } : m
+    );
+    if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(albumId, 'sent');
+    else chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+
+    const previewText = captionText ? maskSpoilers(captionText) : `Albom (${successfulItems.length} ta media)`;
+    _gRt?.send({
+      id: albumId, type: 'album', albumId, text: captionText || null,
+      items: successfulItems, mediaPath: coverPath,
+      replyTo: _fReplyTo,
+    });
+    groupInboxSend(groupId, { gid: groupId, from: state.me.uid, id: albumId, text: previewText.slice(0, 120), ts: Date.now() });
+    if (_latestGroupMap[groupId]) {
+      _latestGroupMap[groupId].lastMessage = previewText.slice(0, 120);
+      _latestGroupMap[groupId].lastMessageAt = Date.now();
+      _latestGroupMap[groupId].lastSenderId = state.me.uid;
+    }
+  } catch (err) {
+    console.error('Group album insert failed:', err);
+    toast('Albom saqlanmadi', 'error');
+  }
+}
+
 export async function sendGroupFile(file, caption = '') {
   if (!_currentGroupId || !state.me || !file) return;
   if (!(await _guardWrite())) return;
@@ -1280,14 +1404,13 @@ export async function sendGroupFile(file, caption = '') {
   if (_fReply) cancelReply(false);
   const id = _gUuid();
   const nowMs = Date.now();
-  const pendingId = id;
   const isMedia = (file.type || '').startsWith('image/') || (file.type || '').startsWith('video/');
   let localUrl = '';
   if (isMedia) {
     try { localUrl = URL.createObjectURL(file); } catch (_) {}
   }
 
-  // Guruhda optimistik xabar — rasm/fayl shu zahoti ko'rinadi
+  // Guruhda 0ms optimistik xabar — rasm/fayl shu zahoti ko'rinadi
   const localMsg = mapMessage({
     id, group_id: groupId, sender_id: state.me.uid, type: 'file',
     media_path: null, media_url: localUrl || '', media_type: file.type || null,
@@ -1302,13 +1425,12 @@ export async function sendGroupFile(file, caption = '') {
     chatUI.paintGroupThread(_gMsgs, _currentGroupData);
   }
 
-  if (!isMedia) {
-    _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
-  }
-
   try {
-    const result = await uploadViaControllerProgress(file, 'group-files', pct => _updatePendingProgress(pendingId, pct));
-    if (!isMedia) _removePendingBubble(pendingId);
+    const result = await enqueueSequentialUpload({
+      id,
+      file,
+      folder: 'group-files',
+    });
 
     const { error } = await sb.from('group_messages').insert({
       id, group_id: groupId, sender_id: state.me.uid, type: 'file',
@@ -1338,6 +1460,16 @@ export async function sendGroupFile(file, caption = '') {
       _latestGroupMap[groupId].lastMessageAt = Date.now();
       _latestGroupMap[groupId].lastSenderId = state.me.uid;
     }
+  } catch (err) {
+    console.error('Group file upload failed:', err);
+    _gMsgs = _gMsgs.filter(m => m.id !== id);
+    chatUI.paintGroupThread(_gMsgs, _currentGroupData);
+    try { if (localUrl) URL.revokeObjectURL(localUrl); } catch (_) {}
+    if (err?.name !== 'AbortError') {
+      toast('Fayl yuborilmadi', 'error');
+    }
+  }
+}
     _reloadGroupThread && _reloadGroupThread();
   } catch (err) {
     console.error('[Groups] file send failed:', err);

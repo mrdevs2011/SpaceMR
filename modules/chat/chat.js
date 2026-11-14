@@ -991,7 +991,7 @@ import { rateOk }           from '../core/rate-limit.js';
 import { initEmojiPicker } from '../ui/emoji-picker.js';
 import { emojiOnlyClass, wrapEmojiNoSelect, playRemoteEmoji } from '../ui/emoji-only.js';
 import { openRt } from './rt-chat.js';
-import { generateVoiceBubble, generateFileBubble, generateTextBubble, generateGifBubble, generateMediaBubble, generateYouTubeBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
+import { generateVoiceBubble, generateFileBubble, generateAlbumBubble, generateTextBubble, generateGifBubble, generateMediaBubble, generateYouTubeBubble, generateLocationBubble, generatePollBubble, generateCallBubble, rememberImgRatio, wrapChatBubble, assembleMessageHtml, generateOptimisticVoiceHtml } from './components/message-bubble.js';
 import { busOn, inboxSend, inboxWarm, isUidOnline } from '../core/rt-bus.js';
 import {
   startGroupsWatcher, stopGroupsWatcher, bindGroupsRealtime,
@@ -1047,6 +1047,8 @@ import {
   _dateSepLabel,
   parsePostShare,
   parseGif,
+  parseLocation,
+  parsePoll,
   parseCallLog,
   formatLastMessageText,
   humanMsgPreview,
@@ -2916,6 +2918,12 @@ function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
     if (Array.isArray(m.waveform) && m.waveform.length && _vUrl) primeWaveform(_vUrl, barCount, m.waveform);
     const _mpName = (mine ? 'Siz' : (grp ? (grp.names?.[m.senderId]?.fullName || 'Ovozli xabar') : ($('chatThreadName')?.textContent || 'Ovozli xabar'))).replace(/"/g, '&quot;');
     bubbleContent = generateVoiceBubble({ voiceMedia, dur, barCount, safeUrl, _mpName, renderVoiceWave, waveReadyClass, idx, state });
+  } else if (m.type === 'album' || (m.type === 'file' && Array.isArray(m.items) && m.items.length > 1)) {
+    /* ── Telegram Multi-Media Albom (Kollaj) ── */
+    const bData = generateAlbumBubble({ m, time, mine, renderTicks, dm: !grp, renderMarkdown });
+    bubbleClassExtra = bData.bubbleClassExtra;
+    metaOutside = bData.metaOutside;
+    bubbleContent = bData.bubbleContent;
   } else if (m.type === 'file') {
     /* ── File message ── */
     const fname = esc(m.fileName || 'file');
@@ -2943,11 +2951,19 @@ function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
     } else {
       const postShare = parsePostShare(m.text);
       const gif = postShare ? null : parseGif(m.text);
-      const pureMedia = (postShare || gif) ? null : parsePureMedia(m.text);
+      const loc = (postShare || gif) ? null : parseLocation(m.text);
+      const poll = (postShare || gif || loc) ? null : parsePoll(m.text);
+      const pureMedia = (postShare || gif || loc || poll) ? null : parsePureMedia(m.text);
       let bData;
       if (gif) {
         bData = generateGifBubble({ gif, m, time, mine, renderTicks, dm: !grp });
         metaOutside = false;
+      } else if (loc) {
+        bData = generateLocationBubble({ loc, m, time, mine, renderTicks, dm: !grp });
+        metaOutside = true;
+      } else if (poll) {
+        bData = generatePollBubble({ poll, m, time, mine, renderTicks, dm: !grp, currentUid: state.me?.uid });
+        metaOutside = true;
       } else if (pureMedia) {
         bData = generateMediaBubble({ media: pureMedia, m, time, mine, renderTicks, dm: !grp });
         metaOutside = false;
@@ -3223,20 +3239,20 @@ function setChatFile(file) {
     return;
   }
 
+  if (!Array.isArray(chatState._chatSelFiles)) chatState._chatSelFiles = [];
+  if (chatState._chatSelFiles.length >= 10) {
+    import('../ui/toast.js').then(m => m.toast('Maksimal 10 ta fayl', 'warn'));
+    return;
+  }
+
   const mime = (file.type || '').toLowerCase();
   const isImg = mime.startsWith('image/');
   const isVid = mime.startsWith('video/');
   const isMedia = isImg || isVid;
 
+  let objUrl = '';
   if (isMedia) {
-    // Rasm/video → multi-tray ga qo'sh
-    if (!Array.isArray(chatState._chatSelFiles)) chatState._chatSelFiles = [];
-    // Max 10 ta
-    if (chatState._chatSelFiles.length >= 10) {
-      import('../ui/toast.js').then(m => m.toast('Maksimal 10 ta fayl', 'warn'));
-      return;
-    }
-    const objUrl = URL.createObjectURL(file);
+    objUrl = URL.createObjectURL(file);
     if (isImg) {
       const probe = new Image();
       probe.onload = () => {
@@ -3244,31 +3260,13 @@ function setChatFile(file) {
       };
       probe.src = objUrl;
     }
-    const idx = chatState._chatSelFiles.length;
-    chatState._chatSelFiles.push({ file, objUrl });
-    _renderCfpTray();
-    // Birinchi fayl bo'lsa eski _chatSelFile ni ham yangilaymiz (boshqa joy ishlatadi)
-    if (idx === 0) chatState._chatSelFile = file;
-  } else {
-    // Fayl (doc/audio) → eski single-card
-    _cfpRevoke();
-    chatState._chatSelFile = file;
-    chatState._chatSelFiles = [];
-    const card = $('cfpCard');
-    if (card) card.style.display = '';
-    const fileEl = $('cfpFile');
-    const mediaEl = $('cfpMedia');
-    if (mediaEl) { mediaEl.hidden = true; mediaEl.innerHTML = ''; }
-    if (fileEl) fileEl.hidden = false;
-    const name = file.name || 'Fayl';
-    const ext = (name.split('.').pop() || '').toUpperCase().slice(0, 5) || 'FILE';
-    if ($('cfpIcon')) $('cfpIcon').innerHTML = getChatFileIcon(name, file.type);
-    if ($('cfpName')) $('cfpName').textContent = name.length > 28 ? name.slice(0, 26) + '…' : name;
-    if ($('cfpSize')) $('cfpSize').textContent = fmtSz(file.size);
-    if ($('cfpBadge')) $('cfpBadge').textContent = ext;
-    $('chatFilePreview')?.classList.add('active');
   }
 
+  const idx = chatState._chatSelFiles.length;
+  chatState._chatSelFiles.push({ file, objUrl, isMedia });
+  if (idx === 0) chatState._chatSelFile = file;
+
+  _renderCfpTray();
   updateVoiceSendBtn();
 }
 
@@ -3284,7 +3282,8 @@ function _renderCfpTray() {
   tray.innerHTML = files.map((item, i) => {
     const mime = (item.file.type || '').toLowerCase();
     const isImg = mime.startsWith('image/');
-    const name = item.file.name || '';
+    const isVid = mime.startsWith('video/');
+    const name = item.file.name || 'Fayl';
     const fmtd = fmtSz(item.file.size);
     if (isImg) {
       return `<div class="cfp-tray-item" data-idx="${i}">
@@ -3292,10 +3291,17 @@ function _renderCfpTray() {
         <button type="button" class="cfp-tray-rm" data-idx="${i}" aria-label="Olib tashlash">✕</button>
         <span class="cfp-tray-sz">${fmtd}</span>
       </div>`;
-    } else {
+    } else if (isVid) {
       return `<div class="cfp-tray-item cfp-tray-item--vid" data-idx="${i}">
         <video src="${item.objUrl}#t=0.1" class="cfp-tray-thumb" muted playsinline preload="metadata"></video>
         <span class="cfp-tray-vid-icon">▶</span>
+        <button type="button" class="cfp-tray-rm" data-idx="${i}" aria-label="Olib tashlash">✕</button>
+        <span class="cfp-tray-sz">${fmtd}</span>
+      </div>`;
+    } else {
+      return `<div class="cfp-tray-item cfp-tray-item--file" data-idx="${i}">
+        <div class="cfp-tray-icon">${getChatFileIcon(name, item.file.type)}</div>
+        <div class="cfp-tray-fn">${esc(name.length > 14 ? name.slice(0, 12) + '…' : name)}</div>
         <button type="button" class="cfp-tray-rm" data-idx="${i}" aria-label="Olib tashlash">✕</button>
         <span class="cfp-tray-sz">${fmtd}</span>
       </div>`;
@@ -3902,6 +3908,38 @@ export function _showOptimisticVoiceBubble(id, localUrl, duration) {
 }
 
 /* Pending bubble + uploadViaControllerProgress: chat-shared.js */
+document.addEventListener('chat:upload-cancelled', e => {
+  const uploadId = e.detail?.uploadId;
+  if (!uploadId) return;
+
+  if (chatState._rtLocal.has(uploadId)) {
+    chatState._rtLocal.delete(uploadId);
+    chatState._curMsgs = chatState._curMsgs.filter(m => m.id !== uploadId);
+    paintMessages(chatState._curMsgs);
+    toast('Yuklash bekor qilindi');
+    return;
+  }
+
+  let changed = false;
+  chatState._curMsgs = chatState._curMsgs.map(m => {
+    if ((m.type === 'album' || Array.isArray(m.items)) && Array.isArray(m.items)) {
+      const idx = m.items.findIndex(it => it.id === uploadId || `${m.id}_${it.id}` === uploadId);
+      if (idx !== -1) {
+        changed = true;
+        const newItems = [...m.items];
+        newItems.splice(idx, 1);
+        if (newItems.length === 0) return null;
+        return { ...m, items: newItems };
+      }
+    }
+    return m;
+  }).filter(Boolean);
+
+  if (changed) {
+    paintMessages(chatState._curMsgs);
+    toast('Fayl bekor qilindi');
+  }
+});
 
 /* ── Wire static DOM (modal already exists in index.html on page load) ── */
 $('chatThreadBack').onclick = closeChatThread;
@@ -4125,12 +4163,104 @@ initKeyboardAdaptation();
 
 
 // File attach
-/* Skrepka: menyu (Kamera / Fayl / Media) — modules/chat/attach-menu.js; DM va guruh uchun bitta */
+/* Skrepka: menyu (Kamera / Fayl / Media / Lokatsiya / So‘rovnoma) — modules/chat/attach-menu.js; DM va guruh uchun bitta */
+export async function sendLocationMessage(loc) {
+  if (!loc || typeof loc.lat !== 'number' || typeof loc.lon !== 'number') return;
+  const payload = {
+    __location: true,
+    lat: loc.lat,
+    lon: loc.lon,
+    title: loc.title || 'Joylashuv',
+    address: loc.address || '',
+  };
+  return sendChatMessage({ text: JSON.stringify(payload) });
+}
+
+export async function sendPollMessage(poll) {
+  if (!poll || !poll.question || !Array.isArray(poll.options)) return;
+  const payload = {
+    __poll: true,
+    id: poll.id || ('poll_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+    question: poll.question.trim(),
+    options: poll.options.map((opt, i) => ({
+      id: opt.id || ('opt_' + i),
+      text: typeof opt === 'string' ? opt.trim() : (opt.text || '').trim(),
+      voters: [],
+    })),
+    multiple: !!poll.multiple,
+    anonymous: poll.anonymous !== false,
+    totalVotes: 0,
+    creatorId: state.me?.uid || null,
+  };
+  return sendChatMessage({ text: JSON.stringify(payload) });
+}
+
+/* So‘rovnomaga (Poll) ovoz berish hodisasi */
+window._handlePollVote = async function(msgId, optId, evt) {
+  if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+  const uid = state.me?.uid;
+  if (!uid) return;
+  const msg = (chatState._curMsgs || []).find(x => String(x.id) === String(msgId));
+  if (!msg) return;
+  const poll = parsePoll(msg.text);
+  if (!poll) return;
+
+  const opt = poll.options.find(o => String(o.id) === String(optId));
+  if (!opt) return;
+
+  const voters = Array.isArray(opt.voters) ? opt.voters : [];
+  const hasVotedThis = voters.includes(uid);
+
+  if (poll.multiple) {
+    if (hasVotedThis) {
+      opt.voters = voters.filter(u => u !== uid);
+    } else {
+      opt.voters.push(uid);
+    }
+  } else {
+    if (hasVotedThis) {
+      opt.voters = voters.filter(u => u !== uid);
+    } else {
+      poll.options.forEach(o => {
+        o.voters = (o.voters || []).filter(u => u !== uid);
+      });
+      opt.voters.push(uid);
+    }
+  }
+
+  // Umumiy unikal ovoz beruvchilar soni
+  const allVoters = new Set();
+  poll.options.forEach(o => (o.voters || []).forEach(u => allVoters.add(u)));
+  poll.totalVotes = allVoters.size;
+
+  const newText = JSON.stringify(poll);
+  msg.text = newText;
+
+  // Mahalliy xabarlar ro‘yxatini darhol chizish
+  paintMessages([...chatState._curMsgs]);
+
+  // DB update
+  try {
+    const isGrp = !!(msg.groupId || msg.group_id || (state.currentChatKind && state.currentChatKind !== 'dm'));
+    const tbl = isGrp ? 'group_messages' : 'messages';
+    await sb.from(tbl).update({ text: newText, edited_at: new Date().toISOString() }).eq('id', msgId);
+    if (chatState._rt && chatState._rtChatId === state.currentChatId) {
+      chatState._rt.send(msgId, newText);
+    }
+  } catch (err) {
+    console.warn('[Poll] Vote sync failed:', err);
+  }
+};
+
 initAttachMenu({
   btn: $('chatAttachBtn'),
   fileInput: $('chatFileInput'),
   isBusy: () => !!($('chatVoiceBtn')?.classList.contains('recording') || $('chatThreadInputRow')?.classList.contains('recording')),
   onPick: f => { setChatFile(f); $('chatThreadInput')?.focus({ preventScroll: true }); },
+  showLocation: true,
+  showPoll: true,
+  onLocation: loc => sendLocationMessage(loc),
+  onPoll: poll => sendPollMessage(poll),
 });
 $('chatFileInput')?.addEventListener('change', e => {
   const files = [...(e.target.files || [])];

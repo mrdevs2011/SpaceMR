@@ -236,6 +236,26 @@ async function trimTotal() {
   } catch (_) {}
 }
 
+/** Bitta story faylini keshdan to'liq tozalash (o'chirilganda) */
+export async function evictItem(id) {
+  if (!id) return;
+  try {
+    const u = _urls.get(id);
+    if (u) {
+      try { URL.revokeObjectURL(u); } catch (_) {}
+      _urls.delete(id);
+    }
+    _inflight.delete(id);
+    await tx('media', 'readwrite', s => { s.delete(id); });
+    try {
+      const { removeMedia } = await import('../core/store/media-cache.js');
+      if (typeof removeMedia === 'function') {
+        await removeMedia(id);
+      }
+    } catch (_) {}
+  } catch (_) {}
+}
+
 /** Logout: ro'yxat va fayllarning hammasini o'chiradi */
 export async function clearAll() {
   try {

@@ -10,6 +10,44 @@ if (!window.__chatImgZoomBound) {
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 
+    /* Yuklashni bekor qilish ('X') tugmasi bosilganda */
+    const cancelBtn = e.target?.closest?.('[data-cancel-upload]');
+    if (cancelBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const uploadId = cancelBtn.getAttribute('data-cancel-upload');
+      if (uploadId) {
+        import('../chat-upload-queue.js').then(q => {
+          q.cancelUpload(uploadId);
+          document.dispatchEvent(new CustomEvent('chat:upload-cancelled', { detail: { uploadId } }));
+        }).catch(() => {});
+      }
+      return;
+    }
+
+    /* Albom elementiga bosilganda — Telegram uslubidagi Media Gallery (Oldinga/Orqaga) */
+    const albumItem = e.target?.closest?.('.chat-album-item');
+    if (albumItem) {
+      const grid = albumItem.closest('.chat-album-grid');
+      if (grid) {
+        e.preventDefault();
+        e.stopPropagation();
+        const allItems = [...grid.querySelectorAll('.chat-album-item')].map(el => ({
+          url: el.dataset.url || el.querySelector('img, video')?.src || '',
+          kind: el.dataset.type || (el.classList.contains('chat-album-item--video') ? 'video' : 'image'),
+          fileName: el.dataset.name || ''
+        })).filter(it => Boolean(it.url));
+        const curIdx = Math.max(0, parseInt(albumItem.dataset.mediaIdx || '0', 10));
+        import('../chat-media.js').then(cm => {
+          cm.openMediaGallery(allItems, curIdx);
+        }).catch(() => {
+          const url = albumItem.dataset.url || albumItem.querySelector('img, video')?.src;
+          if (url) openZoom(url, albumItem.dataset.type || 'image');
+        });
+        return;
+      }
+    }
+
     /* Ulashilgan post kartasi: profil rasmiga bosish */
     const avi = e.target?.closest?.('.cpc-avi-link[data-uid]');
     if (avi && !avi.classList.contains('is-deleted')) {

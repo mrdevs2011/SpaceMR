@@ -5,9 +5,9 @@ import { sb, state } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { chatState, chatUI } from './chat-state.js';
-import { uploadViaControllerProgress, _showPendingBubble, _updatePendingProgress, _removePendingBubble, _uuid } from './chat-shared.js';
+import { uploadViaControllerProgress, _showPendingBubble, _updatePendingProgress, _removePendingBubble, _uuid, enqueueSequentialUpload, cancelUpload } from './chat-shared.js';
 import { inboxSend } from '../core/rt-bus.js';
-import { sendGroupMessage, sendGroupVoice, sendGroupFile } from './groups.js';
+import { sendGroupMessage, sendGroupVoice, sendGroupFile, sendGroupAlbum } from './groups.js';
 import { commitEdit, isEditing, getReplying, cancelReply } from './msg-menu.js';
 import { rateOk } from '../core/rate-limit.js';
 import { encodeForSend } from '../ui/emoji-img.js';
@@ -294,10 +294,151 @@ export async function sendVoiceMessage(blob, duration) {
   }
 }
 
+export async function sendChatAlbum(mediaFiles, captionOverride = '') {
+  if (!mediaFiles || !mediaFiles.length || !state.me) return;
+  if (!state.currentChatId) return;
+
+  const caption = protectSecrets((captionOverride || '').trim());
+  const chatId = state.currentChatId;
+  const otherUid = state.currentChatUid;
+  const albumId = _uuid();
+  const nowMs = Date.now();
+
+  const _fReply = getReplying();
+  const _fReplyTo = _fReply?.id ? String(_fReply.id) : null;
+  if (_fReply) cancelReply(false);
+
+  // 1) 0ms Optimistik albom elementlari
+  const albumItems = mediaFiles.map((file, idx) => {
+    const isVid = (file.type || '').startsWith('video/');
+    let objUrl = '';
+    try { objUrl = URL.createObjectURL(file); } catch (_) {}
+    return {
+      id: `${albumId}_${idx}`,
+      file,
+      url: objUrl,
+      mediaUrl: objUrl,
+      type: file.type || (isVid ? 'video/mp4' : 'image/jpeg'),
+      name: file.name || (isVid ? 'video.mp4' : 'image.jpg'),
+      size: file.size || 0,
+      status: 'uploading',
+      progress: 0,
+      path: null,
+    };
+  });
+
+  const optimisticMsg = {
+    id: albumId,
+    chatId,
+    senderId: state.me.uid,
+    type: 'album',
+    albumId,
+    items: albumItems,
+    text: caption || null,
+    status: 'sending',
+    createdAt: nowMs,
+    _at: nowMs,
+    replyTo: _fReplyTo,
+    replyPreview: _fReply ? { name: _fReply.name, text: _fReply.preview, type: _fReply.type } : null,
+  };
+
+  chatState._rtLocal.set(albumId, optimisticMsg);
+  chatUI.paintMessages([...chatState._curMsgs, optimisticMsg]);
+
+  // 2) Ketma-ket (sequential) navbatda bittalab yuklash (50kbps bardoshli)
+  for (let i = 0; i < albumItems.length; i++) {
+    const item = albumItems[i];
+    try {
+      const res = await enqueueSequentialUpload({
+        id: item.id,
+        file: item.file,
+        folder: 'chat-files',
+        onProgress: pct => {
+          item.progress = pct;
+        },
+      });
+
+      item.status = 'sent';
+      item.path = res.path;
+      item.url = res.url || item.url;
+    } catch (err) {
+      console.warn(`Album item [${i}] upload failed:`, err?.message || err);
+      item.status = 'failed';
+    }
+  }
+
+  // 3) Muvaffaqiyatli yuklangan elementlarni saqlash
+  const successfulItems = albumItems.filter(it => it.status === 'sent' && it.path);
+  if (!successfulItems.length) {
+    chatState._rtLocal.delete(albumId);
+    chatUI.paintMessages(chatState._curMsgs.filter(m => m.id !== albumId));
+    toast('Albom yuklanmadi', 'error');
+    return;
+  }
+
+  const payloadText = JSON.stringify({
+    __album: true,
+    albumId,
+    caption: caption || '',
+    items: successfulItems.map(it => ({
+      id: it.id,
+      path: it.path,
+      type: it.type,
+      name: it.name,
+      size: it.size,
+    })),
+  });
+
+  try {
+    const coverPath = successfulItems[0]?.path || null;
+    const { error } = await sb.from('messages').insert({
+      id: albumId,
+      chat_id: chatId,
+      sender_id: state.me.uid,
+      type: 'file',
+      text: payloadText,
+      media_path: coverPath,
+      media_type: successfulItems[0]?.type || 'image/jpeg',
+      file_name: successfulItems[0]?.name || 'album',
+      file_size: successfulItems.reduce((acc, it) => acc + (it.size || 0), 0),
+      reply_to: _fReplyTo,
+    });
+
+    if (error) throw error;
+
+    optimisticMsg.status = 'sent';
+    optimisticMsg.items = successfulItems;
+    chatState._curMsgs = chatState._curMsgs.map(m => m.id === albumId ? { ...m, status: 'sent', items: successfulItems } : m);
+    if (typeof chatUI.updateMsgTicks === 'function') chatUI.updateMsgTicks(albumId, 'sent');
+    else chatUI.paintMessages(chatState._curMsgs);
+
+    const previewText = caption ? maskSpoilers(caption) : `Albom (${successfulItems.length} ta media)`;
+    if (chatState._rt && chatState._rtChatId === chatId) {
+      chatState._rt.send({
+        id: albumId,
+        type: 'album',
+        albumId,
+        text: caption || null,
+        items: successfulItems,
+        mediaPath: coverPath,
+      });
+    }
+    inboxSend(otherUid, { chatId, from: state.me.uid, id: albumId, text: previewText.slice(0, 120), ts: Date.now() });
+    if (chatState._latestChatMap[otherUid]) {
+      chatState._latestChatMap[otherUid].lastMessage = previewText.slice(0, 120);
+      chatState._latestChatMap[otherUid].lastMessageAt = Date.now();
+      chatState._latestChatMap[otherUid].lastSenderId = state.me.uid;
+    }
+    chatState._reloadThread && chatState._reloadThread();
+  } catch (err) {
+    console.error('Album DB save failed:', err);
+    toast('Albom saqlanmadi', 'error');
+  }
+}
+
 export async function sendChatFile(fileOverride = null, captionOverride = null) {
   const file = fileOverride || chatState._chatSelFile;
   if (!file || !state.me) return;
-  if (!rateOk('file', 30, 30000)) return;
 
   const caption = protectSecrets((captionOverride !== null && captionOverride !== undefined
     ? captionOverride
@@ -321,14 +462,13 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
 
   const id = _uuid();
   const nowMs = Date.now();
-  const pendingId = id; // dedup uchun haqiqiy id
   const isMedia = (file.type || '').startsWith('image/') || (file.type || '').startsWith('video/');
   let localUrl = '';
   if (isMedia) {
     try { localUrl = URL.createObjectURL(file); } catch (_) {}
   }
 
-  // Optimistik xabar — foydalanuvchi o'z rasmini/faylini shu zahoti ekranda ko'radi
+  // 0ms Optimistik xabar — foydalanuvchi o'z faylini darhol chatda ko'radi
   const localMsg = {
     id, chatId, senderId: state.me.uid, type: 'file', text: caption || null,
     mediaPath: null, mediaUrl: localUrl || '', mediaType: file.type || null,
@@ -340,16 +480,13 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
   chatState._rtLocal.set(id, localMsg);
   chatUI.paintMessages([...chatState._curMsgs, localMsg]);
 
-  if (!isMedia) {
-    _showPendingBubble(pendingId, 'file', file.size, file.name, file.type);
-  }
-
   try {
-    const result = await uploadViaControllerProgress(file, 'chat-files', pct => {
-      _updatePendingProgress(pendingId, pct);
+    // Ketma-ket (sequential) navbat: tarmoq tiqilmaydi, retry bor, cancel qo'llab-quvvatlaydi
+    const result = await enqueueSequentialUpload({
+      id,
+      file,
+      folder: 'chat-files',
     });
-
-    if (!isMedia) _removePendingBubble(pendingId);
 
     const { error } = await sb.from('messages').insert({
       id, chat_id: chatId, sender_id: state.me.uid, type: 'file',
@@ -360,7 +497,9 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
     });
     if (error) throw error;
 
-    // Sent status va to'g'ri media_path bilan optimistik xabarni yangilash
+    localMsg.status = 'sent';
+    localMsg.mediaPath = result.path;
+    localMsg.mediaUrl = result.url || localUrl;
     chatState._curMsgs = chatState._curMsgs.map(m =>
       m.id === id ? { ...m, status: 'sent', mediaPath: result.path, mediaUrl: result.url || localUrl } : m
     );
@@ -368,7 +507,6 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
     else chatUI.paintMessages(chatState._curMsgs);
 
     const previewText = fileMsgPreview({ caption: maskSpoilers(caption), fileName: file.name });
-    // Tezkor yo'l: peer darhol ko'rsin
     if (chatState._rt && chatState._rtChatId === chatId) {
       chatState._rt.send({
         id, type: 'file', text: caption || null,
@@ -387,13 +525,12 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
 
   } catch (err) {
     console.error('File send failed:', err);
-    if (!isMedia) _removePendingBubble(pendingId);
     chatState._rtLocal.delete(id);
     chatUI.paintMessages(chatState._curMsgs.filter(m => m.id !== id));
     try { if (localUrl) URL.revokeObjectURL(localUrl); } catch (_) {}
-    const inp = $('chatThreadInput');
-    if (inp && caption) { inp.value = caption; chatUI.updateVoiceSendBtn(); }
-    toast('Fayl yuborilmadi', 'error');
+    if (err?.name !== 'AbortError') {
+      toast('Fayl yuborilmadi', 'error');
+    }
   }
 }
 
@@ -417,21 +554,48 @@ export async function handleSendAction() {
       }
       chatUI.updateVoiceSendBtn();
 
-      if (hasMulti) {
-        // Multi-file: birinchi fayl caption bilan, qolganlari caption-siz
-        const filesToSend = [...multiFiles.map(f => f.file)];
-        // State ni tozalash
-        chatUI.clearChatFile();
-        for (let i = 0; i < filesToSend.length; i++) {
-          const caption = i === 0 ? text : '';
-          await sendChatFile(filesToSend[i], caption);
+      const files = hasMulti ? multiFiles.map(f => f.file) : [chatState._chatSelFile];
+      chatUI.clearChatFile();
+
+      // Media (rasm/video) va boshqa hujjatlarni ajratamiz
+      const mediaList = [];
+      const docList = [];
+      for (const f of files) {
+        const mime = (f.type || '').toLowerCase();
+        if (mime.startsWith('image/') || mime.startsWith('video/')) {
+          mediaList.push(f);
+        } else {
+          docList.push(f);
         }
-      } else {
-        await sendChatFile(null, text);
       }
 
-      if (inp && inp.value.trim()) setDraft(scope, inp.value);
-      else clearDraft(scope);
+      // 1. Agar medialar 2 yoki undan ko'p bo'lsa -> Telegram Albom (Kollaj)!
+      if (mediaList.length >= 2) {
+        if (state.currentChatKind && state.currentChatKind !== 'dm') {
+          await sendGroupAlbum(mediaList, text);
+        } else {
+          await sendChatAlbum(mediaList, text);
+        }
+      } else if (mediaList.length === 1) {
+        // Faqat bitta media bo'lsa
+        if (state.currentChatKind && state.currentChatKind !== 'dm') {
+          sendGroupFile(mediaList[0], text);
+        } else {
+          sendChatFile(mediaList[0], text);
+        }
+      }
+
+      // 2. Oddiy fayllar (doc, pdf, zip...) har biri 0ms da chatga tushadi va sequential navbatda yuklanadi
+      for (let i = 0; i < docList.length; i++) {
+        const caption = (mediaList.length === 0 && i === 0) ? text : '';
+        if (state.currentChatKind && state.currentChatKind !== 'dm') {
+          sendGroupFile(docList[i], caption);
+        } else {
+          sendChatFile(docList[i], caption);
+        }
+      }
+
+      clearDraft(scope);
     } else {
       await sendChatMessage();
       clearDraft(scope);

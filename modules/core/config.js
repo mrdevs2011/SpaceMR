@@ -427,14 +427,32 @@ export function mapChat(r) {
 export function mapMessage(r) {
   if (!r) return null;
   const _f = splitFwd(r.text);
+  const rawText = _f.text || '';
+  let parsedAlbum = null;
+  if (typeof rawText === 'string' && rawText.includes('"__album"')) {
+    try {
+      const p = JSON.parse(rawText.trim());
+      if (p && (p.__album === true || p.__album === 'true') && Array.isArray(p.items)) {
+        parsedAlbum = p;
+      }
+    } catch (_) {}
+  }
+
+  const items = parsedAlbum ? parsedAlbum.items.map(it => ({
+    ...it,
+    mediaUrl: it.url || (it.path ? (mediaSecureUrlSync(it.path) || mediaPublicUrl(it.path) || '') : '')
+  })) : null;
+
   return {
     id: r.id,
     chatId: r.chat_id || r.group_id || null,
     groupId: r.group_id || null,
     seq: r.seq == null ? null : Number(r.seq),
     senderId: r.sender_id,
-    type: r.type,
-    text: _f.text || '',
+    type: parsedAlbum ? 'album' : r.type,
+    albumId: parsedAlbum ? (parsedAlbum.albumId || r.id) : null,
+    items,
+    text: parsedAlbum ? (parsedAlbum.caption || '') : rawText,
     fwdFrom: _f.name || null,
     fwdKind: _f.kind || '',
     fwdId: _f.id || '',

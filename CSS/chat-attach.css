@@ -250,3 +250,780 @@
 #camCapture .cc-flash.faded { opacity: 0; transform: scale(0.6); pointer-events: none; }
 
 .attach-menu label.am-item { box-sizing: border-box; margin: 0; -webkit-tap-highlight-color: transparent; }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Telegram uslubidagi Yangi Biriktirma Paneli (Attach Sheet/Drawer)
+   ═════════════════════════════════════════════════════════════════════════ */
+.attach-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100050;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.attach-drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.attach-drawer {
+  width: 100%;
+  max-width: 520px;
+  background: var(--bg-surface, #18191c);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  padding: 10px 16px max(18px, env(safe-area-inset-bottom, 16px));
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  transform: translateY(100%);
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.attach-drawer-overlay.open .attach-drawer {
+  transform: translateY(0);
+}
+
+.attach-drawer-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 auto 14px;
+}
+
+/* ── Yuqori Media Qism (Jonli Kamera / Galereya / Fayllar) ── */
+.attach-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.attach-grid-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--text, #fff);
+  box-sizing: border-box;
+  padding: 8px;
+  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.attach-grid-item:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.attach-grid-item:active {
+  transform: scale(0.96);
+}
+
+/* 1-katakcha: Jonli Kamera (Telegram inline live camera stream) */
+.live-cam-tile {
+  background: #000;
+  border-color: rgba(255, 255, 255, 0.15);
+  padding: 0;
+}
+.live-cam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.live-cam-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #111;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 500;
+}
+.live-cam-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 2;
+}
+.live-cam-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff3b30;
+  animation: liveCamBlink 1.4s ease infinite;
+}
+@keyframes liveCamBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+.live-cam-overlay-label {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 60%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  gap: 3px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Galereya va Ichki xotira plitkalari */
+.grid-tile-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.gallery-icon-wrap {
+  background: linear-gradient(135deg, #007aff, #00c6ff);
+  color: #fff;
+}
+.folder-icon-wrap {
+  background: linear-gradient(135deg, #ff9500, #ffcc00);
+  color: #fff;
+}
+.grid-tile-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.grid-tile-hint {
+  font-size: 10px;
+  color: var(--text3, rgba(255, 255, 255, 0.5));
+  margin-top: 2px;
+}
+
+/* ── Pastki Telegram uslubidagi doiraviy / pill tugmalar paneli ── */
+.attach-bottom-pills {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+.attach-pill-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 6px 4px;
+  border-radius: 12px;
+  color: var(--text, #e7e9ea);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.14s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.attach-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.pill-btn-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease;
+}
+.attach-pill-btn:active .pill-btn-icon {
+  transform: scale(0.92);
+}
+.pill-icon-file {
+  background: linear-gradient(135deg, #34c759, #30d158);
+}
+.pill-icon-poll {
+  background: linear-gradient(135deg, #ff9500, #ffaa00);
+}
+.pill-icon-loc {
+  background: linear-gradient(135deg, #ff3b30, #ff453a);
+}
+.pill-btn-text {
+  white-space: nowrap;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   So‘rovnoma (Poll) Yaratish Modal Oynasi
+   ═════════════════════════════════════════════════════════════════════════ */
+.poll-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100060;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: pollModalFadeIn 0.2s ease forwards;
+}
+@keyframes pollModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.poll-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-surface, #1e1f23);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: pollCardPop 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes pollCardPop {
+  from { transform: scale(0.93) translateY(12px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.poll-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+.poll-modal-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text, #fff);
+}
+.poll-modal-close {
+  background: none;
+  border: 0;
+  color: var(--text3, rgba(255, 255, 255, 0.5));
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.poll-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.poll-modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.poll-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.poll-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2, rgba(255, 255, 255, 0.7));
+}
+.poll-text-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.poll-text-input:focus {
+  border-color: var(--blue, #1d9bf0);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.poll-options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.poll-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.poll-opt-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.14s ease;
+}
+.poll-opt-input:focus {
+  border-color: var(--blue, #1d9bf0);
+}
+.poll-opt-remove {
+  background: none;
+  border: 0;
+  color: rgba(255, 255, 255, 0.4);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.poll-opt-remove:hover {
+  background: rgba(255, 59, 48, 0.2);
+  color: #ff3b30;
+}
+.poll-add-opt-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  color: var(--blue, #1d9bf0);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.14s ease;
+}
+.poll-add-opt-btn:hover {
+  background: rgba(29, 155, 240, 0.1);
+}
+
+/* Toggles */
+.poll-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.poll-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  gap: 12px;
+}
+.poll-toggle-label {
+  display: flex;
+  flex-direction: column;
+}
+.poll-toggle-label b {
+  font-size: 13.5px;
+  color: #fff;
+}
+.poll-toggle-label small {
+  font-size: 11.5px;
+  color: var(--text3, rgba(255, 255, 255, 0.5));
+}
+.poll-switch-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.poll-switch-slider {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.poll-switch-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.poll-switch-input:checked + .poll-switch-slider {
+  background: var(--blue, #1d9bf0);
+}
+.poll-switch-input:checked + .poll-switch-slider::after {
+  transform: translateX(18px);
+}
+
+.poll-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+.poll-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 0;
+  transition: background 0.14s ease, transform 0.1s ease;
+}
+.poll-btn:active {
+  transform: scale(0.96);
+}
+.poll-btn-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.poll-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.poll-btn-create {
+  background: var(--blue, #1d9bf0);
+  color: #fff;
+}
+.poll-btn-create:hover {
+  background: #1a8cd8;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Telegram uslubidagi Lokatsiya Xabar Pufagi (.bubble-location)
+   ═════════════════════════════════════════════════════════════════════════ */
+.bubble-location {
+  padding: 0 !important;
+  overflow: hidden !important;
+  max-width: 340px !important;
+}
+.loc-bubble-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.loc-map-preview {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  background: #1c2430;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+}
+.loc-static-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.loc-map-preview:hover .loc-static-img {
+  transform: scale(1.04);
+}
+.loc-fallback-map {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+.loc-pin-pulse {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.35);
+  animation: locPulse 1.8s ease-out infinite;
+}
+@keyframes locPulse {
+  0% { transform: scale(0.4); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.loc-body {
+  padding: 10px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.loc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.loc-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+}
+.loc-pin-icon {
+  color: #ff3b30;
+  flex-shrink: 0;
+}
+.loc-address {
+  font-size: 12px;
+  color: var(--text3, rgba(255, 255, 255, 0.65));
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.loc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue, #1d9bf0);
+  text-decoration: none;
+  transition: opacity 0.14s ease;
+}
+.loc-action-btn:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Telegram uslubidagi So‘rovnoma Xabar Pufagi (.bubble-poll)
+   ═════════════════════════════════════════════════════════════════════════ */
+.bubble-poll {
+  min-width: 260px;
+  max-width: 360px;
+}
+.poll-bubble-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 2px 2px;
+}
+.poll-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.poll-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+.poll-sub {
+  font-size: 11px;
+  color: var(--text3, rgba(255, 255, 255, 0.55));
+}
+
+.poll-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.poll-item {
+  position: relative;
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.14s ease, border-color 0.14s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.poll-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.poll-item.is-voted {
+  border-color: rgba(29, 155, 240, 0.4);
+}
+
+.poll-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(29, 155, 240, 0.25);
+  border-radius: 8px;
+  pointer-events: none;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.poll-item.is-voted .poll-bar-fill {
+  background: rgba(29, 155, 240, 0.4);
+}
+
+.poll-item-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.poll-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.poll-item-text {
+  font-size: 13.5px;
+  color: #fff;
+  line-height: 1.25;
+  word-break: break-word;
+}
+.poll-item-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue, #1d9bf0);
+  flex-shrink: 0;
+}
+
+/* Radio / Checkbox ikonkasi */
+.poll-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.poll-radio.voted {
+  border-color: var(--blue, #1d9bf0);
+  background: var(--blue, #1d9bf0);
+}
+.poll-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.poll-radio.voted .poll-radio-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.poll-chk {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.poll-chk.voted {
+  border-color: var(--blue, #1d9bf0);
+  background: var(--blue, #1d9bf0);
+}
+.poll-chk svg {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.poll-chk.voted svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.poll-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text3, rgba(255, 255, 255, 0.5));
+}
+.poll-votes-count {
+  font-weight: 500;
+}
+

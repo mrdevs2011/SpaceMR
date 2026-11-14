@@ -6,7 +6,7 @@ import { sb, state, mapProfile, mediaPublicUrl, MEDIA_BUCKET } from '../core/con
 import { $, esc, defAvi, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
-import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired } from './story-cache.js';
+import { loadSnapshot, saveSnapshot, syncMedia, scheduleIdleSync, cacheItem, cachedUrl, cachedUrlSync, storyExpiresAt, isExpired, evictItem } from './story-cache.js';
 import { fixVideoDuration } from '../core/video-policy.js';
 
 const STORY_MS = 5000; // har bir story ko'rsatish muddati
@@ -53,14 +53,25 @@ function disposeStoryMedia() {
 
 function spawnFlyingEmoji(emoji) {
   const v = $('storyViewer'); if (!v) return;
-  const el = document.createElement('div'); el.className = 'sv-flying-emoji';
-  if (emoji && (emoji.includes('.png') || emoji.includes('/'))) {
-    const src = emoji.startsWith('/') ? emoji : ('/' + emoji);
-    el.innerHTML = `<img class="sv-reaction-emoji" src="${src}" style="width:48px;height:48px;" alt="">`;
-  } else {
-    el.textContent = emoji || '❤️';
+  const count = 5;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'sv-flying-emoji';
+    const offsetX = (i - 2) * 28 + (Math.random() * 24 - 12);
+    const delay = i * 55;
+    const scale = 0.95 + Math.random() * 0.35;
+    el.style.setProperty('--fly-x', `${offsetX}px`);
+    el.style.setProperty('--fly-scale', `${scale}`);
+    el.style.animationDelay = `${delay}ms`;
+    if (emoji && (emoji.includes('.png') || emoji.includes('/') || emoji.includes('.webp'))) {
+      const src = emoji.startsWith('/') ? emoji : ('/' + emoji);
+      el.innerHTML = `<img class="sv-reaction-emoji" src="${src}" style="width:44px;height:44px;object-fit:contain;pointer-events:none;" alt="">`;
+    } else {
+      el.innerHTML = `<span style="font-size:38px;line-height:1;">${emoji || '❤️'}</span>`;
+    }
+    v.appendChild(el);
+    setTimeout(() => el.remove(), 1100 + delay);
   }
-  v.appendChild(el); setTimeout(() => el.remove(), 850);
 }
 
 function ensureDom() {
@@ -107,10 +118,12 @@ function ensureDom() {
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
         <div class="sv-reactions" id="svReactions">
-          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44d.png" aria-label="Like"><img class="sv-reaction-emoji" src="/emoji/2d/1f44d.png" alt=""></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi"><img class="sv-reaction-emoji" src="/emoji/2d/2764.png" alt=""></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov"><img class="sv-reaction-emoji" src="/emoji/2d/1f525.png" alt=""></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f602.png" aria-label="Kulgu"><img class="sv-reaction-emoji" src="/emoji/2d/1f602.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat"><img class="sv-reaction-emoji" src="/emoji/2d/1f62e.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f622.png" aria-label="Qayg'u"><img class="sv-reaction-emoji" src="/emoji/2d/1f622.png" alt=""></button>
+          <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44d.png" aria-label="Like"><img class="sv-reaction-emoji" src="/emoji/2d/1f44d.png" alt=""></button>
         </div>
         <div class="sv-own-bar" id="svOwnBar" hidden>
           <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
@@ -132,26 +145,60 @@ function ensureDom() {
       e.stopPropagation();
       const group = _groups[_viewerIdx];
       const item = group?.items?.[_itemIdx];
-      if (!group || !item || !group.isMe) return;
+      const isMine = !!group?.isMe || (!!state.me?.uid && group?.uid === state.me.uid);
+      if (!group || !item || !isMine) return;
       freezeStory();
       showConfirm("Ushbu hikoyani o'chirmoqchimisiz?", async () => {
         try {
-          const { error } = await sb.from('stories').delete().eq('id', item.id);
-          if (error) throw error;
-          if (item.mediaPath) {
-            sb.storage.from(MEDIA_BUCKET).remove([item.mediaPath]).catch(() => {});
+          const myUid = state.me?.uid;
+          const storyId = item.id;
+          const mediaPath = item.mediaPath;
+
+          // a) Avval story_views jadvalidan ushbu story_id ga tegishli qatorlarni o'chirish (FK cheklovi oldini olish)
+          try {
+            await sb.from('story_views').delete().eq('story_id', storyId);
+          } catch (vErr) {
+            console.warn('[stories] story_views tozalashda ogohlantirish:', vErr);
           }
-          toast("Hikoya o'chirildi", "success");
+
+          // b) Keyin stories jadvalidan o'chirish (id va user_id bo'yicha)
+          let delQuery = sb.from('stories').delete().eq('id', storyId);
+          if (myUid) delQuery = delQuery.eq('user_id', myUid);
+          const { error } = await delQuery;
+          if (error) throw error;
+
+          // c) Supabase Storage (MEDIA_BUCKET) dan faylni o'chirish
+          if (mediaPath) {
+            sb.storage.from(MEDIA_BUCKET).remove([mediaPath]).catch(sErr => {
+              console.warn('[stories] media removal warning:', sErr);
+            });
+          }
+
+          // d) Mahalliy keshdan (IndexedDB / story-cache.js) o'chirish
+          try {
+            await evictItem(storyId);
+          } catch (_) {}
+
+          // e) Xotiradagi _groups massividan item ni olib tashlash
           group.items.splice(_itemIdx, 1);
+          if (myUid) {
+            saveSnapshot(myUid, _groups).catch(() => {});
+          }
+
+          toast("Hikoya o'chirildi", "success");
+
+          // Agar userning boshqa story'si qolmasa, viewer'ni yopish va feed'dagi stories track'ni yangilash
           if (!group.items.length) {
             _groups.splice(_viewerIdx, 1);
             closeViewer();
           } else {
+            // Agar qolgan bo'lsa keyingi/oldingi story'ga silliq o'tish
             if (_itemIdx >= group.items.length) _itemIdx = group.items.length - 1;
             showCurrent();
           }
-          loadStories();
+          await loadStories();
         } catch (err) {
+          console.error('[stories] story delete error:', err);
           toast("Hikoyani o'chirib bo'lmadi", "error");
           unfreezeStory();
         }

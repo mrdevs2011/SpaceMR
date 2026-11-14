@@ -258,22 +258,60 @@ function _toggleAudio(i) {
   a.play().catch(() => {});
 }
 
-/* ── Rasm ko'rish ─────────────────────────────────────────────── */
+/* ── Rasm / Media ko'rish galereyasi (Oldinga / Orqaga) ─────────────── */
+let _galleryItems = [];
+let _galleryIndex = 0;
+let _galleryKeyHandler = null;
+
 function _ensureViewer() {
   if (_viewer) return _viewer;
   _viewer = document.createElement('div');
   _viewer.id = 'cmViewer';
-  _viewer.addEventListener('click', e => { if (!e.target.closest('img, video, .zoom-x, .zoom-dl')) _closeViewer(); });
+  _viewer.addEventListener('click', e => {
+    if (!e.target.closest('img, video, .zoom-x, .zoom-dl, .cm-nav-btn')) closeMediaGallery();
+  });
   document.body.appendChild(_viewer);
   return _viewer;
 }
-function _openViewer(i) {
-  const m = _data.media[i];
-  if (!m) return;
+
+/**
+ * Bir nechta media (albom yoki ro'yxat) bo'ylab oldinga/orqaga o'tish imkoniga ega galereyani ochish.
+ * @param {Array<{ url: string, kind?: 'image'|'video', fileName?: string }>} items
+ * @param {number} [initialIndex=0]
+ */
+export function openMediaGallery(items = [], initialIndex = 0) {
+  if (!items || !items.length) return;
+  _galleryItems = items;
+  _galleryIndex = Math.max(0, Math.min(items.length - 1, initialIndex));
+
   const v = _ensureViewer();
-  const url = esc(_url(m));
-  const rawUrl = _url(m);
-  const fname = esc(m.fileName || (m.kind === 'video' ? 'video.mp4' : 'image.jpg'));
+  _renderGalleryCurrent();
+  v.classList.add('show');
+  lockScroll('cmViewer');
+
+  if (!_galleryKeyHandler) {
+    _galleryKeyHandler = (e) => {
+      if (!v.classList.contains('show')) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevMediaGallery(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); nextMediaGallery(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeMediaGallery(); }
+    };
+    window.addEventListener('keydown', _galleryKeyHandler);
+  }
+}
+
+function _renderGalleryCurrent() {
+  const v = _ensureViewer();
+  const m = _galleryItems[_galleryIndex];
+  if (!m) return;
+
+  const rawUrl = m.mediaUrl || m.url || '';
+  const url = esc(rawUrl);
+  const isVideo = m.kind === 'video' || (m.type || '').toLowerCase().startsWith('video') || /\.(mp4|webm|mov)(\?|$)/i.test(rawUrl);
+  const fname = esc(m.fileName || m.name || (isVideo ? 'video.mp4' : 'image.jpg'));
+  const total = _galleryItems.length;
+  const hasNav = total > 1;
+
   v.innerHTML = `
     <button class="zoom-x" type="button" aria-label="Yopish" title="Yopish">
       <img src="./svg/action/close.svg" alt="" class="icon" width="16" height="16">
@@ -281,27 +319,63 @@ function _openViewer(i) {
     <button class="zoom-dl" type="button" aria-label="Yuklab olish" title="Yuklab olish">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>
     </button>
-    ${m.kind === 'video'
+    ${hasNav ? `<div class="cm-gallery-counter">${_galleryIndex + 1} / ${total}</div>` : ''}
+    ${hasNav ? `
+      <button class="cm-nav-btn cm-nav-prev" type="button" aria-label="Oldingi media" title="Oldingi">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="cm-nav-btn cm-nav-next" type="button" aria-label="Keyingi media" title="Keyingi">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    ` : ''}
+    ${isVideo
       ? `<video src="${url}" controls autoplay playsinline></video>`
       : `<img src="${url}" alt="">`}`;
-  v.querySelector('.zoom-x')?.addEventListener('click', (e) => { e.stopPropagation(); _closeViewer(); });
+
+  v.querySelector('.zoom-x')?.addEventListener('click', (e) => { e.stopPropagation(); closeMediaGallery(); });
   v.querySelector('.zoom-dl')?.addEventListener('click', (e) => {
     e.stopPropagation();
-    dlFile(rawUrl, m.fileName || (m.kind === 'video' ? 'video.mp4' : 'image.jpg'));
+    dlFile(rawUrl, m.fileName || m.name || (isVideo ? 'video.mp4' : 'image.jpg'));
   });
-  v.classList.add('show');
-  lockScroll('cmViewer');
-  if (m.kind === 'video') {
+  v.querySelector('.cm-nav-prev')?.addEventListener('click', (e) => { e.stopPropagation(); prevMediaGallery(); });
+  v.querySelector('.cm-nav-next')?.addEventListener('click', (e) => { e.stopPropagation(); nextMediaGallery(); });
+
+  if (isVideo) {
     const vid = v.querySelector('video');
     if (vid) ensureVideoDuration(vid);
   }
 }
-function _closeViewer() {
+
+export function prevMediaGallery() {
+  if (_galleryItems.length <= 1) return;
+  _galleryIndex = (_galleryIndex - 1 + _galleryItems.length) % _galleryItems.length;
+  _renderGalleryCurrent();
+}
+
+export function nextMediaGallery() {
+  if (_galleryItems.length <= 1) return;
+  _galleryIndex = (_galleryIndex + 1) % _galleryItems.length;
+  _renderGalleryCurrent();
+}
+
+export function closeMediaGallery() {
   if (!_viewer) return;
   _viewer.classList.remove('show');
   unlockScroll('cmViewer');
   try { _viewer.querySelector('video')?.pause(); } catch (_) {}
   _viewer.innerHTML = '';
+  if (_galleryKeyHandler) {
+    window.removeEventListener('keydown', _galleryKeyHandler);
+    _galleryKeyHandler = null;
+  }
+}
+
+function _openViewer(i) {
+  openMediaGallery(_data.media, i);
+}
+
+function _closeViewer() {
+  closeMediaGallery();
 }
 
 /* ── Ochish / yopish ────────────────────────────────────────────────── */
@@ -333,7 +407,22 @@ export async function openChatMedia({ chatId, name, avatar, uid } = {}) {
   }
   for (const r of (data || [])) {
     const m = mapMessage(r);
-    if (!m || !m.mediaUrl) continue;
+    if (!m) continue;
+    // Agar albom bo'lsa (bir nechta media)
+    if (m.type === 'album' && Array.isArray(m.items)) {
+      for (const it of m.items) {
+        const itKind = (it.type || '').startsWith('video') ? 'video' : 'image';
+        _data.media.push({
+          ...it,
+          mediaUrl: it.url || it.mediaUrl || (it.path ? _url({ mediaUrl: it.path }) : ''),
+          kind: itKind,
+          fileName: it.name || it.fileName,
+          createdAt: m.createdAt
+        });
+      }
+      continue;
+    }
+    if (!m.mediaUrl) continue;
     m.kind = _kind(m);
     if (m.kind === 'image' || m.kind === 'video') _data.media.push(m);
     else if (m.kind === 'audio') _data.audio.push(m);
