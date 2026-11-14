@@ -96,3 +96,4 @@ console.log('✓ PASS: Location bubble renders safely without quote escaping err
 console.log('====================================================');
 console.log('ALL CHAT MEDIA & UI REGRESSION CHECKS PASSED (100%)');
 console.log('====================================================');
+process.exit(0);

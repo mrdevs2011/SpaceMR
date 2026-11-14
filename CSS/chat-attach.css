@@ -1062,7 +1062,19 @@
   text-decoration: none;
   border: none;
   outline: none;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   transition: transform 0.14s ease, background 0.14s ease, opacity 0.14s ease;
+}
+.loc-action-btn *,
+.loc-btn-view *,
+.loc-btn-start *,
+.loc-map-preview,
+.loc-map-preview * {
+  cursor: pointer !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  pointer-events: auto !important;
 }
 .loc-btn-view {
   background: rgba(255, 255, 255, 0.08);

@@ -265,10 +265,10 @@ function openPick() {
   hp.firstChild.innerHTML = [q, ...HOVER_SET.filter(e => e !== q)]
     .map((e, i) => `<button type="button" class="hp-e${mineE === norm(e) ? ' on' : ''}" data-e="${norm(e)}" aria-label="Reaksiya" style="--i:${i}">${emojiImg(e)}</button>`).join('');
   const r = hb.getBoundingClientRect();
-  // Bo'sh joyga BUTUN emoji sig'adigan qilib balandlik: 36px emoji + 4px oraliq (kesilib qolmasin)
+  // Bo'sh joyga BUTUN emoji sig'adigan qilib balandlik: 36px emoji + 5px oraliq + 8px padding (kesilib qolmasin)
   const room = r.bottom + 4 - minTop() - 18;
-  const n = Math.max(3, Math.min(5, Math.floor((room + 4) / 40)));
-  hp.firstChild.style.maxHeight = (n * 36 + (n - 1) * 4) + 'px';
+  const n = Math.max(3, Math.min(5, Math.floor((room + 6) / 41)));
+  hp.firstChild.style.maxHeight = (n * 36 + (n - 1) * 5 + 8) + 'px';
   hp.style.visibility = 'hidden';
   hp.classList.add('show');
   hp.firstChild.scrollTop = 0;

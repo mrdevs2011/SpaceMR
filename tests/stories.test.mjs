@@ -26,3 +26,4 @@ assert.ok(source.includes("is-zero") && source.includes("opacity = '0'"), "Zero 
 assert.ok(!source.includes("group.isMe || !state.me?.uid) return;"), "Story owner must be able to react");
 
 console.log("STORIES REGRESSION: all checks passed");
+process.exit(0);

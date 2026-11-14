@@ -8,6 +8,27 @@ import { openSmartMapLocation } from '../../ui/location-helper.js';
 
 if (typeof window !== 'undefined') {
   window.__openSmartMap = openSmartMapLocation;
+  if (typeof document !== 'undefined' && !window.__locClickHandlerAttached) {
+    window.__locClickHandlerAttached = true;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('.loc-action-btn, .loc-map-preview');
+      if (!btn) return;
+      const lat = Number(btn.dataset.lat);
+      const lon = Number(btn.dataset.lon);
+      const navigate = btn.dataset.navigate === '1' || btn.classList.contains('loc-btn-start');
+      if (!isNaN(lat) && !isNaN(lon)) {
+        e.stopPropagation();
+        if (typeof window.__openSmartMap === 'function') {
+          window.__openSmartMap(lat, lon, { navigate });
+        } else {
+          const url = navigate
+            ? `https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto`
+            : `https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map`;
+          window.open(url, '_blank');
+        }
+      }
+    }, { capture: true });
+  }
 }
 
 /* Rasm nisbatini eslab qolish: 0ms Aspect Ratio & Zero CLS Registry */
@@ -930,7 +951,7 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
 
   const bubbleContent = `
     <div class="loc-bubble-card">
-      <div class="loc-map-preview media-blur-box" style="aspect-ratio:420/180;width:100%;cursor:pointer;" title="Xaritada ochish" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: false }) : window.open('https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map', '_blank'))">
+      <div class="loc-map-preview media-blur-box" data-lat="${lat}" data-lon="${lon}" data-navigate="0" style="aspect-ratio:420/180;width:100%;cursor:pointer;" title="Xaritada ochish" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: false }) : window.open('https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map', '_blank'))">
         <img class="loc-static-img" src="${yandexStatic}" alt="Xarita" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="loc-fallback-map" style="display:none">
           <div class="loc-pin-pulse"></div>
@@ -946,11 +967,11 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
           <div class="loc-address">${addr}</div>
         </div>
         <div class="loc-actions-row">
-          <button type="button" class="loc-action-btn loc-btn-view" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: false }) : window.open('https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map', '_blank'))" title="Xaritada ko‘rish">
+          <button type="button" class="loc-action-btn loc-btn-view" data-lat="${lat}" data-lon="${lon}" data-navigate="0" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: false }) : window.open('https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map', '_blank'))" title="Xaritada ko‘rish">
             <span>Xaritada</span>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
           </button>
-          <button type="button" class="loc-action-btn loc-btn-start" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: true }) : window.open('https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto', '_blank'))" title="Marshrutni boshlash">
+          <button type="button" class="loc-action-btn loc-btn-start" data-lat="${lat}" data-lon="${lon}" data-navigate="1" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: true }) : window.open('https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto', '_blank'))" title="Marshrutni boshlash">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
             <span>Boshlash</span>
           </button>

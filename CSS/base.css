@@ -40,7 +40,7 @@ html.is-desktop #chatThreadMessages .chat-msg[data-msg-id] {
   user-select: auto !important;
 }
 html.is-desktop #chatThreadMessages .chat-bubble,
-html.is-desktop #chatThreadMessages .chat-bubble *:not(button):not(.chat-msg-meta):not(.msg-avi-btn):not(.loc-action-btn):not(.poll-vote-btn),
+html.is-desktop #chatThreadMessages .chat-bubble *:not(button):not(.chat-msg-meta):not(.msg-avi-btn):not(.loc-action-btn):not(.loc-action-btn *):not(.loc-map-preview):not(.loc-map-preview *):not(.poll-vote-btn):not(.poll-vote-btn *),
 html.is-desktop .chat-bubble-text,
 html.is-desktop .chat-bubble-text *,
 html.is-desktop .cfm-caption,
@@ -54,6 +54,21 @@ html.is-desktop .pf-bio * {
   -webkit-user-select: text !important;
   user-select: text !important;
   cursor: text;
+}
+
+/* Xarita va marshrut tugmalari doimo cursor: pointer va bosiladigan bo'lsin */
+.loc-action-btn,
+.loc-action-btn *,
+.loc-btn-view,
+.loc-btn-view *,
+.loc-btn-start,
+.loc-btn-start *,
+.loc-map-preview,
+.loc-map-preview * {
+  cursor: pointer !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  pointer-events: auto !important;
 }
 /* ─── splash ─── */
 /* ═══════════════════════ SPLASH SCREEN — Minimal ═══════════════════════ */
