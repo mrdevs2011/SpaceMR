@@ -940,6 +940,24 @@
   padding: 0 !important;
   overflow: hidden !important;
   max-width: 340px !important;
+  position: relative !important;
+}
+.chat-bubble.bubble-location .chat-bubble-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+}
+.chat-bubble.bubble-location .chat-msg-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 4px !important;
+  float: none !important;
+  padding: 2px 12px 8px !important;
+  margin: 0 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 .loc-bubble-card {
   display: flex;
@@ -1035,9 +1053,12 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
-  cursor: pointer;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 5;
   text-decoration: none;
   border: none;
   outline: none;

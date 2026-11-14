@@ -18,6 +18,8 @@ import './core/offline.js'; // oflayn banner — ROADMAP 4
 import './ui/onboarding.js';
 import './ui/file-viewer.js'; // fayl ochish oynasi (matn/kod/jadval/rasm/video/audio/PDF)
 
+try { if (typeof window !== 'undefined') { window.__spacemrBootOk = true; window.__spacemrScriptLoaded = true; } } catch (_) {}
+
 /* ── Splash: min 0.8s, max 2s; ma'lumot tayyor bo'lguncha kutadi ── */
 const _splashT0 = Date.now();
 const SPLASH_MIN_MS = 200;

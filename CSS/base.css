@@ -35,12 +35,22 @@ input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-s
     cursor: text;
   }
 }
+html.is-desktop #chatThreadMessages .chat-msg[data-msg-id] {
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+}
+html.is-desktop #chatThreadMessages .chat-bubble,
+html.is-desktop #chatThreadMessages .chat-bubble *:not(button):not(.chat-msg-meta):not(.msg-avi-btn):not(.loc-action-btn):not(.poll-vote-btn),
 html.is-desktop .chat-bubble-text,
 html.is-desktop .chat-bubble-text *,
 html.is-desktop .cfm-caption,
+html.is-desktop .cfm-caption *,
 html.is-desktop .post-text,
+html.is-desktop .post-text *,
 html.is-desktop .cmt-text,
-html.is-desktop .pf-bio {
+html.is-desktop .cmt-text *,
+html.is-desktop .pf-bio,
+html.is-desktop .pf-bio * {
   -webkit-user-select: text !important;
   user-select: text !important;
   cursor: text;

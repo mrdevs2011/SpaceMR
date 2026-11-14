@@ -19,7 +19,8 @@ meta[name="theme-color"] { color: var(--pal-black); }
 :root, [data-theme="dark"] { --text: var(--pal-gray-100); --text2: var(--pal-gray-500); --text3: var(--pal-gray-500); --line: var(--pal-gray-700); --line2: var(--pal-gray-700); --line3: var(--pal-gray-700); }
 html, body, #app { background: var(--bg); color: var(--text); overflow-x: hidden; max-width: 100vw; }
 body { font-family: var(--font); -webkit-font-smoothing: antialiased; }
-::selection { background: rgba(231, 233, 234, 0.2); }
+::selection { background: #1d9bf0 !important; color: #ffffff !important; }
+::-moz-selection { background: #1d9bf0 !important; color: #ffffff !important; }
 /* 2. Tugmalar: pill, tinch */
 .btn-primary { border-radius: 999px; font-weight: 700; font-size: 15px; padding: 13px 20px; letter-spacing: 0; }
 .btn-ghost, .btn-danger { border-radius: 999px; font-weight: 600; font-size: 14px; border: 1px solid var(--line); }
@@ -411,7 +412,8 @@ nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg , nav
   nav.bot-nav .sb-acc-name, nav.bot-nav .sb-acc-user { font-size: 15px; line-height: 20px; }
 }
 /* ═══════════════════════════════════════════════════════════════════════ X 1:1 — aniq X ranglari va komponen... */
-::selection { color: inherit; }
+::selection { color: #ffffff !important; background: #1d9bf0 !important; }
+::-moz-selection { color: #ffffff !important; background: #1d9bf0 !important; }
 /* Asosiy CTA: X'dagi kabi teskari pill (dark: oq/qora matn, light: qora/oq matn) */
 .btn-primary { background: var(--x-inv-bg); }
 .btn-primary:hover { background: var(--x-inv-bg-hover); }

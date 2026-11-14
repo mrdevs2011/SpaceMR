@@ -4,6 +4,11 @@ import { getChatFileIcon, callLogInfo, fmtCallDur, renderUploadRingHtml } from '
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
 import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
 import { getMediaAspectStyle, getMediaDimensions, setMediaDimensions, cachedMediaUrlSync } from '../../core/store/media-cache.js';
+import { openSmartMapLocation } from '../../ui/location-helper.js';
+
+if (typeof window !== 'undefined') {
+  window.__openSmartMap = openSmartMapLocation;
+}
 
 /* Rasm nisbatini eslab qolish: 0ms Aspect Ratio & Zero CLS Registry */
 export function imgRatioAttr(url, w, h) {
@@ -268,19 +273,21 @@ if (typeof window !== 'undefined') {
 /* ── Video preview: birinchi kadr + play tugmasi + davomiylik; bosilsa shu yerning o'zida ijro bo'ladi ── */
 const VID_EXT = ['mp4', 'webm', 'mov', 'm4v', 'ogv'];
 const AUD_EXT = ['mp3', 'm4a', 'aac', 'wav', 'ogg', 'oga', 'opus', 'flac', 'weba'];
-window._chatVidMeta = function (v) {
-  try {
-    rememberImgRatio({ getAttribute: () => v.getAttribute('src').split('#')[0], naturalWidth: v.videoWidth, naturalHeight: v.videoHeight });
-    if (v.videoWidth && v.videoHeight) v.style.aspectRatio = `${v.videoWidth}/${v.videoHeight}`;
-    ensureVideoDuration(v);
-    const d = v.closest('.cfm-vid-wrap')?.querySelector('.cfm-vid-dur');
-    if (d && isFinite(v.duration) && v.duration > 0) d.textContent = fmtDur(v.duration);
-    else if (d) {
-      fixVideoDuration(v).then(sec => { if (sec > 0) d.textContent = fmtDur(sec); });
-    }
-  } catch (_) {}
-  window._chatImgLoaded && window._chatImgLoaded(v);
-};
+if (typeof window !== 'undefined') {
+  window._chatVidMeta = function (v) {
+    try {
+      rememberImgRatio({ getAttribute: () => v.getAttribute('src').split('#')[0], naturalWidth: v.videoWidth, naturalHeight: v.videoHeight });
+      if (v.videoWidth && v.videoHeight) v.style.aspectRatio = `${v.videoWidth}/${v.videoHeight}`;
+      ensureVideoDuration(v);
+      const d = v.closest('.cfm-vid-wrap')?.querySelector('.cfm-vid-dur');
+      if (d && isFinite(v.duration) && v.duration > 0) d.textContent = fmtDur(v.duration);
+      else if (d) {
+        fixVideoDuration(v).then(sec => { if (sec > 0) d.textContent = fmtDur(sec); });
+      }
+    } catch (_) {}
+    window._chatImgLoaded && window._chatImgLoaded(v);
+  };
+}
 /* ── Rolik (dumaloq video): qora/qotgan kadr muammosi ──
    1) MediaRecorder webm/mp4'ida duration yo'q (Infinity) → metadata kelgach tuzatiladi.
    2) preload=metadata birinchi kadrni chizmaydi → qora doira: kichik seek bilan kadr chiziladi.
@@ -315,15 +322,17 @@ function _noteRelease(v) {
     v.load();
   } catch (_) {}
 }
-window._chatNoteMeta = function (v) {
-  try {
-    if (!v.dataset.noteSrc) v.dataset.noteSrc = v.getAttribute('src') || '';
-    ensureVideoDuration(v);
-    if (!_noteIO) { _notePaint(v); return; }
-    _noteIO.observe(v);                                   // allaqachon kuzatilsa — hech narsa o'zgarmaydi
-    if (v.dataset.noteVis === '1') { _notePaint(v); setTimeout(() => _notePaint(v), 700); }   // duration tuzatish seekidan keyin ham
-  } catch (_) {}
-};
+if (typeof window !== 'undefined') {
+  window._chatNoteMeta = function (v) {
+    try {
+      if (!v.dataset.noteSrc) v.dataset.noteSrc = v.getAttribute('src') || '';
+      ensureVideoDuration(v);
+      if (!_noteIO) { _notePaint(v); return; }
+      _noteIO.observe(v);                                   // allaqachon kuzatilsa — hech narsa o'zgarmaydi
+      if (v.dataset.noteVis === '1') { _notePaint(v); setTimeout(() => _notePaint(v), 700); }   // duration tuzatish seekidan keyin ham
+    } catch (_) {}
+  };
+}
 function _fmtVidTime(s) {
   if (!isFinite(s) || s < 0) return '0:00';
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
@@ -522,7 +531,7 @@ function vidStop(wrap) {
   v.controls = false;
   v.pause();
 }
-if (!window.__chatVidBound) {
+if (typeof window !== 'undefined' && !window.__chatVidBound) {
   window.__chatVidBound = true;
   document.addEventListener('click', e => {
     const wrap = e.target?.closest?.('.cfm-vid-wrap');
@@ -564,7 +573,7 @@ if (!window.__chatVidBound) {
   }, true);
 }
 
-if (!window.__chatNoteBound) {
+if (typeof window !== 'undefined' && !window.__chatNoteBound) {
   window.__chatNoteBound = true;
   const stopNote = w => { w.classList.remove('playing'); w.querySelector('video')?.pause(); };
   document.addEventListener('click', e => {
@@ -839,7 +848,7 @@ export function generateCallBubble({ cl, mine, time }) {
     </div>`,
   };
 }
-if (!window.__chatCallBound) {
+if (typeof window !== 'undefined' && !window.__chatCallBound) {
   window.__chatCallBound = true;
   document.addEventListener('click', e => {
     const b = e.target?.closest?.('[data-ccm-call]');
@@ -917,12 +926,11 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
   const lon = Number(loc.lon) || 0;
   const title = esc(loc.title || 'Joylashuv');
   const addr = esc(loc.address || `${lat.toFixed(5)}, ${lon.toFixed(5)}`);
-  const gmaps = `https://www.google.com/maps?q=${lat},${lon}`;
   const yandexStatic = `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=15&l=map&size=420,180&pt=${lon},${lat},pm2rdm`;
 
   const bubbleContent = `
     <div class="loc-bubble-card">
-      <div class="loc-map-preview media-blur-box" style="aspect-ratio:420/180;width:100%;cursor:pointer;" title="Xaritada ochish" onclick="window.__openSmartMap && window.__openSmartMap(${lat}, ${lon}, { navigate: false, title: '${title}' })">
+      <div class="loc-map-preview media-blur-box" style="aspect-ratio:420/180;width:100%;cursor:pointer;" title="Xaritada ochish" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: false }) : window.open('https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map', '_blank'))">
         <img class="loc-static-img" src="${yandexStatic}" alt="Xarita" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="loc-fallback-map" style="display:none">
           <div class="loc-pin-pulse"></div>
@@ -938,11 +946,11 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
           <div class="loc-address">${addr}</div>
         </div>
         <div class="loc-actions-row">
-          <button type="button" class="loc-action-btn loc-btn-view" onclick="window.__openSmartMap && window.__openSmartMap(${lat}, ${lon}, { navigate: false, title: '${title}' })" title="Xaritada ko‘rish">
+          <button type="button" class="loc-action-btn loc-btn-view" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: false }) : window.open('https://yandex.ru/maps/?pt=${lon},${lat}&z=16&l=map', '_blank'))" title="Xaritada ko‘rish">
             <span>Xaritada</span>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
           </button>
-          <button type="button" class="loc-action-btn loc-btn-start" onclick="window.__openSmartMap && window.__openSmartMap(${lat}, ${lon}, { navigate: true, title: '${title}' })" title="Marshrutni boshlash">
+          <button type="button" class="loc-action-btn loc-btn-start" onclick="(window.__openSmartMap ? window.__openSmartMap(${lat}, ${lon}, { navigate: true }) : window.open('https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto', '_blank'))" title="Marshrutni boshlash">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
             <span>Boshlash</span>
           </button>

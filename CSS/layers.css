@@ -529,7 +529,8 @@ svg { color: inherit; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--pal-gray-900); border-radius: var(--radius); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--pal-gray-800); }
 /* ══════════════════════════════════════════ 24. SELECTION ══════════════════════════════════════════ */
-[data-theme="dark"] ::selection { background: #2f3336; color: var(--pal-white); }
+[data-theme="dark"] ::selection { background: #1d9bf0 !important; color: #ffffff !important; }
+[data-theme="dark"] ::-moz-selection { background: #1d9bf0 !important; color: #ffffff !important; }
 /* ══════════════════════════════════════════ 25. REEL — Overlays ══════════════════════════════════════════ */
 [data-theme="dark"] .reel { background: var(--pal-black); }
 [data-theme="dark"] .reel-top-btn { background: var(--pal-black); border: 0.5px solid var(--pal-gray-900); }

@@ -64,6 +64,35 @@ import { openSmartMapLocation } from '../modules/ui/location-helper.js';
 assert.equal(typeof openSmartMapLocation, 'function');
 console.log('✓ PASS: openSmartMapLocation is properly exported');
 
+console.log('--- 8. Testing Poll Parser for Raw/Voted Payloads ---');
+import { parsePoll } from '../modules/chat/chat-shared.js';
+// Payload exactly as shown in user screenshot (missing __poll)
+const leakedPayload = '{"id":"poll_1794639021132_4we8m","question":"Olamning rangi qanday","options":[{"id":"opt_0","text":"Oq","voters":["941ae96e-afa3-4440-98ee-0be10e8923d1"]},{"id":"opt_1","text":"Sariq","voters":[]},{"id":"opt_2","text":"Yashil","voters":[]},{"id":"opt_3","text":"Qizil","voters":[]}],"anonymous":true,"multiple":false,"isQuiz":false,"correctOptionId":null,"explanation":"","totalVotes":1,"creatorId":"941ae96e-afa3-4440-98ee-0be10e8923d1"}';
+const parsedPoll = parsePoll(leakedPayload);
+assert.ok(parsedPoll, 'parsePoll should successfully parse payload lacking __poll');
+assert.equal(parsedPoll.__poll, true, 'parsed poll must guarantee __poll: true');
+assert.equal(parsedPoll.question, 'Olamning rangi qanday');
+assert.equal(parsedPoll.options.length, 4);
+assert.equal(parsedPoll.totalVotes, 1);
+console.log('✓ PASS: parsePoll successfully parses legacy/voted payloads and guarantees __poll: true');
+
+console.log('--- 9. Testing Location Bubble Meta & Click Handlers ---');
+import { generateLocationBubble } from '../modules/chat/components/message-bubble.js';
+const locBubble = generateLocationBubble({
+  loc: { lat: 40.7833, lon: 72.3500, title: "Oltinko'l tumani", address: "Oltinko'l, Andijon viloyati, O'zbekiston" },
+  m: { id: 'm1', status: 'read' },
+  time: '11:40',
+  mine: true,
+  renderTicks: () => '✓✓',
+  dm: true,
+});
+assert.ok(locBubble.bubbleContent.includes('loc-bubble-card'));
+assert.ok(locBubble.bubbleContent.includes('loc-btn-view'));
+assert.ok(locBubble.bubbleContent.includes('loc-btn-start'));
+assert.ok(!locBubble.bubbleContent.includes("title: 'Oltinko'l"), 'Should never contain unescaped single quotes inside inline JS string');
+assert.ok(locBubble.bubbleContent.includes('window.__openSmartMap'));
+console.log('✓ PASS: Location bubble renders safely without quote escaping errors and binds smart maps');
+
 console.log('====================================================');
 console.log('ALL CHAT MEDIA & UI REGRESSION CHECKS PASSED (100%)');
 console.log('====================================================');

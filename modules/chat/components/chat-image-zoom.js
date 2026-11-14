@@ -5,7 +5,7 @@
  * Bitta delegatsiya (capture) — chat qayta chizilganda ham ishlayveradi. */
 import { openZoom } from '../../core/utils.js';
 
-if (!window.__chatImgZoomBound) {
+if (typeof window !== 'undefined' && !window.__chatImgZoomBound) {
   window.__chatImgZoomBound = true;
   document.addEventListener('click', (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;

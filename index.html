@@ -39,7 +39,7 @@ html{color-scheme:dark;}
     document.documentElement.style.background = '#000000';
     try {
       var ua = navigator.userAgent || '';
-      var isRealMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
+      var isRealMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
       if (!isRealMobile) {
         document.documentElement.classList.add('is-desktop');
       } else {
@@ -111,10 +111,10 @@ html{color-scheme:dark;}
 
     function bootOk() {
       try {
-        if (window.__spacemrBootOk) return true;
+        if (window.__spacemrBootOk || window.__spacemrScriptLoaded) return true;
         var app = document.getElementById('app');
         var aw = document.getElementById('authWrap');
-        if (app && app.classList.contains('show')) return true;
+        if (app && (app.classList.contains('show') || (app.children && app.children.length > 0))) return true;
         if (aw && (aw.classList.contains('show') || (aw.style && aw.style.display !== 'none' && aw.offsetParent !== null))) return true;
         var sp = document.getElementById('splash');
         if (sp && (sp.style.display === 'none' || sp.classList.contains('out'))) {
@@ -132,10 +132,10 @@ html{color-scheme:dark;}
         if (bootOk()) return true;
         var sp = d.getElementById('splash');
         var spVis = !!sp && sp.style.display !== 'none' && !sp.classList.contains('out');
-        // Splash hali ko'rinadi: normal kutish 20s; faqat CRITICAL fail da 12s dan keyin o'tkaziladi
+        // Splash hali ko'rinadi: normal kutish 45s (sekin mobil tarmoq / Supabase uchun); faqat CRITICAL fail da 15s
         if (spVis) {
-          if (failed && (Date.now() - t0) > 12000) return false;
-          return (Date.now() - t0) < 20000;
+          if (failed && (Date.now() - t0) > 15000) return false;
+          return (Date.now() - t0) < 45000;
         }
         var pts = [[.5,.5],[.5,.25],[.5,.75],[.25,.5]];
         for (var i = 0; i < pts.length; i++) {
@@ -253,8 +253,8 @@ html{color-scheme:dark;}
       } catch (_) {}
     });
 
-    setTimeout(check, 10000);
-    setTimeout(check, 22000);
+    setTimeout(check, 35000);
+    setTimeout(check, 50000);
   })();
 </script>
 <!-- Story'lar: sayt ochilishi bilan, splash va auth'ni kutmasdan — IndexedDB keshdan o'qish + serverdan yangilash boshlanadi -->

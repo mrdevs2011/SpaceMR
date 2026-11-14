@@ -122,11 +122,23 @@ export function parseLocation(raw) {
 export function parsePoll(raw) {
   if (!raw || typeof raw !== 'string') return null;
   const t = raw.trim();
-  if (!t.startsWith('{') || !t.includes('"__poll"')) return null;
+  if (!t.startsWith('{')) return null;
+  if (!t.includes('"question"') && !t.includes('"__poll"') && !t.includes('"options"')) return null;
   try {
     const p = JSON.parse(t);
-    if (p && (p.__poll === true || p.__poll === 'true') && typeof p.question === 'string' && Array.isArray(p.options)) {
+    const isPollObj = p && (
+      p.__poll === true ||
+      p.__poll === 'true' ||
+      (typeof p.question === 'string' && Array.isArray(p.options) && (
+        (typeof p.id === 'string' && p.id.startsWith('poll_')) ||
+        p.totalVotes !== undefined ||
+        p.anonymous !== undefined ||
+        p.isQuiz !== undefined
+      ))
+    );
+    if (isPollObj && typeof p.question === 'string' && Array.isArray(p.options)) {
       return {
+        __poll: true,
         id: p.id || ('poll_' + Date.now()),
         question: p.question,
         options: p.options.map((opt, i) => ({
@@ -186,7 +198,7 @@ export function formatLastMessageText(raw, mine = false) {
   }
   const t = String(raw).trim();
   // JSON / ichki format — foydalanuvchiga ko'rsatilmasin
-  if (t.startsWith('{') && (t.includes('"__gif"') || t.includes('"__postShare"') || t.includes('"__callLog"') || t.includes('"__location"') || t.includes('"__poll"'))) {
+  if (t.startsWith('{') && (t.includes('"__gif"') || t.includes('"__postShare"') || t.includes('"__callLog"') || t.includes('"__location"') || t.includes('"__poll"') || t.includes('"question"') || t.includes('"poll_'))) {
     return 'Xabar';
   }
   // Yalang'och media URL

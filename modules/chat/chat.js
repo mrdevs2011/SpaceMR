@@ -4248,7 +4248,7 @@ window._handlePollVote = async function(msgId, optId, evt) {
   poll.options.forEach(o => (o.voters || []).forEach(u => allVoters.add(u)));
   poll.totalVotes = allVoters.size;
 
-  const newText = JSON.stringify(poll);
+  const newText = JSON.stringify({ ...poll, __poll: true });
   msg.text = newText;
 
   // Mahalliy xabarlar ro‘yxatini darhol chizish
