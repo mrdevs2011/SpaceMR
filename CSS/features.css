@@ -135,23 +135,162 @@
 .post-badge { font-size: 9px; font-family: var(--mono); padding: 3px 8px; border-radius: var(--radius); font-weight: 500; }
 .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; padding: 6px; border-radius: var(--radius);  display: flex; }
 .del-btn:hover { color: var(--red); }
+/* ═══════════════════════ ZERO CLS & 0ms BLUR PLACEHOLDER ═══════════════════════ */
 /* Media */
-.post-media { cursor: default; background: var(--pal-black); position: relative; width: 100%; min-height: 180px; }
-.post-media img { width: 100%; height: auto; display: block; background: var(--pal-black); filter: blur(0); }
+.post-media {
+  cursor: default;
+  background: var(--pal-black, #000);
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  contain: layout;
+}
+.post-media:not([style*="aspect-ratio"]) {
+  min-height: 180px;
+}
+.post-media img,
+.post-media video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
 
-/* Media yuklanayotganda: oddiy aylanuvchi spinner (blur/skeleton yo'q) */
+/* 0ms Umumiy Blur Box & Shimmer Placeholder */
+.media-blur-box {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: var(--bg2, #16181c);
+  display: block;
+  contain: layout;
+}
+
+/* Yuklanish vaqtida nozik shimmer effekti */
+.media-blur-box::before,
+.media-blur-placeholder {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.07) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: mediaShimmer 1.5s infinite linear;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes mediaShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Yuklanmagan rasm/video blur holatida */
+.media-blur-box img,
+.media-blur-box video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: blur(14px);
+  transform: scale(1.04);
+  opacity: 0.85;
+  transition: filter 0.35s cubic-bezier(0.2, 0, 0, 1),
+              opacity 0.35s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.35s cubic-bezier(0.2, 0, 0, 1);
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+/* Yuklangach (loaded) — blur yo'qoladi, tiniq va barqaror */
+.media-blur-box.loaded::before,
+.media-blur-box:has(img.loaded)::before,
+.media-blur-box:has(video.loaded)::before {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.media-blur-box.loaded img,
+.media-blur-box img.loaded,
+.media-blur-box.loaded video,
+.media-blur-box video.loaded {
+  filter: blur(0);
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Post spinner (yuklanayotganda nozik aylanuvchi doira) */
 .post-media.pm-loading::after {
   content: '';
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 2.5px solid var(--pal-white-25);
-  border-top-color: rgba(231, 233, 234, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.85);
   animation: spin .8s linear infinite;
   pointer-events: none;
+  z-index: 3;
+}
+.post-media.loaded::after,
+.post-media:not(.pm-loading)::after {
+  display: none;
+}
+
+/* Chat media preview blur styling */
+.cfm-media-wrap.media-blur-box,
+.cfm-img-link.media-blur-box,
+.cfm-vid-box.media-blur-box {
+  border-radius: var(--radius);
+  max-width: min(360px, 80vw);
+}
+.cfm-media-wrap.media-blur-box img,
+.cfm-media-wrap.media-blur-box video {
+  max-height: 520px;
+}
+
+/* Lokatsiya / Xarita (Map preview) — 420/180 proporsiya va 0ms Zero CLS */
+.loc-map-preview.media-blur-box {
+  aspect-ratio: 420 / 180;
+  width: 100%;
+  height: auto;
+  min-height: 140px;
+  max-height: 220px;
+}
+
+/* YouTube & havola kartalari — 16/9 proporsiya va 0ms Zero CLS */
+.chat-yt-box.media-blur-box,
+.chat-media-img-wrap.media-blur-box {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+.chat-yt-card.is-shorts .chat-yt-box.media-blur-box {
+  aspect-ratio: 9 / 16;
+}
+
+/* Viktorina / So'rovnoma (Poll) — sakrashsiz barqaror min-height */
+.bubble-poll {
+  min-width: 260px;
+  max-width: 360px;
+  contain: layout;
+}
+.poll-bubble-card {
+  min-height: 110px;
+}
+.poll-options-list {
+  min-height: 38px;
+}
+.poll-item {
+  min-height: 40px;
 }
 
 /* ═══════════════════════ VIDEO 2X SPEED / REWIND BADGE ═══════════════════════ */

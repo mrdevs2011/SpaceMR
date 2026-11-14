@@ -1,7 +1,7 @@
 import { protectSecrets } from '../core/secrets.js';
 import { busEmit } from '../core/rt-bus.js';
 import { getCachedProfile } from '../core/local-cache.js';
-import { sb, state, MAX_FILE, uploadViaController, mapPost } from '../core/config.js';
+import { sb, state, MAX_FILE, uploadViaController, mapPost, setMediaDimensions } from '../core/config.js';
 import { compressImage } from './compress.js';
 import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi, safeStorage } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
@@ -31,6 +31,7 @@ function revokeObjUrl() {
 function _measureSelectedMedia(file, objUrl) {
   state._selMediaW = null;
   state._selMediaH = null;
+  if (!file || !objUrl) return;
   if (isImageFile(file)) {
     const img = new Image();
     img.onload = () => {
@@ -38,8 +39,23 @@ function _measureSelectedMedia(file, objUrl) {
       if (state._objUrl !== objUrl) return;
       state._selMediaW = img.naturalWidth  || null;
       state._selMediaH = img.naturalHeight || null;
+      if (state._selMediaW && state._selMediaH) {
+        setMediaDimensions(objUrl, state._selMediaW, state._selMediaH);
+      }
     };
     img.src = objUrl;
+  } else if (isVideoFile(file)) {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => {
+      if (state._objUrl !== objUrl) return;
+      state._selMediaW = v.videoWidth || null;
+      state._selMediaH = v.videoHeight || null;
+      if (state._selMediaW && state._selMediaH) {
+        setMediaDimensions(objUrl, state._selMediaW, state._selMediaH);
+      }
+    };
+    v.src = objUrl;
   }
 }
 
@@ -406,6 +422,10 @@ export async function submitPost() {
       mediaType = file.type;
       fileName  = file.name;
       fileSize  = file.size;
+      if (hasFile && mediaW && mediaH) {
+        setMediaDimensions(mediaPath, mediaW, mediaH);
+        if (result.url) setMediaDimensions(result.url, mediaW, mediaH);
+      }
     }
 
     const { data: _newPost, error: postErr } = await sb.from('posts').insert({

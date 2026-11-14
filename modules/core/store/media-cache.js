@@ -23,14 +23,116 @@ let _opfsFailed = false;
 let _totalBytes = 0;
 let _totalKnown = false;
 
-function _idFromPath(pathOrUrl) {
+/* ── 0ms Media Dimension & Aspect Ratio Registry (Zero CLS) ────────── */
+const DIMS_STORAGE_KEY = 'spacemr_media_dims';
+const MAX_DIMS_ENTRIES = 1500;
+const _dimMap = new Map();
+
+function _loadDims() {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(DIMS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (Array.isArray(item) && item[0] && item[1]?.w && item[1]?.h) {
+              _dimMap.set(item[0], item[1]);
+            }
+          }
+        }
+      }
+    }
+  } catch (_) {}
+}
+_loadDims();
+
+let _dimSaveTimeout = null;
+function _persistDims() {
+  if (typeof localStorage === 'undefined') return;
+  if (_dimSaveTimeout) clearTimeout(_dimSaveTimeout);
+  _dimSaveTimeout = setTimeout(() => {
+    try {
+      const entries = [..._dimMap.entries()].slice(-MAX_DIMS_ENTRIES);
+      localStorage.setItem(DIMS_STORAGE_KEY, JSON.stringify(entries));
+    } catch (_) {}
+  }, 1000);
+}
+
+/**
+ * Har qanday URL yoki yo'lni yagona kanonik kalitga keltiradi (Deduplication).
+ * Supabase public URL, signed URL (?token=...) yoki to'g'ridan-to'g'ri path
+ * bitta umumiy identifikatorga aylanadi.
+ */
+export function normalizeMediaKey(pathOrUrl) {
   if (!pathOrUrl) return null;
-  const s = String(pathOrUrl);
-  // public URL dan path ajratish
-  const m = s.match(/\/storage\/v1\/object\/public\/media\/(.+)$/);
-  if (m) return decodeURIComponent(m[1].split('?')[0]);
-  if (/^https?:\/\//i.test(s)) return 'url:' + s.slice(0, 180);
-  return s.replace(/^\/+/, '');
+  const s = String(pathOrUrl).trim();
+  // Supabase storage object path (/storage/v1/object/(public|sign|authenticated)/media/<path>)
+  const m = s.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/media\/([^?#]+)/);
+  if (m) return decodeURIComponent(m[1].replace(/^\/+/, ''));
+  // Tashqi URL
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      // Agar Supabase bo'lsa
+      if (u.pathname.includes('/storage/v1/object/')) {
+        const sub = u.pathname.split('/storage/v1/object/')[1] || '';
+        return sub.replace(/^(?:public|sign|authenticated)\/media\//, '').replace(/^\/+/, '');
+      }
+      return 'url:' + (u.origin + u.pathname).slice(0, 200);
+    } catch (_) {
+      return 'url:' + s.split('?')[0].slice(0, 200);
+    }
+  }
+  return s.split('?')[0].replace(/^\/+/, '');
+}
+
+export function _idFromPath(pathOrUrl) {
+  return normalizeMediaKey(pathOrUrl);
+}
+
+export function getMediaDimensions(pathOrUrl) {
+  const key = normalizeMediaKey(pathOrUrl);
+  if (!key) return null;
+  const item = _dimMap.get(key);
+  if (!item) return null;
+  return {
+    width: item.w,
+    height: item.h,
+    ratio: item.r || `${item.w}/${item.h}`,
+    aspectRatioStyle: `aspect-ratio: ${item.r || `${item.w}/${item.h}`}; width: 100%;`
+  };
+}
+
+export function setMediaDimensions(pathOrUrl, width, height) {
+  const w = parseInt(width, 10);
+  const h = parseInt(height, 10);
+  if (!w || !h || w <= 0 || h <= 0) return null;
+  const key = normalizeMediaKey(pathOrUrl);
+  if (!key) return null;
+  const r = `${w}/${h}`;
+  const existing = _dimMap.get(key);
+  if (existing && existing.w === w && existing.h === h) return existing;
+  const val = { w, h, r };
+  _dimMap.set(key, val);
+  _persistDims();
+  return val;
+}
+
+export function getMediaAspectStyle(pathOrUrl, width, height, fallback = '') {
+  const w = parseInt(width, 10);
+  const h = parseInt(height, 10);
+  if (w && h && w > 0 && h > 0) {
+    return ` style="aspect-ratio:${w}/${h}; width: 100%;"`;
+  }
+  const cached = getMediaDimensions(pathOrUrl);
+  if (cached) {
+    return ` style="aspect-ratio:${cached.ratio}; width: 100%;"`;
+  }
+  if (fallback) {
+    return ` style="${fallback}"`;
+  }
+  return '';
 }
 
 async function _getOpfs() {
@@ -327,5 +429,51 @@ export async function prefetchMany(urls, { concurrency = 4, expiresAt = null } =
 export const mediaCache = {
   resolveMedia, putMedia, touch, removeMedia, evictIfNeeded, clearMediaCache,
   cachedMediaUrlSync, resolvePublicMedia, prefetchMany,
+  normalizeMediaKey, getMediaDimensions, setMediaDimensions, getMediaAspectStyle,
 };
+
+if (typeof window !== 'undefined') {
+  window.__mediaCache = mediaCache;
+
+  // Har qanday rasm to'liq yuklangach (onload) — uning haqiqiy o'lchamlarini eslab qolish va blur'ni ochish
+  window.__onMediaLoad = function(el) {
+    if (!el) return;
+    el.classList.add('loaded');
+    const box = el.closest('.media-blur-box') || el.closest('.post-media') || el.closest('.cfm-vid-box');
+    if (box) {
+      box.classList.remove('pm-loading');
+      box.classList.add('loaded');
+    }
+    const w = el.naturalWidth || el.videoWidth;
+    const h = el.naturalHeight || el.videoHeight;
+    const path = el.dataset.mediaPath || el.currentSrc || el.src;
+    if (w && h && path) {
+      setMediaDimensions(path, w, h);
+      if (box && !box.style.aspectRatio) {
+        box.style.aspectRatio = `${w}/${h}`;
+      }
+    }
+  };
+
+  // Video metadata yuklangach (onloadedmetadata)
+  window.__onVideoMeta = function(v) {
+    if (!v) return;
+    v.classList.add('loaded');
+    const box = v.closest('.media-blur-box') || v.closest('.post-media') || v.closest('.cfm-vid-box');
+    if (box) {
+      box.classList.remove('pm-loading');
+      box.classList.add('loaded');
+    }
+    const w = v.videoWidth;
+    const h = v.videoHeight;
+    const path = v.dataset.mediaPath || v.currentSrc || v.src;
+    if (w && h && path) {
+      setMediaDimensions(path, w, h);
+      if (box && !box.style.aspectRatio) {
+        box.style.aspectRatio = `${w}/${h}`;
+      }
+    }
+  };
+}
+
 export default mediaCache;

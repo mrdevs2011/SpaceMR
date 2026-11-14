@@ -708,8 +708,8 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
           `<span class="chat-yt-copy-text">Nusxa</span>` +
         `</span>` +
       `</div>` +
-      `<div class="chat-media-img-wrap" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
-        `<img class="chat-media-thumb" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded')" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">${badgeHtml || ''}` +
+      `<div class="chat-media-img-wrap media-blur-box" style="aspect-ratio:16/9;width:100%;" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
+        `<img class="chat-media-thumb" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">${badgeHtml || ''}` +
       `</div>` +
     `</div>`;
   }
@@ -719,8 +719,8 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
     const siteName = meta?.siteName ? esc(meta.siteName) : esc(domain);
     const siteDesc = meta?.description ? `<div class="chat-link-desc" style="display:-webkit-box;">${esc(meta.description)}</div>` : `<div class="chat-link-desc" style="display:none;"></div>`;
     const thumbHtml = meta?.image
-      ? `<div class="chat-link-thumb-wrap" style="display:block;"><img class="chat-media-thumb chat-link-thumb" src="${esc(meta.image)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>`
-      : `<div class="chat-link-thumb-wrap" style="display:none;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy" onload="this.parentElement.style.display='block'" onerror="this.parentElement.remove()"></div>`;
+      ? `<div class="chat-link-thumb-wrap media-blur-box" style="display:block;aspect-ratio:1/1;width:56px;height:56px;flex-shrink:0;"><img class="chat-media-thumb chat-link-thumb" src="${esc(meta.image)}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')" onerror="this.parentElement.remove()"></div>`
+      : `<div class="chat-link-thumb-wrap media-blur-box" style="display:none;aspect-ratio:1/1;width:56px;height:56px;flex-shrink:0;"><img class="chat-media-thumb chat-link-thumb" alt="" loading="lazy" onload="this.classList.add('loaded');this.parentElement.style.display='block';this.closest('.media-blur-box')?.classList.add('loaded')" onerror="this.parentElement.remove()"></div>`;
 
     return `<div class="chat-yt-card chat-link-card${standaloneCls} is-media-web" data-media-type="web">` +
       `<div class="chat-yt-header" onclick="window._copyChatYtSource&&window._copyChatYtSource(this, '${cUrl}')" title="Haqiqiy havoladan nusxa olish">` +
@@ -745,13 +745,13 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
 
   let boxContent = '';
   if (type === 'video') {
-    boxContent = `<video class="chat-media-video" src="${cUrl}" preload="metadata" playsinline muted></video>` +
+    boxContent = `<video class="chat-media-video" src="${cUrl}" preload="metadata" playsinline muted onloadedmetadata="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')"></video>` +
       `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
       `</button>` +
       badgeDom + (badgeHtml || '');
   } else if (type === 'youtube') {
-    boxContent = `<img class="chat-yt-thumb" src="https://i.ytimg.com/vi/${vId}/hqdefault.jpg" alt="YouTube video" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${vId}/0.jpg'">` +
+    boxContent = `<img class="chat-yt-thumb" src="https://i.ytimg.com/vi/${vId}/hqdefault.jpg" alt="YouTube video" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded')" onerror="this.src='https://i.ytimg.com/vi/${vId}/0.jpg'">` +
       `<button type="button" class="chat-media-play-btn" aria-label="Ijro etish">` +
         `<svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="rgba(0,0,0,.6)"/><path d="M19 15.5v17l14-8.5z" fill="#fff"/></svg>` +
       `</button>` +
@@ -788,7 +788,7 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
         `<span class="chat-yt-copy-text">Nusxa</span>` +
       `</span>` +
     `</div>` +
-    `<div class="chat-yt-box chat-media-box" ${dataAttrs} onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
+    `<div class="chat-yt-box chat-media-box media-blur-box" ${dataAttrs} onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
       boxContent +
     `</div>` +
   `</div>`;

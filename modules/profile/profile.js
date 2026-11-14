@@ -1,4 +1,4 @@
-import { sb, state, getMediaUrl, uploadViaController, mapProfile, mapPost } from '../core/config.js';
+import { sb, state, getMediaUrl, uploadViaController, mapProfile, mapPost, cachedMediaUrlSync } from '../core/config.js';
 import { $, esc, fmt, fmtSz, defAvi,
          openZoom, renderSpoilers, lockScroll, unlockScroll } from '../core/utils.js';
 import { toast }                         from '../ui/toast.js';
@@ -411,9 +411,13 @@ function _upGridHtml(posts, uid, tab) {
   }
   return list.map(p => {
     let c = '';
-    if (p.mediaUrl && p.mediaType?.startsWith('image'))
-      c = `<img class="w-full h-full object-cover" src="${esc(p.mediaUrl)}" loading="lazy" onerror="this.classList.add('d-none')">`;
-    else
+    if (p.mediaUrl && p.mediaType?.startsWith('image')) {
+      const cached = cachedMediaUrlSync(p.mediaPath || p.mediaUrl) || p.mediaUrl;
+      const dataPathAttr = p.mediaPath ? ` data-media-path="${esc(p.mediaPath)}"` : '';
+      c = `<div class="media-blur-box" style="width:100%;height:100%;aspect-ratio:1/1;">
+        <img class="w-full h-full object-cover" src="${esc(cached)}"${dataPathAttr} loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.classList.add('d-none')">
+      </div>`;
+    } else
       c = `<div class="up-grid-cell-txt">${esc((p.text||p.fileName||'').substring(0,40))}</div>`;
     const _um = !!(p.mediaUrl && p.mediaType?.startsWith('image'));
     return `<div class="up-grid-cell ${_um ? 'up-grid-cell--media' : 'up-grid-cell--text'}" data-id="${p.id}" data-uid="${uid}">${c}

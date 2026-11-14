@@ -37,6 +37,15 @@ html{color-scheme:dark;}
     document.documentElement.setAttribute('data-theme', 'dark');
     document.documentElement.style.colorScheme = 'dark';
     document.documentElement.style.background = '#000000';
+    try {
+      var ua = navigator.userAgent || '';
+      var isRealMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
+      if (!isRealMobile) {
+        document.documentElement.classList.add('is-desktop');
+      } else {
+        document.documentElement.classList.add('is-mobile');
+      }
+    } catch (_) {}
   })();
   /* Kirmagan foydalanuvchi: /login ga. Sessiya bor bo'lsa URL ni tekmang
      (aks holda deploy/yangilanishda /login → /home flash bo'ladi). */

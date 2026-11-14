@@ -8,7 +8,7 @@ import { schedulePaint }                   from '../core/perf.js';
 import { getFileIcon } from '../core/file-icons.js';
 import './post-image-zoom.js';
 import './post-media-guard.js';
-import { cachedMediaUrlSync, resolvePublicMedia, prefetchMany } from '../core/store/media-cache.js';
+import { cachedMediaUrlSync, resolvePublicMedia, prefetchMany, getMediaAspectStyle, getMediaDimensions } from '../core/store/media-cache.js';
 import { syncLike } from './like-sync.js';
 import { ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
 import { onEsc } from '../ui/esc-stack.js';
@@ -56,27 +56,20 @@ export function buildCaption(text, postId) {
 }
 
 export function buildMedia(p) {
-  if (!p.mediaUrl) return '';
-  // Post matni doim darrov ko'rinadi (buildCaption alohida chiziladi).
-  // Media esa "pm-loading" holatida boshlanadi: agar postda mediaWidth/
-  // mediaHeight saqlangan bo'lsa (yuklash paytida o'lchangan), post-card
-  // ALDINDAN xuddi shu nisbatda joy ochib turadi — shu bois rasm
-  // hali yuklanmasdan turib ham layout "sakramaydi", faqat blur bilan
-  // ko'rinadi. To'liq yuklangach (onload) "pm-loading"
-  // klassi olib tashlanadi va blur asta yo'qoladi.
-  const ratio = (p.mediaWidth && p.mediaHeight)
-    ? ` style="aspect-ratio:${p.mediaWidth}/${p.mediaHeight}"`
-    : '';
+  if (!p.mediaUrl && !p.mediaPath) return '';
+  const mediaRef = p.mediaPath || p.mediaUrl;
+  const ratio = getMediaAspectStyle(mediaRef, p.mediaWidth, p.mediaHeight);
   const mt = (p.mediaType || '').toLowerCase();
-  const urlL = String(p.mediaUrl || '').toLowerCase();
+  const urlL = String(p.mediaUrl || p.mediaPath || '').toLowerCase();
   const isImg = mt.startsWith('image') || /\.(jpe?g|png|gif|webp|avif|heic|bmp)(\?|$)/i.test(urlL);
   const isVid = mt.startsWith('video') || /\.(mp4|webm|mov|mkv|avi)(\?|$)/i.test(urlL);
-  // Keshda bor bo'lsa blob URL — tarmoq kutmasdan chiqadi
-  const cached = cachedMediaUrlSync(p.mediaUrl) || p.mediaUrl;
+  // Keshda bor bo'lsa blob URL — tarmoq kutmasdan chiqadi (0ms single-source)
+  const cached = cachedMediaUrlSync(mediaRef) || p.mediaUrl;
+  const dataPathAttr = p.mediaPath ? ` data-media-path="${esc(p.mediaPath)}"` : '';
   if (isImg)
-    return `<div class="post-media pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(cached)}" loading="lazy" decoding="async" onload="this.closest('.post-media')?.classList.remove('pm-loading')" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
+    return `<div class="post-media media-blur-box pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(cached)}"${dataPathAttr} loading="lazy" decoding="async" onload="this.classList.add('loaded');this.closest('.post-media')?.classList.remove('pm-loading');this.closest('.post-media')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   if (isVid)
-    return `<div class="post-media" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}" controls playsinline preload="metadata" style="width:100%;height:auto;display:block;background:#000"></video></div>`;
+    return `<div class="post-media media-blur-box" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}"${dataPathAttr} controls playsinline preload="metadata" onloadedmetadata="this.classList.add('loaded');this.closest('.post-media')?.classList.remove('pm-loading');this.closest('.post-media')?.classList.add('loaded');window.__onVideoMeta&&window.__onVideoMeta(this)" style="width:100%;height:100%;display:block;background:#000"></video></div>`;
   const _fext = (String(p.fileName || '').split('.').pop() || '').toUpperCase().slice(0, 6);
   const _fsub = [String(p.fileName || '').includes('.') ? _fext : '', p.fileSize ? fmtSz(p.fileSize) : ''].filter(Boolean).join(' · ');
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}" data-fv-url="${esc(p.mediaUrl)}" data-fv-name="${esc(p.fileName||'file')}" data-fv-mime="${esc(p.mediaType||'')}" data-fv-size="${+p.fileSize || 0}" role="button" tabindex="0">

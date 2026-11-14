@@ -275,12 +275,12 @@ async function _cacheFirstSWR(req, cacheName) {
   const cached = await _matchCache(req);
   if (cached) {
     // Fon yangilash — SW CACHE_VERSION o'zgaganda eski cache o'chadi
-    fetch(req).then(res => { if (res && res.ok) _putIn(cacheName, req, res); }).catch(() => {});
+    fetch(req).then(res => { if (res && (res.ok || res.type === 'opaque')) _putIn(cacheName, req, res); }).catch(() => {});
     return cached;
   }
   try {
     const res = await fetch(req);
-    if (res && res.ok) await _putIn(cacheName, req, res);
+    if (res && (res.ok || res.type === 'opaque')) await _putIn(cacheName, req, res);
     return res;
   } catch (e) {
     return new Response('Offline', { status: 503, statusText: 'Offline' });
@@ -341,6 +341,19 @@ self.addEventListener('fetch', (event) => {
       }
     })());
     return;
+  }
+
+  // Global Media Single-Source Deduplication (1 ta keladi, hamma joy keshdan oladi)
+  if (req.method === 'GET' && !req.headers.has('range')) {
+    const isStaticMap = url.includes('static-maps.yandex.ru');
+    const isExternalIcon = url.includes('icons.duckduckgo.com') || url.includes('google.com/s2/favicons');
+    const isYtThumb = url.includes('i.ytimg.com');
+    const isPublicMedia = url.includes('/storage/v1/object/public/media/');
+
+    if (isStaticMap || isExternalIcon || isYtThumb || isPublicMedia) {
+      event.respondWith(_cacheFirstSWR(req, RUNTIME_CACHE));
+      return;
+    }
   }
 
   if (_isBypassed(url) || req.method !== 'GET') return;

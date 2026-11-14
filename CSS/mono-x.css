@@ -6938,14 +6938,20 @@ select.field option { background: #000000; color: var(--text); }
 }
 /* Chat xabari matni: desktopda belgilanadi; mobilda DM'da menyudagi "Nusxalash",
    guruh xabarlarida (menyusiz) oddiy belgilash. Emoji-only va ko'p tanlash rejimi yopiq. */
-/* Chat bubble matni: desktop (sichqoncha) da HAR DOIM belgilanadi */
+/* Chat bubble matni: desktop (sichqoncha yoki no-touch) da HAR DOIM belgilanadi */
+html.is-desktop #chatThreadMessages:not(.msg-selecting) .chat-bubble,
+html.is-desktop #chatThreadMessages:not(.msg-selecting) .chat-bubble-text,
+html.is-desktop #chatThreadMessages:not(.msg-selecting) .chat-bubble-text *,
+html.is-desktop #chatThreadMessages:not(.msg-selecting) .cfm-caption,
+html.is-desktop .chat-msg .chat-bubble-text,
 @media (pointer: fine) {
   #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble,
   #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text,
-  #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text {
+  #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text * {
     -webkit-user-select: text !important;
     user-select: text !important;
     -webkit-touch-callout: default;
+    cursor: text;
   }
 }
 /* Guruh (menyusiz) xabarlar: mobil + desktopda belgilash */

@@ -3,26 +3,16 @@ import { esc, renderYouTubeCard, renderMediaCard } from '../../core/utils.js';
 import { getChatFileIcon, callLogInfo, fmtCallDur, renderUploadRingHtml } from '../chat-shared.js';
 import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js';
 import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
+import { getMediaAspectStyle, getMediaDimensions, setMediaDimensions, cachedMediaUrlSync } from '../../core/store/media-cache.js';
 
-/* Rasm nisbatini eslab qolish: qayta chizilganda (innerHTML) rasm yuklanmasdan oldin ham
-   joyi band bo'lsin — chat sakramasin. Birinchi marta ko'rilganda nisbat noma'lum. */
-const _DIMS_KEY = 'chatImgRatios';
-const _ratios = new Map();
-try { for (const [k, v] of JSON.parse(sessionStorage.getItem(_DIMS_KEY) || '[]')) _ratios.set(k, v); } catch (_) {}
-export function imgRatioAttr(url) {
-  const r = _ratios.get(url);
-  return r ? ` style="aspect-ratio:${r}"` : '';
+/* Rasm nisbatini eslab qolish: 0ms Aspect Ratio & Zero CLS Registry */
+export function imgRatioAttr(url, w, h) {
+  return getMediaAspectStyle(url, w, h);
 }
 export function rememberImgRatio(img) {
-  const url = img.getAttribute('src');
+  const url = img?.getAttribute('src') || img?.currentSrc;
   if (!url || !img.naturalWidth || !img.naturalHeight) return;
-  const r = `${img.naturalWidth}/${img.naturalHeight}`;
-  if (_ratios.get(url) === r) return;
-  _ratios.set(url, r);
-  try {
-    const arr = [..._ratios.entries()].slice(-300);
-    sessionStorage.setItem(_DIMS_KEY, JSON.stringify(arr));
-  } catch (_) {}
+  setMediaDimensions(url, img.naturalWidth, img.naturalHeight);
 }
 
 if (typeof window !== 'undefined' && !window._chatMediaError) {
@@ -634,18 +624,20 @@ export function generateAlbumBubble({ m, time, mine, renderTicks, dm = false, re
 
   const itemsHtml = items.map((it, idx) => {
     const rawUrl = it.url || it.mediaUrl || it.objUrl || '';
-    const safeUrl = esc(rawUrl);
+    const cachedUrl = (it.path ? cachedMediaUrlSync(it.path) : null) || cachedMediaUrlSync(rawUrl) || rawUrl;
+    const safeUrl = esc(cachedUrl);
     const isVideo = (it.type || '').toLowerCase().startsWith('video') || /\.(mp4|webm|mov)(\?|$)/i.test(rawUrl);
     const fname = esc(it.name || it.fileName || (isVideo ? 'video.mp4' : 'image.jpg'));
     const isUploading = it.status === 'uploading' || it.status === 'sending' || ((m.status === 'sending' || m.status === 'uploading') && !it.path);
     const uploadId = it.id || `${m.id}_${idx}`;
+    const dataPathAttr = it.path ? ` data-media-path="${esc(it.path)}"` : '';
 
     const ringHtml = isUploading ? renderUploadRingHtml(uploadId, it.progress || 0) : '';
 
-    return `<div class="chat-album-item${isVideo ? ' chat-album-item--video' : ''}" data-album-id="${esc(m.id)}" data-media-idx="${idx}" data-url="${safeUrl}" data-type="${isVideo ? 'video' : 'image'}" data-name="${fname}">
+    return `<div class="chat-album-item media-blur-box${isVideo ? ' chat-album-item--video' : ''}" data-album-id="${esc(m.id)}" data-media-idx="${idx}" data-url="${safeUrl}" data-type="${isVideo ? 'video' : 'image'}" data-name="${fname}">
       ${isVideo
-        ? `<video src="${safeUrl}#t=0.1" preload="metadata" playsinline muted disablepictureinpicture></video><span class="cm-vbadge" aria-hidden="true"></span>`
-        : `<img src="${safeUrl}" alt="${fname}" loading="lazy" onload="this.classList.add('loaded')">`
+        ? `<video src="${safeUrl}#t=0.1"${dataPathAttr} preload="metadata" playsinline muted disablepictureinpicture onloadedmetadata="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onVideoMeta&&window.__onVideoMeta(this)"></video><span class="cm-vbadge" aria-hidden="true"></span>`
+        : `<img src="${safeUrl}"${dataPathAttr} alt="${fname}" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)">`
       }
       ${ringHtml}
     </div>`;
@@ -724,8 +716,10 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     metaOutside = false;
     bubbleContent = renderVideoNote({ url: safeUrl, fileName: m.fileName, time, ticks: mine ? renderTicks(m.status) : '', ttl: _ttl });
   } else if (_isVideo) {
-    const vid = `<div class="cfm-vid-box"${_ttl}>
-        <video class="cfm-vid" src="${esc(safeUrl)}" preload="metadata" playsinline disablepictureinpicture${imgRatioAttr(safeUrl.split('#')[0])} onloadedmetadata="window._chatVidMeta&&window._chatVidMeta(this)"></video>
+    const vidRatio = getMediaAspectStyle(m.mediaPath || safeUrl, m.mediaWidth, m.mediaHeight, 'aspect-ratio:16/9;width:100%;');
+    const cachedVidUrl = (m.mediaPath ? cachedMediaUrlSync(m.mediaPath) : null) || cachedMediaUrlSync(safeUrl) || safeUrl;
+    const vid = `<div class="cfm-vid-box media-blur-box"${_ttl}${vidRatio}>
+        <video class="cfm-vid" src="${esc(cachedVidUrl)}" data-media-path="${esc(m.mediaPath || '')}" preload="metadata" playsinline disablepictureinpicture onloadedmetadata="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onVideoMeta&&window.__onVideoMeta(this);window._chatVidMeta&&window._chatVidMeta(this)"></video>
         <button type="button" class="cfm-vid-play" aria-label="Ijro etish">${PLAY_SVG}</button>
         <span class="cfm-vid-dur"></span>
       </div>`;
@@ -751,17 +745,18 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
       </div>`;
     }
   } else if (_isImage) {
+    const imgRatio = getMediaAspectStyle(m.mediaPath || safeUrl, m.mediaWidth, m.mediaHeight);
+    const cachedImgUrl = (m.mediaPath ? cachedMediaUrlSync(m.mediaPath) : null) || cachedMediaUrlSync(safeUrl) || safeUrl;
+    const imgHtml = `<a href="${safeUrl}" class="cfm-img-link media-blur-box"${_ttl}${imgRatio}>
+        <img class="cfm-img-preview" src="${esc(cachedImgUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this);window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
+      </a>`;
     if (dm) {
-      _dmMedia(`<a href="${safeUrl}" class="cfm-img-link"${_ttl}>
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
-        </a>`);
+      _dmMedia(imgHtml);
     } else if (!hasCaption) {
       bubbleClassExtra = ' bubble-media-only';
       metaOutside = false;
       bubbleContent = `<div class="cfm-media-wrap cfm-media-wrap--standalone">
-        <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
-        </a>
+        ${imgHtml}
         ${ringHtml}
         <span class="chat-msg-meta cfm-media-badge">
           ${m.editedAt ? '<span class="chat-msg-edited">tahrirlangan</span>' : ''}<span class="chat-msg-time">${time}</span>
@@ -771,9 +766,7 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     } else {
       bubbleClassExtra = ' bubble-media-caption';
       bubbleContent = `<div class="cfm-media-wrap">
-        <a href="${safeUrl}" class="cfm-img-link"${_ttl}>
-          <img class="cfm-img-preview" src="${esc(safeUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy"${imgRatioAttr(safeUrl)} onload="this.classList.add('loaded');window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">
-        </a>
+        ${imgHtml}
         ${ringHtml}
         ${captionHtml}
       </div>`;
@@ -929,8 +922,8 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
 
   const bubbleContent = `
     <div class="loc-bubble-card">
-      <a href="${gmaps}" target="_blank" rel="noopener noreferrer" class="loc-map-preview" title="Xaritada ochish">
-        <img class="loc-static-img" src="${yandexStatic}" alt="Xarita" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <a href="${gmaps}" target="_blank" rel="noopener noreferrer" class="loc-map-preview media-blur-box" style="aspect-ratio:420/180;width:100%;" title="Xaritada ochish">
+        <img class="loc-static-img" src="${yandexStatic}" alt="Xarita" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="loc-fallback-map" style="display:none">
           <div class="loc-pin-pulse"></div>
           <svg viewBox="0 0 24 24" width="34" height="34" fill="#ff3b30"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
@@ -1000,7 +993,7 @@ export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = fals
   const voteCountText = total > 0 ? `${total} ta ovoz` : 'Hali ovoz berilmagan';
 
   const bubbleContent = `
-    <div class="poll-bubble-card">
+    <div class="poll-bubble-card" style="contain: layout; min-height: 110px;">
       <div class="poll-header">
         <div class="poll-title">${q}</div>
         <div class="poll-sub">${subText}</div>

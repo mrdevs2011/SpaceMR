@@ -1470,18 +1470,6 @@ export async function sendGroupFile(file, caption = '') {
     }
   }
 }
-    _reloadGroupThread && _reloadGroupThread();
-  } catch (err) {
-    console.error('[Groups] file send failed:', err);
-    if (!isMedia) _removePendingBubble(pendingId);
-    _gMsgs = _gMsgs.filter(m => m.id !== id);
-    chatUI.paintGroupThread(_gMsgs, _currentGroupData);
-    if (localUrl) { try { URL.revokeObjectURL(localUrl); } catch (_) {} }
-    const inp = $('chatThreadInput');
-    if (inp && captionText) { inp.value = captionText; chatUI.updateVoiceSendBtn(); }
-    toast('Fayl yuborilmadi', 'error');
-  }
-}
 
 /** Ovozli xabar (DM bilan bir xil oqim). Bazada `group_messages.duration` va type='voice' kerak: supabase/unfulfilled/016_group-voice.sql */
 export async function sendGroupVoice(blob, duration) {

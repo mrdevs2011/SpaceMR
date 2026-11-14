@@ -2,11 +2,49 @@
 /* scroll jump prevention */
 html { scroll-behavior: auto; }
 body { overflow-anchor: none; }
+
+/* ─── SpaceMR Universal Ko'k Selection (#1d9bf0) ─── */
+::selection {
+  background: var(--x-blue, #1d9bf0) !important;
+  color: #ffffff !important;
+}
+::-moz-selection {
+  background: var(--x-blue, #1d9bf0) !important;
+  color: #ffffff !important;
+}
+
 /* CSS/base.css — splash, loading. Kaskad tartibi MUHIM: tokens → base → features → layers → admin → mono-x (scripts/build-css.mjs) */
-/* ─── Hech narsa tanlanmasin (matn belgilash/nusxalash/uzoq bosish menyusi yo'q) ───
-   Istisno: yozish maydonlari — aks holda iOS/Safari'da yozib bo'lmaydi. Aniqlik (specificity) 0 — kerak bo'lsa komponent o'zi qayta belgilaydi. */
+/* ─── Mobil uchun default: keraksiz tanlashlarni cheklash; Desktopda esa matn tanlash ochiq ─── */
 *, *::before, *::after { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 input, textarea, [contenteditable=""], [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+
+/* Desktopda (kompyuter / noutbuk) barcha xabar va matnlarni belgilash (select) imkoniyati */
+@media (hover: hover) and (pointer: fine) {
+  .chat-bubble-text,
+  .chat-bubble-text *,
+  .cfm-caption,
+  .post-text,
+  .post-text *,
+  .cmt-text,
+  .cmt-text *,
+  .pf-bio,
+  .fv-md,
+  .fv-pre {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+    cursor: text;
+  }
+}
+html.is-desktop .chat-bubble-text,
+html.is-desktop .chat-bubble-text *,
+html.is-desktop .cfm-caption,
+html.is-desktop .post-text,
+html.is-desktop .cmt-text,
+html.is-desktop .pf-bio {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  cursor: text;
+}
 /* ─── splash ─── */
 /* ═══════════════════════ SPLASH SCREEN — Minimal ═══════════════════════ */
 #splash { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999;  background-color: var(--pal-gray-900); }

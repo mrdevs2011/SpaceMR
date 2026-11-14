@@ -292,6 +292,23 @@
   transform: translateY(0);
 }
 
+/* Post va Story upload uchun to'liq ekranli ochilish */
+.attach-drawer.attach-drawer--fullscreen {
+  max-width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  padding: max(24px, env(safe-area-inset-top, 24px)) 20px max(24px, env(safe-area-inset-bottom, 24px)) !important;
+}
+.attach-drawer.attach-drawer--fullscreen .attach-media-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 14px !important;
+  margin-top: 24px !important;
+}
+
 .attach-drawer-handle {
   width: 36px;
   height: 4px;
@@ -777,7 +794,9 @@
 .loc-map-preview {
   position: relative;
   width: 100%;
-  height: 150px;
+  aspect-ratio: 420 / 180;
+  height: auto;
+  min-height: 140px;
   background: #1c2430;
   overflow: hidden;
   display: block;

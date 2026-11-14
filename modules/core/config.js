@@ -11,7 +11,24 @@ import { createClient } from '../vendor/vendor-supabase.js';
 import { splitFwd } from './fwd.js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './env.js';
 import { assertAllowedUpload } from './upload-policy.js';
-export { SUPABASE_URL, SUPABASE_ANON_KEY };
+import {
+  normalizeMediaKey,
+  getMediaDimensions,
+  setMediaDimensions,
+  getMediaAspectStyle,
+  cachedMediaUrlSync,
+  resolveMedia,
+} from './store/media-cache.js';
+export {
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  normalizeMediaKey,
+  getMediaDimensions,
+  setMediaDimensions,
+  getMediaAspectStyle,
+  cachedMediaUrlSync,
+  resolveMedia,
+};
 export const MEDIA_BUCKET      = 'media';
 
 export const SB_CONFIGURED = !/YOUR-/.test(SUPABASE_URL + SUPABASE_ANON_KEY);
@@ -195,16 +212,24 @@ export function mapProfile(r) {
 
 export function mapPost(r) {
   if (!r) return null;
+  let w = r.media_width || null;
+  let h = r.media_height || null;
+  if ((!w || !h) && r.media_path) {
+    const dim = getMediaDimensions(r.media_path);
+    if (dim) { w = dim.width; h = dim.height; }
+  } else if (w && h && r.media_path) {
+    setMediaDimensions(r.media_path, w, h);
+  }
   return {
     id: r.id,
     userId: r.user_id,
     userFullName: r.user_full_name || '',
     text: r.text,
     mediaPath: r.media_path,
-    mediaUrl: mediaSecureUrlSync(r.media_path) || mediaPublicUrl(r.media_path),
+    mediaUrl: cachedMediaUrlSync(r.media_path) || mediaSecureUrlSync(r.media_path) || mediaPublicUrl(r.media_path),
     mediaType: r.media_type,
-    mediaWidth: r.media_width,
-    mediaHeight: r.media_height,
+    mediaWidth: w,
+    mediaHeight: h,
     fileName: r.file_name,
     fileSize: r.file_size,
     isPublic: r.is_public === true,
@@ -438,10 +463,32 @@ export function mapMessage(r) {
     } catch (_) {}
   }
 
-  const items = parsedAlbum ? parsedAlbum.items.map(it => ({
-    ...it,
-    mediaUrl: it.url || (it.path ? (mediaSecureUrlSync(it.path) || mediaPublicUrl(it.path) || '') : '')
-  })) : null;
+  const items = parsedAlbum ? parsedAlbum.items.map(it => {
+    const rawU = it.url || (it.path ? (cachedMediaUrlSync(it.path) || mediaSecureUrlSync(it.path) || mediaPublicUrl(it.path) || '') : '');
+    let itemW = it.width || it.w || null;
+    let itemH = it.height || it.h || null;
+    if ((!itemW || !itemH) && (it.path || rawU)) {
+      const dim = getMediaDimensions(it.path || rawU);
+      if (dim) { itemW = dim.width; itemH = dim.height; }
+    } else if (itemW && itemH) {
+      setMediaDimensions(it.path || rawU, itemW, itemH);
+    }
+    return {
+      ...it,
+      mediaUrl: rawU,
+      width: itemW,
+      height: itemH,
+    };
+  }) : null;
+
+  let msgW = r.media_width || null;
+  let msgH = r.media_height || null;
+  if ((!msgW || !msgH) && r.media_path) {
+    const dim = getMediaDimensions(r.media_path);
+    if (dim) { msgW = dim.width; msgH = dim.height; }
+  } else if (msgW && msgH && r.media_path) {
+    setMediaDimensions(r.media_path, msgW, msgH);
+  }
 
   return {
     id: r.id,
@@ -457,8 +504,10 @@ export function mapMessage(r) {
     fwdKind: _f.kind || '',
     fwdId: _f.id || '',
     mediaPath: r.media_path,
-    mediaUrl: mediaSecureUrlSync(r.media_path) || mediaPublicUrl(r.media_path) || '',
+    mediaUrl: cachedMediaUrlSync(r.media_path) || mediaSecureUrlSync(r.media_path) || mediaPublicUrl(r.media_path) || '',
     mediaType: r.media_type,
+    mediaWidth: msgW,
+    mediaHeight: msgH,
     fileName: r.file_name,
     fileSize: r.file_size,
     duration: (r.duration == null ? null : Number(r.duration)) || null,
