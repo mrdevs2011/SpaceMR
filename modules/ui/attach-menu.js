@@ -954,8 +954,6 @@ export function initAttachMenu({
     requestAnimationFrame(() => {
       overlay.classList.add('open');
     });
-      overlay.classList.add('open');
-    });
 
     const gridItemsSlot = overlay.querySelector('#amMediaItemsSlot');
     const sendBar = overlay.querySelector('#amSendBar');
