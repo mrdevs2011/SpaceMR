@@ -17,8 +17,41 @@ meta[name="theme-color"] { color: var(--pal-black); }
 /* 1. Palitra */
 /* Aniq X (Twitter) ranglari. Dark = "Lights out", Light = standart oq. */
 :root, [data-theme="dark"] { --text: var(--pal-gray-100); --text2: var(--pal-gray-500); --text3: var(--pal-gray-500); --line: var(--pal-gray-700); --line2: var(--pal-gray-700); --line3: var(--pal-gray-700); }
-html, body, #app { background: var(--bg); color: var(--text); overflow-x: hidden; max-width: 100vw; }
-body { font-family: var(--font); -webkit-font-smoothing: antialiased; }
+html {
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  height: auto;
+  min-height: 100%;
+  max-width: 100vw;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100%;
+  touch-action: pan-y !important;
+  overscroll-behavior-y: auto !important;
+  max-width: 100vw;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+#app {
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  min-height: 100%;
+  max-width: 100vw;
+}
+.view.on {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+}
 ::selection { background: #1d9bf0 !important; color: #ffffff !important; }
 ::-moz-selection { background: #1d9bf0 !important; color: #ffffff !important; }
 /* 2. Tugmalar: pill, tinch */
@@ -4955,13 +4988,25 @@ a.cfm-name--link:hover {
   border-radius: 0 !important;
 }
 
+.cfm-media-wrap,
+.cfm-media-dm,
+.cfm-img-link,
+.cfm-img-preview,
+.cfm-vid-box,
+.cfm-album-wrap,
+.chat-album-grid {
+  min-width: min(220px, 70vw) !important;
+  min-height: 180px !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .cfm-media-wrap {
   position: relative;
   display: flex;
   flex-direction: column;
   width: fit-content;
   max-width: min(340px, 75vw);
-  min-height: auto;
+  min-height: 180px;
 }
 
 .cfm-media-wrap--standalone {
@@ -8086,32 +8131,31 @@ body.report-open { overflow: auto !important; }
 }
 
 /* ═══ Spoiler: Telegram-style client-side blur ═══ */
-html body .md-spoiler:not(.revealed) {
-  filter: blur(6px) !important;
-  -webkit-filter: blur(6px) !important;
-  background: rgba(255, 255, 255, 0.22) !important;
+.md-spoiler {
+  display: inline !important;
+  position: relative;
+  border-radius: 4px;
+  padding: 0 4px;
+  cursor: pointer !important;
+  transition: filter 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+  text-decoration: none !important;
+}
+.md-spoiler:not(.revealed) {
   color: inherit !important;
   -webkit-text-fill-color: inherit !important;
-  cursor: pointer !important;
+  filter: blur(5px) !important;
+  -webkit-filter: blur(5px) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
   user-select: none !important;
   -webkit-user-select: none !important;
-  border-radius: 4px;
 }
-html body .md-spoiler:not(.revealed)::before {
-  display: none !important;
-}
-html body .md-spoiler.revealed {
+.md-spoiler.revealed {
   filter: none !important;
   -webkit-filter: none !important;
   background: transparent !important;
-  color: inherit !important;
-  -webkit-text-fill-color: inherit !important;
-  cursor: text !important;
-  user-select: text !important;
-  -webkit-user-select: text !important;
-}
-html body .md-spoiler.revealed::before {
-  display: none !important;
+  cursor: text;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
 }
 
 /* Media faqat o'zi bo'lganda (matnsiz pure YouTube, TikTok, Instagram, Facebook, link, rasm, video) — mutlaqo pufaksiz (erkin) */
@@ -8374,4 +8418,66 @@ html body .md-spoiler.revealed::before {
 .chat-msg.theirs .chat-bubble.bubble-post-card,
 .chat-msg.theirs .chat-bubble.bubble-media-only .chat-yt-card {
   border-radius: 14px 14px 14px 4px !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   EQUAL BORDER-RADIUS FOR ALL MODAL CARDS, SHEETS & POPUPS
+   (Barcha modal kartalar, sheetlar va popuplarning 4 ta tomoni ham TENG yumaloq)
+   ═════════════════════════════════════════════════════════════════════════ */
+.sheet,
+.composer-sheet,
+#uploadOverlay .composer-sheet,
+.attach-drawer,
+.apf,
+.sv-viewers-sheet,
+.report-sheet-panel,
+.ig-sheet,
+#detailContent,
+.poll-modal-card,
+.ua-modal,
+.modal-content,
+.cmt-modal-sheet,
+#cmtModal .sheet,
+#reelCapSheet .sheet,
+#confirmOverlay .sheet,
+#grpAddUserOverlay .sheet,
+#grpCreateFormOverlay .sheet,
+#grpEditOverlay .sheet,
+.mic-perm-sheet,
+.smr-folder-modal-box {
+  border-radius: 20px !important;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.1)) !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   VIEW ISOLATION — HAR BIR SAHIFA TO'LIQ ALOHIDA (USTMA-UST EMAS)
+   ═════════════════════════════════════════════════════════════════════════ */
+.view:not(.on),
+#homeView:not(.on),
+#followingView:not(.on),
+#reelsView:not(.on),
+#profileView:not(.on),
+#chatsView:not(.on),
+#actionsView:not(.on),
+#savedView:not(.on),
+#appsView:not(.on),
+#notifsView:not(.on),
+#loginView:not(.on) {
+  display: none !important;
+  visibility: hidden !important;
+  position: absolute !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+.view.on {
+  display: block !important;
+  visibility: visible !important;
+  position: static !important;
+  pointer-events: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
 }

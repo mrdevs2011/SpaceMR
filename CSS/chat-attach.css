@@ -276,12 +276,12 @@
 }
 
 .attach-drawer {
-  width: 100%;
+  width: calc(100% - 16px);
   max-width: 520px;
+  margin: 0 auto max(10px, env(safe-area-inset-bottom, 10px));
   background: var(--bg-surface, #18191c);
-  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
-  border-bottom: 0;
-  border-radius: 22px 22px 0 0;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1)) !important;
+  border-radius: 20px !important;
   padding: 10px 16px max(18px, env(safe-area-inset-bottom, 16px));
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
   transform: translateY(100%);
@@ -289,34 +289,123 @@
   box-sizing: border-box;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: pan-y;
+  will-change: transform, height;
 }
 .attach-drawer-overlay.open .attach-drawer {
   transform: translateY(0);
 }
 
+/* Chat attach drawer: 3-bosqichli tabiiy fizika paneli (50vh -> 92vh -> 0) */
+.attach-drawer.attach-drawer--chat {
+  width: calc(100% - 16px) !important;
+  max-width: 520px !important;
+  margin: 0 auto max(10px, env(safe-area-inset-bottom, 10px)) !important;
+  border-radius: 20px !important;
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  transition: height 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.attach-drawer--chat.attach-drawer--half {
+  height: 50vh !important;
+  max-height: 50vh !important;
+}
+.attach-drawer--chat.attach-drawer--full {
+  height: 92vh !important;
+  max-height: 92vh !important;
+}
+.attach-drawer--chat .attach-media-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  margin-bottom: 8px !important;
+}
+.attach-drawer--chat .attach-bottom-pills {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  padding-top: 10px !important;
+  padding-bottom: max(6px, env(safe-area-inset-bottom)) !important;
+}
+.attach-drawer--chat .attach-send-bar {
+  margin-top: auto !important;
+  flex-shrink: 0 !important;
+  padding-top: 10px !important;
+  padding-bottom: max(6px, env(safe-area-inset-bottom)) !important;
+}
+
 /* Post va Story upload uchun to'liq ekranli ochilish */
-.attach-drawer.attach-drawer--fullscreen {
+.attach-drawer.attach-drawer--fullscreen,
+.attach-drawer.attach-drawer--story,
+.attach-drawer.attach-drawer--post {
+  width: 100% !important;
   max-width: 100% !important;
   height: 100vh !important;
   max-height: 100vh !important;
+  margin: 0 !important;
+  border: 0 !important;
   border-radius: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-start !important;
-  padding: max(24px, env(safe-area-inset-top, 24px)) 20px max(24px, env(safe-area-inset-bottom, 24px)) !important;
+  padding: max(14px, env(safe-area-inset-top, 14px)) 16px max(16px, env(safe-area-inset-bottom, 16px)) !important;
+  box-sizing: border-box !important;
 }
-.attach-drawer.attach-drawer--fullscreen .attach-media-grid {
+
+/* Story Upload: 5 ta doiraviy tugmalar (Hujjat, So'rovnoma, Lokatsiya va h.k.) mutlaqo bo'lmasin (yashirilsin). Faqat kamera va media grid ko'rinsin */
+.attach-drawer--story .attach-bottom-pills {
+  display: none !important;
+}
+
+/* Post Upload: 5 ta doiraviy tugmalar eng pastda joylashsin */
+.attach-drawer--post .attach-bottom-pills {
+  margin-top: auto !important;
+  padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  padding-top: 12px !important;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08)) !important;
+  flex-shrink: 0 !important;
+}
+.attach-drawer--post .attach-send-bar {
+  margin-top: auto !important;
+  padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  padding-top: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Post va Story da butun ekran media grid va fotolarga ajratiladi */
+.attach-drawer--fullscreen .attach-media-grid,
+.attach-drawer--post .attach-media-grid,
+.attach-drawer--story .attach-media-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
   grid-template-columns: repeat(3, 1fr) !important;
-  gap: 14px !important;
-  margin-top: 24px !important;
+  gap: 8px !important;
+  margin-top: 4px !important;
+  margin-bottom: 8px !important;
 }
 
 .attach-drawer-handle {
-  width: 36px;
+  width: 38px;
   height: 4px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.25);
-  margin: 0 auto 14px;
+  background: rgba(255, 255, 255, 0.28);
+  margin: 0 auto 12px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  position: relative;
+}
+.attach-drawer-handle::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  left: -20px;
+  right: -20px;
 }
 
 /* ── Yuqori Media Qism (Jonli Kamera / Galereya / Haqiqiy fotosuratlar va videolar) ── */
@@ -1615,5 +1704,224 @@
 .chat-msg.theirs .bubble-quiz {
   border-radius: 14px 14px 14px 4px !important;
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Android Attach Drawer: Oxirgilar / Galareya (DCIM) Switcher & Modal
+   ═════════════════════════════════════════════════════════════════════════ */
+.am-nav-tabs-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.am-nav-tabs {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+}
+.am-nav-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.am-nav-tab:hover {
+  color: #fff;
+}
+.am-nav-tab.active {
+  background: var(--blue, #1d9bf0);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.35);
+}
+
+/* Galareya (DCIM) Paneli */
+.am-gallery-panel {
+  display: none;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+.attach-drawer .am-gallery-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+.attach-drawer .am-gallery-panel #amDcimGrid {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+.am-gallery-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px 8px 6px;
+  font-size: 12px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+.am-gallery-folder-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #fff;
+}
+.am-gallery-change-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text, #fff);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.am-gallery-change-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+.am-gallery-loading-box,
+.am-gallery-empty-box {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  gap: 10px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  font-size: 13px;
+}
+.am-gallery-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--blue, #1d9bf0);
+  border-radius: 50%;
+  animation: amSpin 0.8s linear infinite;
+}
+@keyframes amSpin {
+  to { transform: rotate(360deg); }
+}
+.am-gallery-connect-btn {
+  margin-top: 8px;
+  padding: 8px 18px;
+  border-radius: 14px;
+  background: var(--blue, #1d9bf0);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+.am-gallery-connect-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Noto'g'ri Papka Tanlanganda Modal / Popup */
+.smr-folder-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100060;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.smr-folder-modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.smr-folder-modal-box {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg-surface, #1e2025);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 20px;
+  padding: 24px 20px 20px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  transform: scale(0.92);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+.smr-folder-modal-overlay.open .smr-folder-modal-box {
+  transform: scale(1);
+}
+.smr-folder-modal-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: rgba(255, 173, 31, 0.15);
+  color: #ffad1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  border: 1px solid rgba(255, 173, 31, 0.3);
+}
+.smr-folder-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 10px;
+}
+.smr-folder-modal-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.75));
+  margin: 0 0 20px;
+}
+.smr-folder-modal-text strong {
+  color: #fff;
+  font-weight: 700;
+}
+.smr-folder-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.smr-folder-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+.smr-folder-btn-cancel {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text, #fff);
+}
+.smr-folder-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.smr-folder-btn-retry {
+  background: var(--blue, #1d9bf0);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.35);
+}
+.smr-folder-btn-retry:hover {
+  filter: brightness(1.1);
+}
+
 
 

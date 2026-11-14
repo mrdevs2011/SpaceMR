@@ -57,516 +57,46 @@ export function escapeRegex(str) {
   return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/* ── Spoiler vault: maxfiy matn DOM/HTML da EMAS — faqat xotirada.
-   Kenglik character soniga mos (--spoiler-ch). Ochilganda vault dan ~0ms. */
-const _spoilerVault = new Map();
-let _spoilerSeq = 0;
-
+/* ── Telegram Spoilers (|| matn ||): 0ms, toza va yengil inline blur ── */
 export function spoilerVaultGet(id) {
-  return _spoilerVault.get(String(id)) ?? null;
+  return null;
 }
 
 export function spoilerVaultHas(id) {
-  return _spoilerVault.has(String(id));
+  return false;
 }
 
-/* SPOILER_DEPLOY t-1792259696568 */
-/** Approximate display width in "ch" units (emoji/CJK wider). */
-function spoilerChCount(text) {
-  let n = 0;
-  for (const ch of String(text || '')) {
-    if (ch === '\n' || ch === '\r' || ch === '\t') continue;
-    const cp = ch.codePointAt(0);
-    if (cp <= 0x1f || (cp >= 0x7f && cp <= 0x9f)) continue;
-    if (cp > 0xffff || (cp >= 0x1f300 && cp <= 0x1faff) || (cp >= 0x2600 && cp <= 0x27bf)) n += 2;
-    else if (cp >= 0x1100 && cp <= 0xd7af) n += 2;
-    else if (cp >= 0x2e80 && cp <= 0x9fff) n += 2;
-    else n += 1;
-  }
-  return Math.max(2, n);
-}
+export function layoutSpoilers(root) {}
 
-/** Per-line metrics for multi-line spoilers (matches real text shape). */
-function spoilerLineMetrics(text) {
-  const raw = String(text || '');
-  let parts = raw.length ? raw.split(/\r?\n/) : [''];
-  while (parts.length > 1 && !String(parts[0]).trim()) parts.shift();
-  while (parts.length > 1 && !String(parts[parts.length - 1]).trim()) parts.pop();
-  if (!parts.length) parts = [''];
-  return parts.map(line => ({
-    ch: Math.max(3, spoilerChCount(line.length ? line : '...')),
-    line: line
-  }));
-}
-
-function measureSpoilerPx(text, fontSourceEl, chHint) {
-  let t = String(text || '').replace(/[\r\n\t]+/g, ' ');
-  // Matn yo'q (marker-only) — ch soniga mos probe string
-  if (!t && chHint > 0) {
-    t = 'n'.repeat(Math.max(1, Math.min(200, chHint | 0)));
-  }
-  if (!t) return 0;
-  try {
-    const cs = getComputedStyle(fontSourceEl || document.body);
-    const canvas = measureSpoilerPx._c || (measureSpoilerPx._c = document.createElement('canvas'));
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return 0;
-    const size = cs.fontSize || '15px';
-    const family = cs.fontFamily || 'sans-serif';
-    const weight = cs.fontWeight || '400';
-    const style = cs.fontStyle || 'normal';
-    ctx.font = style + ' ' + weight + ' ' + size + ' ' + family;
-    const w = ctx.measureText(t).width;
-    let ls = 0;
-    try {
-      const raw = cs.letterSpacing;
-      if (raw && raw !== 'normal') ls = parseFloat(raw) || 0;
-    } catch (_) {}
-    if (ls) return Math.ceil(w + ls * Math.max(0, t.length - 1));
-    return Math.ceil(w);
-  } catch (_) {
-    return 0;
-  }
-}
-
-function spoilerLineBarsHtml(metrics) {
-  return metrics.map(m => {
-    const ch = Math.max(3, m.ch || 3);
-    // Absolute ch width — NOT min(100%,…) — flex parent width:auto da % circular collapse qiladi
-    return '<span class="md-spoiler-line" style="--spoiler-ch:' + ch +
-      ';width:' + ch + 'ch;min-width:3ch;max-width:100%" aria-hidden="true"></span>';
-  }).join('');
-}
-
-function spoilerPlaceholder(rawInner, meta) {
-  meta = meta || {};
+function spoilerPlaceholder(rawInner) {
   const text = String(rawInner ?? '');
-  if (text) {
-    const id = 'sp' + (++_spoilerSeq);
-    _spoilerVault.set(id, text);
-    return '<span class="md-spoiler" data-sid="' + id + '" role="button" tabindex="0" title="Yashirin matn">' + esc(text) + '</span>';
-  }
-  let metrics;
-  if (meta.lineCh && meta.lineCh.length) {
-    metrics = meta.lineCh.map(ch => ({ ch: Math.max(2, Number(ch) || 2), line: '' }));
-  } else {
-    metrics = [{ ch: Math.max(2, meta.ch != null ? Number(meta.ch) : 4), line: '' }];
-  }
-  const totalCh = metrics.reduce((s, m) => s + m.ch, 0);
-  const ch = Math.max(2, meta.ch != null ? Number(meta.ch) : totalCh);
-  const multi = metrics.length > 1;
-  const bars = multi ? spoilerLineBarsHtml(metrics) : '';
-  const cls = 'md-spoiler' + (bars ? ' md-spoiler-block' : '');
-  const style = bars
-    ? '--spoiler-ch:' + ch
-    : '--spoiler-ch:' + ch + ';min-width:min(100%,' + ch + 'ch);width:min(100%,' + ch + 'ch)';
-
-  if (meta.msgId != null && meta.ord != null) {
-    return '<span class="' + cls + '" data-scope="' + (meta.scope || 'dm') +
-      '" data-msg="' + String(meta.msgId).replace(/"/g, '') +
-      '" data-ord="' + String(meta.ord) +
-      '" data-ch="' + ch +
-      '" data-lines="' + metrics.length +
-      '" style="' + style +
-      '" role="button" tabindex="0" aria-label="Spoiler">' + bars + '</span>';
-  }
-  const id = 'sp' + (++_spoilerSeq);
-  _spoilerVault.set(id, text);
-  return '<span class="' + cls + '" data-sid="' + id + '" data-ch="' + ch +
-    '" data-lines="' + metrics.length +
-    '" style="' + style +
-    '" role="button" tabindex="0" aria-label="Spoiler">' + bars + '</span>';
-}
-
-/** Har qanday konteynerdagi blur bar kengligini aniq qil (post, chat, izoh, ...). */
-export function layoutSpoilers(root) {
-  const scope = root && root.querySelectorAll ? root : document;
-  scope.querySelectorAll('.md-spoiler:not(.revealed)').forEach(el => {
-    const id = el.getAttribute('data-sid');
-    const text = id ? _spoilerVault.get(id) : null;
-    const lines = el.querySelectorAll('.md-spoiler-line');
-
-    if (text != null && text.length && lines.length) {
-      const metrics = spoilerLineMetrics(text);
-      // Rebuild bars if line count mismatch
-      if (metrics.length !== lines.length) {
-        el.innerHTML = spoilerLineBarsHtml(metrics);
-        el.classList.add('md-spoiler-block');
-        el.setAttribute('data-lines', String(metrics.length));
-      }
-      const bars = el.querySelectorAll('.md-spoiler-line');
-      let maxPx = 0;
-      metrics.forEach((m, i) => {
-        const bar = bars[i];
-        if (!bar) return;
-        const ch = Math.max(2, m.ch);
-        const px = measureSpoilerPx(m.line.length ? m.line : '', el.parentElement || el, ch);
-        // Absolute width — min(100%,…) flex column da circular collapse beradi
-        if (px > 0) {
-          bar.style.width = px + 'px';
-          bar.style.minWidth = Math.min(px, 24) + 'px';
-          bar.style.maxWidth = '100%';
-          if (px > maxPx) maxPx = px;
-        } else {
-          bar.style.width = ch + 'ch';
-          bar.style.minWidth = '3ch';
-          bar.style.maxWidth = '100%';
-        }
-        bar.style.setProperty('--spoiler-ch', String(ch));
-      });
-      if (maxPx > 0) {
-        el.style.width = 'auto';
-        el.style.maxWidth = '100%';
-      }
-      el.setAttribute('data-ch', String(metrics.reduce((s, m) => s + m.ch, 0)));
-      return;
-    }
-
-    if (text != null && text.length && !lines.length) {
-      // single-line bar (or upgrade to multi)
-      const metrics = spoilerLineMetrics(text);
-      if (metrics.length > 1) {
-        el.innerHTML = spoilerLineBarsHtml(metrics);
-        el.classList.add('md-spoiler-block');
-        el.style.width = 'auto';
-        el.style.height = 'auto';
-        el.setAttribute('data-lines', String(metrics.length));
-        layoutSpoilers(el.parentElement || el);
-        return;
-      }
-      const px = measureSpoilerPx(text, el.parentElement || el);
-      const ch = Math.max(2, spoilerChCount(text));
-      if (px > 0) {
-        el.style.width = 'min(100%, ' + px + 'px)';
-        el.style.minWidth = Math.min(px, 48) + 'px';
-      } else {
-        el.style.width = 'min(100%, ' + ch + 'ch)';
-      }
-      el.style.setProperty('--spoiler-ch', String(ch));
-      el.setAttribute('data-ch', String(ch));
-      return;
-    }
-
-    // marker-only: multi-line bars already present (lineCh from server marker)
-    if (lines.length) {
-      // data-lines bilan bar soni mos kelmasa — qayta chizamiz
-      const wantLines = parseInt(el.getAttribute('data-lines') || '0', 10) || lines.length;
-      if (wantLines > 1 && lines.length !== wantLines) {
-        const totalCh = parseInt(el.getAttribute('data-ch') || '0', 10) || 0;
-        const per = Math.max(3, Math.ceil((totalCh || wantLines * 8) / wantLines));
-        const metrics = Array.from({ length: wantLines }, () => ({ ch: per, line: '' }));
-        el.innerHTML = spoilerLineBarsHtml(metrics);
-        el.classList.add('md-spoiler-block');
-        el.setAttribute('data-lines', String(wantLines));
-        // yangi barlar bilan davom etamiz
-        const bars2 = el.querySelectorAll('.md-spoiler-line');
-        bars2.forEach(bar => {
-          let lch = parseInt(bar.style.getPropertyValue('--spoiler-ch') || '0', 10) || per;
-          lch = Math.max(3, lch);
-          const px = measureSpoilerPx('', el.parentElement || el, lch);
-          if (px > 0) {
-            bar.style.width = px + 'px';
-            bar.style.minWidth = Math.min(px, 24) + 'px';
-          } else {
-            bar.style.width = lch + 'ch';
-            bar.style.minWidth = '3ch';
-          }
-          bar.style.maxWidth = '100%';
-          bar.style.setProperty('--spoiler-ch', String(lch));
-        });
-        el.style.width = 'auto';
-        el.style.maxWidth = '100%';
-        el.style.height = 'auto';
-        return;
-      }
-      lines.forEach(bar => {
-        let lch = parseInt(bar.style.getPropertyValue('--spoiler-ch') || '0', 10);
-        if (!lch) lch = parseInt(bar.getAttribute('data-ch') || '0', 10);
-        lch = Math.max(3, lch || 3);
-        // Canvas bilan aniq px — ch birligi shriftga bog'liq, noto'g'ri chiqishi mumkin
-        const px = measureSpoilerPx('', el.parentElement || el, lch);
-        if (px > 0) {
-          bar.style.width = px + 'px';
-          bar.style.minWidth = Math.min(px, 24) + 'px';
-        } else {
-          bar.style.width = lch + 'ch';
-          bar.style.minWidth = '3ch';
-        }
-        bar.style.maxWidth = '100%';
-        bar.style.setProperty('--spoiler-ch', String(lch));
-      });
-      el.classList.add('md-spoiler-block');
-      el.style.width = 'auto';
-      el.style.maxWidth = '100%';
-      el.style.height = 'auto';
-      return;
-    }
-
-    // marker-only: single bar from data-ch
-    // Uzun matn uchun oldindan taxminiy qatorlar ajrat (bubble kengligiga qarab)
-    let ch = parseInt(el.getAttribute('data-ch') || '0', 10);
-    ch = Math.max(2, ch || 4);
-    el.style.setProperty('--spoiler-ch', String(ch));
-
-    if (!lines.length && ch > 28) {
-      // Uzun blur: bitta to'liq kenglikdagi blok, balandligi taxminiy qatorlar soniga mos
-      // (to'p-to'p qisqa barlar o'rniga)
-      let charsPerLine = 32;
-      try {
-        const parent = el.closest('.chat-bubble') || el.parentElement || el;
-        const pw = parent.getBoundingClientRect().width;
-        if (pw > 60) {
-          const cs = getComputedStyle(el);
-          const fs = parseFloat(cs.fontSize) || 14;
-          charsPerLine = Math.max(22, Math.floor((pw - 24) / (fs * 0.52)));
-        }
-      } catch (_) {}
-      const lineCount = Math.max(1, Math.min(6, Math.ceil(ch / charsPerLine)));
-      if (lineCount >= 1) {
-        // Bitta keng bar, balandligi lineCount * 1.25em
-        el.style.width = '100%';
-        el.style.maxWidth = '100%';
-        el.style.minWidth = '0';
-        el.style.height = (lineCount * 1.25) + 'em';
-        el.style.display = 'block';
-        el.classList.remove('md-spoiler-block');
-        el.innerHTML = ''; // ::before pattern butun maydonni qoplasin
-        el.setAttribute('data-lines', String(lineCount));
-        el.setAttribute('data-ch', String(ch));
-        return;
-      }
-    }
-
-    if (!lines.length) {
-      el.style.width = 'min(100%, ' + ch + 'ch)';
-      el.style.minWidth = Math.min(ch, 8) + 'ch';
-    }
-    el.setAttribute('data-ch', String(ch));
-  });
-}
-
-function _revealSpoilerApply(el, text) {
-  /* Serverdan kelgan matn — newline saqlanadi, pre-wrap bilan ko'rsatiladi */
-  let body = String(text ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const w = el.offsetWidth;
-  const h = el.offsetHeight;
-  el.classList.remove('md-spoiler-block', 'md-spoiler-loading');
-  el.innerHTML = '';
-  el.textContent = body;
-  el.classList.add('revealed');
-  el.style.removeProperty('--spoiler-ch');
-  el.style.boxSizing = 'border-box';
-  el.style.whiteSpace = 'pre-wrap';
-  el.style.display = 'inline-block';
-  /* Blur box o'lchamini saqlab surilishni kamaytiramiz */
-  if (w > 0) el.style.width = w + 'px';
-  if (h > 0) el.style.minHeight = h + 'px';
-  el.style.removeProperty('height');
-  el.style.removeProperty('min-width');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (!el.classList.contains('revealed')) return;
-      el.style.removeProperty('width');
-      el.style.removeProperty('min-height');
-    });
-  });
-}
-
-async function revealSpoilerEl(el) {
-  if (!el || el.classList.contains('revealed')) return false;
-  const id = el.getAttribute('data-sid');
-  if (id) {
-    const text = _spoilerVault.get(id);
-    if (text == null) return false;
-    _revealSpoilerApply(el, text);
-    return true;
-  }
-  const msg = el.getAttribute('data-msg');
-  const ord = el.getAttribute('data-ord');
-  const scope = el.getAttribute('data-scope') || 'dm';
-  if (!msg || ord == null) return false;
-  el.classList.add('md-spoiler-loading');
-  try {
-    const { data, error } = await sb.rpc('reveal_spoiler', {
-      p_scope: scope,
-      p_message_id: msg,
-      p_ordinal: parseInt(ord, 10)
-    });
-    if (error || data == null) {
-      el.classList.remove('md-spoiler-loading');
-      return false;
-    }
-    const text = String(data);
-    const vid = 'rpc:' + scope + ':' + msg + ':' + ord;
-    _spoilerVault.set(vid, text);
-    el.setAttribute('data-sid', vid);
-    _revealSpoilerApply(el, text);
-    return true;
-  } catch (_) {
-    el.classList.remove('md-spoiler-loading');
-    return false;
-  }
-}
-
-function hideSpoilerEl(el) {
-  if (!el || !el.classList.contains('revealed')) return;
-  const id = el.getAttribute('data-sid');
-  const text = id ? _spoilerVault.get(id) : null;
-  /* Yopishdan oldin box o'lchamini saqlaymiz — surilish bo'lmasin */
-  const w = el.offsetWidth;
-  const h = el.offsetHeight;
-  el.textContent = '';
-  el.classList.remove('revealed');
-  el.style.boxSizing = 'border-box';
-  if (w > 0) el.style.width = w + 'px';
-  if (h > 0) el.style.minHeight = h + 'px';
-  if (text != null && text.length) {
-    const metrics = spoilerLineMetrics(text);
-    if (metrics.length > 1) {
-      el.innerHTML = spoilerLineBarsHtml(metrics);
-      el.classList.add('md-spoiler-block');
-      el.setAttribute('data-lines', String(metrics.length));
-    } else {
-      const ch = Math.max(2, metrics[0]?.ch || 4);
-      el.classList.remove('md-spoiler-block');
-      el.style.setProperty('--spoiler-ch', String(ch));
-      el.setAttribute('data-ch', String(ch));
-    }
-  } else {
-    const ch = parseInt(el.getAttribute('data-ch') || '4', 10) || 4;
-    const lines = parseInt(el.getAttribute('data-lines') || '1', 10) || 1;
-    el.style.setProperty('--spoiler-ch', String(ch));
-    if (lines > 1) {
-      /* marker-only multi-line: data-ch jami, lineCh yo'q — taxminiy teng qatorlar */
-      const per = Math.max(3, Math.ceil(ch / lines));
-      const metrics = Array.from({ length: lines }, () => ({ ch: per, line: '' }));
-      el.innerHTML = spoilerLineBarsHtml(metrics);
-      el.classList.add('md-spoiler-block');
-    } else {
-      el.classList.remove('md-spoiler-block');
-    }
-  }
-  requestAnimationFrame(() => {
-    layoutSpoilers(el.parentElement || document);
-    requestAnimationFrame(() => {
-      if (el.classList.contains('revealed')) return;
-      el.style.removeProperty('width');
-      el.style.removeProperty('min-height');
-      el.style.height = 'auto';
-    });
-  });
+  return `<span class="md-spoiler" role="button" tabindex="0" title="Yashirin matn">${esc(text)}</span>`;
 }
 
 let _spoilerUiBound = false;
 export function bindSpoilerUI() {
   if (_spoilerUiBound) return;
-  if (typeof document === 'undefined') return; // Node / SSR
+  if (typeof document === 'undefined') return;
   _spoilerUiBound = true;
-  let _lastSpoilerAct = 0;
-  /* Qisqa bosish = ochish/yopish; uzun bosish (select) = hech narsa */
-  let _spDown = null; // { t, x, y, el, pid }
-  const TAP_MS = 380;
-  const TAP_MOVE = 12; // px
-  const act = (el) => {
-    if (!el || !el.classList.contains('md-spoiler')) return;
-    const now = Date.now();
-    if (now - _lastSpoilerAct < 250) return; // click+pointerup double-fire
-    _lastSpoilerAct = now;
-    if (el.classList.contains('revealed')) {
-      el.classList.remove('revealed');
-    } else {
-      if (el.getAttribute('data-msg') && !el.textContent.trim()) {
-        revealSpoilerEl(el);
-      } else {
-        el.classList.add('revealed');
-      }
-    }
-  };
-  const isShortTap = (e, down) => {
-    if (!down) return false;
-    const dt = Date.now() - down.t;
-    const dx = Math.abs((e.clientX ?? 0) - down.x);
-    const dy = Math.abs((e.clientY ?? 0) - down.y);
-    return dt < TAP_MS && dx < TAP_MOVE && dy < TAP_MOVE;
-  };
-  const hasTextSelection = () => {
-    try {
-      const s = window.getSelection();
-      return !!(s && !s.isCollapsed && s.toString().trim());
-    } catch (_) { return false; }
-  };
-  document.addEventListener('pointerdown', (e) => {
-    const el = e.target?.closest?.('.md-spoiler');
-    if (!el) { _spDown = null; return; }
-    if (e.button != null && e.button !== 0) { _spDown = null; return; }
-    _spDown = { t: Date.now(), x: e.clientX || 0, y: e.clientY || 0, el, pid: e.pointerId };
-  }, true);
-  document.addEventListener('pointercancel', () => { _spDown = null; }, true);
+
   document.addEventListener('click', (e) => {
     const el = e.target?.closest?.('.md-spoiler');
     if (!el) return;
     if (e.button != null && e.button !== 0) return;
-    // Select rejimi yoki uzun bosish — ochma/yopma
-    if (hasTextSelection()) return;
-    if (_spDown && _spDown.el === el && !isShortTap(e, _spDown)) {
-      _spDown = null;
-      return;
-    }
-    _spDown = null;
-    e.preventDefault();
-    e.stopPropagation();
-    act(el);
+    try {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && sel.toString().trim()) return;
+    } catch (_) {}
+    el.classList.toggle('revealed');
   }, true);
-  document.addEventListener('pointerup', (e) => {
-    // iOS/Android: click ba'zan yutiladi — faqat qisqa tap
-    if (e.pointerType === 'mouse') return;
-    const el = e.target?.closest?.('.md-spoiler');
-    if (!el) { _spDown = null; return; }
-    if (hasTextSelection()) { _spDown = null; return; }
-    if (!_spDown || _spDown.el !== el || !isShortTap(e, _spDown)) {
-      _spDown = null;
-      return;
-    }
-    _spDown = null;
-    e.preventDefault();
-    e.stopPropagation();
-    act(el);
-  }, true);
-  document.addEventListener('keydown', e => {
+
+  document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    const el = e.target.closest?.('.md-spoiler');
+    const el = e.target?.closest?.('.md-spoiler');
     if (!el) return;
     e.preventDefault();
-    act(el);
+    el.classList.toggle('revealed');
   }, true);
-  // Yangi .md-spoiler qo'shilganda kenglikni aniqla (debounce, faqat spoiler node)
-  try {
-    let _layoutSched = false;
-    const scheduleLayout = () => {
-      if (_layoutSched) return;
-      _layoutSched = true;
-      requestAnimationFrame(() => {
-        _layoutSched = false;
-        try { layoutSpoilers(document); } catch (_) {}
-      });
-    };
-    const hasSpoiler = (node) => {
-      if (!node || node.nodeType !== 1) return false;
-      if (node.classList && node.classList.contains('md-spoiler')) return true;
-      return !!(node.querySelector && node.querySelector('.md-spoiler'));
-    };
-    const mo = new MutationObserver(muts => {
-      for (const m of muts) {
-        if (!m.addedNodes) continue;
-        for (const n of m.addedNodes) {
-          if (hasSpoiler(n)) { scheduleLayout(); return; }
-        }
-      }
-    });
-    mo.observe(document.documentElement, { childList: true, subtree: true });
-  } catch (_) {}
-  if (document.readyState !== 'loading') requestAnimationFrame(() => layoutSpoilers(document));
-  else document.addEventListener('DOMContentLoaded', () => layoutSpoilers(document));
 }
 
 
@@ -974,13 +504,7 @@ export function renderMarkdown(rawText, opts) {
     return '\n\u0000YT' + idx + '\u0000\n';
   });
 
-  // Display-time shield: DB dagi eski ochiq kalitlar ham ||spoiler|| ga aylanadi (DOM ga tushmasdan vault)
-  s = s.replace(/\|\|@(\d+):([\d,]+)\|\|/g, (_m, ord, lenSpec) => {
-    const idx = _spHold.push(spoilerPlaceholder('', {
-      msgId: msgId, ord: parseInt(ord, 10), ch: (String(lenSpec).split(',').reduce((a,b)=>a+(parseInt(b,10)||0),0)), lineCh: String(lenSpec).split(',').map(x=>parseInt(x,10)||2), scope: scope
-    })) - 1;
-    return '\u0000SP' + idx + '\u0000';
-  });
+  s = s.replace(/\|\|@\d+:[\d,]+\|\|/g, '');
   s = s.replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
     if (inner.charAt(0) === '@') return _m;
     const idx = _spHold.push(spoilerPlaceholder(inner)) - 1;
@@ -1094,8 +618,6 @@ export function renderMarkdown(rawText, opts) {
   s = s.replace(/(?:<br>)*\u0000YT(\d+)\u0000(?:<br>)*/g, (_m, idx) => _ytHold[parseInt(idx, 10)] || '');
   s = s.replace(/\u0000YT(\d+)\u0000/g, (_m, idx) => _ytHold[parseInt(idx, 10)] || '');
 
-  // Kenglikni keyingi frame da aniq o'lchaymiz (post/chat/izoh)
-  try { requestAnimationFrame(() => layoutSpoilers(document)); } catch (_) {}
   return s;
 }
 
@@ -1621,12 +1143,29 @@ function _releaseScrollLock(restore) {
   try { window.dispatchEvent(new CustomEvent('spacemr:scrolllock', { detail: { locked: false } })); } catch (_) {}
 }
 
+function _hasVisibleOverlay() {
+  if (typeof document === 'undefined') return false;
+  const overlays = document.querySelectorAll(
+    '.overlay.show, .overlay.open, .modal.show, .modal.open, .sheet.show, .sheet.open, [id$="Overlay"].show, [id$="Modal"].show, .search-overlay.open'
+  );
+  for (const el of overlays) {
+    if (el.id === 'splash') continue;
+    if (el.offsetWidth > 0 || el.offsetHeight > 0) return true;
+  }
+  return false;
+}
+
 /** Body/HTML scroll holatini tekshirish va qulflanmagan bo'lsa darhol bo'shatish */
 export function syncScrollLock() {
   if (typeof document === 'undefined') return;
   const total = _scrollLockTotal();
-  if (total === 0) {
-    if (_scrollLockApplied || document.body.classList.contains('scroll-locked') || document.documentElement.classList.contains('scroll-locked')) {
+  const hasOverlay = _hasVisibleOverlay();
+  if (total === 0 || !hasOverlay) {
+    if (!hasOverlay) {
+      _scrollLocks.clear();
+      _scrollLockAnon = 0;
+    }
+    if (_scrollLockApplied || document.body.classList.contains('scroll-locked') || document.documentElement.classList.contains('scroll-locked') || document.body.style.overflow === 'hidden' || document.documentElement.style.overflow === 'hidden') {
       _releaseScrollLock(false);
     }
   }
@@ -1812,26 +1351,10 @@ export function renderSpoilers(rawText) {
  */
 export function resolveSpoilerMarkers(rawText, opts) {
   opts = opts || {};
-  const msgId = opts.msgId != null ? String(opts.msgId) : '';
-  const scope = opts.scope || 'dm';
   let s = String(rawText || '');
-  // Server marker: ||@0:45,12||
-  s = s.replace(/\|\|@(\d+):([\d,]+)\|\|/g, (_m, ord) => {
-    const keys = [
-      'rpc:' + scope + ':' + msgId + ':' + ord,
-      'rpc:dm:' + msgId + ':' + ord,
-      'rpc:group:' + msgId + ':' + ord
-    ];
-    for (const k of keys) {
-      const t = _spoilerVault.get(k);
-      if (t != null) return String(t);
-    }
-    // data-sid yo'q, lekin DOM da revealed bo'lishi mumkin — caller to'ldiradi
-    return '\u2022\u2022\u2022\u2022';
-  });
-  // Klassik ||matn|| (vault sid yo'q — ichidagi matn)
+  s = s.replace(/\|\|@(\d+):([\d,]+)\|\|/g, '');
   s = s.replace(/\|\|([\s\S]*?)\|\|/g, (_m, inner) => {
-    if (inner.charAt(0) === '@') return _m; // qolgan marker
+    if (inner.charAt(0) === '@') return _m;
     return inner;
   });
   return s;

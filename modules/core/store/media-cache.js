@@ -123,11 +123,11 @@ export function getMediaAspectStyle(pathOrUrl, width, height, fallback = '') {
   const w = parseInt(width, 10);
   const h = parseInt(height, 10);
   if (w && h && w > 0 && h > 0) {
-    return ` style="aspect-ratio:${w}/${h}; width: 100%;"`;
+    return ` style="aspect-ratio: ${w}/${h}; min-width: 220px; min-height: 160px;"`;
   }
   const cached = getMediaDimensions(pathOrUrl);
   if (cached) {
-    return ` style="aspect-ratio:${cached.ratio}; width: 100%;"`;
+    return ` style="aspect-ratio: ${cached.ratio}; min-width: 220px; min-height: 160px;"`;
   }
   if (fallback) {
     return ` style="${fallback}"`;

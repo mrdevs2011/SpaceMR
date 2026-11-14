@@ -260,9 +260,9 @@ html[data-theme] .apf-hint.bad:empty { display: none; }
 }
 /* Mobil: pastdan chiquvchi sheet */
 @media (max-width: 699px) {
-  html[data-theme] .apf-ov { align-items: flex-end; padding: 0; }
-  html[data-theme] .apf { max-width: none; max-height: 94dvh; border-width: 1px 0 0; border-radius: var(--radius) var(--radius) 0 0; padding: 16px 16px 0; }
-  html[data-theme] .apf-h { top: -16px; margin: -16px -16px 0; padding-top: 16px; border-radius: var(--radius) var(--radius) 0 0; }
+  html[data-theme] .apf-ov { align-items: flex-end; justify-content: center; padding: 0 8px max(10px, env(safe-area-inset-bottom, 10px)); }
+  html[data-theme] .apf { width: 100%; max-width: none; max-height: 94dvh; border: 1px solid #2f3336 !important; border-radius: 20px !important; padding: 16px 16px 16px; }
+  html[data-theme] .apf-h { top: -16px; margin: -16px -16px 0; padding-top: 16px; border-radius: 20px 20px 0 0; }
   html[data-theme] .apf-h::before { content: ""; position: absolute; top: 6px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: var(--radius); background: #2f3336; }
   html[data-theme] .apf-actions { bottom: 0; margin: 0 -16px; }
   html[data-theme] .apf-actions .aps-btn { flex: 1; height: 44px; justify-content: center; }

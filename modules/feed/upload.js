@@ -71,6 +71,12 @@ let _composerMode = 'post';
 function _setComposerMode(mode) {
   _composerMode = mode;
   const story = mode === 'story';
+  const ov = $('uploadOverlay');
+  if (ov) {
+    ov.setAttribute('data-composer-mode', mode);
+    ov.setAttribute('data-mode', mode);
+    ov.classList.toggle('story-mode', story);
+  }
   const cap = $('captionInput');
   cap.placeholder = story ? "Hikoya 24 soat davomida ko'rinadi. Izoh yozing (ixtiyoriy)…" : _POST_PLACEHOLDER;
   if (story) cap.maxLength = STORY_CAPTION_MAX; else cap.removeAttribute('maxlength');
@@ -806,6 +812,10 @@ function _bindHomeComposer() {
     showFile: true,
     showMedia: true,
     mediaAccept: 'image/*,video/*',
+    getOptions: () => ({
+      context: 'post',
+      isPost: true,
+    }),
   });
 
   $('homeComposerFile')?.addEventListener('change', e => {
@@ -861,6 +871,9 @@ initAttachMenu({
   getOptions: () => {
     const story = _composerMode === 'story';
     return {
+      context: story ? 'story' : 'post',
+      isStory: story,
+      isPost: !story,
       showFile: !story,           // story: rasm/video/kamera
       showMedia: true,
       mediaAccept: 'image/*,video/*',

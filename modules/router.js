@@ -196,12 +196,16 @@ async function switchView(prevRoute, routeName) {
     } catch (_) { /* eski view controller bo'lmasa — muammo emas */ }
   }
 
-  // Hide all views
+  const targetView = $(`${routeName}View`);
+
+  // Barcha boshqa view lardan .on ni darhol olib tashlash — har bir sahifa mustaqil
   document.querySelectorAll('.view').forEach(el => {
-    el.classList.remove('on');
+    if (el !== targetView) {
+      el.classList.remove('on');
+    }
   });
 
-  // Show target view — rAF orqali fade animatsiyasi ishlaydi (display:none -> block -> opacity)
+  // Explore overlay / search overlay boshqaruvi
   if (routeName === 'explore') {
     const ov = $('searchOverlay');
     if (ov) {
@@ -216,14 +220,9 @@ async function switchView(prevRoute, routeName) {
     if (ov && ov.classList.contains('open')) ov.classList.remove('open');
   }
 
-  const targetView = $(`${routeName}View`);
+  // Target view ni darhol faollashtirish — ustma-ust tushish va kechikishlar yo'q
   if (targetView) {
-    // display:none holidan chiqarish uchun bir frame kutamiz, so'ng .on qo'shamiz
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        targetView.classList.add('on');
-      });
-    });
+    targetView.classList.add('on');
   }
 
   // Import and initialize view controller dynamically

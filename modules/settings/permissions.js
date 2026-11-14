@@ -5,6 +5,11 @@
 import { toast } from '../ui/toast.js';
 import { haptic } from '../core/utils.js';
 import { areNotificationsEnabled, setNotificationsEnabled } from '../push.js';
+import {
+  getSavedGalleryDirHandle,
+  saveGalleryDirHandle,
+  isAllowedGalleryFolder,
+} from '../ui/gallery-fs.js';
 
 export const PERMISSIONS_CONFIG = {
   microphone: {
@@ -109,6 +114,27 @@ export const PERMISSIONS_CONFIG = {
       }
       return true;
     }
+  },
+  storage: {
+    id: 'storage',
+    name: 'Fayllar va Media (Galareya)',
+    shortDesc: "Qurilma galareyasidagi (DCIM) rasm va videolarni chatda ko'rish",
+    fullDesc: "Attach (fayl biriktirish) menyusi ochilganda qurilmadagi barcha foto va videolarni Telegram kabi ko'rish imkoniyati.",
+    securityNote: "Faqat siz tanlagan rasm yoki video chatga yuboriladi. SpaceMR fayllaringizni yashirin o'qimaydi va o'zboshimchalik bilan serverga jo'natmaydi.",
+    icon: './svg/media/gallery.svg',
+    badgeClass: 'perm-badge-storage',
+    queryName: null,
+    async request() {
+      if (!('showDirectoryPicker' in window)) {
+        throw new Error("Brauzeringiz File System Access API ni qo'llab-quvvatlamaydi");
+      }
+      const dirHandle = await window.showDirectoryPicker({ mode: 'read', startIn: 'pictures' });
+      if (!isAllowedGalleryFolder(dirHandle)) {
+        throw new Error("Iltimos, ichki xotiradagi DCIM yoki Pictures papkasini tanlang");
+      }
+      await saveGalleryDirHandle(dirHandle);
+      return true;
+    }
   }
 };
 
@@ -137,9 +163,13 @@ export function isPermissionAllowed(permId) {
  */
 export function requirePermission(permId, onAllowed) {
   if (!isPermissionAllowed(permId)) {
-    const conf = PERMISSIONS_CONFIG[permId];
-    const name = conf?.name || permId;
-    toast(`Sozlamalar → Ruxsatlar bo'limidan ${name.toLowerCase()}ga ruxsat bering`, 'warn');
+    if (permId === 'storage') {
+      toast("Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering", 'warn');
+    } else {
+      const conf = PERMISSIONS_CONFIG[permId];
+      const name = conf?.name || permId;
+      toast(`Sozlamalar → Ruxsatlar bo'limidan ${name.toLowerCase()}ga ruxsat bering`, 'warn');
+    }
     return false;
   }
   if (typeof onAllowed === 'function') {
@@ -175,6 +205,21 @@ export async function queryBrowserPermission(permId) {
   if (permId === 'notifications') {
     if (!('Notification' in window)) return 'unsupported';
     return Notification.permission; // 'granted' | 'denied' | 'default'
+  }
+
+  if (permId === 'storage') {
+    if (!('showDirectoryPicker' in window)) return 'unsupported';
+    try {
+      const handle = await getSavedGalleryDirHandle();
+      if (handle && typeof handle.queryPermission === 'function') {
+        const state = await handle.queryPermission({ mode: 'read' });
+        return state; // 'granted' | 'prompt' | 'denied'
+      }
+    } catch (_) {}
+    if (localStorage.getItem(PERM_KEY_PREFIX + 'storage') === 'granted') {
+      return 'granted';
+    }
+    return 'prompt';
   }
 
   if (navigator.permissions?.query && conf.queryName) {

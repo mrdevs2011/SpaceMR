@@ -12,6 +12,16 @@ import { hasCameraDevice } from '../chat/camera-access.js';
 import { openCameraCapture } from '../chat/camera-capture.js';
 import { openPollModal } from './poll-dialog.js';
 import { requestAndSendLocation } from './location-helper.js';
+import { isPermissionAllowed, requirePermission } from '../settings/permissions.js';
+import {
+  isAndroidMobile,
+  getSavedGalleryDirHandle,
+  saveGalleryDirHandle,
+  scanDirectory,
+  pickAndValidateGalleryDirectory,
+  showInvalidFolderModal,
+} from './gallery-fs.js';
+import { toast } from './toast.js';
 
 const SVG = {
   camera: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
@@ -508,6 +518,259 @@ export function initAttachMenu({
     document.addEventListener('keydown', onKey, true);
   }
 
+  /**
+   * Tabiiy jismoniy kuch (Physics Touch Swipe-to-Dismiss / Expand) harakatlari:
+   * - Chat:
+   *   * Yuqoriga sursa: full-height (92vh)
+   *   * Pastga sursa: half-height (50vh)
+   *   * Yana pastga sursa: 0 height (yopiladi)
+   * - Post Upload va Story Upload:
+   *   * 1 ta tabiiy jismoniy surish (swipe down / slide down) bilan silliq pastga tushib butunlay yopilsin (0 height).
+   *   * touchstart, touchmove, touchend da transform: translateY(...) va inersiya
+   *     (velocity > 0.4 yoki drag masofasi > 100px) bilan tabiiy animatsiyada pastga sirg'alib yopilsin.
+   */
+  function _bindDrawerGestures(drawer, overlay, ctx) {
+    if (!drawer || !overlay) return;
+
+    const isStory = ctx === 'story';
+    const isPost = ctx === 'post';
+
+    // Chat holat mashinasi: 'half' (50vh) va 'full' (92vh)
+    let chatState = 'half';
+
+    let startY = 0;
+    let startX = 0;
+    let startTime = 0;
+    let lastY = 0;
+    let lastTime = 0;
+    let isDragging = false;
+    let dragLocked = false;
+    let isHandleTouch = false;
+    let scrollContainer = null;
+
+    function onTouchStart(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      startY = touch.clientY;
+      startX = touch.clientX;
+      startTime = performance.now();
+      lastY = startY;
+      lastTime = startTime;
+      isDragging = false;
+      dragLocked = false;
+
+      isHandleTouch = !!e.target.closest('.attach-drawer-handle, .attach-bottom-pills, .attach-send-bar');
+      scrollContainer = e.target.closest('.attach-media-grid, .am-gallery-panel, #amDcimGrid');
+    }
+
+    function onTouchMove(e) {
+      if (dragLocked || !e.touches || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const currentY = touch.clientY;
+      const currentX = touch.clientX;
+      const currentTime = performance.now();
+      const deltaY = currentY - startY;
+      const deltaX = currentX - startX;
+
+      // Gorizontal harakat ustun bo'lsa, vertikal drawer gestureni qulflaymiz
+      if (!isDragging) {
+        if (Math.abs(deltaX) > Math.abs(deltaY) + 5 && Math.abs(deltaX) > 10) {
+          dragLocked = true;
+          return;
+        }
+
+        if (isStory || isPost) {
+          // Story yoki Post drawer:
+          // Handle yoki pastki bar bosilsa to'g'ridan-to'g'ri drag
+          if (isHandleTouch) {
+            if (Math.abs(deltaY) > 5) isDragging = true;
+          } else if (scrollContainer) {
+            // Kontent yuqori chegarada bo'lsa va pastga tortilsa drag boshlanadi
+            if (deltaY > 6 && scrollContainer.scrollTop <= 0) {
+              isDragging = true;
+            } else if (deltaY < 0) {
+              // Kontent ichida pastga scroll qilishga yo'l beramiz
+              dragLocked = true;
+              return;
+            }
+          } else {
+            if (deltaY > 6) isDragging = true;
+          }
+        } else {
+          // Chat drawer (3 bosqichli: 92vh <-> 50vh <-> 0):
+          if (isHandleTouch) {
+            if (Math.abs(deltaY) > 5) isDragging = true;
+          } else if (chatState === 'half') {
+            // Half holatda: yuqoriga sursa full-height (92vh) ga ochiladi;
+            // pastga sursa 0 height ga qarab yopiladi
+            if (deltaY < -6) {
+              isDragging = true;
+            } else if (deltaY > 6 && (!scrollContainer || scrollContainer.scrollTop <= 0)) {
+              isDragging = true;
+            }
+          } else if (chatState === 'full') {
+            // Full holatda: kontent boshida pastga sursa half-height (50vh) ga tushadi
+            if (deltaY > 6 && (!scrollContainer || scrollContainer.scrollTop <= 0)) {
+              isDragging = true;
+            } else if (deltaY < -6) {
+              if (!isHandleTouch) {
+                dragLocked = true;
+                return;
+              }
+              isDragging = true;
+            }
+          }
+        }
+      }
+
+      if (isDragging) {
+        if (e.cancelable) e.preventDefault();
+        drawer.style.transition = 'none';
+
+        if (isStory || isPost) {
+          // Post & Story: transform translateY orqali real vaqtda suriladi
+          if (deltaY > 0) {
+            drawer.style.transform = `translateY(${deltaY}px)`;
+            const progress = Math.min(1, deltaY / (window.innerHeight * 0.85));
+            overlay.style.opacity = String(Math.max(0, 1 - progress * 0.85));
+          } else {
+            // Yuqoriga tortganda tabiiy rubber-band qarshilik
+            drawer.style.transform = `translateY(${deltaY * 0.18}px)`;
+          }
+        } else {
+          // Chat:
+          if (chatState === 'half') {
+            if (deltaY < 0) {
+              // Yuqoriga surish -> 92vh ga qarab balandlik silliq o'sadi
+              drawer.style.transform = 'translateY(0)';
+              const baseH = window.innerHeight * 0.50;
+              const maxH = window.innerHeight * 0.92;
+              const newH = Math.min(maxH, baseH - deltaY);
+              drawer.style.height = `${newH}px`;
+            } else {
+              // Pastga surish -> 0 height ga qarab yopilish
+              drawer.style.height = '50vh';
+              drawer.style.transform = `translateY(${deltaY}px)`;
+              const progress = Math.min(1, deltaY / (window.innerHeight * 0.5));
+              overlay.style.opacity = String(Math.max(0, 1 - progress * 0.85));
+            }
+          } else if (chatState === 'full') {
+            if (deltaY > 0) {
+              // Pastga surish -> 50vh ga qarab balandlik silliq qisqaradi
+              drawer.style.transform = 'translateY(0)';
+              const baseH = window.innerHeight * 0.92;
+              const minH = window.innerHeight * 0.50;
+              const newH = Math.max(minH, baseH - deltaY);
+              drawer.style.height = `${newH}px`;
+            } else {
+              // Yuqoriga tortganda qarshilik
+              drawer.style.height = '92vh';
+              drawer.style.transform = `translateY(${deltaY * 0.15}px)`;
+            }
+          }
+        }
+
+        lastY = currentY;
+        lastTime = currentTime;
+      }
+    }
+
+    function onTouchEnd(e) {
+      if (!isDragging) return;
+      isDragging = false;
+
+      const touch = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+      const endY = touch ? touch.clientY : lastY;
+      const totalDeltaY = endY - startY;
+      const totalTime = Math.max(1, performance.now() - startTime);
+      const recentTime = Math.max(1, performance.now() - lastTime);
+      const recentVelocity = (endY - lastY) / Math.max(10, recentTime); // px/ms (pastga > 0, yuqoriga < 0)
+      const overallVelocity = totalDeltaY / totalTime;
+      const maxVelocity = Math.max(recentVelocity, overallVelocity);
+
+      if (isStory || isPost) {
+        // Post Upload va Story Upload:
+        // 1 ta tabiiy jismoniy surish bilan silliq pastga tushib butunlay yopilsin (0 height).
+        // inersiya (velocity > 0.4 yoki drag masofasi > 100px) bilan tabiiy animatsiyada pastga sirg'alib yopilsin.
+        const shouldDismiss = totalDeltaY > 100 || maxVelocity > 0.4;
+        if (shouldDismiss) {
+          drawer.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+          drawer.style.transform = 'translateY(100%)';
+          overlay.style.transition = 'opacity 0.26s linear';
+          overlay.style.opacity = '0';
+          setTimeout(() => closeAttachMenu(), 280);
+        } else {
+          // Orqaga qaytish (bekor qilish)
+          drawer.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)';
+          drawer.style.transform = 'translateY(0)';
+          overlay.style.transition = 'opacity 0.2s linear';
+          overlay.style.opacity = '1';
+        }
+      } else {
+        // Chat attach drawer:
+        // Yuqoriga sursa full-height (92vh).
+        // Pastga sursa half-height (50vh).
+        // Yana pastga sursa 0 height (yopiladi).
+        if (chatState === 'half') {
+          const wantsFull = totalDeltaY < -60 || recentVelocity < -0.35 || overallVelocity < -0.35;
+          const wantsDismiss = totalDeltaY > 100 || recentVelocity > 0.4 || overallVelocity > 0.4;
+
+          if (wantsFull) {
+            // Yuqoriga sursa full-height (92vh)
+            chatState = 'full';
+            drawer.classList.remove('attach-drawer--half');
+            drawer.classList.add('attach-drawer--full');
+            drawer.style.transition = 'height 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)';
+            drawer.style.height = '92vh';
+            drawer.style.transform = 'translateY(0)';
+            overlay.style.transition = 'opacity 0.2s linear';
+            overlay.style.opacity = '1';
+          } else if (wantsDismiss) {
+            // Yana pastga sursa 0 height (yopiladi)
+            drawer.style.transition = 'transform 0.26s cubic-bezier(0.2, 0.9, 0.3, 1)';
+            drawer.style.transform = 'translateY(100%)';
+            overlay.style.transition = 'opacity 0.24s linear';
+            overlay.style.opacity = '0';
+            setTimeout(() => closeAttachMenu(), 260);
+          } else {
+            // Snap back to half (50vh)
+            drawer.style.transition = 'height 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+            drawer.style.height = '50vh';
+            drawer.style.transform = 'translateY(0)';
+            overlay.style.transition = 'opacity 0.2s linear';
+            overlay.style.opacity = '1';
+          }
+        } else if (chatState === 'full') {
+          const wantsHalf = totalDeltaY > 60 || recentVelocity > 0.35 || overallVelocity > 0.35;
+
+          if (wantsHalf) {
+            // Pastga sursa half-height (50vh)
+            chatState = 'half';
+            drawer.classList.remove('attach-drawer--full');
+            drawer.classList.add('attach-drawer--half');
+            drawer.style.transition = 'height 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)';
+            drawer.style.height = '50vh';
+            drawer.style.transform = 'translateY(0)';
+            overlay.style.transition = 'opacity 0.2s linear';
+            overlay.style.opacity = '1';
+          } else {
+            // Snap back to full (92vh)
+            drawer.style.transition = 'height 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+            drawer.style.height = '92vh';
+            drawer.style.transform = 'translateY(0)';
+            overlay.style.transition = 'opacity 0.2s linear';
+            overlay.style.opacity = '1';
+          }
+        }
+      }
+    }
+
+    drawer.addEventListener('touchstart', onTouchStart, { passive: false });
+    drawer.addEventListener('touchmove', onTouchMove, { passive: false });
+    drawer.addEventListener('touchend', onTouchEnd, { passive: true });
+    drawer.addEventListener('touchcancel', onTouchEnd, { passive: true });
+  }
+
   /* ─────────── 2. Mobil & Planshet Attach Sheet (Telegram uslubida) ─────────── */
   function openMobileDrawer(dynamicOpts = {}) {
     closeAttachMenu();
@@ -516,17 +779,67 @@ export function initAttachMenu({
     const canFile = dynamicOpts.showFile ?? showFile;
     const canPoll = dynamicOpts.showPoll ?? showPoll;
     const canLoc = dynamicOpts.showLocation ?? showLocation;
-    const isFullscreen = dynamicOpts.fullscreen ?? (dynamicOpts.mode === 'fullscreen' || !!btn.closest('#uploadOverlay, .composer-sheet, #homeComposer'));
+
+    // Kontekstni aniqlash: Story vs Post vs Chat
+    let ctx = dynamicOpts.context;
+    if (!ctx) {
+      if (
+        dynamicOpts.isStory ||
+        btn?.closest?.('#storyUpload') ||
+        btn?.id === 'storyUpload' ||
+        document.getElementById('storyUpload')?.classList.contains('show') ||
+        document.getElementById('uploadOverlay')?.getAttribute('data-composer-mode') === 'story' ||
+        document.getElementById('uploadOverlay')?.getAttribute('data-mode') === 'story' ||
+        (btn?.closest?.('#uploadOverlay') && document.getElementById('uploadOverlay')?.classList.contains('story-mode'))
+      ) {
+        ctx = 'story';
+      } else if (
+        dynamicOpts.isPost ||
+        btn?.closest?.('#uploadOverlay, .composer-sheet, #homeComposer')
+      ) {
+        ctx = 'post';
+      } else {
+        ctx = 'chat';
+      }
+    }
+
+    const isStory = ctx === 'story';
+    const isPost = ctx === 'post';
+    const isFullscreen = isStory || isPost || dynamicOpts.fullscreen || (dynamicOpts.mode === 'fullscreen');
+
+    let drawerClass = 'attach-drawer';
+    if (isStory) {
+      drawerClass += ' attach-drawer--story attach-drawer--fullscreen';
+    } else if (isPost) {
+      drawerClass += ' attach-drawer--post attach-drawer--fullscreen';
+    } else {
+      drawerClass += ' attach-drawer--chat attach-drawer--half';
+    }
+
+    const isAndroid = isAndroidMobile();
 
     const overlay = document.createElement('div');
     overlay.className = 'attach-drawer-overlay';
 
     overlay.innerHTML = `
-      <div class="attach-drawer ${isFullscreen ? 'attach-drawer--fullscreen' : ''}" role="dialog" aria-label="Biriktirish paneli">
-        <div class="attach-drawer-handle"></div>
+      <div class="${drawerClass}" role="dialog" aria-label="Biriktirish paneli" data-context="${ctx}">
+        <div class="attach-drawer-handle" title="Pastga surib yopish"></div>
 
-        <!-- Telegram uslubidagi Media Photos & Videos Gridi (Scroll bo'ladigan 3 ustun) -->
-        <div class="attach-media-grid" id="amMediaGrid">
+        ${isAndroid ? `
+          <div class="am-nav-tabs-wrapper">
+            <div class="am-nav-tabs" role="tablist">
+              <button type="button" class="am-nav-tab active" id="amTabRecents" role="tab" aria-selected="true">
+                <span>Oxirgilar</span>
+              </button>
+              <button type="button" class="am-nav-tab" id="amTabGallery" role="tab" aria-selected="false">
+                <span>Galareya</span>
+              </button>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 1. Oxirgilar Gridi -->
+        <div class="attach-media-grid" id="amRecentsPanel">
           <div class="attach-grid-item live-cam-tile" id="amLiveCamTile" role="button" tabindex="0" title="Kamera">
             <video class="live-cam-video" autoplay playsinline muted style="display:none;"></video>
             <div class="live-cam-fallback">${SVG.camera}</div>
@@ -543,6 +856,41 @@ export function initAttachMenu({
           <div id="amMediaItemsSlot" style="display:contents;"></div>
         </div>
 
+        <!-- 2. Galareya (DCIM) Paneli (Faqat Android uchun) -->
+        ${isAndroid ? `
+          <div class="am-gallery-panel" id="amGalleryPanel" style="display:none;">
+            <div class="am-gallery-toolbar" id="amGalleryToolbar" style="display:none;">
+              <span class="am-gallery-folder-badge" id="amGalleryFolderBadge">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <span id="amGalleryFolderName">DCIM</span>
+              </span>
+              <button type="button" class="am-gallery-change-btn" id="amGalleryChangeBtn">Papkani o'zgartirish</button>
+            </div>
+
+            <!-- DCIM media fotosuratlar va videolar gridi -->
+            <div class="attach-media-grid" id="amDcimGrid" style="display:none;"></div>
+
+            <div class="am-gallery-loading-box" id="amGalleryLoader" style="display:none;">
+              <div class="am-gallery-spinner"></div>
+              <span>Galareyadagi fayllar o'qilmoqda...</span>
+            </div>
+
+            <div class="am-gallery-empty-box" id="amGalleryConnectPrompt" style="display:none;">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" opacity="0.6">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p style="margin:4px 0 0;line-height:1.4;">DCIM yoki Pictures papkasini ulab barcha foto va videolarni Telegram kabi ko'ring</p>
+              <button type="button" class="am-gallery-connect-btn" id="amGalleryConnectBtn">DCIM papkasini tanlash</button>
+            </div>
+
+            <div class="am-gallery-empty-box" id="amGalleryEmpty" style="display:none;">
+              <span>Tanlangan papkada hech qanday foto yoki video topilmadi</span>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Tanlangan media fayllarni Telegram kabi birdaniga yuborish paneli (Send Bar) -->
         <div class="attach-send-bar" id="amSendBar" style="display:none;">
           <button type="button" class="attach-send-clear-btn" id="amSendClearBtn">Bekor qilish</button>
@@ -553,7 +901,7 @@ export function initAttachMenu({
         </div>
 
         <!-- Pastki Telegram uslubidagi 5 ta rangli doira tugmalar (Galereya, Fayl, Joylashuv, So‘rovnoma, Musiqa) -->
-        <div class="attach-bottom-pills" id="amBottomPills">
+        <div class="attach-bottom-pills" id="amBottomPills" ${isStory ? 'style="display:none !important;"' : ''}>
           ${canMedia ? `
             <button type="button" class="attach-pill-btn" id="amPillGallery">
               <div class="pill-btn-icon pill-icon-gallery">${SVG.gallery}</div>
@@ -593,7 +941,12 @@ export function initAttachMenu({
     document.body.appendChild(overlay);
     _activeDrawer = overlay;
 
+    const drawer = overlay.querySelector('.attach-drawer');
+    _bindDrawerGestures(drawer, overlay, ctx);
+
     requestAnimationFrame(() => {
+      overlay.classList.add('open');
+    });
       overlay.classList.add('open');
     });
 
@@ -605,6 +958,19 @@ export function initAttachMenu({
     const bottomPills = overlay.querySelector('#amBottomPills');
     const galleryTile = overlay.querySelector('#amGalleryPickerTile');
 
+    const recentsPanel = overlay.querySelector('#amRecentsPanel');
+    const galleryPanel = overlay.querySelector('#amGalleryPanel');
+    const tabRecents = overlay.querySelector('#amTabRecents');
+    const tabGallery = overlay.querySelector('#amTabGallery');
+    const dcimGrid = overlay.querySelector('#amDcimGrid');
+    const galleryLoader = overlay.querySelector('#amGalleryLoader');
+    const galleryConnectPrompt = overlay.querySelector('#amGalleryConnectPrompt');
+    const galleryEmpty = overlay.querySelector('#amGalleryEmpty');
+    const galleryToolbar = overlay.querySelector('#amGalleryToolbar');
+    const galleryFolderName = overlay.querySelector('#amGalleryFolderName');
+    const galleryChangeBtn = overlay.querySelector('#amGalleryChangeBtn');
+    const galleryConnectBtn = overlay.querySelector('#amGalleryConnectBtn');
+
     galleryTile?.addEventListener('click', e => {
       e.preventDefault();
       e.stopPropagation();
@@ -614,16 +980,19 @@ export function initAttachMenu({
     // Tanlangan fayllar xaritasi (id -> File)
     const selectedMap = new Map();
     let currentMediaList = [];
+    let dcimMediaList = [];
+    let isDcimLoaded = false;
+    let isDcimLoading = false;
 
     function updateSelectionUI() {
       const keys = Array.from(selectedMap.keys());
       const count = keys.length;
 
-      currentMediaList.forEach(item => {
-        const tile = overlay.querySelector(`.media-photo-tile[data-media-id="${item.id}"]`);
-        if (!tile) return;
+      // Recents va DCIM gridlaridagi barcha tanlov plitkalarini sinxron yangilash
+      overlay.querySelectorAll('.media-photo-tile').forEach(tile => {
+        const id = tile.getAttribute('data-media-id');
         const checkBtn = tile.querySelector('.media-tile-check');
-        const selIdx = keys.indexOf(item.id);
+        const selIdx = keys.indexOf(id);
         if (selIdx >= 0) {
           tile.classList.add('selected');
           if (checkBtn) {
@@ -645,7 +1014,7 @@ export function initAttachMenu({
         if (sendSubmitText) sendSubmitText.textContent = `Yuborish (${count})`;
       } else {
         if (sendBar) sendBar.style.display = 'none';
-        if (bottomPills) bottomPills.style.display = 'flex';
+        if (bottomPills) bottomPills.style.display = isStory ? 'none' : 'flex';
       }
     }
 
@@ -661,6 +1030,218 @@ export function initAttachMenu({
       }
       updateSelectionUI();
     }
+
+    function renderDcimMediaItems(items) {
+      if (!dcimGrid) return;
+      dcimGrid.innerHTML = items.map(item => {
+        const isVid = (item.type || '').startsWith('video/');
+        const selIdx = Array.from(selectedMap.keys()).indexOf(item.id);
+        const isSel = selIdx >= 0;
+        const durText = item.durationText || (isVid ? 'Video' : '');
+        return `
+          <div class="attach-grid-item media-photo-tile ${isSel ? 'selected' : ''}" data-media-id="${item.id}" role="button" tabindex="0">
+            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="${item.name || 'media'}" loading="lazy">
+            ${isVid ? `<div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span class="vid-dur-text">${durText}</span></div>` : ''}
+            <button type="button" class="media-tile-check ${isSel ? 'checked' : ''}" aria-label="Tanlash">
+              ${isSel ? `<span class="check-num">${selIdx + 1}</span>` : ''}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      items.forEach(item => {
+        const tile = dcimGrid.querySelector(`.media-photo-tile[data-media-id="${item.id}"]`);
+        if (!tile) return;
+        tile.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleSelectItem(item);
+        });
+      });
+    }
+
+    async function loadDcimGalleryMedia(forcePick = false) {
+      if (!isPermissionAllowed('storage')) {
+        toast("Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering", 'warn');
+        if (tabRecents && tabGallery) {
+          tabRecents.classList.add('active');
+          tabRecents.setAttribute('aria-selected', 'true');
+          tabGallery.classList.remove('active');
+          tabGallery.setAttribute('aria-selected', 'false');
+          if (recentsPanel) recentsPanel.style.display = 'grid';
+          if (galleryPanel) galleryPanel.style.display = 'none';
+        }
+        return;
+      }
+
+      if (!galleryLoader || !dcimGrid) return;
+      if (isDcimLoading) return;
+      isDcimLoading = true;
+
+      galleryLoader.style.display = 'flex';
+      dcimGrid.style.display = 'none';
+      if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'none';
+      if (galleryEmpty) galleryEmpty.style.display = 'none';
+
+      let handle = forcePick ? null : await getSavedGalleryDirHandle();
+
+      if (handle) {
+        try {
+          if (typeof handle.queryPermission === 'function') {
+            let perm = await handle.queryPermission({ mode: 'read' });
+            if (perm === 'prompt' && typeof handle.requestPermission === 'function') {
+              perm = await handle.requestPermission({ mode: 'read' });
+            }
+            if (perm !== 'granted') {
+              handle = null;
+            }
+          }
+        } catch (_) {
+          handle = null;
+        }
+      }
+
+      if (!handle) {
+        if (!('showDirectoryPicker' in window)) {
+          galleryLoader.style.display = 'none';
+          isDcimLoading = false;
+          toast("Brauzeringiz File System Access API ni qo'llab-quvvatlamaydi", 'info');
+          galleryPicker.click();
+          return;
+        }
+
+        try {
+          const pickRes = await pickAndValidateGalleryDirectory({
+            onInvalidFolder: () => {
+              galleryLoader.style.display = 'none';
+              if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
+              showInvalidFolderModal({
+                onRetry: () => loadDcimGalleryMedia(true),
+                onCancel: () => {
+                  if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
+                }
+              });
+            }
+          });
+
+          if (pickRes && pickRes.valid) {
+            handle = pickRes.dirHandle;
+          } else {
+            galleryLoader.style.display = 'none';
+            isDcimLoading = false;
+            if (!pickRes || !pickRes.invalid) {
+              if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
+            }
+            return;
+          }
+        } catch (err) {
+          galleryLoader.style.display = 'none';
+          isDcimLoading = false;
+          if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
+          return;
+        }
+      }
+
+      try {
+        if (galleryFolderName) galleryFolderName.textContent = handle.name || 'DCIM';
+        if (galleryToolbar) galleryToolbar.style.display = 'flex';
+
+        const mediaEntries = await scanDirectory(handle, 3, 120);
+
+        if (!mediaEntries.length) {
+          galleryLoader.style.display = 'none';
+          isDcimLoading = false;
+          if (galleryEmpty) galleryEmpty.style.display = 'flex';
+          return;
+        }
+
+        dcimMediaList = mediaEntries.map((m, idx) => {
+          let thumbUrl = '';
+          try {
+            thumbUrl = URL.createObjectURL(m.file);
+            _activeObjectUrls.add(thumbUrl);
+          } catch (_) {}
+          const isVid = (m.type || '').startsWith('video/');
+          return {
+            id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
+            file: m.file,
+            thumbUrl,
+            type: m.type,
+            name: m.name,
+            duration: 0,
+            durationText: isVid ? 'Video' : '',
+          };
+        });
+
+        renderDcimMediaItems(dcimMediaList);
+        isDcimLoaded = true;
+        galleryLoader.style.display = 'none';
+        dcimGrid.style.display = 'grid';
+        updateSelectionUI();
+
+        // Video davomiyliklarini asinxron o'qib yangilash
+        dcimMediaList.forEach(async (it) => {
+          if (it.file && it.type && it.type.startsWith('video/')) {
+            try {
+              const dur = await _getVideoDuration(it.file);
+              if (dur > 0) {
+                it.duration = dur;
+                it.durationText = _formatDuration(dur);
+                const badgeTxt = dcimGrid.querySelector(`.media-photo-tile[data-media-id="${it.id}"] .vid-dur-text`);
+                if (badgeTxt) badgeTxt.textContent = it.durationText;
+              }
+            } catch (_) {}
+          }
+        });
+      } catch (err) {
+        console.warn('[AttachMenu] scan DCIM error:', err);
+        galleryLoader.style.display = 'none';
+        if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
+      } finally {
+        isDcimLoading = false;
+      }
+    }
+
+    tabRecents?.addEventListener('click', e => {
+      e.preventDefault();
+      tabRecents.classList.add('active');
+      tabRecents.setAttribute('aria-selected', 'true');
+      tabGallery?.classList.remove('active');
+      tabGallery?.setAttribute('aria-selected', 'false');
+      if (recentsPanel) recentsPanel.style.display = 'grid';
+      if (galleryPanel) galleryPanel.style.display = 'none';
+    });
+
+    tabGallery?.addEventListener('click', async e => {
+      e.preventDefault();
+      if (!isPermissionAllowed('storage')) {
+        toast("Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering", 'warn');
+        return;
+      }
+
+      tabGallery.classList.add('active');
+      tabGallery.setAttribute('aria-selected', 'true');
+      tabRecents?.classList.remove('active');
+      tabRecents?.setAttribute('aria-selected', 'false');
+      if (recentsPanel) recentsPanel.style.display = 'none';
+      if (galleryPanel) galleryPanel.style.display = 'flex';
+
+      if (!isDcimLoaded) {
+        await loadDcimGalleryMedia();
+      }
+    });
+
+    galleryChangeBtn?.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      loadDcimGalleryMedia(true);
+    });
+
+    galleryConnectBtn?.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      loadDcimGalleryMedia(true);
+    });
 
     function renderMediaGridItems(items) {
       currentMediaList = items;
