@@ -1599,4 +1599,21 @@
   line-height: 1.35;
 }
 
+/* Telegram style attachment bubble card radii (14px) */
+.bubble-location,
+.bubble-poll,
+.bubble-quiz {
+  border-radius: 14px;
+}
+.chat-msg.mine .bubble-location,
+.chat-msg.mine .bubble-poll,
+.chat-msg.mine .bubble-quiz {
+  border-radius: 14px 14px 4px 14px !important;
+}
+.chat-msg.theirs .bubble-location,
+.chat-msg.theirs .bubble-poll,
+.chat-msg.theirs .bubble-quiz {
+  border-radius: 14px 14px 14px 4px !important;
+}
+
 

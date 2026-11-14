@@ -164,8 +164,9 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 #callMicBtn.muted::after { content: ''; position: absolute; left: 50%; top: 50%; width: 28px; height: 2px; border-radius: var(--radius); background: #000; transform: translate(-50%, -50%) rotate(-45deg); }
 /* Qurilmada kamera yo'q — Video va Kamera almashtirish tugmalari umuman yo'q */
 .no-camera #callCamCol, .no-camera #callSwitchCol { display: none !important; }
-/* Karnay yo'naltirib bo'lmaydigan qurilma (iOS/desktop) — tugma yo'q */
-.no-speaker-route #callSpeakerCol { display: none !important; }
+/* Karnay (speaker) tugmasi barcha qurilmalarda va rejimlarda doim ko'rinadi */
+#callActiveModal.video-mode #callSpeakerCol { display: flex !important; order: 4; }
+#callActiveModal.video-mode #callEndCol { order: 5; }
 #callActiveModal .call-ctrl-btn.end-btn { width: 64px; height: 64px; background: #ff3b30; box-shadow: 0 6px 20px rgba(255,59,48,.45); }
 #callActiveModal.video-mode .call-ctrl-btn { width: 44px; height: 44px; }
 #callActiveModal.video-mode .call-ctrl-btn.end-btn { width: 50px; height: 50px; }

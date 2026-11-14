@@ -1479,9 +1479,9 @@ img.msg-ticks,
 .chat-msg.mine { align-self: flex-end; justify-content: flex-end; }
 .chat-msg.theirs { align-self: flex-start; }
 /* Bubble — Telegram compact style */
-.chat-bubble { position: relative; padding: 7px 12px 7px 12px; border-radius: var(--radius); font-size: 14px; line-height: 1.45; word-break: break-word; max-width: 100%; display: inline-block; }
-.chat-msg.mine .chat-bubble { background: #2f3336; color: var(--pal-white); border-bottom-right-radius: 5px; }
-.chat-msg.theirs .chat-bubble { background: var(--pal-gray-800); color: var(--text); border-bottom-left-radius: 5px; }
+.chat-bubble { position: relative; padding: 7px 12px 7px 12px; border-radius: 16px; font-size: 14px; line-height: 1.45; word-break: break-word; max-width: 100%; display: inline-block; }
+.chat-msg.mine .chat-bubble { background: #2f3336; color: var(--pal-white); border-radius: 16px 16px 4px 16px; }
+.chat-msg.theirs .chat-bubble { background: var(--pal-gray-800); color: var(--text); border-radius: 16px 16px 16px 4px; }
 .chat-msg.emoji-only .chat-bubble,
 .chat-msg .chat-bubble.emoji-only,
 .chat-bubble.emoji-only { background: none !important; background-color: transparent !important; box-shadow: none !important; border: none !important; padding: 0 !important; border-radius: 0 !important; }
@@ -2120,25 +2120,82 @@ img.msg-ticks,
 
 .call-video-wrap {
   background: #000000; overflow: hidden;
+  position: absolute; inset: 0;
+  touch-action: none;
 }
 #callRemoteVideo {
   width: 100%; height: 100%; object-fit: cover;
+  transform-origin: center center;
 }
 .call-local-pip {
   position: absolute;
   bottom: calc(100px + env(safe-area-inset-bottom, 0px));
   right: 16px;
-  width: 96px; height: 128px;
-  border-radius: var(--radius);
+  width: clamp(96px, 24vw, 120px);
+  aspect-ratio: 9 / 16;
+  height: auto;
+  border-radius: 14px;
   object-fit: cover;
   background: #16181c;
-  border: 1px solid rgba(231, 233, 234, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  z-index: 4;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 10;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+  transform-origin: center center;
+  transition: opacity 0.2s ease, transform 0.12s ease;
 }
-.call-local-pip.cs-active { opacity: 1; }
+.call-local-pip.cs-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.call-local-pip.is-dragging,
+#callRemoteVideo.is-dragging {
+  cursor: grabbing !important;
+  transition: none !important;
+  will-change: left, top;
+}
+
+/* Swapped state: Mening ko'rinishim (local video) asosiy katta ekranda,
+   suhbatdosh ko'rinishi (remote video) esa kichik PiP ekranda */
+#callVideoWrap.is-swapped #callLocalVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  z-index: 1;
+  cursor: default;
+  touch-action: auto;
+  opacity: 1;
+  pointer-events: auto;
+  transform-origin: center center;
+}
+
+#callVideoWrap.is-swapped #callRemoteVideo {
+  position: absolute;
+  z-index: 10;
+  width: clamp(96px, 24vw, 120px);
+  aspect-ratio: 9 / 16;
+  height: auto;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  object-fit: cover;
+  background: #16181c;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  pointer-events: auto;
+  transform-origin: center center;
+  transition: opacity 0.2s ease, transform 0.12s ease;
+}
 
 .call-status {
   font-size: 14px; font-weight: 400;
@@ -2194,8 +2251,8 @@ img.msg-ticks,
 #callActiveModal.video-mode #callSwitchCol { order: 1; display: flex; }
 #callActiveModal.video-mode #callCamCol { order: 2; }
 #callActiveModal.video-mode #callMicCol { order: 3; }
-#callActiveModal.video-mode #callSpeakerCol { display: none; }
-#callActiveModal.video-mode #callEndCol { order: 4; }
+#callActiveModal.video-mode #callSpeakerCol { order: 4; display: flex !important; }
+#callActiveModal.video-mode #callEndCol { order: 5; }
 #callActiveModal.video-mode .call-active-btns {
   position: absolute;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
@@ -2294,19 +2351,19 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 }
 
 .cfm-media-wrap--standalone {
-  border-radius: var(--radius);
+  border-radius: 14px;
   overflow: hidden;
 }
 
 .cfm-media-wrap--standalone .cfm-img-link,
 .cfm-media-wrap--standalone .cfm-img-preview {
-  border-radius: var(--radius);
+  border-radius: 14px;
 }
 
-.cfm-img-link { display: block; width: fit-content; max-width: 100%; border-radius: var(--radius); overflow: hidden; line-height: 0; }
+.cfm-img-link { display: block; width: fit-content; max-width: 100%; border-radius: 14px; overflow: hidden; line-height: 0; }
 .cfm-img-link:hover { opacity: 1; }
-.cfm-img-preview { display: block; width: auto; height: auto; max-width: min(360px, 80vw); max-height: 520px; object-fit: contain; border-radius: var(--radius); background: transparent; }
-.cfm-vid-box { position: relative; width: 100%; max-width: 280px; max-height: 340px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius); background: var(--bg3, #16181c); }
+.cfm-img-preview { display: block; width: auto; height: auto; max-width: min(360px, 80vw); max-height: 520px; object-fit: contain; border-radius: 14px; background: transparent; }
+.cfm-vid-box { position: relative; width: 100%; max-width: 280px; max-height: 340px; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: var(--bg3, #16181c); }
 .cfm-vid { display: block; width: 100%; height: 100%; object-fit: cover; }
 .cfm-note-wrap { width: min(240px, 64vw); height: auto !important; aspect-ratio: auto !important; position: relative; display: flex; flex-direction: column; }
 .cfm-note { width: min(240px, 64vw) !important; height: min(240px, 64vw) !important; aspect-ratio: 1 / 1 !important; border-radius: 50% !important; overflow: hidden !important; position: relative; background: var(--bg3, #16181c); flex-shrink: 0 !important; box-sizing: border-box; }
@@ -2353,16 +2410,16 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-caption {
   padding: 0 !important;
   overflow: hidden;
-  border-radius: var(--radius);
+  border-radius: 14px;
   max-width: 280px;
 }
 
 #chatThreadModal .chat-msg.mine .chat-bubble.bubble-media-caption {
-  border-bottom-right-radius: 5px;
+  border-radius: 14px 14px 4px 14px;
 }
 
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-caption {
-  border-bottom-left-radius: 5px;
+  border-radius: 14px 14px 14px 4px;
 }
 
 .bubble-media-caption .cfm-media-wrap {
@@ -2660,7 +2717,8 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 .chat-msg.mine .chat-bubble { box-shadow: none; border: none; }
 /* theirs — background/color/border-bottom-left-radius o'chirildi (o'lik edi, CSS/chat-dark-redesign.css g'oli... */
 .chat-msg.theirs .chat-bubble { box-shadow: none; border: none; }
-.chat-msg.mine .chat-bubble:has(.chat-img-msg), .chat-msg.theirs .chat-bubble:has(.chat-img-msg) { padding: 3px; border-radius: var(--radius); }
+.chat-msg.mine .chat-bubble:has(.chat-img-msg) { padding: 3px; border-radius: 14px 14px 4px 14px; }
+.chat-msg.theirs .chat-bubble:has(.chat-img-msg) { padding: 3px; border-radius: 14px 14px 14px 4px; }
 /* Input row — clean, chegrasiz */
 .chat-thread-input-row { background: var(--bg); border-top: none; box-shadow: none; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); gap: 6px; }
 .chat-thread-input { background: var(--bg3); border: none; border-radius: var(--radius); padding: 10px 16px; font-size: 14px; color: var(--text); }

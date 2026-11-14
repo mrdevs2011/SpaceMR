@@ -740,6 +740,7 @@ function _showActiveCallModal(otherName, otherAvi, isVideo, statusText) {
 function _hideActiveCallModal() {
   unlockScroll('callActiveModal');
   document.getElementById('callActiveModal')?.classList.remove('show', 'video-mode', 'connected');
+  _resetCallVideoState();
 }
 
 function _hideIncomingCallModal() {
@@ -791,6 +792,9 @@ async function _endCall(notify = true, endSound = null) {
   if (rv) rv.srcObject = null;
   if (lv) lv.srcObject = null;
   if (ra) ra.srcObject = null;
+
+  _resetVideoGestures();
+  _resetSpeaker();
 
   _hideActiveCallModal();
   _hideIncomingCallModal();
@@ -1005,6 +1009,7 @@ function _disableLocalVideo() {
   const track = _localStream?.getVideoTracks()[0];
   if (track) track.enabled = false;
   _localVideoOn = false;
+  if (_isSwapped) _swapViews();
   _setVideoModeUI(_remoteHasVideo);
 }
 
@@ -1031,10 +1036,10 @@ async function _initiateCallImpl(isVideo) {
   _callChatId  = state.currentChatId || null;
   _callPeerUid = uid;
 
-  // Har yangi qo'ng'iroqda speaker = off (earpiece, default)
-  _speakerOn = false;
-  const spBtn = document.getElementById('callSpeakerBtn');
-  if (spBtn) { spBtn.classList.remove('active'); spBtn.title = 'Dinamik (ovoz)'; }
+  // Video qo'ng'iroqda speaker avtomatik yoqiladi, ovozli qo'ng'iroqda earpiece
+  _speakerOn = !!isVideo;
+  _updateSpeakerUI();
+  _applySpeaker(_speakerOn);
 
   // Ovoz/video yozish faol bo'lsa darhol to'xtatamiz (mikrofon/kamera to'qnashmasligi uchun)
   try { import('../chat/chat-voice-record.js').then(m => m.forceStopVoiceRecording?.()).catch(() => {}); } catch (_) {}
@@ -1227,6 +1232,9 @@ async function _acceptIncomingCall(callData, callId) {
     const lv = document.getElementById('callLocalVideo');
     if (lv) lv.srcObject = _localStream;
   }
+  _speakerOn = !!_callIsVideo;
+  _updateSpeakerUI();
+  _applySpeaker(_speakerOn);
 
   // Caller ma'lumotlari
   let callerName = 'Foydalanuvchi', callerAvi = '';
@@ -1542,6 +1550,7 @@ async function _switchCamera() {
     if (lv) { lv.srcObject = null; lv.srcObject = _localStream; }
 
     _facingMode = newFacing;
+    _hwZoom = 1;
   } catch (err) {
     console.warn('[Call] Kamera almashtirib bo\'lmadi:', err.message);
     // Eski kamerani qaytarishga urinamiz, aks holda video butunlay o'chib qolmasin
@@ -1565,12 +1574,8 @@ async function _switchCamera() {
 document.getElementById('callSwitchCamBtn')?.addEventListener('click', _switchCamera);
 
 /* ── Speaker (earpiece ↔ dinamik) toggle ── */
-// _speakerOn = false → earpiece (quloqqa tutilsa eshitiladi, default)
-// _speakerOn = true  → dinamik (baland ovoz)
-// Yo'naltirish faqat setSinkId + alohida "speaker"/"earpiece" chiqish qurilmalari bo'lsa ishlaydi (Android Chrome).
-// iOS Safari / desktop'da bunday qurilma yo'q — tugma yashiriladi (ishlamaydigan tugma ko'rsatilmaydi).
 let _speakerOn = false;
-let _routes = null;   // { speaker, earpiece } | null — null: yo'naltirib bo'lmaydi
+let _routes = null;   // { speaker, earpiece } | null
 
 const _sinkEls = () => ['callRemoteAudio', 'callRemoteVideo'].map(id => document.getElementById(id)).filter(Boolean);
 
@@ -1586,15 +1591,22 @@ async function _probeAudioRoutes() {
     }
   } catch (_) {}
   _routes = routes;
-  document.documentElement.classList.toggle('no-speaker-route', !routes);
+  // Dinamik tugmasi HECH QACHON yashirinmasin! no-speaker-route butunlay bekor qilindi
   return routes;
 }
 
 async function _applySpeaker(on) {
   const routes = _routes || await _probeAudioRoutes();
-  if (!routes) return;
-  const id = on ? routes.speaker : routes.earpiece;
-  await Promise.all(_sinkEls().map(el => el.setSinkId(id).catch(err => console.warn('[Call] setSinkId failed:', err.message))));
+  if (routes) {
+    const id = on ? routes.speaker : routes.earpiece;
+    await Promise.all(_sinkEls().map(el => el.setSinkId(id).catch(err => console.warn('[Call] setSinkId failed:', err.message))));
+  }
+  // Har qanday qurilma / brauzerda ovoz darajasini dinamik tarzda sozlash (fallback)
+  _sinkEls().forEach(el => {
+    try {
+      el.volume = on ? 1.0 : 0.45;
+    } catch (_) {}
+  });
 }
 
 navigator.mediaDevices?.addEventListener?.('devicechange', () => { _probeAudioRoutes().then(() => _applySpeaker(_speakerOn)); });
@@ -1605,6 +1617,194 @@ document.getElementById('callSpeakerBtn')?.addEventListener('click', async funct
   this.title = _speakerOn ? 'Dinamik (yoqiq)' : 'Quloqcha rejimi';
   await _applySpeaker(_speakerOn);
 });
+
+/* ── Telegram uslubidagi Video Call PiP: Draggable, Tap-to-Swap & Pinch-to-Zoom ── */
+let _isSwapped = false;
+let _pipZoom = 1.0;
+let _mainZoom = 1.0;
+
+export function _resetCallVideoState() {
+  _isSwapped = false;
+  _pipZoom = 1.0;
+  _mainZoom = 1.0;
+  const wrap = document.getElementById('callVideoWrap');
+  if (wrap) wrap.classList.remove('is-swapped');
+  const lv = document.getElementById('callLocalVideo');
+  const rv = document.getElementById('callRemoteVideo');
+  if (lv) {
+    lv.style.transform = '';
+    lv.style.left = '';
+    lv.style.top = '';
+    lv.style.bottom = '';
+    lv.style.right = '';
+  }
+  if (rv) {
+    rv.style.transform = '';
+    rv.style.left = '';
+    rv.style.top = '';
+    rv.style.bottom = '';
+    rv.style.right = '';
+  }
+}
+
+function _setupPipGestures() {
+  const wrap = document.getElementById('callVideoWrap');
+  const lv = document.getElementById('callLocalVideo');
+  const rv = document.getElementById('callRemoteVideo');
+  if (!wrap || !lv || !rv) return;
+
+  const activePointers = new Map();
+  let dragEl = null;
+  let startX = 0, startY = 0;
+  let initLeft = 0, initTop = 0;
+  let hasMoved = false;
+  let initPinchDist = 0;
+  let initScale = 1.0;
+
+  function getPipTarget() {
+    return _isSwapped ? rv : lv;
+  }
+  function getMainTarget() {
+    return _isSwapped ? lv : rv;
+  }
+
+  function getDistance(p1, p2) {
+    return Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+  }
+
+  // Pointer Down (Drag & Pinch)
+  wrap.addEventListener('pointerdown', e => {
+    activePointers.set(e.pointerId, e);
+    const pipEl = getPipTarget();
+    const mainEl = getMainTarget();
+
+    if (activePointers.size === 1) {
+      // 1 barmoq — agar PiP elementida bo'lsa drag qilish
+      const rect = pipEl.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        dragEl = pipEl;
+        startX = e.clientX;
+        startY = e.clientY;
+        initLeft = rect.left;
+        initTop = rect.top;
+        hasMoved = false;
+        dragEl.classList.add('is-dragging');
+        try { dragEl.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+    } else if (activePointers.size === 2) {
+      // 2 barmoq — Pinch to Zoom
+      const pts = Array.from(activePointers.values());
+      initPinchDist = getDistance(pts[0], pts[1]);
+      // Agar ikkala barmoq PiP ichida bo'lsa PiP zoom, aks holda Main zoom
+      const rect = pipEl.getBoundingClientRect();
+      const inPip = pts.every(p => p.clientX >= rect.left && p.clientX <= rect.right && p.clientY >= rect.top && p.clientY <= rect.bottom);
+      initScale = inPip ? _pipZoom : _mainZoom;
+    }
+  });
+
+  wrap.addEventListener('pointermove', e => {
+    if (!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, e);
+
+    if (activePointers.size === 1 && dragEl) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.hypot(dx, dy) > 8) hasMoved = true;
+
+      const rect = dragEl.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width - 8;
+      const maxY = window.innerHeight - rect.height - 8;
+      const newL = Math.max(8, Math.min(maxX, initLeft + dx));
+      const newT = Math.max(8, Math.min(maxY, initTop + dy));
+
+      dragEl.style.left = `${newL}px`;
+      dragEl.style.top = `${newT}px`;
+      dragEl.style.right = 'auto';
+      dragEl.style.bottom = 'auto';
+    } else if (activePointers.size === 2) {
+      const pts = Array.from(activePointers.values());
+      const curDist = getDistance(pts[0], pts[1]);
+      if (initPinchDist > 10) {
+        const factor = curDist / initPinchDist;
+        const newZoom = Math.max(1.0, Math.min(4.0, initScale * factor));
+        const pipEl = getPipTarget();
+        const mainEl = getMainTarget();
+        const rect = pipEl.getBoundingClientRect();
+        const inPip = pts.every(p => p.clientX >= rect.left && p.clientX <= rect.right && p.clientY >= rect.top && p.clientY <= rect.bottom);
+
+        if (inPip) {
+          _pipZoom = newZoom;
+          pipEl.style.transform = `scale(${newZoom})`;
+        } else {
+          _mainZoom = newZoom;
+          mainEl.style.transform = `scale(${newZoom})`;
+
+          // Agar local video katta ekranda bo'lsa (men o'zimni ko'rsatayotgan bo'lsam),
+          // kamera track'iga apparat zoom constraints jo'natamiz — shunda suhbatdosh ham kattalashganini ko'radi!
+          if (_isSwapped && _localStream) {
+            const vTrack = _localStream.getVideoTracks()[0];
+            try {
+              const caps = vTrack?.getCapabilities?.();
+              if (caps && caps.zoom) {
+                const zVal = Math.max(caps.zoom.min || 1, Math.min(caps.zoom.max || 4, newZoom));
+                vTrack.applyConstraints({ advanced: [{ zoom: zVal }] }).catch(() => {});
+              }
+            } catch (_) {}
+          }
+        }
+      }
+    }
+  });
+
+  const onPointerUp = e => {
+    activePointers.delete(e.pointerId);
+    if (dragEl) {
+      dragEl.classList.remove('is-dragging');
+      try { dragEl.releasePointerCapture(e.pointerId); } catch (_) {}
+      // Agar surilmagan bo'lsa (oddiy bitta bosish/tap) — SWAP (katta va kichik ekran almashadi)
+      if (!hasMoved) {
+        _isSwapped = !_isSwapped;
+        wrap.classList.toggle('is-swapped', _isSwapped);
+        // O'lcham va joylashuvni yangilash
+        lv.style.left = ''; lv.style.top = ''; lv.style.right = ''; lv.style.bottom = '';
+        rv.style.left = ''; rv.style.top = ''; rv.style.right = ''; rv.style.bottom = '';
+        lv.style.transform = '';
+        rv.style.transform = '';
+        _pipZoom = 1.0;
+        _mainZoom = 1.0;
+      }
+      dragEl = null;
+    }
+  };
+
+  wrap.addEventListener('pointerup', onPointerUp);
+  wrap.addEventListener('pointercancel', onPointerUp);
+
+  // Katta ekranga 2 marta tez bosilganda zoomni 1.0 ga qaytarish
+  wrap.addEventListener('dblclick', e => {
+    _mainZoom = 1.0;
+    _pipZoom = 1.0;
+    lv.style.transform = '';
+    rv.style.transform = '';
+    if (_localStream) {
+      const vTrack = _localStream.getVideoTracks()[0];
+      try {
+        const caps = vTrack?.getCapabilities?.();
+        if (caps && caps.zoom) {
+          vTrack.applyConstraints({ advanced: [{ zoom: caps.zoom.min || 1 }] }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+  });
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _setupPipGestures);
+  } else {
+    _setupPipGestures();
+  }
+}
 
 /* ── Kamera bor-yo'qligi: qurilmada videoinput bo'lmasa Video/Kamera tugmalari butunlay yashirinadi (CSS: .no-camera) ── */
 async function _probeCamera() {

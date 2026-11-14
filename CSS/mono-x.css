@@ -519,8 +519,8 @@ nav.bot-nav #createBtn.nav-center-btn:hover { background: var(--x-blue-hover); }
 #chatThreadModal .chat-thread-input { background: var(--bg3); border-radius: var(--radius); padding: 9px 16px; }
 #chatThreadModal .chat-thread-input:focus { background: var(--bg3); }
 #chatThreadModal .chat-bubble { font-size: 15px; line-height: 1.33; }
-#chatThreadModal .chat-msg.mine .chat-bubble { background: var(--bubble-mine); color: var(--pal-white); border-radius: var(--radius) var(--radius) var(--radius) var(--radius); }
-#chatThreadModal .chat-msg.theirs .chat-bubble { background: var(--line); color: var(--text); border-radius: var(--radius) var(--radius) var(--radius) var(--radius); }
+#chatThreadModal .chat-msg.mine .chat-bubble { background: var(--bubble-mine); color: var(--pal-white); border-radius: 16px 16px 4px 16px !important; }
+#chatThreadModal .chat-msg.theirs .chat-bubble { background: var(--line); color: var(--text); border-radius: 16px 16px 16px 4px !important; }
 #chatThreadModal .chat-msg.mine .chat-bubble a { color: var(--pal-white); text-decoration: underline; }
 #chatThreadModal .chat-msg.mine .cvm-play { background: var(--pal-white-25); }
 /* ═══════════════════════════════════════════════════════════════════════ X 1:1 — tuzatish (haqiqiy X bilan s... */
@@ -2669,17 +2669,19 @@ body #toast {
 .chat-bubble.bubble-post-card {
   padding: 6px !important;
   max-width: min(340px, 86vw) !important;
-  border-radius: var(--radius)!important;
+  border-radius: 14px !important;
 }
 .chat-msg.mine .chat-bubble.bubble-post-card {
   background: #16181c !important;
   border: 1px solid rgba(231, 233, 234, 0.2);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 14px 14px 4px 14px !important;
 }
 .chat-msg.theirs .chat-bubble.bubble-post-card {
   background: #16181c !important;
   border: 1px solid rgba(231, 233, 234, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border-radius: 14px 14px 14px 4px !important;
 }
 
 .chat-post-card {
@@ -4963,18 +4965,18 @@ a.cfm-name--link:hover {
 }
 
 .cfm-media-wrap--standalone {
-  border-radius: var(--radius);
+  border-radius: 14px;
   overflow: hidden;
 }
 
 .cfm-media-wrap--standalone .cfm-img-link,
 .cfm-media-wrap--standalone .cfm-img-preview {
-  border-radius: var(--radius);
+  border-radius: 14px;
 }
 
 .cfm-img-link {
   display: block;
-  border-radius: var(--radius);
+  border-radius: 14px;
   overflow: hidden;
   line-height: 0;
 }
@@ -4990,7 +4992,7 @@ a.cfm-name--link:hover {
   max-width: min(360px, 80vw);
   max-height: 520px;
   object-fit: contain;
-  border-radius: var(--radius);
+  border-radius: 14px;
   background: transparent;
 }
 
@@ -5033,16 +5035,16 @@ a.cfm-name--link:hover {
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-caption {
   padding: 0 !important;
   overflow: hidden;
-  border-radius: var(--radius);
+  border-radius: 14px;
   max-width: 280px;
 }
 
 #chatThreadModal .chat-msg.mine .chat-bubble.bubble-media-caption {
-  border-bottom-right-radius: 5px;
+  border-radius: 14px 14px 4px 14px;
 }
 
 #chatThreadModal .chat-msg.theirs .chat-bubble.bubble-media-caption {
-  border-bottom-left-radius: 5px;
+  border-radius: 14px 14px 14px 4px;
 }
 
 .bubble-media-caption .cfm-media-wrap {
@@ -5773,16 +5775,16 @@ a.cfm-name--link:hover {
 }
 
 #chatThreadModal .chat-bubble {
-  border-radius: var(--radius);
+  border-radius: 16px;
   padding: 7px 11px 8px;
 }
 
 #chatThreadModal .chat-msg.mine .chat-bubble {
-  border-bottom-right-radius: 5px;
+  border-radius: 16px 16px 4px 16px !important;
 }
 
 #chatThreadModal .chat-msg.theirs .chat-bubble {
-  border-bottom-left-radius: 5px;
+  border-radius: 16px 16px 16px 4px !important;
 }
 
 #chatThreadModal .chat-msg-time {
@@ -6919,14 +6921,16 @@ select.field option { background: #000000; color: var(--text); }
 .grp-username-input-wrap > input { margin: 0 !important; padding-left: 32px !important; }
 .grp-username-prefix { left: 13px !important; color: var(--text3) !important; font-weight: 400 !important; }
 
-/* ═══ Chat (DM) — X: yuborilgan ko'k pufak 24/24/4/24, kelgan #2f3336; yozish maydoni kulrang pill ═══ */
-#chatThreadModal .chat-msg.mine:not(.emoji-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
+/* ═══ Chat (DM) — Telegram message bubbles: mine 16/16/4/16, theirs 16/16/16/4 ═══ */
+#chatThreadModal .chat-msg.mine:not(.emoji-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-msg.mine:not(.emoji-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
   background: var(--x-blue) !important; color: #e7e9ea !important;
-  border-radius: var(--radius) var(--radius) var(--radius) var(--radius)!important; border: 0 !important; box-shadow: none !important;
+  border-radius: 16px 16px 4px 16px !important; border: 0 !important; box-shadow: none !important;
 }
-#chatThreadModal .chat-msg:not(.mine):not(.emoji-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
+#chatThreadModal .chat-msg:not(.mine):not(.emoji-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-msg:not(.mine):not(.emoji-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
   background: #2f3336 !important; color: var(--text) !important;
-  border-radius: var(--radius) var(--radius) var(--radius) var(--radius)!important; border: 0 !important; box-shadow: none !important;
+  border-radius: 16px 16px 16px 4px !important; border: 0 !important; box-shadow: none !important;
 }
 #chatThreadModal .chat-bubble-text { font-size: 15px; line-height: 20px; }
 #chatThreadModal .chat-thread-input-row {
@@ -6985,7 +6989,12 @@ html.is-desktop #chatThreadMessages:not(.msg-selecting) .chat-bubble,
 html.is-desktop #chatThreadMessages:not(.msg-selecting) .chat-bubble-text,
 html.is-desktop #chatThreadMessages:not(.msg-selecting) .chat-bubble-text *,
 html.is-desktop #chatThreadMessages:not(.msg-selecting) .cfm-caption,
-html.is-desktop .chat-msg .chat-bubble-text,
+html.is-desktop .chat-msg .chat-bubble-text {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default;
+  cursor: text;
+}
 @media (pointer: fine) {
   #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble,
   #chatThreadMessages:not(.msg-selecting) .chat-msg:not(.emoji-only) .chat-bubble-text,
@@ -7063,8 +7072,8 @@ html.is-desktop .chat-msg .chat-bubble-text,
 .grp-sender-name .grp-sn-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grp-sender-name .grp-role { flex-shrink: 0; padding: 1px 8px; border-radius: var(--radius); font-size: 11px; font-weight: 500; line-height: 16px; color: var(--x-blue, #1d9bf0); background: rgba(29, 155, 240, 0.15); }
 .chat-bubble.bubble-media-only:has(> .chat-bubble-wrap > .grp-sender-name) .chat-bubble-wrap { display: flex; flex-direction: column; align-items: stretch; width: max-content; max-width: 280px; }
-.chat-bubble.bubble-media-only .grp-sender-name { margin: 0; padding: 7px 12px 6px; background: var(--pal-gray-800); border-radius: var(--radius) var(--radius) 0 0; }
-.chat-bubble.bubble-media-only .grp-sender-name + .cfm-media-wrap--standalone { border-radius: 0 0 var(--radius) var(--radius); }
+.chat-bubble.bubble-media-only .grp-sender-name { margin: 0; padding: 7px 12px 6px; background: var(--pal-gray-800); border-radius: 14px 14px 0 0; }
+.chat-bubble.bubble-media-only .grp-sender-name + .cfm-media-wrap--standalone { border-radius: 0 0 14px 14px; }
 
 /* ── Faqat 1–3 emoji (Telegram uslubi): bubble YO'Q (guruh va 1v1), vaqt — pastda kichik quyuq "pill" ───── */
 #chatThreadModal .chat-msg.emoji-only .chat-bubble,
@@ -7107,7 +7116,7 @@ html.is-desktop .chat-msg .chat-bubble-text,
 
 
 /* ═══ Chatdagi video preview (message-bubble.js): birinchi kadr + play + davomiylik ═══ */
-.cfm-vid-box { position: relative; display: block; line-height: 0; border-radius: var(--radius); overflow: hidden; background: #000; }
+.cfm-vid-box { position: relative; display: block; line-height: 0; border-radius: 14px; overflow: hidden; background: #000; }
 .cfm-vid { display: block; width: 100%; max-width: 280px; max-height: 340px; aspect-ratio: 16 / 9; object-fit: cover; background: #000; border-radius: inherit; }
 .cfm-vid-wrap.playing .cfm-vid { object-fit: contain; }
 .cfm-vid-play { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; padding: 0; border: 0; background: none; cursor: pointer; transition: transform .15s ease, opacity .15s ease; -webkit-tap-highlight-color: transparent; }
@@ -7119,8 +7128,8 @@ html.is-desktop .chat-msg .chat-bubble-text,
 
 
 /* ═══ Chatdagi qo'ng'iroq yozuvi (Telegram uslubi): message-bubble.js → generateCallBubble ═══ */
-#chatThreadModal .chat-msg.mine .chat-bubble.bubble-call { background: #2b5278; border-radius: var(--radius); }
-#chatThreadModal .chat-msg.theirs .chat-bubble.bubble-call { background: #222c36; border-radius: var(--radius); }
+#chatThreadModal .chat-msg.mine .chat-bubble.bubble-call { background: #2b5278; border-radius: 16px 16px 4px 16px !important; }
+#chatThreadModal .chat-msg.theirs .chat-bubble.bubble-call { background: #222c36; border-radius: 16px 16px 16px 4px !important; }
 .chat-bubble:has(.chat-call-msg) { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: filter .12s ease; }
 .chat-bubble:has(.chat-call-msg):active { filter: brightness(.92); }
 .chat-call-msg { display: flex; align-items: center; gap: 22px; min-width: 210px; padding: 2px 2px; color: #fff; }
@@ -7135,7 +7144,7 @@ html.is-desktop .chat-msg .chat-bubble-text,
 
 
 /* ═══ 1v1 chat: rasm/video pufakka o'ralmaydi — faqat 1.5px border (pufak faqat guruhlarda) ═══ */
-.cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: var(--radius); overflow: hidden; width: fit-content; max-width: min(360px, 80vw); }
+.cfm-media-dm { box-sizing: border-box; border: 1.5px solid rgba(231, 233, 234, 0.22); border-radius: 14px; overflow: hidden; width: fit-content; max-width: min(360px, 80vw); }
 .chat-msg.mine .cfm-media-dm { border-color: rgba(29, 155, 240, 0.55); }
 .cfm-media-dm .cfm-vid-box, .cfm-media-dm .cfm-img-link, .cfm-media-dm .cfm-img-preview { border-radius: 0; }
 /* DM albomlar: kollaj hech qachon 0px yoki 1 ta ingichka vertikal chiziq bo'lib qolmasin */
@@ -7180,10 +7189,10 @@ html.is-desktop .chat-msg .chat-bubble-text,
 #chatThreadModal .chat-msg.theirs .cfm-media-dm--cap .cfm-caption { background: var(--line); color: var(--text); }
 /* Eski alohida caption (agar qolgan bo'lsa) */
 .cfm-cap-dm { margin-top: 0; max-width: 280px; }
-.cfm-cap-dm .cfm-caption { padding: 7px 12px; border-radius: var(--radius); font-size: 14.5px; line-height: 1.4; word-break: break-word; }
+.cfm-cap-dm .cfm-caption { padding: 7px 12px; border-radius: 14px; font-size: 14.5px; line-height: 1.4; word-break: break-word; }
 .cfm-cap-dm .cfm-caption p { margin: 0; }
-#chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-bottom-right-radius: 5px; }
-#chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-bottom-left-radius: 5px; }
+#chatThreadModal .chat-msg.mine .cfm-cap-dm .cfm-caption { background: var(--bubble-mine); color: var(--pal-white); border-radius: 14px 14px 4px 14px; }
+#chatThreadModal .chat-msg.theirs .cfm-cap-dm .cfm-caption { background: var(--line); color: var(--text); border-radius: 14px 14px 14px 4px; }
 
 /* Play tugmasi atrofidagi silliq doira-waveform (SVG halqa; chat-voice-player.js chizadi) */
 .cvm-eq .cvm-ring {
@@ -8304,4 +8313,65 @@ html body .md-spoiler.revealed::before {
   height: 14px !important;
   border-radius: 4px !important;
   margin-top: 4px !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   TELEGRAM MESSAGE BUBBLE TAIL & CHAT ELEMENT BORDER-RADIUS
+   ═════════════════════════════════════════════════════════════════════════ */
+/* 1. Telegram style message bubble tail radius:
+   Mine: top-left 16px, top-right 16px, bottom-right 4px, bottom-left 16px
+   Theirs: top-left 16px, top-right 16px, bottom-right 16px, bottom-left 4px */
+#chatThreadModal .chat-msg.mine:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+#chatThreadMessages .chat-msg.mine:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-thread-messages .chat-msg.mine:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-msg.mine:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
+  border-radius: 16px 16px 4px 16px !important;
+}
+
+#chatThreadModal .chat-msg.theirs:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+#chatThreadMessages .chat-msg.theirs:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-thread-messages .chat-msg.theirs:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-msg.theirs:not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+#chatThreadModal .chat-msg:not(.mine):not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only),
+.chat-msg:not(.mine):not(.emoji-only):not(.bubble-media-only) .chat-bubble:not(.bubble-media-only):not(.emoji-only) {
+  border-radius: 16px 16px 16px 4px !important;
+}
+
+/* 2. Chat ichidagi elementlar (poll, location, call, media, album): crisp Telegram 14px */
+.poll-bubble-card,
+.loc-bubble-card,
+.call-bubble-card,
+.chat-yt-card,
+.chat-media-pure-wrap,
+.cfm-media-wrap,
+.chat-album-grid,
+.cfm-album-wrap {
+  border-radius: 14px !important;
+}
+
+/* 3. Standalone media va albomlarda Telegram burchak dumi (mine: 14px 14px 4px 14px, theirs: 14px 14px 14px 4px) */
+.chat-msg.mine .cfm-media-wrap--standalone,
+.chat-msg.mine .cfm-media-dm,
+.chat-msg.mine .chat-album-grid,
+.chat-msg.mine .cfm-album-wrap,
+.chat-msg.mine .chat-bubble.bubble-media-caption,
+.chat-msg.mine .chat-bubble.bubble-location,
+.chat-msg.mine .chat-bubble.bubble-call,
+.chat-msg.mine .chat-bubble.bubble-poll,
+.chat-msg.mine .chat-bubble.bubble-post-card,
+.chat-msg.mine .chat-bubble.bubble-media-only .chat-yt-card {
+  border-radius: 14px 14px 4px 14px !important;
+}
+
+.chat-msg.theirs .cfm-media-wrap--standalone,
+.chat-msg.theirs .cfm-media-dm,
+.chat-msg.theirs .chat-album-grid,
+.chat-msg.theirs .cfm-album-wrap,
+.chat-msg.theirs .chat-bubble.bubble-media-caption,
+.chat-msg.theirs .chat-bubble.bubble-location,
+.chat-msg.theirs .chat-bubble.bubble-call,
+.chat-msg.theirs .chat-bubble.bubble-poll,
+.chat-msg.theirs .chat-bubble.bubble-post-card,
+.chat-msg.theirs .chat-bubble.bubble-media-only .chat-yt-card {
+  border-radius: 14px 14px 14px 4px !important;
 }
