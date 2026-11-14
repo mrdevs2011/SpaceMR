@@ -61,7 +61,7 @@ function rowAtPoint(target, y) {
   return bd <= 3 ? best : null;
 }
 // Mobilda bitta bosish menyu ochadi — lekin bu elementlar o'z ishini qiladi (play, havola, rasm, avatar)
-const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote, .msg-fwd, .cpc-media, .cpc-avi-link, .cpc-author-meta, .cpc-open-btn, .chat-yt-card, .chat-link-box, .chat-yt-header, .chat-media-img-wrap, .is-media-web, .chat-media-video, .chat-yt-thumb, .chat-media-thumb, [data-preview-url], .md-mention, .md-tag, .md-code-copy';
+const TAP_KEEP = 'a, a.md-link, .md-link, button, audio, input, textarea, video, [data-cm-open], .msg-avi-btn, .grp-sender-name[data-uid], .cfm-img-link, .cfm-name--link, .chat-file-msg[data-fv-url], .cpc-file[data-fv-url], .msg-reply-quote, .msg-fwd, .cpc-media, .cpc-avi-link, .cpc-author-meta, .cpc-open-btn, .chat-yt-card, .chat-link-box, .chat-yt-header, .chat-media-img-wrap, .is-media-web, .chat-media-video, .chat-yt-thumb, .chat-media-thumb, [data-preview-url], .md-mention, .md-tag, .md-code-copy, .poll-bubble-card, .poll-item, .poll-radio, .poll-chk, .poll-options-list, .poll-quiz-badge, .poll-quiz-explanation, .poll-bottom-bar';
 const coarse = () => window.matchMedia('(pointer: coarse)').matches;
 const pad = n => String(n).padStart(2, '0');
 
@@ -1134,6 +1134,7 @@ export function initMsgMenu(opts) {
 
   // Desktop: o'ng tugma. Sensorli qurilmada brauzerning o'z menyusini bostiramiz (long-press o'zimiz ushlaymiz).
   box.addEventListener('contextmenu', e => {
+    if (e.target.closest?.('.poll-bubble-card, .poll-item, .poll-radio, .poll-chk, .poll-quiz-badge, .poll-quiz-explanation')) return;
     const row = rowAtPoint(e.target, e.clientY);
     if (!row) return;
     e.preventDefault();
@@ -1145,6 +1146,7 @@ export function initMsgMenu(opts) {
   box.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) { sw = null; return; }
     const t = e.touches[0];
+    if (e.target.closest?.('.poll-bubble-card, .poll-item, .poll-radio, .poll-chk, .poll-quiz-badge, .poll-quiz-explanation')) { sw = null; cancelLp(); return; }
     // Havola / interaktiv element ustida — long-press va swipe yo'q (URL ochilsin)
     if (e.target.closest?.(TAP_KEEP)) { sw = null; cancelLp(); return; }
     const row = rowAtPoint(e.target, t.clientY);
@@ -1297,6 +1299,7 @@ export function initMsgMenu(opts) {
       }
       const r = rowAtPoint(e.target, e.clientY);
       if (!r) return;
+      if (e.target.closest?.('.poll-bubble-card, .poll-item, .poll-radio, .poll-chk, .poll-quiz-badge, .poll-quiz-explanation')) return;
       if (e.target.closest?.('.md-spoiler')) return; // spoiler: menyu emas — faqat ochiladi/yopiladi (o'zining onclick'i)
       const keep = e.target.closest?.(TAP_KEEP);
       if (keep && box.contains(keep)) return; // play tugmasi, havola, rasm...

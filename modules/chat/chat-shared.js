@@ -136,6 +136,9 @@ export function parsePoll(raw) {
         })),
         anonymous: !!p.anonymous,
         multiple: !!p.multiple,
+        isQuiz: !!p.isQuiz,
+        correctOptionId: p.correctOptionId || null,
+        explanation: typeof p.explanation === 'string' ? p.explanation : '',
         totalVotes: Number(p.totalVotes) || 0,
         creatorId: p.creatorId || null,
       };

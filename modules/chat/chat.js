@@ -4178,17 +4178,27 @@ export async function sendLocationMessage(loc) {
 
 export async function sendPollMessage(poll) {
   if (!poll || !poll.question || !Array.isArray(poll.options)) return;
+  const isQuiz = !!poll.isQuiz;
+  const correctOptionIndex = typeof poll.correctOptionIndex === 'number' ? poll.correctOptionIndex : null;
+  const options = poll.options.map((opt, i) => ({
+    id: (opt && typeof opt === 'object' && opt.id) ? opt.id : ('opt_' + i),
+    text: typeof opt === 'string' ? opt.trim() : (opt?.text || '').trim(),
+    voters: [],
+  }));
+  const correctOptionId = (isQuiz && correctOptionIndex !== null && options[correctOptionIndex])
+    ? options[correctOptionIndex].id
+    : (poll.correctOptionId || null);
+
   const payload = {
     __poll: true,
     id: poll.id || ('poll_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
     question: poll.question.trim(),
-    options: poll.options.map((opt, i) => ({
-      id: opt.id || ('opt_' + i),
-      text: typeof opt === 'string' ? opt.trim() : (opt.text || '').trim(),
-      voters: [],
-    })),
-    multiple: !!poll.multiple,
+    options,
+    multiple: !isQuiz && !!poll.multiple,
     anonymous: poll.anonymous !== false,
+    isQuiz,
+    correctOptionId,
+    explanation: isQuiz ? (poll.explanation || '').trim() : '',
     totalVotes: 0,
     creatorId: state.me?.uid || null,
   };
@@ -4211,7 +4221,12 @@ window._handlePollVote = async function(msgId, optId, evt) {
   const voters = Array.isArray(opt.voters) ? opt.voters : [];
   const hasVotedThis = voters.includes(uid);
 
-  if (poll.multiple) {
+  if (poll.isQuiz) {
+    // Viktorina rejimida faqat 1 marta javob tanlanadi va javob ochiladi
+    const alreadyVotedAny = poll.options.some(o => (o.voters || []).includes(uid));
+    if (alreadyVotedAny) return;
+    opt.voters.push(uid);
+  } else if (poll.multiple) {
     if (hasVotedThis) {
       opt.voters = voters.filter(u => u !== uid);
     } else {

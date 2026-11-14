@@ -454,8 +454,8 @@ html[data-theme] .apf .apf-dd-btn:focus-visible, html[data-theme] .apf .apf-dd.o
   .apf-dd-opt { padding: 12px; }
 }
 
-/* Tasdiqlash oynasi (o'chirish va h.k.) ilova runneri (1600) va forma (1700/1750) ustida ko'rinsin */
-html #confirmOverlay { z-index: 1800; }
+/* Tasdiqlash oynasi (o'chirish va h.k.) eng yuqori z-index da bo'lsin */
+html #confirmOverlay { z-index: 2147483647 !important; }
 
 /* ═══ Apps UI qayta qurish: telefon / planshet / desktop ═══
    phone <760  launcher, to'liq kenglikdagi kartalar

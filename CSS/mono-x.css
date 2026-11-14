@@ -1292,8 +1292,8 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 #msgFwd .mf-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #msgFwd .mf-empty { padding: 24px; text-align: center; color: var(--pal-gray-500); font-size: 13px; }
 
-/* Tasdiq oynasi (showConfirm) doim eng ustida: umumiy .overlay z-index=200 < chat oynasi 360, shuning uchun chat ochiq paytda "O'chirilsinmi?" orqada qolardi */
-#confirmOverlay { z-index: 640; }
+/* Tasdiq oynasi (showConfirm) doim eng ustida: har qanday viewer, modal, sheet ustida chiqishi shart */
+#confirmOverlay { z-index: 2147483647 !important; }
 /* Tasdiq oynasi — Telegram uslubida: to'liq qora (dark #000000) karta, qizil tasdiq tugmasi, xiralashtirilgan fon */
 #confirmOverlay { align-items: center; justify-content: center; padding: 16px; background: #000000; }
 #confirmOverlay .sheet {

@@ -1206,6 +1206,7 @@ export function showConfirm(msg, onOk, title = 'Aniqmi?', okLabel = 'Mayli', onC
     if (window.confirm(msg)) onOk();
     return;
   }
+  confirmOverlay.style.zIndex = '2147483647';
   confirmTitle.textContent = title;
   confirmMsg.textContent   = msg;
   ok.textContent = okLabel; // klon ham shu matnni oladi

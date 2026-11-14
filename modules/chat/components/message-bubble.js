@@ -922,13 +922,13 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
 
   const bubbleContent = `
     <div class="loc-bubble-card">
-      <a href="${gmaps}" target="_blank" rel="noopener noreferrer" class="loc-map-preview media-blur-box" style="aspect-ratio:420/180;width:100%;" title="Xaritada ochish">
+      <div class="loc-map-preview media-blur-box" style="aspect-ratio:420/180;width:100%;cursor:pointer;" title="Xaritada ochish" onclick="window.__openSmartMap && window.__openSmartMap(${lat}, ${lon}, { navigate: false, title: '${title}' })">
         <img class="loc-static-img" src="${yandexStatic}" alt="Xarita" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="loc-fallback-map" style="display:none">
           <div class="loc-pin-pulse"></div>
           <svg viewBox="0 0 24 24" width="34" height="34" fill="#ff3b30"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
         </div>
-      </a>
+      </div>
       <div class="loc-body">
         <div class="loc-details">
           <div class="loc-title">
@@ -937,10 +937,16 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
           </div>
           <div class="loc-address">${addr}</div>
         </div>
-        <a href="${gmaps}" target="_blank" rel="noopener noreferrer" class="loc-action-btn">
-          <span>Xaritada ko‘rish</span>
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
+        <div class="loc-actions-row">
+          <button type="button" class="loc-action-btn loc-btn-view" onclick="window.__openSmartMap && window.__openSmartMap(${lat}, ${lon}, { navigate: false, title: '${title}' })" title="Xaritada ko‘rish">
+            <span>Xaritada</span>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+          </button>
+          <button type="button" class="loc-action-btn loc-btn-start" onclick="window.__openSmartMap && window.__openSmartMap(${lat}, ${lon}, { navigate: true, title: '${title}' })" title="Marshrutni boshlash">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+            <span>Boshlash</span>
+          </button>
+        </div>
       </div>
     </div>`;
 
@@ -951,17 +957,22 @@ export function generateLocationBubble({ loc, m, time, mine, renderTicks, dm = f
   };
 }
 
-/** ── Telegram uslubidagi interaktiv So‘rovnoma (Poll) Bubble ── */
+/** ── Telegram uslubidagi interaktiv So‘rovnoma (Poll) va Viktorina (Quiz) Bubble ── */
 export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = false, currentUid = null }) {
   const q = esc(poll.question || 'So‘rovnoma');
   const isAnon = !!poll.anonymous;
-  const isMulti = !!poll.multiple;
+  const isMulti = !poll.isQuiz && !!poll.multiple;
+  const isQuiz = !!poll.isQuiz;
+  const correctOptionId = poll.correctOptionId || null;
+  const explanation = poll.explanation ? esc(poll.explanation) : '';
   const total = Number(poll.totalVotes) || 0;
   const opts = Array.isArray(poll.options) ? poll.options : [];
   const hasUserVoted = currentUid ? opts.some(o => (o.voters || []).includes(currentUid)) : false;
   const showResults = hasUserVoted || (mine && total > 0);
 
-  const subText = `${isAnon ? 'Anonim so‘rovnoma' : 'Ochiq so‘rovnoma'}${isMulti ? ' • Bir nechta javob' : ''}`;
+  const subText = isQuiz
+    ? `${isAnon ? 'Anonim viktorina' : 'Ochiq viktorina'}${explanation ? ' • 💡 Izoh bor' : ''}`
+    : `${isAnon ? 'Anonim so‘rovnoma' : 'Ochiq so‘rovnoma'}${isMulti ? ' • Bir nechta javob' : ''}`;
 
   const optionsHtml = opts.map((opt, i) => {
     const optId = esc(opt.id || ('opt_' + i));
@@ -971,15 +982,43 @@ export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = fals
     const count = voters.length;
     const pct = total > 0 ? Math.round((count / total) * 100) : 0;
 
-    const checkIcon = isMulti
-      ? `<div class="poll-chk ${isVoted ? 'voted' : ''}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>`
-      : `<div class="poll-radio ${isVoted ? 'voted' : ''}"><div class="poll-radio-dot"></div></div>`;
+    let itemExtraCls = '';
+    let checkIcon = '';
+
+    if (isQuiz) {
+      const isThisCorrect = (optId === correctOptionId);
+      if (showResults) {
+        if (isThisCorrect) {
+          itemExtraCls = ' is-quiz-correct';
+          checkIcon = `<div class="poll-quiz-badge poll-quiz-badge--correct" title="To‘g‘ri javob">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>`;
+        } else if (isVoted && !isThisCorrect) {
+          itemExtraCls = ' is-quiz-wrong';
+          checkIcon = `<div class="poll-quiz-badge poll-quiz-badge--wrong" title="Noto‘g‘ri javob">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>`;
+        } else {
+          checkIcon = `<div class="poll-radio ${isVoted ? 'voted' : ''}"><div class="poll-radio-dot"></div></div>`;
+        }
+      } else {
+        checkIcon = `<div class="poll-radio ${isVoted ? 'voted' : ''}"><div class="poll-radio-dot"></div></div>`;
+      }
+    } else {
+      checkIcon = isMulti
+        ? `<div class="poll-chk ${isVoted ? 'voted' : ''}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>`
+        : `<div class="poll-radio ${isVoted ? 'voted' : ''}"><div class="poll-radio-dot"></div></div>`;
+    }
 
     return `
-      <div class="poll-item ${isVoted ? 'is-voted' : ''} ${showResults ? 'has-results' : ''}"
+      <div class="poll-item ${isVoted ? 'is-voted' : ''} ${showResults ? 'has-results' : ''}${itemExtraCls}"
            role="button" tabindex="0"
-           onclick="window._handlePollVote && window._handlePollVote('${esc(m.id)}', '${optId}', event)">
-        ${showResults ? `<div class="poll-bar-fill" style="width:${pct}%"></div>` : ''}
+           onpointerdown="event.stopPropagation()"
+           onmousedown="event.stopPropagation()"
+           ontouchstart="event.stopPropagation()"
+           oncontextmenu="event.stopPropagation(); event.preventDefault();"
+           onclick="event.stopPropagation(); window._handlePollVote && window._handlePollVote('${esc(m.id)}', '${optId}', event)">
+        ${showResults ? `<div class="poll-bar-fill${itemExtraCls}" style="width:${pct}%"></div>` : ''}
         <div class="poll-item-row">
           <div class="poll-item-left">
             ${checkIcon}
@@ -992,8 +1031,23 @@ export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = fals
 
   const voteCountText = total > 0 ? `${total} ta ovoz` : 'Hali ovoz berilmagan';
 
+  const explanationHtml = (isQuiz && showResults && explanation)
+    ? `<div class="poll-quiz-explanation">
+         <span class="poll-quiz-exp-icon">💡</span>
+         <div class="poll-quiz-exp-content">
+           <div class="poll-quiz-exp-title">Tushuntirish:</div>
+           <div class="poll-quiz-exp-text">${explanation}</div>
+         </div>
+       </div>`
+    : '';
+
   const bubbleContent = `
-    <div class="poll-bubble-card" style="contain: layout; min-height: 110px;">
+    <div class="poll-bubble-card ${isQuiz ? 'is-quiz-card' : ''}" style="contain: layout; min-height: 110px;"
+         onpointerdown="event.stopPropagation()"
+         onmousedown="event.stopPropagation()"
+         ontouchstart="event.stopPropagation()"
+         onclick="event.stopPropagation()"
+         oncontextmenu="event.stopPropagation(); event.preventDefault();">
       <div class="poll-header">
         <div class="poll-title">${q}</div>
         <div class="poll-sub">${subText}</div>
@@ -1001,13 +1055,14 @@ export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = fals
       <div class="poll-options-list">
         ${optionsHtml}
       </div>
+      ${explanationHtml}
       <div class="poll-bottom-bar">
         <span class="poll-votes-count">${voteCountText}</span>
       </div>
     </div>`;
 
   return {
-    bubbleClassExtra: ' bubble-poll' + (dm ? ' bubble-poll-dm' : ''),
+    bubbleClassExtra: ' bubble-poll' + (dm ? ' bubble-poll-dm' : '') + (isQuiz ? ' bubble-quiz' : ''),
     metaOutside: true,
     bubbleContent,
   };

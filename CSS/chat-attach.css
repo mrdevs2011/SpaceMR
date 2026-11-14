@@ -317,18 +317,31 @@
   margin: 0 auto 14px;
 }
 
-/* ── Yuqori Media Qism (Jonli Kamera / Galereya / Fayllar) ── */
+/* ── Yuqori Media Qism (Jonli Kamera / Galereya / Haqiqiy fotosuratlar va videolar) ── */
 .attach-media-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 6px;
+  max-height: 290px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 12px;
+  padding: 2px;
+  border-radius: 12px;
+}
+.attach-media-grid::-webkit-scrollbar {
+  width: 4px;
+}
+.attach-media-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .attach-grid-item {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -340,7 +353,7 @@
   text-decoration: none;
   color: var(--text, #fff);
   box-sizing: border-box;
-  padding: 8px;
+  padding: 0;
   transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -353,10 +366,10 @@
   transform: scale(0.96);
 }
 
-/* 1-katakcha: Jonli Kamera (Telegram inline live camera stream) */
+/* 1-slot: Jonli Kamera (Telegram inline live camera stream — yozuvlarsiz toza video) */
 .live-cam-tile {
   background: #000;
-  border-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   padding: 0;
 }
 .live-cam-video {
@@ -369,57 +382,201 @@
   position: absolute;
   inset: 0;
   display: none;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 2-slot: Galereyadan tanlash plitkasi */
+.gallery-picker-tile {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px dashed rgba(255, 255, 255, 0.22);
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  background: #111;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  font-weight: 500;
+  gap: 3px;
+  padding: 6px;
 }
-.live-cam-badge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
+.gallery-picker-tile:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--blue, #1d9bf0);
+}
+.gallery-picker-tile .grid-tile-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #007aff, #00c6ff);
+  color: #fff;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.65);
-  color: #fff;
-  font-size: 10px;
+  justify-content: center;
+  margin-bottom: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.gallery-picker-tile .grid-tile-name {
+  font-size: 11.5px;
   font-weight: 600;
-  pointer-events: none;
-  z-index: 2;
+  color: #fff;
+  line-height: 1.2;
 }
-.live-cam-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ff3b30;
-  animation: liveCamBlink 1.4s ease infinite;
+.gallery-picker-tile .grid-tile-hint {
+  font-size: 9.5px;
+  color: var(--text3, rgba(255, 255, 255, 0.5));
 }
-@keyframes liveCamBlink {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.85); }
-}
-.live-cam-overlay-label {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 60%);
+
+.gallery-empty-tile {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 8px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 500;
-  gap: 3px;
-  z-index: 2;
+  justify-content: center;
+  gap: 4px;
+}
+.gallery-empty-tile:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--blue, #1d9bf0);
+}
+
+/* Qolgan slotlar: Haqiqiy fotosuratlar va videolar (Media Photo Tile) */
+.media-photo-tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0d0e12;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: transform 0.12s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.media-photo-tile:active {
+  transform: scale(0.96);
+}
+.media-photo-tile.selected {
+  border-color: var(--blue, #1d9bf0);
+  box-shadow: 0 0 0 1px var(--blue, #1d9bf0);
+}
+.media-tile-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
   pointer-events: none;
+}
+.media-tile-vid-badge {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Telegram uslubidagi doiraviy tanlash indikatori (1, 2, 3...) */
+.media-tile-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 3;
+  padding: 0;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+.media-tile-check.checked {
+  background: var(--blue, #1d9bf0);
+  border-color: #fff;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.media-tile-check .check-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+/* Tanlangan media fayllarni Telegram kabi birdaniga yuborish paneli (Send Bar) */
+.attach-send-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  animation: sendBarSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes sendBarSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.attach-send-clear-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  color: var(--text2, rgba(255, 255, 255, 0.7));
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.attach-send-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.attach-send-submit-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--blue, #1d9bf0);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(29, 155, 240, 0.35);
+  transition: transform 0.12s ease, background 0.14s ease;
+}
+.attach-send-submit-btn:hover {
+  background: #1a8cd8;
+}
+.attach-send-submit-btn:active {
+  transform: scale(0.98);
 }
 
 /* Galereya va Ichki xotira plitkalari */
@@ -865,19 +1022,46 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.loc-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
 .loc-action-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--blue, #1d9bf0);
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
   text-decoration: none;
-  transition: opacity 0.14s ease;
+  border: none;
+  outline: none;
+  transition: transform 0.14s ease, background 0.14s ease, opacity 0.14s ease;
 }
-.loc-action-btn:hover {
-  text-decoration: underline;
-  opacity: 0.85;
+.loc-btn-view {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.loc-btn-view:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.loc-btn-start {
+  background: var(--blue, #1d9bf0);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.35);
+}
+.loc-btn-start:hover {
+  background: #1a8cd8;
+  transform: translateY(-1px);
+}
+.loc-btn-start:active {
+  transform: scale(0.96);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -1045,4 +1229,139 @@
 .poll-votes-count {
   font-weight: 500;
 }
+
+/* ── Viktorina (Quiz) rejimi modal radio buttoni ── */
+.poll-opt-radio-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+.poll-correct-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.poll-correct-radio-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  box-sizing: border-box;
+}
+.poll-correct-radio-dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.poll-correct-radio:checked + .poll-correct-radio-dot {
+  border-color: #30d158;
+  background: #30d158;
+}
+.poll-correct-radio:checked + .poll-correct-radio-dot::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── Viktorina xabar pufagi (.is-quiz-card) va feedback (To'g'ri / Noto'g'ri) ── */
+.bubble-quiz {
+  min-width: 270px;
+}
+.poll-item.is-quiz-correct {
+  background: rgba(48, 209, 88, 0.14) !important;
+  border-color: rgba(48, 209, 88, 0.6) !important;
+}
+.poll-bar-fill.is-quiz-correct {
+  background: rgba(48, 209, 88, 0.35) !important;
+}
+.poll-item.is-quiz-wrong {
+  background: rgba(255, 69, 58, 0.14) !important;
+  border-color: rgba(255, 69, 58, 0.6) !important;
+  animation: quizShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+.poll-bar-fill.is-quiz-wrong {
+  background: rgba(255, 69, 58, 0.35) !important;
+}
+@keyframes quizShake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+.poll-quiz-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+.poll-quiz-badge--correct {
+  background: #30d158;
+  box-shadow: 0 0 10px rgba(48, 209, 88, 0.45);
+  animation: quizPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.poll-quiz-badge--wrong {
+  background: #ff453a;
+  box-shadow: 0 0 10px rgba(255, 69, 58, 0.45);
+  animation: quizPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes quizPop {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.poll-quiz-explanation {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 214, 10, 0.08);
+  border-left: 3px solid #ffd60a;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  animation: quizExpSlide 0.25s ease;
+}
+@keyframes quizExpSlide {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.poll-quiz-exp-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.poll-quiz-exp-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffd60a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+.poll-quiz-exp-text {
+  font-size: 13px;
+  color: var(--text, #e7e9ea);
+  line-height: 1.35;
+}
+
 

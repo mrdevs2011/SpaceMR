@@ -324,13 +324,13 @@ export async function openCameraCapture(options = {}) {
       recOutStream = null; recCanvas = null; recCtx = null;
     };
 
-    /* ── Kamerani OCHISH: overlay darhol ko'rinadi, bitta getUserMedia (qayta ochish yo'q) ── */
+    /* ── Kamerani OCHISH: overlay darhol ko'rinadi, DOIMO OLD KAMERA ('user') dan boshlanadi ── */
     try {
       let s0;
-      try { s0 = await _startStream(null, 'environment'); }
+      try { s0 = await _startStream(null, 'user'); }
       catch (e1) {
         if (e1?.name === 'NotAllowedError' || e1?.name === 'SecurityError') throw e1;
-        s0 = await _startStream(null, 'user');
+        s0 = await _startStream(null, 'environment');
       }
       const st0 = s0.getVideoTracks()[0]?.getSettings?.() || {};
       facing = st0.facingMode === 'environment' ? 'environment' : 'user';
