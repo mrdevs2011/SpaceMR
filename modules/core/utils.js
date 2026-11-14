@@ -1665,6 +1665,14 @@ if (typeof window !== 'undefined') {
       _releaseScrollLock(false);
     }
   });
+
+  // Mobile / Desktop scroll watchdog: agar DOMda hech qanday modal ochiq bo'lmasa,
+  // lekin qulf "oqib" qolgan bo'lsa, birinchi teginishdayoq scroll qulfi darhol yechiladi
+  document.addEventListener('touchstart', () => {
+    if (_scrollLockApplied && _scrollLockTotal() === 0) {
+      _releaseScrollLock(false);
+    }
+  }, { passive: true });
 }
 
 /** 1234 -> "1.2K", 0 -> "" (X uslubi) */

@@ -972,8 +972,9 @@ async function _filesFromClipboardApi() {
 function _routePastedFile(f) {
   const target = _pasteTarget();
   if (!target || !f) return false;
-  if (target === 'chat') _toChat(f);
-  else if (target === 'composer') pickFile(f);
+  // Chat oynasi o'zining mustaqil paste tinglovchisiga ega (chat.js) — ikkilanishni oldini olish
+  if (target === 'chat') return false;
+  if (target === 'composer') pickFile(f);
   else {
     _pickHomeFile(f);
     $('homeComposerInput')?.focus({ preventScroll: true });
@@ -982,16 +983,15 @@ function _routePastedFile(f) {
 }
 
 function _onPasteMedia(e) {
+  const target = _pasteTarget();
+  if (!target || target === 'chat') return; // chat.js paste event orqali 1 marta aniq biriktiradi
   const files = _filesFromPasteEvent(e);
   if (files.length) {
-    if (!_pasteTarget()) return; // matn paste ishlasin
     e.preventDefault();
     _routePastedFile(files[0]);
     return;
   }
   // Mobil fallback: eventda fayl yo'q, lekin bufferda rasm bor bo'lishi mumkin
-  const target = _pasteTarget();
-  if (!target) return;
   _filesFromClipboardApi().then(list => {
     if (list[0]) _routePastedFile(list[0]);
   });

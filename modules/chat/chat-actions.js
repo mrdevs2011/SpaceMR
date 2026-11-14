@@ -66,7 +66,8 @@ export async function sendChatMessage(opts) {
     replyPreview: replyInfo ? { name: replyInfo.name, text: replyInfo.preview, type: replyInfo.type } : null,
   };
   chatState._rtLocal.set(id, localMsg);
-  chatUI.paintMessages([...chatState._curMsgs, localMsg]);
+  chatState._curMsgs = [...chatState._curMsgs, localMsg];
+  chatUI.paintMessages(chatState._curMsgs);
   // 2) Peer'ga to'g'ridan-to'g'ri (WebRTC DataChannel; ulanmagan bo'lsa broadcast)
   if (chatState._rt && chatState._rtChatId === chatId) chatState._rt.send(id, finalMsgText);
   // 2b) Peer'ning suhbatlar ro'yxati/unread — suhbat ochiq bo'lmasa ham shu zahoti
@@ -218,7 +219,8 @@ export async function sendVoiceMessage(blob, duration) {
     replyPreview: _vReply ? { name: _vReply.name, text: _vReply.preview, type: _vReply.type } : null,
   };
   chatState._rtLocal.set(id, localMsg);
-  chatUI.paintMessages([...chatState._curMsgs, localMsg]);
+  chatState._curMsgs = [...chatState._curMsgs, localMsg];
+  chatUI.paintMessages(chatState._curMsgs);
 
   try {
     const ext = blob.type.includes('ogg') ? 'ogg' : 'webm';
@@ -329,7 +331,8 @@ export async function sendChatAlbum(mediaFiles, captionOverride = '') {
   };
 
   chatState._rtLocal.set(albumId, optimisticMsg);
-  chatUI.paintMessages([...chatState._curMsgs, optimisticMsg]);
+  chatState._curMsgs = [...chatState._curMsgs, optimisticMsg];
+  chatUI.paintMessages(chatState._curMsgs);
 
   // 2) Ketma-ket (sequential) navbatda bittalab yuklash (50kbps bardoshli)
   for (let i = 0; i < albumItems.length; i++) {
@@ -464,7 +467,8 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
     replyPreview: _fReply ? { name: _fReply.name, text: _fReply.preview, type: _fReply.type } : null,
   };
   chatState._rtLocal.set(id, localMsg);
-  chatUI.paintMessages([...chatState._curMsgs, localMsg]);
+  chatState._curMsgs = [...chatState._curMsgs, localMsg];
+  chatUI.paintMessages(chatState._curMsgs);
 
   try {
     // Ketma-ket (sequential) navbat: tarmoq tiqilmaydi, retry bor, cancel qo'llab-quvvatlaydi
@@ -512,7 +516,8 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
   } catch (err) {
     console.error('File send failed:', err);
     chatState._rtLocal.delete(id);
-    chatUI.paintMessages(chatState._curMsgs.filter(m => m.id !== id));
+    chatState._curMsgs = chatState._curMsgs.filter(m => m.id !== id);
+    chatUI.paintMessages(chatState._curMsgs);
     try { if (localUrl) URL.revokeObjectURL(localUrl); } catch (_) {}
     if (err?.name !== 'AbortError') {
       toast('Fayl yuborilmadi', 'error');

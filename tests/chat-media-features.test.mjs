@@ -108,6 +108,33 @@ assert.ok(routerSource.includes("ALLOWED_ROUTES = ['home', 'explore'"), 'ALLOWED
 assert.ok(indexSource.includes('id="sbSearchToggle" data-v="explore"'), 'sbSearchToggle must have data-v="explore"');
 console.log('✓ PASS: Kashf tab is properly defined in router and navigation bar');
 
+console.log('--- 12. Testing Poll Menu & Formatted Copy ---');
+const msgMenuSource = fs.readFileSync(new URL('../modules/chat/msg-menu.js', import.meta.url), 'utf8');
+assert.ok(msgMenuSource.includes('Savol:\\n${poll.question}\\n\\n${optsText}'), 'Poll copying must format question and dash options');
+assert.ok(msgMenuSource.includes('!isPollMsg'), 'Poll message must not show Tahrirlash in menu');
+console.log('✓ PASS: Poll copy format and edit prevention verified');
+
+console.log('--- 13. Testing Paste Deduplication ---');
+const uploadSource = fs.readFileSync(new URL('../modules/feed/upload.js', import.meta.url), 'utf8');
+assert.ok(uploadSource.includes("if (!target || target === 'chat') return;"), 'Paste on chat must be delegated exclusively to chat.js');
+console.log('✓ PASS: Paste deduplication verified');
+
+console.log('--- 14. Testing Telegram 5 Circles in Attach Menu ---');
+const attachSource = fs.readFileSync(new URL('../modules/ui/attach-menu.js', import.meta.url), 'utf8');
+assert.ok(!attachSource.includes('DEFAULT_GALLERY_PHOTOS'), 'Demo photos must be completely removed');
+assert.ok(attachSource.includes('pill-icon-gallery'), 'Gallery circle button must exist');
+assert.ok(attachSource.includes('pill-icon-file'), 'File circle button must exist');
+assert.ok(attachSource.includes('pill-icon-loc'), 'Location circle button must exist');
+assert.ok(attachSource.includes('pill-icon-poll'), 'Poll circle button must exist');
+assert.ok(attachSource.includes('pill-icon-audio'), 'Audio circle button must exist');
+console.log('✓ PASS: 5 Telegram colored circular buttons present and demo photos removed');
+
+console.log('--- 15. Testing Checkmark Ticks Sizing in Media Blur Box ---');
+const featuresCssSource = fs.readFileSync(new URL('../CSS/features.css', import.meta.url), 'utf8');
+assert.ok(featuresCssSource.includes('.media-blur-box > img:not(.msg-ticks)'), 'media-blur-box img must exclude .msg-ticks');
+assert.ok(featuresCssSource.includes('.msg-ticks,\nimg.msg-ticks'), 'Explicit 18x11 size for read ticks');
+console.log('✓ PASS: Giant ticks prevention verified in CSS');
+
 console.log('====================================================');
 console.log('ALL CHAT MEDIA & UI REGRESSION CHECKS PASSED (100%)');
 console.log('====================================================');

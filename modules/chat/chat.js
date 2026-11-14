@@ -4209,33 +4209,104 @@ export async function sendPollMessage(poll) {
 }
 
 /* So‘rovnomaga (Poll) ovoz berish hodisasi */
-window._showPollVotersById = function(msgId, optId, evt) {
+window._showPollVotersById = async function(msgId, optId, evt) {
   if (evt) { evt.preventDefault(); evt.stopPropagation(); }
   const msg = (chatState._curMsgs || []).find(x => String(x.id) === String(msgId));
   if (!msg) return;
   const poll = parsePoll(msg.text);
   if (!poll) return;
-  const opt = (poll.options || []).find(o => String(o.id) === String(optId));
-  if (!opt) return;
 
   if (poll.anonymous) {
     import('../ui/toast.js').then(m => m.toast('Bu anonim so‘rovnoma — ovoz berganlar ro‘yxati yashirilgan', 'info'));
     return;
   }
-  const voters = Array.isArray(opt.voters) ? opt.voters : [];
-  if (!voters.length) {
-    import('../ui/toast.js').then(m => m.toast(`«${opt.text}» variantiga hali hech kim ovoz bermagan`, 'info'));
-    return;
-  }
-  const gNames = (typeof chatUI.groupNames === 'function') ? chatUI.groupNames() : {};
-  const names = voters.map(uid => {
-    if (uid === state.me?.uid) return 'Siz';
-    if (gNames && gNames[uid]?.fullName) return gNames[uid].fullName;
-    if (chatState._curPeer && chatState._curPeer.id === uid) return chatState._curPeer.display_name || 'Suhbatdosh';
-    return 'Foydalanuvchi';
+
+  // Barcha ovoz bergan foydalanuvchilar ID larini yig'amiz
+  const allUids = new Set();
+  (poll.options || []).forEach(opt => {
+    (opt.voters || []).forEach(uid => allUids.add(uid));
   });
-  const listStr = names.slice(0, 5).join(', ') + (names.length > 5 ? ` va yana ${names.length - 5} kishi` : '');
-  import('../ui/toast.js').then(m => m.toast(`«${opt.text}» (${voters.length} ta ovoz): ${listStr}`, 'info', 3500));
+
+  const profilesMap = new Map();
+  if (state.me) profilesMap.set(state.me.uid, { fullName: 'Siz', username: state.me.username || 'siz', avatar: state.me.avatar || '' });
+
+  if (allUids.size > 0) {
+    try {
+      const { data } = await sb.from('profiles').select('id, full_name, username, avatar_url').in('id', [...allUids]);
+      (data || []).forEach(p => {
+        profilesMap.set(p.id, {
+          fullName: p.full_name || p.username || 'Foydalanuvchi',
+          username: p.username || '',
+          avatar: p.avatar_url || '',
+        });
+      });
+    } catch (_) {}
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'poll-voters-modal-overlay';
+  overlay.innerHTML = `
+    <div class="poll-voters-modal" role="dialog" aria-label="So‘rovnoma natijalari">
+      <div class="pvm-header">
+        <div class="pvm-title">So‘rovnoma natijalari</div>
+        <button type="button" class="pvm-close" aria-label="Yopish">✕</button>
+      </div>
+      <div class="pvm-question">${esc(poll.question || '')}</div>
+      <div class="pvm-sub">${poll.isQuiz ? 'Viktorina' : 'Ochiq so‘rovnoma'} · ${Number(poll.totalVotes) || 0} ta ovoz</div>
+      <div class="pvm-body">
+        ${(poll.options || []).map(opt => {
+          const count = (opt.voters || []).length;
+          const total = Number(poll.totalVotes) || 1;
+          const pct = Math.round((count / total) * 100);
+          const isTarget = optId && opt.id === optId;
+          const votersHtml = (opt.voters || []).map(uid => {
+            const pr = profilesMap.get(uid) || { fullName: (uid === state.me?.uid ? 'Siz' : 'Foydalanuvchi'), username: '', avatar: '' };
+            const aviSrc = pr.avatar || defAvi(pr.fullName);
+            return `<div class="pvm-voter-row" data-uid="${esc(uid)}">
+              <img src="${esc(aviSrc)}" alt="" class="pvm-voter-avi" loading="lazy">
+              <div class="pvm-voter-info">
+                <span class="pvm-voter-name">${esc(pr.fullName)}</span>
+                ${pr.username ? `<span class="pvm-voter-uname">@${esc(pr.username)}</span>` : ''}
+              </div>
+            </div>`;
+          }).join('') || '<div class="pvm-empty-opt">Hali ovoz berilmagan</div>';
+
+          return `<div class="pvm-option-block ${isTarget ? 'pvm-option-highlight' : ''}">
+            <div class="pvm-opt-head">
+              <span class="pvm-opt-text">${esc(opt.text)}</span>
+              <span class="pvm-opt-count">${count} ta (${pct}%)</span>
+            </div>
+            <div class="pvm-voters-list">${votersHtml}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  lockScroll('pollVotersModal');
+
+  const close = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => {
+      try { overlay.remove(); } catch (_) {}
+      unlockScroll('pollVotersModal');
+    }, 180);
+  };
+
+  overlay.querySelector('.pvm-close')?.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelectorAll('.pvm-voter-row[data-uid]').forEach(row => {
+    row.addEventListener('click', () => {
+      const uid = row.dataset.uid;
+      if (uid && uid !== state.me?.uid) {
+        close();
+        import('../profile/profile.js').then(m => m.openUserProfileModal?.(uid)).catch(() => {});
+      }
+    });
+  });
+
+  requestAnimationFrame(() => overlay.classList.add('open'));
 };
 
 window._handlePollVote = async function(msgId, optId, evt) {

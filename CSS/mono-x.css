@@ -4246,8 +4246,10 @@ input[type="file"] {
 }
 
 .chat-thread-messages {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 0%;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: contain;
   padding: 12px 12px 8px;
   display: flex;

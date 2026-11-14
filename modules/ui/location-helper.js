@@ -85,6 +85,11 @@ export function requestAndSendLocation(onLocation) {
  */
 export function openExternalUrl(url) {
   if (!url) return;
+  // PWA (standalone) yoki mobil brauzerda tizim brauzeri / ilovasini ochish
+  try {
+    const w = window.open(url, '_system') || window.open(url, '_blank', 'noopener,noreferrer');
+    if (w) return;
+  } catch (_) {}
   try {
     const a = document.createElement('a');
     a.href = url;
@@ -96,10 +101,6 @@ export function openExternalUrl(url) {
       try { document.body.removeChild(a); } catch (_) {}
     }, 150);
     return;
-  } catch (_) {}
-  try {
-    const w = window.open(url, '_blank', 'noopener,noreferrer');
-    if (w) return;
   } catch (_) {}
   try {
     window.location.href = url;
@@ -124,25 +125,22 @@ export function openSmartMapLocation(lat, lon, { navigate = false, title = '' } 
   const isApple = /iPhone|iPad|iPod|Macintosh|Mac OS X/i.test(ua);
   const isAndroid = /Android/i.test(ua);
   const isMobile = isApple || isAndroid;
-  const isStandalone = !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!navigator.standalone;
 
   if (isApple) {
     if (navigate) {
-      // Apple Maps: marshrut (navigatsiya) boshlash
       const appUrl = `maps://?daddr=${nLat},${nLon}&dirflg=d`;
       const webUrl = `https://maps.apple.com/?daddr=${nLat},${nLon}&dirflg=d`;
-      if (isMobile && !isStandalone) {
+      if (isMobile) {
         window.location.href = appUrl;
         setTimeout(() => { openExternalUrl(webUrl); }, 700);
       } else {
         openExternalUrl(webUrl);
       }
     } else {
-      // Apple Maps: joylashuvni ko'rish
       const q = encodeURIComponent(title || 'Joylashuv');
       const appUrl = `maps://?ll=${nLat},${nLon}&q=${q}`;
       const webUrl = `https://maps.apple.com/?ll=${nLat},${nLon}&q=${q}`;
-      if (isMobile && !isStandalone) {
+      if (isMobile) {
         window.location.href = appUrl;
         setTimeout(() => { openExternalUrl(webUrl); }, 700);
       } else {
@@ -154,13 +152,12 @@ export function openSmartMapLocation(lat, lon, { navigate = false, title = '' } 
 
   // Android yoki Desktop / Web: Top 1 = Yandex Maps, Top 2 = Google Maps
   if (navigate) {
-    // Navigatsiya / Marshrut boshlash
     const yandexApp = `yandexmaps://build_route_on_map?lat_to=${nLat}&lon_to=${nLon}`;
     const yandexWeb = `https://yandex.ru/maps/?rtext=~${nLat},${nLon}&rtt=auto`;
     const googleApp = `google.navigation:q=${nLat},${nLon}&mode=d`;
     const googleWeb = `https://www.google.com/maps/dir/?api=1&destination=${nLat},${nLon}`;
 
-    if (isMobile && !isStandalone) {
+    if (isMobile) {
       const t0 = Date.now();
       window.location.href = yandexApp;
       setTimeout(() => {
@@ -179,7 +176,7 @@ export function openSmartMapLocation(lat, lon, { navigate = false, title = '' } 
     const yandexApp = `yandexmaps://maps.yandex.ru/?pt=${nLon},${nLat}&z=16&l=map`;
     const yandexWeb = `https://yandex.ru/maps/?pt=${nLon},${nLat}&z=16&l=map`;
 
-    if (isMobile && !isStandalone) {
+    if (isMobile) {
       const t0 = Date.now();
       window.location.href = yandexApp;
       setTimeout(() => {

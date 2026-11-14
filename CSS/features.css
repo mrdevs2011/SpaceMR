@@ -192,7 +192,13 @@
 }
 
 /* Yuklanmagan rasm/video blur holatida */
-.media-blur-box img,
+.media-blur-box > img:not(.msg-ticks),
+.media-blur-box > a > img:not(.msg-ticks),
+.media-blur-box img.chat-media-thumb,
+.media-blur-box img.chat-media-img,
+.media-blur-box img.loc-static-img,
+.media-blur-box img.loc-map-img,
+.media-blur-box img.post-media-img,
 .media-blur-box video {
   width: 100%;
   height: 100%;
@@ -207,6 +213,26 @@
   position: relative;
   z-index: 2;
   background: transparent;
+}
+
+/* O'qilganlik belgilari (ticks) hech qachon cho'zilib ketmasin */
+.msg-ticks,
+img.msg-ticks,
+.media-blur-box img.msg-ticks,
+.cfm-media-badge img.msg-ticks,
+.chat-msg-meta img.msg-ticks {
+  width: 18px !important;
+  height: 11px !important;
+  max-width: 18px !important;
+  max-height: 11px !important;
+  min-width: 18px !important;
+  min-height: 11px !important;
+  filter: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  display: inline-block !important;
+  position: static !important;
+  object-fit: contain !important;
 }
 
 /* Yuklangach (loaded) — blur yo'qoladi, tiniq va barqaror */
@@ -1425,7 +1451,17 @@
 .chat-thread-avi { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: var(--bg4); }
 .chat-thread-avi img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
 .chat-thread-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chat-thread-messages { flex: 1; overflow-y: auto; overscroll-behavior-y: contain; overflow-anchor: auto; padding: 12px 12px 8px; display: flex; flex-direction: column; }
+.chat-thread-messages {
+  flex: 1 1 0%;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain;
+  overflow-anchor: auto;
+  padding: 12px 12px 8px;
+  display: flex;
+  flex-direction: column;
+}
 #chatThreadMessages { overflow-anchor: auto; }
 /* Sana ajratuvchi — Telegram uslubidagi suzuvchi pill ("Bugun"/"Kecha") */
 .chat-date-sep { margin: 10px 0 8px; }
@@ -6197,12 +6233,12 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 }
 .chat-album-grid {
   display: grid;
-  gap: 2px;
+  gap: 1.5px;
   border-radius: 14px;
   overflow: hidden;
   position: relative;
   width: 100%;
-  background: rgba(0, 0, 0, 0.15);
+  background: transparent;
   user-select: none;
 }
 .chat-album-item {
@@ -6211,6 +6247,9 @@ svg.sv-reaction-emoji { overflow: visible !important; }
   display: block;
   width: 100%;
   height: 100%;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
 }
@@ -6220,6 +6259,8 @@ svg.sv-reaction-emoji { overflow: visible !important; }
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 0 !important;
+  margin: 0 !important;
   transition: transform 0.22s ease;
 }
 .chat-album-item:hover img,

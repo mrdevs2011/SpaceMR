@@ -609,12 +609,12 @@
   margin-top: 2px;
 }
 
-/* ── Pastki Telegram uslubidagi doiraviy / pill tugmalar paneli ── */
+/* ── Pastki Telegram uslubidagi doiraviy / circle tugmalar paneli (5 ta rangli doira) ── */
 .attach-bottom-pills {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  gap: 12px;
+  gap: 8px;
   padding-top: 14px;
   border-top: 1px solid var(--line, rgba(255, 255, 255, 0.08));
 }
@@ -626,15 +626,16 @@
   gap: 6px;
   background: none;
   border: 0;
-  padding: 6px 4px;
+  padding: 6px 2px;
   border-radius: 12px;
   color: var(--text, #e7e9ea);
   font: inherit;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.14s ease;
+  transition: background 0.14s ease, transform 0.12s ease;
   -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 .attach-pill-btn:hover {
   background: rgba(255, 255, 255, 0.06);
@@ -653,13 +654,19 @@
 .attach-pill-btn:active .pill-btn-icon {
   transform: scale(0.92);
 }
+.pill-icon-gallery {
+  background: linear-gradient(135deg, #007aff, #00c6ff);
+}
 .pill-icon-file {
-  background: linear-gradient(135deg, #34c759, #30d158);
+  background: linear-gradient(135deg, #8774e1, #6c52d9);
+}
+.pill-icon-loc {
+  background: linear-gradient(135deg, #2fba50, #20a040);
 }
 .pill-icon-poll {
   background: linear-gradient(135deg, #ff9500, #ffaa00);
 }
-.pill-icon-loc {
+.pill-icon-audio {
   background: linear-gradient(135deg, #ff3b30, #ff453a);
 }
 .pill-btn-text {
@@ -1125,7 +1132,8 @@
 .poll-sub {
   font-size: 11.5px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: #ffffff !important;
+  opacity: 0.94;
 }
 
 .poll-options-list {
@@ -1270,17 +1278,168 @@
   justify-content: space-between;
   margin-top: 5px;
   font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: #ffffff !important;
+  opacity: 0.94;
+  cursor: pointer !important;
 }
 .poll-votes-count {
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: #ffffff !important;
+  opacity: 0.94;
+  cursor: pointer !important;
+  user-select: none;
+}
+.poll-votes-count:hover {
+  text-decoration: underline;
 }
 
 .chat-msg.mine .poll-sub,
 .chat-msg.mine .poll-bottom-bar,
 .chat-msg.mine .poll-votes-count {
-  color: rgba(255, 255, 255, 0.88) !important;
+  color: #ffffff !important;
+  opacity: 0.96;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Telegram uslubidagi So'rovnoma Voter Natijalar Modali
+   ═════════════════════════════════════════════════════════════════════════ */
+.poll-voters-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100070;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.poll-voters-modal-overlay.open {
+  opacity: 1;
+}
+.poll-voters-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  background: var(--bg2, #16181c);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+  transform: scale(0.96);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.poll-voters-modal-overlay.open .poll-voters-modal {
+  transform: scale(1);
+}
+.pvm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+}
+.pvm-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+}
+.pvm-close {
+  background: none;
+  border: 0;
+  color: var(--text2, #71767b);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+.pvm-close:hover { color: #fff; }
+.pvm-question {
+  padding: 12px 20px 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.35;
+}
+.pvm-sub {
+  padding: 0 20px 10px;
+  font-size: 12.5px;
+  color: var(--text3, #71767b);
+  border-bottom: 1px solid var(--line, rgba(255, 255, 255, 0.06));
+}
+.pvm-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pvm-option-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.pvm-opt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.pvm-opt-count {
+  color: var(--x-blue, #1d9bf0);
+  font-size: 12.5px;
+}
+.pvm-voters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pvm-voter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.pvm-voter-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.pvm-voter-avi {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.pvm-voter-info {
+  display: flex;
+  flex-direction: column;
+}
+.pvm-voter-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+.pvm-voter-uname {
+  font-size: 11.5px;
+  color: var(--text3, #71767b);
+}
+.pvm-empty-opt {
+  font-size: 12px;
+  color: var(--text3, #71767b);
+  padding: 4px 6px;
+  font-style: italic;
+}
 }
 .chat-msg.theirs .poll-sub,
 .chat-msg.theirs .poll-bottom-bar,

@@ -21,36 +21,11 @@ const SVG = {
   poll: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
   location: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
   send: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+  audio: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
 };
 
 let _activeDrawer = null;
 let _activeDropdown = null;
-const DEFAULT_GALLERY_PHOTOS = [
-  { id: 'gal_1', name: 'tog_manzarasi.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_2', name: 'shahar_tungi.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/313782/pexels-photo-313782.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_3', name: 'dengiz_plyaj.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_4', name: 'sport_mashina.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/337909/pexels-photo-337909.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_5', name: 'qahva_damlash.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_6', name: 'kuzgi_tabiat.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/33109/fall-autumn-red-season.jpg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_7', name: 'zamonaviy_bino.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_8', name: 'yashil_orman.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/15286/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_9', name: 'uy_hayvonlari.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_10', name: 'quyosh_botishi.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/36717/amazing-animal-beautiful-beautifull.jpg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_11', name: 'yulduzli_osmon.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_12', name: 'sport_mashq.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_13', name: 'kitob_va_choy.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/904616/pexels-photo-904616.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_14', name: 'qizil_atirgul.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/56866/garden-rose-red-pink-56866.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_15', name: 'samolyot.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/46148/aircraft-jet-landing-cloud-46148.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_16', name: 'zamonaviy_uslub.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/994523/pexels-photo-994523.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_17', name: 'muzey_sanati.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1839919/pexels-photo-1839919.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_18', name: 'dasturlash_noutbuk.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_19', name: 'oqshom_daryo.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/247599/pexels-photo-247599.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_20', name: 'muzlik_toglar.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/417074/pexels-photo-417074.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_21', name: 'koprik_shahar.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/169647/pexels-photo-169647.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_22', name: 'kok_dengiz.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_23', name: 'choqqi_quyosh.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/674010/pexels-photo-674010.jpeg?auto=compress&cs=tinysrgb&w=500' },
-  { id: 'gal_24', name: 'gulzor_bahor.jpg', type: 'image/jpeg', thumbUrl: 'https://images.pexels.com/photos/158028/bellingrath-gardens-alabama-landscape-scenic-158028.jpeg?auto=compress&cs=tinysrgb&w=500' },
-];
 
 async function _resolveFile(item) {
   if (!item) return null;
@@ -270,6 +245,7 @@ export function initAttachMenu({
 
   const galleryPicker = _createHiddenInput(mediaAccept, true, onPick);
   const filePicker = _createHiddenInput(fileAccept || fileInput?.getAttribute('accept') || '', true, onPick);
+  const audioPicker = _createHiddenInput('audio/*', true, onPick);
 
   /* ─────────── 1. Desktop Dropdown (Kompyuterlar uchun) ─────────── */
   async function openDesktopDropdown(dynamicOpts = {}) {
@@ -401,10 +377,9 @@ export function initAttachMenu({
   }
 
   /* ─────────── 2. Mobil & Planshet Attach Sheet (Telegram uslubida) ─────────── */
-  async function openMobileDrawer(dynamicOpts = {}, preAcquiredStream = null, hasCamDevice = false) {
+  function openMobileDrawer(dynamicOpts = {}) {
     closeAttachMenu();
 
-    const hasCam = !!hasCamDevice && !!preAcquiredStream;
     const canMedia = dynamicOpts.showMedia ?? showMedia;
     const canFile = dynamicOpts.showFile ?? showFile;
     const canPoll = dynamicOpts.showPoll ?? showPoll;
@@ -420,22 +395,10 @@ export function initAttachMenu({
 
         <!-- Telegram uslubidagi Media Photos & Videos Gridi (Scroll bo'ladigan 3 ustun) -->
         <div class="attach-media-grid" id="amMediaGrid">
-          ${hasCam ? `
-            <div class="attach-grid-item live-cam-tile" id="amLiveCamTile" role="button" tabindex="0" title="Kamera">
-              <video class="live-cam-video" autoplay playsinline muted></video>
-              <div class="live-cam-fallback" style="display:none">${SVG.camera}</div>
-            </div>
-          ` : ''}
-
-          ${canMedia ? `
-            <div class="attach-grid-item gallery-picker-tile" id="amGalleryPickerTile" role="button" tabindex="0" title="Galereyadan tanlash">
-              <div class="grid-tile-icon-wrap gallery-icon-wrap">
-                ${SVG.gallery}
-              </div>
-              <span class="grid-tile-name">+ Galereya</span>
-              <span class="grid-tile-hint">Boshqa rasmlar</span>
-            </div>
-          ` : ''}
+          <div class="attach-grid-item live-cam-tile" id="amLiveCamTile" role="button" tabindex="0" title="Kamera">
+            <video class="live-cam-video" autoplay playsinline muted style="display:none;"></video>
+            <div class="live-cam-fallback">${SVG.camera}</div>
+          </div>
 
           <!-- Media fotosuratlar va videolar shu yerga yuklanadi -->
           <div id="amMediaItemsSlot" style="display:contents;"></div>
@@ -450,13 +413,27 @@ export function initAttachMenu({
           </button>
         </div>
 
-        <!-- Pastki Telegram uslubidagi pill tugmalar (Fayl, So‘rovnoma, Joylashuv) -->
+        <!-- Pastki Telegram uslubidagi 5 ta rangli doira tugmalar (Galereya, Fayl, Joylashuv, So‘rovnoma, Musiqa) -->
         <div class="attach-bottom-pills" id="amBottomPills">
+          ${canMedia ? `
+            <button type="button" class="attach-pill-btn" id="amPillGallery">
+              <div class="pill-btn-icon pill-icon-gallery">${SVG.gallery}</div>
+              <span class="pill-btn-text">Galereya</span>
+            </button>
+          ` : ''}
+
           ${canFile ? `
             <label class="attach-pill-btn" for="${filePicker.id}">
               <div class="pill-btn-icon pill-icon-file">${SVG.file}</div>
               <span class="pill-btn-text">Fayl</span>
             </label>
+          ` : ''}
+
+          ${canLoc ? `
+            <button type="button" class="attach-pill-btn" id="amPillLocation">
+              <div class="pill-btn-icon pill-icon-loc">${SVG.location}</div>
+              <span class="pill-btn-text">Joylashuv</span>
+            </button>
           ` : ''}
 
           ${canPoll ? `
@@ -466,12 +443,10 @@ export function initAttachMenu({
             </button>
           ` : ''}
 
-          ${canLoc ? `
-            <button type="button" class="attach-pill-btn" id="amPillLocation">
-              <div class="pill-btn-icon pill-icon-loc">${SVG.location}</div>
-              <span class="pill-btn-text">Joylashuv</span>
-            </button>
-          ` : ''}
+          <button type="button" class="attach-pill-btn" id="amPillAudio">
+            <div class="pill-btn-icon pill-icon-audio">${SVG.audio}</div>
+            <span class="pill-btn-text">Musiqa</span>
+          </button>
         </div>
       </div>
     `;
@@ -572,7 +547,7 @@ export function initAttachMenu({
       });
     }
 
-    // Recent mediani IDB keshdan va haqiqiy galereya fotolari bilan birga darhol chizish
+    // Recent mediani IDB keshdan darhol chizish (hech qanday soxta demo rasmlarsiz)
     _loadRecentMedia().then(cachedList => {
       if (!_activeDrawer) return;
       const prepared = cachedList.map(rec => {
@@ -595,22 +570,8 @@ export function initAttachMenu({
         };
       }).filter(x => !!x.thumbUrl);
 
-      // Telefon keshidagi rasmlar oldinda, keyin to'liq haqiqiy fotosuratlar galereyasi
-      const allPhotos = [...prepared, ...DEFAULT_GALLERY_PHOTOS];
-      renderMediaGridItems(allPhotos);
-    });
-
-    // "+ Galereyadan tanlash" bosilganda file pickerni chaqirish
-    galleryTile?.addEventListener('click', async e => {
-      e.preventDefault();
-      e.stopPropagation();
-      try {
-        galleryPicker.click();
-      } catch (err) {
-        console.warn('[AttachMenu] Gallery open error:', err);
-        const { toast } = await import('./toast.js');
-        toast('Galereyani ochishda xatolik yuz berdi', 'error');
-      }
+      // Faqat haqiqiy qurilma mediani ko'rsatamiz
+      renderMediaGridItems(prepared);
     });
 
     // File pickerdan fayllar tanlanganda ushbu drawer ichiga kiritish
@@ -664,36 +625,63 @@ export function initAttachMenu({
       updateSelectionUI();
     });
 
-    // 1-slot: Jonli Kamera oqimi
-    if (hasCam && preAcquiredStream) {
-      const camTile = overlay.querySelector('#amLiveCamTile');
-      const camVideo = overlay.querySelector('.live-cam-video');
-      const camFallback = overlay.querySelector('.live-cam-fallback');
+    // 1-slot: Jonli Kamera oqimini asinxron fonda yuklaymiz (drawer ochilishini to'xtatmaydi)
+    const camTile = overlay.querySelector('#amLiveCamTile');
+    const camVideo = overlay.querySelector('.live-cam-video');
+    const camFallback = overlay.querySelector('.live-cam-fallback');
 
-      _liveStream = preAcquiredStream;
-      if (camVideo) {
-        camVideo.srcObject = preAcquiredStream;
+    if (navigator.mediaDevices?.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } },
+        audio: false,
+      }).then(stream => {
+        if (!_activeDrawer || !camVideo) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+        _liveStream = stream;
+        camVideo.srcObject = stream;
         camVideo.style.display = 'block';
         if (camFallback) camFallback.style.display = 'none';
-      }
-
-      camTile?.addEventListener('click', async e => {
-        e.preventDefault();
-        e.stopPropagation();
-        closeAttachMenu();
-        try {
-          const f = await openCameraCapture();
-          if (f) onPick(f);
-        } catch (err) {
-          console.warn('[AttachMenu] camera capture error:', err);
-        }
+      }).catch(err => {
+        console.warn('[AttachMenu] camera stream not available:', err);
       });
     }
+
+    camTile?.addEventListener('click', async e => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAttachMenu();
+      try {
+        const f = await openCameraCapture();
+        if (f) onPick(f);
+      } catch (err) {
+        console.warn('[AttachMenu] camera capture error:', err);
+      }
+    });
 
     overlay.querySelectorAll('label.attach-pill-btn').forEach(lbl => {
       lbl.addEventListener('click', () => {
         setTimeout(() => closeAttachMenu(), 250);
       });
+    });
+
+    // Galereya doiraviy tugmasi
+    const galBtn = overlay.querySelector('#amPillGallery');
+    galBtn?.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      galleryPicker.click();
+      closeAttachMenu();
+    });
+
+    // Musiqa doiraviy tugmasi
+    const audioBtn = overlay.querySelector('#amPillAudio');
+    audioBtn?.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      audioPicker.click();
+      closeAttachMenu();
     });
 
     const pollBtn = overlay.querySelector('#amPillPoll');
@@ -729,7 +717,7 @@ export function initAttachMenu({
     document.addEventListener('keydown', onKey);
   }
 
-  btn.addEventListener('click', async e => {
+  btn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
     if (typeof isBusy === 'function' && isBusy()) return;
@@ -739,32 +727,8 @@ export function initAttachMenu({
     }
     const dyn = (typeof getOptions === 'function' ? getOptions() : null) || {};
     if (isMobileOrTabletDevice()) {
-      let hasCam = false;
-      const wantCam = dyn.showCamera ?? showCamera;
-      if (wantCam) {
-        try {
-          hasCam = await hasCameraDevice();
-        } catch (_) {
-          hasCam = false;
-        }
-      }
-
-      let acquiredStream = null;
-      if (hasCam) {
-        try {
-          acquiredStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } },
-            audio: false,
-          });
-        } catch (err) {
-          console.warn('[AttachMenu] Camera permission denied or not available:', err);
-          hasCam = false;
-          acquiredStream = null;
-        }
-      }
-
-      // Panel har doim ochiladi — kamera ruxsat bermagan bo'lsa ham galereya va media ko'rinadi!
-      openMobileDrawer(dyn, acquiredStream, hasCam);
+      // 0ms da darhol ochiladi (kutish yo'q!)
+      openMobileDrawer(dyn);
     } else {
       openDesktopDropdown(dyn);
     }

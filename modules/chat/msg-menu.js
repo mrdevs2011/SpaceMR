@@ -11,7 +11,7 @@ import { onEsc } from '../ui/esc-stack.js';
 import { markDissolve, unmarkDissolve } from '../ui/dissolve.js';
 import { reactInit, reactStripHtml, reactToggle, reactAfterPaint, reactReset, reactHoverHide, reactionsOf } from './msg-reactions.js';
 import { emojiImg, encodeForSend, decodeEmojiText } from '../ui/emoji-img.js';
-import { humanMsgPreview } from './chat-shared.js';
+import { humanMsgPreview, parsePoll } from './chat-shared.js';
 import { wrapFwd } from '../core/fwd.js';
 import { groupInboxSend } from '../core/rt-bus.js';
 import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, fetchWithProgress } from '../ui/float-progress.js';
@@ -432,6 +432,7 @@ function menuHtml(m) {
   let h = '';
   const isPostShare = m.text && m.text.includes('"__postShare"');
   const isGif = !!(m.text && m.text.includes('"__gif"'));
+  const isPollMsg = !!parsePoll(m.text);
   // Reply — har qanday oddiy xabar uchun (Telegram uslubida)
   if (!isCallMsg(m) && !(mine && m.status === 'sending')) h += it('reply', IC.reply, 'Javob');
   const kind = mediaKind(m);
@@ -440,7 +441,7 @@ function menuHtml(m) {
   if (kind === 'image' && mUrl && !onCap) h += it('copyimg', IC.copy, 'Rasmni nusxalash');           // rasm ustida: matn o'rniga rasm
   else if (hasText && !hasHiddenSpoiler(m.id) && (isDM() || kind) && !isGif && (!kind || onCap)) h += it('copy', IC.copy, isPostShare ? 'Havolani nusxalash' : 'Nusxalash');   // izoh ustida: matn
   if (kind && mUrl && !onCap) h += it('dl', IC.dl, DL_LABEL[kind]);   // izoh (matn) ustida — yuklash yo'q, faqat matnni nusxalash
-  if (mine && ['text', 'image', 'video', 'file'].includes(m.type || 'text') && !isPostShare && !isGif) h += it('edit', IC.edit, 'Tahrirlash');
+  if (mine && ['text', 'image', 'video', 'file'].includes(m.type || 'text') && !isPostShare && !isGif && !isPollMsg) h += it('edit', IC.edit, 'Tahrirlash');
   h += it('fwd', IC.fwd, 'Uzatish');
   if (canDel(m)) h += it('del', IC.del, 'O‘chirish', 'danger');
   h += it('sel', IC.sel, 'Tanlash');
@@ -557,6 +558,14 @@ function run(act, id) {
   if (!m) return;
   if (act === 'copy') {
     if (hasHiddenSpoiler(m.id)) return;   // blur ochilmaguncha nusxalab bo'lmaydi
+    const poll = parsePoll(m.text);
+    if (poll) {
+      const optsText = (poll.options || []).map(opt => `-${opt.text}`).join('\n\n');
+      const textToCopy = `Savol:\n${poll.question}\n\n${optsText}`;
+      copyToClipboard(textToCopy);
+      toast('Nusxalandi');
+      return;
+    }
     if (m.text && m.text.includes('"__postShare"')) {
       try {
         const ps = JSON.parse(m.text);
@@ -785,7 +794,14 @@ function ensureSelBar() {
     if (b.dataset.sb === 'x') exitSelect();
     else if (b.dataset.sb === 'copy') {
       if ([...sel].some(hasHiddenSpoiler)) return;
-      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => markdownToPlain(decodeEmojiText(m.text || '').trim(), { msgId: m.id, scope: isDM() ? 'dm' : 'group' })).filter(Boolean).join('\n');
+      const t = (api.getMsgs() || []).filter(m => sel.has(m.id)).map(m => {
+        const poll = parsePoll(m.text);
+        if (poll) {
+          const optsText = (poll.options || []).map(opt => `-${opt.text}`).join('\n\n');
+          return `Savol:\n${poll.question}\n\n${optsText}`;
+        }
+        return markdownToPlain(decodeEmojiText(m.text || '').trim(), { msgId: m.id, scope: isDM() ? 'dm' : 'group' });
+      }).filter(Boolean).join('\n\n');
       if (t) { copyToClipboard(t); toast('Nusxalandi'); } else toast('Nusxalanadigan matn yo‘q');
     }
     else if (b.dataset.sb === 'edit') { const m = msgOf(ids[0]); if (m) startEdit(m); }
@@ -840,7 +856,7 @@ function paintSel(keepEmpty) {
   selBar.querySelector('[data-sb="del"]').hidden = !allMine || ![...sel].every(id => canDel(msgOf(id)));
   selBar.querySelector('[data-sb="copy"]').hidden = hasCall || !allMine || [...sel].some(hasHiddenSpoiler) || !(api.getMsgs() || []).some(m => sel.has(m.id) && (m.text || '').trim());
   const one = sel.size === 1 ? msgOf([...sel][0]) : null;
-  const isEditable = one && ['text', 'image', 'video', 'file'].includes(one.type || 'text');
+  const isEditable = one && ['text', 'image', 'video', 'file'].includes(one.type || 'text') && !parsePoll(one.text);
   selBar.querySelector('[data-sb="edit"]').hidden = hasCall || !(allMine && isEditable && !(one.text && (one.text.includes('"__postShare"') || one.text.includes('"__gif"'))));
 }
 

@@ -1085,7 +1085,7 @@ export function generatePollBubble({ poll, m, time, mine, renderTicks, dm = fals
         ${optionsHtml}
       </div>
       ${explanationHtml}
-      <div class="poll-bottom-bar">
+      <div class="poll-bottom-bar" role="button" tabindex="0" title="${isAnon ? 'Anonim so‘rovnoma' : 'Ovoz berganlarni ko‘rish'}" onclick="event.stopPropagation(); window._showPollVotersById && window._showPollVotersById('${esc(m.id)}', null, event)">
         <span class="poll-votes-count">${voteCountText}</span>
       </div>
     </div>`;
