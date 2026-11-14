@@ -3018,7 +3018,7 @@ function _renderMessageHtml(m, idx, msgs, grp = null, opts = {}) {
       } else if (poll) {
         bData = generatePollBubble({ poll, m, time, mine, renderTicks, dm: !grp, currentUid: state.me?.uid });
         metaOutside = true;
-      } else if (pureMedia) {
+      } else if (pureMedia && pureMedia.type !== 'web') {
         bData = generateMediaBubble({ media: pureMedia, m, time, mine, renderTicks, dm: !grp });
         metaOutside = false;
       } else {

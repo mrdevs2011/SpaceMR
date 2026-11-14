@@ -852,6 +852,12 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     box-sizing: border-box;
     border: 0;
   }
+  /* Chats tab aktiv bo'lganda rightRail kerak emas — chatsView o'ng panelni egallaydi */
+  body:has(#chatsView.on) #rightRail {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
 /* Right-rail cards — X "Who to follow" uslubi (logika o'zgarmaydi) */
 .rr-card {
@@ -4990,13 +4996,16 @@ a.cfm-name--link:hover {
 
 .cfm-media-wrap,
 .cfm-media-dm,
-.cfm-img-link,
-.cfm-img-preview,
 .cfm-vid-box,
 .cfm-album-wrap,
 .chat-album-grid {
   min-width: min(220px, 70vw) !important;
   min-height: 180px !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+.cfm-img-link,
+.cfm-img-preview {
+  min-width: min(220px, 70vw) !important;
   background: rgba(255, 255, 255, 0.05);
 }
 

@@ -9,11 +9,16 @@ if (!window.__postImgZoomBound) {
     if (!media) return;
     if (media.dataset.type === 'video' || e.target.closest('video, a, button')) return;
     const img = media.querySelector('img');
-    const url = media.dataset.url || img?.currentSrc || img?.src;
+    // Prefer currentSrc (may be a blob URL already cached), then dataset.url
+    const url = img?.currentSrc || media.dataset.url || img?.src;
     if (!url) return;
     e.preventDefault();
     e.stopPropagation();
-    openZoom(url, 'image');
+    // Also check mediaCache for blob URL to avoid re-fetch
+    const cachedUrl = (window.__mediaCache?.cachedMediaUrlSync)
+      ? (window.__mediaCache.cachedMediaUrlSync(media.dataset.url || url) || url)
+      : url;
+    openZoom(cachedUrl, 'image');
   }, true);
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -21,10 +26,13 @@ if (!window.__postImgZoomBound) {
     const media = e.target?.closest?.('.post-media');
     if (!media || media.dataset.type === 'video') return;
     const img = media.querySelector('img');
-    const url = media.dataset.url || img?.currentSrc || img?.src;
+    const url = img?.currentSrc || media.dataset.url || img?.src;
     if (!url) return;
     e.preventDefault();
     e.stopPropagation();
-    openZoom(url, 'image');
+    const cachedUrl = (window.__mediaCache?.cachedMediaUrlSync)
+      ? (window.__mediaCache.cachedMediaUrlSync(media.dataset.url || url) || url)
+      : url;
+    openZoom(cachedUrl, 'image');
   }, true);
 }

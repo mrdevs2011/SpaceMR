@@ -239,14 +239,17 @@ export function renderMediaCard({ type = 'youtube', videoId = '', canonicalUrl =
   const badgeDom = badgeText ? `<span class="chat-yt-shorts-badge">${badgeText}</span>` : '';
 
   if (type === 'image') {
-    return `<div class="chat-media-pure-wrap media-blur-box" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
+    return `<div class="chat-media-img-wrap chat-link-box media-blur-box" data-media-type="image" data-url="${cUrl}" onclick="window._chatPlayMedia&&window._chatPlayMedia(this)">` +
       `<img class="chat-media-pure-img" src="${cUrl}" alt="" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.parentElement.innerHTML='<div class=\\'chat-media-broken\\'>Yuklanmadi</div>'">` +
       (badgeHtml || '') +
     `</div>`;
   }
 
   if (type === 'web') {
-    return `<a href="${cUrl}" target="_blank" rel="noopener noreferrer" class="chat-text-link md-link">${dUrl}</a>`;
+    return `<a href="${cUrl}" target="_blank" rel="noopener noreferrer" class="chat-link-card chat-link-box">` +
+      `<span class="chat-link-favicon">${logoSvg}</span>` +
+      `<span class="chat-link-url">${dUrl}</span>` +
+    `</a>`;
   }
 
   let boxContent = '';
@@ -551,7 +554,9 @@ export function renderMarkdown(rawText, opts) {
 
   // \u0000 (placeholder) va qo'shtirnoqlarda to'xtaydi — aks holda tayyor <a> tegi href ichiga tushib, atribut in'ektsiyasi bo'ladi
   s = s.replace(/(https?:\/\/[^\s<\u0000"']+)/g, (match) => {
-    return `<a href="${esc(match)}" class="chat-text-link md-link" target="_blank" rel="noopener noreferrer">${esc(match)}</a>`;
+    let d = '';
+    try { d = new URL(match).hostname.replace(/^www\./, ''); } catch (_) { d = match; }
+    return `<a href="${esc(match)}" class="chat-text-link md-link chat-link-box" target="_blank" rel="noopener noreferrer">${esc(match)}</a>`;
   });
 
   s = s.replace(/\u0000TG(\d+)\u0000/g, (_m, idx) => htmlTags[parseInt(idx, 10)]);
@@ -843,7 +848,11 @@ export function openZoom(url, type) {
   } else {
     if (vid) { try { vid.pause(); } catch (_) {} vid.src = ''; vid.style.display = 'none'; }
     im.style.display = 'block';
-    im.src = url;
+    // Avval kesh dan blob URL ni tekshir (qayta yuklash oldini olish)
+    const _cachedUrl = (typeof window !== 'undefined' && window.__mediaCache?.cachedMediaUrlSync)
+      ? (window.__mediaCache.cachedMediaUrlSync(url) || url)
+      : url;
+    im.src = _cachedUrl;
     if (isAvi) {
       im.style.borderRadius = '50%';
       im.style.width = 'min(72vw, 340px)';
