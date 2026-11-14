@@ -879,7 +879,7 @@ export function initAttachMenu({
 
             <div class="am-gallery-loading-box" id="amGalleryLoader" style="display:none;">
               <div class="am-gallery-spinner"></div>
-              <span>Galareyadagi fayllar o'qilmoqda...</span>
+              <span id="amGalleryLoadingText">Galareyadagi fayllar o'qilmoqda...</span>
             </div>
 
             <div class="am-gallery-empty-box" id="amGalleryConnectPrompt" style="display:none;">
@@ -1150,39 +1150,61 @@ export function initAttachMenu({
       try {
         if (galleryFolderName) galleryFolderName.textContent = handle.name || 'DCIM';
         if (galleryToolbar) galleryToolbar.style.display = 'flex';
+        const galleryLoadingText = overlay.querySelector('#amGalleryLoadingText');
+        if (galleryLoadingText) galleryLoadingText.textContent = "Galereya o'qilmoqda...";
+        let renderedFirstBatch = false;
 
-        const mediaEntries = await scanDirectory(handle, 3, 120);
+        const mediaEntries = await scanDirectory(handle, {
+          maxDepth: 3,
+          maxCount: 150,
+          onProgress: ({ scannedCount, foundCount, currentFolder, isComplete }) => {
+            if (galleryLoadingText) {
+              galleryLoadingText.textContent = isComplete
+                ? `Tayyor! (${foundCount} ta media)`
+                : `${currentFolder || 'DCIM'} o'qilmoqda... (${foundCount} ta topildi)`;
+            }
+          },
+          onBatch: (batch) => {
+            if (!batch || !batch.length) return;
+            dcimMediaList = batch.map((m, idx) => {
+              let thumbUrl = '';
+              try {
+                thumbUrl = URL.createObjectURL(m.file);
+                _activeObjectUrls.add(thumbUrl);
+              } catch (_) {}
+              const isVid = (m.type || '').startsWith('video/');
+              return {
+                id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
+                file: m.file,
+                thumbUrl,
+                type: m.type,
+                name: m.name,
+                duration: 0,
+                durationText: isVid ? 'Video' : '',
+              };
+            });
 
-        if (!mediaEntries.length) {
+            renderDcimMediaItems(dcimMediaList);
+            isDcimLoaded = true;
+            dcimGrid.style.display = 'grid';
+            updateSelectionUI();
+
+            if (!renderedFirstBatch) {
+              renderedFirstBatch = true;
+              if (galleryLoader) galleryLoader.style.display = 'none';
+            }
+          }
+        });
+
+        if (!mediaEntries.length && !renderedFirstBatch) {
           galleryLoader.style.display = 'none';
           isDcimLoading = false;
           if (galleryEmpty) galleryEmpty.style.display = 'flex';
           return;
         }
 
-        dcimMediaList = mediaEntries.map((m, idx) => {
-          let thumbUrl = '';
-          try {
-            thumbUrl = URL.createObjectURL(m.file);
-            _activeObjectUrls.add(thumbUrl);
-          } catch (_) {}
-          const isVid = (m.type || '').startsWith('video/');
-          return {
-            id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
-            file: m.file,
-            thumbUrl,
-            type: m.type,
-            name: m.name,
-            duration: 0,
-            durationText: isVid ? 'Video' : '',
-          };
-        });
-
-        renderDcimMediaItems(dcimMediaList);
-        isDcimLoaded = true;
+        // Barcha skanerlash tugagach loader ni yashirish
         galleryLoader.style.display = 'none';
-        dcimGrid.style.display = 'grid';
-        updateSelectionUI();
 
         // Video davomiyliklarini asinxron o'qib yangilash
         dcimMediaList.forEach(async (it) => {

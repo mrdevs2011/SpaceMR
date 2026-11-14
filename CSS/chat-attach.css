@@ -6,28 +6,30 @@
 
 /* ═══ SpaceMR Camera UI ═══ */
 #camCapture {
-  position: fixed; inset: 0; z-index: 9200;
+  position: fixed; inset: 0; z-index: 2147483640 !important;
   background: #000;
   display: flex; align-items: center; justify-content: center;
   user-select: none; -webkit-user-select: none;
   touch-action: none; overflow: hidden;
+  pointer-events: auto !important;
 }
 #camCapture .cc-video {
   width: 100%; height: 100%;
   object-fit: cover; background: #000;
   transform: scale(var(--cc-zoom, 1)); transform-origin: center;
+  z-index: 1; pointer-events: none !important;
 }
 #camCapture .cc-video.mirror { transform: scaleX(-1) scale(var(--cc-zoom, 1)); }
 #camCapture .cc-zoom-badge {
   position: absolute; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
   padding: 4px 12px; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff;
-  font-size: 14px; font-weight: 600; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 3;
+  font-size: 14px; font-weight: 600; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 5;
 }
 #camCapture .cc-zoom-badge.show { opacity: 1; }
 #camCapture .cc-video { will-change: transform; }
 #camCapture .cc-freeze {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-  filter: blur(14px) brightness(0.85); pointer-events: none; z-index: 1;
+  filter: blur(14px) brightness(0.85); pointer-events: none !important; z-index: 2;
   opacity: 0; transition: opacity 0.22s ease;
   transform: scale(var(--cc-zoom, 1)); transform-origin: center;
 }
@@ -40,13 +42,16 @@
   position: absolute; left: 0; right: 0;
   top: 0; padding: max(14px, calc(env(safe-area-inset-top, 0px) + 8px)) 12px 0;
   display: flex; align-items: center; gap: 8px;
-  z-index: 2;
+  z-index: 20 !important;
+  pointer-events: auto !important;
   transition: opacity 0.28s ease, transform 0.28s ease;
 }
 #camCapture .cc-top-right {
   display: flex; align-items: center; gap: 8px;
   margin-left: auto;
   flex-shrink: 0;
+  z-index: 22 !important;
+  pointer-events: auto !important;
 }
 #camCapture .cc-btn {
   width: 44px; height: 44px;
@@ -56,6 +61,10 @@
   color: #fff; cursor: pointer;
   background: rgba(0,0,0,.92);
   transition: background .15s ease, transform .12s ease;
+  position: relative;
+  z-index: 25 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
 }
 #camCapture .cc-btn:active { transform: scale(0.92); }
 #camCapture .cc-btn:hover { background: rgba(0,0,0,0.6); }
@@ -64,9 +73,10 @@
   position: absolute;
   left: 50%; top: max(14px, calc(env(safe-area-inset-top, 0px) + 8px));
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 22 !important;
   display: flex; align-items: center; justify-content: center;
   min-width: 96px; min-height: 42px;
+  pointer-events: auto !important;
 }
 #camCapture .cc-modes {
   display: flex; gap: 4px;
@@ -76,14 +86,15 @@
   border-radius: var(--radius);
   background: rgba(0,0,0,0.55);
   background: rgba(0,0,0,.92);
-  pointer-events: auto;
+  pointer-events: auto !important;
+  z-index: 25 !important;
   transition: opacity 0.22s ease, transform 0.22s ease;
 }
 #camCapture .cc-modes[hidden] {
   display: flex !important;
   opacity: 0;
   transform: scale(0.88);
-  pointer-events: none;
+  pointer-events: none !important;
   position: absolute;
   visibility: hidden;
 }
@@ -96,6 +107,10 @@
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   transition: background .15s ease, color .15s ease;
+  position: relative;
+  z-index: 26 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
 }
 #camCapture .cc-mode svg { display: block; }
 #camCapture .cc-mode.active {
@@ -107,7 +122,8 @@
   bottom: max(24px, env(safe-area-inset-bottom, 0px));
   display: flex; justify-content: center; align-items: center;
   gap: 0;
-  z-index: 2;
+  z-index: 20 !important;
+  pointer-events: auto !important;
 }
 #camCapture .cc-shutter {
   width: 74px; height: 74px; padding: 0;
@@ -115,6 +131,10 @@
   background: transparent; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: border-color .15s ease, transform .1s ease;
+  position: relative;
+  z-index: 25 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
 }
 #camCapture .cc-gallery-btn {
   position: absolute;
@@ -128,6 +148,15 @@
   border: 1.5px solid rgba(255, 255, 255, 0.6);
   color: #fff;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  z-index: 25 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: transparent;
+}
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -215,6 +244,9 @@
   width: 100%;
   padding: 0 24px;
   animation: cc-review-in 0.28s cubic-bezier(.2,.8,.2,1);
+  position: relative;
+  z-index: 22 !important;
+  pointer-events: auto !important;
 }
 #camCapture .cc-review[hidden] {
   display: none !important;
@@ -227,12 +259,18 @@
   width: 52px; height: 52px;
   background: rgba(0,0,0,0.45);
   color: #fff;
+  z-index: 25 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
 }
 #camCapture .cc-send {
   width: 56px; height: 56px;
   background: #1d9bf0;
   color: #fff;
   box-shadow: 0 4px 16px rgba(29,155,240,0.35);
+  z-index: 25 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
 }
 #camCapture .cc-send:active { transform: scale(0.94); }
 #camCapture .cc-shutter[hidden] { display: none !important; }

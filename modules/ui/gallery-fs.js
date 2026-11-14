@@ -266,56 +266,163 @@ export async function pickAndValidateGalleryDirectory({ onInvalidFolder = null }
 }
 
 /**
- * Tanlangan papka va uning barcha ichki ost-papkalarini (Camera, Screenshots,
- * Screen recordings, Instagram, Telegram va h.k.) aqlli rekursiv skanerlash.
- * Fayllarni lastModified sanasi bo'yicha eng yangilarini birinchi qilib saralaydi.
+ * Tanlangan papka va uning barcha ichki ost-papkalarini (Camera, Screenshots va h.k.)
+ * chaqmoq tezligida parallel va progressiv oqim bilan skanerlash.
+ * Dastlabki topilgan fayllar darhol onBatch() orqali UI ga uzatiladi.
+ * onProgress() esa skanerlash jarayonini real-vaqtda son va papka nomi bilan ko'rsatib boradi.
  */
-export async function scanDirectory(dirHandle, maxDepth = 3, maxCount = 150) {
+export async function scanDirectory(dirHandle, maxDepthOrOptions = 3, maxCountParam = 150) {
   if (!dirHandle) return [];
 
-  const rawEntries = [];
+  let maxDepth = 3;
+  let maxCount = 150;
+  let onProgress = null;
+  let onBatch = null;
 
-  async function processDirectory(handle, depth = 0) {
-    if (!handle || depth > maxDepth) return;
+  if (typeof maxDepthOrOptions === 'object' && maxDepthOrOptions !== null) {
+    maxDepth = maxDepthOrOptions.maxDepth ?? 3;
+    maxCount = maxDepthOrOptions.maxCount ?? 150;
+    onProgress = maxDepthOrOptions.onProgress ?? null;
+    onBatch = maxDepthOrOptions.onBatch ?? null;
+  } else {
+    maxDepth = Number(maxDepthOrOptions) || 3;
+    maxCount = Number(maxCountParam) || 150;
+  }
+
+  const rawEntries = [];
+  const seenFileKeys = new Set();
+  let totalScannedDirs = 0;
+  let totalFoundFiles = 0;
+
+  // 1) Papkalarni ustuvorlik bo'yicha saralash
+  // DCIM ichida "Camera" eng muhim! Keyin "Screenshots", keyin boshqalar.
+  function prioritizeDirs(dirs) {
+    return dirs.sort((a, b) => {
+      const aN = (a.name || '').toLowerCase();
+      const bN = (b.name || '').toLowerCase();
+      if (aN === 'camera') return -1;
+      if (bN === 'camera') return 1;
+      if (aN.includes('camera')) return -1;
+      if (bN.includes('camera')) return 1;
+      if (aN.includes('screenshot')) return -1;
+      if (bN.includes('screenshot')) return 1;
+      return 0;
+    });
+  }
+
+  // Bitta papka ichidagi fayllarni parallel (chunks bilan) o'qish
+  async function readDirectoryEntries(handle) {
+    const files = [];
+    const subDirs = [];
     try {
       for await (const entry of handle.values()) {
         if (entry.kind === 'file') {
           const name = entry.name || '';
           const dotIdx = name.lastIndexOf('.');
           const ext = dotIdx >= 0 ? name.slice(dotIdx + 1).toLowerCase() : '';
-
-          const isImg = IMAGE_EXTENSIONS.has(ext);
-          const isVid = VIDEO_EXTENSIONS.has(ext);
-
-          if (isImg || isVid) {
-            try {
-              const file = await entry.getFile();
-              if (file && file.size > 0) {
-                rawEntries.push({
-                  file,
-                  name: file.name || name,
-                  type: file.type || (isImg ? 'image/jpeg' : 'video/mp4'),
-                  size: file.size,
-                  lastModified: file.lastModified || Date.now(),
-                });
-              }
-            } catch (_) {}
+          if (IMAGE_EXTENSIONS.has(ext) || VIDEO_EXTENSIONS.has(ext)) {
+            files.push(entry);
           }
-        } else if (entry.kind === 'directory' && depth < maxDepth) {
+        } else if (entry.kind === 'directory') {
           const dName = (entry.name || '').toLowerCase();
-          // Tizim yashirin papkalari yoki thumbnail/cache papkalarini chetlab o'tamiz
           const isIgnored = dName.startsWith('.') ||
                             dName.includes('thumb') ||
                             dName.includes('cache') ||
                             dName.includes('trashed') ||
                             dName === 'lost.dir';
           if (!isIgnored) {
-            await processDirectory(entry, depth + 1);
+            subDirs.push(entry);
           }
         }
       }
     } catch (err) {
-      console.warn('[GalleryFS] recursive scan error in dir:', handle.name, err);
+      console.warn('[GalleryFS] dir read error:', handle.name, err);
+    }
+    return { files, subDirs };
+  }
+
+  // Parallel file.getFile() olish (Concurrency: 12)
+  async function resolveFilesParallel(fileEntries, folderName) {
+    const CHUNK_SIZE = 12;
+
+    for (let i = 0; i < fileEntries.length; i += CHUNK_SIZE) {
+      if (rawEntries.length >= maxCount * 2) break; // yetarli media yig'ildi
+
+      const chunk = fileEntries.slice(i, i + CHUNK_SIZE);
+      const batchFiles = await Promise.all(
+        chunk.map(async (entry) => {
+          try {
+            const f = await entry.getFile();
+            if (f && f.size > 0) {
+              const key = `${f.name}_${f.size}_${f.lastModified}`;
+              if (!seenFileKeys.has(key)) {
+                seenFileKeys.add(key);
+                const ext = (f.name.split('.').pop() || '').toLowerCase();
+                const isImg = IMAGE_EXTENSIONS.has(ext);
+                return {
+                  file: f,
+                  name: f.name || entry.name,
+                  type: f.type || (isImg ? 'image/jpeg' : 'video/mp4'),
+                  size: f.size,
+                  lastModified: f.lastModified || Date.now(),
+                };
+              }
+            }
+          } catch (_) {}
+          return null;
+        })
+      );
+
+      const validItems = batchFiles.filter(Boolean);
+      if (validItems.length > 0) {
+        rawEntries.push(...validItems);
+        totalFoundFiles = rawEntries.length;
+
+        // Progress haqida xabar berish
+        if (typeof onProgress === 'function') {
+          onProgress({
+            scannedCount: totalScannedDirs,
+            foundCount: totalFoundFiles,
+            currentFolder: folderName || 'DCIM',
+            isComplete: false,
+          });
+        }
+
+        // Yangi batch kelishi bilan UI ni darhol progressiv yangilash
+        if (typeof onBatch === 'function') {
+          const currentSorted = [...rawEntries].sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0)).slice(0, maxCount);
+          onBatch(currentSorted);
+        }
+      }
+    }
+  }
+
+  async function processDirectory(handle, depth = 0) {
+    if (!handle || depth > maxDepth || rawEntries.length >= maxCount * 2) return;
+    totalScannedDirs++;
+
+    if (typeof onProgress === 'function') {
+      onProgress({
+        scannedCount: totalScannedDirs,
+        foundCount: totalFoundFiles,
+        currentFolder: handle.name || 'DCIM',
+        isComplete: false,
+      });
+    }
+
+    const { files, subDirs } = await readDirectoryEntries(handle);
+
+    // Agar fayllar bo'lsa, ularni parallel olamiz
+    if (files.length > 0) {
+      await resolveFilesParallel(files, handle.name);
+    }
+
+    if (depth < maxDepth && subDirs.length > 0 && rawEntries.length < maxCount * 2) {
+      const prioritized = prioritizeDirs(subDirs);
+      for (const sub of prioritized) {
+        if (rawEntries.length >= maxCount * 2) break;
+        await processDirectory(sub, depth + 1);
+      }
     }
   }
 
@@ -323,8 +430,22 @@ export async function scanDirectory(dirHandle, maxDepth = 3, maxCount = 150) {
 
   // Eng so'nggi (yangi) fotosuratlar va videolar birinchi bo'lib chiqishi uchun saralaymiz
   rawEntries.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+  const finalResult = rawEntries.slice(0, maxCount);
 
-  return rawEntries.slice(0, maxCount);
+  if (typeof onProgress === 'function') {
+    onProgress({
+      scannedCount: totalScannedDirs,
+      foundCount: finalResult.length,
+      currentFolder: dirHandle.name || 'DCIM',
+      isComplete: true,
+    });
+  }
+
+  if (typeof onBatch === 'function') {
+    onBatch(finalResult);
+  }
+
+  return finalResult;
 }
 
 // Qulaylik uchun alias

@@ -234,6 +234,7 @@ export async function openCameraCapture(options = {}) {
     const ptrDist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
     ov.addEventListener('pointerdown', e => {
       if (reviewing) return;
+      if (e.target.closest('button, .cc-btn, .cc-shutter, .cc-mode, .cc-gallery-btn, .cc-top, .cc-bottom')) return;
       ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (ptrs.size === 2) pinch = { d: ptrDist(), z: zoomLevel };
     });
@@ -679,19 +680,23 @@ export async function openCameraCapture(options = {}) {
       };
       document.addEventListener('keydown', onKey, true);
 
-      closeBtn.onclick = () => {
+      closeBtn.onclick = (e) => {
+        e?.stopPropagation?.();
         if (recording) return; // yozishda X yo'q
         if (reviewing) { exitReview(); return; }
         done(null);
       };
 
-      flipBtn?.addEventListener('click', () => switchFacing());
+      flipBtn?.addEventListener('click', (e) => {
+        e?.stopPropagation?.();
+        switchFacing();
+      });
 
       // Chapga surish → orqa kamera, o'ngga surish → old kamera (faqat 2+ kamerali qurilmada)
       let sw = null;
       ov.addEventListener('pointerdown', e => {
         if (sw && e.pointerId !== sw.id) { sw.multi = true; return; }   // 2 barmoq = pinch-zoom
-        if (e.target.closest('button, .cc-shutter')) { sw = null; return; }
+        if (e.target.closest('button, .cc-shutter, .cc-btn, .cc-mode, .cc-gallery-btn, .cc-top, .cc-bottom')) { sw = null; return; }
         sw = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), multi: false };
       });
       ov.addEventListener('pointerup', e => {
@@ -705,7 +710,8 @@ export async function openCameraCapture(options = {}) {
       });
       ov.addEventListener('pointercancel', () => { sw = null; });
 
-      flashBtn.addEventListener('click', async () => {
+      flashBtn.addEventListener('click', async (e) => {
+        e?.stopPropagation?.();
         if (reviewing || switchingFace) return;
         let tr = vTrack();
         if (!tr) return;
@@ -735,12 +741,17 @@ export async function openCameraCapture(options = {}) {
         });
       });
       modesEl.addEventListener('click', e => {
+        e?.stopPropagation?.();
         const b = e.target.closest('.cc-mode');
         if (b && !recording && !reviewing) switchMode(b.dataset.mode);
       });
 
-      ov.querySelector('.cc-retake').onclick = () => exitReview();
-      ov.querySelector('.cc-send').onclick = () => {
+      ov.querySelector('.cc-retake').onclick = (e) => {
+        e?.stopPropagation?.();
+        exitReview();
+      };
+      ov.querySelector('.cc-send').onclick = (e) => {
+        e?.stopPropagation?.();
         if (pendingFile) done(pendingFile);
       };
 
@@ -754,6 +765,7 @@ export async function openCameraCapture(options = {}) {
       };
 
       const onShutterDown = (e) => {
+        e?.stopPropagation?.();
         if (reviewing || recording) return;
         if (e.button != null && e.button !== 0) return;
         holdFired = false;
@@ -771,7 +783,8 @@ export async function openCameraCapture(options = {}) {
         }, 2000);
       };
 
-      const onShutterUp = () => {
+      const onShutterUp = (e) => {
+        e?.stopPropagation?.();
         clearHold();
       };
 
@@ -780,7 +793,9 @@ export async function openCameraCapture(options = {}) {
       shutter.addEventListener('pointerleave', onShutterUp);
       shutter.addEventListener('pointercancel', onShutterUp);
 
-      shutter.addEventListener('click', async () => {
+      shutter.addEventListener('click', async (e) => {
+        e?.stopPropagation?.();
+        e?.preventDefault?.();
         if (ignoreNextClick) { ignoreNextClick = false; return; }
         if (reviewing) return;
         if (holdFired) { holdFired = false; return; }
