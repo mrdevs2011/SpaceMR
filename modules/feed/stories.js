@@ -124,31 +124,42 @@ function disposeStoryMedia() {
   media.innerHTML = '';
 }
 
-function spawnFlyingEmoji(emoji) {
-  const v = $('storyViewer'); if (!v) return;
-  const count = 5;
+function spawnFlyingEmoji(emoji, triggerEl) {
+  const count = 10;
+  const rect = triggerEl?.getBoundingClientRect?.();
+  const startX = rect ? (rect.left + rect.width / 2) : (window.innerWidth / 2);
+  const startY = rect ? (rect.top + rect.height / 2) : (window.innerHeight - 100);
+
   for (let i = 0; i < count; i++) {
     const el = document.createElement('div');
     el.className = 'sv-flying-emoji';
-    const offsetX = (i - 2) * 28 + (Math.random() * 24 - 12);
-    const delay = i * 55;
-    const scale = 0.95 + Math.random() * 0.35;
-    el.style.setProperty('--fly-x', `${offsetX}px`);
+    const spreadX = (i - 4.5) * 32 + (Math.random() * 48 - 24);
+    const flyY = -240 - Math.random() * 190;
+    const delay = i * 35;
+    const scale = 0.85 + Math.random() * 0.55;
+    const rot = (Math.random() * 60 - 30);
+
+    el.style.left = `${startX}px`;
+    el.style.top = `${startY}px`;
+    el.style.setProperty('--fly-x', `${spreadX}px`);
+    el.style.setProperty('--fly-y', `${flyY}px`);
     el.style.setProperty('--fly-scale', `${scale}`);
+    el.style.setProperty('--fly-rot', `${rot}deg`);
     el.style.animationDelay = `${delay}ms`;
+
     const svg = getReactionSvg(emoji);
     if (svg) {
       el.innerHTML = svg;
       const s = el.querySelector('svg');
-      if (s) { s.style.width = '42px'; s.style.height = '42px'; s.style.filter = 'drop-shadow(0 4px 14px rgba(0,0,0,0.5))'; }
+      if (s) { s.style.width = '42px'; s.style.height = '42px'; }
     } else if (emoji && (emoji.includes('.png') || emoji.includes('/') || emoji.includes('.webp'))) {
       const src = emoji.startsWith('/') ? emoji : ('/' + emoji);
       el.innerHTML = `<img class="sv-reaction-emoji" src="${src}" style="width:44px;height:44px;object-fit:contain;pointer-events:none;" alt="">`;
     } else {
       el.innerHTML = `<span style="font-size:38px;line-height:1;">${emoji || '❤️'}</span>`;
     }
-    v.appendChild(el);
-    setTimeout(() => el.remove(), 1100 + delay);
+    document.body.appendChild(el);
+    setTimeout(() => { try { el.remove(); } catch (_) {} }, 1100 + delay);
   }
 }
 
@@ -446,7 +457,7 @@ function ensureDom() {
         _storyReactionCounts.set(storyId, counts);
 
         renderStoryReactions(storyId);
-        if (next) spawnFlyingEmoji(next);
+        if (next) spawnFlyingEmoji(next, chip);
         try { window.haptic?.success?.(); } catch (_) {}
 
         chip.classList.add('is-saving');
@@ -798,6 +809,32 @@ function renderBar() {
       openStoryAdd();
     });
   }
+
+  // 0ms ochilishi uchun eng yangi va yaqin story rasmlarini oldindan keshga yuklash
+  preloadStories(_groups);
+}
+
+function preloadStories(groups) {
+  if (!Array.isArray(groups)) return;
+  const toPreload = [];
+  for (const g of groups) {
+    if (!g.items?.length) continue;
+    const firstUnseen = g.items.find(it => !it.seen) || g.items[0];
+    if (firstUnseen?.mediaUrl && !String(firstUnseen.mediaType || '').startsWith('video')) {
+      toPreload.push(firstUnseen);
+      if (toPreload.length >= 8) break;
+    }
+  }
+  toPreload.forEach(it => {
+    try {
+      const img = new Image();
+      img.decoding = 'async';
+      img.loading = 'eager';
+      try { img.fetchPriority = 'high'; } catch (_) {}
+      img.src = cachedUrlSync(it.id) || it.mediaUrl;
+      cacheItem(it);
+    } catch (_) {}
+  });
 }
 
 /* Story qo'shish: mobile/tabletda to'g'ridan-to'g'ri kamera ochiladi, desktopda composer kartasi */
@@ -1233,6 +1270,10 @@ async function showCurrent() {
     el.setAttribute('playsinline', '');
     el.preload = 'auto';
     duration = 15000;
+  } else {
+    el.decoding = 'async';
+    el.loading = 'eager';
+    try { el.fetchPriority = 'high'; } catch (_) {}
   }
   media.appendChild(el);
 
@@ -1246,10 +1287,13 @@ async function showCurrent() {
   // Mark viewed
   markViewed(item);
 
-  // Media manbasi: avval IndexedDB keshi (tarmoqsiz, tez); yo'q bo'lsa — URL, rasm bo'lsa fonda keshlanadi
-  let src = cachedUrlSync(item.id);
-  if (!src) { src = await cachedUrl(item.id); if (token !== _showToken) return; }
-  if (!src) { src = item.mediaUrl; if (!isVideo) cacheItem(item); }
+  // Media manbasi: darhol sinxron olinadi (kutib turilmaydi)
+  let src = cachedUrlSync(item.id) || item.mediaUrl;
+  if (!isVideo) {
+    cacheItem(item);
+  } else if (!cachedUrlSync(item.id)) {
+    cachedUrl(item.id).catch(() => {});
+  }
 
   // Progress faqat media tayyor bo'lgandan KEYIN boshlanadi
   const n = g.items.length;
