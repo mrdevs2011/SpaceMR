@@ -1569,20 +1569,44 @@ export function addHapticTouch(el, type = 'light') {
 
 /* Scroll qulfi. MUHIM: har qulf o'z KALITI bilan ro'yxatga olinadi (masalan 'uploadOverlay'):
    - bir kalit bilan takror lockScroll — qo'shimcha hisoblanmaydi (qulf "oqib" qolmaydi, scroll o'lmaydi);
-   - qulflanmagan kalit bilan unlockScroll — hech narsa qilmaydi (eski xato: ortiqcha unlock
-     window.scrollTo(0, eski_scrollY) chaqirib lentani tepaga otib yuborardi).
-   Kalitsiz chaqiruv (eski kod) — oddiy hisoblagich, lekin u ham 0 dan pastga tushmaydi. */
+   - qulflanmagan yoki yopilgan kalitlar avtomatik tozalanadi (_pruneDeadScrollLocks);
+   - modal DOM dan yopilsa ham scroll hech qachon qotib qolmaydi. */
 const _scrollLocks = new Set();
 let _scrollLockAnon = 0;
 let _scrollLockApplied = false;   // body haqiqatan qulflanganmi
 let _scrollY = 0;
 
-const _scrollLockTotal = () => _scrollLocks.size + _scrollLockAnon;
+/** Yopilgan/ko'rinmaydigan elementlar qulfini avtomatik tozalash (leak oldini olish) */
+function _pruneDeadScrollLocks() {
+  if (typeof document === 'undefined') return;
+  for (const key of _scrollLocks) {
+    const el = document.getElementById(key);
+    if (!el || !el.isConnected) {
+      _scrollLocks.delete(key);
+      continue;
+    }
+    if (el.hidden) {
+      _scrollLocks.delete(key);
+      continue;
+    }
+    const isShown = el.classList.contains('show') || el.classList.contains('open') || el.classList.contains('active') ||
+      (el.style.display !== '' && el.style.display !== 'none');
+    if (!isShown) {
+      _scrollLocks.delete(key);
+    }
+  }
+  if (_scrollLockAnon < 0) _scrollLockAnon = 0;
+}
+
+const _scrollLockTotal = () => {
+  _pruneDeadScrollLocks();
+  return _scrollLocks.size + Math.max(0, _scrollLockAnon);
+};
 
 function _applyScrollLock() {
   if (_scrollLockApplied) return;
   _scrollLockApplied = true;
-  _scrollY = window.scrollY;
+  _scrollY = window.scrollY || 0;
   document.body.style.overflow = 'hidden';
   document.body.style.position = 'fixed';
   document.body.style.top = `-${_scrollY}px`;
@@ -1591,13 +1615,13 @@ function _applyScrollLock() {
 }
 
 function _releaseScrollLock(restore) {
-  if (!_scrollLockApplied) return;   // qulflanmagan bo'lsa — scroll joyiga umuman tegmaymiz
   _scrollLockApplied = false;
   document.body.style.overflow = '';
   document.body.style.position = '';
   document.body.style.top = '';
   document.body.style.width = '';
-  if (restore) window.scrollTo(0, _scrollY);
+  document.documentElement.style.overflow = '';
+  if (restore && _scrollY > 0) window.scrollTo(0, _scrollY);
   try { window.dispatchEvent(new CustomEvent('spacemr:scrolllock', { detail: { locked: false } })); } catch (_) {}
 }
 
@@ -1607,10 +1631,10 @@ export function lockScroll(key) {
   _applyScrollLock();
 }
 
-/** Body scrollini qayta ochish — modal/sheet yopilganda. Shu key bilan lock qilinmagan bo'lsa — e'tiborsiz. */
+/** Body scrollini qayta ochish — modal/sheet yopilganda. */
 export function unlockScroll(key) {
-  if (key) { if (!_scrollLocks.delete(key)) return; }
-  else { if (_scrollLockAnon === 0) return; _scrollLockAnon--; }
+  if (key) _scrollLocks.delete(key);
+  else if (_scrollLockAnon > 0) _scrollLockAnon--;
   if (_scrollLockTotal() === 0) _releaseScrollLock(true);
 }
 
@@ -1619,6 +1643,14 @@ export function resetScrollLock() {
   _scrollLocks.clear();
   _scrollLockAnon = 0;
   _releaseScrollLock(false);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('spacemr:route', () => {
+    if (_scrollLockTotal() === 0 && _scrollLockApplied) {
+      _releaseScrollLock(false);
+    }
+  });
 }
 
 /** 1234 -> "1.2K", 0 -> "" (X uslubi) */

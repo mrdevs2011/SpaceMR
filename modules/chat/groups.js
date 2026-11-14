@@ -601,7 +601,13 @@ export async function joinGroupByToken(raw) {
 
 export async function openGroupThread(groupId) {
   // Boshqa guruh/chat ochilganda eski guruh-info paneli yopilsin (router: avval thread, keyin info ochadi)
-  try { document.getElementById('grpInfoOverlay')?.classList.remove('show'); } catch (_) {}
+  try {
+    const gi = document.getElementById('grpInfoOverlay');
+    if (gi?.classList.contains('show')) {
+      gi.classList.remove('show');
+      unlockScroll('grpInfoOverlay');
+    }
+  } catch (_) {}
   document.getElementById('chatThreadModal')?.classList.remove('is-saved');
   let groupData = _latestGroupMap[groupId];
   if (!groupData && state.me && groupId) {
@@ -930,6 +936,13 @@ export function closeGroupThread() {
   _currentGroupId   = null;
   _currentGroupData = null;
   state.currentChatKind = 'dm';
+  try {
+    const gi = document.getElementById('grpInfoOverlay');
+    if (gi?.classList.contains('show')) {
+      gi.classList.remove('show');
+      unlockScroll('grpInfoOverlay');
+    }
+  } catch (_) {}
   unlockScroll('chatThreadModal'); // Modal yopildi — body scrollini qayta ochamiz
   try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
 }

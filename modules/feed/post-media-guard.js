@@ -55,15 +55,15 @@ if (typeof document !== 'undefined' && !window.__postMediaGuard) {
 
   /* Modal yoki qoplama ochiqligini tekshirish */
   function isModalActive() {
+    const sv = document.getElementById('storyViewer');
     return !!(
-      document.body.style.position === 'fixed' ||
-      document.getElementById('storyViewer')?.classList?.contains('open') ||
+      (sv && !sv.hidden) ||
       document.getElementById('incomingCallModal')?.classList?.contains('show') ||
       document.getElementById('callActiveModal')?.classList?.contains('show') ||
       document.getElementById('camCapture')?.classList?.contains('open') ||
-      document.getElementById('uploadOverlay')?.classList?.contains('open') ||
-      document.getElementById('zoomModal')?.classList?.contains('open') ||
-      document.getElementById('cmViewer')?.classList?.contains('open') ||
+      document.getElementById('uploadOverlay')?.classList?.contains('show') ||
+      document.getElementById('zoomModal')?.classList?.contains('show') ||
+      document.getElementById('cmViewer')?.classList?.contains('show') ||
       document.getElementById('appRunner')?.classList?.contains('open')
     );
   }
@@ -80,9 +80,6 @@ if (typeof document !== 'undefined' && !window.__postMediaGuard) {
     });
   }
   window.addEventListener('spacemr:route', () => { setTimeout(pauseHidden, 120); });
-  window.addEventListener('spacemr:scrolllock', (e) => {
-    if (e?.detail?.locked) pauseHidden();
-  });
 
   document.addEventListener('play', (e) => {
     const v = e.target;

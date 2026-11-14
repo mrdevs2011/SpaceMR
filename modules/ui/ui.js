@@ -1,4 +1,4 @@
-import { $, esc, lockScroll, unlockScroll } from '../core/utils.js';
+import { $, esc, lockScroll, unlockScroll, resetScrollLock } from '../core/utils.js';
 import { state, sb }                               from '../core/config.js';
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -11,7 +11,6 @@ const searchInput    = $('searchInput');
 
 function openSearchOverlay() {
   searchOverlay?.classList.add('open');
-  lockScroll('searchOverlay');
   // Explore ochilganda input avtomatik fokuslanmasin
   sbSearchToggle?.classList.add('search-active');
   // URL: /explore (float emas — to'liq sahifa)
@@ -26,7 +25,6 @@ function openSearchOverlay() {
 
 function closeSearchOverlay() {
   searchOverlay?.classList.remove('open');
-  unlockScroll('searchOverlay');
   sbSearchToggle?.classList.remove('search-active');
   import('./right-rail.js').then(m => m.onRouteChange?.()).catch(() => {});
   if (searchInput) { searchInput.value = ''; _doSearch(''); }
@@ -85,6 +83,7 @@ export async function switchView(v) {
     state.currentViewingUserId    = null;
     state.currentViewingUserPosts = [];
     upm.classList.remove('show');
+    unlockScroll('userProfileModal');
   }
 
   /* Qidiruv overlay yopilsin */
@@ -92,6 +91,7 @@ export async function switchView(v) {
     closeSearchOverlay();
   }
 
+  resetScrollLock();
   window.scrollTo({ top: 0 });
 
   if (v === 'home') {

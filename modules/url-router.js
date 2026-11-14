@@ -1,4 +1,4 @@
-import { smoothScrollIntoView } from './core/utils.js';
+import { smoothScrollIntoView, resetScrollLock } from './core/utils.js';
 /**
  * SpaceMR — URL router (path asosida).
  *
@@ -437,6 +437,7 @@ function closeEverythingExcept(keep) {
   if (keep !== 'story' && sv && !sv.hidden) import('./feed/stories.js').then(m => m.closeStoryViewer?.()).catch(() => {});
   if (keep !== 'userprofile' && hasShow('userProfileModal')) $('upBack')?.click();
   if (keep !== 'groupcreate' && hasShow('grpCreateFormOverlay')) $('grpFormCancelBtn')?.click();
+  if (hasShow('grpInfoOverlay')) $('grpInfoCloseBtn')?.click();
   /* uploadOverlay float — closeEverythingExcept yopmaydi */
   if (keep !== 'explore' && hasShow('searchOverlay', 'open')) $('searchOverlayClose')?.click();
   if (keep !== 'settings' && hasShow('settingsOverlay') && !settingsPinned()) $('closeSettingsBtn')?.click();
@@ -682,6 +683,7 @@ async function _applyPathImpl(rawPath, { initial = false } = {}) {
       }
       closeEverythingExcept(null);
       await closeThreadIfOpen();
+      resetScrollLock();
       if (route.view === 'profile') pickTab('#profileGridTabs [data-pg-tab]', 'pgTab', route.tab || 'all');
       if (route.view === 'apps') window.dispatchEvent(new Event('apps:path'));
       updateTitle(cleanPath(rawPath));
