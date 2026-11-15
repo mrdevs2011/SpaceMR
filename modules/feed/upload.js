@@ -160,7 +160,7 @@ export function pickFile(f) {
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
     </button></div>`;
   } else if (video) {
-    $('previewArea').innerHTML = `<div class="preview-wrap"><video src="${esc(state._objUrl)}" controls playsinline muted style="width:100%;max-height:280px;background:#000;display:block" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video><button class="preview-clear" data-action="clear-file">
+    $('previewArea').innerHTML = `<div class="preview-wrap"><video src="${esc(state._objUrl)}" controls playsinline muted style="width:100%;height:auto;display:block;border-radius:var(--radius);background:transparent" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video><button class="preview-clear" data-action="clear-file">
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
     </button><div class="fs-11px c-text3-theme" style="padding:6px 8px">Kamera standarti: 1 daqiqa · 1080p · 30 fps</div></div>`;
   } else {
