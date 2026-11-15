@@ -333,12 +333,22 @@ export function handleSwipeMove(touch, event) {
       return;
     }
 
-    // 2. In chat thread: check for message swipe-to-reply (deltaX < -15px on message card)
+    // 2. In chat thread: check for message swipe-to-reply (on message card)
     if (_swipe.type === 'chat') {
-      if (_swipe.msgRow && deltaX < -15 && absX > absY) {
-        _swipe.directionLocked = 'reply';
+      if (_swipe.msgRow) {
+        // Message card ustida har qanday gorizontal harakat (chapga yoki o'ngga) — faqat Reply!
+        // Xabar kartasi ustida surish hech qachon chat oynasini yopib chiqib ketmasligi kerak!
+        if (absX > 10 && absX > absY) {
+          _swipe.directionLocked = 'reply';
+          return;
+        }
+        if (absY > 8) {
+          _swipe.directionLocked = 'vertical';
+          return;
+        }
         return;
       }
+      // Chatni orqaga surib yopish (swipe-to-back) faqat xabardan tashqari joylarda (header, fon) ishlaydi
       if (deltaX > 8 && absX > absY) {
         _swipe.directionLocked = 'horizontal';
       }

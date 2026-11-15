@@ -1015,11 +1015,13 @@ function cancelLp() { clearTimeout(lpTimer); lpTimer = null; lp = null; }
    Telegram uslubi: qator barmoq bilan siljiydi, chetda "javob" belgisi paydo bo'ladi; yetarlicha
    surilib qo'yib yuborilsa — startReply(). Faqat sensorli qurilmada (sichqonchada matn belgilash bilan
    to'qnashmasligi uchun). Vertikal scroll va bosib-turib belgilash (long-press) bilan aralashmaydi. */
-const SW_START = 14, SW_TRIGGER = 56, SW_MAX = 86, SW_EDGE = 24;
+const SW_START = 12, SW_TRIGGER = 52, SW_MAX = 86, SW_EDGE = 14;
 let sw = null, swIc = null;
 function swEligible(row, x) {
   if (selMode || !row?.dataset?.msgId) return false;
-  if (x < SW_EDGE || x > innerWidth - SW_EDGE) return false;   // tizim "orqaga" imo-ishorasi
+  // Faqat tizimning chap qirra orqaga imo-ishorasi (x < SW_EDGE) cheklanadi;
+  // Xabar qayerda bo'lishidan qat'i nazar (hatto o'ng tomondagi o'z xabarlarimiz ham) reply doimo ishlashi kerak!
+  if (x < SW_EDGE) return false;
   const m = msgOf(row.dataset.msgId);
   return !!m && !isCallMsg(m) && !(isMine(m) && m.status === 'sending');
 }
@@ -1033,21 +1035,26 @@ function swIcon() {
 }
 function swUpdate(dx) {
   if (!sw) return;
-  // Xabar kartasi ustida chapga surilsa (dx < 0) — Reply 1-darajali bo'lib qoladi, orqaga surish aralashmaydi
-  let raw = dx < 0 ? dx : 0;
-  sw.dx = raw;
-  if (!raw) {
+  // Xabar kartasi ustida har qanday gorizontal surish (chapga ham, o'ngga ham) — Reply rejimi
+  sw.dx = dx;
+  const absDx = Math.abs(dx);
+  if (!dx || absDx < 2) {
     sw.row.style.transform = '';
     if (swIc) { swIc.style.opacity = '0'; swIc.classList.remove('armed'); }
     sw.armed = false;
     return;
   }
-  const tx = Math.max(-SW_MAX, raw * 0.7);
+  const sign = dx < 0 ? -1 : 1;
+  const tx = sign * Math.min(SW_MAX, absDx * 0.7);
   sw.row.style.transform = `translateX(${tx.toFixed(1)}px)`;
   const ic = swIcon(), r = sw.row.getBoundingClientRect(), br = box.getBoundingClientRect();
-  const p = Math.min(1, Math.abs(raw) / SW_TRIGGER);
+  const p = Math.min(1, absDx / SW_TRIGGER);
   ic.style.top = (r.top + r.height / 2 - 17) + 'px';
-  ic.style.left = (br.right - 44) + 'px';
+  if (dx < 0) {
+    ic.style.left = (br.right - 44) + 'px';
+  } else {
+    ic.style.left = (br.left + 16) + 'px';
+  }
   ic.style.opacity = String(p);
   ic.style.transform = `scale(${(0.5 + 0.5 * p).toFixed(2)})`;
   ic.classList.toggle('armed', p >= 1);
@@ -1197,14 +1204,13 @@ export function initMsgMenu(opts) {
     if (drag) { updateDrag(t.clientY); return; } // surish paytida ro'yxat siljimasligini touchBlock ta'minlaydi
     if (sw) {
       const dx = t.clientX - sw.x, dy = t.clientY - sw.y;
+      const absDx = Math.abs(dx), absDy = Math.abs(dy);
       if (!sw.on) {
-        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) sw = null;                       // vertikal scroll
-        else if (dx < -SW_START && Math.abs(dx) > Math.abs(dy) * 1.4) {
-          // Xabar kartasi ustida chapga surilsa (dx < -15px): Reply (Javob berish) 1-darajali bo'lib qoladi
+        if (absDy > 12 && absDy > absDx) {
+          sw = null; // vertikal scroll
+        } else if (absDx > SW_START && absDx > absDy * 1.3) {
+          // Xabar kartasi ustida surilganda (chapga yoki o'ngga) — Reply (Javob berish) 1-darajali bo'ladi!
           sw.on = true; cancelLp(); sw.row.style.transition = 'none';
-        } else if (dx > 5) {
-          // O'ngga surish: chat oynasini orqaga surish (swipe-to-back) ga to'liq yo'l berish
-          sw = null;
         }
       }
       if (sw?.on) { blockTouch(true); swUpdate(dx); return; }
