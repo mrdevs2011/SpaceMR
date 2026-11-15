@@ -377,7 +377,6 @@ function _paintCmts(postId, listId, cmts, aMap) {
         const { data: _delRows, error: delErr } = await sb.from('comments').delete().eq('id', cmtId).select('id');
         if (delErr) throw delErr;
         if (!(_delRows || []).length) throw new Error('0 qator o\'chirildi (RLS)');   // jim rad etilsa izoh qayta chiqib qolardi
-        toast('Izoh o\'chirildi', 'success');
         const _left = cmts.filter(x => String(x.id) !== String(cmtId));
         _cmtCache = { postId, listId, cmts: _left, aMap };
         _paintCmts(postId, listId, _left, aMap);
@@ -559,7 +558,6 @@ async function sendComment(mode) {
   } else {
     _cmtCount(postId, (state.allPosts?.find(p => p.id === postId)?.commentCount || 0) + 1);
   }
-  toast('Izoh qo\'shildi', 'success');
 
   /* 2) Orqa fonda yuboriladi; muvaffaqiyatda boshqalarga ham tarqatiladi, xato bo'lsa qaytariladi */
   (async () => {

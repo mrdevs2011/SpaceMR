@@ -1000,7 +1000,6 @@ export async function doDelete(id) {
   document.querySelector(`.post[data-id="${id}"]`)?.remove();
   document.querySelector(`.grid-cell[data-id="${id}"]`)?.remove();
   busEmit('post', { op: 'del', id });
-  toast("Post o'chirildi", 'success');
   document.dispatchEvent(new CustomEvent('postsUpdated'));
 }
 /* ── Keyboard Controls ───────────────────────────────────────────────── */

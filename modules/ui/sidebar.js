@@ -125,20 +125,6 @@ export function openProfileSettings() {
 
 $('sbAccount')?.addEventListener('click', e => {
   e.stopPropagation();
-  const dots = e.target.closest('.sb-acc-dots');
-  const wide = window.matchMedia('(min-width: 1100px)').matches;
-
-  // Desktop: 3 nuqta → menyu, qolgan joy → profil + settings
-  if (wide) {
-    if (dots) {
-      if (_menu) closeMenu(); else openMenu();
-    } else {
-      openProfileSettings();
-    }
-    return;
-  }
-
-  // Mobil / planshet: account → profil/sozlamalar + Asosiy ma'lumotlar
   openProfileSettings();
 });
 

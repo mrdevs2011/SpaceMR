@@ -157,19 +157,23 @@ export function isPermissionAllowed(permId) {
   return true;
 }
 
+const PERM_TOAST_MAP = {
+  microphone: "Sozlamalar → Ruxsatlar bo'limidan mikrofonga ruxsat bering",
+  camera: "Sozlamalar → Ruxsatlar bo'limidan kameraga ruxsat bering",
+  notifications: "Sozlamalar → Ruxsatlar bo'limidan bildirishnomalarga ruxsat bering",
+  geolocation: "Sozlamalar → Ruxsatlar bo'limidan joylashuvga ruxsat bering",
+  clipboard: "Sozlamalar → Ruxsatlar bo'limidan klipbordga ruxsat bering",
+  storage: "Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering",
+};
+
 /**
  * Funksiyani chaqirishdan oldin ruxsatni tekshirish.
  * Taqiqlangan bo'lsa, ogohlantirish beradi va false qaytaradi.
  */
 export function requirePermission(permId, onAllowed) {
   if (!isPermissionAllowed(permId)) {
-    if (permId === 'storage') {
-      toast("Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering", 'warn');
-    } else {
-      const conf = PERMISSIONS_CONFIG[permId];
-      const name = conf?.name || permId;
-      toast(`Sozlamalar → Ruxsatlar bo'limidan ${name.toLowerCase()}ga ruxsat bering`, 'warn');
-    }
+    const msg = PERM_TOAST_MAP[permId] || `Sozlamalar → Ruxsatlar bo'limidan ${permId}ga ruxsat bering`;
+    toast(msg, 'warn');
     return false;
   }
   if (typeof onAllowed === 'function') {

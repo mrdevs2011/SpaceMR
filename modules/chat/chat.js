@@ -404,7 +404,6 @@ function _openChatContextMenu(row) {
   overlay.querySelector('#chatCtxPin')?.addEventListener('click', () => {
     close();
     const nowPinned = _togglePin(isGroup ? 'group' : 'dm', id);
-    toast(nowPinned ? "Qadandi" : "Qadash bekor qilindi", "success");
     paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
   });
 
@@ -412,7 +411,6 @@ function _openChatContextMenu(row) {
     close();
     showConfirm("Ushbu suhbatni o'chirmoqchimisiz?", () => {
       _deleteChatForMe(id);
-      toast("Suhbat o'chirildi", "info");
       paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
     }, "Suhbatni o'chirish", "O'chirish");
   });
@@ -422,7 +420,6 @@ function _openChatContextMenu(row) {
     showConfirm("Guruhdan chiqmoqchimisiz?", async () => {
       try {
         await leaveGroup(id);
-        toast("Guruhdan chiqdingiz", "info");
         paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
       } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
     }, "Guruhdan chiqish", "Chiqish");
@@ -767,7 +764,6 @@ export function initChatHeaderMenu() {
       try {
         if (muted) localStorage.removeItem(muteKey);
         else localStorage.setItem(muteKey, '1');
-        toast(muted ? 'Ovoz yoqildi' : 'Suhbat ovozsiz qilindi', 'info');
       } catch (_) {}
     });
 
@@ -790,7 +786,6 @@ export function initChatHeaderMenu() {
           const c = chatState._latestChatMap?.[uid];
           if (c) { c.lastMessage = ''; c.lastMessageAt = 0; c.lastSenderId = null; c.lastMessageId = null; }
           try { localStorage.removeItem('thread_' + chatId); } catch (_) {}
-          toast('Tarix tozalandi', 'success');
           if (state.view === 'chats') renderChatsList();
         } catch (err) {
           toast('Tarix tozalanmadi: ' + (err?.message || 'xato'), 'error');
@@ -808,7 +803,6 @@ export function initChatHeaderMenu() {
           await leaveGroup(gid);
           $('chatThreadModal')?.classList.remove('show');
           closeGroupThread();
-          toast("Guruhdan chiqdingiz", "info");
           if (state.view === 'chats') renderChatsList();
         } catch (e) { toast(e?.expected ? e.message : "Xatolik yuz berdi", "error"); }
       }, "Guruhdan chiqish", "Chiqish");
@@ -822,7 +816,6 @@ export function initChatHeaderMenu() {
       showConfirm("Suhbatdan chiqmoqchimisiz?", () => {
         _deleteChatForMe(uid);
         closeChatThread();
-        toast("Suhbatdan chiqildi", "info");
         if (state.view === 'chats') renderChatsList();
       }, "Suhbatdan chiqish", "Chiqish");
     });

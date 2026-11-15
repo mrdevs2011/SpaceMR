@@ -272,8 +272,6 @@ function ensureDom() {
             saveSnapshot(myUid, _groups).catch(() => {});
           }
 
-          toast("Hikoya o'chirildi", "success");
-
           // Agar userning boshqa story'si qolmasa, viewer'ni yopish va feed'dagi stories track'ni yangilash
           if (!group.items.length) {
             _groups.splice(_viewerIdx, 1);
@@ -485,11 +483,6 @@ function ensureDom() {
             }
           }
           if (request === _reactionToken) renderStoryReactions(storyId);
-          if (next) {
-            toast('Reaksiya saqlandi', 'success');
-          } else {
-            toast('Reaksiya bekor qilindi', 'info');
-          }
         } catch (error) {
           // Rollback on error
           if (previous) _selectedStoryReaction.set(storyId, previous);

@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="uz" prefix="og: https://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>SpaceMR Icons & Assets — Professional SVG Design System & Icon Library</title>
+  <meta name="title" content="SpaceMR Icons & Assets — Professional SVG Design System & Icon Library">
+  <meta name="description" content="Explore and download 170+ handcrafted, modern SVG icons, file badges, and brand assets for SpaceMR. Instant copy SVG, React JSX, CSS Data URI, and canvas PNG export. Optimized, free and open source.">
+  <meta name="keywords" content="SpaceMR, SVG icons, icon library, ui badges, vector assets, react icons, open source icons, design system, web design, svg generator, png download, uzbekistan icons">
+  <meta name="author" content="SpaceMR Design Team">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="./">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="./">
+  <meta property="og:title" content="SpaceMR Icons & Assets — Professional SVG Design System">
+  <meta property="og:description" content="170+ handcrafted, responsive SVG icons and file badges. Instant 1-click SVG copy, React JSX, and PNG download.">
+  <meta property="og:image" content="./SpaceMR.png">
+  <meta property="og:site_name" content="SpaceMR Design System">
+  <meta property="og:locale" content="uz_UZ">
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="./">
+  <meta name="twitter:title" content="SpaceMR Icons & Assets — SVG Design System">
+  <meta name="twitter:description" content="Explore, customize and export 170+ clean SVG icons and badges with live color & size controls.">
+  <meta name="twitter:image" content="./SpaceMR.png">
+
+  <!-- PWA & Mobile Meta -->
+  <meta name="theme-color" content="#0c0f17" id="metaThemeColor">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SpaceMR Icons">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <!-- Schema.org Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "./#webapp",
+        "name": "SpaceMR Icons & Assets Library",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "description": "High-performance vector icon library and SVG design system with live color customizer, React JSX export, and PNG renderer.",
+        "image": "./SpaceMR.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.95",
+          "reviewCount": "180",
+          "bestRating": "5",
+          "worstRating": "1"
+        }
+      },
+      {
+        "@type": "ImageGallery",
+        "@id": "./#gallery",
+        "name": "SpaceMR Vector Design System",
+        "description": "Complete collection of action icons, file type badges, social tools, navigation glyphs and branding assets.",
+        "numberOfItems": 177
+      }
+    ]
+  }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-main: #0c0f17;
+      --bg-card: #151926;
+      --bg-card-hover: #1c2235;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: #6366f1;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --card-radius: 14px;
+      --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      --icon-size: 36px;
+      --custom-color: currentColor;
+    }
+
+    [data-theme="light"] {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-focus: #4f46e5;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #4f46e5;
+      --accent-glow: rgba(79, 70, 229, 0.15);
+      --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+    }
+
+    /* Checkerboard patterns */
+    .bg-checker {
+      background-color: #1e2436 !important;
+      background-image: 
+        linear-gradient(45deg, #151926 25%, transparent 25%), 
+        linear-gradient(-45deg, #151926 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #151926 75%), 
+        linear-gradient(-45deg, transparent 75%, #151926 75%) !important;
+      background-size: 16px 16px !important;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px !important;
+    }
+    [data-theme="light"] .bg-checker {
+      background-color: #f1f5f9 !important;
+      background-image: 
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%), 
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%), 
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%) !important;
+      background-size: 16px 16px !important;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px !important;
+    }
+
+    .bg-dark-preview { background-color: #0b0f19 !important; background-image: none !important; }
+    .bg-light-preview { background-color: #ffffff !important; background-image: none !important; }
+    .bg-slate-preview { background-color: #334155 !important; background-image: none !important; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html { scroll-behavior: smooth; }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    header.site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(12, 15, 23, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.5rem;
+      transition: var(--transition);
+    }
+    [data-theme="light"] header.site-header {
+      background: rgba(248, 250, 252, 0.88);
+    }
+
+    .nav-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-logo {
+      height: 38px;
+      width: auto;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .brand-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.9rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      transition: var(--transition);
+      text-decoration: none;
+      user-select: none;
+    }
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      background: #4f46e5;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* Hero Section */
+    .hero-section {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+
+    .hero-title {
+      font-size: clamp(1.8rem, 4vw, 2.75rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      max-width: 800px;
+    }
+    .hero-title span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 650px;
+      line-height: 1.6;
+    }
+
+    /* Main Toolbar */
+    .toolbar-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 1.5rem 1rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      padding: 0.85rem 3.5rem 0.85rem 2.8rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .search-input-wrap input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      width: 20px;
+      height: 20px;
+      pointer-events: none;
+    }
+
+    .search-kbd {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0.15rem 0.45rem;
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      pointer-events: none;
+    }
+
+    /* Customizer Controls Bar */
+    .controls-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.65rem 1rem;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .ctrl-group label {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .slider-wrap input[type="range"] {
+      width: 90px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .color-picker-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+    .color-picker-btn input[type="color"] {
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+
+    .btn-group {
+      display: inline-flex;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    [data-theme="light"] .btn-group {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .btn-icon {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 0.35rem 0.55rem;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .btn-icon.active, .btn-icon:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Categories Bar */
+    .categories-scroll {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+    .categories-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+    .categories-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .cat-btn {
+      padding: 0.45rem 0.9rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      white-space: nowrap;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .cat-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+    }
+    .cat-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .cat-btn .pill-count {
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+    }
+
+    /* Grid Layout */
+    main.main-content {
+      flex: 1;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem 1.5rem 3rem;
+    }
+
+    .results-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .assets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.15rem;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: var(--transition);
+      position: relative;
+      cursor: pointer;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      background: var(--bg-card-hover);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.4), 0 0 18px -4px var(--accent-glow);
+    }
+
+    .card-preview {
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      padding: 0.75rem;
+      transition: background-color 0.2s ease;
+    }
+
+    .card-preview img, .card-preview svg {
+      width: var(--icon-size);
+      height: var(--icon-size);
+      max-width: 85%;
+      max-height: 85%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover .card-preview img,
+    .card:hover .card-preview svg {
+      transform: scale(1.12);
+    }
+
+    /* Quick hover actions */
+    .card-quick-actions {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      display: flex;
+      gap: 0.35rem;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: var(--transition);
+      z-index: 5;
+    }
+    .card:hover .card-quick-actions {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .quick-btn {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .quick-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .badge-pill {
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: 0.65rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+    }
+    .badge-pill.svg { color: #38bdf8; border-color: rgba(56, 189, 248, 0.3); }
+    .badge-pill.png { color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+    .badge-pill.jpg { color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
+
+    /* Section group header */
+    .category-divider {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+      font-size: 1.15rem;
+      font-weight: 800;
+      text-transform: capitalize;
+    }
+    .category-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 0.85rem 1.3rem;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      transform: translateY(120px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast svg { color: #34d399; width: 20px; height: 20px; }
+
+    /* Modal / Inspector */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 760px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 1.75rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .modal-preview-box {
+      height: 220px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 2rem;
+    }
+    .modal-preview-box img, .modal-preview-box svg {
+      max-width: 140px;
+      max-height: 140px;
+      object-fit: contain;
+    }
+
+    .modal-tabs-header {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .tab-btn.active {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent);
+    }
+
+    .code-viewer-box {
+      position: relative;
+    }
+    .code-viewer-box pre {
+      background: #090c13;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .code-copy-floating {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+    }
+
+    .modal-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+
+    /* SEO Catalog & Footer */
+    footer.site-footer {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 3rem 1.5rem 2rem;
+      margin-top: auto;
+    }
+
+    .footer-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+
+    .footer-brand {
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .footer-brand p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+    .footer-col h4 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
+    }
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .footer-col a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+    .footer-col a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Empty search state */
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4.5rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state svg {
+      width: 52px;
+      height: 52px;
+      margin-bottom: 1rem;
+      opacity: 0.4;
+    }
+
+    @media (max-width: 640px) {
+      .assets-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+      .hero-title {
+        font-size: 1.75rem;
+      }
+      .controls-strip {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="./" class="brand-link" title="SpaceMR SVG Design System">
+        <img src="logo.png" alt="SpaceMR Logo" class="brand-logo" onerror="this.style.display='none'">
+        <div>
+          <h1 class="brand-title">SpaceMR Icons</h1>
+        </div>
+        <span class="brand-badge">Full SEO App</span>
+      </a>
+
+      <div class="top-actions">
+        <button class="btn" id="themeToggle" title="Tungi / Kunduzgi rejim (Dark/Light mode)">
+          <svg id="themeIcon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          <span class="btn-text">Mavzu</span>
+        </button>
+        <a href="#seo-catalog" class="btn" title="Katalog ro'yxati">Katalog</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-tag">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>
+      SpaceMR SVG Asset System v2.5
+    </div>
+    <h2 class="hero-title">Yuqori sifatli <span>SVG Ikonkalar</span> va UI Badgelar</h2>
+    <p class="hero-desc">
+      SpaceMR uchun maxsus yaratilgan toza, yengil va zamonaviy vektor ikonkalari to'plami.
+      1-klik bilan SVG kodi, React JSX yoki PNG sifatida nusxalang va yuklab oling.
+    </p>
+  </section>
+
+  <!-- Toolbar & Controls -->
+  <div class="toolbar-wrapper">
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Ikonkalarni qidirish... (masalan: pdf, chat, video, code, heart, send)" autocomplete="off">
+        <span class="search-kbd">/</span>
+      </div>
+    </div>
+
+    <!-- Live Customizer Bar -->
+    <div class="controls-strip">
+      <!-- Size Slider -->
+      <div class="ctrl-group">
+        <label for="sizeSlider">O'lcham:</label>
+        <div class="slider-wrap">
+          <input type="range" id="sizeSlider" min="20" max="80" value="36" step="2">
+          <span id="sizeVal" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; width: 32px;">36px</span>
+        </div>
+      </div>
+
+      <!-- Preview Background switcher -->
+      <div class="ctrl-group">
+        <label>Fon:</label>
+        <div class="btn-group" title="Preview foni">
+          <button class="btn-icon active" data-bg="checker" title="Katakli shaxmat fon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path>
+            </svg>
+          </button>
+          <button class="btn-icon" data-bg="dark" title="To'q fon (Dark)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="9"></circle>
+            </svg>
+          </button>
+          <button class="btn-icon" data-bg="light" title="Yorug' fon (Light)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"></circle>
+            </svg>
+          </button>
+          <button class="btn-icon" data-bg="slate" title="Kulrang fon (Slate)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#64748b">
+              <rect x="3" y="3" width="18" height="18" rx="4"></rect>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Color Customizer -->
+      <div class="ctrl-group">
+        <label for="colorPicker">Rang:</label>
+        <div class="color-picker-btn" id="colorPickerWrap" style="background: #6366f1;" title="Ikonka rangini o'zgartirish">
+          <input type="color" id="colorPicker" value="#6366f1">
+        </div>
+        <button class="btn" id="resetColorBtn" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Asliga qaytarish</button>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="ctrl-group" style="margin-left: auto;">
+        <span id="displayedCount" style="font-weight: 700; color: var(--text-main);">177</span> ta asset
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="categories-scroll" id="categoriesBar">
+      <button class="cat-btn active" data-category="all">
+        Barchasi <span class="pill-count">177</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <main class="main-content">
+    <div class="results-meta">
+      <div>Ko'rsatilyapti: <strong id="filterStatus" style="color: var(--text-main);">Barcha fayllar</strong></div>
+      <div style="font-size: 0.8rem;">Tezkor harakat: <em>ustiga bosing yoki hover qiling</em></div>
+    </div>
+
+    <div class="assets-grid" id="assetsGrid"></div>
+  </main>
+
+  <!-- Inspector Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Asset Details</h3>
+        <button class="modal-close-btn" id="modalCloseBtn" title="Yopish (Esc)">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-preview-box bg-checker" id="modalPreview">
+          <img id="modalImg" src="" alt="Asset Preview">
+        </div>
+
+        <!-- Action buttons -->
+        <div class="modal-actions-grid">
+          <button class="btn btn-primary" id="btnCopySvgCode">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            SVG Kodini olish
+          </button>
+          <button class="btn" id="btnCopyJsx">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+            </svg>
+            React JSX olish
+          </button>
+          <button class="btn" id="btnCopyDataUri">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+            </svg>
+            Data-URI (CSS)
+          </button>
+          <a class="btn" id="btnDownloadSvg" download>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            SVG Yuklash
+          </a>
+          <button class="btn" id="btnDownloadPng">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            PNG Yuklash (512px)
+          </button>
+        </div>
+
+        <!-- Code Viewer Tabs -->
+        <div>
+          <div class="modal-tabs-header">
+            <button class="tab-btn active" data-tab="svg">SVG Kodi</button>
+            <button class="tab-btn" data-tab="jsx">React JSX</button>
+            <button class="tab-btn" data-tab="html">HTML &lt;img&gt;</button>
+            <button class="tab-btn" data-tab="uri">CSS Data-URI</button>
+          </div>
+
+          <div class="code-viewer-box" style="margin-top: 0.75rem;">
+            <pre><code id="codeViewerText">Yuklanmoqda...</code></pre>
+          </div>
+        </div>
+
+        <!-- Metadata Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; background: rgba(0,0,0,0.15); padding: 0.85rem; border-radius: 10px; font-size: 0.78rem;">
+          <div><span style="color: var(--text-muted);">Yo'li:</span> <strong id="metaPath" style="font-family: monospace;">-</strong></div>
+          <div><span style="color: var(--text-muted);">Hajmi:</span> <strong id="metaSize">-</strong></div>
+          <div><span style="color: var(--text-muted);">Kategoriya:</span> <strong id="metaCat" style="text-transform: capitalize;">-</strong></div>
+          <div><span style="color: var(--text-muted);">Format:</span> <strong id="metaExt" style="text-transform: uppercase;">-</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="toastMsg">Muvaffaqiyatli nusxalandi!</span>
+  </div>
+
+  <!-- SEO Semantic Catalog / Sitemap Section -->
+  <footer class="site-footer" id="seo-catalog">
+    <div class="footer-container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <img src="logo.png" alt="SpaceMR" style="height: 32px;" onerror="this.style.display='none'">
+            <h3 style="font-size: 1.15rem; font-weight: 800;">SpaceMR Asset Catalog</h3>
+          </div>
+          <p>
+            SpaceMR — zamonaviy ijtimoiy tarmoq va xabarlashuv tizimi uchun to'liq optimallashtirilgan SVG dizayn tizimi.
+            Barcha ikonka va grafikalar MIT litsenziyasi asosida erkin foydalanish uchun taqdim etiladi.
+          </p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Kategoriyalar</h4>
+            <ul>
+              <li><a href="javascript:filterCat('ui')">UI & Badges (19+)</a></li>
+              <li><a href="javascript:filterCat('action')">Harakatlar (29)</a></li>
+              <li><a href="javascript:filterCat('media')">Media & Audio (10)</a></li>
+              <li><a href="javascript:filterCat('social')">Chat & Ijtimoiy (9)</a></li>
+              <li><a href="javascript:filterCat('nav')">Navigatsiya (7)</a></li>
+              <li><a href="javascript:filterCat('admin')">Admin & Xavfsizlik (6)</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Formatlar</h4>
+            <ul>
+              <li><a href="javascript:void(0)">SVG (Scalable Vector)</a></li>
+              <li><a href="javascript:void(0)">React JSX Komponent</a></li>
+              <li><a href="javascript:void(0)">CSS Data-URI</a></li>
+              <li><a href="javascript:void(0)">PNG (512x512 Canvas)</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4>Tezkor havolalar</h4>
+            <ul>
+              <li><a href="../">SpaceMR Asosiy Dastur</a></li>
+              <li><a href="../privacy.html">Maxfiylik Siyosati</a></li>
+              <li><a href="../terms.html">Foydalanish Shartlari</a></li>
+              <li><a href="javascript:window.scrollTo({top:0, behavior:'smooth'})">Tepaga qaytish ↑</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 SpaceMR. Barcha huquqlar himoyalangan. SVG & Icon Library.</div>
+        <div>Optimizatsiya qilingan: 177 ta toza vektor aktivlari.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Embedded Complete Asset Dataset
+    const assetsData = [{"name": "arrow-up.svg", "path": "action/arrow-up.svg", "size": 236, "ext": "svg", "category": "action", "tags": ["action", "arrow", "harakat", "control", "amallar", "svg", "tugma", "up", "button"]}, {"name": "close.svg", "path": "action/close.svg", "size": 236, "ext": "svg", "category": "action", "tags": ["action", "harakat", "close", "control", "amallar", "svg", "tugma", "button"]}, {"name": "copy-alt.svg", "path": "action/copy-alt.svg", "size": 236, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "copy", "tugma", "svg", "alt", "button"]}, {"name": "copy.svg", "path": "action/copy.svg", "size": 278, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "copy", "tugma", "svg", "button"]}, {"name": "download.svg", "path": "action/download.svg", "size": 227, "ext": "svg", "category": "action", "tags": ["action", "download", "saqlash", "harakat", "fayl", "control", "amallar", "svg", "tugma", "save", "yuklash", "button"]}, {"name": "edit-off.svg", "path": "action/edit-off.svg", "size": 271, "ext": "svg", "category": "action", "tags": ["off", "action", "harakat", "control", "amallar", "svg", "tugma", "button", "edit"]}, {"name": "edit-square-alt.svg", "path": "action/edit-square-alt.svg", "size": 299, "ext": "svg", "category": "action", "tags": ["action", "harakat", "alt", "control", "amallar", "svg", "tugma", "square", "button", "edit"]}, {"name": "edit-square.svg", "path": "action/edit-square.svg", "size": 299, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "svg", "tugma", "square", "button", "edit"]}, {"name": "edit.svg", "path": "action/edit.svg", "size": 249, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "svg", "tugma", "button", "edit"]}, {"name": "logout.svg", "path": "action/logout.svg", "size": 288, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "exit", "svg", "tugma", "logout", "button", "tizimdan chiqish", "chiqish"]}, {"name": "msg-off.svg", "path": "action/msg-off.svg", "size": 257, "ext": "svg", "category": "action", "tags": ["off", "action", "harakat", "control", "amallar", "msg", "tugma", "svg", "button"]}, {"name": "msg-on.svg", "path": "action/msg-on.svg", "size": 235, "ext": "svg", "category": "action", "tags": ["on", "action", "harakat", "control", "amallar", "msg", "tugma", "svg", "button"]}, {"name": "pin-filled.svg", "path": "action/pin-filled.svg", "size": 229, "ext": "svg", "category": "action", "tags": ["action", "harakat", "filled", "pin", "control", "amallar", "svg", "tugma", "button"]}, {"name": "pin.svg", "path": "action/pin.svg", "size": 226, "ext": "svg", "category": "action", "tags": ["action", "harakat", "pin", "control", "amallar", "svg", "tugma", "button"]}, {"name": "plus-alt.svg", "path": "action/plus-alt.svg", "size": 238, "ext": "svg", "category": "action", "tags": ["action", "plus", "harakat", "control", "amallar", "svg", "tugma", "alt", "button"]}, {"name": "plus.svg", "path": "action/plus.svg", "size": 238, "ext": "svg", "category": "action", "tags": ["action", "plus", "harakat", "control", "amallar", "svg", "tugma", "button"]}, {"name": "refresh-alt.svg", "path": "action/refresh-alt.svg", "size": 229, "ext": "svg", "category": "action", "tags": ["action", "harakat", "refresh", "control", "amallar", "svg", "tugma", "alt", "button"]}, {"name": "refresh.svg", "path": "action/refresh.svg", "size": 241, "ext": "svg", "category": "action", "tags": ["action", "harakat", "refresh", "control", "amallar", "svg", "tugma", "button"]}, {"name": "reply.svg", "path": "action/reply.svg", "size": 233, "ext": "svg", "category": "action", "tags": ["action", "reply", "harakat", "control", "amallar", "svg", "tugma", "button"]}, {"name": "revoke.svg", "path": "action/revoke.svg", "size": 169, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "svg", "tugma", "revoke", "button"]}, {"name": "save.svg", "path": "action/save.svg", "size": 310, "ext": "svg", "category": "action", "tags": ["action", "harakat", "control", "amallar", "svg", "tugma", "save", "button"]}, {"name": "search-alt.svg", "path": "action/search-alt.svg", "size": 223, "ext": "svg", "category": "action", "tags": ["action", "lupa", "harakat", "find", "qidiruv", "control", "amallar", "svg", "tugma", "alt", "button", "search"]}, {"name": "search-overlay.svg", "path": "action/search-overlay.svg", "size": 221, "ext": "svg", "category": "action", "tags": ["action", "harakat", "overlay", "control", "amallar", "svg", "tugma", "button", "search"]}, {"name": "search.svg", "path": "action/search.svg", "size": 221, "ext": "svg", "category": "action", "tags": ["poisk", "action", "lupa", "harakat", "find", "qidiruv", "control", "amallar", "svg", "tugma", "button", "search"]}, {"name": "send-filled.svg", "path": "action/send-filled.svg", "size": 264, "ext": "svg", "category": "action", "tags": ["action", "xabar", "harakat", "chat", "yuborish", "filled", "control", "amallar", "svg", "tugma", "button", "send"]}, {"name": "send.svg", "path": "action/send.svg", "size": 245, "ext": "svg", "category": "action", "tags": ["action", "samolyot", "xabar", "harakat", "chat", "yuborish", "telegram", "control", "amallar", "svg", "tugma", "button", "send"]}, {"name": "settings.svg", "path": "action/settings.svg", "size": 827, "ext": "svg", "category": "action", "tags": ["options", "action", "harakat", "control", "amallar", "svg", "tugma", "gear", "sozlamalar", "button", "settings"]}, {"name": "switch-camera.svg", "path": "action/switch-camera.svg", "size": 304, "ext": "svg", "category": "action", "tags": ["action", "camera", "harakat", "switch", "control", "amallar", "svg", "tugma", "button"]}, {"name": "trash.svg", "path": "action/trash.svg", "size": 342, "ext": "svg", "category": "action", "tags": ["action", "remove", "harakat", "trash", "delete", "control", "amallar", "svg", "tugma", "o‘chirish", "axlat", "korzina", "button"]}, {"name": "fail.svg", "path": "admin/fail.svg", "size": 223, "ext": "svg", "category": "admin", "tags": ["shield", "security", "admin", "svg", "qulf", "key", "fail", "sozlamalar", "boshqaruv", "xavfsizlik"]}, {"name": "grid.svg", "path": "admin/grid.svg", "size": 354, "ext": "svg", "category": "admin", "tags": ["shield", "security", "admin", "svg", "qulf", "key", "grid", "sozlamalar", "boshqaruv", "xavfsizlik"]}, {"name": "key.svg", "path": "admin/key.svg", "size": 232, "ext": "svg", "category": "admin", "tags": ["shield", "kalit", "parol", "ruxsat", "security", "admin", "svg", "qulf", "key", "sozlamalar", "boshqaruv", "xavfsizlik"]}, {"name": "ok.svg", "path": "admin/ok.svg", "size": 227, "ext": "svg", "category": "admin", "tags": ["ok", "shield", "security", "admin", "svg", "qulf", "key", "sozlamalar", "boshqaruv", "xavfsizlik"]}, {"name": "shield.svg", "path": "admin/shield.svg", "size": 280, "ext": "svg", "category": "admin", "tags": ["shield", "security", "admin", "svg", "qulf", "key", "sozlamalar", "boshqaruv", "xavfsizlik"]}, {"name": "warn.svg", "path": "admin/warn.svg", "size": 228, "ext": "svg", "category": "admin", "tags": ["warn", "shield", "security", "admin", "svg", "qulf", "key", "sozlamalar", "boshqaruv", "xavfsizlik"]}, {"name": "lock.svg", "path": "auth/lock.svg", "size": 255, "ext": "svg", "category": "auth", "tags": ["shield", "himoya", "parol", "auth", "kirish", "lock", "login", "password", "svg", "qulf", "xavfsizlik"]}, {"name": "mail-alt.svg", "path": "auth/mail-alt.svg", "size": 282, "ext": "svg", "category": "auth", "tags": ["shield", "parol", "auth", "kirish", "lock", "login", "password", "svg", "alt", "xavfsizlik", "mail"]}, {"name": "mail.svg", "path": "auth/mail.svg", "size": 237, "ext": "svg", "category": "auth", "tags": ["shield", "parol", "auth", "kirish", "lock", "login", "password", "svg", "xavfsizlik", "mail"]}, {"name": "shield-white.svg", "path": "auth/shield-white.svg", "size": 219, "ext": "svg", "category": "auth", "tags": ["shield", "parol", "auth", "kirish", "white", "lock", "login", "password", "svg", "xavfsizlik"]}, {"name": "shield.svg", "path": "auth/shield.svg", "size": 231, "ext": "svg", "category": "auth", "tags": ["shield", "parol", "auth", "kirish", "lock", "login", "password", "svg", "xavfsizlik"]}, {"name": "phone.svg", "path": "call/phone.svg", "size": 472, "ext": "svg", "category": "call", "tags": ["aloqa", "qo‘ng‘iroq", "telefon", "phone", "call", "svg", "ovozli"]}, {"name": "activities.svg", "path": "emoji/activities.svg", "size": 251, "ext": "svg", "category": "emoji", "tags": ["smiles", "activities", "hayvonlar", "smaylik", "reaction", "svg", "emoji", "hissiyot"]}, {"name": "animals.svg", "path": "emoji/animals.svg", "size": 430, "ext": "svg", "category": "emoji", "tags": ["smiles", "hayvonlar", "smaylik", "reaction", "animals", "svg", "emoji", "hissiyot"]}, {"name": "flags.svg", "path": "emoji/flags.svg", "size": 211, "ext": "svg", "category": "emoji", "tags": ["smiles", "hayvonlar", "smaylik", "reaction", "svg", "emoji", "flags", "hissiyot"]}, {"name": "food.svg", "path": "emoji/food.svg", "size": 322, "ext": "svg", "category": "emoji", "tags": ["smiles", "food", "hayvonlar", "smaylik", "reaction", "svg", "emoji", "hissiyot"]}, {"name": "objects.svg", "path": "emoji/objects.svg", "size": 287, "ext": "svg", "category": "emoji", "tags": ["smiles", "hayvonlar", "smaylik", "reaction", "objects", "svg", "emoji", "hissiyot"]}, {"name": "people.svg", "path": "emoji/people.svg", "size": 235, "ext": "svg", "category": "emoji", "tags": ["smiles", "hayvonlar", "smaylik", "reaction", "svg", "emoji", "hissiyot", "people"]}, {"name": "recent.svg", "path": "emoji/recent.svg", "size": 218, "ext": "svg", "category": "emoji", "tags": ["smiles", "hayvonlar", "recent", "smaylik", "reaction", "svg", "emoji", "hissiyot"]}, {"name": "search.svg", "path": "emoji/search.svg", "size": 221, "ext": "svg", "category": "emoji", "tags": ["poisk", "smiles", "lupa", "find", "hayvonlar", "qidiruv", "smaylik", "reaction", "svg", "emoji", "hissiyot", "search"]}, {"name": "smileys.svg", "path": "emoji/smileys.svg", "size": 276, "ext": "svg", "category": "emoji", "tags": ["smiles", "smileys", "hayvonlar", "smaylik", "reaction", "svg", "emoji", "hissiyot"]}, {"name": "symbols.svg", "path": "emoji/symbols.svg", "size": 241, "ext": "svg", "category": "emoji", "tags": ["smiles", "symbols", "hayvonlar", "smaylik", "reaction", "svg", "emoji", "hissiyot"]}, {"name": "travel.svg", "path": "emoji/travel.svg", "size": 291, "ext": "svg", "category": "emoji", "tags": ["smiles", "hayvonlar", "smaylik", "reaction", "svg", "travel", "emoji", "hissiyot"]}, {"name": "icon-041fdea3033a.svg", "path": "extra/icon-041fdea3033a.svg", "size": 305, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "041fdea3033a", "icon"]}, {"name": "icon-0c873cf7ce23.svg", "path": "extra/icon-0c873cf7ce23.svg", "size": 170, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "0c873cf7ce23", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-22a55ac71fee.svg", "path": "extra/icon-22a55ac71fee.svg", "size": 333, "ext": "svg", "category": "extra", "tags": ["22a55ac71fee", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-2875c154aeb6.svg", "path": "extra/icon-2875c154aeb6.svg", "size": 225, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "2875c154aeb6", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-2f7c262fe1e7.svg", "path": "extra/icon-2f7c262fe1e7.svg", "size": 237, "ext": "svg", "category": "extra", "tags": ["2f7c262fe1e7", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-34d2886eafb1.svg", "path": "extra/icon-34d2886eafb1.svg", "size": 252, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "34d2886eafb1", "icon"]}, {"name": "icon-34ff153eec4e.svg", "path": "extra/icon-34ff153eec4e.svg", "size": 327, "ext": "svg", "category": "extra", "tags": ["34ff153eec4e", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-36ae445873ad.svg", "path": "extra/icon-36ae445873ad.svg", "size": 188, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "36ae445873ad", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-43bf503445c5.svg", "path": "extra/icon-43bf503445c5.svg", "size": 286, "ext": "svg", "category": "extra", "tags": ["extra", "43bf503445c5", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-44d5da9e7c91.svg", "path": "extra/icon-44d5da9e7c91.svg", "size": 226, "ext": "svg", "category": "extra", "tags": ["44d5da9e7c91", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-4ed8972aa2b8.svg", "path": "extra/icon-4ed8972aa2b8.svg", "size": 165, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "4ed8972aa2b8", "icon"]}, {"name": "icon-527cb9523916.svg", "path": "extra/icon-527cb9523916.svg", "size": 230, "ext": "svg", "category": "extra", "tags": ["extra", "527cb9523916", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-615b4dff4d09.svg", "path": "extra/icon-615b4dff4d09.svg", "size": 257, "ext": "svg", "category": "extra", "tags": ["extra", "615b4dff4d09", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-61f15d5fa242.svg", "path": "extra/icon-61f15d5fa242.svg", "size": 179, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "61f15d5fa242", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-649766ef725f.svg", "path": "extra/icon-649766ef725f.svg", "size": 227, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "649766ef725f", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-651dd2923a10.svg", "path": "extra/icon-651dd2923a10.svg", "size": 231, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "651dd2923a10", "svg", "interfeys", "icon"]}, {"name": "icon-6b67b8783b6a.svg", "path": "extra/icon-6b67b8783b6a.svg", "size": 310, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "6b67b8783b6a", "svg", "interfeys", "icon"]}, {"name": "icon-6c25873293c0.svg", "path": "extra/icon-6c25873293c0.svg", "size": 274, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "6c25873293c0", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-6e134fdbda1e.svg", "path": "extra/icon-6e134fdbda1e.svg", "size": 238, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "6e134fdbda1e", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-838eb192325a.svg", "path": "extra/icon-838eb192325a.svg", "size": 247, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "838eb192325a", "svg", "interfeys", "icon"]}, {"name": "icon-886b6ae85bc6.svg", "path": "extra/icon-886b6ae85bc6.svg", "size": 319, "ext": "svg", "category": "extra", "tags": ["886b6ae85bc6", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-9157214ed9c4.svg", "path": "extra/icon-9157214ed9c4.svg", "size": 259, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "9157214ed9c4", "icon"]}, {"name": "icon-938c12a9f405.svg", "path": "extra/icon-938c12a9f405.svg", "size": 205, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "938c12a9f405", "interfeys", "svg", "icon"]}, {"name": "icon-938ddddb771c.svg", "path": "extra/icon-938ddddb771c.svg", "size": 292, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "938ddddb771c", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-96495123cb1b.svg", "path": "extra/icon-96495123cb1b.svg", "size": 237, "ext": "svg", "category": "extra", "tags": ["extra", "96495123cb1b", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-9a45b4993686.svg", "path": "extra/icon-9a45b4993686.svg", "size": 311, "ext": "svg", "category": "extra", "tags": ["9a45b4993686", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-9d6229c40a8d.svg", "path": "extra/icon-9d6229c40a8d.svg", "size": 238, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "9d6229c40a8d", "icon"]}, {"name": "icon-a4ea72a360cc.svg", "path": "extra/icon-a4ea72a360cc.svg", "size": 239, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "a4ea72a360cc", "svg", "interfeys", "icon"]}, {"name": "icon-af51112fbda1.svg", "path": "extra/icon-af51112fbda1.svg", "size": 740, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "af51112fbda1", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-c0aeb9caa2ca.svg", "path": "extra/icon-c0aeb9caa2ca.svg", "size": 297, "ext": "svg", "category": "extra", "tags": ["extra", "c0aeb9caa2ca", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-c10e4d45ebfa.svg", "path": "extra/icon-c10e4d45ebfa.svg", "size": 256, "ext": "svg", "category": "extra", "tags": ["c10e4d45ebfa", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-c9b87fab5705.svg", "path": "extra/icon-c9b87fab5705.svg", "size": 236, "ext": "svg", "category": "extra", "tags": ["c9b87fab5705", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-d269b370c5cf.svg", "path": "extra/icon-d269b370c5cf.svg", "size": 287, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "d269b370c5cf", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-dae7be10a164.svg", "path": "extra/icon-dae7be10a164.svg", "size": 404, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "dae7be10a164", "svg", "interfeys", "icon"]}, {"name": "icon-dc035561d9ad.svg", "path": "extra/icon-dc035561d9ad.svg", "size": 146, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "dc035561d9ad", "icon"]}, {"name": "icon-de6761387092.svg", "path": "extra/icon-de6761387092.svg", "size": 187, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "de6761387092", "icon"]}, {"name": "icon-dfb40720ae6a.svg", "path": "extra/icon-dfb40720ae6a.svg", "size": 255, "ext": "svg", "category": "extra", "tags": ["dfb40720ae6a", "extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-e20961b31619.svg", "path": "extra/icon-e20961b31619.svg", "size": 193, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "e20961b31619", "icon"]}, {"name": "icon-e3ece82ff84d.svg", "path": "extra/icon-e3ece82ff84d.svg", "size": 267, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "e3ece82ff84d", "interfeys", "svg", "icon"]}, {"name": "icon-e42dbb86abcd.svg", "path": "extra/icon-e42dbb86abcd.svg", "size": 256, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "e42dbb86abcd", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-e5c4dc67a486.svg", "path": "extra/icon-e5c4dc67a486.svg", "size": 120, "ext": "svg", "category": "extra", "tags": ["extra", "e5c4dc67a486", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "icon"]}, {"name": "icon-ea9c18b62f47.svg", "path": "extra/icon-ea9c18b62f47.svg", "size": 208, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "ea9c18b62f47", "svg", "interfeys", "icon"]}, {"name": "icon-f57c0d2780e7.svg", "path": "extra/icon-f57c0d2780e7.svg", "size": 285, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "f57c0d2780e7", "icon"]}, {"name": "icon-fa9cc44ef90e.svg", "path": "extra/icon-fa9cc44ef90e.svg", "size": 290, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "interface", "svg", "interfeys", "fa9cc44ef90e", "icon"]}, {"name": "icon-fb3793816331.svg", "path": "extra/icon-fb3793816331.svg", "size": 274, "ext": "svg", "category": "extra", "tags": ["extra", "ui", "komponent", "qo‘shimcha", "fb3793816331", "interface", "svg", "interfeys", "icon"]}, {"name": "saved-messages.svg", "path": "extra/saved-messages.svg", "size": 276, "ext": "svg", "category": "extra", "tags": ["messages", "extra", "ui", "saved", "komponent", "qo‘shimcha", "interface", "svg", "interfeys"]}, {"name": "camera.svg", "path": "media/camera.svg", "size": 284, "ext": "svg", "category": "media", "tags": ["audio", "camera", "photo", "surat", "foto", "rasm", "video", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "gallery.svg", "path": "media/gallery.svg", "size": 298, "ext": "svg", "category": "media", "tags": ["audio", "gallery", "camera", "rasmlar", "foto", "rasm", "galereya", "video", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "mic-alt.svg", "path": "media/mic-alt.svg", "size": 341, "ext": "svg", "category": "media", "tags": ["audio", "camera", "rasm", "alt", "video", "mic", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "mic.svg", "path": "media/mic.svg", "size": 268, "ext": "svg", "category": "media", "tags": ["audio", "camera", "rasm", "mikrofon", "video", "mic", "svg", "kamera", "media", "musiqa", "ovoz", "voice"]}, {"name": "paperclip-alt.svg", "path": "media/paperclip-alt.svg", "size": 239, "ext": "svg", "category": "media", "tags": ["audio", "camera", "rasm", "paperclip", "alt", "video", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "paperclip.svg", "path": "media/paperclip.svg", "size": 285, "ext": "svg", "category": "media", "tags": ["audio", "camera", "fayl", "rasm", "paperclip", "attach", "skrepka", "video", "svg", "kamera", "media", "musiqa", "ovoz", "biriktirish"]}, {"name": "play.svg", "path": "media/play.svg", "size": 120, "ext": "svg", "category": "media", "tags": ["audio", "camera", "rasm", "video", "play", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "speaker.svg", "path": "media/speaker.svg", "size": 298, "ext": "svg", "category": "media", "tags": ["audio", "speaker", "camera", "rasm", "video", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "upload.svg", "path": "media/upload.svg", "size": 285, "ext": "svg", "category": "media", "tags": ["audio", "camera", "rasm", "video", "upload", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "video.svg", "path": "media/video.svg", "size": 259, "ext": "svg", "category": "media", "tags": ["audio", "camera", "rasm", "video", "svg", "kamera", "media", "musiqa", "ovoz"]}, {"name": "copy.svg", "path": "menu/copy.svg", "size": 246, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "select", "kontekst", "amallar", "copy", "svg", "menyu"]}, {"name": "del.svg", "path": "menu/del.svg", "size": 318, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "del", "select", "kontekst", "amallar", "svg", "menyu"]}, {"name": "edit.svg", "path": "menu/edit.svg", "size": 236, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "select", "kontekst", "amallar", "svg", "menyu", "edit"]}, {"name": "fwd.svg", "path": "menu/fwd.svg", "size": 236, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "select", "kontekst", "amallar", "svg", "menyu", "fwd"]}, {"name": "resend.svg", "path": "menu/resend.svg", "size": 227, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "resend", "select", "kontekst", "amallar", "svg", "menyu"]}, {"name": "sel.svg", "path": "menu/sel.svg", "size": 220, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "sel", "select", "kontekst", "amallar", "svg", "menyu"]}, {"name": "x.svg", "path": "menu/x.svg", "size": 194, "ext": "svg", "category": "menu", "tags": ["menu", "tanlash", "select", "kontekst", "amallar", "svg", "menyu", "x"]}, {"name": "apps.svg", "path": "nav/apps.svg", "size": 337, "ext": "svg", "category": "nav", "tags": ["home", "arrow", "apps", "yo‘nalish", "strelka", "navigation", "chevron", "nav", "svg", "navigatsiya"]}, {"name": "arrow-left-white.svg", "path": "nav/arrow-left-white.svg", "size": 194, "ext": "svg", "category": "nav", "tags": ["home", "arrow", "yo‘nalish", "strelka", "left", "navigation", "white", "chevron", "nav", "svg", "navigatsiya"]}, {"name": "arrow-left.svg", "path": "nav/arrow-left.svg", "size": 194, "ext": "svg", "category": "nav", "tags": ["home", "arrow", "yo‘nalish", "strelka", "left", "navigation", "chevron", "nav", "svg", "navigatsiya"]}, {"name": "chevron-down-alt.svg", "path": "nav/chevron-down-alt.svg", "size": 195, "ext": "svg", "category": "nav", "tags": ["down", "home", "arrow", "yo‘nalish", "strelka", "navigation", "chevron", "nav", "svg", "navigatsiya", "alt"]}, {"name": "chevron-down.svg", "path": "nav/chevron-down.svg", "size": 197, "ext": "svg", "category": "nav", "tags": ["down", "home", "arrow", "yo‘nalish", "strelka", "navigation", "chevron", "nav", "svg", "navigatsiya"]}, {"name": "chevron-left.svg", "path": "nav/chevron-left.svg", "size": 198, "ext": "svg", "category": "nav", "tags": ["home", "arrow", "yo‘nalish", "strelka", "left", "navigation", "chevron", "nav", "svg", "navigatsiya"]}, {"name": "home.svg", "path": "nav/home.svg", "size": 274, "ext": "svg", "category": "nav", "tags": ["home", "arrow", "yo‘nalish", "strelka", "navigation", "chevron", "nav", "uy", "svg", "navigatsiya", "bosh sahifa", "main"]}, {"name": "bookmark-filled.svg", "path": "social/bookmark-filled.svg", "size": 216, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "bookmark", "zakladka", "filled", "profil", "like", "ijtimoiy", "user", "saqlangan", "svg", "social", "yurak"]}, {"name": "bookmark-outline.svg", "path": "social/bookmark-outline.svg", "size": 216, "ext": "svg", "category": "social", "tags": ["outline", "xabar", "chat", "bookmark", "profil", "like", "ijtimoiy", "user", "saqlangan", "svg", "social", "yurak"]}, {"name": "bookmark.svg", "path": "social/bookmark.svg", "size": 223, "ext": "svg", "category": "social", "tags": ["saqlash", "xabar", "chat", "bookmark", "zakladka", "profil", "izbrannoe", "like", "ijtimoiy", "user", "saqlangan", "svg", "social", "yurak"]}, {"name": "chat.svg", "path": "social/chat.svg", "size": 295, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "sms", "profil", "suhbat", "like", "ijtimoiy", "user", "saqlangan", "svg", "message", "social", "yurak"]}, {"name": "heart-filled.svg", "path": "social/heart-filled.svg", "size": 313, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "qizil", "filled", "profil", "sevgi", "like", "ijtimoiy", "user", "saqlangan", "heart", "svg", "social", "yurak"]}, {"name": "heart.svg", "path": "social/heart.svg", "size": 310, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "yoqdi", "profil", "sevgi", "like", "ijtimoiy", "user", "saqlangan", "heart", "svg", "social", "yurak"]}, {"name": "user-alt.svg", "path": "social/user-alt.svg", "size": 243, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "profil", "like", "ijtimoiy", "user", "saqlangan", "svg", "alt", "social", "yurak"]}, {"name": "user-badge.svg", "path": "social/user-badge.svg", "size": 196, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "badge", "profil", "like", "ijtimoiy", "user", "saqlangan", "svg", "social", "yurak"]}, {"name": "user.svg", "path": "social/user.svg", "size": 253, "ext": "svg", "category": "social", "tags": ["xabar", "chat", "account", "inson", "profil", "odam", "akkaunt", "like", "ijtimoiy", "user", "saqlangan", "svg", "social", "yurak"]}, {"name": "badge-apk.svg", "path": "ui/badge-apk.svg", "size": 583, "ext": "svg", "category": "ui", "tags": ["apk", "status", "ui", "tizim", "element", "badge", "android", "app", "interface", "mobile", "belgi", "svg", "dastur", "ilova"]}, {"name": "badge-audio.svg", "path": "ui/badge-audio.svg", "size": 470, "ext": "svg", "category": "ui", "tags": ["audio", "status", "ui", "tizim", "element", "badge", "qo‘shiq", "interface", "music", "belgi", "svg", "mp3", "musiqa", "sound", "ovoz"]}, {"name": "badge-code.svg", "path": "ui/badge-code.svg", "size": 490, "ext": "svg", "category": "ui", "tags": ["kod", "code", "developer", "status", "tags", "html", "ui", "tizim", "element", "badge", "dasturlash", "interface", "belgi", "svg"]}, {"name": "badge-css.svg", "path": "ui/badge-css.svg", "size": 394, "ext": "svg", "category": "ui", "tags": ["status", "ui", "tizim", "element", "badge", "css", "styles", "ranglar", "interface", "belgi", "svg", "dizayn", "stylesheet"]}, {"name": "badge-doc.svg", "path": "ui/badge-doc.svg", "size": 684, "ext": "svg", "category": "ui", "tags": ["status", "hujjat", "fayl", "ui", "tizim", "element", "badge", "matn", "interface", "belgi", "svg", "document", "doc"]}, {"name": "badge-excel.svg", "path": "ui/badge-excel.svg", "size": 515, "ext": "svg", "category": "ui", "tags": ["jadval", "status", "excel", "hisob", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "spreadsheet", "xls", "xlsx"]}, {"name": "badge-file.svg", "path": "ui/badge-file.svg", "size": 583, "ext": "svg", "category": "ui", "tags": ["status", "hujjat", "fayl", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "generic", "file"]}, {"name": "badge-image.svg", "path": "ui/badge-image.svg", "size": 439, "ext": "svg", "category": "ui", "tags": ["png", "tasvir", "photo", "status", "surat", "ui", "tizim", "element", "badge", "image", "rasm", "jpg", "interface", "belgi", "svg"]}, {"name": "badge-js.svg", "path": "ui/badge-js.svg", "size": 397, "ext": "svg", "category": "ui", "tags": ["kod", "status", "ui", "tizim", "element", "badge", "frontend", "interface", "belgi", "svg", "js", "javascript", "script"]}, {"name": "badge-json.svg", "path": "ui/badge-json.svg", "size": 407, "ext": "svg", "category": "ui", "tags": ["data", "status", "kalit", "ui", "tizim", "element", "badge", "json", "malumot", "interface", "belgi", "svg", "key", "api"]}, {"name": "badge-jsx.svg", "path": "ui/badge-jsx.svg", "size": 395, "ext": "svg", "category": "ui", "tags": ["kod", "react", "status", "ui", "tizim", "element", "badge", "jsx", "komponent", "frontend", "interface", "belgi", "svg"]}, {"name": "badge-markdown.svg", "path": "ui/badge-markdown.svg", "size": 412, "ext": "svg", "category": "ui", "tags": ["markdown", "status", "hujjat", "ui", "tizim", "element", "badge", "interface", "md", "belgi", "svg", "yozuv", "readme"]}, {"name": "badge-pdf.svg", "path": "ui/badge-pdf.svg", "size": 550, "ext": "svg", "category": "ui", "tags": ["status", "hujjat", "fayl", "ui", "tizim", "element", "badge", "kitob", "interface", "file", "belgi", "pdf", "svg", "document", "adobe"]}, {"name": "badge-python.svg", "path": "ui/badge-python.svg", "size": 480, "ext": "svg", "category": "ui", "tags": ["status", "backend", "py", "django", "ui", "tizim", "element", "badge", "dasturlash", "interface", "belgi", "svg", "python"]}, {"name": "badge-text.svg", "path": "ui/badge-text.svg", "size": 583, "ext": "svg", "category": "ui", "tags": ["status", "fayl", "ui", "tizim", "element", "badge", "txt", "matn", "interface", "belgi", "svg", "yozuv", "text"]}, {"name": "badge-ts.svg", "path": "ui/badge-ts.svg", "size": 397, "ext": "svg", "category": "ui", "tags": ["kod", "status", "ui", "tizim", "element", "badge", "ts", "frontend", "interface", "typescript", "belgi", "svg", "javascript"]}, {"name": "badge-video.svg", "path": "ui/badge-video.svg", "size": 468, "ext": "svg", "category": "ui", "tags": ["kino", "status", "ui", "tizim", "element", "badge", "klip", "video", "interface", "mp4", "belgi", "svg", "media", "film"]}, {"name": "badge-word.svg", "path": "ui/badge-word.svg", "size": 745, "ext": "svg", "category": "ui", "tags": ["status", "word", "hujjat", "ui", "tizim", "element", "badge", "matn", "interface", "belgi", "svg", "microsoft", "docx", "doc"]}, {"name": "badge-zip.svg", "path": "ui/badge-zip.svg", "size": 590, "ext": "svg", "category": "ui", "tags": ["status", "ui", "tizim", "element", "badge", "interface", "archive", "arxiv", "belgi", "svg", "zip", "rar", "siqilgan", "box"]}, {"name": "bell.svg", "path": "ui/bell.svg", "size": 257, "ext": "svg", "category": "ui", "tags": ["notification", "bell", "status", "qo‘ng‘iroq", "ui", "tizim", "element", "badge", "xabarnoma", "bildirishnoma", "interface", "belgi", "svg"]}, {"name": "check.svg", "path": "ui/check.svg", "size": 217, "ext": "svg", "category": "ui", "tags": ["ok", "status", "ui", "tizim", "element", "badge", "interface", "tasdiq", "to‘g‘ri", "belgi", "svg", "bajarildi", "check"]}, {"name": "clock.svg", "path": "ui/clock.svg", "size": 244, "ext": "svg", "category": "ui", "tags": ["time", "status", "ui", "tizim", "element", "badge", "clock", "interface", "belgi", "svg", "soat", "tarix", "vaqt"]}, {"name": "dots-horizontal.svg", "path": "ui/dots-horizontal.svg", "size": 180, "ext": "svg", "category": "ui", "tags": ["dots", "status", "ui", "tizim", "element", "badge", "horizontal", "interface", "belgi", "svg"]}, {"name": "dots-vertical-alt.svg", "path": "ui/dots-vertical-alt.svg", "size": 258, "ext": "svg", "category": "ui", "tags": ["dots", "vertical", "status", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "alt"]}, {"name": "dots-vertical.svg", "path": "ui/dots-vertical.svg", "size": 180, "ext": "svg", "category": "ui", "tags": ["dots", "vertical", "status", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "emoji-alt.svg", "path": "ui/emoji-alt.svg", "size": 307, "ext": "svg", "category": "ui", "tags": ["status", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "emoji", "alt"]}, {"name": "emoji.svg", "path": "ui/emoji.svg", "size": 307, "ext": "svg", "category": "ui", "tags": ["status", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "emoji"]}, {"name": "eye-closed.svg", "path": "ui/eye-closed.svg", "size": 391, "ext": "svg", "category": "ui", "tags": ["status", "eye", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "closed"]}, {"name": "eye-open.svg", "path": "ui/eye-open.svg", "size": 249, "ext": "svg", "category": "ui", "tags": ["open", "status", "eye", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "hashtag.svg", "path": "ui/hashtag.svg", "size": 210, "ext": "svg", "category": "ui", "tags": ["hashtag", "status", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "help.svg", "path": "ui/help.svg", "size": 282, "ext": "svg", "category": "ui", "tags": ["status", "help", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "info.svg", "path": "ui/info.svg", "size": 313, "ext": "svg", "category": "ui", "tags": ["status", "ui", "tizim", "element", "badge", "info", "interface", "belgi", "svg"]}, {"name": "ticks-98b8af.svg", "path": "ui/ticks-98b8af.svg", "size": 324, "ext": "svg", "category": "ui", "tags": ["status", "ticks", "98b8af", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "ticks-b1f42f.svg", "path": "ui/ticks-b1f42f.svg", "size": 588, "ext": "svg", "category": "ui", "tags": ["b1f42f", "status", "ticks", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "ticks-c46cc2.svg", "path": "ui/ticks-c46cc2.svg", "size": 201, "ext": "svg", "category": "ui", "tags": ["c46cc2", "status", "ticks", "ui", "tizim", "element", "badge", "interface", "belgi", "svg"]}, {"name": "ticks-pending.svg", "path": "ui/ticks-pending.svg", "size": 588, "ext": "svg", "category": "ui", "tags": ["kutilmoqda", "status", "ticks", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "soat", "pending", "sending"]}, {"name": "ticks-read.svg", "path": "ui/ticks-read.svg", "size": 324, "ext": "svg", "category": "ui", "tags": ["double check", "ikkita galochka", "status", "ticks", "ui", "tizim", "element", "badge", "interface", "belgi", "svg", "read", "o‘qildi"]}, {"name": "ticks-sent.svg", "path": "ui/ticks-sent.svg", "size": 201, "ext": "svg", "category": "ui", "tags": ["status", "ticks", "sent", "ui", "tizim", "element", "badge", "yuborildi", "interface", "belgi", "svg", "single check", "bitta galochka"]}, {"name": "MRspace.png", "path": "MRspace.png", "size": 164629, "ext": "png", "category": "brand & images", "tags": ["grafika", "png", "mrspace.png", "rasm", "banner", "brand", "logo", "splash"]}, {"name": "SpaceMR-email.jpg", "path": "SpaceMR-email.jpg", "size": 7154, "ext": "jpg", "category": "brand & images", "tags": ["grafika", "rasm", "jpg", "spacemr-email.jpg", "banner", "brand", "logo", "splash"]}, {"name": "SpaceMR-email.png", "path": "SpaceMR-email.png", "size": 10148, "ext": "png", "category": "brand & images", "tags": ["grafika", "png", "rasm", "banner", "brand", "spacemr-email.png", "logo", "splash"]}, {"name": "SpaceMR.jpg", "path": "SpaceMR.jpg", "size": 91385, "ext": "jpg", "category": "brand & images", "tags": ["grafika", "rasm", "jpg", "banner", "brand", "spacemr.jpg", "logo", "splash"]}, {"name": "SpaceMR.png", "path": "SpaceMR.png", "size": 164629, "ext": "png", "category": "brand & images", "tags": ["grafika", "png", "rasm", "spacemr.png", "banner", "brand", "logo", "splash"]}, {"name": "favicon.png", "path": "favicon.png", "size": 8968, "ext": "png", "category": "brand & images", "tags": ["grafika", "png", "favicon.png", "rasm", "banner", "brand", "logo", "splash"]}, {"name": "logo.png", "path": "logo.png", "size": 49841, "ext": "png", "category": "brand & images", "tags": ["grafika", "png", "rasm", "logo.png", "banner", "brand", "logo", "splash"]}, {"name": "splash.png", "path": "splash.png", "size": 164629, "ext": "png", "category": "brand & images", "tags": ["grafika", "png", "splash.png", "rasm", "banner", "brand", "logo", "splash"]}];
+
+    // State
+    let activeCategory = 'all';
+    let searchQuery = '';
+    let previewBackground = 'checker';
+    let currentAsset = null;
+    let currentSvgRaw = '';
+    let currentActiveTab = 'svg';
+    let liveColor = null;
+
+    // Elements
+    const assetsGrid = document.getElementById('assetsGrid');
+    const categoriesBar = document.getElementById('categoriesBar');
+    const searchInput = document.getElementById('searchInput');
+    const displayedCount = document.getElementById('displayedCount');
+    const filterStatus = document.getElementById('filterStatus');
+    const sizeSlider = document.getElementById('sizeSlider');
+    const sizeVal = document.getElementById('sizeVal');
+    const colorPicker = document.getElementById('colorPicker');
+    const colorPickerWrap = document.getElementById('colorPickerWrap');
+    const resetColorBtn = document.getElementById('resetColorBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+    const bgButtons = document.querySelectorAll('[data-bg]');
+
+    // Modal elements
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalImg = document.getElementById('modalImg');
+    const modalPreview = document.getElementById('modalPreview');
+    const codeViewerText = document.getElementById('codeViewerText');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const btnCopySvgCode = document.getElementById('btnCopySvgCode');
+    const btnCopyJsx = document.getElementById('btnCopyJsx');
+    const btnCopyDataUri = document.getElementById('btnCopyDataUri');
+    const btnDownloadSvg = document.getElementById('btnDownloadSvg');
+    const btnDownloadPng = document.getElementById('btnDownloadPng');
+    const metaPath = document.getElementById('metaPath');
+    const metaSize = document.getElementById('metaSize');
+    const metaCat = document.getElementById('metaCat');
+    const metaExt = document.getElementById('metaExt');
+
+    // Format bytes helper
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // Toast notification helper
+    function showToast(text) {
+      toastMsg.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2200);
+    }
+
+    // Copy to clipboard helper
+    async function copyToClipboard(text, successMsg = 'Nusxalandi!') {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(successMsg);
+      } catch (err) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(successMsg);
+      }
+    }
+
+    // Initialize Category Filters
+    function initCategories() {
+      const catCounts = {};
+      assetsData.forEach(item => {
+        catCounts[item.category] = (catCounts[item.category] || 0) + 1;
+      });
+
+      Object.keys(catCounts).sort().forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'cat-btn';
+        btn.dataset.category = cat;
+        btn.innerHTML = `${cat} <span class="pill-count">${catCounts[cat]}</span>`;
+        btn.addEventListener('click', () => {
+          filterCat(cat);
+        });
+        categoriesBar.appendChild(btn);
+      });
+
+      categoriesBar.querySelector('[data-category="all"]').addEventListener('click', () => {
+        filterCat('all');
+      });
+    }
+
+    window.filterCat = function(cat) {
+      document.querySelectorAll('.cat-btn').forEach(el => {
+        if (el.dataset.category === cat) el.classList.add('active');
+        else el.classList.remove('active');
+      });
+      activeCategory = cat;
+      filterStatus.textContent = cat === 'all' ? 'Barcha fayllar' : cat + ' bo‘limi';
+      renderAssets();
+    };
+
+    // Render Grid
+    function renderAssets() {
+      assetsGrid.innerHTML = '';
+
+      const q = searchQuery.toLowerCase().trim();
+
+      const filtered = assetsData.filter(item => {
+        const matchesCategory = (activeCategory === 'all' || item.category === activeCategory);
+        let matchesSearch = true;
+        if (q) {
+          const inName = item.name.toLowerCase().includes(q);
+          const inCat = item.category.toLowerCase().includes(q);
+          const inTags = item.tags && item.tags.some(t => t.toLowerCase().includes(q));
+          matchesSearch = inName || inCat || inTags;
+        }
+        return matchesCategory && matchesSearch;
+      });
+
+      displayedCount.textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        assetsGrid.innerHTML = `
+          <div class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem;">Mos fayl topilmadi</h3>
+            <p>Qidiruv so'zini o'zgartirib yoki boshqa kategoriya tanlab ko'ring</p>
+          </div>
+        `;
+        return;
+      }
+
+      const bgClass = `bg-${previewBackground}-preview`;
+
+      // Group if in 'all' view and no query
+      if (activeCategory === 'all' && !q) {
+        const grouped = {};
+        filtered.forEach(item => {
+          if (!grouped[item.category]) grouped[item.category] = [];
+          grouped[item.category].push(item);
+        });
+
+        Object.keys(grouped).sort().forEach(cat => {
+          const divider = document.createElement('div');
+          divider.className = 'category-divider';
+          divider.innerHTML = `<span>📂 ${cat}</span> <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">(${grouped[cat].length})</span>`;
+          assetsGrid.appendChild(divider);
+
+          grouped[cat].forEach(item => {
+            assetsGrid.appendChild(createCard(item, bgClass));
+          });
+        });
+      } else {
+        filtered.forEach(item => {
+          assetsGrid.appendChild(createCard(item, bgClass));
+        });
+      }
+    }
+
+    // Create Card
+    function createCard(item, bgClass) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.title = `${item.name} (${formatBytes(item.size)})`;
+
+      const previewBg = previewBackground === 'checker' ? 'bg-checker' : bgClass;
+
+      card.innerHTML = `
+        <div class="card-preview ${previewBg}">
+          <img src="${item.path}" alt="${item.name}" loading="lazy">
+          <div class="card-quick-actions">
+            <button class="quick-btn btn-quick-copy" title="SVG kodini nusxalash">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"></rect>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke-width="2"></path>
+              </svg>
+            </button>
+            <a class="quick-btn btn-quick-dl" href="${item.path}" download="${item.name}" title="Yuklab olish">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+        <div class="card-info">
+          <div class="card-title">${item.name}</div>
+          <div class="card-footer">
+            <span class="badge-pill ${item.ext}">${item.ext}</span>
+            <span>${formatBytes(item.size)}</span>
+          </div>
+        </div>
+      `;
+
+      // Quick copy button click
+      const quickCopyBtn = card.querySelector('.btn-quick-copy');
+      quickCopyBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          const res = await fetch(item.path);
+          const svgText = await res.text();
+          copyToClipboard(svgText, `${item.name} SVG kodi nusxalandi!`);
+        } catch (_) {
+          copyToClipboard(item.path, `${item.name} yo'li nusxalandi!`);
+        }
+      });
+
+      const quickDlBtn = card.querySelector('.btn-quick-dl');
+      quickDlBtn.addEventListener('click', (e) => e.stopPropagation());
+
+      card.addEventListener('click', () => openModal(item));
+      return card;
+    }
+
+    // Convert SVG to React JSX
+    function svgToJsx(svgText, componentName = 'Icon') {
+      let jsx = svgText
+        .replace(/xmlns="[^"]*"/g, '')
+        .replace(/class=/g, 'className=')
+        .replace(/stroke-width=/g, 'strokeWidth=')
+        .replace(/stroke-linecap=/g, 'strokeLinecap=')
+        .replace(/stroke-linejoin=/g, 'strokeLinejoin=')
+        .replace(/stroke-miterlimit=/g, 'strokeMiterlimit=')
+        .replace(/fill-rule=/g, 'fillRule=')
+        .replace(/clip-rule=/g, 'clipRule=')
+        .replace(/clip-path=/g, 'clipPath=')
+        .replace(/letter-spacing=/g, 'letterSpacing=')
+        .replace(/text-anchor=/g, 'textAnchor=')
+        .replace(/font-family=/g, 'fontFamily=')
+        .replace(/font-size=/g, 'fontSize=')
+        .replace(/font-weight=/g, 'fontWeight=');
+      return `export function ${componentName}(props) {\n  return (\n    ${jsx.trim()}\n  );\n}`;
+    }
+
+    // Open Modal
+    async function openModal(item) {
+      currentAsset = item;
+      modalTitle.textContent = item.name;
+      modalImg.src = item.path;
+      btnDownloadSvg.href = item.path;
+      btnDownloadSvg.setAttribute('download', item.name);
+
+      metaPath.textContent = item.path;
+      metaSize.textContent = formatBytes(item.size);
+      metaCat.textContent = item.category;
+      metaExt.textContent = item.ext;
+
+      modalPreview.className = 'modal-preview-box ' + (previewBackground === 'checker' ? 'bg-checker' : `bg-${previewBackground}-preview`);
+
+      currentSvgRaw = '';
+      if (item.ext === 'svg') {
+        try {
+          const res = await fetch(item.path);
+          currentSvgRaw = await res.text();
+        } catch (_) {
+          currentSvgRaw = `<img src="${item.path}" alt="${item.name}" />`;
+        }
+      } else {
+        currentSvgRaw = `<img src="${item.path}" alt="${item.name}" width="48" height="48" />`;
+      }
+
+      updateCodeViewer();
+      modalBackdrop.style.display = 'flex';
+    }
+
+    function updateCodeViewer() {
+      if (!currentAsset) return;
+
+      if (currentActiveTab === 'svg') {
+        codeViewerText.textContent = currentSvgRaw;
+      } else if (currentActiveTab === 'jsx') {
+        const compName = currentAsset.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') + 'Icon';
+        codeViewerText.textContent = svgToJsx(currentSvgRaw, compName);
+      } else if (currentActiveTab === 'html') {
+        codeViewerText.textContent = `<img src="${currentAsset.path}" alt="${currentAsset.name}" width="32" height="32">`;
+      } else if (currentActiveTab === 'uri') {
+        const uri = 'data:image/svg+xml;utf8,' + encodeURIComponent(currentSvgRaw);
+        codeViewerText.textContent = `background-image: url("${uri}");`;
+      }
+    }
+
+    function closeModal() {
+      modalBackdrop.style.display = 'none';
+      currentAsset = null;
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalBackdrop.style.display === 'flex') {
+        closeModal();
+      }
+      if (e.key === '/' && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+    });
+
+    // Tab buttons in modal
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentActiveTab = btn.dataset.tab;
+        updateCodeViewer();
+      });
+    });
+
+    // Action buttons in modal
+    btnCopySvgCode.addEventListener('click', () => {
+      copyToClipboard(currentSvgRaw, 'SVG manba kodi nusxalandi!');
+    });
+
+    btnCopyJsx.addEventListener('click', () => {
+      const compName = currentAsset.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('') + 'Icon';
+      copyToClipboard(svgToJsx(currentSvgRaw, compName), 'React JSX komponenti nusxalandi!');
+    });
+
+    btnCopyDataUri.addEventListener('click', () => {
+      const uri = 'data:image/svg+xml;utf8,' + encodeURIComponent(currentSvgRaw);
+      copyToClipboard(`background-image: url("${uri}");`, 'CSS Data-URI nusxalandi!');
+    });
+
+    // Download PNG at 512x512 via Canvas
+    btnDownloadPng.addEventListener('click', () => {
+      if (!currentAsset) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        ctx.clearRect(0, 0, 512, 512);
+        ctx.drawImage(img, 0, 0, 512, 512);
+        const pngUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.download = currentAsset.name.replace(/\.[^/.]+$/, '') + '.png';
+        a.href = pngUrl;
+        a.click();
+        showToast('PNG fayli muvaffaqiyatli yuklandi!');
+      };
+      img.src = currentAsset.path;
+    });
+
+    // Search input
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderAssets();
+    });
+
+    // Size Slider
+    sizeSlider.addEventListener('input', (e) => {
+      const sz = e.target.value + 'px';
+      document.documentElement.style.setProperty('--icon-size', sz);
+      sizeVal.textContent = sz;
+    });
+
+    // Color Customizer
+    colorPicker.addEventListener('input', (e) => {
+      liveColor = e.target.value;
+      colorPickerWrap.style.background = liveColor;
+      applyLiveColor(liveColor);
+    });
+
+    resetColorBtn.addEventListener('click', () => {
+      liveColor = null;
+      colorPickerWrap.style.background = '#6366f1';
+      colorPicker.value = '#6366f1';
+      document.querySelectorAll('.card-preview img').forEach(img => {
+        img.style.filter = '';
+      });
+      showToast('Rang asliga qaytarildi');
+    });
+
+    function applyLiveColor(hex) {
+      // Hue-rotate / filter effect for live preview
+      document.querySelectorAll('.card-preview img').forEach(img => {
+        img.style.filter = `drop-shadow(0 2px 4px rgba(0,0,0,0.2)) drop-shadow(0 0 1px ${hex})`;
+      });
+    }
+
+    // Preview Background Buttons
+    bgButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        bgButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        previewBackground = btn.dataset.bg;
+        renderAssets();
+        if (currentAsset) {
+          modalPreview.className = 'modal-preview-box ' + (previewBackground === 'checker' ? 'bg-checker' : `bg-${previewBackground}-preview`);
+        }
+      });
+    });
+
+    // Theme toggle
+    themeToggle.addEventListener('click', () => {
+      const curr = document.body.getAttribute('data-theme');
+      const next = curr === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', next);
+      const meta = document.getElementById('metaThemeColor');
+      if (meta) meta.setAttribute('content', next === 'light' ? '#f8fafc' : '#0c0f17');
+    });
+
+    // Init
+    initCategories();
+    renderAssets();
+  </script>
+</body>
+</html>

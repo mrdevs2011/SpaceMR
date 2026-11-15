@@ -1678,7 +1678,6 @@ export async function openGroupInfo(groupId) {
         panel.classList.remove('show');
         closeGroupThread();
         $('chatThreadModal').classList.remove('show');
-        toast(`${typeLabel}dan chiqdingiz`, 'info');
       } catch(e) { toast('Xato yuz berdi', 'error'); }
     }, 'Chiqish', 'Chiqish');
   };
@@ -1690,7 +1689,6 @@ export async function openGroupInfo(groupId) {
         panel.classList.remove('show');
         closeGroupThread();
         $('chatThreadModal').classList.remove('show');
-        toast(`${typeLabel} o'chirildi`, 'success');
       } catch(e) { toast('Xato yuz berdi', 'error'); }
     }, "O'chirish", "O'chirish");
   };
