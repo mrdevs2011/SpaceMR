@@ -525,14 +525,14 @@
 .attach-media-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 3px;
   max-height: 290px;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  margin-bottom: 12px;
-  padding: 2px;
-  border-radius: 12px;
+  margin-bottom: 8px;
+  padding: 0;
+  border-radius: 6px;
 }
 .attach-media-grid::-webkit-scrollbar {
   width: 4px;
@@ -545,10 +545,10 @@
 .attach-grid-item {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 12px;
+  border-radius: 4px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -558,29 +558,26 @@
   color: var(--text, #fff);
   box-sizing: border-box;
   padding: 0;
-  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+  transition: transform 0.12s ease, filter 0.14s ease;
   -webkit-tap-highlight-color: transparent;
 }
-.attach-grid-item:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.18);
-}
 .attach-grid-item:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
 /* 1-slot: Jonli yoki Statik Kamera plitkasi */
 .live-cam-tile {
   background: var(--bg3, #16181c);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
   padding: 0;
   position: relative;
   overflow: hidden;
 }
 .live-cam-tile.static-cam-tile {
   background: var(--bg3, #16181c);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 .live-cam-video {
   width: 100%;
@@ -674,50 +671,62 @@
 
 /* Qolgan slotlar: Haqiqiy fotosuratlar va videolar (Media Photo Tile) */
 .media-photo-tile {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #0d0e12;
-  border: 2px solid transparent;
-  cursor: pointer;
-  padding: 0;
-  box-sizing: border-box;
-  transition: transform 0.12s ease, border-color 0.14s ease, box-shadow 0.14s ease;
-  -webkit-tap-highlight-color: transparent;
+  position: relative !important;
+  aspect-ratio: 1 / 1 !important;
+  width: 100% !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  background: #121316 !important;
+  border: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  transition: transform 0.12s ease, filter 0.14s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 .media-photo-tile:active {
-  transform: scale(0.96);
+  transform: scale(0.97) !important;
 }
 .media-photo-tile.selected {
-  border-color: var(--blue, #1d9bf0);
-  box-shadow: 0 0 0 1px var(--blue, #1d9bf0);
+  outline: 2.5px solid var(--blue, #1d9bf0) !important;
+  outline-offset: -2.5px !important;
 }
-.media-tile-thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
-}
-.media-tile-vid-badge {
+.media-photo-tile.selected::after {
+  content: '';
   position: absolute;
-  bottom: 6px;
-  left: 6px;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  inset: 0;
+  background: rgba(29, 155, 240, 0.22);
   pointer-events: none;
   z-index: 2;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.media-tile-thumb {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  pointer-events: none !important;
+  background: #14161b !important;
+}
+.media-tile-vid-badge {
+  position: absolute !important;
+  bottom: 5px !important;
+  left: 5px !important;
+  background: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
 .media-tile-vid-badge svg {
   flex-shrink: 0;
@@ -755,40 +764,40 @@
 
 /* Telegram uslubidagi doiraviy tanlash indikatori (1, 2, 3...) */
 .media-tile-check {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  pointer-events: none;
-  z-index: 3;
-  padding: 0;
-  box-sizing: border-box;
-  transition: all 0.15s ease;
+  position: absolute !important;
+  top: 5px !important;
+  right: 5px !important;
+  width: 23px !important;
+  height: 23px !important;
+  border-radius: 50% !important;
+  border: 1.8px solid rgba(255, 255, 255, 0.9) !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #fff !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease !important;
 }
 .media-tile-check.checked {
-  background: var(--blue, #1d9bf0);
-  border-color: #fff;
-  transform: scale(1.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: var(--blue, #1d9bf0) !important;
+  border-color: #fff !important;
+  transform: scale(1.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 .media-tile-check .check-num {
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  line-height: 1 !important;
 }
 
 /* Tanlangan media fayllarni Telegram kabi birdaniga yuborish paneli (Send Bar) */
@@ -1906,18 +1915,30 @@
 .am-gallery-panel {
   display: none;
   flex-direction: column;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .attach-drawer .am-gallery-panel {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  display: none;
+  flex-direction: column !important;
 }
-.attach-drawer .am-gallery-panel #amDcimGrid {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-  overflow-y: auto;
+.attach-drawer .am-gallery-panel #amDcimGrid,
+.attach-drawer #amDcimGrid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 3px !important;
+  padding: 0 !important;
+  margin-bottom: 6px !important;
+  border-radius: 6px !important;
 }
 .am-gallery-toolbar {
   display: flex;

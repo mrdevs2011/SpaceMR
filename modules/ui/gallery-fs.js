@@ -352,6 +352,12 @@ export async function scanDirectory(dirHandle, maxDepthOrOptions = 3, maxCountPa
             const ext = dotIdx >= 0 ? name.slice(dotIdx + 1).toLowerCase() : '';
             if (IMAGE_EXTENSIONS.has(ext) || VIDEO_EXTENSIONS.has(ext)) {
               files.push(entry);
+              // Agar bu birinchi o'qilayotgan papka bo'lsa va rawEntries bo'sh bo'lsa,
+              // birinchi 12 ta faylni zudlik bilan resolve qilib foydalanuvchiga 0ms da ko'rsatamiz
+              if (rawEntries.length === 0 && files.length >= 12) {
+                const earlyChunk = files.splice(0, files.length);
+                await resolveFilesParallel(earlyChunk, handle.name);
+              }
             }
           } else if (entry.kind === 'directory') {
             const dName = (entry.name || '').toLowerCase();

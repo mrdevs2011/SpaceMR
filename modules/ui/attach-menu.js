@@ -1022,9 +1022,13 @@ export function initAttachMenu({
         const selIdx = Array.from(selectedMap.keys()).indexOf(item.id);
         const isSel = selIdx >= 0;
         const durText = item.durationText || (isVid ? 'Video' : '');
+        const escName = String(item.name || 'media').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const mediaThumb = isVid
+          ? `<video class="media-tile-thumb" src="${item.thumbUrl}#t=0.001" preload="metadata" muted playsinline></video>`
+          : `<img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">`;
         return `
           <div class="attach-grid-item media-photo-tile ${isSel ? 'selected' : ''}" data-media-id="${item.id}" role="button" tabindex="0">
-            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="${item.name || 'media'}" loading="lazy">
+            ${mediaThumb}
             ${isVid ? `<div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span class="vid-dur-text">${durText}</span></div>` : ''}
             <button type="button" class="media-tile-check ${isSel ? 'checked' : ''}" aria-label="Tanlash">
               ${isSel ? `<span class="check-num">${selIdx + 1}</span>` : ''}
@@ -1132,25 +1136,62 @@ export function initAttachMenu({
         const galleryLoadingText = overlay.querySelector('#amGalleryLoadingText');
         if (galleryLoadingText) galleryLoadingText.textContent = "Galereya o'qilmoqda...";
         let renderedFirstBatch = false;
+        const dcimThumbUrlMap = new Map();
+        let dcimRenderRaf = null;
+        let lastRenderTime = 0;
+
+        function scheduleDcimRender(force = false) {
+          const now = Date.now();
+          if (force || !renderedFirstBatch || now - lastRenderTime > 200) {
+            if (dcimRenderRaf) cancelAnimationFrame(dcimRenderRaf);
+            dcimRenderRaf = null;
+            lastRenderTime = now;
+            renderDcimMediaItems(dcimMediaList);
+            isDcimLoaded = true;
+            dcimGrid.style.display = 'grid';
+            updateSelectionUI();
+            if (!renderedFirstBatch) {
+              renderedFirstBatch = true;
+              if (galleryLoader) galleryLoader.style.display = 'none';
+            }
+          } else if (!dcimRenderRaf) {
+            dcimRenderRaf = requestAnimationFrame(() => {
+              dcimRenderRaf = null;
+              lastRenderTime = Date.now();
+              renderDcimMediaItems(dcimMediaList);
+              updateSelectionUI();
+            });
+          }
+        }
 
         const mediaEntries = await scanDirectory(handle, {
           maxDepth: 3,
           maxCount: 150,
           onProgress: ({ scannedCount, foundCount, currentFolder, isComplete }) => {
             if (galleryLoadingText) {
-              galleryLoadingText.textContent = isComplete
-                ? `Tayyor! (${foundCount} ta media)`
-                : `${currentFolder || 'DCIM'} o'qilmoqda... (${foundCount} ta topildi)`;
+              if (isComplete) {
+                galleryLoadingText.textContent = `Tayyor! (${foundCount} ta media)`;
+              } else if (foundCount > 0) {
+                galleryLoadingText.textContent = `${foundCount} ta media topildi...`;
+              } else {
+                galleryLoadingText.textContent = `${currentFolder || 'DCIM'} papkasi o'qilmoqda...`;
+              }
             }
           },
           onBatch: (batch) => {
             if (!batch || !batch.length) return;
             dcimMediaList = batch.map((m, idx) => {
-              let thumbUrl = '';
-              try {
-                thumbUrl = URL.createObjectURL(m.file);
-                _activeObjectUrls.add(thumbUrl);
-              } catch (_) {}
+              const fileKey = m.file ? `${m.file.name}_${m.file.size}_${m.file.lastModified}` : (m.name + '_' + idx);
+              let thumbUrl = dcimThumbUrlMap.get(fileKey);
+              if (!thumbUrl) {
+                try {
+                  thumbUrl = URL.createObjectURL(m.file);
+                  _activeObjectUrls.add(thumbUrl);
+                  dcimThumbUrlMap.set(fileKey, thumbUrl);
+                } catch (_) {
+                  thumbUrl = '';
+                }
+              }
               const isVid = (m.type || '').startsWith('video/');
               return {
                 id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
@@ -1163,17 +1204,11 @@ export function initAttachMenu({
               };
             });
 
-            renderDcimMediaItems(dcimMediaList);
-            isDcimLoaded = true;
-            dcimGrid.style.display = 'grid';
-            updateSelectionUI();
-
-            if (!renderedFirstBatch) {
-              renderedFirstBatch = true;
-              if (galleryLoader) galleryLoader.style.display = 'none';
-            }
+            scheduleDcimRender(!renderedFirstBatch);
           }
         });
+
+        scheduleDcimRender(true);
 
         if (!mediaEntries.length && !renderedFirstBatch) {
           galleryLoader.style.display = 'none';
@@ -1265,8 +1300,8 @@ export function initAttachMenu({
         let mediaBody = '';
         if (isVid) {
           mediaBody = `
-            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">
-            <div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span>${durText}</span></div>`;
+            <video class="media-tile-thumb" src="${item.thumbUrl}#t=0.001" preload="metadata" muted playsinline></video>
+            <div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span class="vid-dur-text">${durText}</span></div>`;
         } else if (isImg || (item.thumbUrl && !item.file)) {
           mediaBody = `<img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">`;
         } else {
