@@ -828,7 +828,9 @@ export function initChatHeaderMenu() {
     }
   });
 }
-window._initChatHeaderMenu = initChatHeaderMenu;
+if (typeof window !== 'undefined') {
+  window._initChatHeaderMenu = initChatHeaderMenu;
+}
 
 /* ── Chat skeleton yuklanishi (1px to 1px .chat-row bilan bir xil layout) ── */
 export function paintChatSkeleton(wrap, n = 6) {
@@ -1793,10 +1795,12 @@ busOn('inbox', (o) => {
   updateChatBadge(Object.values(chatState._latestChatMap).reduce((n, c) => n + (c.unreadCount?.[me] || 0), 0));
   if (state.view === 'chats') paintChatsList(chatState._usersCache || [], chatState._latestChatMap);
 });
-document.addEventListener('presenceChanged', () => {
-  if (state.view === 'chats' && chatState._usersCache) paintChatsList(chatState._usersCache, chatState._latestChatMap);
-  if (state.currentChatUid && $('chatTypingStatus')) _paintPeerStatus(chatState._peerLastSeenAt);
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('presenceChanged', () => {
+    if (state.view === 'chats' && chatState._usersCache) paintChatsList(chatState._usersCache, chatState._latestChatMap);
+    if (state.currentChatUid && $('chatTypingStatus')) _paintPeerStatus(chatState._peerLastSeenAt);
+  });
+}
 
 /* ── Open chat thread ─────────────────────────────────────────────────── */
 
@@ -2743,13 +2747,15 @@ function _smoothToBottom(box) {
   box._smoothUntil = Date.now() + 900;
   smoothScrollContainer(box, top);
 }
-window._chatImgLoaded = function (img) {
-  try { rememberImgRatio(img); } catch (_) {}
-  const box = document.getElementById('chatThreadMessages');
-  if (!box || !chatState._pinned || !box.contains(img)) return;
-  const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
-  if (gap < 160) _smoothToBottom(box);
-};
+if (typeof window !== 'undefined') {
+  window._chatImgLoaded = function (img) {
+    try { rememberImgRatio(img); } catch (_) {}
+    const box = document.getElementById('chatThreadMessages');
+    if (!box || !chatState._pinned || !box.contains(img)) return;
+    const gap = box.scrollHeight - box.scrollTop - box.clientHeight;
+    if (gap < 160) _smoothToBottom(box);
+  };
+}
 
 /** Xabarlar DOM'ini kalit (xabar id) bo'yicha yamaydi: bir xil HTML — o'sha element qoladi */
 function _patchMessages(box, parts, keys) {
@@ -3884,31 +3890,33 @@ export function renderChatPostCard(ps) {
   `;
 }
 
-window._openPostFromChat = async function(postId) {
-  if (!postId) return;
-  if (chatState._postExistenceMap.get(postId) === false) {
-    toast("Bu post o'chirilgan", "error");
-    return;
-  }
-  // Post mavjudligini bazadan tezkor tekshiramiz
-  try {
-    const { data } = await sb.from('posts').select('id').eq('id', postId).maybeSingle();
-    if (!data) {
-      chatState._postExistenceMap.set(postId, false);
-      _updatePostCardsInDOM();
+if (typeof window !== 'undefined') {
+  window._openPostFromChat = async function(postId) {
+    if (!postId) return;
+    if (chatState._postExistenceMap.get(postId) === false) {
       toast("Bu post o'chirilgan", "error");
       return;
     }
-    chatState._postExistenceMap.set(postId, true);
-  } catch (_) {}
+    // Post mavjudligini bazadan tezkor tekshiramiz
+    try {
+      const { data } = await sb.from('posts').select('id').eq('id', postId).maybeSingle();
+      if (!data) {
+        chatState._postExistenceMap.set(postId, false);
+        _updatePostCardsInDOM();
+        toast("Bu post o'chirilgan", "error");
+        return;
+      }
+      chatState._postExistenceMap.set(postId, true);
+    } catch (_) {}
 
-  try {
-    closeChatThread();
-  } catch (_) {}
-  // Post linkini ochish bilan bir xil mantiq (feed.js: openPostLink) — boshqa hech narsa emas
-  const { openPostLink } = await import('../feed/feed.js');
-  openPostLink(postId);
-};
+    try {
+      closeChatThread();
+    } catch (_) {}
+    // Post linkini ochish bilan bir xil mantiq (feed.js: openPostLink) — boshqa hech narsa emas
+    const { openPostLink } = await import('../feed/feed.js');
+    openPostLink(postId);
+  };
+}
 
 /** Xabar maydoni qatorlar soniga qarab balandlashadi (max ~7 qator, undan keyin ichida skroll). */
 const _INPUT_MAX_H = 144;
@@ -3925,7 +3933,9 @@ export function autoGrowChatInput() {
   // Yozish maydoni balandligi o'zgarsa xabarlar oynasi ham o'zgaradi — pastda turgan bo'lsak pastda qolamiz
   if (_stick) _msgBox.scrollTop = _msgBox.scrollHeight;
 }
-window.addEventListener('resize', autoGrowChatInput);
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', autoGrowChatInput);
+}
 
 export function updateVoiceSendBtn() {
   autoGrowChatInput();

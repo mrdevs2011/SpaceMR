@@ -2,6 +2,7 @@
 import { toast } from '../ui/toast.js';
 import { isPermissionAllowed } from '../settings/permissions.js';
 import { pushOverlay, dismissOverlay } from '../ui/overlay-stack.js';
+import { initAttachMenu, closeAttachMenu } from '../ui/attach-menu.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
   trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced, waitTrackTorchReady,

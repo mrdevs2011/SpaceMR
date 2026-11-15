@@ -255,9 +255,13 @@ export function handleSwipeStart(touch, target) {
     } catch (_) {}
 
     if (MAIN_TABS.includes(cur)) {
+      const curEl = document.getElementById(`${cur}View`) || document.querySelector('.view.on') || document.body;
       _swipe = {
         type: 'tabPager',
-        el: document.getElementById(`${cur}View`) || document.querySelector('.view.on') || document.body,
+        el: curEl,
+        curEl: curEl,
+        targetEl: null,
+        targetTab: null,
         target,
         startX: clientX,
         startY: clientY,
@@ -357,6 +361,49 @@ export function handleSwipeMove(touch, event) {
     }
   } else if (_swipe.type === 'tabPager') {
     _swipe.moveX = deltaX;
+    const curTab = _swipe.currentTab;
+    const curIdx = MAIN_TABS.indexOf(curTab);
+    const W = (typeof window !== 'undefined' ? window.innerWidth : 360) || 360;
+
+    let targetIdx = -1;
+    if (deltaX < 0) {
+      targetIdx = curIdx + 1;
+    } else if (deltaX > 0) {
+      targetIdx = curIdx - 1;
+    }
+
+    let targetTab = (targetIdx >= 0 && targetIdx < MAIN_TABS.length) ? MAIN_TABS[targetIdx] : null;
+    let targetEl = targetTab ? document.getElementById(`${targetTab}View`) : null;
+
+    if (_swipe.targetEl && _swipe.targetEl !== targetEl) {
+      _cleanupTabSwiping(null, _swipe.targetEl);
+    }
+
+    _swipe.targetTab = targetTab;
+    _swipe.targetEl = targetEl;
+
+    const curEl = _swipe.curEl || _swipe.el;
+
+    if (targetEl && curEl) {
+      curEl.classList.add('tab-swiping-active');
+      curEl.style.transition = 'none';
+      curEl.style.transform = `translate3d(${deltaX}px, 0, 0)`;
+
+      targetEl.classList.add('tab-swiping-target');
+      targetEl.style.transition = 'none';
+      if (deltaX < 0) {
+        targetEl.style.transform = `translate3d(${W + deltaX}px, 0, 0)`;
+        targetEl.style.boxShadow = '-15px 0 35px rgba(0, 0, 0, 0.5)';
+      } else {
+        targetEl.style.transform = `translate3d(${-W + deltaX}px, 0, 0)`;
+        curEl.style.boxShadow = '-15px 0 35px rgba(0, 0, 0, 0.5)';
+      }
+    } else if (curEl) {
+      const dampedX = deltaX * 0.35;
+      curEl.classList.add('tab-swiping-active');
+      curEl.style.transition = 'none';
+      curEl.style.transform = `translate3d(${dampedX}px, 0, 0)`;
+    }
   }
 }
 
@@ -470,24 +517,56 @@ export function handleSwipeEnd() {
     const absX = Math.abs(deltaX);
     const vx = absX / dt;
     const threshold = Math.min(width * 0.18, 55);
+    const shouldSwitch = (absX >= threshold) || (vx > 0.35 && absX > 20);
 
-    if (absX >= threshold || (vx > 0.35 && absX > 25)) {
-      if (deltaX < 0) {
-        // Swiped left -> next tab
-        const switched = switchTab(1);
-        return { switched, dir: 1, deltaX, vx };
-      } else {
-        // Swiped right -> prev tab OR on 'home' open story upload
-        if (s.currentTab === 'home') {
-          try { navigator.vibrate?.(10); } catch (_) {}
-          try {
-            import('../feed/stories.js').then(m => m.openStoryAdd?.()).catch(() => {});
-          } catch (_) {}
-          return { switched: true, dir: -1, action: 'storyUpload', deltaX, vx };
-        }
-        const switched = switchTab(-1);
-        return { switched, dir: -1, deltaX, vx };
+    const curEl = s.curEl || s.el;
+    const targetEl = s.targetEl;
+    const targetTab = s.targetTab;
+
+    if (shouldSwitch && targetTab && targetEl) {
+      const dir = deltaX < 0 ? 1 : -1;
+      try { navigator.vibrate?.(10); } catch (_) {}
+
+      if (curEl) {
+        curEl.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
+        curEl.style.transform = (deltaX < 0) ? 'translate3d(-100vw, 0, 0)' : 'translate3d(100vw, 0, 0)';
       }
+      if (targetEl) {
+        targetEl.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.24s ease';
+        targetEl.style.transform = 'translate3d(0, 0, 0)';
+      }
+
+      setTimeout(() => {
+        _cleanupTabSwiping(curEl, targetEl);
+        doNavigateTo(targetTab);
+      }, 240);
+
+      return { switched: true, dir, deltaX, vx };
+    } else {
+      if (s.currentTab === 'home' && deltaX >= threshold) {
+        _cleanupTabSwiping(curEl, targetEl);
+        try { navigator.vibrate?.(10); } catch (_) {}
+        try {
+          import('../feed/stories.js').then(m => m.openStoryAdd?.()).catch(() => {});
+        } catch (_) {}
+        return { switched: true, dir: -1, action: 'storyUpload', deltaX, vx };
+      }
+
+      if (curEl) {
+        curEl.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+        curEl.style.transform = 'translate3d(0, 0, 0)';
+        curEl.style.boxShadow = '';
+      }
+      if (targetEl) {
+        targetEl.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+        targetEl.style.transform = (deltaX < 0) ? 'translate3d(100vw, 0, 0)' : 'translate3d(-100vw, 0, 0)';
+      }
+
+      setTimeout(() => {
+        _cleanupTabSwiping(curEl, targetEl);
+      }, 220);
+
+      return { switched: false, dir: deltaX < 0 ? 1 : -1, deltaX, vx };
     }
   }
 
@@ -525,6 +604,30 @@ export function initSwipeNavigation() {
   document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
   document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
   document.addEventListener('touchcancel', onTouchEnd, { passive: true, capture: true });
+}
+
+export function _cleanupTabSwiping(curEl, targetEl) {
+  if (curEl) {
+    curEl.classList.remove('tab-swiping-active');
+    curEl.style.transform = '';
+    curEl.style.transition = '';
+    curEl.style.boxShadow = '';
+    curEl.style.pointerEvents = '';
+  }
+  if (targetEl) {
+    targetEl.classList.remove('tab-swiping-target');
+    targetEl.style.transform = '';
+    targetEl.style.transition = '';
+    targetEl.style.boxShadow = '';
+    targetEl.style.display = '';
+    targetEl.style.position = '';
+    targetEl.style.top = '';
+    targetEl.style.left = '';
+    targetEl.style.width = '';
+    targetEl.style.height = '';
+    targetEl.style.zIndex = '';
+    targetEl.style.pointerEvents = '';
+  }
 }
 
 // Auto-boot in browser environment

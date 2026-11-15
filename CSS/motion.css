@@ -403,3 +403,24 @@ img, video { decoding: async; }
   will-change: transform;
   transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
 }
+
+/* Telegram/Instagram uslubidagi Tab Pager (Physical 1:1 Horizontal Slide) */
+.view.tab-swiping-active {
+  pointer-events: none !important;
+  will-change: transform;
+}
+.view.tab-swiping-target {
+  display: block !important;
+  visibility: visible !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  pointer-events: none !important;
+  overflow-y: auto !important;
+  z-index: 12 !important;
+  will-change: transform;
+  box-sizing: border-box;
+  background: var(--bg, #000000) !important;
+}
