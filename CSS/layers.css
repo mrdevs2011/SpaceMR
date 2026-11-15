@@ -925,9 +925,17 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 }
 #uploadOverlay .upload-drop:hover { background: #2f3336; box-shadow: none; }
 #uploadOverlay .upload-drop.drag-over { background: #2f3336; transform: none; box-shadow: none; }
-@media (max-width: 480px) {
-  #uploadOverlay { padding: 0 8px max(10px, env(safe-area-inset-bottom, 10px)); align-items: flex-end; justify-content: center; }
-  #uploadOverlay .composer-sheet { width: 100%; max-width: 100%; max-height: 92dvh; border-radius: 20px !important; border: 1px solid var(--pal-gray-700) !important; }
+/* Mobil va planshet: #uploadOverlay umuman chiqmasin (xatto orqa fonda ham) */
+@media (max-width: 1024px) {
+  #uploadOverlay,
+  #uploadOverlay.show,
+  .upload-overlay {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    z-index: -9999 !important;
+  }
 }
 /* Fayl sahifaga sudralganda — yengil ko'rsatkich */
 body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: var(--radius); background: rgba(231, 233, 234, 0.05); pointer-events: none; z-index: 9999; }

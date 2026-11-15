@@ -78,13 +78,7 @@ export function initNavigation() {
   if (createBtn) {
     createBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {
-        const uploadOverlay = $('uploadOverlay');
-        if (uploadOverlay) {
-          uploadOverlay.classList.add('show');
-          setTimeout(() => $('captionInput')?.focus(), 100);
-        }
-      });
+      import('../feed/upload.js').then(m => m.openComposer?.()).catch(() => {});
     });
   }
 

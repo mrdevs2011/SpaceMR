@@ -22,7 +22,7 @@ const camCode = readFileSync(resolve('modules/chat/camera-capture.js'), 'utf8');
 assert(camCode.includes('cc-gallery-btn'), 'camera-capture.js must include cc-gallery-btn in bottom bar');
 assert(camCode.includes('gallery:'), 'camera-capture.js must define gallery SVG');
 assert(camCode.includes('initAttachMenu'), 'camera-capture.js must initialize attach menu on galleryBtn');
-assert(camCode.includes('context: \'story_camera\'') || camCode.includes('isStoryCamera: true'), 'camera-capture.js must pass story_camera context');
+assert(camCode.includes('context: \'story_camera\'') || camCode.includes('isStoryCamera: true') || camCode.includes('isForStory ? \'story_camera\''), 'camera-capture.js must pass story_camera context');
 assert(camCode.includes('galleryBtn.hidden = recording || reviewing'), 'camera-capture.js must hide gallery button while recording or reviewing');
 console.log('✓ PASS: camera-capture.js gallery button and attach menu integration verified');
 

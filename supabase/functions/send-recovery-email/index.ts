@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
   const maskedEmail = (resData?.masked_email as string) || null;
 
   const emailSubject = `SpaceMR | Tasdiqlash kodi: ${temp_password}`;
-  const logoUrl = 'https://spacemr.vercel.app/svg/SpaceMR-email.png';
+  const logoUrl = 'https://spacemr.vercel.app/svg/SpaceMR.png';
   const emailHtml = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:auto;padding:28px 24px;border:1px solid #222222;border-radius:14px;background:#000000;color:#f0f0f0;">
       <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">

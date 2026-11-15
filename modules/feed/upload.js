@@ -3,7 +3,7 @@ import { busEmit } from '../core/rt-bus.js';
 import { getCachedProfile } from '../core/local-cache.js';
 import { sb, state, MAX_FILE, uploadViaController, mapPost, setMediaDimensions } from '../core/config.js';
 import { compressImage } from './compress.js';
-import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi, safeStorage } from '../core/utils.js';
+import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi, safeStorage, isMobileOrTabletDevice } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
@@ -349,29 +349,22 @@ async function submitStory() {
   }
 }
 
-let _submitBusy = false;
-export async function submitPost() {
-  if (_submitBusy) return;
-  _submitBusy = true;
-  try {
-    if (_composerMode === 'story') return await submitStory();
-  const caption      = protectSecrets($('captionInput').value.trim());
-  const isPublic     = true;
-  if (!state.me) return;
-  if (!caption && !state.selFile) return;
+/* ── Post to'g'ridan-to'g'ri yuklash (mobil kamera/galereya yoki composer) ───── */
+export async function uploadPostDirect(file, captionText = '', localBlob = null, mediaW = null, mediaH = null) {
+  if (!state.me) return false;
+  const caption = protectSecrets((captionText || '').trim());
+  if (!caption && !file) return false;
 
   const { rateOk } = await import('../core/rate-limit.js');
   if (!rateOk('post', 3, 60000)) {
     const { toast } = await import('../ui/ui.js');
     toast('Juda ko\'p post yozdingiz. Biroz kuting', 'warning');
-    return;
+    return false;
   }
 
-  const hasFile = !!state.selFile;
-  const fileRef = state.selFile;
-  const localBlob = state._objUrl || null;
-  const mediaW = state._selMediaW || null;
-  const mediaH = state._selMediaH || null;
+  const hasFile = !!file;
+  const fileRef = file;
+  const tempBlob = localBlob || (hasFile && URL.createObjectURL ? URL.createObjectURL(file) : null);
   const tempId = (crypto.randomUUID && crypto.randomUUID()) || ('tmp_' + Date.now());
   const displayName = state.me.displayName || state._userCache?.[state.me.uid]?.fullName || 'Foydalanuvchi';
 
@@ -382,7 +375,7 @@ export async function submitPost() {
     userFullName: displayName,
     text: caption || null,
     mediaPath: null,
-    mediaUrl: localBlob,
+    mediaUrl: tempBlob,
     mediaType: fileRef?.type || null,
     mediaWidth: mediaW,
     mediaHeight: mediaH,
@@ -396,24 +389,7 @@ export async function submitPost() {
     _optimistic: true,
   };
   busEmit('post', { op: 'opt', post: optimistic });
-
-  $('uploadBtn').disabled    = true;
-  $('uploadBtn').textContent = 'Yuklanmoqda…';
-  $('uploadOverlay').classList.remove('show');
-  unlockScroll('uploadOverlay');
   if (hasFile) floatBarShow('post');
-  _clearHomeComposerUi();
-  // Composer tozalash — blob revoke YO'Q (optimistic media uchun)
-  state.selFile = null;
-  state._objUrl = null;
-  state._selMediaW = null;
-  state._selMediaH = null;
-  _setComposerMode('post');
-  try {
-    const fi = $('fileInput'); if (fi) fi.value = '';
-    const prev = $('filePreview'); if (prev) prev.innerHTML = '';
-    const cap = $('captionInput'); if (cap) cap.value = '';
-  } catch (_) {}
 
   try {
     const { data: ud } = await sb.from('profiles').select('full_name').eq('id', state.me.uid).maybeSingle();
@@ -423,20 +399,18 @@ export async function submitPost() {
     let fileSize  = null;
 
     if (hasFile && fileRef) {
-      let file = fileRef;
-      file = await _prepareUploadFile(file, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'post');
-      floatBarUpdate(0);
-
+      let prepFile = fileRef;
+      prepFile = await _prepareUploadFile(prepFile, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'post');
       floatBarUpdate(8);
-      const result = await uploadViaController(file, 'posts', {
+      const result = await uploadViaController(prepFile, 'posts', {
         onProgress: (r) => floatBarUpdate(8 + Math.round(Math.min(1, r) * 86)),
       });
       floatBarUpdate(96);
 
       mediaPath = result.path;
-      mediaType = file.type;
-      fileName  = file.name;
-      fileSize  = file.size;
+      mediaType = prepFile.type;
+      fileName  = prepFile.name;
+      fileSize  = prepFile.size;
       if (hasFile && mediaW && mediaH) {
         setMediaDimensions(mediaPath, mediaW, mediaH);
         if (result.url) setMediaDimensions(result.url, mediaW, mediaH);
@@ -453,32 +427,23 @@ export async function submitPost() {
       media_height:   hasFile ? mediaH : null,
       file_name:      fileName,
       file_size:      fileSize,
-      is_public:      !!isPublic,
+      is_public:      true,
     }).select('*').maybeSingle();
     if (postErr) {
       if (mediaPath) sb.storage.from('media').remove([mediaPath]).catch(() => {});
       throw postErr;
     }
 
-    // Haqiqiy post → temp o'rniga; boshqalarga ham
     if (_newPost) busEmit('post', { op: 'new', row: _newPost, replaceId: tempId });
-
     _clearPostDraft();
     if (hasFile) floatBarDone(true);
     else toast('Yuklandi!', 'success');
-
-    // blob endi server URL bilan almashtirilgan — biroz kutib revoke
-    if (localBlob) setTimeout(() => { try { URL.revokeObjectURL(localBlob); } catch (_) {} }, 8000);
+    if (tempBlob && !localBlob) setTimeout(() => { try { URL.revokeObjectURL(tempBlob); } catch (_) {} }, 8000);
+    return true;
   } catch (err) {
-    // Optimistic postni olib tashlash; matn qoralama sifatida saqlanadi (ROADMAP 4)
     busEmit('post', { op: 'del', id: tempId });
-    if (caption) {
-      _savePostDraft(caption);
-      const home = $('homeComposerInput');
-      if (home && !home.value.trim()) { home.value = caption; _syncHomeUi(); }
-      const capEl = $('captionInput');
-      if (capEl && !capEl.value.trim()) capEl.value = caption;
-    }
+    if (tempBlob && !localBlob) try { URL.revokeObjectURL(tempBlob); } catch (_) {}
+    if (caption) _savePostDraft(caption);
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     const status = Number(err?.status || 0);
     const uploadMessage = status === 400 || status === 415
@@ -488,26 +453,64 @@ export async function submitPost() {
       : status === 413 ? 'Rasm hajmi juda katta'
       : status === 429 ? 'Juda ko‘p urinish — biroz kut'
       : status >= 500 ? 'Serverda vaqtinchalik xato — qayta urinib ko‘r'
-      : /vaqti tugadi/i.test(err?.message || '') ? 'Yuklash vaqti tugadi — internetni tekshir'
-      : /tarmoq/i.test(err?.message || '') ? 'Internet bilan aloqa uzildi'
-      : 'Rasm yuklanmadi — qayta urinib ko‘r';
-    const msg = offline
-      ? "Internet yo'q — matn qoralama sifatida saqlandi"
-      : (hasFile ? uploadMessage : 'Post joylanmadi');
+      : offline ? 'Internet yo‘q — matn qoralama sifatida saqlandi'
+      : (err?.message || 'Yuklashda xatolik');
+    toast(uploadMessage, 'error');
     if (hasFile) floatBarDone(false);
-    toast(msg, 'error');
-    if (localBlob) try { URL.revokeObjectURL(localBlob); } catch (_) {}
-    // Upload muvaffaqiyatsiz bo‘lsa, foydalanuvchi tanlagan rasmni yo‘qotmaymiz.
-    if (hasFile && fileRef) {
-      try { pickFile(fileRef); } catch (restoreErr) { console.warn('[upload] faylni qayta tiklab bo‘lmadi:', restoreErr); }
+    return false;
+  }
+}
+
+/* Mobil va planshetda post yaratish: to'g'ridan-to'g'ri kamera / galereya + izoh + samalyot sahifasi */
+export async function openMobilePostUpload() {
+  if (!state.me) return;
+  try {
+    const { openCameraCapture } = await import('../chat/camera-capture.js');
+    const file = await openCameraCapture({ forPost: true });
+    if (file) {
+      await uploadPostDirect(file, file.caption || '');
     }
-    console.error('[post] submit failed:', err?.message || err, err);
+  } catch (err) {
+    console.warn('[post] mobile camera upload error:', err);
+  }
+}
+
+let _submitBusy = false;
+export async function submitPost() {
+  if (_submitBusy) return;
+  _submitBusy = true;
+  try {
+    if (_composerMode === 'story') return await submitStory();
+    const caption = protectSecrets($('captionInput')?.value?.trim() || '');
+    if (!state.me) return;
+    if (!caption && !state.selFile) return;
+
+    $('uploadBtn').disabled    = true;
+    $('uploadBtn').textContent = 'Yuklanmoqda…';
+    $('uploadOverlay')?.classList.remove('show');
+    unlockScroll('uploadOverlay');
+    _clearHomeComposerUi();
+
+    const fileRef = state.selFile;
+    const localBlob = state._objUrl || null;
+    const mediaW = state._selMediaW || null;
+    const mediaH = state._selMediaH || null;
+
+    state.selFile = null;
+    state._objUrl = null;
+    state._selMediaW = null;
+    state._selMediaH = null;
+    _setComposerMode('post');
+    try {
+      const fi = $('fileInput'); if (fi) fi.value = '';
+      const prev = $('filePreview'); if (prev) prev.innerHTML = '';
+      const cap = $('captionInput'); if (cap) cap.value = '';
+    } catch (_) {}
+
+    await uploadPostDirect(fileRef, caption, localBlob, mediaW, mediaH);
   } finally {
-    _submitBusy = false;
     $('uploadBtn').disabled = false;
     $('uploadBtn').textContent = 'Joylash';
-  }
-  } finally {
     _submitBusy = false;
   }
 }
@@ -542,6 +545,9 @@ function loadComposerAvi() {
 
 /* ── Overlay open/close ──────────────────────────────────────────────── */
 function raiseUploadOverlay() {
+  if (isMobileOrTabletDevice()) {
+    return null;
+  }
   const ov = $('uploadOverlay');
   if (!ov) return null;
   if (ov.parentElement !== document.body) document.body.appendChild(ov);
@@ -554,6 +560,10 @@ function raiseUploadOverlay() {
 }
 
 export function openComposer() {
+  if (isMobileOrTabletDevice()) {
+    openMobilePostUpload();
+    return;
+  }
   const ov = raiseUploadOverlay();
   if (!ov) return;
   ov.classList.add('show');
@@ -568,8 +578,12 @@ export function openComposer() {
   loadComposerAvi();
   try { window.dispatchEvent(new CustomEvent('spacemr:route')); } catch (_) {}
 }
-/* Story "+" bosilganda: fayl menejerini darhol ochmaymiz — post kabi composer kartasi ochiladi */
+/* Story "+" bosilganda: mobil/planshetda to'g'ridan-to'g'ri kamera/send ochiladi */
 export function openStoryComposer() {
+  if (isMobileOrTabletDevice()) {
+    import('./stories.js').then(m => m.openStoryAdd?.()).catch(() => {});
+    return;
+  }
   if (!state.me) return;
   const ov = raiseUploadOverlay();
   if (!ov) return;

@@ -88,6 +88,11 @@ export async function openCameraCapture(options = {}) {
   if (_open) return null;
   _open = true;
 
+  const isForPost = !!options.forPost;
+  const isForStory = !!options.forStory;
+  const needsCaption = isForPost || isForStory;
+  const captionPlaceholder = isForStory ? 'Hikoyaga matn yozish…' : 'Post uchun matn yozing…';
+
   let stream = null;
   let facing = 'user';
   let deviceId = null;
@@ -143,8 +148,8 @@ export async function openCameraCapture(options = {}) {
         <button type="button" class="cc-shutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
         <div class="cc-review" hidden>
           <button type="button" class="cc-btn cc-retake" aria-label="Qayta olish">${SVG.retake}</button>
-          <div class="cc-caption-box" ${options.forStory ? '' : 'hidden'}>
-            <input type="text" class="cc-caption-input" placeholder="Hikoyaga matn yozish…" maxlength="200" autocomplete="off" enterkeyhint="send" />
+          <div class="cc-caption-box" ${needsCaption ? '' : 'hidden'}>
+            <input type="text" class="cc-caption-input" placeholder="${captionPlaceholder}" maxlength="200" autocomplete="off" enterkeyhint="send" />
           </div>
           <button type="button" class="cc-btn cc-send" aria-label="Yuborish">${SVG.send}</button>
         </div>
@@ -413,10 +418,14 @@ export async function openCameraCapture(options = {}) {
       if (reviewing) {
         shutter.setAttribute('hidden', '');
         reviewEl.removeAttribute('hidden');
-        reviewEl.classList.toggle('has-caption', !!options.forStory);
+        reviewEl.classList.toggle('has-caption', needsCaption);
         if (captionBox) {
-          if (options.forStory) captionBox.removeAttribute('hidden');
-          else captionBox.setAttribute('hidden', '');
+          if (needsCaption) {
+            captionBox.removeAttribute('hidden');
+            if (captionInput) captionInput.placeholder = captionPlaceholder;
+          } else {
+            captionBox.setAttribute('hidden', '');
+          }
         }
         liveVid.hidden = true;
         if (flipBtn) flipBtn.hidden = true;
@@ -441,21 +450,22 @@ export async function openCameraCapture(options = {}) {
           if (file) enterReview(file);
         },
         showCamera: false,
-        showFile: false,
+        showFile: isForPost,
         showMedia: true,
         showPoll: false,
         showLocation: false,
-        mediaAccept: 'image/*,video/*',
+        mediaAccept: isForStory ? 'image/*,video/*' : '*/*',
         getOptions: () => ({
-          context: 'story_camera',
-          isStoryCamera: true,
-          isStory: true,
+          context: isForStory ? 'story_camera' : (isForPost ? 'post' : 'chat'),
+          isStoryCamera: isForStory,
+          isStory: isForStory,
+          isPost: isForPost,
           showCamera: false,
-          showFile: false,
+          showFile: isForPost,
           showMedia: true,
           showPoll: false,
           showLocation: false,
-          mediaAccept: 'image/*,video/*',
+          mediaAccept: isForStory ? 'image/*,video/*' : '*/*',
         }),
       });
     }
@@ -788,7 +798,7 @@ export async function openCameraCapture(options = {}) {
       };
       const submitReview = () => {
         if (!pendingFile) return;
-        if (captionInput && options.forStory) {
+        if (captionInput && needsCaption) {
           pendingFile.caption = captionInput.value.trim();
         }
         done(pendingFile);
