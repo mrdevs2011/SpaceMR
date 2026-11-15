@@ -204,6 +204,10 @@ function ensureDom() {
       <div class="sv-media" id="svMedia"></div>
       <div class="sv-rate" id="svRate" hidden style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 28px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 14px/1 system-ui,sans-serif;pointer-events:none;z-index:5"></div>
       <div class="sv-bottom" id="svBottom">
+        <div class="sv-caption-wrap" id="svCaptionWrap" hidden>
+          <div class="sv-caption" id="svCaption"></div>
+          <button type="button" class="sv-caption-more" id="svCaptionMore" hidden aria-label="Ko'proq o'qish">ko'proq</button>
+        </div>
         <div class="sv-reactions" id="svReactions">
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/2764.png" aria-label="Sevgi">${getReactionSvg('2764')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f525.png" aria-label="Olov">${getReactionSvg('1f525')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
@@ -226,6 +230,21 @@ function ensureDom() {
     $('svClose')?.addEventListener('click', e => {
       e.stopPropagation();
       closeViewer();
+    });
+
+    $('svCaptionWrap')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const wrap = $('svCaptionWrap');
+      const moreBtn = $('svCaptionMore');
+      if (!wrap) return;
+      const isExpanded = wrap.classList.toggle('expanded');
+      if (isExpanded) {
+        freezeStory();
+        if (moreBtn) moreBtn.textContent = 'yopish';
+      } else {
+        unfreezeStory();
+        if (moreBtn) moreBtn.textContent = "ko'proq";
+      }
     });
 
     $('svDelete')?.addEventListener('click', e => {
@@ -1075,6 +1094,11 @@ function closeViewer() {
   cancelAnimationFrame(_progressRaf);
   const v = $('storyViewer');
   if (v) v.hidden = true;
+  const wrap = $('svCaptionWrap');
+  if (wrap) {
+    wrap.classList.remove('expanded');
+    wrap.setAttribute('hidden', '');
+  }
   state.storyUid = null;
   unlockScroll('storyViewer');
   disposeStoryMedia();
@@ -1267,11 +1291,30 @@ async function showCurrent() {
   }
   media.appendChild(el);
 
-  if (item.caption) {
-    const cap = document.createElement('div');
-    cap.className = 'sv-caption';
-    cap.textContent = item.caption;
-    media.appendChild(cap);
+  const capWrap = $('svCaptionWrap');
+  const capEl = $('svCaption');
+  const moreBtn = $('svCaptionMore');
+  if (capWrap && capEl) {
+    if (item.caption) {
+      capEl.textContent = item.caption;
+      capWrap.classList.remove('expanded');
+      capWrap.removeAttribute('hidden');
+      if (moreBtn) {
+        moreBtn.textContent = "ko'proq";
+        moreBtn.setAttribute('hidden', '');
+      }
+      requestAnimationFrame(() => {
+        if (capEl.scrollHeight > capEl.clientHeight + 4) {
+          moreBtn?.removeAttribute('hidden');
+        } else {
+          moreBtn?.setAttribute('hidden', '');
+        }
+      });
+    } else {
+      capWrap.setAttribute('hidden', '');
+      capEl.textContent = '';
+      moreBtn?.setAttribute('hidden', '');
+    }
   }
 
   // Mark viewed
