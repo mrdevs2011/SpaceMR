@@ -629,7 +629,7 @@ function _nextVoiceBtn(btn, url) {
   return null;
 }
 
-window._chatPlayVoice = async function(btn) {
+export async function _chatPlayVoice(btn) {
   const wrap = btn.closest('.chat-voice-msg');
   let url = wrap?.dataset?.url || '';
   const path = wrap?.dataset?.path || '';
@@ -794,7 +794,10 @@ window._chatPlayVoice = async function(btn) {
   }
 
   _syncMiniPlayer();
-};
+}
+if (typeof window !== 'undefined') {
+  window._chatPlayVoice = _chatPlayVoice;
+}
 
 /* ── Voice mini-player — chatdan chiqib ketilsa ham ijro davom etadi ── */
 function _isVoiceOwnerChatOpen() {
@@ -825,40 +828,42 @@ function _updateMiniPlayerProgress(pct) {
   if (fill) fill.style.width = `${Math.max(0, Math.min(1, pct)) * 100}%`;
 }
 
-$('vmpPlay')?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  if (!_activeAudio) return;
-  if (_activeAudio.paused) { _activeAudio.play().catch(() => {}); _startProgressLoop(); }
-  else _activeAudio.pause();
-  _setBtnState();
-  _syncMiniPlayer();
-});
+if (typeof document !== 'undefined') {
+  $('vmpPlay')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!_activeAudio) return;
+    if (_activeAudio.paused) { _activeAudio.play().catch(() => {}); _startProgressLoop(); }
+    else _activeAudio.pause();
+    _setBtnState();
+    _syncMiniPlayer();
+  });
 
-$('vmpClose')?.addEventListener('click', (e) => {
-  e.stopPropagation();
-  _stopActive();
-  _activeChatId   = null;
-  _activeChatUid  = null;
-  _activeChatKind = null;
-  _syncMiniPlayer();
-});
+  $('vmpClose')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _stopActive();
+    _activeChatId   = null;
+    _activeChatUid  = null;
+    _activeChatKind = null;
+    _syncMiniPlayer();
+  });
 
-// Bar bosilganda — ovoz chiqayotgan chatga qaytamiz
-$('voiceMiniPlayer')?.addEventListener('click', async () => {
-  if (_activeChatKind === 'group' && _activeChatId) {
-    const { applyPath } = await import('../url-router.js');
-    applyPath('/chats/g/' + encodeURIComponent(_activeChatId));
-  } else if (_activeChatUid) {
-    const { applyPath } = await import('../url-router.js');
-    const { dmToken } = await import('./chat.js');
-    const token = dmToken(_activeChatUid);
-    if (token) {
-      applyPath('/chats/u/' + encodeURIComponent(token));
-    } else if (typeof _openChatCb === 'function') {
-      _openChatCb(_activeChatUid);
+  // Bar bosilganda — ovoz chiqayotgan chatga qaytamiz
+  $('voiceMiniPlayer')?.addEventListener('click', async () => {
+    if (_activeChatKind === 'group' && _activeChatId) {
+      const { applyPath } = await import('../url-router.js');
+      applyPath('/chats/g/' + encodeURIComponent(_activeChatId));
+    } else if (_activeChatUid) {
+      const { applyPath } = await import('../url-router.js');
+      const { dmToken } = await import('./chat.js');
+      const token = dmToken(_activeChatUid);
+      if (token) {
+        applyPath('/chats/u/' + encodeURIComponent(token));
+      } else if (typeof _openChatCb === 'function') {
+        _openChatCb(_activeChatUid);
+      }
     }
-  }
-});
+  });
+}
 
 const PLAY_ICON  = `<img src="./svg/media/play.svg" alt="" class="icon" width="14" height="14">`;
 const PAUSE_ICON = `<img src="./svg/extra/icon-4ed8972aa2b8.svg" alt="" class="icon" width="14" height="14">`;

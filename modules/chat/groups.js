@@ -320,9 +320,11 @@ function _resetGroupUnread(groupId) {
 }
 
 // Ochiq guruh chati orqa fondan qaytganda — kelib turgan xabarlar endi o'qilgan hisoblanadi
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && _currentGroupId) _resetGroupUnread(_currentGroupId);
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && _currentGroupId) _resetGroupUnread(_currentGroupId);
+  });
+}
 
 /* ─────────────────────────────────────────────────────────────────────
    WATCHER — real-time listener for groups/channels the user is in
@@ -340,7 +342,9 @@ export function startGroupsWatcher() {
 let _groupsTimer = null;
 const _groupsSched = () => { clearTimeout(_groupsTimer); _groupsTimer = setTimeout(_loadGroups, 0); };
 /* Uyg'onish / internet qaytishi: guruhlar ro'yxati qayta yuklanadi */
-window.addEventListener('spacemr:resync', () => { if (_groupsUnsub) _groupsSched(); });
+if (typeof window !== 'undefined') {
+  window.addEventListener('spacemr:resync', () => { if (_groupsUnsub) _groupsSched(); });
+}
 
 /** Ochiq guruh o'chirildi — chat.js thread'ni yopib, chatlar ro'yxatiga qaytaradi */
 function _notifyGroupGone(id) {
@@ -1112,10 +1116,12 @@ function _gOnTyping(v, from) {
   _gPaintSub();
 }
 // Katta emoji bosildi / BOOM — guruh a'zolariga uzatamiz (DM da chat.js)
-document.addEventListener('emo-tap', e => {
-  if (!_currentGroupId || !(state.currentChatKind && state.currentChatKind !== 'dm')) return;
-  try { _gRt?.sendEmo(e.detail.id, e.detail.k); } catch (_) {}
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener('emo-tap', e => {
+    if (!_currentGroupId || !(state.currentChatKind && state.currentChatKind !== 'dm')) return;
+    try { _gRt?.sendEmo(e.detail.id, e.detail.k); } catch (_) {}
+  });
+}
 function _gSetTyping(v) {
   if (_gIamTyping === v) return;
   _gIamTyping = v;
