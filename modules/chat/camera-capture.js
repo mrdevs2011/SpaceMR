@@ -2,7 +2,7 @@
 import { toast } from '../ui/toast.js';
 import { isPermissionAllowed } from '../settings/permissions.js';
 import { pushOverlay, dismissOverlay } from '../ui/overlay-stack.js';
-import { initAttachMenu, closeAttachMenu } from '../ui/attach-menu.js';
+import { initAttachMenu, closeAttachMenu, preloadDcimMedia } from '../ui/attach-menu.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
   trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced, waitTrackTorchReady,
@@ -457,6 +457,9 @@ export async function openCameraCapture(options = {}) {
       }
     };
     syncUi();
+
+    // Fonda DCIM keshini tekshirish / isitish (preload)
+    try { preloadDcimMedia().catch(() => {}); } catch (_) {}
 
     if (galleryBtn) {
       initAttachMenu({

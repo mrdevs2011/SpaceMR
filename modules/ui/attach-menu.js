@@ -75,6 +75,93 @@ const ATTACH_DB_VER = 1;
 const ATTACH_STORE = 'recent_media';
 const _memRecentFiles = [];
 
+/* ── Global DCIM Gallery Cache (SpaceMR ochilishidan boshlab 1 marta fonda o'qiladi) ── */
+let _globalDcimMediaList = [];
+let _isGlobalDcimLoaded = false;
+let _isGlobalDcimLoading = false;
+let _globalDcimHandle = null;
+const _globalDcimUrlMap = new Map();
+const _globalDcimListeners = new Set();
+
+/**
+ * SpaceMR ga kirishi bilanoq DCIM papkasidagi rasmlarni fonda bir marta o'qib keshlab qo'yadi.
+ * Bu orqali har safar attach menu yoki kamera galereyasi ochilganda 0ms da darhol chiqadi.
+ */
+export async function preloadDcimMedia(force = false) {
+  if (!isAndroidMobile()) return [];
+  if (_isGlobalDcimLoaded && !force) return _globalDcimMediaList;
+  if (_isGlobalDcimLoading) return _globalDcimMediaList;
+  if (!isPermissionAllowed('storage')) return [];
+
+  const handle = await getSavedGalleryDirHandle();
+  if (!handle) return [];
+
+  if (typeof handle.queryPermission === 'function') {
+    try {
+      const perm = await handle.queryPermission({ mode: 'read' });
+      if (perm !== 'granted') return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  _isGlobalDcimLoading = true;
+  _globalDcimHandle = handle;
+
+  try {
+    await scanDirectory(handle, {
+      maxDepth: 3,
+      maxCount: 150,
+      onProgress: (prog) => {
+        _globalDcimListeners.forEach(sub => {
+          try { sub.onProgress?.(prog); } catch (_) {}
+        });
+      },
+      onBatch: (batch) => {
+        if (!batch || !batch.length) return;
+        _globalDcimMediaList = batch.map((m, idx) => {
+          const fileKey = m.file ? `${m.file.name}_${m.file.size}_${m.file.lastModified}` : (m.name + '_' + idx);
+          let thumbUrl = _globalDcimUrlMap.get(fileKey);
+          if (!thumbUrl) {
+            try {
+              thumbUrl = URL.createObjectURL(m.file);
+              _activeObjectUrls.add(thumbUrl);
+              _globalDcimUrlMap.set(fileKey, thumbUrl);
+            } catch (_) {
+              thumbUrl = '';
+            }
+          }
+          const isVid = (m.type || '').startsWith('video/');
+          return {
+            id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
+            file: m.file,
+            thumbUrl,
+            type: m.type,
+            name: m.name,
+            duration: 0,
+            durationText: isVid ? 'Video' : '',
+          };
+        });
+
+        _globalDcimListeners.forEach(sub => {
+          try { sub.onBatch?.(_globalDcimMediaList); } catch (_) {}
+        });
+      }
+    });
+
+    _isGlobalDcimLoaded = true;
+    _globalDcimListeners.forEach(sub => {
+      try { sub.onComplete?.(_globalDcimMediaList); } catch (_) {}
+    });
+  } catch (err) {
+    console.warn('[AttachMenu] preloadDcimMedia error:', err);
+  } finally {
+    _isGlobalDcimLoading = false;
+  }
+
+  return _globalDcimMediaList;
+}
+
 let _attachDbPromise = null;
 function _getAttachDb() {
   if (_attachDbPromise) return _attachDbPromise;
@@ -1064,6 +1151,70 @@ export function initAttachMenu({
 
       if (!galleryLoader || !dcimGrid) return;
       if (isDcimLoading) return;
+
+      // 1. Agar DCIM allaqachon fonda o'qilgan bo'lsa (va forcePick bo'lmasa) — 0ms da darhol chizamiz!
+      if (!forcePick && _isGlobalDcimLoaded && _globalDcimMediaList.length > 0) {
+        if (galleryFolderName) galleryFolderName.textContent = _globalDcimHandle?.name || 'DCIM';
+        if (galleryToolbar) galleryToolbar.style.display = 'flex';
+        dcimMediaList = _globalDcimMediaList;
+        renderDcimMediaItems(dcimMediaList);
+        isDcimLoaded = true;
+        if (galleryLoader) galleryLoader.style.display = 'none';
+        dcimGrid.style.display = 'grid';
+        if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'none';
+        if (galleryEmpty) galleryEmpty.style.display = 'none';
+        updateSelectionUI();
+        return;
+      }
+
+      // 2. Agar fonda hozir skanerlash ketayotgan bo'lsa, zudlik bilan ulanamiz
+      if (!forcePick && _isGlobalDcimLoading) {
+        if (galleryFolderName) galleryFolderName.textContent = _globalDcimHandle?.name || 'DCIM';
+        if (galleryToolbar) galleryToolbar.style.display = 'flex';
+        if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'none';
+        if (galleryEmpty) galleryEmpty.style.display = 'none';
+
+        if (_globalDcimMediaList.length > 0) {
+          dcimMediaList = _globalDcimMediaList;
+          renderDcimMediaItems(dcimMediaList);
+          dcimGrid.style.display = 'grid';
+          if (galleryLoader) galleryLoader.style.display = 'none';
+        } else {
+          if (galleryLoader) galleryLoader.style.display = 'flex';
+          dcimGrid.style.display = 'none';
+        }
+
+        const sub = {
+          onProgress: ({ scannedCount, foundCount, currentFolder, isComplete }) => {
+            const galleryLoadingText = overlay.querySelector('#amGalleryLoadingText');
+            if (galleryLoadingText) {
+              if (isComplete) galleryLoadingText.textContent = `Tayyor! (${foundCount} ta media)`;
+              else if (foundCount > 0) galleryLoadingText.textContent = `${foundCount} ta media topildi...`;
+              else galleryLoadingText.textContent = `${currentFolder || 'DCIM'} papkasi o'qilmoqda...`;
+            }
+          },
+          onBatch: (list) => {
+            dcimMediaList = list;
+            renderDcimMediaItems(dcimMediaList);
+            isDcimLoaded = true;
+            dcimGrid.style.display = 'grid';
+            if (galleryLoader) galleryLoader.style.display = 'none';
+            updateSelectionUI();
+          },
+          onComplete: (list) => {
+            dcimMediaList = list;
+            renderDcimMediaItems(dcimMediaList);
+            isDcimLoaded = true;
+            dcimGrid.style.display = 'grid';
+            if (galleryLoader) galleryLoader.style.display = 'none';
+            updateSelectionUI();
+            _globalDcimListeners.delete(sub);
+          }
+        };
+        _globalDcimListeners.add(sub);
+        return;
+      }
+
       isDcimLoading = true;
 
       galleryLoader.style.display = 'flex';
@@ -1209,6 +1360,10 @@ export function initAttachMenu({
         });
 
         scheduleDcimRender(true);
+
+        _globalDcimMediaList = dcimMediaList;
+        _isGlobalDcimLoaded = true;
+        _globalDcimHandle = handle;
 
         if (!mediaEntries.length && !renderedFirstBatch) {
           galleryLoader.style.display = 'none';
@@ -1534,20 +1689,36 @@ export function initAttachMenu({
     document.addEventListener('keydown', onKey);
   }
 
-  btn.addEventListener('click', e => {
+  // Duplicate listener guard: agar tugmaga avval listener bog'langan bo'lsa, eskisini o'chiramiz
+  if (btn._attachHandler) {
+    btn.removeEventListener('click', btn._attachHandler);
+  }
+
+  btn._attachIsBusy = isBusy;
+  btn._attachGetOptions = getOptions;
+
+  btn._attachHandler = e => {
     e.preventDefault();
     e.stopPropagation();
-    if (typeof isBusy === 'function' && isBusy()) return;
+    if (typeof btn._attachIsBusy === 'function' && btn._attachIsBusy()) return;
     if (_activeDrawer || _activeDropdown) {
       closeAttachMenu();
       return;
     }
-    const dyn = (typeof getOptions === 'function' ? getOptions() : null) || {};
+    const dyn = (typeof btn._attachGetOptions === 'function' ? btn._attachGetOptions() : null) || {};
     if (isMobileOrTabletDevice()) {
       // 0ms da darhol ochiladi (kutish yo'q!)
       openMobileDrawer(dyn);
     } else {
       openDesktopDropdown(dyn);
     }
-  });
+  };
+  btn.addEventListener('click', btn._attachHandler);
+}
+
+// SpaceMR ochilishi bilanoq DCIM ni fonda bir marta o'qib keshlaydi (preload)
+if (typeof window !== 'undefined' && isAndroidMobile()) {
+  setTimeout(() => {
+    preloadDcimMedia().catch(() => {});
+  }, 250);
 }
