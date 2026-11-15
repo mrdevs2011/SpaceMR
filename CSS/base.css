@@ -249,7 +249,7 @@ img.icon:not([width]) {
 
 /* ─── Forgot password link ─── */
 #forgotPasswordWrap {
-  display: none;
+  display: block;
   margin-top: -6px;
   margin-bottom: 12px;
   text-align: right;

@@ -835,13 +835,6 @@ export function initAttachMenu({
           </div>
           ` : ''}
 
-          <!-- 2-slot: Galereyadan tanlash plitkasi -->
-          <div class="attach-grid-item gallery-picker-tile am-gallery-entry-tile" id="amGalleryPickerTile" role="button" tabindex="0" title="Galereyadan tanlash">
-            <div class="grid-tile-icon-wrap">${SVG.gallery}</div>
-            <div class="grid-tile-name">Galereya</div>
-            <div class="grid-tile-hint">Barcha media</div>
-          </div>
-
           <!-- Media fotosuratlar va videolar shu yerga yuklanadi -->
           <div id="amMediaItemsSlot" style="display:contents;"></div>
         </div>

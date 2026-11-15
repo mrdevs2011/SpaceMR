@@ -136,8 +136,8 @@ assert.ok(featuresCssSource.includes('.msg-ticks,\nimg.msg-ticks'), 'Explicit 18
 console.log('✓ PASS: Giant ticks prevention verified in CSS');
 
 console.log('--- 16. Testing Mobile Attach Drawer Gallery Grid & Video Support ---');
-assert.ok(attachSource.includes('amGalleryPickerTile'), 'Gallery picker tile element must exist in grid');
-assert.ok(attachSource.includes('am-gallery-entry-tile'), 'am-gallery-entry-tile class must exist');
+// Big redundant gallery tile removed as user requested (bottom pills/camera handle gallery)
+assert.ok(!attachSource.includes('id="amGalleryPickerTile"'), 'Redundant square gallery picker tile in grid must be removed');
 assert.ok(attachSource.includes('_getVideoDuration'), '_getVideoDuration must be defined for video support');
 assert.ok(attachSource.includes('_formatDuration'), '_formatDuration must be defined for duration badges');
 assert.ok(attachSource.includes('media-tile-vid-badge'), 'media-tile-vid-badge must be rendered for videos');

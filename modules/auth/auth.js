@@ -142,7 +142,11 @@ if (authSwitchBtn) {
     authSwitchBtn.textContent       = isLogin ? 'Ro\'yxatdan o\'tish' : 'Kirish';
     $('nameRow').style.display      = isLogin ? 'none' : 'block';
     $('confirmRow').style.display   = isLogin ? 'none' : 'block';
-    hideForgotPasswordBtn();
+    if (isLogin) {
+      showForgotPasswordBtn();
+    } else {
+      hideForgotPasswordBtn();
+    }
     $('authErr').textContent = '';
   };
 }

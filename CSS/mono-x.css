@@ -1432,7 +1432,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 /* ── Auth: forgot + install (UA default oq tugmalarni yopish) ── */
 #authWrap #forgotPasswordWrap {
-  display: none;
+  display: block;
   margin: -4px 0 10px;
   text-align: right;
 }

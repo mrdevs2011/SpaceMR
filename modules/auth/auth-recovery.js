@@ -110,7 +110,7 @@ if (forgotPasswordBtn) {
     }
 
     // Avtomatik email yubormaymiz! Yagona sodda tiklash kartasini ochamiz:
-    openRecoveryModal(u, recInfo.masked_email || 'Emailingiz');
+    openRecoveryModal(u, recInfo?.masked_email || 'Emailingiz');
   };
 }
 
@@ -296,23 +296,42 @@ async function sendCode(triggerBtn) {
   try {
     // Har safar yangi kod yaratiladi — bazada eski barcha kodlar avtomatik eskiradi
     const tempPassword = gen8CharTempPassword();
-    const resp = await sb.functions.invoke('send-recovery-email', {
-      body: { username: u, temp_password: tempPassword }
-    });
-    const data = resp.data;
-    if (resp.error || !data?.ok) {
-      throw new Error(data?.error || resp.error?.message || "Server bilan bog'lanishda xatolik");
-    }
-    if (!data.email_sent) {
-      throw new Error(data.error_detail || 'Elektron pochta yuborishda xatolik yuz berdi');
+    let sent = false;
+    let masked = _activeMaskedEmail || '';
+
+    // 1-urinish: Edge Function orqali email yuborish
+    try {
+      const resp = await sb.functions.invoke('send-recovery-email', {
+        body: { username: u, temp_password: tempPassword }
+      });
+      if (!resp.error && resp.data?.ok && resp.data?.email_sent) {
+        sent = true;
+        masked = resp.data.masked_email || masked;
+      }
+    } catch (edgeErr) {
+      console.warn('[recovery] edge function failed, falling back to direct RPC:', edgeErr);
     }
 
-    const masked = data.masked_email || _activeMaskedEmail || '';
+    // 2-urinish: Agar Edge Function ishlamasa, to'g'ridan-to'g'ri RPC (request_password_reset) chaqiramiz
+    if (!sent) {
+      const { data: rpcData, error: rpcErr } = await sb.rpc('request_password_reset', {
+        p_username: u,
+        p_temp_password: tempPassword,
+      });
+      if (rpcErr || !rpcData?.ok) {
+        throw new Error(rpcErr?.message || rpcData?.error || "Server bilan bog'lanishda xatolik yuz berdi");
+      }
+      if (rpcData.error === 'rate_limited') {
+        throw new Error("Juda ko'p urinish. 15 daqiqa kuting.");
+      }
+      masked = rpcData.masked_email || masked;
+    }
+
     if (masked) {
       _activeMaskedEmail = masked;
       if (recoveryTargetEmail) recoveryTargetEmail.textContent = masked;
     }
-    toast(`Yangi kod ${masked || 'emailingiz'} ga yuborildi. Eski kodlar bekor qilindi`, 'success', 5000);
+    toast(`Tasdiqlash kodi ${masked || 'emailingiz'} ga yuborildi`, 'success', 5000);
 
     cells.forEach(c => { c.value = ''; });
     syncCode();

@@ -826,7 +826,27 @@ function _bindHomeComposer() {
     // blur oldin ishlashi uchun
     e.preventDefault();
   });
-  // Umumiy skrepka menyusi (Kamera / Fayl / Media) — chat bilan bir xil
+  // Mobil qurilmalarda post skrepkasi bosilganda to'g'ridan-to'g'ri kamera (va uning galereya tugmasi) ochiladi
+  $('homeComposerAttach')?.addEventListener('click', async e => {
+    if (isMobileOrTabletDevice()) {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const { openCameraCapture } = await import('../chat/camera-capture.js');
+        const file = await openCameraCapture({ forPost: true });
+        if (file) {
+          _pickHomeFile(file);
+          if (file.caption && $('homeComposerInput')) {
+            $('homeComposerInput').value = file.caption;
+            _syncHomeUi();
+          }
+        }
+      } catch (err) {
+        console.warn('[post attach] camera open error:', err);
+      }
+    }
+  }, true);
+  // Umumiy skrepka menyusi (Kamera / Fayl / Media) — desktop uchun
   initAttachMenu({
     btn: $('homeComposerAttach'),
     fileInput: $('homeComposerFile'),
