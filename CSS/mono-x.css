@@ -4027,10 +4027,19 @@ textarea:not(:focus) {
   }
 }
 
-/* Avatar zoom: X va "Rasmni o'zgartirish" tugmalari hech kimga (egasiga ham) chiqmaydi */
+/* Har qanday rasm/video zoom va media viewer: X va Download umuman chiqmaydi */
+.zoom-x, .zoom-dl,
+#zoomModal .zoom-x, #zoomModal .zoom-dl,
+#cmViewer .zoom-x, #cmViewer .zoom-dl,
+.cm-viewer .zoom-x, .cm-viewer .zoom-dl,
 #zoomModal.zoom-avatar .zoom-x,
 #zoomModal.zoom-avatar .avi-zoom-edit-btn,
-#zoomModal.zoom-avatar .gi-avi-zoom-edit { display: none !important; }
+#zoomModal.zoom-avatar .gi-avi-zoom-edit {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
 
 /* ── Keng ekran: butun guruh (sidebar + markaz + o'ng ustun) markazda, chap va o'ng bo'sh joy teng ──
    Sidebar kengligi = 260 + gutter; ichidagi tugmalar gutter'dan keyin boshlansin (chapga yopishmasin). */
@@ -4663,25 +4672,12 @@ input[type="file"] {
 }
 .chat-clip-close:hover { color: #fff; }
 
-.act-btn.views-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  cursor: default;
-  user-select: none;
-  opacity: 0.82;
-  font-size: 13px;
-  color: var(--text3);
-}
-.act-btn.views-btn svg {
-  stroke: var(--text3);
-  opacity: 0.85;
-  pointer-events: none;
-}
-.act-btn.views-btn span {
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
+.act-btn.views-btn,
+.post-actions .views-btn,
+.post-actions-left .views-btn {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .chat-file-msg {

@@ -303,10 +303,6 @@ export async function renderPermissionsUI() {
           <div class="perm-info">
             <div class="perm-name-row">
               <span class="perm-name">${p.name}</span>
-              <span class="perm-status-chip" id="permStatusChip_${p.id}">
-                <span class="perm-dot"></span>
-                <span class="perm-status-label" id="permStatusText_${p.id}">Tekshirilmoqda...</span>
-              </span>
             </div>
             <div class="perm-short-desc">${p.shortDesc}</div>
           </div>

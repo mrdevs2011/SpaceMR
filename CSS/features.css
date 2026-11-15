@@ -1171,29 +1171,15 @@ img.msg-ticks,
 .post-media[data-type="video"] { cursor: default; }
 .post-media img { pointer-events: none; } /* click .post-media ga tushadi */
 
-.zoom-x, .zoom-dl {
-  position: absolute;
-  top: max(16px, env(safe-area-inset-top, 0px));
-  background: var(--glass-mid, rgba(255, 255, 255, 0.15));
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  border: 0.5px solid var(--glass-border, rgba(255, 255, 255, 0.2));
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--specular-top), var(--liquid-shadow-sm);
-  z-index: 10;
-  color: #ffffff;
-  transition: background 0.15s ease, transform 0.15s ease;
+.zoom-x, .zoom-dl,
+#zoomModal .zoom-x, #zoomModal .zoom-dl,
+#cmViewer .zoom-x, #cmViewer .zoom-dl,
+.cm-viewer .zoom-x, .cm-viewer .zoom-dl {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
 }
-.zoom-x { right: max(16px, env(safe-area-inset-right, 0px)); }
-.zoom-dl { right: calc(max(16px, env(safe-area-inset-right, 0px)) + 52px); }
-.zoom-x:hover, .zoom-dl:hover { background: var(--glass-heavy, rgba(255, 255, 255, 0.25)); transform: scale(1.05); }
-.zoom-x:active, .zoom-dl:active { transform: scale(0.95); }
 /* ═══════════════════════ DETAIL MODAL ═══════════════════════ */
 #detailModal { position: fixed; inset: 0; display: none; align-items: flex-end; justify-content: center; background: var(--pal-black); }
 #detailModal.show { display: flex; }
@@ -1851,25 +1837,12 @@ img.msg-ticks,
   line-height: 1;
 }
 .chat-clip-close:hover { color: #fff; }
-.act-btn.views-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  cursor: default;
-  user-select: none;
-  opacity: 0.82;
-  font-size: 13px;
-  color: var(--text3);
-}
-.act-btn.views-btn svg {
-  stroke: var(--text3);
-  opacity: 0.85;
-  pointer-events: none;
-}
-.act-btn.views-btn span {
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
+.act-btn.views-btn,
+.post-actions .views-btn,
+.post-actions-left .views-btn {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 /* Voice message bubble */
 /* File message (non-image, non-video) */
@@ -6643,6 +6616,12 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 .perm-icon-wrap .icon {
   width: 20px;
   height: 20px;
+  filter: brightness(0) invert(1) !important;
+  color: #ffffff !important;
+}
+
+.perm-status-chip {
+  display: none !important;
 }
 
 .perm-badge-mic {

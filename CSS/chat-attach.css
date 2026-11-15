@@ -157,13 +157,6 @@
   touch-action: manipulation !important;
   -webkit-tap-highlight-color: transparent;
 }
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
-  z-index: 3;
-  -webkit-tap-highlight-color: transparent;
-}
 #camCapture .cc-gallery-btn[hidden] {
   display: none !important;
 }
@@ -181,7 +174,8 @@
 }
 #camCapture .cc-shutter-inner {
   display: block; width: 60px; height: 60px;
-  border-radius: 50%; background: #fff;
+  border-radius: 50%; background: var(--pal-blue, #1d9bf0);
+  box-shadow: 0 0 12px rgba(29, 155, 240, 0.4);
   transition: transform .12s ease, border-radius .15s ease, background .15s ease, width .15s ease, height .15s ease;
 }
 #camCapture .cc-shutter:active .cc-shutter-inner { transform: scale(0.88); }
