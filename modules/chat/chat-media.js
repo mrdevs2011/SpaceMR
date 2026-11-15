@@ -4,6 +4,7 @@
    aynan shu suhbatda ikkalamiz ulashgan rasm, musiqa va fayllar. */
 import { sb, mapMessage } from '../core/config.js';
 import { esc, fmtSz, defAvi, dlFile, lockScroll, unlockScroll } from '../core/utils.js';
+import { getChatFileIcon } from '../core/file-icons.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
 import { ensureVideoDuration } from '../core/video-policy.js';
@@ -15,7 +16,6 @@ const LIMIT = 300;
 
 const ICON_PLAY = '<img src="./svg/extra/icon-e5c4dc67a486.svg" alt="" class="icon" width="16" height="16">';
 const ICON_PAUSE = '<img src="./svg/extra/icon-61f15d5fa242.svg" alt="" class="icon" width="16" height="16">';
-const ICON_FILE = '<img src="./svg/extra/icon-e3ece82ff84d.svg" alt="" class="icon" width="20" height="20">';
 const ICON_DL = '<img src="./svg/extra/icon-fa9cc44ef90e.svg" alt="" class="icon" width="16" height="16">';
 
 let _audio = null;
@@ -134,7 +134,7 @@ function _rowsAudio() {
 function _rowsFiles() {
   return _data.file.map(m => `
     <a class="cm-row" href="${_url(m)}" download="${esc(m.fileName || 'file')}" data-fv-url="${_url(m)}" data-fv-name="${esc(m.fileName || 'file')}" data-fv-mime="${esc(m.mediaType || '')}" data-fv-size="${+m.fileSize || 0}">
-      <div class="cm-ico">${ICON_FILE}</div>
+      <div class="cm-ico cm-ico--file">${getChatFileIcon(m.fileName, m.mediaType)}</div>
       <div class="cm-info"><div class="cm-fn">${esc(m.fileName || 'Fayl')}</div><div class="cm-sub">${esc(_sub(m))}</div></div>
       <div class="cm-dl">${ICON_DL}</div>
     </a>`).join('');

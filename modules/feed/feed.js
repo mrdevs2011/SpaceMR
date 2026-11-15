@@ -5,7 +5,7 @@ import { $, esc, renderMarkdown, fmt, fmtSz, defAvi,
          dlFile, openZoom, showHeartBurst, fmtCount, smoothScrollIntoView, markdownToPlain} from '../core/utils.js';
 import { toast }                            from '../ui/toast.js';
 import { schedulePaint }                   from '../core/perf.js';
-import { getFileIcon } from '../core/file-icons.js';
+import { getFileIcon, getFileTypeInfo } from '../core/file-icons.js';
 import './post-image-zoom.js';
 import './post-media-guard.js';
 import { cachedMediaUrlSync, resolvePublicMedia, prefetchMany, getMediaAspectStyle, getMediaDimensions } from '../core/store/media-cache.js';
@@ -70,8 +70,8 @@ export function buildMedia(p) {
     return `<div class="post-media media-blur-box pm-loading" data-id="${p.id}" data-type="image" data-url="${esc(p.mediaUrl)}"${ratio} role="button" tabindex="0" aria-label="Rasmni kattalashtirish"><img src="${esc(cached)}"${dataPathAttr} loading="lazy" decoding="async" onload="this.classList.add('loaded');this.closest('.post-media')?.classList.remove('pm-loading');this.closest('.post-media')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this)" onerror="this.closest('.post-media')?.classList.remove('pm-loading')"></div>`;
   if (isVid)
     return `<div class="post-media media-blur-box" data-id="${p.id}" data-type="video" data-url="${esc(p.mediaUrl)}"${ratio}><video src="${esc(cached)}"${dataPathAttr} controls playsinline preload="metadata" onloadedmetadata="this.classList.add('loaded');this.closest('.post-media')?.classList.remove('pm-loading');this.closest('.post-media')?.classList.add('loaded');window.__onVideoMeta&&window.__onVideoMeta(this)" style="width:100%;height:100%;display:block;background:#000"></video></div>`;
-  const _fext = (String(p.fileName || '').split('.').pop() || '').toUpperCase().slice(0, 6);
-  const _fsub = [String(p.fileName || '').includes('.') ? _fext : '', p.fileSize ? fmtSz(p.fileSize) : ''].filter(Boolean).join(' · ');
+  const _finfo = getFileTypeInfo(p.fileName || '', p.mediaType || '');
+  const _fsub = [_finfo.label, p.fileSize ? fmtSz(p.fileSize) : ''].filter(Boolean).join(' · ');
   return `<div class="file-card" data-url="${esc(p.mediaUrl)}" data-name="${esc(p.fileName||'file')}" data-fv-url="${esc(p.mediaUrl)}" data-fv-name="${esc(p.fileName||'file')}" data-fv-mime="${esc(p.mediaType||'')}" data-fv-size="${+p.fileSize || 0}" role="button" tabindex="0">
     <div class="file-card-icon">${getFileIcon(p.fileName||'', p.mediaType||'')}</div>
     <div class="file-info"><div class="file-name">${esc(p.fileName||'File')}</div><div class="file-size">${esc(_fsub)}</div></div>
@@ -133,7 +133,7 @@ export async function renderFeedTo(feedEl, posts) {
     if (state.search) {
       feedEl.innerHTML = `<div class="empty-search">
         <div class="empty-search-icon">
-          <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="20" height="20">
+          <img src="./svg/action/search.svg" alt="" class="icon" width="20" height="20">
         </div>
         <div>Natija topilmadi: "<strong>${esc(state.search)}</strong>"</div>
         <div class="empty-search-hint">Boshqa so'z bilan qidirib ko'ring yoki imloni tekshiring</div>
@@ -288,7 +288,7 @@ export async function renderFeedTo(feedEl, posts) {
             <button class="act-btn save-btn right-two${saved?' saved':''}" data-id="${p.id}" title="${saved?'Saqlanganlardan olib tashlash':'Saqlash'}" aria-label="Saqlash" aria-pressed="${saved?'true':'false'}">
               ${saved
                   ? '<img src="./svg/social/bookmark-filled.svg" alt="" class="icon" width="18" height="18">'
-                  : '<img src="./svg/social/bookmark-outline.svg" alt="" class="icon" width="18" height="18">'}
+                  : '<img src="./svg/social/bookmark.svg" alt="" class="icon" width="18" height="18">'}
             </button>
           </div>
         </div>
@@ -757,7 +757,7 @@ function paintSaveBtn(btn, on) {
   // Bookmark endi <img> — manbani almashtiramiz (to'la / kontur)
   const im = btn.querySelector('img.icon');
   if (im && (im.getAttribute('src') || '').includes('/bookmark')) {
-    im.setAttribute('src', on ? './svg/social/bookmark-filled.svg' : './svg/social/bookmark-outline.svg');
+    im.setAttribute('src', on ? './svg/social/bookmark-filled.svg' : './svg/social/bookmark.svg');
   }
   const svg = btn.querySelector('svg');
   if (svg) {

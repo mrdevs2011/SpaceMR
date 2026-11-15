@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <rect width="48" height="48" rx="10" fill="rgba(59, 130, 246, 0.12)"/>
-  <path d="M14 9h14l8 8v20a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2z" stroke="#3b82f6" stroke-width="2" fill="rgba(59, 130, 246, 0.05)"/>
-  <path d="M28 9v8h8" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-  <text x="24" y="24" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="10" fill="#3b82f6">W</text>
-  <line x1="17" y1="28" x2="31" y2="28" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round"/>
-  <line x1="17" y1="32" x2="27" y2="32" stroke="#3b82f6" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>
-</svg>

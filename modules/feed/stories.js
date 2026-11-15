@@ -835,9 +835,8 @@ export async function openStoryAdd() {
       const { openCameraCapture } = await import('../chat/camera-capture.js');
       const file = await openCameraCapture({ forStory: true });
       if (file) {
-        const { openStoryComposer, pickFile } = await import('./upload.js');
-        openStoryComposer();
-        pickFile(file);
+        const { uploadStoryDirect } = await import('./upload.js');
+        await uploadStoryDirect(file, file.caption || '');
       }
     } catch (err) {
       console.warn('[stories] camera open error, fallback to composer:', err);

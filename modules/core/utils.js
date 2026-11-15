@@ -649,7 +649,23 @@ export const fmtTime = ts => {
   return new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
 };
 
-export const fmtSz  = b  => b > 1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
+export const fmtSz = (bytes) => {
+  const b = Number(bytes);
+  if (!Number.isFinite(b) || b <= 0) return '0 B';
+  if (b < 1024) return `${Math.round(b)} B`;
+  if (b < 1048576) {
+    const kb = b / 1024;
+    const s = kb < 100 ? (Math.round(kb * 10) / 10).toFixed(1) : String(Math.round(kb));
+    return (s.endsWith('.0') && kb >= 10 ? String(Math.round(kb)) : s) + ' KB';
+  }
+  if (b < 1073741824) {
+    const mb = b / 1048576;
+    const s = mb < 100 ? (Math.round(mb * 10) / 10).toFixed(1) : String(Math.round(mb));
+    return (s.endsWith('.0') && mb >= 10 ? String(Math.round(mb)) : s) + ' MB';
+  }
+  const gb = b / 1073741824;
+  return (Math.round(gb * 10) / 10).toFixed(1) + ' GB';
+};
 
 /* ── Onlayn holat / oxirgi faollik ────────────────────────────────────
  * Presence uchun alohida "online" maydon ishlatilmaydi — buning o'rniga

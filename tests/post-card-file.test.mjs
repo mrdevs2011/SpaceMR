@@ -38,3 +38,4 @@ for (const [n, m] of [['a.docx',''],['a.pdf',''],['a.xlsx',''],['a.pptx',''],['a
 }
 if (fail) { console.error(`${fail} ta xato`); process.exit(1); }
 console.log(`OK: ${cases.length} tur holati + ikonkalar`);
+process.exit(0);

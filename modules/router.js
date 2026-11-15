@@ -340,7 +340,7 @@ function _toggleProfileSearch() {
       'border-radius: 28px',
     ].join(';');
     wrap.innerHTML = `
-      <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="14" height="14" style="flex-shrink:0;opacity:.5">
+      <img src="./svg/action/search.svg" alt="" class="icon" width="14" height="14" style="flex-shrink:0;opacity:.5">
       <input id="profileSearchInput" placeholder="Postlarni qidirish..."
         autocomplete="off" spellcheck="false"
         style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-size:14px">

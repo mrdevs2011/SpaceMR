@@ -143,6 +143,9 @@ export async function openCameraCapture(options = {}) {
         <button type="button" class="cc-shutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
         <div class="cc-review" hidden>
           <button type="button" class="cc-btn cc-retake" aria-label="Qayta olish">${SVG.retake}</button>
+          <div class="cc-caption-box" ${options.forStory ? '' : 'hidden'}>
+            <input type="text" class="cc-caption-input" placeholder="Hikoyaga matn yozish…" maxlength="200" autocomplete="off" enterkeyhint="send" />
+          </div>
           <button type="button" class="cc-btn cc-send" aria-label="Yuborish">${SVG.send}</button>
         </div>
       </div>
@@ -159,6 +162,8 @@ export async function openCameraCapture(options = {}) {
     const timeTxt = ov.querySelector('.cc-rec-time');
     const shutter = ov.querySelector('.cc-shutter');
     const reviewEl = ov.querySelector('.cc-review');
+    const captionBox = ov.querySelector('.cc-caption-box');
+    const captionInput = ov.querySelector('.cc-caption-input');
     const flipBtn = ov.querySelector('.cc-flip');
     const freezeEl = ov.querySelector('.cc-freeze');
     const galleryBtn = ov.querySelector('.cc-gallery-btn');
@@ -378,6 +383,7 @@ export async function openCameraCapture(options = {}) {
       prevVid.classList.remove('mirror');
       prevVid.removeAttribute('src');
       prevVid.pause();
+      if (captionInput) captionInput.value = '';
     };
 
     const syncUi = () => {
@@ -407,11 +413,18 @@ export async function openCameraCapture(options = {}) {
       if (reviewing) {
         shutter.setAttribute('hidden', '');
         reviewEl.removeAttribute('hidden');
+        reviewEl.classList.toggle('has-caption', !!options.forStory);
+        if (captionBox) {
+          if (options.forStory) captionBox.removeAttribute('hidden');
+          else captionBox.setAttribute('hidden', '');
+        }
         liveVid.hidden = true;
         if (flipBtn) flipBtn.hidden = true;
         flashBtn.hidden = true;
       } else {
         reviewEl.setAttribute('hidden', '');
+        reviewEl.classList.remove('has-caption');
+        if (captionBox) captionBox.setAttribute('hidden', '');
         shutter.removeAttribute('hidden');
         liveVid.hidden = false;
         if (flipBtn) flipBtn.hidden = !canSwitch;
@@ -472,6 +485,10 @@ export async function openCameraCapture(options = {}) {
     };
 
     const exitReview = () => {
+      if (captionInput) {
+        captionInput.value = '';
+        try { captionInput.blur(); } catch (_) {}
+      }
       clearPending();
       reviewing = false;
       syncUi();
@@ -769,10 +786,25 @@ export async function openCameraCapture(options = {}) {
         e?.stopPropagation?.();
         exitReview();
       };
+      const submitReview = () => {
+        if (!pendingFile) return;
+        if (captionInput && options.forStory) {
+          pendingFile.caption = captionInput.value.trim();
+        }
+        done(pendingFile);
+      };
+
       ov.querySelector('.cc-send').onclick = (e) => {
         e?.stopPropagation?.();
-        if (pendingFile) done(pendingFile);
+        submitReview();
       };
+
+      captionInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitReview();
+        }
+      });
 
       // Shutter: tap = foto / video toggle; 2s hold (photo) = video mode + start, release does not stop
       let holdTimer = null;

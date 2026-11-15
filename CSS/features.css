@@ -3063,6 +3063,8 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 #cmContent .cm-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; color: var(--text); text-decoration: none; cursor: pointer; }
 #cmContent .cm-row:hover, #cmContent .cm-row.playing { background: var(--bg3); }
 #cmContent .cm-ico { width: 42px; height: 42px; border-radius: 50%; background: var(--bg4); color: var(--text); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+#cmContent .cm-ico.cm-ico--file { background: transparent !important; border-radius: 8px !important; width: 40px !important; height: 40px !important; }
+#cmContent .cm-ico.cm-ico--file .file-type-icon { width: 40px !important; height: 40px !important; display: block; border-radius: 8px; }
 #cmContent .cm-row.playing .cm-ico { background: var(--x-blue); color: #e7e9ea; }
 #cmContent .cm-info { flex: 1; min-width: 0; }
 #cmContent .cm-fn { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

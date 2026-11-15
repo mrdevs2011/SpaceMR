@@ -59,6 +59,18 @@ assert(featCode.includes('#chatThreadMessages::-webkit-scrollbar'), 'features.cs
 assert(featCode.includes('scrollbar-width: none !important'), 'features.css must set scrollbar-width: none for #chatThreadMessages');
 console.log('✓ PASS: features.css scrollbar hide verified');
 
+// 5. Check Mobile Story Review Screen Caption & Direct Upload
+assert(camCode.includes('cc-caption-box'), 'camera-capture.js must include cc-caption-box');
+assert(camCode.includes('cc-caption-input'), 'camera-capture.js must include cc-caption-input');
+assert(camCode.includes('pendingFile.caption'), 'camera-capture.js must assign pendingFile.caption on review submit');
+assert(storiesCode.includes('uploadStoryDirect(file, file.caption || \'\')'), 'stories.js must call uploadStoryDirect with file and caption');
+const uploadCode = readFileSync(resolve('modules/feed/upload.js'), 'utf8');
+assert(uploadCode.includes('export async function uploadStoryDirect'), 'upload.js must export uploadStoryDirect');
+const attachCss = readFileSync(resolve('CSS/chat-attach.css'), 'utf8');
+assert(attachCss.includes('#camCapture .cc-caption-box'), 'chat-attach.css must style .cc-caption-box');
+assert(attachCss.includes('#camCapture .cc-caption-input'), 'chat-attach.css must style .cc-caption-input');
+console.log('✓ PASS: mobile story review caption input and direct airplane upload verified');
+
 console.log('====================================================');
 console.log('ALL STORY CAMERA & MEDIA COLLAPSE TESTS PASSED (100%)');
 console.log('====================================================');

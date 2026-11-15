@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">  <rect x="8" y="10" width="32" height="28" rx="5" fill="rgba(255, 255, 255, 0.02)" stroke="#0ea5e9" stroke-width="1.6"/>
+  <rect x="11" y="12" width="3" height="2.5" rx="0.5" fill="#0ea5e9" opacity="0.6"/>
+  <rect x="16.5" y="12" width="3" height="2.5" rx="0.5" fill="#0ea5e9" opacity="0.6"/>
+  <rect x="22" y="12" width="3" height="2.5" rx="0.5" fill="#0ea5e9" opacity="0.6"/>
+  <rect x="27.5" y="12" width="3" height="2.5" rx="0.5" fill="#0ea5e9" opacity="0.6"/>
+  <rect x="33" y="12" width="3" height="2.5" rx="0.5" fill="#0ea5e9" opacity="0.6"/>
+  <circle cx="24" cy="24" r="7.5" fill="#0ea5e9"/>
+  <polygon points="22,20.5 28,24 22,27.5" fill="#ffffff"/>
+  <text x="24" y="35" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="6.5" fill="#0ea5e9" letter-spacing="0.5">WEBM</text>
+</svg>

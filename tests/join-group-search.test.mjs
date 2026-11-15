@@ -16,6 +16,7 @@ let searchImpl = async () => [];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const env = {
   esc, defAvi: n => 'avi:' + n, state: { me: { uid: 'me' } },
+  lockScroll: () => {}, unlockScroll: () => {},
   searchGroups: async t => { calls.search.push(t); return searchImpl(t); },
   resolveGroupInvite: async r => { calls.resolve.push(r); return { success: true, name: 'Maxfiy', is_private: true }; },
   joinGroupByToken: async () => ({ success: true, group_id: 'gx' }),

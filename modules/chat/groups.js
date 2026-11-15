@@ -2906,7 +2906,7 @@ export function injectGroupsDOM() {
           <div class="grp-msg-perm" id="grpFormMsgPermWrap" data-value="all">
             <button type="button" class="grp-msg-perm-btn" id="grpFormMsgPermBtn" aria-expanded="false">
               <span class="grp-msg-perm-label" id="grpFormMsgPermLabel">Xabar yuborish: barcha a'zolar</span>
-              <img src="./svg/nav/chevron-down-alt.svg" alt="" class="icon grp-msg-perm-chev" width="16" height="16">
+              <img src="./svg/nav/chevron-down.svg" alt="" class="icon grp-msg-perm-chev" width="16" height="16">
             </button>
             <div class="grp-msg-perm-menu" id="grpFormMsgPermMenu" hidden>
               <button type="button" class="grp-msg-perm-item is-active" data-perm="all">Xabar yuborish: barcha a'zolar</button>
@@ -2933,7 +2933,7 @@ export function injectGroupsDOM() {
     <!-- Group / Channel info (full-screen page, like userProfileModal) -->
     <div id="grpInfoOverlay">
       <button class="gi-back-btn" id="grpInfoCloseBtn" title="Orqaga">
-        <img src="./svg/nav/arrow-left-white.svg" alt="" class="icon" width="18" height="18">
+        <img src="./svg/nav/arrow-left.svg" alt="" class="icon" width="18" height="18">
       </button>
 
       <div class="gi-body">

@@ -23,6 +23,7 @@ import {
   showInvalidFolderModal,
 } from './gallery-fs.js';
 import { toast } from './toast.js';
+import { fileIconSvg } from '../core/file-icons.js';
 
 const SVG = {
   camera: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
@@ -1258,14 +1259,33 @@ export function initAttachMenu({
       if (!gridItemsSlot) return;
 
       gridItemsSlot.innerHTML = items.map(item => {
-        const isVid = (item.type || '').startsWith('video/');
+        const mime = (item.type || '').toLowerCase();
+        const isVid = mime.startsWith('video/');
+        const isImg = mime.startsWith('image/');
         const selIdx = Array.from(selectedMap.keys()).indexOf(item.id);
         const isSel = selIdx >= 0;
         const durText = item.durationText || (isVid ? 'Video' : '');
+        const escName = String(item.name || 'Fayl').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        let mediaBody = '';
+        if (isVid) {
+          mediaBody = `
+            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">
+            <div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span>${durText}</span></div>`;
+        } else if (isImg || (item.thumbUrl && !item.file)) {
+          mediaBody = `<img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">`;
+        } else {
+          // Document / File tile (PDF, DOCX, ZIP, custom ASDF, etc.)
+          mediaBody = `
+            <div class="media-tile-file-wrap">
+              <div class="media-tile-file-ico">${fileIconSvg(item.name, item.type, 44)}</div>
+              <div class="media-tile-file-name" title="${escName}">${escName}</div>
+            </div>`;
+        }
+
         return `
-          <div class="attach-grid-item media-photo-tile ${isSel ? 'selected' : ''}" data-media-id="${item.id}" role="button" tabindex="0">
-            <img class="media-tile-thumb" src="${item.thumbUrl}" alt="${item.name || 'media'}" loading="lazy">
-            ${isVid ? `<div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span>${durText}</span></div>` : ''}
+          <div class="attach-grid-item media-photo-tile ${!isImg && !isVid ? 'media-file-tile' : ''} ${isSel ? 'selected' : ''}" data-media-id="${item.id}" role="button" tabindex="0">
+            ${mediaBody}
             <button type="button" class="media-tile-check ${isSel ? 'checked' : ''}" aria-label="Tanlash">
               ${isSel ? `<span class="check-num">${selIdx + 1}</span>` : ''}
             </button>

@@ -1033,12 +1033,8 @@ function swIcon() {
 }
 function swUpdate(dx) {
   if (!sw) return;
-  // O'z xabari (o'ngda): faqat O'NGA; boshqalar (chapda): faqat CHAPGA
-  const m = msgOf(sw.row.dataset.msgId);
-  const mine = isMine(m);
-  let raw = dx;
-  if (mine && raw < 0) raw = 0;
-  if (!mine && raw > 0) raw = 0;
+  // Xabar kartasi ustida chapga surilsa (dx < 0) — Reply 1-darajali bo'lib qoladi, orqaga surish aralashmaydi
+  let raw = dx < 0 ? dx : 0;
   sw.dx = raw;
   if (!raw) {
     sw.row.style.transform = '';
@@ -1046,13 +1042,12 @@ function swUpdate(dx) {
     sw.armed = false;
     return;
   }
-  const tx = Math.sign(raw) * Math.min(SW_MAX, Math.abs(raw) * 0.7);
+  const tx = Math.max(-SW_MAX, raw * 0.7);
   sw.row.style.transform = `translateX(${tx.toFixed(1)}px)`;
   const ic = swIcon(), r = sw.row.getBoundingClientRect(), br = box.getBoundingClientRect();
   const p = Math.min(1, Math.abs(raw) / SW_TRIGGER);
   ic.style.top = (r.top + r.height / 2 - 17) + 'px';
-  // O'z xabar o'nga → belgi chapda; boshqa chapga → belgi o'ngda
-  ic.style.left = raw < 0 ? (br.right - 44) + 'px' : (br.left + 10) + 'px';
+  ic.style.left = (br.right - 44) + 'px';
   ic.style.opacity = String(p);
   ic.style.transform = `scale(${(0.5 + 0.5 * p).toFixed(2)})`;
   ic.classList.toggle('armed', p >= 1);
@@ -1204,15 +1199,12 @@ export function initMsgMenu(opts) {
       const dx = t.clientX - sw.x, dy = t.clientY - sw.y;
       if (!sw.on) {
         if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) sw = null;                       // vertikal scroll
-        else if (Math.abs(dx) > SW_START && Math.abs(dx) > Math.abs(dy) * 1.6) {
-          const mm = msgOf(sw.row.dataset.msgId);
-          const mine = isMine(mm);
-          // Faqat to'g'ri yo'nalish: o'zim → o'nga (+), boshqa → chapga (−)
-          if ((mine && dx > 0) || (!mine && dx < 0)) {
-            sw.on = true; cancelLp(); sw.row.style.transition = 'none';
-          } else {
-            sw = null; // noto'g'ri tomon — swipe yo'q
-          }
+        else if (dx < -SW_START && Math.abs(dx) > Math.abs(dy) * 1.4) {
+          // Xabar kartasi ustida chapga surilsa (dx < -15px): Reply (Javob berish) 1-darajali bo'lib qoladi
+          sw.on = true; cancelLp(); sw.row.style.transition = 'none';
+        } else if (dx > 5) {
+          // O'ngga surish: chat oynasini orqaga surish (swipe-to-back) ga to'liq yo'l berish
+          sw = null;
         }
       }
       if (sw?.on) { blockTouch(true); swUpdate(dx); return; }

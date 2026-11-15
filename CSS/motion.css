@@ -371,3 +371,35 @@ img, video { decoding: async; }
 .attach-menu { z-index: 2147483001 !important; }
 
 .chat-draft-tag { color: #f4212e; font-weight: 700; margin-right: 4px; }
+
+/* Telegram uslubidagi jismoniy gorizontal surish (Physical Horizontal Swipe Gestures) */
+#chatThreadModal, #grpInfoOverlay, #settingsOverlay {
+  will-change: transform;
+}
+
+#chatThreadModal.swiping-horizontal,
+#grpInfoOverlay.swiping-horizontal,
+#settingsOverlay.swiping-horizontal {
+  transition: none !important;
+  box-shadow: -15px 0 35px rgba(0, 0, 0, 0.5) !important;
+}
+
+#chatThreadModal.swipe-dismissing,
+#grpInfoOverlay.swipe-dismissing,
+#settingsOverlay.swipe-dismissing {
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.24s ease !important;
+  transform: translate3d(100%, 0, 0) !important;
+  box-shadow: -15px 0 35px rgba(0, 0, 0, 0.5) !important;
+}
+
+#chatThreadModal.swipe-snapping,
+#grpInfoOverlay.swipe-snapping,
+#settingsOverlay.swipe-snapping {
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.24s ease !important;
+  transform: translate3d(0, 0, 0) !important;
+}
+
+.view-parallax-bg {
+  will-change: transform;
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+}

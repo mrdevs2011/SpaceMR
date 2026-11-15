@@ -719,7 +719,7 @@ export function initChatHeaderMenu() {
 
     const commonTop = `
         <button type="button" class="chat-header-dropdown-item" id="chmSearchMsgs">
-          <img src="./svg/action/search-overlay.svg" alt="" class="icon" width="16" height="16">
+          <img src="./svg/action/search.svg" alt="" class="icon" width="16" height="16">
           <span>Xabarlarni qidirish</span>
         </button>
         <button type="button" class="chat-header-dropdown-item" id="chmMute">
@@ -2433,15 +2433,15 @@ function _observeMessagesForRead() {
 function renderTicks(status) {
   // 'sending' = soat, 'failed' = qayta urinish, 'read' = 2 chek, boshqa = 1 chek
   if (status === 'sending') {
-    return `<img src="./svg/ui/ticks-b1f42f.svg" alt="" class="icon msg-ticks sending" width="14" height="14" data-t0="${Date.now()}" aria-label="Yuborilmoqda">`;
+    return `<img src="./svg/ui/ticks-sending.svg" alt="" class="icon msg-ticks sending" width="14" height="14" data-t0="${Date.now()}" aria-label="Yuborilmoqda">`;
   }
   if (status === 'failed') {
     return `<button type="button" class="msg-ticks failed" title="Yuborilmadi — qayta urinish" aria-label="Yuborilmadi — qayta urinish">!</button>`;
   }
   if (status === 'read') {
-    return `<img src="./svg/ui/ticks-98b8af.svg" alt="" class="icon msg-ticks read" width="18" height="11" aria-label="O'qildi">`;
+    return `<img src="./svg/ui/ticks-read.svg" alt="" class="icon msg-ticks read" width="18" height="11" aria-label="O'qildi">`;
   }
-  return `<img src="./svg/ui/ticks-c46cc2.svg" alt="" class="icon msg-ticks sent" width="12" height="10" aria-label="Yuborildi">`;
+  return `<img src="./svg/ui/ticks-sent.svg" alt="" class="icon msg-ticks sent" width="12" height="10" aria-label="Yuborildi">`;
 }
 
 /** Faqat status/tick yangilash — to'liq paintMessages YO'Q (tezlik). */
@@ -3250,8 +3250,16 @@ export function closeChatThread() {
   unlockScroll('chatThreadModal');
   const modal = $('chatThreadModal');
   if (modal) {
-    modal.classList.remove('show');
+    modal.classList.remove('show', 'swiping-horizontal', 'swipe-dismissing', 'swipe-snapping');
     modal.style.bottom = '0px';
+    modal.style.transform = '';
+    modal.style.boxShadow = '';
+    modal.style.transition = '';
+  }
+  const bgEl = document.getElementById('chatsView') || document.querySelector('.view.on');
+  if (bgEl) {
+    bgEl.style.transform = '';
+    bgEl.style.transition = '';
   }
   // Chat ro'yxatini yangilash — oxirgi xabar/preview yangi bo'lishi uchun
   if (state.view === 'chats') renderChatsList();

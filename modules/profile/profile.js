@@ -51,7 +51,7 @@ function _postKind(p) {
   if (mt.startsWith('video') || _VID_EXT_SET.has(ext)) return 'videos';
   if (mt.startsWith('audio') || _AUD_EXT_SET.has(ext) || mt.includes('mpeg') || mt.includes('mp3') || mt.includes('wav') || mt.includes('ogg')) return 'music';
   if (mt.startsWith('image') || _IMG_EXT_SET.has(ext)) return 'photos';
-  if (mt === 'file' || mt === 'document' || mt.startsWith('application/') || _FILE_EXT_SET.has(ext) || (p.fileName && p.fileName.includes('.'))) return 'files';
+  if (mt === 'file' || mt === 'document' || mt.startsWith('application/') || mt === 'text/plain' || _FILE_EXT_SET.has(ext) || Boolean(p.fileName)) return 'files';
   if (!p.mediaUrl && !p.mediaPath && !p.fileName) return 'text';
   if (p.mediaUrl || p.mediaPath) {
     return _IMG_EXT_SET.has(ext) ? 'photos' : 'files';

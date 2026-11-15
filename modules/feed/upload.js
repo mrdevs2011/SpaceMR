@@ -250,56 +250,37 @@ async function _prepareUploadFile(file, label, mode = 'post') {
 
 
 /* ── Yuklash / Post ───────────────────────────────────────────────────── */
-/* ── Story yuklash (composer 'story' rejimida) ─────────────────────── */
-async function submitStory() {
-  let file = state.selFile;
-  if (!file || !state.me) return;
-  const caption = $('captionInput').value.trim().slice(0, STORY_CAPTION_MAX);
+/* ── Story to'g'ridan-to'g'ri yuklash (mobil kamera yoki composer) ───── */
+export async function uploadStoryDirect(file, captionText = '', localBlob = null) {
+  if (!file || !state.me) return false;
+  const caption = (captionText || '').trim().slice(0, STORY_CAPTION_MAX);
 
   const { rateOk } = await import('../core/rate-limit.js');
   if (!rateOk('story', 3, 60000)) {
     const { toast } = await import('../ui/ui.js');
     toast('Juda ko\'p story yukladingiz', 'warning');
-    return;
+    return false;
   }
 
   // 0ms: o'zimga darhol ko'rsatish (local blob)
   const tempId = (crypto.randomUUID && crypto.randomUUID()) || ('tmp_' + Date.now());
-  const localBlob = state._objUrl || null;
+  const blobKeep = localBlob || (URL.createObjectURL ? URL.createObjectURL(file) : null);
   busEmit('story', {
     op: 'opt',
     item: {
       id: tempId,
-      mediaUrl: localBlob,
+      mediaUrl: blobKeep,
       mediaType: isVideoFile(file) ? 'video' : 'image',
       caption: caption || '',
       createdAt: new Date().toISOString(),
     },
   });
 
-  $('uploadBtn').disabled    = true;
-  $('uploadBtn').textContent = 'Yuklanmoqda…';
-  $('uploadOverlay').classList.remove('show');
-  unlockScroll('uploadOverlay');
   floatBarShow('story');
-  // Composer tozalanadi, lekin blob URL revoke qilinmaydi (optimistic ko'rinish uchun)
-  const fileRef = file;
-  const blobKeep = localBlob;
-  state.selFile = null;
-  state._objUrl = null; // revoke qilmaymiz
-  state._selMediaW = null;
-  state._selMediaH = null;
-  _setComposerMode('post');
   try {
-    const fi = $('fileInput'); if (fi) fi.value = '';
-    const prev = $('filePreview'); if (prev) prev.innerHTML = '';
-    const cap = $('captionInput'); if (cap) cap.value = '';
-  } catch (_) {}
-
-  try {
-    file = await _prepareUploadFile(fileRef, fileRef.name.length > 28 ? fileRef.name.slice(0, 26) + '…' : fileRef.name, 'story');
+    const prepared = await _prepareUploadFile(file, file.name.length > 28 ? file.name.slice(0, 26) + '…' : file.name, 'story');
     floatBarUpdate(8);
-    const { path } = await uploadViaController(file, 'stories', {
+    const { path } = await uploadViaController(prepared, 'stories', {
       onProgress: (r) => floatBarUpdate(8 + Math.round(Math.min(1, r) * 86)),
     });
     floatBarUpdate(96);
@@ -307,7 +288,7 @@ async function submitStory() {
     const row = {
       user_id:    state.me.uid,
       media_path: path,
-      media_type: isVideoFile(file) ? 'video' : 'image',
+      media_type: isVideoFile(prepared) ? 'video' : 'image',
       expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     };
     if (caption) row.caption = caption;
@@ -324,16 +305,44 @@ async function submitStory() {
     try { clearDraft('story'); } catch (_) {}
     toast(captionLost ? 'Story qo\'shildi, lekin izoh saqlanmadi (DB da caption ustuni yo\'q)' : 'Story qo\'shildi',
           captionLost ? 'info' : 'success');
-    // Serverdagi haqiqiy story — boshqalarga + o'zimni yangilash
     busEmit('story', { op: 'new' });
     import('./stories.js').then(m => m.loadStories()).catch(() => {});
-    // blob endi kerak emas
-    if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
+    if (blobKeep && !localBlob) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
+    return true;
   } catch (err) {
     floatBarDone(false);
     toast('Hikoya yuklanmadi: ' + (err.message || 'Noma\'lum xatolik'), 'error');
-    if (blobKeep) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
+    if (blobKeep && !localBlob) try { URL.revokeObjectURL(blobKeep); } catch (_) {}
     import('./stories.js').then(m => m.loadStories()).catch(() => {});
+    return false;
+  }
+}
+
+/* ── Story yuklash (composer 'story' rejimida) ─────────────────────── */
+async function submitStory() {
+  let file = state.selFile;
+  if (!file || !state.me) return;
+  const caption = $('captionInput').value.trim().slice(0, STORY_CAPTION_MAX);
+
+  $('uploadBtn').disabled    = true;
+  $('uploadBtn').textContent = 'Yuklanmoqda…';
+  $('uploadOverlay').classList.remove('show');
+  unlockScroll('uploadOverlay');
+  const fileRef = file;
+  const blobKeep = state._objUrl || null;
+  state.selFile = null;
+  state._objUrl = null; // revoke qilmaymiz
+  state._selMediaW = null;
+  state._selMediaH = null;
+  _setComposerMode('post');
+  try {
+    const fi = $('fileInput'); if (fi) fi.value = '';
+    const prev = $('filePreview'); if (prev) prev.innerHTML = '';
+    const cap = $('captionInput'); if (cap) cap.value = '';
+  } catch (_) {}
+
+  try {
+    await uploadStoryDirect(fileRef, caption, blobKeep);
   } finally {
     $('uploadBtn').disabled = false;
     $('uploadBtn').textContent = 'Joylash';

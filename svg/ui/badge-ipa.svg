@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">  <!-- App Store circle -->
+  <circle cx="24" cy="21" r="10" fill="#0071e3"/>
+  <!-- App Store 'A' logo stylized -->
+  <path d="M24 14l-5 9h2.2l1.2-2.2h3.2l1.2 2.2H29l-5-9zm0 3.2l1.1 2h-2.2l1.1-2z" fill="#ffffff"/>
+  <text x="24" y="37" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="6.5" fill="#0071e3" letter-spacing="0.5">IPA</text>
+</svg>

@@ -219,3 +219,4 @@ console.log('✓ PASS: All background intervals guard against document.hidden to
 console.log('\n========================================');
 console.log('ALL REGRESSION AUDIT TESTS PASSED (100%)');
 console.log('========================================');
+process.exit(0);

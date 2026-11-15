@@ -93,6 +93,7 @@ import('./ui/sidebar.js');
 import('./ui/notifs.js');
 import('./ui/right-rail.js');
 import('./chat/chats-x.js');
+import('./ui/swipe-navigation.js');
 
 /* ── iOS 27 Haptic — global touch feedback ── */
 import { haptic, addHapticTouch } from './core/utils.js';
