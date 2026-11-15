@@ -789,9 +789,10 @@ export function initAttachMenu({
     }
 
     const isStoryCamera = ctx === 'story_camera' || !!dynamicOpts.isStoryCamera;
-    const isStory = ctx === 'story' || isStoryCamera;
-    const isPost = ctx === 'post';
+    const isStory = ctx === 'story' || isStoryCamera || !!dynamicOpts.isStory;
+    const isPost = ctx === 'post' || !!dynamicOpts.isPost;
     const isFullscreen = isStory || isPost || dynamicOpts.fullscreen || (dynamicOpts.mode === 'fullscreen');
+    const shouldLiveStream = !isStory && !isPost && !isStoryCamera && (dynamicOpts.liveCamera !== false);
 
     let drawerClass = 'attach-drawer';
     if (isStoryCamera) {
@@ -830,9 +831,9 @@ export function initAttachMenu({
         <!-- 1. Oxirgilar Gridi -->
         <div class="attach-media-grid" id="amRecentsPanel">
           ${!isStoryCamera ? `
-          <div class="attach-grid-item live-cam-tile" id="amLiveCamTile" role="button" tabindex="0" title="Kamera">
-            <video class="live-cam-video" autoplay playsinline muted style="display:none;"></video>
-            <div class="live-cam-fallback">${SVG.camera}</div>
+          <div class="attach-grid-item live-cam-tile ${!shouldLiveStream ? 'static-cam-tile' : ''}" id="amLiveCamTile" role="button" tabindex="0" title="Kamera">
+            ${shouldLiveStream ? `<video class="live-cam-video" autoplay playsinline muted style="display:none;"></video>` : ''}
+            <div class="live-cam-fallback" style="${!shouldLiveStream ? 'display:flex;' : ''}">${SVG.camera}</div>
           </div>
           ` : ''}
 
@@ -1404,12 +1405,12 @@ export function initAttachMenu({
       updateSelectionUI();
     });
 
-    // 1-slot: Jonli Kamera oqimini asinxron fonda yuklaymiz (drawer ochilishini to'xtatmaydi)
+    // 1-slot: Jonli Kamera oqimi (faqat chat uchun; post va story da live kamera bo'lmaydi)
     const camTile = overlay.querySelector('#amLiveCamTile');
     const camVideo = overlay.querySelector('.live-cam-video');
     const camFallback = overlay.querySelector('.live-cam-fallback');
 
-    if (navigator.mediaDevices?.getUserMedia) {
+    if (shouldLiveStream && navigator.mediaDevices?.getUserMedia) {
       navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } },
         audio: false,
@@ -1424,7 +1425,10 @@ export function initAttachMenu({
         if (camFallback) camFallback.style.display = 'none';
       }).catch(err => {
         console.warn('[AttachMenu] camera stream not available:', err);
+        if (camFallback) camFallback.style.display = 'flex';
       });
+    } else if (camFallback) {
+      camFallback.style.display = 'flex';
     }
 
     camTile?.addEventListener('click', async e => {
@@ -1432,7 +1436,7 @@ export function initAttachMenu({
       e.stopPropagation();
       closeAttachMenu();
       try {
-        const f = await openCameraCapture();
+        const f = await openCameraCapture(isStory ? { forStory: true } : (isPost ? { forPost: true } : {}));
         if (f) onPick(f);
       } catch (err) {
         console.warn('[AttachMenu] camera capture error:', err);

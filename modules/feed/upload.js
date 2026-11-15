@@ -859,6 +859,7 @@ function _bindHomeComposer() {
       context: isMobileOrTabletDevice() ? 'story' : 'post',
       isStory: isMobileOrTabletDevice(),
       isPost: !isMobileOrTabletDevice(),
+      liveCamera: false,
     }),
   });
 
@@ -922,6 +923,7 @@ initAttachMenu({
       showMedia: true,
       mediaAccept: 'image/*,video/*',
       showCamera: true,
+      liveCamera: false,
     };
   },
 });

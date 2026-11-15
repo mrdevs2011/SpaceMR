@@ -570,11 +570,17 @@
   transform: scale(0.96);
 }
 
-/* 1-slot: Jonli Kamera (Telegram inline live camera stream — yozuvlarsiz toza video) */
+/* 1-slot: Jonli yoki Statik Kamera plitkasi */
 .live-cam-tile {
-  background: #000;
+  background: var(--bg3, #16181c);
   border: 1px solid rgba(255, 255, 255, 0.16);
   padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+.live-cam-tile.static-cam-tile {
+  background: var(--bg3, #16181c);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .live-cam-video {
   width: 100%;
@@ -586,11 +592,21 @@
 .live-cam-fallback {
   position: absolute;
   inset: 0;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: #111;
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--bg3, #16181c);
+  color: rgba(255, 255, 255, 0.75);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.live-cam-fallback svg {
+  width: 28px;
+  height: 28px;
+}
+.live-cam-tile:hover .live-cam-fallback,
+.live-cam-tile:active .live-cam-fallback {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
 /* 2-slot: Galereyadan tanlash plitkasi */
