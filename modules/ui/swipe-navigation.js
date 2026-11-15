@@ -141,6 +141,14 @@ export function switchTab(dir) {
     doNavigateTo(targetTab);
     return true;
   }
+  // Mobile: swipe right on home tab (from left to right) opens story upload
+  if (cur === 'home' && dir === -1) {
+    try { navigator.vibrate?.(10); } catch (_) {}
+    try {
+      import('../feed/stories.js').then(m => m.openStoryAdd?.()).catch(() => {});
+    } catch (_) {}
+    return true;
+  }
   return false;
 }
 
@@ -469,7 +477,14 @@ export function handleSwipeEnd() {
         const switched = switchTab(1);
         return { switched, dir: 1, deltaX, vx };
       } else {
-        // Swiped right -> prev tab
+        // Swiped right -> prev tab OR on 'home' open story upload
+        if (s.currentTab === 'home') {
+          try { navigator.vibrate?.(10); } catch (_) {}
+          try {
+            import('../feed/stories.js').then(m => m.openStoryAdd?.()).catch(() => {});
+          } catch (_) {}
+          return { switched: true, dir: -1, action: 'storyUpload', deltaX, vx };
+        }
         const switched = switchTab(-1);
         return { switched, dir: -1, deltaX, vx };
       }

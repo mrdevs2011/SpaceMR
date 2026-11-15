@@ -836,8 +836,9 @@ function _bindHomeComposer() {
     showMedia: true,
     mediaAccept: 'image/*,video/*',
     getOptions: () => ({
-      context: 'post',
-      isPost: true,
+      context: isMobileOrTabletDevice() ? 'story' : 'post',
+      isStory: isMobileOrTabletDevice(),
+      isPost: !isMobileOrTabletDevice(),
     }),
   });
 

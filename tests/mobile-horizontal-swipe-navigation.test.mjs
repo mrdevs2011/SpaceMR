@@ -201,6 +201,14 @@ const pagerResult = swipeModule.handleSwipeEnd();
 assert.ok(pagerResult, 'Pager must produce a switch result');
 assert.strictEqual(pagerResult.dir, 1, 'Swipe left corresponds to dir +1 (next tab)');
 
+// Swipe right (left to right) on homeView -> open story upload
+swipeModule.handleSwipeStart({ clientX: 50, clientY: 200 }, document.getElementById('homeView'));
+swipeModule.handleSwipeMove({ clientX: 150, clientY: 202 }); // swipe right by 100px
+const storySwipeResult = swipeModule.handleSwipeEnd();
+assert.ok(storySwipeResult, 'Swiping right on homeView must produce a result');
+assert.strictEqual(storySwipeResult.dir, -1, 'Swipe right corresponds to dir -1');
+assert.strictEqual(storySwipeResult.action, 'storyUpload', 'Swipe right on homeView must trigger storyUpload');
+
 console.log('✓ PASS: Horizontal tab pager verified');
 
 console.log('====================================================');
