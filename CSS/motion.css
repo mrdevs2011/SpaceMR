@@ -404,10 +404,22 @@ img, video { decoding: async; }
   transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Telegram/Instagram uslubidagi Tab Pager (Physical 1:1 Horizontal Slide) */
+/* Telegram/Instagram uslubidagi Tab Pager (Yonma-yon Contiguous 1:1 Horizontal Slide - Kaskad emas) */
 .view.tab-swiping-active {
+  display: block !important;
+  visibility: visible !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
   pointer-events: none !important;
+  overflow-y: auto !important;
+  z-index: 10 !important;
   will-change: transform;
+  box-sizing: border-box;
+  box-shadow: none !important;
+  background: var(--bg, #000000) !important;
 }
 .view.tab-swiping-target {
   display: block !important;
@@ -419,8 +431,9 @@ img, video { decoding: async; }
   height: 100dvh !important;
   pointer-events: none !important;
   overflow-y: auto !important;
-  z-index: 12 !important;
+  z-index: 10 !important;
   will-change: transform;
   box-sizing: border-box;
+  box-shadow: none !important;
   background: var(--bg, #000000) !important;
 }

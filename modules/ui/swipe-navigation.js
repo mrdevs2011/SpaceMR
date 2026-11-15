@@ -392,11 +392,11 @@ export function handleSwipeMove(touch, event) {
       targetEl.classList.add('tab-swiping-target');
       targetEl.style.transition = 'none';
       if (deltaX < 0) {
+        // Next tab yonma-yon o'ng tomondan keladi (kaskad emas, yopishtirilgan chok)
         targetEl.style.transform = `translate3d(${W + deltaX}px, 0, 0)`;
-        targetEl.style.boxShadow = '-15px 0 35px rgba(0, 0, 0, 0.5)';
       } else {
+        // Prev tab yonma-yon chap tomondan keladi (kaskad emas, yopishtirilgan chok)
         targetEl.style.transform = `translate3d(${-W + deltaX}px, 0, 0)`;
-        curEl.style.boxShadow = '-15px 0 35px rgba(0, 0, 0, 0.5)';
       }
     } else if (curEl) {
       const dampedX = deltaX * 0.35;
@@ -532,7 +532,7 @@ export function handleSwipeEnd() {
         curEl.style.transform = (deltaX < 0) ? 'translate3d(-100vw, 0, 0)' : 'translate3d(100vw, 0, 0)';
       }
       if (targetEl) {
-        targetEl.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.24s ease';
+        targetEl.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
         targetEl.style.transform = 'translate3d(0, 0, 0)';
       }
 
@@ -613,6 +613,13 @@ export function _cleanupTabSwiping(curEl, targetEl) {
     curEl.style.transition = '';
     curEl.style.boxShadow = '';
     curEl.style.pointerEvents = '';
+    curEl.style.display = '';
+    curEl.style.position = '';
+    curEl.style.top = '';
+    curEl.style.left = '';
+    curEl.style.width = '';
+    curEl.style.height = '';
+    curEl.style.zIndex = '';
   }
   if (targetEl) {
     targetEl.classList.remove('tab-swiping-target');
