@@ -781,8 +781,8 @@ export function generateFileBubble({ m, fname, fsz, safeUrl, _isImage, hasCaptio
     const w = parseInt(m.mediaWidth, 10);
     const h = parseInt(m.mediaHeight, 10);
     const imgRatio = (w && h)
-      ? ` style="aspect-ratio: ${w}/${h}; min-width: 220px; min-height: 160px;"`
-      : (getMediaAspectStyle(m.mediaPath || safeUrl, m.mediaWidth, m.mediaHeight) || ' style="min-width: 220px; min-height: 160px;"');
+      ? ` style="aspect-ratio: ${w}/${h}; min-width: 220px; max-height: 520px;"`
+      : (getMediaAspectStyle(m.mediaPath || safeUrl, m.mediaWidth, m.mediaHeight) || ' style="min-width: 220px; max-height: 520px;"');
     const cachedImgUrl = (m.mediaPath ? cachedMediaUrlSync(m.mediaPath) : null) || cachedMediaUrlSync(safeUrl) || safeUrl;
     const imgHtml = `<a href="${safeUrl}" class="cfm-img-link media-blur-box"${_ttl}${imgRatio}>
         <img class="cfm-img-preview" src="${esc(cachedImgUrl)}" data-media-path="${esc(m.mediaPath || '')}" alt="${fname}" loading="lazy" onload="this.classList.add('loaded');this.closest('.media-blur-box')?.classList.add('loaded');window.__onMediaLoad&&window.__onMediaLoad(this);window._chatImgLoaded&&window._chatImgLoaded(this)" onerror="window._chatMediaError&&window._chatMediaError(this)">

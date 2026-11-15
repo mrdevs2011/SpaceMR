@@ -5048,9 +5048,13 @@ a.cfm-name--link:hover {
 
 .cfm-img-link {
   display: block;
+  width: fit-content;
+  max-width: min(360px, 80vw);
+  max-height: 520px !important;
   border-radius: 14px;
   overflow: hidden;
   line-height: 0;
+  background: transparent !important;
 }
 
 .cfm-img-link:hover {
@@ -5059,13 +5063,13 @@ a.cfm-name--link:hover {
 
 .cfm-img-preview {
   display: block;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   max-width: min(360px, 80vw);
-  max-height: 520px;
-  object-fit: contain;
+  max-height: 520px !important;
+  object-fit: cover;
   border-radius: 14px;
-  background: transparent;
+  background: transparent !important;
 }
 
 .cfm-media-badge {
