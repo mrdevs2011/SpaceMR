@@ -178,6 +178,13 @@ export function handleSwipeStart(touch, target) {
     return null;
   }
 
+  // Allow text selection on desktop when clicking text elements
+  if (target.closest?.('.chat-bubble-text, .post-text, .cmt-text, [contenteditable="true"]')) {
+    if (typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches) {
+      return null;
+    }
+  }
+
   const clientX = touch.clientX;
   const clientY = touch.clientY;
 
@@ -604,9 +611,51 @@ export function initSwipeNavigation() {
   document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
   document.addEventListener('touchend', onTouchEnd, { passive: true, capture: true });
   document.addEventListener('touchcancel', onTouchEnd, { passive: true, capture: true });
+
+  // Desktop (window toraytirilganda / mobile rejimida) sichqoncha bilan ham slidelar tabiiy ishlashi uchun
+  let _isMouseDown = false;
+
+  const isNarrowScreen = () => {
+    if (typeof window === 'undefined') return true;
+    return window.innerWidth <= 1099;
+  };
+
+  const onMouseDown = (e) => {
+    if (e.button !== 0 || !isNarrowScreen()) return;
+    if (e.target.closest?.('input, textarea, select, button, a, .sv-close, .modal, #camCapture, [role="button"], label')) return;
+    _isMouseDown = true;
+    handleSwipeStart(e, e.target);
+  };
+
+  const onMouseMove = (e) => {
+    if (!_isMouseDown || !_swipe) return;
+    if (_swipe.directionLocked === 'horizontal') {
+      try { e.preventDefault(); } catch (_) {}
+      document.body.classList.add('is-swiping-tabs');
+    }
+    handleSwipeMove(e, e);
+  };
+
+  const onMouseUp = () => {
+    if (!_isMouseDown) return;
+    _isMouseDown = false;
+    document.body.classList.remove('is-swiping-tabs');
+    handleSwipeEnd();
+  };
+
+  document.addEventListener('mousedown', onMouseDown, { passive: true, capture: true });
+  document.addEventListener('mousemove', onMouseMove, { passive: false, capture: true });
+  document.addEventListener('mouseup', onMouseUp, { passive: true, capture: true });
+  window.addEventListener('blur', onMouseUp, { passive: true });
+  document.addEventListener('dragstart', (e) => {
+    if (_isMouseDown || _swipe) {
+      e.preventDefault();
+    }
+  }, { capture: true });
 }
 
 export function _cleanupTabSwiping(curEl, targetEl) {
+  try { document.body.classList.remove('is-swiping-tabs'); } catch (_) {}
   if (curEl) {
     curEl.classList.remove('tab-swiping-active');
     curEl.style.transform = '';

@@ -405,6 +405,12 @@ img, video { decoding: async; }
 }
 
 /* Telegram/Instagram uslubidagi Tab Pager (Yonma-yon Contiguous 1:1 Horizontal Slide - Kaskad emas) */
+body.is-swiping-tabs,
+body.is-swiping-tabs * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
 .view.tab-swiping-active {
   display: block !important;
   visibility: visible !important;
