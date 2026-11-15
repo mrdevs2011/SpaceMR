@@ -69,7 +69,7 @@ let isInitialized = false;
 
 const VIEW_URL = { home: '/home', explore: '/explore', chats: '/chats', profile: '/profile', actions: '/actions', saved: '/saved', notifs: '/notifications', apps: '/apps' };
 
-export function navigateTo(routeName, pushState = true) {
+export function navigateTo(routeName, pushState = true, options = {}) {
   const route = routes[routeName];
   if (!route) {
     console.error('Manzil topilmadi:', routeName);
@@ -168,8 +168,10 @@ export function navigateTo(routeName, pushState = true) {
   // Update nav UI
   updateNavUI(routeName);
 
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'auto' });
+  // Scroll to top (faqat swipe orqali o'tilmagan bo'lsa)
+  if (!options?.keepScroll) {
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
 
   // URL sinxronlashtirilsin
   window.dispatchEvent(new Event('spacemr:route'));

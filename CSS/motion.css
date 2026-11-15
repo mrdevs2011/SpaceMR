@@ -430,6 +430,8 @@ body.is-swiping-tabs * {
   overflow-y: auto !important;
   z-index: 10 !important;
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   box-sizing: border-box;
   box-shadow: none !important;
   background: var(--bg, #000000) !important;
@@ -453,9 +455,31 @@ body.is-swiping-tabs * {
   overflow-y: auto !important;
   z-index: 10 !important;
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   box-sizing: border-box;
   box-shadow: none !important;
   background: var(--bg, #000000) !important;
+}
+
+#camCapture.tab-swiping-target {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  z-index: 2147483640 !important;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-sizing: border-box;
+  box-shadow: none !important;
+  background: #000000 !important;
 }
 
 /* SpaceMR Tranquil Telegram-Style Chat Pattern Background (Hotirjamlik hissi) */

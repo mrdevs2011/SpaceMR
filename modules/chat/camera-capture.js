@@ -85,6 +85,51 @@ function _blobToVideoFile(blob) {
   return markVideoReady(new File([blob], `video_${Date.now()}.${ext}`, { type: blob.type || 'video/webm' }));
 }
 
+export function getOrCreateCameraDom(options = {}) {
+  let ov = document.getElementById('camCapture');
+  if (ov) return ov;
+  ov = document.createElement('div');
+  ov.id = 'camCapture';
+  const isForPost = !!options.forPost;
+  const isForStory = !!options.forStory;
+  const needsCaption = isForPost || isForStory;
+  const captionPlaceholder = isForStory ? 'Hikoyaga matn yozish…' : 'Post uchun matn yozing…';
+  ov.innerHTML = `
+    <video class="cc-video" autoplay muted playsinline disablepictureinpicture></video>
+    <canvas class="cc-freeze"></canvas>
+    <img class="cc-preview-img" alt="" hidden>
+    <video class="cc-preview-vid" playsinline controls hidden></video>
+    <div class="cc-top">
+      <button type="button" class="cc-btn cc-close" aria-label="Yopish">${SVG.close}</button>
+      <div class="cc-top-center">
+        <div class="cc-modes">
+          <button type="button" class="cc-mode active" data-mode="photo" aria-label="Foto">${SVG.photo}</button>
+          <button type="button" class="cc-mode" data-mode="video" aria-label="Video">${SVG.video}</button>
+        </div>
+        <div class="cc-rec-timer" hidden><span class="cc-rec-dot"></span><span class="cc-rec-time">0:00</span></div>
+      </div>
+      <div class="cc-top-right">
+        <button type="button" class="cc-btn cc-flip" aria-label="Kamerani almashtirish">${SVG.flip}</button>
+        <button type="button" class="cc-btn cc-flash" aria-label="Fonar" hidden>${SVG.flashOff}</button>
+      </div>
+    </div>
+    <div class="cc-bottom">
+      <button type="button" class="cc-gallery-btn" aria-label="Media va Galereya" title="Galereya">${SVG.gallery}</button>
+      <button type="button" class="cc-shutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
+      <div class="cc-review" hidden>
+        <button type="button" class="cc-btn cc-retake" aria-label="Qayta olish">${SVG.retake}</button>
+        <div class="cc-caption-box" ${needsCaption ? '' : 'hidden'}>
+          <input type="text" class="cc-caption-input" placeholder="${captionPlaceholder}" maxlength="200" autocomplete="off" enterkeyhint="send" />
+        </div>
+        <button type="button" class="cc-btn cc-send" aria-label="Yuborish">${SVG.send}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(ov);
+  return ov;
+}
+if (typeof window !== 'undefined') window.getOrCreateCameraDom = getOrCreateCameraDom;
+
 export async function openCameraCapture(options = {}) {
   if (_open) return null;
   _open = true;
@@ -123,40 +168,9 @@ export async function openCameraCapture(options = {}) {
 
     facing = 'environment';
 
-    const ov = document.createElement('div');
-    ov.id = 'camCapture';
-    ov.innerHTML = `
-      <video class="cc-video" autoplay muted playsinline disablepictureinpicture></video>
-      <canvas class="cc-freeze"></canvas>
-      <img class="cc-preview-img" alt="" hidden>
-      <video class="cc-preview-vid" playsinline controls hidden></video>
-      <div class="cc-top">
-        <button type="button" class="cc-btn cc-close" aria-label="Yopish">${SVG.close}</button>
-        <div class="cc-top-center">
-          <div class="cc-modes">
-            <button type="button" class="cc-mode" data-mode="photo" aria-label="Foto">${SVG.photo}</button>
-            <button type="button" class="cc-mode" data-mode="video" aria-label="Video">${SVG.video}</button>
-          </div>
-          <div class="cc-rec-timer" hidden><span class="cc-rec-dot"></span><span class="cc-rec-time">0:00</span></div>
-        </div>
-        <div class="cc-top-right">
-          <button type="button" class="cc-btn cc-flip" aria-label="Kamerani almashtirish">${SVG.flip}</button>
-          <button type="button" class="cc-btn cc-flash" aria-label="Fonar" hidden>${SVG.flashOff}</button>
-        </div>
-      </div>
-      <div class="cc-bottom">
-        <button type="button" class="cc-gallery-btn" aria-label="Media va Galereya" title="Galereya">${SVG.gallery}</button>
-        <button type="button" class="cc-shutter" aria-label="Surat / yozish"><span class="cc-shutter-inner"></span></button>
-        <div class="cc-review" hidden>
-          <button type="button" class="cc-btn cc-retake" aria-label="Qayta olish">${SVG.retake}</button>
-          <div class="cc-caption-box" ${needsCaption ? '' : 'hidden'}>
-            <input type="text" class="cc-caption-input" placeholder="${captionPlaceholder}" maxlength="200" autocomplete="off" enterkeyhint="send" />
-          </div>
-          <button type="button" class="cc-btn cc-send" aria-label="Yuborish">${SVG.send}</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(ov);
+    const ov = getOrCreateCameraDom(options);
+    ov.style.display = 'flex';
+    ov.classList.add('show');
 
     const liveVid = ov.querySelector('.cc-video');
     const prevImg = ov.querySelector('.cc-preview-img');
@@ -361,7 +375,8 @@ export async function openCameraCapture(options = {}) {
     } catch (err) {
       console.error('Kamera xatosi:', err);
       toast(cameraErrorMsg(err), 'error');
-      ov.remove();
+      ov.style.display = 'none';
+      ov.classList.remove('show');
       return null;
     }
     // Kameralar ro'yxati — fonda (ochilishni kutdirmaydi)
@@ -696,7 +711,10 @@ export async function openCameraCapture(options = {}) {
         try { stream?.getTracks().forEach(t => t.stop()); } catch (_) {}
         stream = null;
         liveVid.srcObject = null;
-        ov.remove();
+        ov.classList.remove('show', 'open');
+        ov.style.display = 'none';
+        ov.style.transform = '';
+        ov.style.transition = '';
       };
       const done = file => {
         dismissOverlay('camCapture');

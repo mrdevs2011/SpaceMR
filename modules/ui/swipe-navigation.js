@@ -40,10 +40,10 @@ export async function doCloseChatThread() {
   }
 }
 
-export async function doNavigateTo(route) {
+export async function doNavigateTo(route, options = {}) {
   try {
     const { navigateTo } = await import('../router.js');
-    if (typeof navigateTo === 'function') navigateTo(route);
+    if (typeof navigateTo === 'function') navigateTo(route, true, options);
   } catch (_) {}
 }
 
@@ -65,7 +65,6 @@ export function hasAnyOverlayOpen() {
     '.attach-menu.open',
     '#chatLightbox.show',
     '#storyViewer.show',
-    '#camCapture.show',
     '#confirmOverlay.show',
     '#searchOverlay.open',
     '#cmtModal.show',
@@ -249,7 +248,30 @@ export function handleSwipeStart(touch, target) {
     return _swipe;
   }
 
-  // 3. Main tabs horizontal pager (home <-> chats <-> saved <-> profile)
+  // 3. Camera swipe-to-dismiss (kameradan home ga surib qaytish)
+  const camOverlay = document.getElementById('camCapture');
+  if (camOverlay && (camOverlay.classList.contains('show') || camOverlay.style.display === 'flex')) {
+    if (!target.closest?.('button, input, select, textarea, .cc-shutter, .cc-review, .attach-drawer, .attach-menu, .cc-top, .cc-bottom')) {
+      const homeEl = document.getElementById('homeView') || document.body;
+      _swipe = {
+        type: 'cameraDismiss',
+        el: camOverlay,
+        camEl: camOverlay,
+        homeEl: homeEl,
+        target,
+        startX: clientX,
+        startY: clientY,
+        startTime: Date.now(),
+        lastX: clientX,
+        lastY: clientY,
+        directionLocked: null,
+        moveX: 0
+      };
+      return _swipe;
+    }
+  }
+
+  // 4. Main tabs horizontal pager (home <-> chats <-> saved <-> profile)
   if (!hasAnyOverlayOpen()) {
     let cur = 'home';
     try {
@@ -382,6 +404,19 @@ export function handleSwipeMove(touch, event) {
     let targetTab = (targetIdx >= 0 && targetIdx < MAIN_TABS.length) ? MAIN_TABS[targetIdx] : null;
     let targetEl = targetTab ? document.getElementById(`${targetTab}View`) : null;
 
+    // Home dan o'ngga surilganda: Jonli Kamera (Story Upload) ochiladi
+    if (curTab === 'home' && deltaX > 0) {
+      targetTab = 'camera';
+      targetEl = document.getElementById('camCapture') || (typeof window !== 'undefined' && window.getOrCreateCameraDom ? window.getOrCreateCameraDom({ forStory: true }) : null);
+      if (!targetEl) {
+        try {
+          import('../chat/camera-capture.js').then(m => {
+            if (m.getOrCreateCameraDom) targetEl = m.getOrCreateCameraDom({ forStory: true });
+          }).catch(() => {});
+        } catch (_) {}
+      }
+    }
+
     if (_swipe.targetEl && _swipe.targetEl !== targetEl) {
       _cleanupTabSwiping(null, _swipe.targetEl);
     }
@@ -397,7 +432,7 @@ export function handleSwipeMove(touch, event) {
       curEl.style.transform = `translate3d(${deltaX}px, 0, 0)`;
 
       targetEl.classList.add('tab-swiping-target');
-      targetEl.style.setProperty('display', 'block', 'important');
+      targetEl.style.setProperty('display', targetTab === 'camera' ? 'flex' : 'block', 'important');
       targetEl.style.setProperty('visibility', 'visible', 'important');
       targetEl.style.setProperty('opacity', '1', 'important');
       targetEl.style.setProperty('position', 'fixed', 'important');
@@ -405,14 +440,14 @@ export function handleSwipeMove(touch, event) {
       targetEl.style.setProperty('left', '0', 'important');
       targetEl.style.setProperty('width', '100vw', 'important');
       targetEl.style.setProperty('height', '100dvh', 'important');
-      targetEl.style.setProperty('z-index', '10', 'important');
+      targetEl.style.setProperty('z-index', targetTab === 'camera' ? '2147483640' : '10', 'important');
       targetEl.style.setProperty('background', 'var(--bg, #000000)', 'important');
       targetEl.style.transition = 'none';
       if (deltaX < 0) {
         // Next tab yonma-yon o'ng tomondan keladi (kaskad emas, yopishtirilgan chok)
         targetEl.style.transform = `translate3d(${W + deltaX}px, 0, 0)`;
       } else {
-        // Prev tab yonma-yon chap tomondan keladi (kaskad emas, yopishtirilgan chok)
+        // Prev tab yoki Camera yonma-yon chap tomondan keladi
         targetEl.style.transform = `translate3d(${-W + deltaX}px, 0, 0)`;
       }
     } else if (curEl) {
@@ -420,6 +455,30 @@ export function handleSwipeMove(touch, event) {
       curEl.classList.add('tab-swiping-active');
       curEl.style.transition = 'none';
       curEl.style.transform = `translate3d(${dampedX}px, 0, 0)`;
+    }
+  } else if (_swipe.type === 'cameraDismiss') {
+    _swipe.moveX = deltaX;
+    const W = (typeof window !== 'undefined' ? window.innerWidth : 360) || 360;
+    const camEl = _swipe.camEl;
+    const homeEl = _swipe.homeEl;
+
+    if (deltaX > 0 && camEl) {
+      camEl.style.transition = 'none';
+      camEl.style.transform = `translate3d(${deltaX}px, 0, 0)`;
+
+      if (homeEl) {
+        homeEl.classList.add('tab-swiping-target');
+        homeEl.style.setProperty('display', 'block', 'important');
+        homeEl.style.setProperty('visibility', 'visible', 'important');
+        homeEl.style.setProperty('position', 'fixed', 'important');
+        homeEl.style.setProperty('top', '0', 'important');
+        homeEl.style.setProperty('left', '0', 'important');
+        homeEl.style.setProperty('width', '100vw', 'important');
+        homeEl.style.setProperty('height', '100dvh', 'important');
+        homeEl.style.setProperty('z-index', '10', 'important');
+        homeEl.style.transition = 'none';
+        homeEl.style.transform = `translate3d(${-W + deltaX}px, 0, 0)`;
+      }
     }
   }
 }
@@ -528,7 +587,63 @@ export function handleSwipeEnd() {
     }
   }
 
-  // 2. Main Tabs Horizontal Pager
+  // 2. Camera Dismiss
+  if (s.type === 'cameraDismiss') {
+    const deltaX = Math.max(0, s.moveX);
+    const vx = deltaX / dt;
+    const shouldDismiss = (deltaX > width * 0.22) || (vx > 0.35 && deltaX > 20);
+    const camEl = s.camEl;
+    const homeEl = s.homeEl;
+
+    if (shouldDismiss) {
+      const ease = 'transform 0.28s cubic-bezier(0.2, 0.9, 0.1, 1)';
+      if (camEl) {
+        camEl.style.transition = ease;
+        camEl.style.transform = 'translate3d(100vw, 0, 0)';
+      }
+      if (homeEl) {
+        homeEl.style.transition = ease;
+        homeEl.style.transform = 'translate3d(0, 0, 0)';
+      }
+
+      setTimeout(() => {
+        _cleanupTabSwiping(null, homeEl);
+        if (camEl) {
+          camEl.style.transform = '';
+          camEl.style.transition = '';
+          const closeBtn = camEl.querySelector('.cc-close');
+          if (closeBtn) closeBtn.click();
+          else {
+            import('../ui/overlay-stack.js').then(m => m.dismissOverlay?.('camCapture')).catch(() => {});
+          }
+        }
+      }, 280);
+
+      return { dismissed: true, type: 'cameraDismiss' };
+    } else {
+      const ease = 'transform 0.24s cubic-bezier(0.2, 0.9, 0.1, 1)';
+      if (camEl) {
+        camEl.style.transition = ease;
+        camEl.style.transform = 'translate3d(0, 0, 0)';
+      }
+      if (homeEl) {
+        homeEl.style.transition = ease;
+        homeEl.style.transform = 'translate3d(-100vw, 0, 0)';
+      }
+
+      setTimeout(() => {
+        _cleanupTabSwiping(null, homeEl);
+        if (camEl) {
+          camEl.style.transform = '';
+          camEl.style.transition = '';
+        }
+      }, 240);
+
+      return { dismissed: false, type: 'cameraDismiss' };
+    }
+  }
+
+  // 3. Main Tabs Horizontal Pager (0ms blink-free 120 FPS handover)
   if (s.type === 'tabPager') {
     const deltaX = s.moveX;
     const absX = Math.abs(deltaX);
@@ -540,48 +655,86 @@ export function handleSwipeEnd() {
     const targetEl = s.targetEl;
     const targetTab = s.targetTab;
 
-    if (shouldSwitch && targetTab && targetEl) {
+    const isCameraSwipe = (targetTab === 'camera') || (s.currentTab === 'home' && deltaX > 0);
+
+    if (shouldSwitch && ((targetTab && targetEl) || isCameraSwipe)) {
       const dir = deltaX < 0 ? 1 : -1;
+      const action = isCameraSwipe ? 'storyUpload' : undefined;
       try { navigator.vibrate?.(10); } catch (_) {}
 
+      const ease = 'transform 0.28s cubic-bezier(0.2, 0.9, 0.1, 1)';
       if (curEl) {
-        curEl.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
+        curEl.style.transition = ease;
         curEl.style.transform = (deltaX < 0) ? 'translate3d(-100vw, 0, 0)' : 'translate3d(100vw, 0, 0)';
       }
       if (targetEl) {
-        targetEl.style.transition = 'transform 0.24s cubic-bezier(0.32, 0.72, 0, 1)';
+        targetEl.style.transition = ease;
         targetEl.style.transform = 'translate3d(0, 0, 0)';
       }
 
-      setTimeout(() => {
-        _cleanupTabSwiping(curEl, targetEl);
-        doNavigateTo(targetTab);
-      }, 240);
+      const finishSwitch = () => {
+        if (isCameraSwipe) {
+          _cleanupTabSwiping(curEl, targetEl);
+          import('../feed/stories.js').then(m => m.openStoryAdd?.({ fromSlide: true })).catch(() => {});
+          return;
+        }
 
-      return { switched: true, dir, deltaX, vx };
-    } else {
-      if (s.currentTab === 'home' && deltaX >= threshold) {
-        _cleanupTabSwiping(curEl, targetEl);
-        try { navigator.vibrate?.(10); } catch (_) {}
-        try {
-          import('../feed/stories.js').then(m => m.openStoryAdd?.()).catch(() => {});
-        } catch (_) {}
-        return { switched: true, dir: -1, action: 'storyUpload', deltaX, vx };
-      }
+        // 1. Yangi sahifani darhol faollashtiramiz (.on)
+        if (targetEl) {
+          targetEl.classList.add('on');
+          if (curEl && curEl !== targetEl) curEl.classList.remove('on');
+        }
+
+        // 2. Routerni scrollni silkitmasdan sinxronlashtiramiz
+        if (targetTab) {
+          doNavigateTo(targetTab, { keepScroll: true });
+        }
+
+        // 3. Keyingi kadrda transformlarni tozalaymiz (0ms uzilish)
+        requestAnimationFrame(() => {
+          _cleanupTabSwiping(curEl, targetEl);
+        });
+      };
+
+      let settled = false;
+      const onSettle = () => {
+        if (settled) return;
+        settled = true;
+        finishSwitch();
+      };
 
       if (curEl) {
-        curEl.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+        curEl.addEventListener('transitionend', function _h(e) {
+          if (e.propertyName === 'transform') {
+            curEl.removeEventListener('transitionend', _h);
+            onSettle();
+          }
+        });
+        setTimeout(onSettle, 320);
+      } else {
+        setTimeout(onSettle, 280);
+      }
+
+      return { switched: true, dir, action, deltaX, vx };
+    } else {
+      // Snapback (bekor qilish)
+      const ease = 'transform 0.24s cubic-bezier(0.2, 0.9, 0.1, 1)';
+      if (curEl) {
+        curEl.style.transition = ease;
         curEl.style.transform = 'translate3d(0, 0, 0)';
         curEl.style.boxShadow = '';
       }
       if (targetEl) {
-        targetEl.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+        targetEl.style.transition = ease;
         targetEl.style.transform = (deltaX < 0) ? 'translate3d(100vw, 0, 0)' : 'translate3d(-100vw, 0, 0)';
       }
 
       setTimeout(() => {
         _cleanupTabSwiping(curEl, targetEl);
-      }, 220);
+        if (targetTab === 'camera' && targetEl) {
+          targetEl.style.display = 'none';
+        }
+      }, 260);
 
       return { switched: false, dir: deltaX < 0 ? 1 : -1, deltaX, vx };
     }
