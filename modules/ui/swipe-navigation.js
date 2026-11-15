@@ -397,6 +397,16 @@ export function handleSwipeMove(touch, event) {
       curEl.style.transform = `translate3d(${deltaX}px, 0, 0)`;
 
       targetEl.classList.add('tab-swiping-target');
+      targetEl.style.setProperty('display', 'block', 'important');
+      targetEl.style.setProperty('visibility', 'visible', 'important');
+      targetEl.style.setProperty('opacity', '1', 'important');
+      targetEl.style.setProperty('position', 'fixed', 'important');
+      targetEl.style.setProperty('top', '0', 'important');
+      targetEl.style.setProperty('left', '0', 'important');
+      targetEl.style.setProperty('width', '100vw', 'important');
+      targetEl.style.setProperty('height', '100dvh', 'important');
+      targetEl.style.setProperty('z-index', '10', 'important');
+      targetEl.style.setProperty('background', 'var(--bg, #000000)', 'important');
       targetEl.style.transition = 'none';
       if (deltaX < 0) {
         // Next tab yonma-yon o'ng tomondan keladi (kaskad emas, yopishtirilgan chok)
@@ -661,28 +671,34 @@ export function _cleanupTabSwiping(curEl, targetEl) {
     curEl.style.transform = '';
     curEl.style.transition = '';
     curEl.style.boxShadow = '';
-    curEl.style.pointerEvents = '';
-    curEl.style.display = '';
-    curEl.style.position = '';
-    curEl.style.top = '';
-    curEl.style.left = '';
-    curEl.style.width = '';
-    curEl.style.height = '';
-    curEl.style.zIndex = '';
+    curEl.style.removeProperty('display');
+    curEl.style.removeProperty('visibility');
+    curEl.style.removeProperty('opacity');
+    curEl.style.removeProperty('position');
+    curEl.style.removeProperty('top');
+    curEl.style.removeProperty('left');
+    curEl.style.removeProperty('width');
+    curEl.style.removeProperty('height');
+    curEl.style.removeProperty('z-index');
+    curEl.style.removeProperty('background');
+    curEl.style.removeProperty('pointer-events');
   }
   if (targetEl) {
     targetEl.classList.remove('tab-swiping-target');
     targetEl.style.transform = '';
     targetEl.style.transition = '';
     targetEl.style.boxShadow = '';
-    targetEl.style.display = '';
-    targetEl.style.position = '';
-    targetEl.style.top = '';
-    targetEl.style.left = '';
-    targetEl.style.width = '';
-    targetEl.style.height = '';
-    targetEl.style.zIndex = '';
-    targetEl.style.pointerEvents = '';
+    targetEl.style.removeProperty('display');
+    targetEl.style.removeProperty('visibility');
+    targetEl.style.removeProperty('opacity');
+    targetEl.style.removeProperty('position');
+    targetEl.style.removeProperty('top');
+    targetEl.style.removeProperty('left');
+    targetEl.style.removeProperty('width');
+    targetEl.style.removeProperty('height');
+    targetEl.style.removeProperty('z-index');
+    targetEl.style.removeProperty('background');
+    targetEl.style.removeProperty('pointer-events');
   }
 }
 

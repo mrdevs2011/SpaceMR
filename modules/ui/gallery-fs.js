@@ -21,12 +21,29 @@ export const ALLOWED_FOLDER_KEYWORDS = [
   'pictures',
   'photos',
   'gallery',
-  'internal shared storage'
+  'internal shared storage',
+  'download',
+  'downloads',
+  'telegram',
+  'whatsapp',
+  'screenshots',
+  'images',
+  'image',
+  'media',
+  'storage',
+  'sdcard',
+  'rasm',
+  'rasmlar',
+  'surat',
+  'suratlar',
+  'foto',
+  'video',
+  'videos'
 ];
 
 // Qo'llab-quvvatlanadigan media kengaytmalari
-const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif']);
-const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'm4v', 'webm', '3gp', 'mkv']);
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'avif', 'jfif', 'svg', 'dng', 'cr2', 'raw']);
+const VIDEO_EXTENSIONS = new Set(['mp4', 'mov', 'm4v', 'webm', '3gp', 'mkv', 'avi', 'flv', 'wmv', 'ts', 'm2ts', 'mts', 'ogv']);
 
 /**
  * IndexedDB dan saqlangan FileSystemDirectoryHandle ni olish
@@ -143,9 +160,8 @@ export async function clearGalleryDirHandle() {
  * Tanlangan papka nomi to'g'ri ekanligini qat'iy tekshirish
  */
 export function isAllowedGalleryFolder(dirHandle) {
-  if (!dirHandle || !dirHandle.name) return false;
-  const name = String(dirHandle.name).toLowerCase().trim();
-  return ALLOWED_FOLDER_KEYWORDS.some(k => name.includes(k));
+  if (!dirHandle || !dirHandle.name) return true;
+  return true;
 }
 
 /**
@@ -315,24 +331,41 @@ export async function scanDirectory(dirHandle, maxDepthOrOptions = 3, maxCountPa
     const files = [];
     const subDirs = [];
     try {
-      for await (const entry of handle.values()) {
-        if (entry.kind === 'file') {
-          const name = entry.name || '';
-          const dotIdx = name.lastIndexOf('.');
-          const ext = dotIdx >= 0 ? name.slice(dotIdx + 1).toLowerCase() : '';
-          if (IMAGE_EXTENSIONS.has(ext) || VIDEO_EXTENSIONS.has(ext)) {
-            files.push(entry);
+      if (typeof handle.values !== 'function') return { files, subDirs };
+      const iterator = handle.values();
+      while (true) {
+        let nextRes;
+        try {
+          nextRes = await iterator.next();
+        } catch (iterErr) {
+          console.warn('[GalleryFS] iterator step error:', iterErr);
+          break;
+        }
+        if (!nextRes || nextRes.done) break;
+        const entry = nextRes.value;
+        if (!entry) continue;
+
+        try {
+          if (entry.kind === 'file') {
+            const name = entry.name || '';
+            const dotIdx = name.lastIndexOf('.');
+            const ext = dotIdx >= 0 ? name.slice(dotIdx + 1).toLowerCase() : '';
+            if (IMAGE_EXTENSIONS.has(ext) || VIDEO_EXTENSIONS.has(ext)) {
+              files.push(entry);
+            }
+          } else if (entry.kind === 'directory') {
+            const dName = (entry.name || '').toLowerCase();
+            const isIgnored = dName.startsWith('.') ||
+                              dName.includes('thumb') ||
+                              dName.includes('cache') ||
+                              dName.includes('trashed') ||
+                              dName === 'lost.dir';
+            if (!isIgnored) {
+              subDirs.push(entry);
+            }
           }
-        } else if (entry.kind === 'directory') {
-          const dName = (entry.name || '').toLowerCase();
-          const isIgnored = dName.startsWith('.') ||
-                            dName.includes('thumb') ||
-                            dName.includes('cache') ||
-                            dName.includes('trashed') ||
-                            dName === 'lost.dir';
-          if (!isIgnored) {
-            subDirs.push(entry);
-          }
+        } catch (itemErr) {
+          console.warn('[GalleryFS] entry item error:', itemErr);
         }
       }
     } catch (err) {

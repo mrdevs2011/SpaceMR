@@ -7495,6 +7495,15 @@ html.is-desktop .chat-msg .chat-bubble-text {
 }
 .cfm-media-wrap--standalone {
   min-height: 80px;
+  background: transparent !important;
+}
+.cfm-media-wrap--standalone.loaded,
+.cfm-media-wrap--standalone:has(img.loaded),
+.cfm-media-wrap--standalone:has(video.loaded),
+.cfm-img-link.loaded,
+.cfm-img-link:has(img.loaded) {
+  min-height: 0 !important;
+  background: transparent !important;
 }
 
 

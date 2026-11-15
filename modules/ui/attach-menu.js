@@ -432,7 +432,7 @@ export function initAttachMenu({
     const menu = document.createElement('div');
     menu.className = 'attach-menu';
     menu.setAttribute('role', 'menu');
-    menu.style.zIndex = '2147483001';
+    menu.style.zIndex = '2147483645';
 
     menu.innerHTML = items.map(({ k, t, svg, forId }) => {
       if (forId) {
@@ -808,6 +808,7 @@ export function initAttachMenu({
 
     const overlay = document.createElement('div');
     overlay.className = 'attach-drawer-overlay';
+    overlay.style.zIndex = '2147483645';
 
     overlay.innerHTML = `
       <div class="${drawerClass}" role="dialog" aria-label="Biriktirish paneli" data-context="${ctx}">

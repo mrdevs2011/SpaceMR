@@ -368,7 +368,8 @@ img, video { decoding: async; }
 /* Composer skrepka menyusi kartaning pastida qirqilmasin — tepada, overlay ustida */
 #uploadOverlay.show,
 #uploadOverlay.show .composer-sheet { overflow: visible !important; }
-.attach-menu { z-index: 2147483001 !important; }
+.attach-menu,
+.attach-drawer-overlay { z-index: 2147483645 !important; }
 
 .chat-draft-tag { color: #f4212e; font-weight: 700; margin-right: 4px; }
 
@@ -411,9 +412,15 @@ body.is-swiping-tabs * {
   -webkit-user-select: none !important;
 }
 
-.view.tab-swiping-active {
+#app .view.tab-swiping-active,
+.view.tab-swiping-active,
+#homeView.tab-swiping-active,
+#chatsView.tab-swiping-active,
+#savedView.tab-swiping-active,
+#profileView.tab-swiping-active {
   display: block !important;
   visibility: visible !important;
+  opacity: 1 !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -427,9 +434,16 @@ body.is-swiping-tabs * {
   box-shadow: none !important;
   background: var(--bg, #000000) !important;
 }
-.view.tab-swiping-target {
+
+#app .view.tab-swiping-target,
+.view.tab-swiping-target,
+#homeView.tab-swiping-target,
+#chatsView.tab-swiping-target,
+#savedView.tab-swiping-target,
+#profileView.tab-swiping-target {
   display: block !important;
   visibility: visible !important;
+  opacity: 1 !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;

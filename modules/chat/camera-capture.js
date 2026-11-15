@@ -448,10 +448,15 @@ export async function openCameraCapture(options = {}) {
         btn: galleryBtn,
         onPick: (file) => {
           try { closeAttachMenu(); } catch (_) {}
-          if (file) enterReview(file);
+          if (!file) return;
+          if (file.type?.startsWith('image/') || file.type?.startsWith('video/')) {
+            enterReview(file);
+          } else {
+            done(file);
+          }
         },
         showCamera: false,
-        showFile: isForPost,
+        showFile: true,
         showMedia: true,
         showPoll: false,
         showLocation: false,
@@ -462,7 +467,7 @@ export async function openCameraCapture(options = {}) {
           isStory: isForStory,
           isPost: isForPost,
           showCamera: false,
-          showFile: isForPost,
+          showFile: true,
           showMedia: true,
           showPoll: false,
           showLocation: false,
