@@ -301,8 +301,47 @@
 /* Cover olib tashlandi (rasm yuklash funksiyasi yo'q edi) — avatar tepada */
 #profileView .pf-cover { display: none; }
 #profileView .profile-avi { margin: 16px 0 12px; }
-#profileView .pf-actions { top: 16px; right: 58px; }
+#profileView .pf-actions,
+#profileView #pfEditBtn,
+#profileView #pfShareBtn { display: none !important; }
 #profileView .profile-gear-btn,
-#profileView #settingsBtn.profile-gear-btn { top: 16px; right: 12px; background: transparent !important; border: 1px solid #536471 !important; }
+#profileView .profile-settings-btn,
+#profileView #settingsBtn {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  border-radius: 50% !important;
+  border: 1px solid var(--pal-gray-700, #2f3336) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 5 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease !important;
+}
 #profileView .profile-gear-btn:hover,
-#profileView #settingsBtn.profile-gear-btn:hover { background: rgba(231, 233, 234, 0.1) !important; }
+#profileView .profile-settings-btn:hover,
+#profileView #settingsBtn:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: var(--pal-gray-500, #71767b) !important;
+  transform: scale(1.05) !important;
+}
+#profileView .profile-gear-btn:active,
+#profileView .profile-settings-btn:active,
+#profileView #settingsBtn:active {
+  transform: scale(0.94) !important;
+}
+#profileView .profile-gear-btn img.icon,
+#profileView .profile-settings-btn img.icon,
+#profileView #settingsBtn img.icon {
+  width: 20px !important;
+  height: 20px !important;
+  filter: brightness(0) invert(1) !important;
+}

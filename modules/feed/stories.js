@@ -164,19 +164,17 @@ function spawnFlyingEmoji(emoji, triggerEl) {
 }
 
 function ensureDom() {
-  if ($('storiesBar')) return;
   const home = $('homeView');
-  if (!home) return;
-
-  const bar = document.createElement('div');
-  bar.id = 'storiesBar';
-  bar.className = 'stories-bar';
-  bar.innerHTML = `<div class="stories-track" id="storiesTrack"></div>`;
-
-  // Yuqorida doim ko'rinsin: composer/feed dan OLDIN
-  const anchor = $('homeComposer') || $('feed');
-  if (anchor) home.insertBefore(bar, anchor);
-  else home.prepend(bar);
+  if (home && !$('storiesBar')) {
+    const bar = document.createElement('div');
+    bar.id = 'storiesBar';
+    bar.className = 'stories-bar';
+    bar.innerHTML = `<div class="stories-track" id="storiesTrack"></div>`;
+    renderSkeleton(6);
+    const anchor = $('homeComposer') || $('feed');
+    if (anchor) home.insertBefore(bar, anchor);
+    else home.prepend(bar);
+  }
 
   // Viewer overlay (body ga)
   if (!$('storyViewer')) {

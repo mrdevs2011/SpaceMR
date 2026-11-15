@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="10" fill="rgba(255, 212, 0, 0.1)"/><rect x="10" y="10" width="28" height="28" rx="5" fill="#ffd400"/><text x="24" y="30" text-anchor="middle" font-family="monospace" font-weight="800" font-size="14" fill="#16181c">JS</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect width="48" height="48" rx="10" fill="rgba(247, 223, 30, 0.15)"/>
+  <rect x="10" y="10" width="28" height="28" rx="6" fill="#f7df1e"/>
+  <text x="24" y="29.5" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#000000" letter-spacing="0.5">JS</text>
+</svg>
