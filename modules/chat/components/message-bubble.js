@@ -5,6 +5,7 @@ import { PLAY_SVG, fmtDur, isVideoNote, renderVideoNote } from './video-note.js'
 import { ensureVideoDuration, fixVideoDuration, hardenVideoPlayback } from '../../core/video-policy.js';
 import { getMediaAspectStyle, getMediaDimensions, setMediaDimensions, cachedMediaUrlSync } from '../../core/store/media-cache.js';
 import { openSmartMapLocation } from '../../ui/location-helper.js';
+import { toast } from '../../ui/toast.js';
 
 if (typeof window !== 'undefined') {
   window.__openSmartMap = openSmartMapLocation;
@@ -77,14 +78,12 @@ if (typeof window !== 'undefined' && !window._chatYtBound) {
           el.classList.add('copied');
           setTimeout(() => { badge.textContent = orig; el.classList.remove('copied'); }, 1800);
         }
-        if (typeof window.toast === 'function') {
-          window.toast('Video havolasi nusxalandi', 'info');
-        }
+        toast('Video havolasi nusxalandi', 'info');
       }).catch(() => {
-        if (typeof window.toast === 'function') window.toast('Havola: ' + url, 'info');
+        toast('Havola: ' + url, 'info');
       });
     } catch (_) {
-      if (typeof window.toast === 'function') window.toast('Havola: ' + url, 'info');
+      toast('Havola: ' + url, 'info');
     }
   };
 

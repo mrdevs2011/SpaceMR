@@ -546,7 +546,15 @@ nav.bot-nav #createBtn.nav-center-btn:hover { background: var(--x-blue-hover); }
   --c-divider: var(--line);
   --c-danger: var(--red);
 }
-#chatThreadModal .chat-thread-messages { background-image: none; }
+#chatThreadModal .chat-thread-messages {
+  background-color: #0b0d14;
+  background-image:
+    radial-gradient(ellipse at 50% 25%, rgba(24, 34, 58, 0.45) 0%, rgba(9, 11, 17, 0.94) 100%),
+    url('./svg/chat/chat-bg-pattern.svg');
+  background-repeat: no-repeat, repeat;
+  background-position: center top, 0 0;
+  background-size: 100% 100%, 380px 380px;
+}
 /* Chat pastki input: dark sahifaga mos — qator sahifa bilan bir xil qora, input esa yumshoq pill */
 #chatThreadModal .chat-thread-input-row, #chatThreadModal .chat-reply-bar { background: var(--c-bg-chat); border-top: 1px solid var(--c-divider); }
 #chatThreadModal .chat-thread-input { background: var(--bg3); border-radius: var(--radius); padding: 9px 16px; }

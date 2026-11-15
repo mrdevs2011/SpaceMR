@@ -437,3 +437,29 @@ img, video { decoding: async; }
   box-shadow: none !important;
   background: var(--bg, #000000) !important;
 }
+
+/* SpaceMR Tranquil Telegram-Style Chat Pattern Background (Hotirjamlik hissi) */
+#chatThreadModal {
+  background-color: #0b0d14 !important;
+}
+
+#chatThreadModal .chat-thread-messages,
+#chatThreadMessages {
+  background-color: #0b0d14 !important;
+  background-image:
+    radial-gradient(ellipse at 50% 25%, rgba(24, 34, 58, 0.45) 0%, rgba(9, 11, 17, 0.94) 100%),
+    url('./svg/chat/chat-bg-pattern.svg') !important;
+  background-repeat: no-repeat, repeat !important;
+  background-position: center top, 0 0 !important;
+  background-size: 100% 100%, 380px 380px !important;
+  background-attachment: fixed, local !important;
+}
+
+/* Date separator in chat — frosted glass pill over tranquil pattern */
+#chatThreadModal .chat-date-sep span {
+  background: rgba(11, 13, 20, 0.68) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
