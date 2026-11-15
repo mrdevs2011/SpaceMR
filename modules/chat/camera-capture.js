@@ -1,6 +1,7 @@
 /* camera-capture.js — SpaceMR kamera: foto/video, review (retake / paperplane send). */
 import { toast } from '../ui/toast.js';
 import { isPermissionAllowed } from '../settings/permissions.js';
+import { pushOverlay, dismissOverlay } from '../ui/overlay-stack.js';
 import {
   hasCameraDevice, cameraErrorMsg, listCameras,
   trackSupportsTorch, trackMaybeTorch, setTorch, applyTrackAdvanced, waitTrackTorchReady,
@@ -664,8 +665,26 @@ export async function openCameraCapture(options = {}) {
         liveVid.srcObject = null;
         ov.remove();
       };
-      const done = file => { finishRef = null; cleanup(); resolve(file || null); };
+      const done = file => {
+        dismissOverlay('camCapture');
+        finishRef = null;
+        cleanup();
+        resolve(file || null);
+      };
       finishRef = done;
+
+      pushOverlay('camCapture', () => {
+        if (recording) {
+          stopRecording().then(f => { if (f) enterReview(f); });
+          return true;
+        }
+        if (reviewing) {
+          exitReview();
+          return true;
+        }
+        done(null);
+        return true;
+      });
 
       const onKey = e => {
         if (e.key !== 'Escape') return;

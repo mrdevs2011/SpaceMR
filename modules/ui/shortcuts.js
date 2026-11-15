@@ -46,6 +46,8 @@ const CLOSERS = [
   ['incomingCallModal',      () => { document.getElementById('incomingCallReject')?.click(); return true; }],
   ['callActiveModal',        () => { (document.getElementById('callEndBtn') || document.getElementById('callHangupBtn'))?.click(); return true; }],
   ['camCapture',             () => document.querySelector('#camCapture .cc-close')?.click()],
+  ['attach-drawer-overlay',  () => { import('./attach-menu.js').then(m => m.closeAttachMenu?.()); return true; }],
+  ['attach-menu',            () => { import('./attach-menu.js').then(m => m.closeAttachMenu?.()); return true; }],
   ['chatCtxOverlay',         () => $('chatCtxOverlay')?.remove()],
   ['pwConfirmOverlay',       () => { $('pwcCancel')?.click(); $('pwConfirmOverlay')?.remove(); return true; }],
   ['confirmOverlay',         () => $('confirmCancelBtn')?.click()],
@@ -85,10 +87,10 @@ const zOf = el => { const z = parseInt(getComputedStyle(el).zIndex, 10); return 
 
 /* Esc: butun ilova bo'yicha faqat ENG USTKI narsani yopadi — ochiq oyna ham, ichki holat (menyu, tanlash, emoji panel...) ham.
    Hech narsa yopilmasa false qaytaradi (Esc hech narsani buzmaydi, chatdan ham chiqarmaydi). */
-function closeTopmost() {
+export function closeTopmost() {
   const items = escLocals().map(l => ({ z: l.z, run: l.fn }));
   for (const [id, close] of CLOSERS) {
-    const el = $(id);
+    const el = $(id) || document.querySelector('.' + id);
     if (isOpen(el)) items.push({ z: zOf(el), run: () => { close(); return true; } });
   }
   items.sort((a, b) => b.z - a.z); // tenglikda ichki holatlar (oldin qo'shilgan) birinchi

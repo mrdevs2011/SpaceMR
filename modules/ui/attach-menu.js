@@ -13,6 +13,7 @@ import { openCameraCapture } from '../chat/camera-capture.js';
 import { openPollModal } from './poll-dialog.js';
 import { requestAndSendLocation } from './location-helper.js';
 import { isPermissionAllowed, requirePermission } from '../settings/permissions.js';
+import { pushOverlay, dismissOverlay } from './overlay-stack.js';
 import {
   isAndroidMobile,
   getSavedGalleryDirHandle,
@@ -316,6 +317,7 @@ export function isMobileOrTabletDevice() {
 
 /** Yopish va barcha oqimlarni to‘xtatish */
 export function closeAttachMenu() {
+  dismissOverlay('attachDrawer');
   _drawerPickerCallback = null;
   if (_liveStream) {
     try {
@@ -334,7 +336,7 @@ export function closeAttachMenu() {
     _activeDrawer = null;
     setTimeout(() => {
       try { d.remove(); } catch (_) {}
-    }, 240);
+    }, 280);
   }
   if (_activeDropdown) {
     try { _activeDropdown.remove(); } catch (_) {}
@@ -630,42 +632,24 @@ export function initAttachMenu({
         if (isStory || isPost) {
           // Post & Story: transform translateY orqali real vaqtda suriladi
           if (deltaY > 0) {
-            drawer.style.transform = `translateY(${deltaY}px)`;
-            const progress = Math.min(1, deltaY / (window.innerHeight * 0.85));
-            overlay.style.opacity = String(Math.max(0, 1 - progress * 0.85));
+            drawer.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+            const progress = Math.min(1, deltaY / (window.innerHeight * 0.55));
+            overlay.style.opacity = String(Math.max(0, 1 - progress * 0.9));
           } else {
             // Yuqoriga tortganda tabiiy rubber-band qarshilik
-            drawer.style.transform = `translateY(${deltaY * 0.18}px)`;
+            drawer.style.transform = `translate3d(0, ${deltaY * 0.18}px, 0)`;
           }
         } else {
-          // Chat:
-          if (chatState === 'half') {
-            if (deltaY < 0) {
-              // Yuqoriga surish -> 92vh ga qarab balandlik silliq o'sadi
-              drawer.style.transform = 'translateY(0)';
-              const baseH = window.innerHeight * 0.50;
-              const maxH = window.innerHeight * 0.92;
-              const newH = Math.min(maxH, baseH - deltaY);
-              drawer.style.height = `${newH}px`;
+          // Chat: 1:1 GPU-accelerated translateY (reflowsiz, 120 FPS)
+          if (deltaY > 0) {
+            drawer.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+            const progress = Math.min(1, deltaY / (window.innerHeight * 0.45));
+            overlay.style.opacity = String(Math.max(0, 1 - progress * 0.9));
+          } else {
+            if (chatState === 'half') {
+              drawer.style.transform = `translate3d(0, ${deltaY}px, 0)`;
             } else {
-              // Pastga surish -> 0 height ga qarab yopilish
-              drawer.style.height = '50vh';
-              drawer.style.transform = `translateY(${deltaY}px)`;
-              const progress = Math.min(1, deltaY / (window.innerHeight * 0.5));
-              overlay.style.opacity = String(Math.max(0, 1 - progress * 0.85));
-            }
-          } else if (chatState === 'full') {
-            if (deltaY > 0) {
-              // Pastga surish -> 50vh ga qarab balandlik silliq qisqaradi
-              drawer.style.transform = 'translateY(0)';
-              const baseH = window.innerHeight * 0.92;
-              const minH = window.innerHeight * 0.50;
-              const newH = Math.max(minH, baseH - deltaY);
-              drawer.style.height = `${newH}px`;
-            } else {
-              // Yuqoriga tortganda qarshilik
-              drawer.style.height = '92vh';
-              drawer.style.transform = `translateY(${deltaY * 0.15}px)`;
+              drawer.style.transform = `translate3d(0, ${deltaY * 0.16}px, 0)`;
             }
           }
         }
@@ -690,19 +674,17 @@ export function initAttachMenu({
 
       if (isStory || isPost) {
         // Post Upload va Story Upload:
-        // 1 ta tabiiy jismoniy surish bilan silliq pastga tushib butunlay yopilsin (0 height).
-        // inersiya (velocity > 0.4 yoki drag masofasi > 100px) bilan tabiiy animatsiyada pastga sirg'alib yopilsin.
-        const shouldDismiss = totalDeltaY > 100 || maxVelocity > 0.4;
+        const shouldDismiss = totalDeltaY > 55 || totalDeltaY > 100 || maxVelocity > 0.4 || maxVelocity > 0.3;
         if (shouldDismiss) {
-          drawer.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
-          drawer.style.transform = 'translateY(100%)';
-          overlay.style.transition = 'opacity 0.26s linear';
+          drawer.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+          drawer.style.transform = 'translate3d(0, calc(100% + 50px), 0)';
+          overlay.style.transition = 'opacity 0.24s linear';
           overlay.style.opacity = '0';
           setTimeout(() => closeAttachMenu(), 280);
         } else {
           // Orqaga qaytish (bekor qilish)
-          drawer.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1)';
-          drawer.style.transform = 'translateY(0)';
+          drawer.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+          drawer.style.transform = 'translate3d(0, 0, 0)';
           overlay.style.transition = 'opacity 0.2s linear';
           overlay.style.opacity = '1';
         }
@@ -712,52 +694,52 @@ export function initAttachMenu({
         // Pastga sursa half-height (50vh).
         // Yana pastga sursa 0 height (yopiladi).
         if (chatState === 'half') {
-          const wantsFull = totalDeltaY < -60 || recentVelocity < -0.35 || overallVelocity < -0.35;
-          const wantsDismiss = totalDeltaY > 100 || recentVelocity > 0.4 || overallVelocity > 0.4;
+          const wantsFull = totalDeltaY < -50 || recentVelocity < -0.3 || overallVelocity < -0.3;
+          const wantsDismiss = totalDeltaY > 55 || recentVelocity > 0.3 || overallVelocity > 0.3;
 
           if (wantsFull) {
-            // Yuqoriga sursa full-height (92vh)
             chatState = 'full';
             drawer.classList.remove('attach-drawer--half');
             drawer.classList.add('attach-drawer--full');
-            drawer.style.transition = 'height 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)';
+            drawer.style.transition = 'height 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
             drawer.style.height = '92vh';
-            drawer.style.transform = 'translateY(0)';
+            drawer.style.transform = 'translate3d(0, 0, 0)';
             overlay.style.transition = 'opacity 0.2s linear';
             overlay.style.opacity = '1';
           } else if (wantsDismiss) {
-            // Yana pastga sursa 0 height (yopiladi)
-            drawer.style.transition = 'transform 0.26s cubic-bezier(0.2, 0.9, 0.3, 1)';
-            drawer.style.transform = 'translateY(100%)';
+            drawer.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+            drawer.style.transform = 'translate3d(0, calc(100% + 50px), 0)';
             overlay.style.transition = 'opacity 0.24s linear';
             overlay.style.opacity = '0';
-            setTimeout(() => closeAttachMenu(), 260);
+            setTimeout(() => closeAttachMenu(), 280);
           } else {
-            // Snap back to half (50vh)
-            drawer.style.transition = 'height 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
-            drawer.style.height = '50vh';
-            drawer.style.transform = 'translateY(0)';
+            drawer.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+            drawer.style.transform = 'translate3d(0, 0, 0)';
             overlay.style.transition = 'opacity 0.2s linear';
             overlay.style.opacity = '1';
           }
         } else if (chatState === 'full') {
-          const wantsHalf = totalDeltaY > 60 || recentVelocity > 0.35 || overallVelocity > 0.35;
+          const wantsDirectDismiss = totalDeltaY > 120 || recentVelocity > 0.55 || overallVelocity > 0.55;
+          const wantsHalf = totalDeltaY > 50 || recentVelocity > 0.28 || overallVelocity > 0.28;
 
-          if (wantsHalf) {
-            // Pastga sursa half-height (50vh)
+          if (wantsDirectDismiss) {
+            drawer.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+            drawer.style.transform = 'translate3d(0, calc(100% + 50px), 0)';
+            overlay.style.transition = 'opacity 0.24s linear';
+            overlay.style.opacity = '0';
+            setTimeout(() => closeAttachMenu(), 280);
+          } else if (wantsHalf) {
             chatState = 'half';
             drawer.classList.remove('attach-drawer--full');
             drawer.classList.add('attach-drawer--half');
-            drawer.style.transition = 'height 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)';
+            drawer.style.transition = 'height 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
             drawer.style.height = '50vh';
-            drawer.style.transform = 'translateY(0)';
+            drawer.style.transform = 'translate3d(0, 0, 0)';
             overlay.style.transition = 'opacity 0.2s linear';
             overlay.style.opacity = '1';
           } else {
-            // Snap back to full (92vh)
-            drawer.style.transition = 'height 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
-            drawer.style.height = '92vh';
-            drawer.style.transform = 'translateY(0)';
+            drawer.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+            drawer.style.transform = 'translate3d(0, 0, 0)';
             overlay.style.transition = 'opacity 0.2s linear';
             overlay.style.opacity = '1';
           }
@@ -947,6 +929,7 @@ export function initAttachMenu({
 
     document.body.appendChild(overlay);
     _activeDrawer = overlay;
+    pushOverlay('attachDrawer', () => { closeAttachMenu(); return true; });
 
     const drawer = overlay.querySelector('.attach-drawer');
     _bindDrawerGestures(drawer, overlay, ctx);

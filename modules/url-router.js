@@ -1,4 +1,5 @@
 import { smoothScrollIntoView, resetScrollLock } from './core/utils.js';
+import { handleOverlayPopState } from './ui/overlay-stack.js';
 /**
  * SpaceMR — URL router (path asosida).
  *
@@ -888,6 +889,11 @@ export function initUrlRouter() {
     if (window.__zoomSkipPop) { window.__zoomSkipPop = false; return; }  // rasm zoom yopildi — sahifa o'zgarmaydi
     if (_internalPop) { _internalPop = false; return; }
     if (_auth === 'unknown') return;
+
+    // Mobil / planshet: eng ustki ochiq modal / drawer / camera orqaga tugmasi orqali yopiladi, sahifa emas!
+    if (handleOverlayPopState()) {
+      return;
+    }
 
     // Chat ichidagi qidiruv ochiq bo'lsa — orqaga bosilganda chatdan chiqib ketmasdan, faqat qidiruv yopilsin
     const searchHdr = document.querySelector('.chat-thread-hdr.search-active');
