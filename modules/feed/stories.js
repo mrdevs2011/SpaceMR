@@ -192,9 +192,13 @@ function ensureDom() {
             <div class="sv-time" id="svTime"></div>
           </div>
         </div>
-        <div class="sv-top-actions" style="display:flex;align-items:center;gap:4px;pointer-events:auto">
+        <div class="sv-top-actions" style="display:flex;align-items:center;gap:6px;pointer-events:auto">
           <button type="button" class="sv-close sv-delete" id="svDelete" hidden aria-label="O'chirish" title="Hikoyani o'chirish">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+          </button>
+          <button type="button" class="sv-views-badge" id="svViewsBadge" hidden role="button" tabindex="0" title="Ko'rishlar soni" aria-label="Ko'rishlar soni">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="sv-views-count">0</span>
           </button>
           <button type="button" class="sv-close" id="svClose" aria-label="Yopish">
             <img src="./svg/action/close.svg" alt="" class="icon" width="22" height="22">
@@ -215,9 +219,6 @@ function ensureDom() {
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f62e.png" aria-label="Hayrat">${getReactionSvg('1f62e')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f622.png" aria-label="Qayg'u">${getReactionSvg('1f622')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
           <button type="button" class="sv-react-chip" aria-pressed="false" data-emoji="emoji/2d/1f44d.png" aria-label="Like">${getReactionSvg('1f44d')}<span class="sv-react-count is-zero" style="opacity: 0;">0</span></button>
-        </div>
-        <div class="sv-own-bar" id="svOwnBar" hidden>
-          <span class="sv-views-badge" id="svViewsBadge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sv-views-count">0</span><span>ta ko'rildi</span></span>
         </div>
       </div>
     `;
@@ -1163,39 +1164,33 @@ async function showCurrent() {
   $('svAvi').innerHTML = `<img src="${esc(g.avatar)}" alt="" onerror="this.style.display='none'">`;
 
   const isMine = !!g.isMe || (!!state.me?.uid && g.uid === state.me.uid);
-  const ownBar = $('svOwnBar');
   const delBtn = $('svDelete');
   if (delBtn) delBtn.hidden = !isMine;
+  const viewsBadge = $('svViewsBadge');
+  if (viewsBadge) viewsBadge.hidden = !isMine;
 
-
-  if (isMine) {
-    if (ownBar) {
-      ownBar.hidden = false;
-      const viewsBadge = $('svViewsBadge');
-      const countEl = viewsBadge?.querySelector('.sv-views-count');
-      const countStoryId = item.id;
-      if (countEl) countEl.textContent = formatCompactNumber((item.viewsCount != null) ? item.viewsCount : 0);
-      sb.from('story_views').select('story_id', { count: 'exact' }).eq('story_id', countStoryId)
-        .then(({ data, count, error }) => {
-          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
-          if (error) {
-            console.warn('[stories] views count:', error.message || error);
-            if (countEl && item.viewsCount == null) countEl.textContent = '0';
-            return;
-          }
-          const realCount = (typeof count === 'number' && !isNaN(count))
-            ? count
-            : (Array.isArray(data) ? data.length : 0);
-          item.viewsCount = realCount;
-          if (countEl) countEl.textContent = formatCompactNumber(realCount);
-        }).catch(err => {
-          if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
-          console.warn('[stories] views count:', err?.message || err);
+  if (isMine && viewsBadge) {
+    const countEl = viewsBadge.querySelector('.sv-views-count');
+    const countStoryId = item.id;
+    if (countEl) countEl.textContent = formatCompactNumber((item.viewsCount != null) ? item.viewsCount : 0);
+    sb.from('story_views').select('story_id', { count: 'exact' }).eq('story_id', countStoryId)
+      .then(({ data, count, error }) => {
+        if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
+        if (error) {
+          console.warn('[stories] views count:', error.message || error);
           if (countEl && item.viewsCount == null) countEl.textContent = '0';
-        });
-    }
-  } else {
-    if (ownBar) ownBar.hidden = true;
+          return;
+        }
+        const realCount = (typeof count === 'number' && !isNaN(count))
+          ? count
+          : (Array.isArray(data) ? data.length : 0);
+        item.viewsCount = realCount;
+        if (countEl) countEl.textContent = formatCompactNumber(realCount);
+      }).catch(err => {
+        if (_groups[_viewerIdx]?.items?.[_itemIdx]?.id !== countStoryId) return;
+        console.warn('[stories] views count:', err?.message || err);
+        if (countEl && item.viewsCount == null) countEl.textContent = '0';
+      });
   }
 
   const reactionStoryId = item.id;

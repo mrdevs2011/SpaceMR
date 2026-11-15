@@ -10,7 +10,7 @@ assert.ok(source.includes("svReactions") && source.includes("sv-reactions"), "St
 assert.ok(source.includes("sv-react-chip") && source.includes("sv-reaction-emoji"), "Story viewer must include reaction buttons and images");
 assert.ok(!source.includes("from('story_reactions')"), "Story viewer must not read or write separate legacy story_reactions table");
 assert.ok(!source.includes("replyToStory") && !source.includes("Hikoyaga munosabat"), "Story reactions must not spam chat messages");
-assert.ok(source.includes("sv-own-bar"), "Story views row must remain in the bottom panel");
+assert.ok(source.includes("svViewsBadge") && source.includes("sv-top-actions"), "Story views badge must be positioned in top actions bar next to close and trash");
 assert.ok(source.includes("from('story_views').upsert("), "Reaction updates must use atomic upsert on story_views");
 assert.ok(source.includes("Hikoyani yuklab bo‘lmadi"));
 assert.ok(source.includes("Qayta urinish"));

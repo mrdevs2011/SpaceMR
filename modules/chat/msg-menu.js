@@ -19,17 +19,17 @@ import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, f
 const LONG_MS = 420;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
 const IC = {
-  copy: '<img src="./svg/menu/copy.svg" alt="" class="icon" width="18" height="18">',
-  edit: '<img src="./svg/menu/edit.svg" alt="" class="icon" width="18" height="18">',
+  copy: '<img src="./svg/action/copy.svg" alt="" class="icon" width="18" height="18">',
+  edit: '<img src="./svg/action/edit.svg" alt="" class="icon" width="18" height="18">',
   fwd: '<img src="./svg/menu/fwd.svg" alt="" class="icon" width="18" height="18">',
-  del: '<img src="./svg/menu/del.svg" alt="" class="icon" width="18" height="18">',
+  del: '<img src="./svg/action/trash.svg" alt="" class="icon" width="18" height="18">',
   sel: '<img src="./svg/menu/sel.svg" alt="" class="icon" width="18" height="18">',
-  resend: '<img src="./svg/menu/resend.svg" alt="" class="icon" width="18" height="18">',
+  resend: '<img src="./svg/action/refresh.svg" alt="" class="icon" width="18" height="18">',
   reply: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
   dl: '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e7e9ea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><polyline points="7 11 12 16 17 11"/><path d="M5 20h14"/></svg>',
-  x: '<img src="./svg/menu/x.svg" alt="" class="icon" width="18" height="18">',
-  seen: '<img src="./svg/extra/icon-041fdea3033a.svg" alt="" class="icon" width="18" height="11">',
-  sent: '<img src="./svg/extra/icon-e20961b31619.svg" alt="" class="icon" width="12" height="10">',
+  x: '<img src="./svg/action/close.svg" alt="" class="icon" width="18" height="18">',
+  seen: '<img src="./svg/ui/ticks-read.svg" alt="" class="icon" width="18" height="11">',
+  sent: '<img src="./svg/ui/ticks-sent.svg" alt="" class="icon" width="12" height="10">',
 };
 
 let api = null, box = null, menu = null, selBar = null, fwdEl = null;

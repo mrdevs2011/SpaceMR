@@ -6207,11 +6207,57 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 .sv-loading-spinner { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.2); border-top-color: #a855f7; border-radius: 50%; animation: svSpin .8s linear infinite; }
 @keyframes svSpin { to { transform: rotate(360deg); } }
 .sv-media-error button { border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 9px 16px; color: #fff; background: rgba(255,255,255,.12); font: inherit; cursor: pointer; pointer-events: auto; }
-.sv-own-bar { display: flex; align-items: center; justify-content: flex-start; padding: 1px 7px 0; width: 100%; }
-.sv-views-badge { font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, .92); display: inline-flex; align-items: center; gap: 7px; background: transparent !important; border: none !important; box-shadow: none !important; padding: 4px 0 !important; border-radius: 0 !important; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; transition: opacity .15s ease; }
-.sv-views-badge:hover { background: transparent !important; opacity: 0.82; }
-.sv-views-badge:active { background: transparent !important; opacity: 0.65; transform: none; }
-.sv-views-badge svg { width: 17px; height: 17px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 1.8; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.7)); }
+.sv-top-actions .sv-views-badge,
+.sv-views-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.42);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e7e9ea;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s ease, color .15s ease, transform .12s ease;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+.sv-top-actions .sv-views-badge:hover,
+.sv-views-badge:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+.sv-top-actions .sv-views-badge:active,
+.sv-views-badge:active {
+  transform: scale(0.95);
+}
+.sv-top-actions .sv-views-badge svg,
+.sv-views-badge svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  display: inline-block;
+  vertical-align: middle;
+}
+.sv-top-actions .sv-views-badge .sv-views-count,
+.sv-views-badge .sv-views-count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
+}
+.sv-views-badge[hidden] {
+  display: none !important;
+}
 .sv-viewers-modal { position: fixed; inset: 0; z-index: 10005; display: flex; align-items: flex-end; justify-content: center; padding-bottom: max(10px, env(safe-area-inset-bottom, 10px)); }
 .sv-viewers-modal[hidden] { display: none !important; }
 .sv-viewers-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .65); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
