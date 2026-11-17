@@ -28,9 +28,9 @@ Vercel Environment Variables:
 - `TURN_KEY_ID`, `TURN_KEY_API_TOKEN` — Cloudflare TURN (`api/turn.js`, faqat serverda; kirgan foydalanuvchiga 24 soatlik kredensial beradi). Qo'ng'iroq uchun asosiy yo'l.
 - Ixtiyoriy zaxira (statik, `scripts/build-env.mjs` o'qiydi): `TURN_URLS` (vergul bilan), `TURN_USERNAME`, `TURN_CREDENTIAL`. Hech biri bo'lmasa umumiy OpenRelay (beqaror).
 
-Bazani o'rnatish: `supabase/setup.sql` — `000_schema.sql`, keyin qolganlari raqam tartibida (`supabase/setup.sql`).
+Bazani o'rnatish: `supabase/setup.sql` — bitta idempotent fayl (SQL Editor → paste → Run); tafsilot `supabase/README.md`.
 Testlar: `node tests/smoke.mjs` (Playwright, ixtiyoriy; tafsilot fayl boshida).
-Hali ishga tushirilmagan patchlar `supabase/unfulfilled/` da — faqat 1 hafta kuzatuvdan keyin (roadmap 1-bo'lim, 3-qoida).
+Sxema o'zgarishlari to'g'ridan-to'g'ri `supabase/setup.sql` ga kiritiladi (idempotent saqlang).
 
 ## Ish tartibi
 1. Har vazifa = alohida branch/commit. Vizual CSS o'zgarishi brauzerda tekshirilmasdan commit qilinmaydi.

@@ -607,8 +607,7 @@
 }
 
 /* 2-slot: Galereyadan tanlash plitkasi */
-.gallery-picker-tile,
-.am-gallery-entry-tile {
+.gallery-picker-tile{
   background: rgba(29, 155, 240, 0.08);
   border: 1.5px dashed rgba(29, 155, 240, 0.45);
   display: flex;
@@ -619,18 +618,15 @@
   padding: 8px 4px;
   transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
 }
-.gallery-picker-tile:hover,
-.am-gallery-entry-tile:hover {
+.gallery-picker-tile:hover{
   background: rgba(29, 155, 240, 0.16);
   border-color: var(--blue, #1d9bf0);
   transform: translateY(-2px);
 }
-.gallery-picker-tile:active,
-.am-gallery-entry-tile:active {
+.gallery-picker-tile:active{
   transform: scale(0.96);
 }
-.gallery-picker-tile .grid-tile-icon-wrap,
-.am-gallery-entry-tile .grid-tile-icon-wrap {
+.gallery-picker-tile .grid-tile-icon-wrap{
   width: 40px;
   height: 40px;
   border-radius: 12px;
@@ -642,15 +638,13 @@
   margin-bottom: 2px;
   box-shadow: 0 4px 12px rgba(29, 155, 240, 0.35);
 }
-.gallery-picker-tile .grid-tile-name,
-.am-gallery-entry-tile .grid-tile-name {
+.gallery-picker-tile .grid-tile-name{
   font-size: 12px;
   font-weight: 600;
   color: #fff;
   line-height: 1.2;
 }
-.gallery-picker-tile .grid-tile-hint,
-.am-gallery-entry-tile .grid-tile-hint {
+.gallery-picker-tile .grid-tile-hint{
   font-size: 10px;
   color: var(--text3, rgba(255, 255, 255, 0.65));
 }
@@ -1876,138 +1870,15 @@
 /* ═════════════════════════════════════════════════════════════════════════
    Android Attach Drawer: Oxirgilar / Galareya (DCIM) Switcher & Modal
    ═════════════════════════════════════════════════════════════════════════ */
-.am-nav-tabs-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-.am-nav-tabs {
-  display: inline-flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 3px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  gap: 4px;
-}
-.am-nav-tab {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
-  padding: 6px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  -webkit-tap-highlight-color: transparent;
-}
-.am-nav-tab:hover {
-  color: #fff;
-}
-.am-nav-tab.active {
-  background: var(--blue, #1d9bf0);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.35);
-}
+
 
 /* Galareya (DCIM) Paneli */
-.am-gallery-panel {
-  display: none;
-  flex-direction: column;
-  margin-bottom: 8px;
-}
-.attach-drawer .am-gallery-panel {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: hidden !important;
-  display: none;
-  flex-direction: column !important;
-}
-.attach-drawer .am-gallery-panel #amDcimGrid,
-.attach-drawer #amDcimGrid {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain !important;
-  -webkit-overflow-scrolling: touch !important;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap: 3px !important;
-  padding: 0 !important;
-  margin-bottom: 6px !important;
-  border-radius: 6px !important;
-}
-.am-gallery-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 6px 8px 6px;
-  font-size: 12px;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
-}
-.am-gallery-folder-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  color: #fff;
-}
-.am-gallery-change-btn {
-  border: none;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text, #fff);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.am-gallery-change-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-.am-gallery-loading-box,
-.am-gallery-empty-box {
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px 16px;
-  gap: 10px;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
-  font-size: 13px;
-}
-.am-gallery-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  border-top-color: var(--blue, #1d9bf0);
-  border-radius: 50%;
-  animation: amSpin 0.8s linear infinite;
-}
+
+
 @keyframes amSpin {
   to { transform: rotate(360deg); }
 }
-.am-gallery-connect-btn {
-  margin-top: 8px;
-  padding: 8px 18px;
-  border-radius: 14px;
-  background: var(--blue, #1d9bf0);
-  color: #fff;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.14s ease, background 0.14s ease;
-}
-.am-gallery-connect-btn:hover {
-  filter: brightness(1.1);
-}
+
 
 /* Noto'g'ri Papka Tanlanganda Modal / Popup */
 .smr-folder-modal-overlay {
@@ -2102,6 +1973,5 @@
 .smr-folder-btn-retry:hover {
   filter: brightness(1.1);
 }
-
 
 

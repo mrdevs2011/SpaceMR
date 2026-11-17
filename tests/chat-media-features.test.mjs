@@ -143,7 +143,7 @@ assert.ok(attachSource.includes('_formatDuration'), '_formatDuration must be def
 assert.ok(attachSource.includes('media-tile-vid-badge'), 'media-tile-vid-badge must be rendered for videos');
 
 const chatAttachCss = fs.readFileSync(new URL('../CSS/chat-attach.css', import.meta.url), 'utf8');
-assert.ok(chatAttachCss.includes('.am-gallery-entry-tile'), '.am-gallery-entry-tile style must exist in chat-attach.css');
+assert.ok(chatAttachCss.includes('.gallery-picker-tile'), '.gallery-picker-tile style must exist in chat-attach.css');
 assert.ok(chatAttachCss.includes('.media-tile-vid-badge'), '.media-tile-vid-badge style must exist in chat-attach.css');
 assert.ok(chatAttachCss.includes('grid-template-columns: repeat(3, 1fr)'), 'attach-media-grid must have 3 columns');
 console.log('✓ PASS: Mobile attach drawer gallery tile, video badges, and 3-column grid verified');
