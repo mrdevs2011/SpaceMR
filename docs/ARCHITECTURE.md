@@ -63,3 +63,11 @@ Brauzerga bitta `app.css` (build: tokens → base → features → layers → ad
 **JS:** bubble HTML → `chat/components/message-bubble.js`; file icon → `core/file-icons.js`; DM+guruh paint → `chat.js` `paintMessages`.
 
 Batafsil: `docs/CONSOLIDATE-ROADMAP.md`.
+
+## To'liq oflayn + avtomatik yangilanish (Telegram uslubi)
+
+- **Qobiq**: `scripts/build-sw.mjs` barcha `modules/**`, `svg/**`, `icons/**` + critical shell ro'yxatini `sw.js` ga yozadi. SW o'rnatilganda hammasi **atomar** keshlanadi (`spacemr-static-<versiya>`); critical xato bersa o'rnatish bekor, eski versiya ishlayveradi.
+- **Strategiya**: JS/CSS/rasm/HTML — shu versiya keshidan darhol (tarmoqsiz), tarmoq faqat keshda yo'q fayl uchun. Lokal dev (localhost/LAN) — tarmoq-birinchi.
+- **Ma'lumot**: chatlar/xabarlar/profil/postlar — IndexedDB (`spacemr_data`, `spacemr_core`), xotirada hydrate, fonda delta-sync; yuborish navbati (outbox) oflaynda yig'ilib, internet kelganda yuboriladi; media — `media-cache.js` + SW runtime kesh.
+- **Yangilanish**: egasi deploy qilsa (`bump-sw.mjs` versiyani o'zgartiradi) → `sw-register.js` har ochilish/5 daqiqa/internet qaytishida `reg.update()` → yangi versiya fonda to'liq o'rnatiladi → `auto-update.js` xavfsiz paytda (yozmayotgan, yuklamayotgan) `SKIP_WAITING` + reload. Foydalanuvchi eski versiyada qolmaydi.
+- "Keshni tozalash" qobiqni (`spacemr-static-*`) o'chirmaydi — oflayn buzilmasin.

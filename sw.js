@@ -134,8 +134,8 @@ let _emojiCache = null;
 
 // PRECACHE_URLS — scripts/build-sw.mjs avtomatik to'ldiradi (barcha modules/**/*.js).
 // BEGIN_PRECACHE
-/* Faqat shell — modules runtime cache. */
-const PRECACHE_URLS = [
+/* CRITICAL: o'rnatish shu fayllarsiz tugamaydi. REST: butun ilova (oflayn uchun), alohida fayl xatosi o'rnatishni to'xtatmaydi. */
+const PRECACHE_CRITICAL = [
   '/',
   '/index.html',
   '/app.css',
@@ -151,6 +151,363 @@ const PRECACHE_URLS = [
   '/modules/core/env.js',
   '/modules/router.js',
   '/modules/url-router.js'
+];
+const PRECACHE_URLS = [
+  '/modules/admin/admin-badge.js',
+  '/modules/admin/admin-force-reload.js',
+  '/modules/admin/admin-gate.js',
+  '/modules/admin/admin-keys.js',
+  '/modules/admin/admin-reset-password.js',
+  '/modules/admin/admin-storage.js',
+  '/modules/admin/admin-wipe.js',
+  '/modules/apps/apps.js',
+  '/modules/apps/code-hl.js',
+  '/modules/apps/logo-extract.js',
+  '/modules/apps/panels.js',
+  '/modules/apps/runner.js',
+  '/modules/auth/auth-pending.js',
+  '/modules/auth/auth-recovery.js',
+  '/modules/auth/auth-reg-recovery.js',
+  '/modules/auth/auth-settings.js',
+  '/modules/auth/auth.js',
+  '/modules/auth/device-sessions.js',
+  '/modules/auth/pwd-ui.js',
+  '/modules/call/call.js',
+  '/modules/chat/attach-menu.js',
+  '/modules/chat/camera-access.js',
+  '/modules/chat/camera-capture.js',
+  '/modules/chat/chat-actions.js',
+  '/modules/chat/chat-media.js',
+  '/modules/chat/chat-pin.js',
+  '/modules/chat/chat-shared.js',
+  '/modules/chat/chat-state.js',
+  '/modules/chat/chat-storage.js',
+  '/modules/chat/chat-upload-queue.js',
+  '/modules/chat/chat-voice-player.js',
+  '/modules/chat/chat-voice-record.js',
+  '/modules/chat/chat.js',
+  '/modules/chat/chats-x.js',
+  '/modules/chat/components/chat-image-zoom.js',
+  '/modules/chat/components/message-bubble.js',
+  '/modules/chat/components/video-note.js',
+  '/modules/chat/groups.js',
+  '/modules/chat/msg-menu.js',
+  '/modules/chat/msg-reactions.js',
+  '/modules/chat/rt-chat.js',
+  '/modules/core/auto-update.js',
+  '/modules/core/cache-policy.js',
+  '/modules/core/device.js',
+  '/modules/core/drafts.js',
+  '/modules/core/error-log.js',
+  '/modules/core/file-icons.js',
+  '/modules/core/force-reload.js',
+  '/modules/core/friendly-error.js',
+  '/modules/core/fwd.js',
+  '/modules/core/icons.js',
+  '/modules/core/live.js',
+  '/modules/core/local-cache.js',
+  '/modules/core/no-autocomplete.js',
+  '/modules/core/offline.js',
+  '/modules/core/perf.js',
+  '/modules/core/quota.js',
+  '/modules/core/rate-limit.js',
+  '/modules/core/rt-bus.js',
+  '/modules/core/secrets.js',
+  '/modules/core/smart-cache.js',
+  '/modules/core/store/db.js',
+  '/modules/core/store/flags.js',
+  '/modules/core/store/index.js',
+  '/modules/core/store/media-cache.js',
+  '/modules/core/store/outbox.js',
+  '/modules/core/store/paint-gate.js',
+  '/modules/core/store/store.js',
+  '/modules/core/store/sync.js',
+  '/modules/core/sw-register.js',
+  '/modules/core/upload-policy.js',
+  '/modules/core/video-hold-speed.js',
+  '/modules/core/video-policy.js',
+  '/modules/core/wake-lock.js',
+  '/modules/explore.js',
+  '/modules/feed/comments.js',
+  '/modules/feed/feed.js',
+  '/modules/feed/like-sync.js',
+  '/modules/feed/post-image-zoom.js',
+  '/modules/feed/post-media-guard.js',
+  '/modules/feed/stories.js',
+  '/modules/feed/story-cache.js',
+  '/modules/feed/upload.js',
+  '/modules/profile/profile.js',
+  '/modules/profile/view-actions.js',
+  '/modules/profile/view-apps.js',
+  '/modules/profile/view-chats.js',
+  '/modules/profile/view-explore.js',
+  '/modules/profile/view-home.js',
+  '/modules/profile/view-login.js',
+  '/modules/profile/view-notifs.js',
+  '/modules/profile/view-profile.js',
+  '/modules/profile/view-saved.js',
+  '/modules/profile/view-users.js',
+  '/modules/push.js',
+  '/modules/settings/permissions.js',
+  '/modules/settings/settings.js',
+  '/modules/ui/attach-menu.js',
+  '/modules/ui/avi-crop.js',
+  '/modules/ui/bar.js',
+  '/modules/ui/dissolve.js',
+  '/modules/ui/emoji-data.js',
+  '/modules/ui/emoji-dom.js',
+  '/modules/ui/emoji-img.js',
+  '/modules/ui/emoji-only.js',
+  '/modules/ui/emoji-picker.js',
+  '/modules/ui/emoji-uz.js',
+  '/modules/ui/esc-stack.js',
+  '/modules/ui/file-viewer.js',
+  '/modules/ui/float-progress.js',
+  '/modules/ui/gallery-fs.js',
+  '/modules/ui/gif-panel.js',
+  '/modules/ui/install-guide.js',
+  '/modules/ui/location-helper.js',
+  '/modules/ui/notifs.js',
+  '/modules/ui/onboarding.js',
+  '/modules/ui/overlay-stack.js',
+  '/modules/ui/password-confirm.js',
+  '/modules/ui/poll-dialog.js',
+  '/modules/ui/right-rail.js',
+  '/modules/ui/shortcuts.js',
+  '/modules/ui/sidebar.js',
+  '/modules/ui/spacemr-group-chip.js',
+  '/modules/ui/swipe-navigation.js',
+  '/modules/ui/toast.js',
+  '/modules/ui/ui.js',
+  '/modules/vendor/vendor-supabase.js',
+  '/svg/SpaceMR.png',
+  '/svg/action/close.svg',
+  '/svg/action/copy.svg',
+  '/svg/action/download.svg',
+  '/svg/action/edit-square.svg',
+  '/svg/action/edit.svg',
+  '/svg/action/logout.svg',
+  '/svg/action/pin-filled.svg',
+  '/svg/action/pin.svg',
+  '/svg/action/plus.svg',
+  '/svg/action/refresh.svg',
+  '/svg/action/reply.svg',
+  '/svg/action/revoke.svg',
+  '/svg/action/save.svg',
+  '/svg/action/search.svg',
+  '/svg/action/send-filled.svg',
+  '/svg/action/send.svg',
+  '/svg/action/settings.svg',
+  '/svg/action/switch-camera.svg',
+  '/svg/action/trash.svg',
+  '/svg/admin/fail.svg',
+  '/svg/admin/key.svg',
+  '/svg/admin/ok.svg',
+  '/svg/admin/shield.svg',
+  '/svg/admin/warn.svg',
+  '/svg/auth/lock.svg',
+  '/svg/auth/mail.svg',
+  '/svg/auth/shield.svg',
+  '/svg/call/phone.svg',
+  '/svg/chat/chat-bg-pattern.svg',
+  '/svg/emoji/activities.svg',
+  '/svg/emoji/animals.svg',
+  '/svg/emoji/flags.svg',
+  '/svg/emoji/food.svg',
+  '/svg/emoji/objects.svg',
+  '/svg/emoji/people.svg',
+  '/svg/emoji/recent.svg',
+  '/svg/emoji/search.svg',
+  '/svg/emoji/smileys.svg',
+  '/svg/emoji/symbols.svg',
+  '/svg/emoji/travel.svg',
+  '/svg/extra/icon-041fdea3033a.svg',
+  '/svg/extra/icon-0c873cf7ce23.svg',
+  '/svg/extra/icon-22a55ac71fee.svg',
+  '/svg/extra/icon-34d2886eafb1.svg',
+  '/svg/extra/icon-34ff153eec4e.svg',
+  '/svg/extra/icon-36ae445873ad.svg',
+  '/svg/extra/icon-43bf503445c5.svg',
+  '/svg/extra/icon-4ed8972aa2b8.svg',
+  '/svg/extra/icon-527cb9523916.svg',
+  '/svg/extra/icon-615b4dff4d09.svg',
+  '/svg/extra/icon-61f15d5fa242.svg',
+  '/svg/extra/icon-649766ef725f.svg',
+  '/svg/extra/icon-651dd2923a10.svg',
+  '/svg/extra/icon-6b67b8783b6a.svg',
+  '/svg/extra/icon-6c25873293c0.svg',
+  '/svg/extra/icon-6e134fdbda1e.svg',
+  '/svg/extra/icon-838eb192325a.svg',
+  '/svg/extra/icon-886b6ae85bc6.svg',
+  '/svg/extra/icon-9157214ed9c4.svg',
+  '/svg/extra/icon-938c12a9f405.svg',
+  '/svg/extra/icon-938ddddb771c.svg',
+  '/svg/extra/icon-96495123cb1b.svg',
+  '/svg/extra/icon-9a45b4993686.svg',
+  '/svg/extra/icon-9d6229c40a8d.svg',
+  '/svg/extra/icon-a4ea72a360cc.svg',
+  '/svg/extra/icon-af51112fbda1.svg',
+  '/svg/extra/icon-c0aeb9caa2ca.svg',
+  '/svg/extra/icon-c10e4d45ebfa.svg',
+  '/svg/extra/icon-c9b87fab5705.svg',
+  '/svg/extra/icon-d269b370c5cf.svg',
+  '/svg/extra/icon-dae7be10a164.svg',
+  '/svg/extra/icon-dc035561d9ad.svg',
+  '/svg/extra/icon-de6761387092.svg',
+  '/svg/extra/icon-dfb40720ae6a.svg',
+  '/svg/extra/icon-e20961b31619.svg',
+  '/svg/extra/icon-e3ece82ff84d.svg',
+  '/svg/extra/icon-e42dbb86abcd.svg',
+  '/svg/extra/icon-e5c4dc67a486.svg',
+  '/svg/extra/icon-ea9c18b62f47.svg',
+  '/svg/extra/icon-f57c0d2780e7.svg',
+  '/svg/extra/icon-fa9cc44ef90e.svg',
+  '/svg/extra/icon-fb3793816331.svg',
+  '/svg/extra/saved-messages.svg',
+  '/svg/media/camera.svg',
+  '/svg/media/gallery.svg',
+  '/svg/media/mic.svg',
+  '/svg/media/paperclip.svg',
+  '/svg/media/play.svg',
+  '/svg/media/speaker.svg',
+  '/svg/media/upload.svg',
+  '/svg/media/video.svg',
+  '/svg/menu/copy.svg',
+  '/svg/menu/del.svg',
+  '/svg/menu/edit.svg',
+  '/svg/menu/fwd.svg',
+  '/svg/menu/resend.svg',
+  '/svg/menu/sel.svg',
+  '/svg/menu/x.svg',
+  '/svg/nav/apps.svg',
+  '/svg/nav/arrow-left.svg',
+  '/svg/nav/chevron-down.svg',
+  '/svg/nav/chevron-left.svg',
+  '/svg/nav/home.svg',
+  '/svg/social/bookmark-filled.svg',
+  '/svg/social/bookmark.svg',
+  '/svg/social/chat.svg',
+  '/svg/social/heart-filled.svg',
+  '/svg/social/heart.svg',
+  '/svg/social/user-badge.svg',
+  '/svg/social/user.svg',
+  '/svg/ui/badge-7z.svg',
+  '/svg/ui/badge-aab.svg',
+  '/svg/ui/badge-aac.svg',
+  '/svg/ui/badge-ai.svg',
+  '/svg/ui/badge-angular.svg',
+  '/svg/ui/badge-apk.svg',
+  '/svg/ui/badge-appimage.svg',
+  '/svg/ui/badge-asm.svg',
+  '/svg/ui/badge-avi.svg',
+  '/svg/ui/badge-avif.svg',
+  '/svg/ui/badge-bash.svg',
+  '/svg/ui/badge-bz2.svg',
+  '/svg/ui/badge-c.svg',
+  '/svg/ui/badge-cert.svg',
+  '/svg/ui/badge-clojure.svg',
+  '/svg/ui/badge-cpp.svg',
+  '/svg/ui/badge-csharp.svg',
+  '/svg/ui/badge-css.svg',
+  '/svg/ui/badge-csv.svg',
+  '/svg/ui/badge-dart.svg',
+  '/svg/ui/badge-deb.svg',
+  '/svg/ui/badge-dmg.svg',
+  '/svg/ui/badge-docker.svg',
+  '/svg/ui/badge-elixir.svg',
+  '/svg/ui/badge-env.svg',
+  '/svg/ui/badge-epub.svg',
+  '/svg/ui/badge-excel.svg',
+  '/svg/ui/badge-exe.svg',
+  '/svg/ui/badge-figma.svg',
+  '/svg/ui/badge-flac.svg',
+  '/svg/ui/badge-flutter.svg',
+  '/svg/ui/badge-flv.svg',
+  '/svg/ui/badge-gif.svg',
+  '/svg/ui/badge-git.svg',
+  '/svg/ui/badge-go.svg',
+  '/svg/ui/badge-graphql.svg',
+  '/svg/ui/badge-gz.svg',
+  '/svg/ui/badge-haskell.svg',
+  '/svg/ui/badge-html.svg',
+  '/svg/ui/badge-ico.svg',
+  '/svg/ui/badge-ini.svg',
+  '/svg/ui/badge-ipa.svg',
+  '/svg/ui/badge-iso.svg',
+  '/svg/ui/badge-java.svg',
+  '/svg/ui/badge-jpg.svg',
+  '/svg/ui/badge-js.svg',
+  '/svg/ui/badge-json.svg',
+  '/svg/ui/badge-jsx.svg',
+  '/svg/ui/badge-julia.svg',
+  '/svg/ui/badge-kotlin.svg',
+  '/svg/ui/badge-latex.svg',
+  '/svg/ui/badge-log.svg',
+  '/svg/ui/badge-lua.svg',
+  '/svg/ui/badge-m4a.svg',
+  '/svg/ui/badge-markdown.svg',
+  '/svg/ui/badge-midi.svg',
+  '/svg/ui/badge-mkv.svg',
+  '/svg/ui/badge-mov.svg',
+  '/svg/ui/badge-mp3.svg',
+  '/svg/ui/badge-mp4.svg',
+  '/svg/ui/badge-msi.svg',
+  '/svg/ui/badge-nim.svg',
+  '/svg/ui/badge-npm.svg',
+  '/svg/ui/badge-ogg.svg',
+  '/svg/ui/badge-pdf.svg',
+  '/svg/ui/badge-perl.svg',
+  '/svg/ui/badge-php.svg',
+  '/svg/ui/badge-png.svg',
+  '/svg/ui/badge-powerpoint.svg',
+  '/svg/ui/badge-powershell.svg',
+  '/svg/ui/badge-prisma.svg',
+  '/svg/ui/badge-proto.svg',
+  '/svg/ui/badge-psd.svg',
+  '/svg/ui/badge-python.svg',
+  '/svg/ui/badge-r.svg',
+  '/svg/ui/badge-rar.svg',
+  '/svg/ui/badge-raw.svg',
+  '/svg/ui/badge-rpm.svg',
+  '/svg/ui/badge-rtf.svg',
+  '/svg/ui/badge-ruby.svg',
+  '/svg/ui/badge-rust.svg',
+  '/svg/ui/badge-scala.svg',
+  '/svg/ui/badge-scss.svg',
+  '/svg/ui/badge-sql.svg',
+  '/svg/ui/badge-svelte.svg',
+  '/svg/ui/badge-svg.svg',
+  '/svg/ui/badge-swift.svg',
+  '/svg/ui/badge-tar.svg',
+  '/svg/ui/badge-tiff.svg',
+  '/svg/ui/badge-toml.svg',
+  '/svg/ui/badge-ts.svg',
+  '/svg/ui/badge-tsv.svg',
+  '/svg/ui/badge-tsx.svg',
+  '/svg/ui/badge-ttf.svg',
+  '/svg/ui/badge-txt.svg',
+  '/svg/ui/badge-vue.svg',
+  '/svg/ui/badge-wasm.svg',
+  '/svg/ui/badge-wav.svg',
+  '/svg/ui/badge-webm.svg',
+  '/svg/ui/badge-webp.svg',
+  '/svg/ui/badge-woff.svg',
+  '/svg/ui/badge-word.svg',
+  '/svg/ui/badge-xml.svg',
+  '/svg/ui/badge-yaml.svg',
+  '/svg/ui/badge-zig.svg',
+  '/svg/ui/badge-zip.svg',
+  '/svg/ui/bell.svg',
+  '/svg/ui/check.svg',
+  '/svg/ui/clock.svg',
+  '/svg/ui/dots-vertical.svg',
+  '/svg/ui/emoji.svg',
+  '/svg/ui/eye-closed.svg',
+  '/svg/ui/eye-open.svg',
+  '/svg/ui/info.svg',
+  '/svg/ui/ticks-read.svg',
+  '/svg/ui/ticks-sending.svg',
+  '/svg/ui/ticks-sent.svg'
 ];
 // END_PRECACHE
 
@@ -171,35 +528,51 @@ function _isStaticAsset(request) {
   return dest === 'style' || dest === 'script' || dest === 'image' || dest === 'font' || dest === 'worker';
 }
 
+/* Lokal ishlab chiqishda (localhost/LAN) versiya o'zgarmaydi — kesh-birinchi eskirgan fayl berardi: tarmoq-birinchi */
+const _DEV = /^(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(self.location.hostname);
+
+/** Butun ilovani (Telegram kabi) ATOMAR o'rnatadi: critical xato bersa o'rnatish bekor (eski versiya ishlayveradi),
+ *  qolgan fayllar xatosi o'rnatishni to'xtatmaydi (runtime keshga tushadi). */
 async function _precacheAll() {
   const cache = await caches.open(STATIC_CACHE);
-  // Parallel cheklov + umumiy timeout — install uzoq osilib qolmasin (tab spinner)
-  const urls = PRECACHE_URLS.slice();
-  const CONC = 6;
-  const hardMs = 8000;
+  const prev = await _prevStaticCaches();
+  const fetchOne = async (u, mustHave) => {
+    try {
+      const res = await fetch(new Request(u, { cache: 'reload' }));
+      if (res && res.ok) { await cache.put(u, res.clone()); return true; }
+    } catch (_) {}
+    if (mustHave) {
+      // Tarmoq vaqtincha yo'q — oldingi versiyadagi nusxa bo'lsa ham (faqat rest uchun) o'tkazamiz
+      throw new Error('precache failed: ' + u);
+    }
+    return false;
+  };
+  for (const u of PRECACHE_CRITICAL) await fetchOne(u, true);
+  const rest = PRECACHE_URLS.slice();
+  const CONC = 8;
   let i = 0;
   const worker = async () => {
-    while (i < urls.length) {
-      const u = urls[i++];
-      try {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 4000);
-        const res = await fetch(u, { signal: ctrl.signal, cache: 'no-cache' });
-        clearTimeout(t);
-        if (res && res.ok) await cache.put(u, res.clone());
-      } catch (_) {}
+    while (i < rest.length) {
+      const u = rest[i++];
+      // O'zgarmagan fayl: oldingi keshdan emas — har doim yangisi (hash yo'q), ammo xato bo'lsa eskisini saqlab qolamiz
+      const ok = await fetchOne(u, false);
+      if (!ok) {
+        for (const pc of prev) { const hit = await pc.match(u); if (hit) { try { await cache.put(u, hit); } catch (_) {} break; } }
+      }
     }
   };
-  const run = Promise.all(Array.from({ length: Math.min(CONC, urls.length) }, () => worker()));
-  await Promise.race([
-    run,
-    new Promise(r => setTimeout(r, hardMs)),
-  ]);
+  await Promise.all(Array.from({ length: CONC }, () => worker()));
+}
+
+async function _prevStaticCaches() {
+  try {
+    const keys = (await caches.keys()).filter(k => k.startsWith('spacemr-static-') && k !== STATIC_CACHE);
+    return Promise.all(keys.map(k => caches.open(k)));
+  } catch (_) { return []; }
 }
 
 self.addEventListener('install', (event) => {
-  // skipWaiting YO'Q — aks holda controllerchange → location.reload loop
-  // Yangi SW faqat client SKIP_WAITING yuborganda (F5 yoki force-reload) faollashadi
+  // skipWaiting YO'Q: yangi versiya to'liq o'rnatilib kutadi; sahifa SKIP_WAITING yuborganda (xavfsiz payt) almashadi.
   event.waitUntil(_precacheAll());
 });
 
@@ -207,7 +580,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(
-      keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== EMOJI_CACHE).map(k => caches.delete(k))
+      keys.filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== EMOJI_CACHE && k !== 'pwa-share-target').map(k => caches.delete(k))
     );
     await self.clients.claim();
     // Mijozlarga yangi versiya — bir marta reload (controllerchange bilan birga)
@@ -284,6 +657,35 @@ async function _cacheFirstSWR(req, cacheName) {
     return res;
   } catch (e) {
     return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+/** Versiyalangan fayl: shu versiya keshida bor bo'lsa — darhol (tarmoqsiz). Yo'q bo'lsa tarmoq + keshga. */
+async function _versionedFirst(req) {
+  let key = req;
+  try { key = new URL(req.url).pathname; } catch (_) {}
+  const sc = await caches.open(STATIC_CACHE);
+  const hit = (await sc.match(key)) || (await _matchCache(req));
+  if (hit) return hit;
+  try {
+    const res = await fetch(req);
+    if (res && res.ok) await _putIn(STATIC_CACHE, req, res);
+    return res;
+  } catch (_) {
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+/** Sahifa (HTML): shu versiyaning qobig'i darhol keshdan (oflayn ham tez). Aralash versiya bo'lmasligi uchun
+ *  tarmoqdan olingan HTML keshga YOZILMAYDI — yangilanish faqat SW versiya almashinuvi orqali. */
+async function _shellFirst(req) {
+  const sc = await caches.open(STATIC_CACHE);
+  const cached = (await sc.match('/index.html')) || (await sc.match('/'));
+  if (cached) return cached;
+  try { return await fetch(req); }
+  catch (_) {
+    const any = (await caches.match('/index.html')) || (await caches.match('/'));
+    return any || new Response('Offline', { status: 503, statusText: 'Offline' });
   }
 }
 
@@ -386,7 +788,9 @@ self.addEventListener('fetch', (event) => {
   // HTML navigatsiya — network-first (index no-cache), offline fallback
   const isNav = req.destination === 'document' || req.mode === 'navigate';
   if (isNav || path === '/' || path === '/index.html') {
-    event.respondWith(_networkFirst(req, RUNTIME_CACHE, ['/index.html', '/']));
+    // Telegram kabi: qobiq darhol keshdan (oflayn ham, sekin tarmoq ham tez); yangi versiya SW almashinuvi bilan keladi
+    if (_DEV) { event.respondWith(_networkFirst(req, RUNTIME_CACHE, ['/index.html', '/'])); return; }
+    event.respondWith(_shellFirst(req));
     return;
   }
 
@@ -399,7 +803,7 @@ self.addEventListener('fetch', (event) => {
   // CSS — cache-first + SWR
   const isCss = req.destination === 'style' || path.endsWith('.css');
   if (isCss) {
-    event.respondWith(_cacheFirstSWR(req, STATIC_CACHE));
+    event.respondWith(_DEV ? _networkFirst(req, STATIC_CACHE) : _versionedFirst(req));
     return;
   }
 
@@ -407,12 +811,12 @@ self.addEventListener('fetch', (event) => {
   const isJs = req.destination === 'script'
     || path.endsWith('.js') || path.endsWith('.mjs');
   if (isJs) {
-    event.respondWith(_networkFirst(req, STATIC_CACHE));
+    event.respondWith(_DEV ? _networkFirst(req, STATIC_CACHE) : _versionedFirst(req));
     return;
   }
 
   // Rasm / font
   if (_isStaticAsset(req) || /\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|otf)$/i.test(path)) {
-    event.respondWith(_cacheFirstSWR(req, STATIC_CACHE));
+    event.respondWith(_versionedFirst(req));
   }
 });

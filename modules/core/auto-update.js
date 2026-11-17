@@ -48,14 +48,19 @@ async function _apply() {
     sessionStorage.setItem(GUARD_KEY, String(Date.now()));
   } catch (_) {}
   _pending = false;
-  try {
-    if (typeof caches !== 'undefined') {
-      const keys = await caches.keys();
-      await Promise.all(keys.filter(k => /^spacemr-(static|runtime)-/.test(k)).map(k => caches.delete(k)));
-    }
-    const reg = await navigator.serviceWorker?.getRegistration?.();
-    reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
-  } catch (_) {}
+  let swapped = false;
+  try { swapped = await (await import('./sw-register.js')).activateWaitingSw(); } catch (_) {}
+  if (!swapped && navigator.onLine) {
+    // SW yangi versiyani o'rnata olmadi (kamdan-kam): eski keshni tozalab, tarmoqdan yangisini olamiz
+    try {
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter(k => /^spacemr-(static|runtime)-/.test(k)).map(k => caches.delete(k)));
+      }
+      const reg = await navigator.serviceWorker?.getRegistration?.();
+      reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    } catch (_) {}
+  }
   try { location.reload(); } catch (_) {}
 }
 
@@ -65,6 +70,9 @@ async function _check() {
   if (!_base) { _base = v; return; }
   if (v !== _base) { _pending = true; _apply(); }
 }
+
+/** SW yangi versiyani fonda to'liq o'rnatib bo'ldi (sw-register.js chaqiradi) — xavfsiz paytda almashtiramiz */
+export function notifyUpdateReady() { _pending = true; _apply(); }
 
 export function startAutoUpdateWatcher() {
   if (_started) return;

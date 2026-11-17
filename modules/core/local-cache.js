@@ -206,7 +206,8 @@ export function clearAllCache() {
 export async function clearRuntimeCache() {
   if (!('caches' in window)) return 0;
   try {
-    const keys = await caches.keys();
+    // Ilova qobig'i (spacemr-static-*) O'CHIRILMAYDI — aks holda oflayn ishlash buziladi. Faqat runtime/media/emoji.
+    const keys = (await caches.keys()).filter(k => !/^spacemr-static-/.test(k));
     await Promise.all(keys.map(k => caches.delete(k)));
     return keys.length;
   } catch {

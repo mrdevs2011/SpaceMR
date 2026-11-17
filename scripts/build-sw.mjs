@@ -6,7 +6,7 @@
  * bump-sw.mjs CACHE_VERSION ni yangilaydi (Vercel).
  * Ishlatish: node scripts/build-sw.mjs
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,14 +31,32 @@ const shell = [
 ];
 if (existsSync(join(ROOT, 'app.js'))) shell.splice(3, 0, '/app.js');
 
-const urls = [];
+const critical = [];
 const seen = new Set();
 for (const u of shell) {
-  if (!seen.has(u)) { seen.add(u); urls.push(u); }
+  if (!seen.has(u)) { seen.add(u); critical.push(u); }
 }
 
-const list = urls.map(u => `  '${u}'`).join(',\n');
-const block = `// BEGIN_PRECACHE\n/* Faqat shell — modules runtime cache. */\nconst PRECACHE_URLS = [\n${list}\n];\n// END_PRECACHE`;
+/** Telegram kabi: butun ilova (barcha modullar, ikonkalar, svg) o'rnatishda keshga tushadi — to'liq oflayn ishlaydi. */
+function walk(dir, exts, acc = []) {
+  if (!existsSync(dir)) return acc;
+  for (const name of readdirSync(dir).sort()) {
+    const p = join(dir, name);
+    const st = statSync(p);
+    if (st.isDirectory()) walk(p, exts, acc);
+    else if (exts.test(name)) acc.push('/' + p.slice(ROOT.length + 1).split('\\').join('/'));
+  }
+  return acc;
+}
+const rest = [
+  ...walk(join(ROOT, 'modules'), /\.(js|mjs|json|wasm)$/),
+  ...walk(join(ROOT, 'svg'), /\.(svg|png|webp|jpg)$/),
+  ...walk(join(ROOT, 'icons'), /\.(png|svg|ico|webp)$/),
+  ...walk(join(ROOT, 'CSS'), /\.css$/).filter(() => false),
+].filter(u => !seen.has(u));
+
+const fmt = a => a.map(u => `  '${u}'`).join(',\n');
+const block = `// BEGIN_PRECACHE\n/* CRITICAL: o'rnatish shu fayllarsiz tugamaydi. REST: butun ilova (oflayn uchun), alohida fayl xatosi o'rnatishni to'xtatmaydi. */\nconst PRECACHE_CRITICAL = [\n${fmt(critical)}\n];\nconst PRECACHE_URLS = [\n${fmt(rest)}\n];\n// END_PRECACHE`;
 
 let src = readFileSync(SW, 'utf8');
 const re = /\/\/ BEGIN_PRECACHE[\s\S]*?\/\/ END_PRECACHE/;
@@ -48,4 +66,4 @@ if (!re.test(src)) {
 }
 src = src.replace(re, block);
 writeFileSync(SW, src);
-console.log(`OK: PRECACHE_URLS — ${urls.length} ta (faqat shell)`);
+console.log(`OK: precache — critical ${critical.length}, rest ${rest.length}`);
