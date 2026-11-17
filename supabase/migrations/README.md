@@ -1,5 +1,9 @@
 # Migrations
 
+> **Yangi baza uchun faqat `supabase/setup.sql` kerak.** U shu papkadagi barcha migratsiyalarning YAKUNIY holatini bitta idempotent faylga jamlaydi
+> (jonli bazadan olingan, lokal Postgres'da 3 marta ketma-ket ishga tushirib va jonli sxema bilan solishtirib tekshirilgan).
+> Bu papka — faqat tarix (nima, qachon, nega o'zgargani). Yangi o'zgarish kerak bo'lsa: `setup.sql` ni yangilang (u yagona haqiqat manbai).
+
 Bazada ISHGA TUSHIRILGAN SQL fayllar, tartib raqami bilan. Yangi bazada `000_schema.sql`, keyin qolganlarini raqam tartibida.
 
 - Ishga tushirilishi kutilayotgan patchlar `supabase/unfulfilled/` da turadi. Bazada bajarilgach shu yerga keyingi raqam bilan ko'chiriladi (`013_nom.sql`).
