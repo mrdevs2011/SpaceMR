@@ -9,7 +9,7 @@
 import { splitFwd } from '../core/fwd.js';
 import { maskSpoilers } from '../core/secrets.js';
 import "./chat-pin.js";
-import { sb, state, uploadViaController, mediaSecureUrl, mediaPublicUrl, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
+import { sb, state, uploadViaController, mediaSecureUrl, mediaPublicUrl, isRemoteFile, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, beginUpload, endUpload } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime, parsePureYouTube, parsePureMedia } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { assertAllowedUpload } from '../core/upload-policy.js';
@@ -293,6 +293,11 @@ export function _removePendingBubble(id) {
 /* ── XHR upload with progress + AbortSignal ──────────────────────────── */
 
 export async function uploadViaControllerProgress(file, folder, onProgress, abortSignal = null) {
+  if (isRemoteFile(file)) {   // hisobdagi "Oxirgilar"dan: qayta yuklash yo'q, mavjud yo'l ishlatiladi
+    const r = await uploadViaController(file, folder, { track: false });
+    if (onProgress) onProgress(100);
+    return r;
+  }
   if (abortSignal?.aborted) throw new DOMException('Upload aborted', 'AbortError');
   const { data: { session } } = await sb.auth.getSession();
   const token = session?.access_token;

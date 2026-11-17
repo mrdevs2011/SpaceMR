@@ -21,7 +21,7 @@
  */
 
 import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
-import { sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, mediaSecureUrls, ts, MEDIA_BUCKET } from '../core/config.js';
+import { sb, state, previewUrlFor, removeMediaIfUnreferenced, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapGroup, mapMessage, mediaSecureUrls, ts, MEDIA_BUCKET } from '../core/config.js';
 import { isSyncV2Enabled, bindGroupTombstoneChannel, setCursor, loadGroupDelta, forgetGroup } from '../core/store/sync.js';
 import { cacheThreadMessages, getCachedThreadMessages } from '../core/local-cache.js';
 import { chatState } from './chat-state.js';
@@ -304,7 +304,7 @@ async function _deleteGroup(groupId) {
   if (!data || !data.length) throw new Error("Ruxsat yo'q");
   forgetGroup(groupId);
   if (_paths.length) {
-    try { for (let i = 0; i < _paths.length; i += 100) await sb.storage.from(MEDIA_BUCKET).remove(_paths.slice(i, i + 100)); } catch (_) {}
+    try { await removeMediaIfUnreferenced(_paths); } catch (_) {}
   }
   await _loadGroups();
 }
@@ -1322,7 +1322,7 @@ export async function sendGroupAlbum(mediaFiles, caption = '') {
   const albumItems = mediaFiles.map((file, idx) => {
     const isVid = (file.type || '').startsWith('video/');
     let objUrl = '';
-    try { objUrl = URL.createObjectURL(file); } catch (_) {}
+    try { objUrl = previewUrlFor(file); } catch (_) {}
     return {
       id: `${albumId}_${idx}`,
       file,
@@ -1447,7 +1447,7 @@ export async function sendGroupFile(file, caption = '') {
   const isMedia = (file.type || '').startsWith('image/') || (file.type || '').startsWith('video/');
   let localUrl = '';
   if (isMedia) {
-    try { localUrl = URL.createObjectURL(file); } catch (_) {}
+    try { localUrl = previewUrlFor(file); } catch (_) {}
   }
 
   // Guruhda 0ms optimistik xabar — rasm/fayl shu zahoti ko'rinadi

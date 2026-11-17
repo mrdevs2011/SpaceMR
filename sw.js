@@ -193,6 +193,7 @@ const PRECACHE_URLS = [
   '/modules/chat/groups.js',
   '/modules/chat/msg-menu.js',
   '/modules/chat/msg-reactions.js',
+  '/modules/chat/recent-media.js',
   '/modules/chat/rt-chat.js',
   '/modules/core/auto-update.js',
   '/modules/core/cache-policy.js',

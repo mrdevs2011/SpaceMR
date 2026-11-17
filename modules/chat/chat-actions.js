@@ -1,7 +1,7 @@
 import { protectSecrets, maskSpoilers, redactSpoilersForStorage } from '../core/secrets.js';
 import { clearDraft, setDraft, activeChatScope } from '../core/drafts.js';
 
-import { sb, state } from '../core/config.js';
+import { sb, state, previewUrlFor } from '../core/config.js';
 import { $, esc, fmtSz, fmtTime } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { chatState, chatUI } from './chat-state.js';
@@ -300,7 +300,7 @@ export async function sendChatAlbum(mediaFiles, captionOverride = '') {
   const albumItems = mediaFiles.map((file, idx) => {
     const isVid = (file.type || '').startsWith('video/');
     let objUrl = '';
-    try { objUrl = URL.createObjectURL(file); } catch (_) {}
+    try { objUrl = previewUrlFor(file); } catch (_) {}
     return {
       id: `${albumId}_${idx}`,
       file,
@@ -458,7 +458,7 @@ export async function sendChatFile(fileOverride = null, captionOverride = null) 
   const isMedia = (file.type || '').startsWith('image/') || (file.type || '').startsWith('video/');
   let localUrl = '';
   if (isMedia) {
-    try { localUrl = URL.createObjectURL(file); } catch (_) {}
+    try { localUrl = previewUrlFor(file); } catch (_) {}
   }
 
   // 0ms Optimistik xabar — foydalanuvchi o'z faylini darhol chatda ko'radi

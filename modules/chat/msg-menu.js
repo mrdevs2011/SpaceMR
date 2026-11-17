@@ -653,18 +653,10 @@ function remove(ids) {
     if (typeof api.applyLocalDelete === 'function') api.applyLocalDelete(own);
     else api.reload?.();
 
-    // 2) Avval Storage dan media, keyin DB qator — fayl butunlay o'chirilsin
+    // 2) Avval DB qator, keyin (boshqa joyda ishlatilmasa) Storage dan fayl
     const idList = own.slice();
     const paths = [...new Set(idList.map(id => msgOf(id)?.mediaPath).filter(Boolean))];
     (async () => {
-      if (paths.length) {
-        try {
-          const { error: se } = await sb.storage.from('media').remove(paths);
-          if (se) console.warn('[MsgMenu] storage remove:', se.message);
-        } catch (e) {
-          console.warn('[MsgMenu] storage remove:', e?.message || e);
-        }
-      }
       try {
         // .select('id'): RLS qatorni jim o'tkazib yuborsa (0 qator) xato bermaydi — xabar keyin qaytib chiqardi
         const { data: _delRows, error: _delErr } = await sb.from(tbl()).delete().in('id', idList).select('id');
@@ -675,6 +667,8 @@ function remove(ids) {
           toast('O‘chirilmadi', 'error');
           api.reload?.();
         } else {
+          // Qatorlar o'chdi — fayl faqat boshqa hech narsa ishlatmasa o'chiriladi (media qayta ishlatilgan bo'lishi mumkin)
+          try { const { removeMediaIfUnreferenced } = await import('../core/config.js'); await removeMediaIfUnreferenced(paths); } catch (_) {}
           // Admin storage ko'rsatkichini yangilash (agar ochiq bo'lsa)
           try {
             const { refreshStorageUsage } = await import('../admin/admin-storage.js');

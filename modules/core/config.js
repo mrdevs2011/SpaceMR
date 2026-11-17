@@ -307,7 +307,47 @@ function _xhrUpload(url, file, token, onProgress) {
   });
 }
 
+/* ── Qayta ishlatiladigan (allaqachon yuklangan) media ───────────────────────────
+   "Oxirgilar" hisobdagi avval yuborilgan media. Qayta tanlanganda Supabase'ga IKKINCHI marta yuklanmaydi:
+   bo'sh File-stub + __remote belgisi; upload funksiyalari uni ko'rib, mavjud yo'lni qaytaradi. */
+export function makeRemoteMediaFile(rec) {
+  const f = new File([], rec.name || 'media', { type: rec.type || 'application/octet-stream' });
+  try { Object.defineProperty(f, 'size', { value: Number(rec.size) || 0 }); } catch (_) {}
+  f.__remote = { path: rec.path };
+  f.__previewUrl = rec.url || mediaPublicUrl(rec.path);
+  return f;
+}
+export function isRemoteFile(file) { return !!(file && file.__remote && file.__remote.path); }
+/** Ekranda ko'rsatish uchun URL: masofaviy media uchun serverdagi URL, oddiy fayl uchun blob URL */
+export function previewUrlFor(file) {
+  if (file && file.__previewUrl) return file.__previewUrl;
+  return URL.createObjectURL(file);
+}
+async function _remoteResult(file) {
+  const path = file.__remote.path;
+  return { path, url: (await mediaSecureUrl(path)) || mediaPublicUrl(path) };
+}
+
+/** Xabar/post/story o'chirilganda faylni FAQAT boshqa hech narsa unga ishora qilmasa o'chiradi
+ *  (bitta media bir nechta chatda qayta ishlatilgan bo'lishi mumkin). Qatorlar AVVAL o'chirilgan bo'lishi kerak. */
+export async function removeMediaIfUnreferenced(paths) {
+  const uniq = [...new Set((paths || []).filter(Boolean))];
+  if (!uniq.length) return;
+  const used = new Set();
+  try {
+    for (const tbl of ['messages', 'group_messages', 'posts', 'stories']) {
+      for (let i = 0; i < uniq.length; i += 100) {
+        const { data } = await sb.from(tbl).select('media_path').in('media_path', uniq.slice(i, i + 100));
+        (data || []).forEach(r => r?.media_path && used.add(r.media_path));
+      }
+    }
+  } catch (_) { return; }   // tekshirib bo'lmasa — o'chirmaymiz (xavfsiz tomon)
+  const dead = uniq.filter(x => !used.has(x));
+  try { for (let i = 0; i < dead.length; i += 100) await sb.storage.from(MEDIA_BUCKET).remove(dead.slice(i, i + 100)); } catch (_) {}
+}
+
 export async function uploadViaController(file, folder = 'posts', opts = {}) {
+  if (isRemoteFile(file)) return _remoteResult(file);   // qayta yuklanmaydi
   const track = opts.track !== false;
   if (track) beginUpload();
   try {

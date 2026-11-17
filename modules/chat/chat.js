@@ -975,7 +975,7 @@ function _paintUserRows(users, animate = false) {
  */
 import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
-  mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET
+  mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, previewUrlFor
 } from '../core/config.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
@@ -3320,7 +3320,7 @@ function setChatFile(file) {
 
   let objUrl = '';
   if (isMedia) {
-    objUrl = URL.createObjectURL(file);
+    objUrl = previewUrlFor(file);
     if (isImg) {
       const probe = new Image();
       probe.onload = () => {

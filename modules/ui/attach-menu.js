@@ -16,6 +16,8 @@ import { requestAndSendLocation } from './location-helper.js';
 import { requirePermission } from '../settings/permissions.js';
 import { pushOverlay, dismissOverlay } from './overlay-stack.js';
 import { toast } from './toast.js';
+import { makeRemoteMediaFile } from '../core/config.js';
+import { getRecentsSync, fetchAccountRecents } from '../chat/recent-media.js';
 import { fileIconSvg } from '../core/file-icons.js';
 
 const SVG = {
@@ -34,6 +36,8 @@ let _activeDropdown = null;
 
 async function _resolveFile(item) {
   if (!item) return null;
+  // Hisobdagi "Oxirgilar"dan: fayl qayta yuklanmaydi, mavjud URL/yo'l ishlatiladi (preview xolos)
+  if (item.remote) return makeRemoteMediaFile(item.remote);
   if (item.file instanceof File || item.file instanceof Blob) {
     return item.file;
   }
@@ -61,35 +65,6 @@ let _liveStream = null;
 let _uid = 0;
 let _drawerPickerCallback = null;
 const _activeObjectUrls = new Set();
-
-/* ── IndexedDB Cache for Recent Media Photos & Videos ── */
-const ATTACH_DB_NAME = 'spacemr_attach_db';
-const ATTACH_DB_VER = 1;
-const ATTACH_STORE = 'recent_media';
-const _memRecentFiles = [];
-
-
-let _attachDbPromise = null;
-function _getAttachDb() {
-  if (_attachDbPromise) return _attachDbPromise;
-  _attachDbPromise = new Promise((resolve, reject) => {
-    if (typeof indexedDB === 'undefined') return reject(new Error('no-idb'));
-    const req = indexedDB.open(ATTACH_DB_NAME, ATTACH_DB_VER);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(ATTACH_STORE)) {
-        db.createObjectStore(ATTACH_STORE, { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-    req.onblocked = () => reject(new Error('blocked'));
-  }).catch(err => {
-    _attachDbPromise = null;
-    throw err;
-  });
-  return _attachDbPromise;
-}
 
 function _formatDuration(sec) {
   if (!sec || isNaN(sec) || sec <= 0) return '';
@@ -125,180 +100,6 @@ async function _getVideoDuration(file) {
       resolve(0);
     }
   });
-}
-
-async function _makeThumbnail(file) {
-  if (!file || !file.type) return '';
-
-  if (file.type.startsWith('image/')) {
-    return new Promise(resolve => {
-      try {
-        const url = URL.createObjectURL(file);
-        const img = new Image();
-        img.onload = () => {
-          try {
-            URL.revokeObjectURL(url);
-            const maxDim = 200;
-            let w = img.width || 100, h = img.height || 100;
-            if (w > h) {
-              if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-            } else {
-              if (h > maxDim) { w = Math.round((h * maxDim) / h); h = maxDim; }
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.7));
-          } catch (_) {
-            resolve('');
-          }
-        };
-        img.onerror = () => {
-          try { URL.revokeObjectURL(url); } catch (_) {}
-          resolve('');
-        };
-        img.src = url;
-      } catch (_) {
-        resolve('');
-      }
-    });
-  }
-
-  if (file.type.startsWith('video/')) {
-    return new Promise(resolve => {
-      try {
-        const url = URL.createObjectURL(file);
-        const video = document.createElement('video');
-        video.muted = true;
-        video.playsInline = true;
-        video.preload = 'metadata';
-        let done = false;
-        const cleanup = () => {
-          if (done) return;
-          done = true;
-          try { URL.revokeObjectURL(url); } catch (_) {}
-          try { video.removeAttribute('src'); video.load(); } catch (_) {}
-        };
-        const timer = setTimeout(() => {
-          cleanup();
-          resolve('');
-        }, 1400);
-
-        video.onloadeddata = () => {
-          try {
-            video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
-          } catch (_) {}
-        };
-        video.onseeked = () => {
-          try {
-            clearTimeout(timer);
-            const maxDim = 200;
-            let w = video.videoWidth || 160, h = video.videoHeight || 90;
-            if (w > h) {
-              if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-            } else {
-              if (h > maxDim) { w = Math.round((h * maxDim) / h); h = maxDim; }
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, w, h);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            cleanup();
-            resolve(dataUrl);
-          } catch (_) {
-            cleanup();
-            resolve('');
-          }
-        };
-        video.onerror = () => {
-          clearTimeout(timer);
-          cleanup();
-          resolve('');
-        };
-        video.src = url;
-      } catch (_) {
-        resolve('');
-      }
-    });
-  }
-
-  return '';
-}
-
-async function _loadRecentMedia() {
-  try {
-    const db = await _getAttachDb();
-    const rows = await new Promise((resolve, reject) => {
-      const tx = db.transaction(ATTACH_STORE, 'readonly');
-      const req = tx.objectStore(ATTACH_STORE).getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
-    });
-    rows.sort((a, b) => (b.time || 0) - (a.time || 0));
-    return rows.slice(0, 48);
-  } catch (_) {
-    return _memRecentFiles.slice(0, 48);
-  }
-}
-
-// Boshlang'ich keshni xotiraga tezkor 0ms yuklash
-if (typeof indexedDB !== 'undefined') {
-  _loadRecentMedia().then(cached => {
-    if (Array.isArray(cached) && cached.length) {
-      _memRecentFiles.length = 0;
-      _memRecentFiles.push(...cached);
-    }
-  }).catch(() => {});
-}
-
-async function _saveRecentMedia(files) {
-  if (!Array.isArray(files) || !files.length) return;
-  for (const f of files) {
-    if (!f) continue;
-    let thumbDataUrl = '';
-    let duration = 0;
-    try {
-      thumbDataUrl = await _makeThumbnail(f);
-      if (f.type && f.type.startsWith('video/')) {
-        duration = await _getVideoDuration(f);
-      }
-    } catch (_) {}
-
-    const item = {
-      id: 'am_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-      name: f.name || 'media',
-      type: f.type || 'image/jpeg',
-      size: f.size || 0,
-      duration: duration || 0,
-      durationText: _formatDuration(duration),
-      thumbDataUrl: thumbDataUrl,
-      file: f,
-      time: Date.now(),
-    };
-
-    // Dublikatlarni tozalash
-    const existIdx = _memRecentFiles.findIndex(m => m.name === item.name && m.size === item.size);
-    if (existIdx >= 0) _memRecentFiles.splice(existIdx, 1);
-
-    _memRecentFiles.unshift(item);
-    if (_memRecentFiles.length > 48) _memRecentFiles.pop();
-
-    try {
-      const db = await _getAttachDb();
-      const tx = db.transaction(ATTACH_STORE, 'readwrite');
-      tx.objectStore(ATTACH_STORE).put(item);
-    } catch (_) {
-      try {
-        const db = await _getAttachDb();
-        const tx = db.transaction(ATTACH_STORE, 'readwrite');
-        tx.objectStore(ATTACH_STORE).put({ ...item, file: null });
-      } catch (_2) {}
-    }
-  }
 }
 
 /** Mobil yoki planshet qurilma ekanligini aniqlash */
@@ -352,8 +153,6 @@ function _createHiddenInput(accept, multiple, onPick) {
       _drawerPickerCallback(files);
       return;
     }
-    const mediaFiles = files.filter(f => f && (f.type?.startsWith('image/') || f.type?.startsWith('video/')));
-    if (mediaFiles.length) _saveRecentMedia(mediaFiles);
     files.forEach(f => {
       if (typeof onPick === 'function') onPick(f);
     });
@@ -959,7 +758,7 @@ export function initAttachMenu({
           mediaBody = `
             <video class="media-tile-thumb" src="${item.thumbUrl}#t=0.001" preload="metadata" muted playsinline></video>
             <div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span class="vid-dur-text">${durText}</span></div>`;
-        } else if (isImg || (item.thumbUrl && !item.file)) {
+        } else if (isImg || (item.thumbUrl && !item.file && !item.remote)) {
           mediaBody = `<img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">`;
         } else {
           // Document / File tile (PDF, DOCX, ZIP, custom ASDF, etc.)
@@ -991,54 +790,36 @@ export function initAttachMenu({
       });
     }
 
+    // "Oxirgilar": hisobdagi (chat + guruh, bitta ro'yxat) oldin yuborilgan media — faqat serverdagi URL preview
     function prepareItems(rawList) {
-      return (rawList || []).map(rec => {
-        const f = rec.file || rec;
-        let thumbUrl = rec.thumbDataUrl || '';
-        if (!thumbUrl && rec.file) {
-          try {
-            thumbUrl = URL.createObjectURL(rec.file);
-            _activeObjectUrls.add(thumbUrl);
-          } catch (_) {
-            thumbUrl = '';
-          }
-        }
-        return {
-          id: rec.id || ('am_' + Math.random().toString(36).slice(2, 7)),
-          file: rec.file,
-          thumbUrl,
-          type: rec.type || (rec.file && rec.file.type) || 'image/jpeg',
-          name: rec.name || (rec.file && rec.file.name) || 'media',
-          duration: rec.duration || 0,
-          durationText: rec.durationText || _formatDuration(rec.duration),
-        };
-      }).filter(x => !!x.thumbUrl);
+      return (rawList || []).map(r => ({
+        id: r.id,
+        remote: { path: r.path, url: r.url, type: r.type, name: r.name, size: r.size },
+        thumbUrl: r.url,
+        type: r.type,
+        name: r.name,
+        duration: r.duration || 0,
+        durationText: _formatDuration(r.duration),
+      })).filter(x => !!x.thumbUrl);
     }
 
-    // 0ms da xotiradagi keshni chizamiz
-    if (_memRecentFiles.length > 0) {
-      renderMediaGridItems(prepareItems(_memRecentFiles));
-    }
+    // 0ms: keshdagi (oflaynda ham) ro'yxat
+    const _cachedRecents = getRecentsSync();
+    if (_cachedRecents.length) renderMediaGridItems(prepareItems(_cachedRecents));
 
-    // Recent mediani IDB keshdan darhol chizish / yangilash
-    _loadRecentMedia().then(cachedList => {
+    // Serverdan yangilash
+    fetchAccountRecents().then(list => {
       if (!_activeDrawer) return;
-      if (Array.isArray(cachedList) && cachedList.length) {
-        _memRecentFiles.length = 0;
-        _memRecentFiles.push(...cachedList);
-        const prepared = prepareItems(cachedList);
-        const selectedArr = Array.from(selectedMap.values());
-        const merged = [...selectedArr, ...prepared.filter(p => !selectedMap.has(p.id))];
-        renderMediaGridItems(merged.length ? merged : prepared);
-        updateSelectionUI();
-      }
-    });
+      const prepared = prepareItems(list);
+      const selectedArr = Array.from(selectedMap.values());
+      const merged = [...selectedArr, ...prepared.filter(p => !selectedMap.has(p.id))];
+      renderMediaGridItems(merged.length ? merged : prepared);
+      updateSelectionUI();
+    }).catch(() => {});
 
     // File pickerdan fayllar tanlanganda ushbu drawer ichiga kiritish
     _drawerPickerCallback = async (pickedFiles) => {
       if (!pickedFiles || !pickedFiles.length) return;
-      await _saveRecentMedia(pickedFiles);
-
       const newItems = [];
       for (const f of pickedFiles) {
         let thumbUrl = '';

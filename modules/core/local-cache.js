@@ -189,6 +189,16 @@ export function getCachedPosts(uid) {
   return v;
 }
 
+/* ══ "Oxirgilar" (biriktirish oynasi): hisobdagi oldin yuborilgan media ═══ */
+export function cacheRecentMedia(uid, list) {
+  if (!uid || !Array.isArray(list)) return;
+  safeSet(`recent_media_${uid}`, list.slice(0, 60));
+}
+export function getCachedRecentMedia(uid) {
+  if (!uid) return null;
+  return safeGet(`recent_media_${uid}`);
+}
+
 /* ══ Tozalash (logout paytida chaqiriladi) ═══════════════════════════ */
 export function clearAllCache() {
   mem.clear(); pending.clear();
