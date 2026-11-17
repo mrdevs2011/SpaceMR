@@ -28,7 +28,7 @@ Vercel Environment Variables:
 - `TURN_KEY_ID`, `TURN_KEY_API_TOKEN` — Cloudflare TURN (`api/turn.js`, faqat serverda; kirgan foydalanuvchiga 24 soatlik kredensial beradi). Qo'ng'iroq uchun asosiy yo'l.
 - Ixtiyoriy zaxira (statik, `scripts/build-env.mjs` o'qiydi): `TURN_URLS` (vergul bilan), `TURN_USERNAME`, `TURN_CREDENTIAL`. Hech biri bo'lmasa umumiy OpenRelay (beqaror).
 
-Bazani o'rnatish: `supabase/migrations/` — `000_schema.sql`, keyin qolganlari raqam tartibida (`supabase/migrations/README.md`).
+Bazani o'rnatish: `supabase/setup.sql` — `000_schema.sql`, keyin qolganlari raqam tartibida (`supabase/setup.sql`).
 Testlar: `node tests/smoke.mjs` (Playwright, ixtiyoriy; tafsilot fayl boshida).
 Hali ishga tushirilmagan patchlar `supabase/unfulfilled/` da — faqat 1 hafta kuzatuvdan keyin (roadmap 1-bo'lim, 3-qoida).
 
@@ -45,7 +45,7 @@ Hali ishga tushirilmagan patchlar `supabase/unfulfilled/` da — faqat 1 hafta k
 ## Production
 
 - Deploy: Vercel (`vercel.json` — build: bump-sw + build-env + build-css).
-- SQL migratsiyalar: `supabase/migrations/` (repo da saqlanadi; CDN ga `.vercelignore` orqali chiqarilmaydi).
+- SQL migratsiyalar: `supabase/setup.sql` (repo da saqlanadi; CDN ga `.vercelignore` orqali chiqarilmaydi).
 - CSS manba: `CSS/*.css` → `app.css` (`npm run build` / `node scripts/build-css.mjs`).
 
 ### URL himoya

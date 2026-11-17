@@ -3,9 +3,10 @@
 | Yo'l | Vazifasi |
 |---|---|
 | `setup.sql` | **Butun baza sxemasi — bitta fayl, idempotent.** Supabase → SQL Editor → New query → hammasini paste → Run. Yangi loyihada ham, mavjud bazada ham ishlaydi (qayta ishga tushirsa xato bermaydi, ma'lumotga tegmaydi). |
-| `migrations/` | Tarix (000…116). Yangi o'rnatish uchun KERAK EMAS — `setup.sql` yetarli. |
 | `functions/` | Edge Functions (send-push, send-recovery-email, admin-*). |
 | `queries/` | Faqat o'qish uchun diagnostika so'rovlari. |
+
+> Eski `migrations/000…116` o'chirildi (2026-11-17): ularning yakuniy holati `setup.sql` da. Tarix kerak bo'lsa: `git log -- supabase/migrations`.
 
 ## setup.sql tarkibi (tartib bilan)
 1 kengaytmalar → 2 funksiyalar → 3 jadvallar → 4 cheklovlar → 5 indekslar → 6 triggerlar → 7–8 RLS va siyosatlar →
