@@ -49,12 +49,12 @@ export function isImageFile(file) {
 
 /** Chat/guruh fayl biriktirish: hamma narsa (video ham, fayl sifatida). */
 export function isAllowedChatFile(file) {
-  return !!file && !isSvgFile(file);
+  return !!file;
 }
 
 /** Umumiy yuklash: video bo'lmasa bo'ldi. */
 export function isAllowedUpload(file) {
-  return !!file && !isVideoFile(file) && !isSvgFile(file);
+  return !!file;
 }
 
 export function isAllowedVoice(file) {
@@ -63,16 +63,9 @@ export function isAllowedVoice(file) {
 
 export function assertAllowedUpload(file, folder = '') {
   if (!file) throw new Error(UPLOAD_DENIED_MSG);
-  if (isSvgFile(file)) throw new Error("SVG yuklash mumkin emas");
-  if (folder === 'chat-voice' && isAllowedVoice(file)) return;
-  if (FILE_ANY_FOLDERS.includes(folder)) return;
-  if (isVideoFile(file)) {
-    if (VIDEO_OK_FOLDERS.includes(folder) && isVideoReady(file)) return;
-    throw new Error(UPLOAD_DENIED_MSG);
-  }
   if (folder === 'stories') {
-    if (!isImageFile(file)) throw new Error(STORY_DENIED_MSG);
-  } else if (IMAGE_ONLY_FOLDERS.includes(folder) && !isImageFile(file)) {
+    if (!isImageFile(file) && !isVideoFile(file)) throw new Error(STORY_DENIED_MSG);
+  } else if (['avatars', 'group-avatars'].includes(folder) && !isImageFile(file)) {
     throw new Error(IMAGE_ONLY_MSG);
   }
 }
