@@ -263,7 +263,6 @@ const PRECACHE_URLS = [
   '/modules/ui/esc-stack.js',
   '/modules/ui/file-viewer.js',
   '/modules/ui/float-progress.js',
-  '/modules/ui/gallery-fs.js',
   '/modules/ui/gif-panel.js',
   '/modules/ui/install-guide.js',
   '/modules/ui/location-helper.js',

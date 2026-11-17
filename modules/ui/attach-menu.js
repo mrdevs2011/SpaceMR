@@ -13,16 +13,8 @@ import { hasCameraDevice } from '../chat/camera-access.js';
 import { openCameraCapture } from '../chat/camera-capture.js';
 import { openPollModal } from './poll-dialog.js';
 import { requestAndSendLocation } from './location-helper.js';
-import { isPermissionAllowed, requirePermission } from '../settings/permissions.js';
+import { requirePermission } from '../settings/permissions.js';
 import { pushOverlay, dismissOverlay } from './overlay-stack.js';
-import {
-  isAndroidMobile,
-  getSavedGalleryDirHandle,
-  saveGalleryDirHandle,
-  scanDirectory,
-  pickAndValidateGalleryDirectory,
-  showInvalidFolderModal,
-} from './gallery-fs.js';
 import { toast } from './toast.js';
 import { fileIconSvg } from '../core/file-icons.js';
 
@@ -76,21 +68,6 @@ const ATTACH_DB_VER = 1;
 const ATTACH_STORE = 'recent_media';
 const _memRecentFiles = [];
 
-/* ── Global DCIM Gallery Cache (SpaceMR ochilishidan boshlab 1 marta fonda o'qiladi) ── */
-let _globalDcimMediaList = [];
-let _isGlobalDcimLoaded = false;
-let _isGlobalDcimLoading = false;
-let _globalDcimHandle = null;
-const _globalDcimUrlMap = new Map();
-const _globalDcimListeners = new Set();
-
-/**
- * SpaceMR ga kirishi bilanoq DCIM papkasidagi rasmlarni fonda bir marta o'qib keshlab qo'yadi.
- * Bu orqali har safar attach menu yoki kamera galereyasi ochilganda 0ms da darhol chiqadi.
- */
-export async function preloadDcimMedia() {
-  return []; // DCIM skaneri olib tashlangan: galereya tizimning o'z tanlagichi orqali ochiladi (tez, ruxsatsiz)
-}
 
 let _attachDbPromise = null;
 function _getAttachDb() {
@@ -577,7 +554,7 @@ export function initAttachMenu({
       dragLocked = false;
 
       isHandleTouch = !!e.target.closest('.attach-drawer-handle, .attach-bottom-pills, .attach-send-bar');
-      scrollContainer = e.target.closest('.attach-media-grid, .am-gallery-panel, #amDcimGrid');
+      scrollContainer = e.target.closest('.attach-media-grid');
     }
 
     function onTouchMove(e) {
@@ -819,7 +796,6 @@ export function initAttachMenu({
       drawerClass += ' attach-drawer--chat attach-drawer--half';
     }
 
-    const isAndroid = false; // DCIM paneli yo'q — "Galereya" tugmasi tizim tanlagichini ochadi
 
     const overlay = document.createElement('div');
     overlay.className = 'attach-drawer-overlay';
@@ -828,19 +804,6 @@ export function initAttachMenu({
     overlay.innerHTML = `
       <div class="${drawerClass}" role="dialog" aria-label="Biriktirish paneli" data-context="${ctx}">
         <div class="attach-drawer-handle" title="Pastga surib yopish"></div>
-
-        ${isAndroid ? `
-          <div class="am-nav-tabs-wrapper">
-            <div class="am-nav-tabs" role="tablist">
-              <button type="button" class="am-nav-tab active" id="amTabRecents" role="tab" aria-selected="true">
-                <span>Oxirgilar</span>
-              </button>
-              <button type="button" class="am-nav-tab" id="amTabGallery" role="tab" aria-selected="false">
-                <span>Galareya</span>
-              </button>
-            </div>
-          </div>
-        ` : ''}
 
         <!-- 1. Oxirgilar Gridi -->
         <div class="attach-media-grid" id="amRecentsPanel">
@@ -854,41 +817,6 @@ export function initAttachMenu({
           <!-- Media fotosuratlar va videolar shu yerga yuklanadi -->
           <div id="amMediaItemsSlot" style="display:contents;"></div>
         </div>
-
-        <!-- 2. Galareya (DCIM) Paneli (Faqat Android uchun) -->
-        ${isAndroid ? `
-          <div class="am-gallery-panel" id="amGalleryPanel" style="display:none;">
-            <div class="am-gallery-toolbar" id="amGalleryToolbar" style="display:none;">
-              <span class="am-gallery-folder-badge" id="amGalleryFolderBadge">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                <span id="amGalleryFolderName">DCIM</span>
-              </span>
-              <button type="button" class="am-gallery-change-btn" id="amGalleryChangeBtn">Papkani o'zgartirish</button>
-            </div>
-
-            <!-- DCIM media fotosuratlar va videolar gridi -->
-            <div class="attach-media-grid" id="amDcimGrid" style="display:none;"></div>
-
-            <div class="am-gallery-loading-box" id="amGalleryLoader" style="display:none;">
-              <div class="am-gallery-spinner"></div>
-              <span id="amGalleryLoadingText">Galareyadagi fayllar o'qilmoqda...</span>
-            </div>
-
-            <div class="am-gallery-empty-box" id="amGalleryConnectPrompt" style="display:none;">
-              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.8" opacity="0.6">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              <p style="margin:4px 0 0;line-height:1.4;">DCIM yoki Pictures papkasini ulab barcha foto va videolarni Telegram kabi ko'ring</p>
-              <button type="button" class="am-gallery-connect-btn" id="amGalleryConnectBtn">DCIM papkasini tanlash</button>
-            </div>
-
-            <div class="am-gallery-empty-box" id="amGalleryEmpty" style="display:none;">
-              <span>Tanlangan papkada hech qanday foto yoki video topilmadi</span>
-            </div>
-          </div>
-        ` : ''}
 
         <!-- Tanlangan media fayllarni Telegram kabi birdaniga yuborish paneli (Send Bar) -->
         <div class="attach-send-bar" id="amSendBar" style="display:none;">
@@ -956,19 +884,6 @@ export function initAttachMenu({
     const bottomPills = overlay.querySelector('#amBottomPills');
     const galleryTile = overlay.querySelector('#amGalleryPickerTile');
 
-    const recentsPanel = overlay.querySelector('#amRecentsPanel');
-    const galleryPanel = overlay.querySelector('#amGalleryPanel');
-    const tabRecents = overlay.querySelector('#amTabRecents');
-    const tabGallery = overlay.querySelector('#amTabGallery');
-    const dcimGrid = overlay.querySelector('#amDcimGrid');
-    const galleryLoader = overlay.querySelector('#amGalleryLoader');
-    const galleryConnectPrompt = overlay.querySelector('#amGalleryConnectPrompt');
-    const galleryEmpty = overlay.querySelector('#amGalleryEmpty');
-    const galleryToolbar = overlay.querySelector('#amGalleryToolbar');
-    const galleryFolderName = overlay.querySelector('#amGalleryFolderName');
-    const galleryChangeBtn = overlay.querySelector('#amGalleryChangeBtn');
-    const galleryConnectBtn = overlay.querySelector('#amGalleryConnectBtn');
-
     galleryTile?.addEventListener('click', e => {
       e.preventDefault();
       e.stopPropagation();
@@ -978,15 +893,12 @@ export function initAttachMenu({
     // Tanlangan fayllar xaritasi (id -> File)
     const selectedMap = new Map();
     let currentMediaList = [];
-    let dcimMediaList = [];
-    let isDcimLoaded = false;
-    let isDcimLoading = false;
 
     function updateSelectionUI() {
       const keys = Array.from(selectedMap.keys());
       const count = keys.length;
 
-      // Recents va DCIM gridlaridagi barcha tanlov plitkalarini sinxron yangilash
+      // Oxirgilar gridi barcha tanlov plitkalarini sinxron yangilash
       overlay.querySelectorAll('.media-photo-tile').forEach(tile => {
         const id = tile.getAttribute('data-media-id');
         const checkBtn = tile.querySelector('.media-tile-check');
@@ -1028,343 +940,6 @@ export function initAttachMenu({
       }
       updateSelectionUI();
     }
-
-    function renderDcimMediaItems(items) {
-      if (!dcimGrid) return;
-      dcimGrid.innerHTML = items.map(item => {
-        const isVid = (item.type || '').startsWith('video/');
-        const selIdx = Array.from(selectedMap.keys()).indexOf(item.id);
-        const isSel = selIdx >= 0;
-        const durText = item.durationText || (isVid ? 'Video' : '');
-        const escName = String(item.name || 'media').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        const mediaThumb = isVid
-          ? `<video class="media-tile-thumb" src="${item.thumbUrl}#t=0.001" preload="metadata" muted playsinline></video>`
-          : `<img class="media-tile-thumb" src="${item.thumbUrl}" alt="${escName}" loading="lazy">`;
-        return `
-          <div class="attach-grid-item media-photo-tile ${isSel ? 'selected' : ''}" data-media-id="${item.id}" role="button" tabindex="0">
-            ${mediaThumb}
-            ${isVid ? `<div class="media-tile-vid-badge"><svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> <span class="vid-dur-text">${durText}</span></div>` : ''}
-            <button type="button" class="media-tile-check ${isSel ? 'checked' : ''}" aria-label="Tanlash">
-              ${isSel ? `<span class="check-num">${selIdx + 1}</span>` : ''}
-            </button>
-          </div>
-        `;
-      }).join('');
-
-      items.forEach(item => {
-        const tile = dcimGrid.querySelector(`.media-photo-tile[data-media-id="${item.id}"]`);
-        if (!tile) return;
-        tile.addEventListener('click', e => {
-          e.preventDefault();
-          e.stopPropagation();
-          toggleSelectItem(item);
-        });
-      });
-    }
-
-    async function loadDcimGalleryMedia(forcePick = false) {
-      if (!isPermissionAllowed('storage')) {
-        toast("Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering", 'warn');
-        if (tabRecents && tabGallery) {
-          tabRecents.classList.add('active');
-          tabRecents.setAttribute('aria-selected', 'true');
-          tabGallery.classList.remove('active');
-          tabGallery.setAttribute('aria-selected', 'false');
-          if (recentsPanel) recentsPanel.style.display = 'grid';
-          if (galleryPanel) galleryPanel.style.display = 'none';
-        }
-        return;
-      }
-
-      if (!galleryLoader || !dcimGrid) return;
-      if (isDcimLoading) return;
-
-      // 1. Agar DCIM allaqachon fonda o'qilgan bo'lsa (va forcePick bo'lmasa) — 0ms da darhol chizamiz!
-      if (!forcePick && _isGlobalDcimLoaded && _globalDcimMediaList.length > 0) {
-        if (galleryFolderName) galleryFolderName.textContent = _globalDcimHandle?.name || 'DCIM';
-        if (galleryToolbar) galleryToolbar.style.display = 'flex';
-        dcimMediaList = _globalDcimMediaList;
-        renderDcimMediaItems(dcimMediaList);
-        isDcimLoaded = true;
-        if (galleryLoader) galleryLoader.style.display = 'none';
-        dcimGrid.style.display = 'grid';
-        if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'none';
-        if (galleryEmpty) galleryEmpty.style.display = 'none';
-        updateSelectionUI();
-        return;
-      }
-
-      // 2. Agar fonda hozir skanerlash ketayotgan bo'lsa, zudlik bilan ulanamiz
-      if (!forcePick && _isGlobalDcimLoading) {
-        if (galleryFolderName) galleryFolderName.textContent = _globalDcimHandle?.name || 'DCIM';
-        if (galleryToolbar) galleryToolbar.style.display = 'flex';
-        if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'none';
-        if (galleryEmpty) galleryEmpty.style.display = 'none';
-
-        if (_globalDcimMediaList.length > 0) {
-          dcimMediaList = _globalDcimMediaList;
-          renderDcimMediaItems(dcimMediaList);
-          dcimGrid.style.display = 'grid';
-          if (galleryLoader) galleryLoader.style.display = 'none';
-        } else {
-          if (galleryLoader) galleryLoader.style.display = 'flex';
-          dcimGrid.style.display = 'none';
-        }
-
-        const sub = {
-          onProgress: ({ scannedCount, foundCount, currentFolder, isComplete }) => {
-            const galleryLoadingText = overlay.querySelector('#amGalleryLoadingText');
-            if (galleryLoadingText) {
-              if (isComplete) galleryLoadingText.textContent = `Tayyor! (${foundCount} ta media)`;
-              else if (foundCount > 0) galleryLoadingText.textContent = `${foundCount} ta media topildi...`;
-              else galleryLoadingText.textContent = `${currentFolder || 'DCIM'} papkasi o'qilmoqda...`;
-            }
-          },
-          onBatch: (list) => {
-            dcimMediaList = list;
-            renderDcimMediaItems(dcimMediaList);
-            isDcimLoaded = true;
-            dcimGrid.style.display = 'grid';
-            if (galleryLoader) galleryLoader.style.display = 'none';
-            updateSelectionUI();
-          },
-          onComplete: (list) => {
-            dcimMediaList = list;
-            renderDcimMediaItems(dcimMediaList);
-            isDcimLoaded = true;
-            dcimGrid.style.display = 'grid';
-            if (galleryLoader) galleryLoader.style.display = 'none';
-            updateSelectionUI();
-            _globalDcimListeners.delete(sub);
-          }
-        };
-        _globalDcimListeners.add(sub);
-        return;
-      }
-
-      isDcimLoading = true;
-
-      galleryLoader.style.display = 'flex';
-      dcimGrid.style.display = 'none';
-      if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'none';
-      if (galleryEmpty) galleryEmpty.style.display = 'none';
-
-      let handle = forcePick ? null : await getSavedGalleryDirHandle();
-
-      if (handle) {
-        try {
-          if (typeof handle.queryPermission === 'function') {
-            let perm = await handle.queryPermission({ mode: 'read' });
-            if (perm === 'prompt' && typeof handle.requestPermission === 'function') {
-              perm = await handle.requestPermission({ mode: 'read' });
-            }
-            if (perm !== 'granted') {
-              handle = null;
-            }
-          }
-        } catch (_) {
-          handle = null;
-        }
-      }
-
-      if (!handle) {
-        if (!('showDirectoryPicker' in window)) {
-          galleryLoader.style.display = 'none';
-          isDcimLoading = false;
-          toast("Bu brauzer galereyaga kirishni qo'llab-quvvatlamaydi", 'info');
-          galleryPicker.click();
-          return;
-        }
-
-        try {
-          const pickRes = await pickAndValidateGalleryDirectory({
-            onInvalidFolder: () => {
-              galleryLoader.style.display = 'none';
-              if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
-              showInvalidFolderModal({
-                onRetry: () => loadDcimGalleryMedia(true),
-                onCancel: () => {
-                  if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
-                }
-              });
-            }
-          });
-
-          if (pickRes && pickRes.valid) {
-            handle = pickRes.dirHandle;
-          } else {
-            galleryLoader.style.display = 'none';
-            isDcimLoading = false;
-            if (!pickRes || !pickRes.invalid) {
-              if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
-            }
-            return;
-          }
-        } catch (err) {
-          galleryLoader.style.display = 'none';
-          isDcimLoading = false;
-          if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
-          return;
-        }
-      }
-
-      try {
-        if (galleryFolderName) galleryFolderName.textContent = handle.name || 'DCIM';
-        if (galleryToolbar) galleryToolbar.style.display = 'flex';
-        const galleryLoadingText = overlay.querySelector('#amGalleryLoadingText');
-        if (galleryLoadingText) galleryLoadingText.textContent = "Galereya o'qilmoqda...";
-        let renderedFirstBatch = false;
-        const dcimThumbUrlMap = new Map();
-        let dcimRenderRaf = null;
-        let lastRenderTime = 0;
-
-        function scheduleDcimRender(force = false) {
-          const now = Date.now();
-          if (force || !renderedFirstBatch || now - lastRenderTime > 200) {
-            if (dcimRenderRaf) cancelAnimationFrame(dcimRenderRaf);
-            dcimRenderRaf = null;
-            lastRenderTime = now;
-            renderDcimMediaItems(dcimMediaList);
-            isDcimLoaded = true;
-            dcimGrid.style.display = 'grid';
-            updateSelectionUI();
-            if (!renderedFirstBatch) {
-              renderedFirstBatch = true;
-              if (galleryLoader) galleryLoader.style.display = 'none';
-            }
-          } else if (!dcimRenderRaf) {
-            dcimRenderRaf = requestAnimationFrame(() => {
-              dcimRenderRaf = null;
-              lastRenderTime = Date.now();
-              renderDcimMediaItems(dcimMediaList);
-              updateSelectionUI();
-            });
-          }
-        }
-
-        const mediaEntries = await scanDirectory(handle, {
-          maxDepth: 3,
-          maxCount: 150,
-          onProgress: ({ scannedCount, foundCount, currentFolder, isComplete }) => {
-            if (galleryLoadingText) {
-              if (isComplete) {
-                galleryLoadingText.textContent = `Tayyor! (${foundCount} ta media)`;
-              } else if (foundCount > 0) {
-                galleryLoadingText.textContent = `${foundCount} ta media topildi...`;
-              } else {
-                galleryLoadingText.textContent = `${currentFolder || 'DCIM'} papkasi o'qilmoqda...`;
-              }
-            }
-          },
-          onBatch: (batch) => {
-            if (!batch || !batch.length) return;
-            dcimMediaList = batch.map((m, idx) => {
-              const fileKey = m.file ? `${m.file.name}_${m.file.size}_${m.file.lastModified}` : (m.name + '_' + idx);
-              let thumbUrl = dcimThumbUrlMap.get(fileKey);
-              if (!thumbUrl) {
-                try {
-                  thumbUrl = URL.createObjectURL(m.file);
-                  _activeObjectUrls.add(thumbUrl);
-                  dcimThumbUrlMap.set(fileKey, thumbUrl);
-                } catch (_) {
-                  thumbUrl = '';
-                }
-              }
-              const isVid = (m.type || '').startsWith('video/');
-              return {
-                id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
-                file: m.file,
-                thumbUrl,
-                type: m.type,
-                name: m.name,
-                duration: 0,
-                durationText: isVid ? 'Video' : '',
-              };
-            });
-
-            scheduleDcimRender(!renderedFirstBatch);
-          }
-        });
-
-        scheduleDcimRender(true);
-
-        _globalDcimMediaList = dcimMediaList;
-        _isGlobalDcimLoaded = true;
-        _globalDcimHandle = handle;
-
-        if (!mediaEntries.length && !renderedFirstBatch) {
-          galleryLoader.style.display = 'none';
-          isDcimLoading = false;
-          if (galleryEmpty) galleryEmpty.style.display = 'flex';
-          return;
-        }
-
-        // Barcha skanerlash tugagach loader ni yashirish
-        galleryLoader.style.display = 'none';
-
-        // Video davomiyliklarini asinxron o'qib yangilash
-        dcimMediaList.forEach(async (it) => {
-          if (it.file && it.type && it.type.startsWith('video/')) {
-            try {
-              const dur = await _getVideoDuration(it.file);
-              if (dur > 0) {
-                it.duration = dur;
-                it.durationText = _formatDuration(dur);
-                const badgeTxt = dcimGrid.querySelector(`.media-photo-tile[data-media-id="${it.id}"] .vid-dur-text`);
-                if (badgeTxt) badgeTxt.textContent = it.durationText;
-              }
-            } catch (_) {}
-          }
-        });
-      } catch (err) {
-        console.warn('[AttachMenu] scan DCIM error:', err);
-        galleryLoader.style.display = 'none';
-        if (galleryConnectPrompt) galleryConnectPrompt.style.display = 'flex';
-      } finally {
-        isDcimLoading = false;
-      }
-    }
-
-    tabRecents?.addEventListener('click', e => {
-      e.preventDefault();
-      tabRecents.classList.add('active');
-      tabRecents.setAttribute('aria-selected', 'true');
-      tabGallery?.classList.remove('active');
-      tabGallery?.setAttribute('aria-selected', 'false');
-      if (recentsPanel) recentsPanel.style.display = 'grid';
-      if (galleryPanel) galleryPanel.style.display = 'none';
-    });
-
-    tabGallery?.addEventListener('click', async e => {
-      e.preventDefault();
-      if (!isPermissionAllowed('storage')) {
-        toast("Sozlamalar → Ruxsatlar bo'limidan galareyaga ruxsat bering", 'warn');
-        return;
-      }
-
-      tabGallery.classList.add('active');
-      tabGallery.setAttribute('aria-selected', 'true');
-      tabRecents?.classList.remove('active');
-      tabRecents?.setAttribute('aria-selected', 'false');
-      if (recentsPanel) recentsPanel.style.display = 'none';
-      if (galleryPanel) galleryPanel.style.display = 'flex';
-
-      if (!isDcimLoaded) {
-        await loadDcimGalleryMedia();
-      }
-    });
-
-    galleryChangeBtn?.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      loadDcimGalleryMedia(true);
-    });
-
-    galleryConnectBtn?.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      loadDcimGalleryMedia(true);
-    });
 
     function renderMediaGridItems(items) {
       currentMediaList = items;
