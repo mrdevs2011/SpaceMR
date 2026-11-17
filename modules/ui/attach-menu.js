@@ -88,79 +88,8 @@ const _globalDcimListeners = new Set();
  * SpaceMR ga kirishi bilanoq DCIM papkasidagi rasmlarni fonda bir marta o'qib keshlab qo'yadi.
  * Bu orqali har safar attach menu yoki kamera galereyasi ochilganda 0ms da darhol chiqadi.
  */
-export async function preloadDcimMedia(force = false) {
-  if (!isAndroidMobile()) return [];
-  if (_isGlobalDcimLoaded && !force) return _globalDcimMediaList;
-  if (_isGlobalDcimLoading) return _globalDcimMediaList;
-  if (!isPermissionAllowed('storage')) return [];
-
-  const handle = await getSavedGalleryDirHandle();
-  if (!handle) return [];
-
-  if (typeof handle.queryPermission === 'function') {
-    try {
-      const perm = await handle.queryPermission({ mode: 'read' });
-      if (perm !== 'granted') return [];
-    } catch (_) {
-      return [];
-    }
-  }
-
-  _isGlobalDcimLoading = true;
-  _globalDcimHandle = handle;
-
-  try {
-    await scanDirectory(handle, {
-      maxDepth: 3,
-      maxCount: 150,
-      onProgress: (prog) => {
-        _globalDcimListeners.forEach(sub => {
-          try { sub.onProgress?.(prog); } catch (_) {}
-        });
-      },
-      onBatch: (batch) => {
-        if (!batch || !batch.length) return;
-        _globalDcimMediaList = batch.map((m, idx) => {
-          const fileKey = m.file ? `${m.file.name}_${m.file.size}_${m.file.lastModified}` : (m.name + '_' + idx);
-          let thumbUrl = _globalDcimUrlMap.get(fileKey);
-          if (!thumbUrl) {
-            try {
-              thumbUrl = URL.createObjectURL(m.file);
-              _activeObjectUrls.add(thumbUrl);
-              _globalDcimUrlMap.set(fileKey, thumbUrl);
-            } catch (_) {
-              thumbUrl = '';
-            }
-          }
-          const isVid = (m.type || '').startsWith('video/');
-          return {
-            id: 'am_dcim_' + (m.lastModified || Date.now()) + '_' + (m.size || idx),
-            file: m.file,
-            thumbUrl,
-            type: m.type,
-            name: m.name,
-            duration: 0,
-            durationText: isVid ? 'Video' : '',
-          };
-        });
-
-        _globalDcimListeners.forEach(sub => {
-          try { sub.onBatch?.(_globalDcimMediaList); } catch (_) {}
-        });
-      }
-    });
-
-    _isGlobalDcimLoaded = true;
-    _globalDcimListeners.forEach(sub => {
-      try { sub.onComplete?.(_globalDcimMediaList); } catch (_) {}
-    });
-  } catch (err) {
-    console.warn('[AttachMenu] preloadDcimMedia error:', err);
-  } finally {
-    _isGlobalDcimLoading = false;
-  }
-
-  return _globalDcimMediaList;
+export async function preloadDcimMedia() {
+  return []; // DCIM skaneri olib tashlangan: galereya tizimning o'z tanlagichi orqali ochiladi (tez, ruxsatsiz)
 }
 
 let _attachDbPromise = null;
@@ -890,7 +819,7 @@ export function initAttachMenu({
       drawerClass += ' attach-drawer--chat attach-drawer--half';
     }
 
-    const isAndroid = isAndroidMobile();
+    const isAndroid = false; // DCIM paneli yo'q — "Galereya" tugmasi tizim tanlagichini ochadi
 
     const overlay = document.createElement('div');
     overlay.className = 'attach-drawer-overlay';
@@ -1713,11 +1642,4 @@ export function initAttachMenu({
     }
   };
   btn.addEventListener('click', btn._attachHandler);
-}
-
-// SpaceMR ochilishi bilanoq DCIM ni fonda bir marta o'qib keshlaydi (preload)
-if (typeof window !== 'undefined' && isAndroidMobile()) {
-  setTimeout(() => {
-    preloadDcimMedia().catch(() => {});
-  }, 250);
 }
