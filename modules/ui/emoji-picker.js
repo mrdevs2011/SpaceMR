@@ -1,6 +1,7 @@
 import { onEsc } from './esc-stack.js';
 import { emojiImg, warmEmoji, warmAtlas, toKey, keyToGlyph } from './emoji-img.js';
 import { createGifPanel } from './gif-panel.js';
+import { isMobileDevice } from '../core/device.js';
 /* emoji-picker.js — telefon klaviaturasi (Gboard) uslubidagi emoji paneli.
    Tepada: qidiruv tugmasi + kategoriya ikonlari (SVG). Pastda: "Oxirgilar" va kategoriyalar
    bo'yicha sahifalar: tablar orasida gorizontal surish, sahifa ichida vertikal skroll. Ma'lumot mahalliy (emoji-data.js), birinchi ochilganda yuklanadi. */
@@ -237,7 +238,7 @@ export function initEmojiPicker({ btn, pop, input, onGif }) {
 
   /* Panel input qatori tepasida (mobil va desktop). Mobil (<1100px): klaviatura o'rnida ochiladi (Telegram kabi) — tizim klaviaturasi chiqmaydi,
      panel xabarlar ustida suzib turadi — xabarlar joyidan siljimaydi. */
-  const isMobile = () => window.matchMedia('(max-width: 1099px)').matches;
+  const isMobile = () => isMobileDevice();
   function dock(open) {
     if (isMobile()) {
       if (open) { input.setAttribute('inputmode', 'none'); input.blur(); input.focus({ preventScroll: true }); }

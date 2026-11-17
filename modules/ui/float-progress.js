@@ -2,16 +2,14 @@
  * Umumiy pastki progress kvadrat (upload + download).
  * Surib joylashtirish mumkin; joy mobile / tablet / desktop alohida saqlanadi.
  */
+import { DEVICE } from '../core/device.js';
 const POS_KEY = 'spacemr_ufb_pos_v1';
 const SIZE = 64;
 
 function $(id) { return document.getElementById(id); }
 
 function deviceBucket() {
-  const w = window.innerWidth || 0;
-  if (w < 768) return 'mobile';
-  if (w < 1100) return 'tablet';
-  return 'desktop';
+  return DEVICE === 'phone' ? 'mobile' : DEVICE;
 }
 
 function loadPosMap() {

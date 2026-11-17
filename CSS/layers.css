@@ -11,9 +11,9 @@
 .theme-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: var(--radius); background: var(--glass); color: var(--text2); cursor: pointer;  padding: 0; flex-shrink: 0; }
 .theme-btn:hover { background: var(--glass-mid); color: var(--text); box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
 .theme-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-@media (min-width: 1100px) {
-  .theme-btn { position: relative; }
-  .theme-btn::after {
+
+  :where(html[data-device="desktop"]) .theme-btn { position: relative; }
+  :where(html[data-device="desktop"]) .theme-btn::after {
     content: attr(data-tip);
     position: absolute;
     left: calc(100% + 12px);
@@ -34,8 +34,8 @@
     z-index: 200;
     box-shadow: var(--liquid-shadow-sm);
   }
-  .theme-btn:hover::after { opacity: 1; }
-}
+  :where(html[data-device="desktop"]) .theme-btn:hover::after { opacity: 1; }
+
 /* ═══════════════════════════════════════════ Global Solid Component Classes ════════════════════════════════... */
 /* Base glass class — use anywhere */
 .glass { background: var(--bg3); border: 1px solid var(--line, var(--pal-gray-800)); box-shadow: none; }
@@ -183,10 +183,10 @@ svg { color: inherit; }
   word-break: break-word;
 }
 /* ═══════════════════════════════════════════ REELS — Enhanced Progress & Controls ══════════════════════════... */
-@media (min-width: 1100px) {
-  .reel::after { content: ''; position: absolute; inset: 0; background: var(--pal-black); opacity: 0;  pointer-events: none; }
-  .reel:hover::after { opacity: 1; }
-}
+
+  :where(html[data-device="desktop"]) .reel::after { content: ''; position: absolute; inset: 0; background: var(--pal-black); opacity: 0;  pointer-events: none; }
+  :where(html[data-device="desktop"]) .reel:hover::after { opacity: 1; }
+
 /* ═══════════════════════════════════════════ 6. COMMENTS — Enhanced Interactions ═══════════════════════════... */
 /* Swipe to reply indicator (mobile) */
 .cmt-swipe-indicator { position: absolute; left: 0; top: 0; bottom: 0; width: 60px; background: var(--blue-glow2); border-radius: var(--radius) 0 0 var(--radius); display: flex; align-items: center; justify-content: center; opacity: 0;  }
@@ -307,19 +307,19 @@ svg { color: inherit; }
   *, *::before, *::after {    scroll-behavior: auto; }
 }
 /* ═══════════════════════════════════════════ MOBILE OPTIMIZATIONS ═══════════════════════════════════════════ */
-@media (max-width: 1099px) {
-  .act-btn, .nav-btn, .theme-btn { min-height: 44px; min-width: 44px; }
-.hdr-icon-btn { min-height: 36px; min-width: 36px; }
-  .post-caption, .reel-cap, .cmt-text { font-size: 14px; line-height: 1.6; }
-  .bot-nav { padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
-  .sheet { padding-bottom: max(env(safe-area-inset-bottom, 0px), 28px); }
-}
+
+  :where(html:not([data-device="desktop"])) .act-btn, :where(html:not([data-device="desktop"])) .nav-btn, :where(html:not([data-device="desktop"])) .theme-btn { min-height: 44px; min-width: 44px; }
+:where(html:not([data-device="desktop"])) .hdr-icon-btn { min-height: 36px; min-width: 36px; }
+  :where(html:not([data-device="desktop"])) .post-caption, :where(html:not([data-device="desktop"])) .reel-cap, :where(html:not([data-device="desktop"])) .cmt-text { font-size: 14px; line-height: 1.6; }
+  :where(html:not([data-device="desktop"])) .bot-nav { padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
+  :where(html:not([data-device="desktop"])) .sheet { padding-bottom: max(env(safe-area-inset-bottom, 0px), 28px); }
+
 /* ═══════════════════════════════════════════ DESKTOP ENHANCEMENTS ═══════════════════════════════════════════ */
-@media (min-width: 1100px) {
-  .feed { max-width: 580px; }
-  #detailModal { align-items: center; justify-content: center; }
-  #detailContent { max-width: 600px; max-height: 90dvh; border-radius: var(--radius); margin: 20px; }
-}
+
+  :where(html[data-device="desktop"]) .feed { max-width: 580px; }
+  :where(html[data-device="desktop"]) #detailModal { align-items: center; justify-content: center; }
+  :where(html[data-device="desktop"]) #detailContent { max-width: 600px; max-height: 90dvh; border-radius: var(--radius); margin: 20px; }
+
 /* ═══════════════════════════════════════════ PRINT STYLES ═══════════════════════════════════════════ */
 @media print {
   .bot-nav,
@@ -561,29 +561,29 @@ svg { color: inherit; }
 /* Header — top bar */
 .app-hdr, [data-theme="dark"] .app-hdr { box-shadow: none; }
 /* Mobile: frosted glass blur */
-@media (max-width: 1099px) {
-  .app-hdr, [data-theme="dark"] .app-hdr { background: rgba(0, 0, 0, 0.8); }
-}
+
+  :where(html:not([data-device="desktop"])) .app-hdr, :where(html:not([data-device="desktop"])) [data-theme="dark"] .app-hdr { background: rgba(0, 0, 0, 0.8); }
+
 /* Desktop: shaffof qolsin */
-@media (min-width: 1100px) {
-  .app-hdr, [data-theme="dark"] .app-hdr { background: transparent; }
-}
+
+  :where(html[data-device="desktop"]) .app-hdr, :where(html[data-device="desktop"]) [data-theme="dark"] .app-hdr { background: transparent; }
+
 /* Header gradient line o'chirish */
 .app-hdr::after, [data-theme="dark"] .app-hdr::after { display: none; }
 /* Bottom nav */
 .bot-nav, [data-theme="dark"] .bot-nav { border-top: none; border-right: none; box-shadow: none; }
 /* Mobile: solid dark bar (was semi-transparent frosted glass — looked washed-out over content) */
-@media (max-width: 1099px) {
-  [data-theme="dark"] .bot-nav { background: var(--pal-black); }
-}
+
+  :where(html:not([data-device="desktop"])) [data-theme="dark"] .bot-nav { background: var(--pal-black); }
+
 /* Desktop: shaffof qolsin */
-@media (min-width: 1100px) {
-  .bot-nav, [data-theme="dark"] .bot-nav { background: transparent; }
-}
+
+  :where(html[data-device="desktop"]) .bot-nav, :where(html[data-device="desktop"]) [data-theme="dark"] .bot-nav { background: transparent; }
+
 /* Desktop sidebar ::before gradient line o'chirish */
-@media (min-width: 1100px) {
-  .bot-nav::before { display: none; background: none; }
-}
+
+  :where(html[data-device="desktop"]) .bot-nav::before { display: none; background: none; }
+
 /* Nav buttons */
 .nav-btn, [data-theme="dark"] .nav-btn:hover, [data-theme="dark"] .nav-btn.on { border: none; box-shadow: none; }
 /* Sheet (bottom panel) */
@@ -812,8 +812,8 @@ svg { color: inherit; }
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 /* Desktop: bottom nav → left sidebar */
-@media (min-width: 1100px) {
-  .bot-nav {
+
+  :where(html[data-device="desktop"]) .bot-nav {
     bottom: auto;
     top: 0;
     left: 0;
@@ -829,12 +829,12 @@ svg { color: inherit; }
     border-right: 0.5px solid var(--glass-border);
     background: transparent;
   }
-}
+
 /* 3. App header */
 .app-hdr { background: var(--bg2, var(--glass)); border-bottom: 0.5px solid var(--glass-border); box-shadow: none; }
-@media (min-width: 1100px) {
-  .app-hdr { background: transparent; }
-}
+
+  :where(html[data-device="desktop"]) .app-hdr { background: transparent; }
+
 /* 4. Input fields */
 .field, input:not([type="checkbox"]):not([type="radio"]), textarea { color: var(--text);  }
 .field:focus, input:focus, textarea:focus { outline: none; }
@@ -842,9 +842,9 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 /* 5. Post card (base) */
 .post { background: var(--bg2, var(--glass)); border: 0.5px solid var(--glass-border); border-radius: var(--radius); box-shadow: none;  }
 .post:hover { box-shadow: none; transform: none; }
-@media (min-width: 1100px) {
-  .post { border-radius: var(--radius); }
-}
+
+  :where(html[data-device="desktop"]) .post { border-radius: var(--radius); }
+
 /* ─── post-composer ─── */
 /* ═══════════════════════════════════════════ POST COMPOSER — X.com uslubidagi post yaratish oynasi Faqat #up... */
 /* Orqa fon — to'liq qora emas, 0.8 shaffoflik (sahifa sal ko'rinadi) */
@@ -926,17 +926,15 @@ input::placeholder, textarea::placeholder, .field::placeholder { color: var(--te
 #uploadOverlay .upload-drop:hover { background: #2f3336; box-shadow: none; }
 #uploadOverlay .upload-drop.drag-over { background: #2f3336; transform: none; box-shadow: none; }
 /* Mobil va planshet: #uploadOverlay umuman chiqmasin (xatto orqa fonda ham) */
-@media (max-width: 1024px) {
-  #uploadOverlay,
-  #uploadOverlay.show,
-  .upload-overlay {
+
+  :where(html:not([data-device="desktop"])) #uploadOverlay, :where(html:not([data-device="desktop"])) #uploadOverlay.show, :where(html:not([data-device="desktop"])) .upload-overlay {
     display: none !important;
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;
     z-index: -9999 !important;
   }
-}
+
 /* Fayl sahifaga sudralganda — yengil ko'rsatkich */
 body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2px dashed var(--x-blue, var(--pal-blue)); border-radius: var(--radius); background: rgba(231, 233, 234, 0.05); pointer-events: none; z-index: 9999; }
 /* ─── card-sheets ─── */
@@ -969,19 +967,19 @@ body.file-dragging::after { content: ''; position: fixed; inset: 8px; border: 2p
 /* Yozuvlar faqat keng rejimda */
 nav.bot-nav .nav-btn .nav-label { display: none; }
 /* Rail (mobil + planshet) umumiy */
-@media (max-width: 1099px) {
-  nav.bot-nav .sb-acc-meta, nav.bot-nav .sb-acc-dots { display: none; }
-  nav.bot-nav .sb-account { padding: 0; justify-content: center; border-radius: 50%; }
-  nav.bot-nav .sb-acc-avi { width: 36px; height: 36px; }
-  nav.bot-nav #createBtn.nav-center-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; padding: 0; flex-shrink: 0; background: var(--text); color: var(--bg); border: none; box-shadow: none; }
-  nav.bot-nav #createBtn.nav-center-btn::before, nav.bot-nav #createBtn.nav-center-btn::after { display: none; }
-  nav.bot-nav #createBtn.nav-center-btn svg { display: block; width: 22px; height: 22px; stroke: currentColor; }
-  nav.bot-nav #createBtn.nav-center-btn .sb-create-label { display: none; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-acc-meta, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-acc-dots { display: none; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-account { padding: 0; justify-content: center; border-radius: 50%; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-acc-avi { width: 36px; height: 36px; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn { display: flex; align-items: center; justify-content: center; border-radius: 50%; padding: 0; flex-shrink: 0; background: var(--text); color: var(--bg); border: none; box-shadow: none; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn::before, :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn::after { display: none; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn svg { display: block; width: 22px; height: 22px; stroke: currentColor; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn .sb-create-label { display: none; }
+
 /* Mobil + planshet (<1100px): PASTKI navigatsiya paneli. Chap rail/sidebar faqat desktop (>=1100px) da. */
-@media (max-width: 1099px) {
-  :root { --nav: calc(56px + env(safe-area-inset-bottom, 0px)); --rail: 0px; --sidebar: 0px; --content-left: 0px; }
-  nav.bot-nav {
+
+  :root:where(:not([data-device="desktop"])) { --nav: calc(56px + env(safe-area-inset-bottom, 0px)); --rail: 0px; --sidebar: 0px; --content-left: 0px; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav {
     top: auto; bottom: 0; left: 0; right: 0;
     width: 100%; height: var(--nav);
     box-sizing: border-box;
@@ -989,31 +987,31 @@ nav.bot-nav .nav-btn .nav-label { display: none; }
     gap: 0; padding: 0 8px env(safe-area-inset-bottom, 0px);
     overflow: visible;
   }
-  nav.bot-nav .sb-top, nav.bot-nav .sb-bottom { display: none; }
-  nav.bot-nav #createBtn.nav-center-btn { display: flex; flex: 0 0 auto; width: 46px; height: 46px; margin: 0 4px; order: 0; }
-  nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; width: auto; max-width: 96px; height: 100%; min-height: 48px; padding: 0; border-radius: 0; position: relative; background: none; }
-  nav.bot-nav .nav-btn.admin-only-btn.d-none { display: none; }
-  nav.bot-nav .nav-btn svg { width: 26px; height: 26px; }
-  nav.bot-nav .nav-btn.on svg { stroke-width: 2.4; }
-  nav.bot-nav .nav-badge { top: 6px; left: calc(50% + 6px); right: auto; }
-}
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-top, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-bottom { display: none; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn { display: flex; flex: 0 0 auto; width: 46px; height: 46px; margin: 0 4px; order: 0; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-search-toggle { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; width: auto; max-width: 96px; height: 100%; min-height: 48px; padding: 0; border-radius: 0; position: relative; background: none; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn.admin-only-btn.d-none { display: none; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn svg { width: 26px; height: 26px; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn.on svg { stroke-width: 2.4; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-badge { top: 6px; left: calc(50% + 6px); right: auto; }
+
 /* Keng sidebar (≥1100px) */
-@media (min-width: 1100px) {
-  :root { --sidebar: 300px; --content-left: 300px; }
-  nav.bot-nav { width: 300px !important; min-width: 280px !important; align-items: stretch; padding: 8px 12px 12px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
-  nav.bot-nav::-webkit-scrollbar { display: none; }
-  nav.bot-nav .sb-top { align-items: flex-start; padding: 0 0 4px 4px; margin: 0; border: none; }
-  nav.bot-nav .sb-logo-row { padding: 0 12px 0 4px; gap: 10px; justify-content: flex-start; }
-  nav.bot-nav .sb-brand-text { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); white-space: nowrap; line-height: 1; }
-  nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { flex-direction: row; justify-content: flex-start; align-items: center; align-self: flex-start; width: auto; max-width: 100%; background: none; border: none; box-shadow: none; }
-  nav.bot-nav .nav-btn:hover { border: none; box-shadow: none; }
-  nav.bot-nav .nav-btn.on, nav.bot-nav #sbSearchToggle.search-active { background: none; border: none; box-shadow: none; }
-  nav.bot-nav .nav-btn svg { width: 26px; height: 26px; stroke: var(--text); flex-shrink: 0; }
-  nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg { stroke: var(--text); stroke-width: 2.4; }
-  nav.bot-nav .nav-btn .nav-label { display: block; color: var(--text); white-space: nowrap; }
-  nav.bot-nav .nav-btn::after, #sbSearchToggle::after { display: none; }
-  nav.bot-nav .nav-badge { left: 30px; right: auto; top: 6px; }
-  nav.bot-nav #createBtn.nav-center-btn {
+
+  :root:where([data-device="desktop"]) { --sidebar: 300px; --content-left: 300px; }
+  :where(html[data-device="desktop"]) nav.bot-nav { width: 300px !important; min-width: 280px !important; align-items: stretch; padding: 8px 12px 12px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav::-webkit-scrollbar { display: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-top { align-items: flex-start; padding: 0 0 4px 4px; margin: 0; border: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-row { padding: 0 12px 0 4px; gap: 10px; justify-content: flex-start; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-brand-text { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); white-space: nowrap; line-height: 1; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle { flex-direction: row; justify-content: flex-start; align-items: center; align-self: flex-start; width: auto; max-width: 100%; background: none; border: none; box-shadow: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn:hover { border: none; box-shadow: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active { background: none; border: none; box-shadow: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn svg { width: 26px; height: 26px; stroke: var(--text); flex-shrink: 0; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on svg, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active svg { stroke: var(--text); stroke-width: 2.4; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn .nav-label { display: block; color: var(--text); white-space: nowrap; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn::after, :where(html[data-device="desktop"]) #sbSearchToggle::after { display: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-badge { left: 30px; right: auto; top: 6px; }
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1026,11 +1024,11 @@ nav.bot-nav .nav-btn .nav-label { display: none; }
     border: none;
     box-shadow: none;
   }
-  nav.bot-nav #createBtn.nav-center-btn::before, nav.bot-nav #createBtn.nav-center-btn::after { display: none; }
-  nav.bot-nav #createBtn.nav-center-btn svg { display: none; }
-  nav.bot-nav #createBtn.nav-center-btn .sb-create-label { display: block; color: var(--bg); }
-  nav.bot-nav .sb-bottom { display: flex; flex-direction: column; align-items: stretch; margin-top: auto; padding: 12px 0 0; border: none; }
-}
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn::before, :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn::after { display: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn svg { display: none; }
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn .sb-create-label { display: block; color: var(--bg); }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-bottom { display: flex; flex-direction: column; align-items: stretch; margin-top: auto; padding: 12px 0 0; border: none; }
+
 /* Post tugma hover: ui-improvements.css dagi #createBtn:hover (transparent) ni bosib o'tadi */
 nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
 /* Akkaunt menyusi (faqat "Chiqish") */
@@ -1064,9 +1062,9 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
 .chats-x-item { display: block; width: 100%; padding: 12px 18px; text-align: left; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: 15px; font-weight: 500; color: var(--text); }
 .chats-x-item.on { font-weight: 700; }
 .chats-x-item:hover { background: var(--pal-mid-16); }
-@media (min-width: 1100px) {
-  :root { --chats-w: clamp(300px, 32vw, 400px); }
-  #chatsView.on {
+
+  :root:where([data-device="desktop"]) { --chats-w: clamp(300px, 32vw, 400px); }
+  :where(html[data-device="desktop"]) #chatsView.on {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -1083,10 +1081,10 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
     border-right: 0.5px solid var(--glass-border);
     scrollbar-width: thin;
   }
-  #chatsView .chats-hdr { position: sticky; top: 0; z-index: 3; max-width: none; margin: 0; padding: 14px 16px 8px; gap: 8px; font-size: 20px; font-weight: 800; background: var(--bg); }
-  #chatsView .chats-hdr > span { flex: 1; }
-  #chatsView .chats-list { max-width: none; margin: 0; padding-bottom: 16px; }
-  .chats-filter-btn {
+  :where(html[data-device="desktop"]) #chatsView .chats-hdr { position: sticky; top: 0; z-index: 3; max-width: none; margin: 0; padding: 14px 16px 8px; gap: 8px; font-size: 20px; font-weight: 800; background: var(--bg); }
+  :where(html[data-device="desktop"]) #chatsView .chats-hdr > span { flex: 1; }
+  :where(html[data-device="desktop"]) #chatsView .chats-list { max-width: none; margin: 0; padding-bottom: 16px; }
+  :where(html[data-device="desktop"]) .chats-filter-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -1102,35 +1100,35 @@ nav.bot-nav #createBtn.nav-center-btn:hover { opacity: .88; box-shadow: none; }
     font-weight: 700;
     color: var(--text);
   }
-  .chats-filter-btn:hover { background: var(--pal-mid-16); }
-  #chatsView .ulist-search-wrap { margin: 4px 16px 10px; padding: 0 16px; height: 44px; border: 1px solid var(--pal-gray-700); border-radius: 999px; background: transparent; }
-  #chatsView .ulist-search-wrap:focus-within { border-color: var(--x-blue, var(--pal-blue)); box-shadow: none; }
-  #chatsListWrap[data-filter="dm"] .grp-rows-section { display: none; }
-  #chatsListWrap[data-filter="groups"] #chatRowsWrap { display: none; }
-  .chats-x-empty.show { display: block; padding: 18vh 24px 0; text-align: center; }
-  .chats-x-empty-title { font-size: 28px; font-weight: 800; color: var(--text); }
-  .chats-x-empty-sub { margin-top: 8px; font-size: 15px; color: var(--text3); }
-  .chats-x-pane { position: fixed; z-index: 39; top: 0; bottom: 0; right: 0; left: calc(var(--sidebar) + var(--chats-w)); align-items: center; justify-content: center; background: var(--bg); }
-  body:has(#chatsView.on) .chats-x-pane { display: flex; }
-  .chats-x-pane-in { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 340px; padding: 0 24px; }
-  .chats-x-pane-ico { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg3, var(--pal-gray-900)); color: var(--text); }
-  .chats-x-pane-title { margin-top: 24px; font-size: 22px; font-weight: 800; color: var(--text); }
-  .chats-x-pane-sub { margin-top: 8px; font-size: 15px; line-height: 1.35; color: var(--text3); }
-  .chats-x-newbtn { margin-top: 20px; padding: 0 22px; height: 40px; background: var(--text); color: var(--bg); border: none; border-radius: 999px; font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer; }
-  .chats-x-newbtn:hover { opacity: .88; }
-  body:has(#chatsView.on) #chatThreadModal { left: calc(var(--sidebar) + var(--chats-w)); border-left: 0.5px solid var(--glass-border); }
-}
+  :where(html[data-device="desktop"]) .chats-filter-btn:hover { background: var(--pal-mid-16); }
+  :where(html[data-device="desktop"]) #chatsView .ulist-search-wrap { margin: 4px 16px 10px; padding: 0 16px; height: 44px; border: 1px solid var(--pal-gray-700); border-radius: 999px; background: transparent; }
+  :where(html[data-device="desktop"]) #chatsView .ulist-search-wrap:focus-within { border-color: var(--x-blue, var(--pal-blue)); box-shadow: none; }
+  :where(html[data-device="desktop"]) #chatsListWrap[data-filter="dm"] .grp-rows-section { display: none; }
+  :where(html[data-device="desktop"]) #chatsListWrap[data-filter="groups"] #chatRowsWrap { display: none; }
+  :where(html[data-device="desktop"]) .chats-x-empty.show { display: block; padding: 18vh 24px 0; text-align: center; }
+  :where(html[data-device="desktop"]) .chats-x-empty-title { font-size: 28px; font-weight: 800; color: var(--text); }
+  :where(html[data-device="desktop"]) .chats-x-empty-sub { margin-top: 8px; font-size: 15px; color: var(--text3); }
+  :where(html[data-device="desktop"]) .chats-x-pane { position: fixed; z-index: 39; top: 0; bottom: 0; right: 0; left: calc(var(--sidebar) + var(--chats-w)); align-items: center; justify-content: center; background: var(--bg); }
+  :where(html[data-device="desktop"]) body:has(#chatsView.on) .chats-x-pane { display: flex; }
+  :where(html[data-device="desktop"]) .chats-x-pane-in { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 340px; padding: 0 24px; }
+  :where(html[data-device="desktop"]) .chats-x-pane-ico { width: 96px; height: 96px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg3, var(--pal-gray-900)); color: var(--text); }
+  :where(html[data-device="desktop"]) .chats-x-pane-title { margin-top: 24px; font-size: 22px; font-weight: 800; color: var(--text); }
+  :where(html[data-device="desktop"]) .chats-x-pane-sub { margin-top: 8px; font-size: 15px; line-height: 1.35; color: var(--text3); }
+  :where(html[data-device="desktop"]) .chats-x-newbtn { margin-top: 20px; padding: 0 22px; height: 40px; background: var(--text); color: var(--bg); border: none; border-radius: 999px; font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer; }
+  :where(html[data-device="desktop"]) .chats-x-newbtn:hover { opacity: .88; }
+  :where(html[data-device="desktop"]) body:has(#chatsView.on) #chatThreadModal { left: calc(var(--sidebar) + var(--chats-w)); border-left: 0.5px solid var(--glass-border); }
+
 /* Post tugma: desktop'da ro'yxat OSTIDA (More/Boshqaruv dan keyin), ikonka emas "Post" yozuvi */
-@media (min-width: 1100px) {
-  nav.bot-nav #createBtn.nav-center-btn { order: 1; }
-  nav.bot-nav .sb-bottom { order: 2; }
-}
+
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn { order: 1; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-bottom { order: 2; }
+
 
 /* Mobil (<768px): Post ikonka tugma ro'yxat OSTIDA, akkaunt (avatar) undan pastda */
-@media (max-width: 1099px) {
-  nav.bot-nav #createBtn.nav-center-btn { order: 1; margin: 12px 0 0; }
-  nav.bot-nav .sb-bottom { order: 2; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn { order: 1; margin: 12px 0 0; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-bottom { order: 2; }
+
 /* ─── style (global reset) ─── */
 /* ═══════════════════════════════════════════
    SpaceMR — Master Stylesheet
@@ -1207,11 +1205,11 @@ body {
   box-shadow: 0 0 8px #ffd400;
   flex-shrink: 0;
 }
-@media (min-width: 1100px) {
-  #offlineIndicator {
+
+  :where(html[data-device="desktop"]) #offlineIndicator {
     bottom: 24px;
   }
-}
+
 
 /* ── Cached Badge — liquid glass ── */
 .cached-badge {

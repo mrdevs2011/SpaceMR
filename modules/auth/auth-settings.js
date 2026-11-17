@@ -12,6 +12,7 @@ import { clearAllCache, clearRuntimeCache, getCachedProfile } from '../core/loca
 import { isEphemeralDevice, setEphemeralDevice, flagsSnapshot } from '../core/store/flags.js';
 import { initDeviceSessionsUi, paintDevicesList } from './device-sessions.js';
 import { renderPermissionsUI } from '../settings/permissions.js';
+import { isDesktopDevice } from '../core/device.js';
 
 /* ── Sozlamalar (Settings) sheet — bildirishnoma + hisobni o'chirish ── */
 
@@ -78,14 +79,14 @@ if (settingsBtn) {
     if (settingsOverlay) {
       settingsOverlay.classList.add('show');
       // Desktopda scroll qulflanmasin (side panel)
-      if (!window.matchMedia('(min-width: 1100px)').matches) lockScroll('settingsOverlay');
+      if (!isDesktopDevice()) lockScroll('settingsOverlay');
       try { window.dispatchEvent(new Event('spacemr:route')); } catch (_) {}
     }
   };
 }
 
 function isDesktopSettingsPinned() {
-  return window.matchMedia('(min-width: 1100px)').matches &&
+  return isDesktopDevice() &&
     (state.view === 'profile' || document.body.classList.contains('desktop-settings-pinned'));
 }
 

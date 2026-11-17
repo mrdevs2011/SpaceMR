@@ -49,7 +49,7 @@ globalThis.fetch = mockFetch;
 globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 globalThis.HTMLElement = dom.window.HTMLElement;
-try { Object.defineProperty(globalThis, 'navigator', { value: dom.window.navigator, configurable: true }); } catch (_) {}
+try { Object.defineProperty(globalThis, 'navigator', { value: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148', maxTouchPoints: 5 }, configurable: true }); } catch (_) {}
 globalThis.innerWidth = 360;
 globalThis.innerHeight = 800;
 globalThis.window.matchMedia = () => ({ matches: false });

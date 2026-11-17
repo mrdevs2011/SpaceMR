@@ -12,6 +12,8 @@ import { extractLogo } from './logo-extract.js';
 import { highlight } from './code-hl.js';
 import { toast } from '../ui/toast.js';
 import { safeLogo, pickRandom, appPath, appCard, launchTile, chips, grouped, railHtml, mobileHome, tabletHome } from './panels.js';
+import { DEVICE, isDesktopDevice } from '../core/device.js';
+import { friendly } from '../core/friendly-error.js';
 
 const $ = id => document.getElementById(id);
 const SLUG_RE = /^[a-z0-9][a-z0-9_-]{2,29}$/;
@@ -74,7 +76,7 @@ export function go(sub) {
 /* ── Chizish ────────────────────────────────────────────────────────── */
 
 /** phone <760, tablet 760–1099, desktop >=1100 (o'ng panel) */
-export const layout = () => window.matchMedia('(min-width: 1100px)').matches ? 'desktop' : window.matchMedia('(min-width: 760px)').matches ? 'tablet' : 'phone';
+export const layout = () => DEVICE;
 const wide = () => layout() === 'desktop';
 let catFilter = '', rndId = '';
 const ctx = () => ({ cats, apps, owners, me: state.me, catById });
@@ -232,7 +234,7 @@ async function openRunner(a, c) {
   const { data, error } = await sb.from('apps').select('html').eq('id', a.id).maybeSingle();
   if (runnerId !== a.id || !el.isConnected) return;   // bu orada yopilgan
   if (error || !data) {
-    body.innerHTML = `<div class="aps-empty"><b>Ilovani yuklab bo'lmadi</b><span>${esc(error?.message || 'Topilmadi')}</span></div>`;
+    body.innerHTML = `<div class="aps-empty"><b>Ilovani yuklab bo'lmadi</b><span>${esc(friendly(error?.message, 'Topilmadi'))}</span></div>`;
     try { window.__spacemrSplashHold = false; (window.__spacemrHideSplash || window.__mrspaceHideSplash)?.('app-preview'); } catch (_) {}
     return;
   }
@@ -297,10 +299,9 @@ function dbErr(e) {
   const m = String(e?.message || e || '');
   if (/duplicate key|unique/i.test(m)) return 'Bu unikal nom band';
   if (/Bu nom band/i.test(m)) return 'Bu unikal nom band';
-  if (/limit/i.test(m)) return m;
   if (/violates foreign key|restrict/i.test(m)) return 'Kategoriyada ilovalar bor — avval ularni o\'chiring';
   if (/row-level security|permission/i.test(m)) return 'Ruxsat yo\'q';
-  return m || 'Xatolik';
+  return friendly(m, 'Saqlanmadi');
 }
 
 function catOptions(sel) {
@@ -776,9 +777,6 @@ export function mountApps() {
     root?.addEventListener('click', onClick);
     root?.addEventListener('input', onSearch);
     $('rrApps')?.addEventListener('click', e => handle(e, $('rrApps')));
-    const onBp = () => { if (state.view === 'apps') render(); };
-    window.matchMedia('(min-width: 1100px)').addEventListener?.('change', onBp);
-    window.matchMedia('(min-width: 760px)').addEventListener?.('change', onBp);
     document.addEventListener('click', onRunnerClick);
     window.addEventListener('apps:path', () => { if (state.view === 'apps') render(); });
   }

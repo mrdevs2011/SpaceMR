@@ -458,7 +458,7 @@ async function _vidToggleTorch() {
   }
   if (!ok) {
     _vidTorchOn = false;
-    toast("Fonarni yoqib bo'lmadi. Orqa kamera + Chrome (HTTPS) kerak", 'error');
+    toast("Fonarni yoqib bo'lmadi. Bu qurilmada orqa kamera kerak", 'error');
   } else {
     _vidTorchOn = want;
     if (want) _vidTorchSeen = true;

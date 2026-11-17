@@ -7,6 +7,7 @@
 import { sb, state, isAdmin } from '../core/config.js';
 import { toast } from '../ui/toast.js';
 import { showConfirm, esc } from '../core/utils.js';
+import { friendly } from '../core/friendly-error.js';
 
 let _initialized = false;
 let _noticeUnsub    = null;
@@ -141,7 +142,7 @@ function _initBroadcast() {
       resultEl.className = 'bc-result ok';
       toast('E\'lon chop etildi', 'success');
     } catch (err) {
-      resultEl.textContent = `Xatolik: ${err.message}`;
+      resultEl.textContent = friendly(err.message, 'Amal bajarilmadi');
       resultEl.className = 'bc-result err';
       toast('Xatolik: ' + err.message, 'error');
     } finally {

@@ -100,7 +100,7 @@ export function renderWipePanel(anchor, onDone) {
         let ok;
         try {
           ok = await askAdmin({
-            title: 'Storage tozalash',
+            title: 'Xotirani tozalash',
             sub: 'Bo\'limni ochish uchun admin parolini kiriting.',
             okLabel: 'Ochish',
           });

@@ -292,11 +292,11 @@
 #profileView .profile-grid .grid-cell { transition: none; }
 #profileView .profile-grid--uniform .grid-cell:hover { transform: none; }
 
-@media (min-width: 1100px) {
-  #profileView { --pf-cover-h: 200px; --pf-avi: 120px; }
-  #profileView .profile-hdr { padding: 0 16px 16px; }
-  #profileView .profile-name { font-size: 20px; }
-}
+
+  :where(html[data-device="desktop"]) #profileView { --pf-cover-h: 200px; --pf-avi: 120px; }
+  :where(html[data-device="desktop"]) #profileView .profile-hdr { padding: 0 16px 16px; }
+  :where(html[data-device="desktop"]) #profileView .profile-name { font-size: 20px; }
+
 
 /* Cover olib tashlandi (rasm yuklash funksiyasi yo'q edi) — avatar tepada */
 #profileView .pf-cover { display: none; }

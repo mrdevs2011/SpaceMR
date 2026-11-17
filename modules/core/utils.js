@@ -1,3 +1,4 @@
+import { DEVICE } from './device.js';
 // test 4: diff uchun izoh
 import { state, sb }  from './config.js';
 import { toast }  from '../ui/toast.js';
@@ -1428,9 +1429,6 @@ export function markdownToPlain(rawText, opts) {
 /** Mobil yoki planshet qurilma ekanligini aniqlash */
 export function isMobileOrTabletDevice() {
   if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const isTouchUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
-  const isSmallTouch = !!(window.matchMedia && window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches);
-  return isTouchUa || isSmallTouch;
+  return DEVICE !== 'desktop';
 }
 

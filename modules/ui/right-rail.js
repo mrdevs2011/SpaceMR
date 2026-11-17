@@ -7,6 +7,7 @@ import { sb, state, mapProfile } from '../core/config.js';
 import { isUidOnline, onlineUids } from '../core/rt-bus.js';
 import { $, esc, defAvi, isOnline } from '../core/utils.js';
 import { groupListItems } from '../chat/groups.js';
+import { isDesktopDevice } from '../core/device.js';
 
 const MAX_ONLINE = 12;
 const MAX_GROUPS = 8;
@@ -32,7 +33,7 @@ export function placeUsersAdmin(isDesktop, view) {
   const desktopHost = document.getElementById('rrUsersAdmin');
   const railEl = rail();
   if (!block || !desktopHost) return;
-  const desk = isDesktop ?? window.matchMedia('(min-width: 1200px)').matches;
+  const desk = isDesktop ?? isDesktopDevice();
   const v = view ?? (state.view || 'home');
   const adminActions = v === 'actions' && desk && !!state.me?.uid;
   if (adminActions) {
@@ -54,8 +55,8 @@ function fit() {
   // home, profile, saved, notifs va qidiruv (explore overlay) da — 3 ustun
   const view = state.view || 'home';
   const exploreOpen = !!document.getElementById('searchOverlay')?.classList.contains('open');
-  const isDesktop = window.matchMedia('(min-width: 1100px)').matches; // sidebar + markaz + rail
-  const isWide = window.matchMedia('(min-width: 1200px)').matches;    // admin (actions) uchun alohida 1100–1199 maket bor
+  const isDesktop = isDesktopDevice(); // sidebar + markaz + rail
+  const isWide = isDesktopDevice();    // admin (actions) uchun alohida 1100–1199 maket bor
   rail()?.classList.toggle('rr-apps-mode', view === 'apps');
   placeUsersAdmin(isWide, view);
   const allowed = view === 'home' || view === 'profile' || view === 'saved' || view === 'notifs' || view === 'apps' || view === 'actions' || exploreOpen;

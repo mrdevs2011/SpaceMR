@@ -24,6 +24,7 @@
  */
 
 export const MAIN_TABS = ['home', 'chats', 'saved', 'profile'];
+import { isDesktopDevice } from '../core/device.js';
 
 // Swipe state machine
 let _swipe = null;
@@ -206,7 +207,7 @@ export function handleSwipeStart(touch, target) {
   }
 
   const settingsOverlay = document.getElementById('settingsOverlay');
-  const isWide = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(min-width: 1100px)').matches;
+  const isWide = isDesktopDevice();
   if (settingsOverlay && settingsOverlay.classList.contains('show') && !isWide && settingsOverlay.contains(target)) {
     _swipe = {
       type: 'settings',
@@ -790,7 +791,7 @@ export function initSwipeNavigation() {
 
   const isNarrowScreen = () => {
     if (typeof window === 'undefined') return true;
-    return window.innerWidth <= 1099;
+    return !isDesktopDevice();
   };
 
   const onMouseDown = (e) => {

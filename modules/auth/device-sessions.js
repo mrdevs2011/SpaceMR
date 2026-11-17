@@ -5,6 +5,7 @@ import { sb, state } from '../core/config.js';
 import { $, esc, showConfirm } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { onEsc } from '../ui/esc-stack.js';
+import { friendly } from '../core/friendly-error.js';
 
 const DEVICE_ID_KEY = 'spacemr_device_id';
 
@@ -472,7 +473,7 @@ export async function paintDevicesList() {
         </div>`;
     }).join('');
   } catch (e) {
-    list.innerHTML = `<div class="dev-loading">Xato: ${esc(e.message || 'yuklanmadi')}</div>`;
+    list.innerHTML = `<div class="dev-loading">${esc(friendly(e.message, 'Yuklanmadi'))}</div>`;
   }
 }
 

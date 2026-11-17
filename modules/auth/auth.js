@@ -16,6 +16,7 @@ import { maybeShowGuideCard } from '../ui/install-guide.js';
 import { showForgotPasswordBtn, hideForgotPasswordBtn, openRecoveryModal } from './auth-recovery.js';
 import { initRegRecovery, openRegRecoveryModal } from './auth-reg-recovery.js';
 import { initAuthPending, showPendingScreen, hidePendingScreen } from './auth-pending.js';
+import { friendly } from '../core/friendly-error.js';
 
 /* ── Server vaqti sinxronizatsiyasi ────────────────────────────────────
    Foydalanuvchi lokal soatini o'zgartirsa ham ban muddati to'g'ri ishlaydi.
@@ -726,7 +727,7 @@ function _showMandatoryPasswordResetModal(me) {
         await _enterApp(me);
       } catch (err) {
         console.error('[MandatoryPwdReset]', err);
-        if (errEl) errEl.textContent = err.message || 'Xatolik yuz berdi';
+        if (errEl) errEl.textContent = friendly(err.message, 'Xatolik yuz berdi');
         shake(_card);
         saveBtn.disabled = false;
         saveBtn.textContent = 'Parolni saqlash va kirish';
@@ -2135,7 +2136,7 @@ if (saveProfileBtn) {
       if (!phoneRes.ok) {
         toast(phoneRes.error, 'error');
         const errEl = $('editPhoneError');
-        if (errEl) { errEl.hidden = false; errEl.textContent = phoneRes.error; }
+        if (errEl) { errEl.hidden = false; errEl.textContent = friendly(phoneRes.error); }
         return;
       }
 
@@ -2163,7 +2164,7 @@ if (saveProfileBtn) {
             return;
           }
           if (uRes && uRes.ok === false) {
-            toast(uRes.message || "Foydalanuvchi nomi o'zgartirilmadi", 'error');
+            toast(friendly(uRes.message, "Foydalanuvchi nomi o'zgartirilmadi"), 'error');
             return;
           }
           newUsername = cleaned;
@@ -2202,7 +2203,7 @@ if (saveProfileBtn) {
         }
 
         if (!pRes?.ok) {
-          toast(pRes?.message || "Parolni o'zgartirishda xatolik", 'error');
+          toast(friendly(pRes?.message, "Parolni o'zgartirishda xatolik"), 'error');
           return;
         }
 

@@ -294,35 +294,26 @@
 #actionsView .ua-approve-btn, #actionsView .ua-reject-btn, #actionsView .ua-block-btn, #actionsView .ua-unblock-btn, #actionsView .ua-history-btn { padding: 9px 14px; font-size: 0.8rem; }
 /* ═══════════════════════════════════════════════════════════════════════ ACTIONS VIEW — DESKTOP (≥1024px) Ik... */
 /* ≥1100: admin kontent markazda; ≥1200 right-rail alohida (boshqa page kabi) */
-@media (min-width: 1100px) and (max-width: 1199px) {
-  #actionsView { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto 1fr; column-gap: 20px; padding: 20px 16px 20px 0; align-items: start; }
-  #actionsView .users-admin-hdr { grid-column: 2; grid-row: 1; padding: 0 0 14px; border-bottom: 1px solid var(--line); }
-  #actionsView #usersAdminList { grid-column: 2; grid-row: 2; padding: 10px 4px 24px 0; }
-  #actionsView .actions-divider { display: none; }
-  #actionsView .ua-row { padding: 14px 16px; }
-  #actionsView .ua-delete-btn { opacity: 0; }
-  #actionsView .ua-row:hover .ua-delete-btn { opacity: 1; }
-  #actionsView .ua-actions { flex-direction: column; gap: 6px; margin-right: 44px; }
-}
-@media (min-width: 1200px) {
-  #actionsView {
+
+
+  :where(html[data-device="desktop"]) #actionsView {
     display: block;
     padding: 12px 0 24px;
     box-sizing: border-box;
   }
-  #actionsView .users-admin-hdr {
+  :where(html[data-device="desktop"]) #actionsView .users-admin-hdr {
     padding: 0 16px 14px;
     border-bottom: 1px solid var(--line);
   }
-  #actionsView #usersAdminList {
+  :where(html[data-device="desktop"]) #actionsView #usersAdminList {
     padding: 10px 8px 24px;
   }
-  #actionsView .actions-divider { display: flex; }
-  #actionsView .ua-row { padding: 14px 16px; }
-  #actionsView .ua-delete-btn { opacity: 0; }
-  #actionsView .ua-row:hover .ua-delete-btn { opacity: 1; }
-  #actionsView .ua-actions { flex-direction: row; flex-wrap: wrap; gap: 6px; margin-right: 44px; }
-}
+  :where(html[data-device="desktop"]) #actionsView .actions-divider { display: flex; }
+  :where(html[data-device="desktop"]) #actionsView .ua-row { padding: 14px 16px; }
+  :where(html[data-device="desktop"]) #actionsView .ua-delete-btn { opacity: 0; }
+  :where(html[data-device="desktop"]) #actionsView .ua-row:hover .ua-delete-btn { opacity: 1; }
+  :where(html[data-device="desktop"]) #actionsView .ua-actions { flex-direction: row; flex-wrap: wrap; gap: 6px; margin-right: 44px; }
+
 /* ═══════════════════════════════════════════════════════════════════════ ADMIN PANEL — SOLID UI ════════════... */
 /* Glass variables */
 /* Admin row — solid card */
@@ -351,10 +342,10 @@
 .ua-badge--approved { box-shadow: 0 0 12px var(--pal-gray-800); }
 .ua-badge--blocked { box-shadow: 0 0 12px var(--pal-gray-800); }
 /* Actions view desktop — solid cards */
-@media (min-width: 1100px) {
-  #actionsView .ua-row { background: var(--ag-glass); border: 0.5px solid var(--ag-border-side); border-radius: var(--radius); box-shadow: var(--ag-specular), 0 2px 12px var(--pal-black); margin-bottom: 8px; }
-  #actionsView .ua-row:hover { background: var(--ag-glass-mid); border-color: var(--ag-border-top); box-shadow: var(--ag-specular), var(--ag-shadow-hover); }
-}
+
+  :where(html[data-device="desktop"]) #actionsView .ua-row { background: var(--ag-glass); border: 0.5px solid var(--ag-border-side); border-radius: var(--radius); box-shadow: var(--ag-specular), 0 2px 12px var(--pal-black); margin-bottom: 8px; }
+  :where(html[data-device="desktop"]) #actionsView .ua-row:hover { background: var(--ag-glass-mid); border-color: var(--ag-border-top); box-shadow: var(--ag-specular), var(--ag-shadow-hover); }
+
 /* ─── admin-plain ─── */
 /* ═══════════════════════════════════════════════════════════════════════ ADMIN PANEL — SpaceMR uslubida (odd... */
 #actionsView { font-size: 13px; font-family: var(--font); }
@@ -862,24 +853,21 @@
   background: color-mix(in srgb, var(--red, #f4212e) 12%, transparent) !important;
   color: var(--red, #f4212e) !important;
 }
-@media (min-width: 1200px) {
+
   /* host bo'sh qolsa joy olmaydi */
-  #actionsUsersHost:empty { display: none; }
-}
+  :where(html[data-device="desktop"]) #actionsUsersHost:empty { display: none; }
+
 
 
 /* Desktop admin: users FAQAT right-rail (JS ko'chiradi + CSS yashiradi) */
-@media (min-width: 1200px) {
-  body.rr-admin-users #actionsUsersHost,
-  body.rr-admin-users #actionsUsersHost[data-rr-moved] {
+
+  :where(html[data-device="desktop"]) body.rr-admin-users #actionsUsersHost, :where(html[data-device="desktop"]) body.rr-admin-users #actionsUsersHost[data-rr-moved] {
     display: none !important;
   }
-  body.rr-admin-users .right-rail > .rr-card,
-  body.rr-admin-users .right-rail > #rrApps {
+  :where(html[data-device="desktop"]) body.rr-admin-users .right-rail > .rr-card, :where(html[data-device="desktop"]) body.rr-admin-users .right-rail > #rrApps {
     display: none !important;
   }
-  body.rr-admin-users #rrUsersAdmin,
-  .right-rail.rr-actions-mode #rrUsersAdmin {
+  :where(html[data-device="desktop"]) body.rr-admin-users #rrUsersAdmin, :where(html[data-device="desktop"]) .right-rail.rr-actions-mode #rrUsersAdmin {
     display: flex !important;
     flex-direction: column;
     flex: 1;
@@ -887,10 +875,10 @@
     overflow: hidden;
     height: 100%;
   }
-  body.rr-admin-users .right-rail.rr-actions-mode {
+  :where(html[data-device="desktop"]) body.rr-admin-users .right-rail.rr-actions-mode {
     padding-top: 0;
   }
-}
+
 
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1025,8 +1013,8 @@
 }
 
 /* ── Desktop ≥1200: center NO page scroll; only right-rail users scroll ── */
-@media (min-width: 1200px) {
-  #actionsView.on {
+
+  :where(html[data-device="desktop"]) #actionsView.on {
     position: fixed !important;
     top: 12px;
     bottom: 12px;
@@ -1047,58 +1035,58 @@
     z-index: 30;
   }
   /* Center ichida faqat kompakt kontent — scroll kerak emas */
-  #actionsView.on .adm-page-hdr {
+  :where(html[data-device="desktop"]) #actionsView.on .adm-page-hdr {
     flex-shrink: 0;
     padding: 16px 18px 12px;
     border-bottom: 1px solid var(--line);
   }
-  #actionsView.on .adm-card {
+  :where(html[data-device="desktop"]) #actionsView.on .adm-card {
     margin: 12px 14px 0;
     flex-shrink: 0;
   }
-  #actionsView.on #admSystemCard {
+  :where(html[data-device="desktop"]) #actionsView.on #admSystemCard {
     margin-bottom: 14px;
     overflow-y: auto;
     max-height: none;
   }
   /* Agar juda baland bo'lsa — center ichida yumshoq scroll (kam hollarda) */
-  #actionsView.on {
+  :where(html[data-device="desktop"]) #actionsView.on {
     overflow-y: auto !important;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
   /* Users host markazda yo'q */
-  body.rr-admin-users #actionsView.on #actionsUsersHost {
+  :where(html[data-device="desktop"]) body.rr-admin-users #actionsView.on #actionsUsersHost {
     display: none !important;
   }
   /* Right-rail users to'liq balandlik + scroll */
-  body.rr-admin-users .right-rail.rr-actions-mode {
+  :where(html[data-device="desktop"]) body.rr-admin-users .right-rail.rr-actions-mode {
     overflow: hidden;
     display: flex;
     flex-direction: column;
     padding: 0 0 12px;
   }
-  body.rr-admin-users #rrUsersAdmin {
+  :where(html[data-device="desktop"]) body.rr-admin-users #rrUsersAdmin {
     flex: 1;
     min-height: 0;
     display: flex !important;
     flex-direction: column;
     overflow: hidden;
   }
-  body.rr-admin-users .rr-users-admin .users-admin-list {
+  :where(html[data-device="desktop"]) body.rr-admin-users .rr-users-admin .users-admin-list {
     flex: 1;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
-  body.rr-admin-users .rr-users-admin .users-admin-hdr {
+  :where(html[data-device="desktop"]) body.rr-admin-users .rr-users-admin .users-admin-hdr {
     padding: 14px 14px 12px;
   }
-  body.rr-admin-users .rr-users-admin .users-admin-hdr h2 {
+  :where(html[data-device="desktop"]) body.rr-admin-users .rr-users-admin .users-admin-hdr h2 {
     font-size: 18px;
     font-weight: 800;
   }
-}
+
 
 
 /* ── Admin users: 3-dots menu, hover tools, status borders ── */

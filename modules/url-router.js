@@ -43,6 +43,7 @@ import { handleOverlayPopState } from './ui/overlay-stack.js';
 
 import { state, sb } from './core/config.js';
 import { navigateTo, getCurrentRoute } from './router.js';
+import { isDesktopDevice } from './core/device.js';
 
 const $ = id => document.getElementById(id);
 
@@ -164,7 +165,7 @@ async function ensureGroupMember(gid) {
   } catch (_) { return true; }
 }
 
-const isWideDesktop = () => window.matchMedia('(min-width: 1100px)').matches;
+const isWideDesktop = () => isDesktopDevice();
 function settingsPinned() { return document.body.classList.contains('desktop-settings-pinned'); }
 
 // true = so'nggi qidiruv tarmoq/server xatosi bilan tugadi (bu "topilmadi" EMAS — 404 ko'rsatilmaydi)
@@ -698,7 +699,7 @@ async function _applyPathImpl(rawPath, { initial = false } = {}) {
       await closeThreadIfOpen();
       let baseView = route.overlay === 'groupcreate' ? 'chats'
         : (initial || getCurrentRoute() === 'actions' ? route.base : (getCurrentRoute() || route.base));
-      if (route.overlay === 'settings' && window.matchMedia('(min-width: 1100px)').matches) baseView = 'profile';
+      if (route.overlay === 'settings' && isDesktopDevice()) baseView = 'profile';
       if (getCurrentRoute() !== baseView) navigateTo(baseView, false);
       closeEverythingExcept(route.overlay);
       await openOverlay(route.overlay, route.section);

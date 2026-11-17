@@ -4,12 +4,7 @@
  */
 let _toastTimer = null;
 
-const TECHNICAL_PATTERNS = [
-  { re: /failed to fetch|networkerror|net::|load failed|err_internet|offline/i, text: "Internet yo'q, qayta urinib ko'ring", type: 'error' },
-  { re: /server|503|502|500|timeout|timed out|gateway/i, text: "Server javob bermadi, birozdan keyin urinib ko'ring", type: 'error' },
-  { re: /permission|forbidden|401|403|RLS|policy|unauthorized/i, text: "Bu amalga ruxsat yo'q", type: 'error' },
-  { re: /null is not an object|undefined is not an object|cannot read properties|typeerror|referenceerror/i, text: "Kutilmagan xatolik yuz berdi", type: 'error' },
-];
+import { friendly, isTechnical } from '../core/friendly-error.js';
 
 function _logTech(raw) {
   try {
@@ -25,15 +20,11 @@ export function toast(msg, type = 'info', dur = 2400) {
   let displayMsg = raw;
   let toastType = type || 'info';
 
-  // Texnik xatolarni inson tushunadigan o'zbekchaga o'giramiz
-  const techHit = TECHNICAL_PATTERNS.find(p => p.re.test(raw));
-  if (techHit) {
-    displayMsg = techHit.text;
-    toastType = techHit.type;
-    _logTech(raw);
-  } else if (toastType === 'error' && /error|exception|fail/i.test(raw) && !/[a-z]'/i.test(raw)) {
-    // Faqat inglizcha xom xatolar bo'lsa
-    displayMsg = 'Amal bajarilmadi';
+  // Texnik gap (Supabase, Storage, HTTP, SQL...) hech qachon ekranga chiqmaydi
+  const rawEnglishErr = toastType === 'error' && /error|exception|fail/i.test(raw) && !/[a-z]'/i.test(raw);
+  if (isTechnical(raw) || rawEnglishErr) {
+    displayMsg = friendly(isTechnical(raw) ? raw : 'xato: failed');
+    toastType = 'error';
     _logTech(raw);
   }
 

@@ -5,6 +5,7 @@
  */
 import { sb, state, verifyPassword } from '../core/config.js';
 import { lockScroll, unlockScroll } from '../core/utils.js';
+import { friendly } from '../core/friendly-error.js';
 
 export function askPassword({
   title = 'Parolni kiriting',
@@ -53,7 +54,7 @@ export function askPassword({
         done(true);
       } catch (e) {
         ok.disabled = false;
-        err.textContent = e.code === 'wrong-password' ? "Parol noto'g'ri" : (e.message || 'Xato');
+        err.textContent = e.code === 'wrong-password' ? "Parol noto'g'ri" : friendly(e.message, 'Xatolik yuz berdi');
         inp.select();
       }
     };

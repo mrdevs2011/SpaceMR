@@ -28,7 +28,7 @@ export async function refreshStorageUsage() {
     if (error) throw error;
     _paint(box, Number(data) || 0);
   } catch (_) {
-    box.textContent = "Storage sarfi hisoblanmadi (DB patch 015 ishga tushirilmagan).";
+    box.textContent = "Xotira sarfi hisoblanmadi.";
   }
 }
 
@@ -43,7 +43,7 @@ export async function renderStorageUsage(anchor) {
     if (anchor.id === 'admSystemMount') anchor.appendChild(box);
     else anchor.insertAdjacentElement('afterend', box);
   }
-  box.textContent = 'Storage hisoblanmoqda…';
+  box.textContent = 'Xotira hisoblanmoqda…';
   await refreshStorageUsage();
   // Realtime hisobi yo'q (storage.objects realtime emas) — panel ochiq paytda polling
   if (_poll) clearInterval(_poll);

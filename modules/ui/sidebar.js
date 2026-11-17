@@ -7,6 +7,7 @@ import { state } from '../core/config.js';
 import { $, esc, defAvi, lockScroll } from '../core/utils.js';
 import { onEsc } from './esc-stack.js';
 import { navigateTo } from '../router.js';
+import { isDesktopDevice } from '../core/device.js';
 
 let _sig = '';
 
@@ -41,7 +42,7 @@ function openMenu() {
   const box = $('sbAccount');
   if (!box) return;
   const r = box.getBoundingClientRect();
-  const wide = window.matchMedia('(min-width: 1100px)').matches;
+  const wide = isDesktopDevice();
 
   _menu = document.createElement('div');
   _menu.className = 'sb-acc-menu';
@@ -106,14 +107,14 @@ export function openProfileSettings() {
     if (!ov.classList.contains('show')) {
       // Mobil: asosiy yo'l — profil sahifasidagi gear tugmasi bilan bir xil (populate + scroll lock)
       const gear = document.getElementById('settingsBtn');
-      if (gear && !window.matchMedia('(min-width: 1100px)').matches) {
+      if (gear && !isDesktopDevice()) {
         gear.click();
       } else {
         import('../auth/auth.js').then(m => { try { m.populateProfileForm?.(); } catch(_){} }).catch(()=>{});
         ov.classList.add('show');
       }
     }
-    if (window.matchMedia('(min-width: 1100px)').matches) {
+    if (isDesktopDevice()) {
       document.body.classList.add('desktop-settings-pinned');
     } else {
       lockScroll('settingsOverlay');

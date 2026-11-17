@@ -126,7 +126,7 @@ export const PERMISSIONS_CONFIG = {
     queryName: null,
     async request() {
       if (!('showDirectoryPicker' in window)) {
-        throw new Error("Brauzeringiz File System Access API ni qo'llab-quvvatlamaydi");
+        throw new Error("Bu brauzer galereyaga kirishni qo'llab-quvvatlamaydi");
       }
       const dirHandle = await window.showDirectoryPicker({ mode: 'read', startIn: 'pictures' });
       if (!isAllowedGalleryFolder(dirHandle)) {

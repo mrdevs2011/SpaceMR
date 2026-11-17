@@ -8,6 +8,7 @@
      * Pastki paneldagi qulay pill tugmalar: Fayl, So‘rovnoma, Joylashuv
    - Desktop (Kompyuter / Noutbuk): Skrepka tugmasi ustida ochiluvchi ixcham dropdown. */
 
+import { DEVICE } from '../core/device.js';
 import { hasCameraDevice } from '../chat/camera-access.js';
 import { openCameraCapture } from '../chat/camera-capture.js';
 import { openPollModal } from './poll-dialog.js';
@@ -397,10 +398,7 @@ async function _saveRecentMedia(files) {
 /** Mobil yoki planshet qurilma ekanligini aniqlash */
 export function isMobileOrTabletDevice() {
   if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  const isTouchUa = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Tablet/i.test(ua);
-  const isSmallTouch = window.matchMedia('(max-width: 1024px) and (pointer: coarse)').matches;
-  return isTouchUa || isSmallTouch;
+  return DEVICE !== 'desktop';
 }
 
 /** Yopish va barcha oqimlarni to‘xtatish */
@@ -1244,7 +1242,7 @@ export function initAttachMenu({
         if (!('showDirectoryPicker' in window)) {
           galleryLoader.style.display = 'none';
           isDcimLoading = false;
-          toast("Brauzeringiz File System Access API ni qo'llab-quvvatlamaydi", 'info');
+          toast("Bu brauzer galereyaga kirishni qo'llab-quvvatlamaydi", 'info');
           galleryPicker.click();
           return;
         }
@@ -1710,7 +1708,8 @@ export function initAttachMenu({
       // 0ms da darhol ochiladi (kutish yo'q!)
       openMobileDrawer(dyn);
     } else {
-      openDesktopDropdown(dyn);
+      // Desktop: hech qanday dropdown yo'q — to'g'ridan-to'g'ri fayl menejeri ochiladi.
+      try { filePicker.click(); } catch (_) {}
     }
   };
   btn.addEventListener('click', btn._attachHandler);

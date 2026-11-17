@@ -6,6 +6,7 @@ import { toast }                   from '../ui/toast.js';
 import { rateOk }                  from '../core/rate-limit.js';
 import { busEmit, busOn }          from '../core/rt-bus.js';
 import { onEsc }                   from '../ui/esc-stack.js';
+import { isDesktopDevice } from '../core/device.js';
 
 /* ── Duplicate load oldini olish ──────────────────────────────────────── */
 let _loading = false;
@@ -13,7 +14,7 @@ let _myName = null;
 let _mode = null; // 'inline' | 'rail'
 
 function isDesktopCmt() {
-  return window.matchMedia('(min-width: 1100px)').matches;
+  return isDesktopDevice();
 }
 
 /* Yuborish tugmasi: matn bo'sh bo'lsa o'chiq (X kabi 50%) */

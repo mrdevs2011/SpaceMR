@@ -67,12 +67,12 @@ body {
 .post:hover { border-color: var(--line); }
 /* 5. Header va navigatsiya: ingichka chiziq */
 .app-hdr, [data-theme="dark"] .app-hdr { background: var(--bg); border-bottom: 1px solid var(--line); }
-@media (max-width: 1099px) {
-  .bot-nav { border-top: 1px solid var(--line); }
-}
-@media (min-width: 1100px) {
-  nav.bot-nav { box-sizing: border-box; box-sizing: border-box; border-right: 1px solid var(--line); }
-}
+
+  :where(html:not([data-device="desktop"])) .bot-nav { border-top: 1px solid var(--line); }
+
+
+  :where(html[data-device="desktop"]) nav.bot-nav { box-sizing: border-box; box-sizing: border-box; border-right: 1px solid var(--line); }
+
 /* Sidebar Post tugmasi va hover: yangi palitraga moslash */
 nav.bot-nav #createBtn.nav-center-btn { color: var(--bg); }
 nav.bot-nav .nav-btn:hover, nav.bot-nav .sb-account:hover { background: var(--bg4); }
@@ -133,9 +133,9 @@ a { color: var(--link); }
 /* Sidebar tuzatishlari ─────────────────────────────────────────────── Faol tugma ostidagi chiziq/nur (ui-imp... */
 .nav-btn.on::before, nav.bot-nav .nav-btn.on::before { content: none; display: none; }
 /* Logotip markazi ikonkalar markaziga tushsin */
-@media (min-width: 1100px) {
-  nav.bot-nav .sb-top { padding-left: 0; }
-}
+
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-top { padding-left: 0; }
+
 /* Modal / sheet: sahifa bilan BIR XIL rang ─────────────────────────── Oldin card-sheets.css va post-composer... */
 .overlay, [data-theme] .overlay, #uploadOverlay, :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) { background: var(--overlay); }
 .sheet, [data-theme] .sheet, #uploadOverlay .composer-sheet, :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet { background: var(--bg); }
@@ -148,23 +148,23 @@ a { color: var(--link); }
 /* Post: kartasiz qator (hamma kenglikda) */
 .post, [data-theme] .post { margin-bottom: 0; box-shadow: none; }
 /* Mobil / planshet: o'rtaga moslangan lenta */
-@media (max-width: 1099px) {
-  .feed, #followingView .feed { max-width: 600px; margin: 0 auto; padding: 0 0 calc(var(--nav, 60px) + 16px) 0; border: none; width: 100%; }
-  #homeComposer { max-width: 600px; margin: 0 auto; width: 100%; }
-  nav.bot-nav { box-sizing: border-box; border: none; border-top: 1px solid var(--line); }
-}
+
+  :where(html:not([data-device="desktop"])) .feed, :where(html:not([data-device="desktop"])) #followingView .feed { max-width: 600px; margin: 0 auto; padding: 0 0 calc(var(--nav, 60px) + 16px) 0; border: none; width: 100%; }
+  :where(html:not([data-device="desktop"])) #homeComposer { max-width: 600px; margin: 0 auto; width: 100%; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav { box-sizing: border-box; border: none; border-top: 1px solid var(--line); }
+
 /* Desktop/planshet: markaz ustun */
-@media (min-width: 1100px) {
-  :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #savedView.on, #appsView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
-  .feed, #followingView .feed { max-width: var(--center-w); padding: 0; min-height: 100dvh; }
-}
+
+  :root:where([data-device="desktop"]) { --center-w: 600px; }
+  :where(html[data-device="desktop"]) #homeView.on, :where(html[data-device="desktop"]) #followingView.on, :where(html[data-device="desktop"]) #savedView.on, :where(html[data-device="desktop"]) #appsView.on { padding-top: var(--hdr, 52px); padding-bottom: 0; }
+  :where(html[data-device="desktop"]) .feed, :where(html[data-device="desktop"]) #followingView .feed { max-width: var(--center-w); padding: 0; min-height: 100dvh; }
+
 /* Keng ekran (≥1260px): sidebar + markaz + o'ng ustun, butun guruh markazda */
-@media (min-width: 1260px) {
-  :root { --gutter: max(0px, calc((100vw - 1266px) / 2)); --sidebar: calc(300px + var(--gutter)); --content-left: var(--sidebar); }
-  nav.bot-nav { box-sizing: border-box; padding-left: calc(12px + var(--gutter)); }
-  .feed, #followingView .feed { margin: 0; }
-}
+
+  :root:where([data-device="desktop"]) { --gutter: max(0px, calc((100vw - 1266px) / 2)); --sidebar: calc(300px + var(--gutter)); --content-left: var(--sidebar); }
+  :where(html[data-device="desktop"]) nav.bot-nav { box-sizing: border-box; padding-left: calc(12px + var(--gutter)); }
+  :where(html[data-device="desktop"]) .feed, :where(html[data-device="desktop"]) #followingView .feed { margin: 0; }
+
 /* O'ng ustun tarkibi */
 /* Mobile header YOQILDI — logo + saved + notif + search + avi */
 .app-hdr { display: flex !important; }
@@ -395,12 +395,12 @@ a { color: var(--link); }
 .act-btn.share-btn:hover { color: var(--x-blue, var(--pal-white)); }
 .act-btn.share-btn:hover svg, .act-btn.share-btn:hover img.icon { background: none !important; opacity: 0.85; filter: brightness(1.25); }
 /* features.css dagi negative margin media ni sindirmasin */
-@media (min-width: 0) {
+
   .post-media, [data-theme] .post-media {
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-}
+
 .act-btn {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px;
   padding: 0; border: none; border-radius: 999px; background: none;
@@ -455,31 +455,31 @@ nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle, nav.bot-nav .sb-logo-row, n
 nav.bot-nav .nav-btn svg, nav.bot-nav .sb-search-toggle svg , nav.bot-nav .nav-btn img.icon, nav.bot-nav .sb-search-toggle img.icon { fill: none; stroke: currentColor; color: var(--text); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 nav.bot-nav .nav-btn.on svg, nav.bot-nav #sbSearchToggle.search-active svg , nav.bot-nav .nav-btn.on img.icon, nav.bot-nav #sbSearchToggle.search-active img.icon { stroke-width: 2.4; }
 /* Pastki nav (mobil + planshet): tugmalar 48x48 kvadrat + 24px radius = aniq doira (new post kabi) */
-@media (max-width: 1099px) {
-  nav.bot-nav { box-sizing: border-box; gap: 0; }
-  nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { flex: 0 0 auto; width: 48px; height: 48px; min-height: 48px; border-radius: var(--radius); }
-  nav.bot-nav .nav-btn:hover, nav.bot-nav .nav-btn:active { background: var(--bg4); }
-}
-@media (max-width: 1099px) {
-  :root { --nav: calc(56px + env(safe-area-inset-bottom, 0px)); --rail: 0px; --sidebar: 0px; --content-left: 0px; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav { box-sizing: border-box; gap: 0; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-search-toggle { flex: 0 0 auto; width: 48px; height: 48px; min-height: 48px; border-radius: var(--radius); }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn:hover, :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn:active { background: var(--bg4); }
+
+
+  :root:where(:not([data-device="desktop"])) { --nav: calc(56px + env(safe-area-inset-bottom, 0px)); --rail: 0px; --sidebar: 0px; --content-left: 0px; }
+
 /* Keng sidebar (>=1100px) */
-@media (min-width: 1100px) {
-  :root { --sidebar: 300px; --content-left: 300px; }
-  nav.bot-nav { box-sizing: border-box; gap: 0; width: 300px !important; min-width: 280px !important; }
-  nav.bot-nav .sb-logo-row { width: auto; height: auto; min-height: 50px; }
-  nav.bot-nav .sb-logo-img { width: 30px; height: 30px; }
-  nav.bot-nav .nav-btn, nav.bot-nav .sb-search-toggle { height: 50px; padding: 0 12px 0 10px; gap: 14px; border-radius: 999px; min-width: 0; }
-  nav.bot-nav .nav-btn svg, nav.bot-nav .sb-search-toggle svg ,   nav.bot-nav .nav-btn img.icon, nav.bot-nav .sb-search-toggle img.icon { width: 24px; height: 24px; flex-shrink: 0; }
-  nav.bot-nav .nav-btn .nav-label { font-family: var(--font); font-size: 16px; line-height: 20px; font-weight: 400; letter-spacing: 0; white-space: nowrap; overflow: visible; text-overflow: clip; flex-shrink: 0; }
-  nav.bot-nav .nav-btn.on .nav-label, nav.bot-nav #sbSearchToggle.search-active .nav-label { font-weight: 700; }
-  nav.bot-nav .nav-btn:hover { background: var(--bg4); }
-  nav.bot-nav #createBtn.nav-center-btn { height: 52px; margin: 16px 0; }
-  nav.bot-nav #createBtn.nav-center-btn .sb-create-label { font-family: var(--font); font-size: 17px; line-height: 20px; font-weight: 700; }
-  nav.bot-nav .sb-account { padding: 12px; margin-bottom: 12px; }
-  nav.bot-nav .sb-account:hover { background: var(--bg4); }
-  nav.bot-nav .sb-acc-name, nav.bot-nav .sb-acc-user { font-size: 15px; line-height: 20px; }
-}
+
+  :root:where([data-device="desktop"]) { --sidebar: 300px; --content-left: 300px; }
+  :where(html[data-device="desktop"]) nav.bot-nav { box-sizing: border-box; gap: 0; width: 300px !important; min-width: 280px !important; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-row { width: auto; height: auto; min-height: 50px; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-img { width: 30px; height: 30px; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle { height: 50px; padding: 0 12px 0 10px; gap: 14px; border-radius: 999px; min-width: 0; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn svg, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle svg, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn img.icon, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle img.icon { width: 24px; height: 24px; flex-shrink: 0; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn .nav-label { font-family: var(--font); font-size: 16px; line-height: 20px; font-weight: 400; letter-spacing: 0; white-space: nowrap; overflow: visible; text-overflow: clip; flex-shrink: 0; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on .nav-label, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active .nav-label { font-weight: 700; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn:hover { background: var(--bg4); }
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn { height: 52px; margin: 16px 0; }
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn .sb-create-label { font-family: var(--font); font-size: 17px; line-height: 20px; font-weight: 700; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-account { padding: 12px; margin-bottom: 12px; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-account:hover { background: var(--bg4); }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-name, :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-user { font-size: 15px; line-height: 20px; }
+
 /* ═══════════════════════════════════════════════════════════════════════ X 1:1 — aniq X ranglari va komponen... */
 ::selection { color: #ffffff !important; background: #1d9bf0 !important; }
 ::-moz-selection { color: #ffffff !important; background: #1d9bf0 !important; }
@@ -593,13 +593,13 @@ nav.bot-nav #createBtn.nav-center-btn *,
 }
 .search-overlay.open { top: 0; }
 [data-theme] .search-overlay-inner { position: relative; width: 100%; max-width: var(--center-w, 600px); margin: 0 auto; gap: 0; padding: 0; transform: none; background: transparent; border: none; box-shadow: none; }
-@media (min-width: 1100px) {
-  [data-theme] .search-overlay-inner { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
-}
-@media (min-width: 1260px) {
-  [data-theme] .search-overlay { right: auto; width: var(--center-w, 600px); }
-  [data-theme] .search-overlay-inner { border-left: none; }
-}
+
+  :where(html[data-device="desktop"]) [data-theme] .search-overlay-inner { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+
+
+  :where(html[data-device="desktop"]) [data-theme] .search-overlay { right: auto; width: var(--center-w, 600px); }
+  :where(html[data-device="desktop"]) [data-theme] .search-overlay-inner { border-left: none; }
+
 /* Panel + pill maydon */
 [data-theme] .search-overlay-box { position: relative; display: block; height: 53px; padding: 4px 16px; background: transparent; border: none; border-radius: 0; box-shadow: none; }
 [data-theme] .search-overlay-box input { width: 100%; height: 44px; padding: 0 48px 0 52px; background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 999px; font-size: 15px; box-shadow: none; }
@@ -771,17 +771,17 @@ nav.bot-nav #createBtn.nav-center-btn *,
 html, body, #app, .app { background: var(--pal-black); background-color: var(--pal-black); color: var(--pal-gray-100); }
 .view.on, .feed, #homeView, #followingView, #reelsView, #profileView, #chatsView { background: transparent; }/* Right-rail — chegarali karta, feed bilan 16px oraliq */
 .right-rail { display: none; }
-@media (min-width: 1100px) {
-  :root { --center-w: 600px; }
-  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
-  .feed, #followingView .feed { max-width: var(--center-w); width: 100%; margin: 0; }
-  [data-theme] .search-overlay, [data-theme="dark"] .search-overlay, .search-overlay {
+
+  :root:where([data-device="desktop"]) { --center-w: 600px; }
+  :where(html[data-device="desktop"]) #homeView.on, :where(html[data-device="desktop"]) #followingView.on, :where(html[data-device="desktop"]) #profileView.on, :where(html[data-device="desktop"]) #savedView.on, :where(html[data-device="desktop"]) #appsView.on, :where(html[data-device="desktop"]) #actionsView.on { margin-left: var(--content-left, var(--sidebar, 260px)); margin-right: 0; width: var(--center-w); max-width: var(--center-w); box-sizing: border-box; }
+  :where(html[data-device="desktop"]) .feed, :where(html[data-device="desktop"]) #followingView .feed { max-width: var(--center-w); width: 100%; margin: 0; }
+  :where(html[data-device="desktop"]) [data-theme] .search-overlay, :where(html[data-device="desktop"]) [data-theme="dark"] .search-overlay, :where(html[data-device="desktop"]) .search-overlay {
     left: var(--content-left, var(--sidebar, 260px));
     right: auto;
     width: var(--center-w);
     max-width: var(--center-w);
   }
-  .right-rail {
+  :where(html[data-device="desktop"]) .right-rail {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -807,20 +807,20 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     scrollbar-width: thin;
   }
-  .right-rail[hidden], #rightRail[hidden] { display: none !important; }
-  .rr-settings-wrap { position: sticky; bottom: 0; margin-top: auto; padding: 12px 0 4px; background: transparent; z-index: 1; }
-  .rr-settings-wrap[hidden] { display: none; }
-  .rr-settings-btn {
+  :where(html[data-device="desktop"]) .right-rail[hidden], :where(html[data-device="desktop"]) #rightRail[hidden] { display: none !important; }
+  :where(html[data-device="desktop"]) .rr-settings-wrap { position: sticky; bottom: 0; margin-top: auto; padding: 12px 0 4px; background: transparent; z-index: 1; }
+  :where(html[data-device="desktop"]) .rr-settings-wrap[hidden] { display: none; }
+  :where(html[data-device="desktop"]) .rr-settings-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
     padding: 12px 16px; border: 1px solid var(--line); border-radius: 999px;
     background: transparent; color: var(--text); font: 700 15px var(--font); cursor: pointer;
     transition: background .15s ease;
   }
-  .rr-settings-btn:hover { background: rgba(231, 233, 234, 0.05); }
-  #chatsView, #reelsView, #actionsView { margin-right: 0; }
+  :where(html[data-device="desktop"]) .rr-settings-btn:hover { background: rgba(231, 233, 234, 0.05); }
+  :where(html[data-device="desktop"]) #chatsView, :where(html[data-device="desktop"]) #reelsView, :where(html[data-device="desktop"]) #actionsView { margin-right: 0; }
 
   /* ── CHAT (≥1200px): suhbat MARKAZDA (feed kabi), ro'yxat + qidiruv O'NG ustunda (rail kabi) ── */
-  #chatsView.on {
+  :where(html[data-device="desktop"]) #chatsView.on {
     position: fixed;
     top: 12px;
     bottom: 12px;
@@ -840,12 +840,12 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     border-radius: var(--radius);
     z-index: 40;
   }
-  #chatsView .chats-hdr { padding: 16px 16px 10px; gap: 8px; background: var(--pal-black); font-size: 20px; font-weight: 800; border-radius: var(--radius) var(--radius) 0 0; }
-  #chatsView .chats-filter-btn, #chatsView .chats-add-btn { height: 36px; }
-  #chatsView .chats-add-btn { width: 36px; }
-  #chatsView .ulist-search-wrap { margin: 2px 16px 12px; height: 42px; }
-  #chatsView .chats-list { padding-bottom: 8px; }
-  body:has(#chatsView.on) #chatThreadModal {
+  :where(html[data-device="desktop"]) #chatsView .chats-hdr { padding: 16px 16px 10px; gap: 8px; background: var(--pal-black); font-size: 20px; font-weight: 800; border-radius: var(--radius) var(--radius) 0 0; }
+  :where(html[data-device="desktop"]) #chatsView .chats-filter-btn, :where(html[data-device="desktop"]) #chatsView .chats-add-btn { height: 36px; }
+  :where(html[data-device="desktop"]) #chatsView .chats-add-btn { width: 36px; }
+  :where(html[data-device="desktop"]) #chatsView .ulist-search-wrap { margin: 2px 16px 12px; height: 42px; }
+  :where(html[data-device="desktop"]) #chatsView .chats-list { padding-bottom: 8px; }
+  :where(html[data-device="desktop"]) body:has(#chatsView.on) #chatThreadModal {
     left: var(--content-left, var(--sidebar, 260px));
     right: auto;
     width: var(--center-w);
@@ -853,7 +853,7 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     box-sizing: border-box;
     border: 0;
   }
-  .chats-x-pane {
+  :where(html[data-device="desktop"]) .chats-x-pane {
     left: var(--content-left, var(--sidebar, 260px));
     right: auto;
     width: var(--center-w);
@@ -861,12 +861,12 @@ html, body, #app, .app { background: var(--pal-black); background-color: var(--p
     border: 0;
   }
   /* Chats tab aktiv bo'lganda rightRail kerak emas — chatsView o'ng panelni egallaydi */
-  body:has(#chatsView.on) #rightRail {
+  :where(html[data-device="desktop"]) body:has(#chatsView.on) #rightRail {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
   }
-}
+
 /* Right-rail cards — X "Who to follow" uslubi (logika o'zgarmaydi) */
 .rr-card {
   background: transparent;
@@ -996,13 +996,13 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 .up-grid--uniform .up-grid-cell--media, .up-grid--uniform .up-grid-cell--text { grid-row: span 1; aspect-ratio: 1; min-height: 0; }
 
 /* Mobil + planshet (<1100px): Post tugmasi pastki navning o'rtasida, dumaloq (eski order/margin ni bekor qiladi) */
-@media (max-width: 1099px) {
-  nav.bot-nav #createBtn.nav-center-btn { order: 0; width: 46px; height: 46px; margin: 0 4px; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn { order: 0; width: 46px; height: 46px; margin: 0 4px; }
+
 /* Qidiruv oynasi ochiq bo'lganda ham pastki nav ko'rinib tursin (mobil + planshet) */
-@media (max-width: 1099px) {
-  [data-theme] .search-overlay { bottom: var(--nav); }
-}
+
+  :where(html:not([data-device="desktop"])) [data-theme] .search-overlay { bottom: var(--nav); }
+
 
 /* Suhbatlar qidiruvi: global input{background;border;radius:12px} qoidasi ichki inputni ham "quti" qilib qo'ygan edi -> pill (wrap) ichida faqat shaffof input */
 #chatsView .ulist-search-wrap .ulist-search-input { background: transparent; border: none; border-radius: 0; box-shadow: none; padding: 0; }
@@ -1020,30 +1020,30 @@ html[data-theme] :is(.post-cmt-panel, .rr-cmt-panel) input.cmt-input:focus {
 .nav-btn { overflow: visible; }
 
 /* Desktop: chat pastki input — yumaloq, silliq "suzuvchi" bar */
-@media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-input-row { margin: 8px 16px 16px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); border-radius: var(--radius); background: #000000; }
-  #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
-  #chatThreadModal .chat-thread-input:focus { background: transparent; }
-}
+
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-input-row { margin: 8px 16px 16px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); border-radius: var(--radius); background: #000000; }
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-input:focus { background: transparent; }
+
 
 /* Chat: o'qildi (2 chek) — ko'k pufak ustida ko'k chek ko'rinmasdi (--c-tick-read = --x-blue = pufak rangi). Yuborilgan = xira oq, o'qilgan = to'liq oq */
 #chatThreadModal .chat-msg.mine .msg-ticks { color: rgba(231, 233, 234, 0.5); }
 #chatThreadModal .chat-msg.mine .msg-ticks.read { color: var(--pal-white); }
 
 /* Desktop: chat sarlavhasi — pastki input bilan bir xil yumaloq "suzuvchi" bar */
-@media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: 16px 16px 8px; padding: 8px 12px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: var(--radius); background: #000000; }
-  #chatThreadModal .chat-thread-messages { padding-top: 76px; }
-}
+
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: 16px 16px 8px; padding: 8px 12px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: var(--radius); background: #000000; }
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-messages { padding-top: 76px; }
+
 
 /* Mobil: chat sarlavhasi va pastki input ham yumaloq "suzuvchi" bar (desktop bilan bir xil ko'rinish, kichikroq chetlar) */
-@media (max-width: 1099px) {
-  #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: max(8px, env(safe-area-inset-top, 0px)) 8px 4px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: var(--radius); background: #000000; }
-  #chatThreadModal .chat-thread-messages { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
-  #chatThreadModal .chat-thread-input-row { margin: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; border: 1px solid var(--pal-gray-800); border-radius: var(--radius); background: #000000; }
-  #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
-  #chatThreadModal .chat-thread-input:focus { background: transparent; }
-}
+
+  :where(html:not([data-device="desktop"])) #chatThreadModal .chat-thread-hdr { position: absolute; top: 0; left: 0; right: 0; z-index: 6; margin: max(8px, env(safe-area-inset-top, 0px)) 8px 4px; padding: 6px 10px; border: 1px solid var(--pal-gray-800); box-shadow: none; border-radius: var(--radius); background: #000000; }
+  :where(html:not([data-device="desktop"])) #chatThreadModal .chat-thread-messages { padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
+  :where(html:not([data-device="desktop"])) #chatThreadModal .chat-thread-input-row { margin: 4px 8px calc(8px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; border: 1px solid var(--pal-gray-800); border-radius: var(--radius); background: #000000; }
+  :where(html:not([data-device="desktop"])) #chatThreadModal .chat-thread-input { background: transparent; border-radius: 0; padding: 9px 8px; }
+  :where(html:not([data-device="desktop"])) #chatThreadModal .chat-thread-input:focus { background: transparent; }
+
 
 /* ─── Izohlar layout ───────────────────────────────────────────────────
    Desktop (o'ng rail): input + "Yuborish" PASTDA, ro'yxat tepada vertikal scroll, gorizontal scroll yo'q.
@@ -1126,14 +1126,14 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   isolation: isolate;
 }
 /* Messages: header balandligi + safe-area — hech narsa hdr pastiga tiqilmasin */
-@media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-messages { padding-top: 76px !important; }
-}
-@media (max-width: 1099px) {
-  #chatThreadModal .chat-thread-messages {
+
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-messages { padding-top: 76px !important; }
+
+
+  :where(html:not([data-device="desktop"])) #chatThreadModal .chat-thread-messages {
     padding-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
   }
-}
+
 /* Loading spinner: header ostidagi bo'sh maydon markazida */
 #chatThreadModal .chat-thread-messages > .spin-wrap {
   flex: 1;
@@ -1190,18 +1190,16 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 
 /* Desktop (≥1200px), Suhbatlar ochiq: profil / guruh-info / media sahifasi faqat MARKAZ ustunni egallaydi —
    o'ngdagi suhbatlar ro'yxati (rail) yopilib qolmasin */
-@media (min-width: 1100px) {
-  body:has(#chatsView.on) #userProfileModal,
-  body:has(#chatsView.on) #grpInfoOverlay {
+
+  :where(html[data-device="desktop"]) body:has(#chatsView.on) #userProfileModal, :where(html[data-device="desktop"]) body:has(#chatsView.on) #grpInfoOverlay {
     left: var(--content-left, var(--sidebar, 260px));
     right: auto;
     width: var(--center-w);
     max-width: var(--center-w);
     box-sizing: border-box;
   }
-  body:has(#chatsView.on) .up-back,
-  body:has(#chatsView.on) .gi-back-btn { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
-}
+  :where(html[data-device="desktop"]) body:has(#chatsView.on) .up-back, :where(html[data-device="desktop"]) body:has(#chatsView.on) .gi-back-btn { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
+
 /* Chat media: yuklanmagan rasm katakchasi */
 .up-grid-cell.cm-broken { background: var(--bg3); }
 .up-grid-cell.cm-broken::after { content: 'Yuklanmadi'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text3, #71767b); }
@@ -1781,9 +1779,9 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   line-height: 16px;
   letter-spacing: 0;
 }
-@media (min-width: 1100px) {
-  #profileView .profile-avi { width: 120px; height: 120px; }
-}
+
+  :where(html[data-device="desktop"]) #profileView .profile-avi { width: 120px; height: 120px; }
+
 #profileView .profile-info {
   padding: 4px 0 0;
   text-align: left;
@@ -1853,12 +1851,11 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 }
 
 /* Desktop ≥1200px: profil gear yashirin — sozlamalar right-rail pastida */
-@media (min-width: 1100px) {
-  #profileView .profile-gear-btn,
-  #profileView #settingsBtn.profile-gear-btn {
+
+  :where(html[data-device="desktop"]) #profileView .profile-gear-btn, :where(html[data-device="desktop"]) #profileView #settingsBtn.profile-gear-btn {
     display: none !important;
   }
-}
+
 
 #profileView .profile-grid-hdr {
   position: sticky;
@@ -1909,9 +1906,9 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
 /* ═══════════════════════════════════════════════════════════════════════
    Sidebar X polish — brend (SpaceMR logo/nom) va navigatsiya logikasi saqlanadi
    ═══════════════════════════════════════════════════════════════════════ */
-@media (min-width: 1100px) {
+
   /* Desktop sidebar: tinch, X pill hover */
-  nav.bot-nav { box-sizing: border-box;
+  :where(html[data-device="desktop"]) nav.bot-nav { box-sizing: border-box;
     width: var(--sidebar);
     padding: 4px 12px 12px;
     border-right: 1px solid var(--line);
@@ -1920,11 +1917,11 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   }
 
   /* Logo — dumaloq hover, brend matni saqlanadi */
-  nav.bot-nav .sb-top {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-top {
     padding: 4px 0 8px;
     margin: 0;
   }
-  nav.bot-nav .sb-logo-row {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-row {
     width: auto;
     min-height: 52px;
     height: auto;
@@ -1938,18 +1935,18 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
     cursor: pointer;
     transition: background .15s ease;
   }
-  nav.bot-nav .sb-logo-row:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-row:hover {
     background: rgba(231, 233, 234, 0.05);
   }
-  nav.bot-nav .sb-logo-glass {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-glass {
     width: 50px; height: 50px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%;
   }
-  nav.bot-nav .sb-logo-img {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-img {
     width: 28px; height: 28px;
   }
-  nav.bot-nav .sb-brand-text {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-brand-text {
     display: block;
     font-size: 20px;
     font-weight: 800;
@@ -1958,8 +1955,7 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
   }
 
   /* Nav items — X pill, aktiv qalin */
-  nav.bot-nav .nav-btn,
-  nav.bot-nav .sb-search-toggle {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle {
     height: 50px;
     min-height: 50px;
     padding: 0 16px 0 12px;
@@ -1971,45 +1967,39 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
     color: var(--text);
     transition: background .15s ease;
   }
-  nav.bot-nav .nav-btn:hover,
-  nav.bot-nav .sb-search-toggle:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn:hover, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle:hover {
     background: rgba(231, 233, 234, 0.05) !important;
   }
-  nav.bot-nav .nav-btn.on,
-  nav.bot-nav #sbSearchToggle.search-active {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active {
     background: none !important;
   }
   /* mobil pastki chiziq desktopda yo'q */
-  nav.bot-nav .nav-btn.on::before,
-  nav.bot-nav .nav-btn::after {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on::before, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn::after {
     display: none !important;
   }
-  nav.bot-nav .nav-btn svg,
-  nav.bot-nav .sb-search-toggle svg ,   nav.bot-nav .sb-search-toggle img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn svg, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle svg, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle img.icon {
     width: 26.25px;
     height: 26.25px;
     stroke: var(--text);
     color: var(--text);
     flex-shrink: 0;
   }
-  nav.bot-nav .nav-btn.on svg,
-  nav.bot-nav #sbSearchToggle.search-active svg ,   nav.bot-nav #sbSearchToggle.search-active img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on svg, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active svg, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active img.icon {
     stroke-width: 2.5;
   }
-  nav.bot-nav .nav-btn .nav-label {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn .nav-label {
     display: block;
     font-size: 20px;
     line-height: 24px;
     font-weight: 400;
     color: var(--text);
   }
-  nav.bot-nav .nav-btn.on .nav-label,
-  nav.bot-nav #sbSearchToggle.search-active .nav-label {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on .nav-label, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active .nav-label {
     font-weight: 700;
   }
 
   /* Post CTA — to'liq enli pill */
-  nav.bot-nav #createBtn.nav-center-btn {
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn {
     align-self: stretch;
     width: 100%;
     height: 52px;
@@ -2020,130 +2010,52 @@ html[data-theme] #chatThreadModal .chat-thread-input, html[data-theme] #chatThre
     box-shadow: none !important;
     transition: background .15s ease, opacity .15s ease;
   }
-  nav.bot-nav #createBtn.nav-center-btn:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn:hover {
     background: var(--x-inv-bg-hover, #e7e9ea) !important;
     opacity: 1;
   }
-  nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
     display: block;
     font-size: 17px;
     font-weight: 700;
     color: inherit !important;
   }
-  nav.bot-nav #createBtn.nav-center-btn svg ,   nav.bot-nav #createBtn.nav-center-btn img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn svg, :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn img.icon {
     display: none;
   }
 
   /* Pastki akkaunt — X kabi */
-  nav.bot-nav .sb-bottom {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-bottom {
     margin-top: auto;
     padding-top: 12px;
   }
-  nav.bot-nav .sb-account {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-account {
     width: 100%;
     padding: 12px;
     border-radius: 999px;
     gap: 12px;
     transition: background .15s ease;
   }
-  nav.bot-nav .sb-account:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-account:hover {
     background: rgba(231, 233, 234, 0.05) !important;
   }
-  nav.bot-nav .sb-acc-avi {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-avi {
     width: 40px; height: 40px;
   }
-  nav.bot-nav .sb-acc-name {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-name {
     font-size: 15px;
     font-weight: 700;
     line-height: 20px;
   }
-  nav.bot-nav .sb-acc-user {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-user {
     font-size: 13px;
     line-height: 16px;
     color: var(--text3);
   }
-}
+
 
 /* O'rta desktop (1100–1259): to'liq yozuvli chap sidebar + markaz + o'ng rail (min 240px) */
-@media (min-width: 1100px) and (max-width: 1259px) {
-  :root {
-    --sidebar: 260px;
-    --content-left: 260px;
-    --center-w: min(600px, calc(100vw - 260px - 272px));
-  }
-  nav.bot-nav {
-    box-sizing: border-box;
-    width: 260px !important;
-    min-width: 240px !important;
-    max-width: 260px;
-    padding: 8px 10px 12px;
-    align-items: stretch;
-  }
-  nav.bot-nav .sb-brand-text,
-  nav.bot-nav .nav-btn .nav-label,
-  nav.bot-nav .sb-acc-meta,
-  nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
-    display: block !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  nav.bot-nav .sb-logo-row {
-    width: auto;
-    height: auto;
-    min-height: 50px;
-    padding: 4px 8px 4px 4px;
-    justify-content: flex-start;
-  }
-  nav.bot-nav .nav-btn,
-  nav.bot-nav .sb-search-toggle {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    padding: 0 12px 0 10px;
-    justify-content: flex-start;
-    align-self: stretch;
-    box-sizing: border-box;
-  }
-  nav.bot-nav #createBtn.nav-center-btn {
-    width: 100%;
-    height: 48px;
-    margin: 12px 0 8px;
-    padding: 0 12px;
-    box-sizing: border-box;
-  }
-  /* Desktop: faqat matn "Post", ikonka yo'q */
-  nav.bot-nav #createBtn.nav-center-btn svg,
-  nav.bot-nav #createBtn.nav-center-btn img.icon {
-    display: none !important;
-  }
-  /* Akkaunt: to'liq qator (meta + avatar), siqilgan 50px emas */
-  nav.bot-nav .sb-account {
-    width: 100%;
-    height: auto;
-    min-height: 48px;
-    padding: 10px 8px;
-    justify-content: flex-start;
-    box-sizing: border-box;
-  }
-  nav.bot-nav .sb-acc-meta { display: flex !important; }
-  nav.bot-nav .sb-acc-dots { display: block !important; }
-  nav.bot-nav .nav-badge { left: 28px; }
 
-  /* Markaz ustun: sidebar o'ngida, qolgan kenglik */
-  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on {
-    margin-left: var(--content-left);
-    margin-right: 0;
-    width: var(--center-w);
-    max-width: var(--center-w);
-    box-sizing: border-box;
-  }
-  .feed, #followingView .feed {
-    max-width: var(--center-w);
-    width: 100%;
-    margin: 0;
-  }
-}
 
 /* ═══════════════════════════════════════════════════════════════════════
    Toast / tizim notiflari — to'liq dark (OLED), doimiy
@@ -2197,9 +2109,9 @@ body #toast {
 #toast.toast-warning, [data-theme] #toast.toast-warning { border-color: #ffd400 !important; }
 #toast.toast-info, [data-theme] #toast.toast-info { border-color: #1d9bf0 !important; }
 #toast.toast-success, [data-theme] #toast.toast-success { border-color: #00ba7c !important; }
-@media (min-width: 1100px) {
-  #toast { bottom: 28px; }
-}
+
+  :where(html[data-device="desktop"]) #toast { bottom: 28px; }
+
 
 /* SW yangilanish paneli + admin notice — to'liq dark */
 #swUpdateBar {
@@ -2245,8 +2157,8 @@ body #toast {
   display: flex !important;
 }
 
-@media (min-width: 1100px) {
-  #settingsOverlay.show {
+
+  :where(html[data-device="desktop"]) #settingsOverlay.show {
     position: fixed !important;
     top: 12px !important;
     bottom: 12px !important;
@@ -2265,13 +2177,13 @@ body #toast {
     flex-direction: column !important;
     overflow: hidden !important;
   }
-  #settingsOverlay.show .settings-hdr {
+  :where(html[data-device="desktop"]) #settingsOverlay.show .settings-hdr {
     background: #000000 !important;
     border-bottom: 1px solid var(--line, #2f3336) !important;
     flex-shrink: 0 !important;
     padding: 14px 16px !important;
   }
-  #settingsOverlay.show .settings-body {
+  :where(html[data-device="desktop"]) #settingsOverlay.show .settings-body {
     flex: 1 !important;
     min-height: 0 !important;
     overflow-y: auto !important;
@@ -2285,11 +2197,11 @@ body #toast {
     gap: 14px !important;
   }
   /* Sozlamalar ochiq: right-rail yashirin (ustiga chiqadi) */
-  body:has(#settingsOverlay.show) #rightRail {
+  :where(html[data-device="desktop"]) body:has(#settingsOverlay.show) #rightRail {
     visibility: hidden;
     pointer-events: none;
   }
-}
+
 
 /* Avatar Hero Section */
 .pe-avatar-hero {
@@ -3535,15 +3447,15 @@ button:focus-visible,
   stroke: var(--pal-black) !important;
 }
 /* Group Overlays: Mobile Fullscreen Page */
-@media (max-width: 1099px) {
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show {
+
+  :where(html:not([data-device="desktop"])) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
     background: #000000 !important;
   }
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet {
+  :where(html:not([data-device="desktop"])) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet {
     width: 100% !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
@@ -3554,20 +3466,20 @@ button:focus-visible,
     box-shadow: none !important;
     overflow-y: auto !important;
   }
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet-handle {
+  :where(html:not([data-device="desktop"])) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet-handle {
     display: none !important;
   }
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet-title {
+  :where(html:not([data-device="desktop"])) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet-title {
     padding: 16px 0 !important;
     border-bottom: 1px solid var(--line, #2f3336) !important;
     text-align: left !important;
     margin-bottom: 16px !important;
   }
-}
+
 
 /* Group Overlays: Desktop Right-Rail */
-@media (min-width: 1100px) {
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show {
+
+  :where(html[data-device="desktop"]) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show {
     position: fixed !important;
     top: 12px !important;
     bottom: 12px !important;
@@ -3589,7 +3501,7 @@ button:focus-visible,
     overflow: hidden !important;
     z-index: 60 !important;
   }
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show .sheet {
+  :where(html[data-device="desktop"]) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show .sheet {
     width: 100% !important;
     height: 100% !important;
     max-height: 100% !important;
@@ -3602,10 +3514,10 @@ button:focus-visible,
     overflow-y: auto !important;
     padding: 0 16px 16px !important;
   }
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show .sheet-handle {
+  :where(html[data-device="desktop"]) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show .sheet-handle {
     display: none !important;
   }
-  :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show .sheet-title {
+  :where(html[data-device="desktop"]) :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show .sheet-title {
     padding: 16px 0 !important;
     border-bottom: 1px solid var(--line, #2f3336) !important;
     text-align: left !important;
@@ -3613,11 +3525,11 @@ button:focus-visible,
   }
   
   /* Hide right rail when creating group */
-  body:has(:is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show) #rightRail {
+  :where(html[data-device="desktop"]) body:has(:is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay).show) #rightRail {
     visibility: hidden;
     pointer-events: none;
   }
-}
+
 :is(#grpCreateChoiceOverlay, #grpAddUserOverlay, #grpCreateFormOverlay) .sheet::-webkit-scrollbar {
   display: none;
 }
@@ -3971,12 +3883,11 @@ textarea:not(:focus) {
 }
 
 /* Desktop (>=1200, o'ng panel): back/chevron kerak emas. Mobil/planshet (<1200) — to'liq ekran, chevron KO'RINADI */
-@media (min-width: 1100px) {
-  #settingsOverlay .settings-back,
-  #settingsOverlay.show .settings-back {
+
+  :where(html[data-device="desktop"]) #settingsOverlay .settings-back, :where(html[data-device="desktop"]) #settingsOverlay.show .settings-back {
     display: none !important;
   }
-}
+
 
 /* "Inbox bo'sh" empty state — not needed, remove from all views */
 .chats-x-empty {
@@ -3994,9 +3905,9 @@ textarea:not(:focus) {
 .pe-avatar-btn { display: none !important; }
 
 /* Sozlamalar: accordion kartalar orasida masofa — FAQAT mobil/tablet (desktop rightbar'da .settings-body gap:14px bor) */
-@media (max-width: 1099px) {
-  .pe-card-group.pe-accordion { margin-bottom: 12px; }
-}
+
+  :where(html:not([data-device="desktop"])) .pe-card-group.pe-accordion { margin-bottom: 12px; }
+
 
 /* Sozlamalar pastki qism: bitta qatorda [ Kesh/xotira ......... ] [Chiqish] [⋮] */
 .settings-body > * { flex-shrink: 0; }
@@ -4012,13 +3923,13 @@ textarea:not(:focus) {
 }
 .settings-more-menu { bottom: 52px; }
 .settings-row + .settings-section-label { margin-top: 22px; }
-@media (min-width: 1100px) { .settings-row + .settings-section-label { margin-top: 8px; } }
+ :where(html[data-device="desktop"]) .settings-row + .settings-section-label { margin-top: 8px; } 
 
 :where(#grpFormAvi, #grpFormAviWrap, #svNext, #svPrev, #chatThreadAvi, #chatThreadName, #profileAvi, #uploadDrop, #voiceMiniPlayer, .story-plus, .user-avi-btn, .cm-row) { cursor: pointer; }
 
 /* ── Yangi guruh formasi: MOBILE — to'liq ekran. Desktop (≥1200px) — right-rail ichida (yuqoridagi "Group Overlays: Desktop Right-Rail") ── */
-@media (max-width: 1099px) {
-  #grpCreateFormOverlay.show {
+
+  :where(html:not([data-device="desktop"])) #grpCreateFormOverlay.show {
     position: fixed !important;
     inset: 0 !important;
     top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important;
@@ -4032,7 +3943,7 @@ textarea:not(:focus) {
     overflow: hidden !important;
     z-index: 1000 !important;
   }
-  #grpCreateFormOverlay.show .sheet {
+  :where(html:not([data-device="desktop"])) #grpCreateFormOverlay.show .sheet {
     width: 100% !important; max-width: none !important;
     height: 100% !important; max-height: 100% !important;
     margin: 0 !important;
@@ -4042,12 +3953,12 @@ textarea:not(:focus) {
     display: flex !important; flex-direction: column !important;
     overflow-y: auto !important;
   }
-  #grpCreateFormOverlay.show .sheet-handle { display: none !important; }
-  #grpCreateFormOverlay.show .sheet-title {
+  :where(html:not([data-device="desktop"])) #grpCreateFormOverlay.show .sheet-handle { display: none !important; }
+  :where(html:not([data-device="desktop"])) #grpCreateFormOverlay.show .sheet-title {
     padding: 16px 0 !important; margin-bottom: 16px !important;
     border-bottom: 1px solid var(--line, #2f3336) !important; text-align: left !important;
   }
-}
+
 
 /* Har qanday rasm/video zoom va media viewer: X va Download umuman chiqmaydi */
 .zoom-x, .zoom-dl,
@@ -4065,21 +3976,21 @@ textarea:not(:focus) {
 
 /* ── Keng ekran: butun guruh (sidebar + markaz + o'ng ustun) markazda, chap va o'ng bo'sh joy teng ──
    Sidebar kengligi = 260 + gutter; ichidagi tugmalar gutter'dan keyin boshlansin (chapga yopishmasin). */
-@media (min-width: 1260px) {
-  nav.bot-nav { padding-left: calc(12px + var(--gutter, 0px)) !important; }
-}
+
+  :where(html[data-device="desktop"]) nav.bot-nav { padding-left: calc(12px + var(--gutter, 0px)) !important; }
+
 
 /* Mobil / planshet (<1100px): bosh sahifada stories tepasida logo + "SpaceMR" (Instagram kabi). Desktop'da sidebar'da bor. */
 .home-brand { display: none; }
-@media (max-width: 1099px) {
-  #homeView .home-brand {
+
+  :where(html:not([data-device="desktop"])) #homeView .home-brand {
     display: flex; align-items: center; gap: 8px;
     padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 2px;
     background: var(--bg);
   }
-  #homeView .home-brand img { width: 28px; height: 28px; border-radius: 0; object-fit: contain; }
-  #homeView .home-brand span { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; color: var(--pal-white, #e7e9ea); line-height: 1; }
-}
+  :where(html:not([data-device="desktop"])) #homeView .home-brand img { width: 28px; height: 28px; border-radius: 0; object-fit: contain; }
+  :where(html:not([data-device="desktop"])) #homeView .home-brand span { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; color: var(--pal-white, #e7e9ea); line-height: 1; }
+
 
 /* ── Saqlash (bookmark) tugmasi + Saqlanganlar sahifasi ── */
 .act-btn.save-btn,
@@ -4125,10 +4036,10 @@ textarea:not(:focus) {
 .saved-back:hover { background: var(--hover-strong, rgba(231, 233, 234, 0.1)); }
 .saved-title { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.3px; color: var(--pal-white, #e7e9ea); }
 .saved-empty { padding: 64px 24px; text-align: center; }
-@media (min-width: 1100px) {
-  .saved-back { display: none; }
-  .saved-head { padding: 16px 16px 12px; }
-}
+
+  :where(html[data-device="desktop"]) .saved-back { display: none; }
+  :where(html[data-device="desktop"]) .saved-head { padding: 16px 16px 12px; }
+
 
 /* Smooth playhead partial bar */
 #chatThreadModal .chat-msg.mine .cvm-bar.cvm-bar-partial {
@@ -5830,11 +5741,11 @@ a.cfm-name--link:hover {
   padding: calc(56px + env(safe-area-inset-top, 0px)) 10px 10px;
   scrollbar-width: none;
 }
-@media (min-width: 1100px) {
-  #chatThreadModal .chat-thread-messages {
+
+  :where(html[data-device="desktop"]) #chatThreadModal .chat-thread-messages {
     padding-top: 76px; /* desktop suzuvchi hdr margin bilan */
   }
-}
+
 
 #chatThreadModal .chat-thread-messages::-webkit-scrollbar {
   display: none;
@@ -6019,23 +5930,23 @@ a.cfm-name--link:hover {
 
 
 /* Mobile header: professional icon row */
-@media (max-width: 1099px) {
-  .app-hdr {
+
+  :where(html:not([data-device="desktop"])) .app-hdr {
     padding: 0 8px 0 10px;
     height: var(--hdr);
     background: #000000 !important;
     border-bottom: 1px solid rgba(231, 233, 234, 0.1) !important;
   }
-  .hdr-brand { font-size: 16px; letter-spacing: -0.3px; }
-  .hdr-new-post-btn { display: none !important; }
+  :where(html:not([data-device="desktop"])) .hdr-brand { font-size: 16px; letter-spacing: -0.3px; }
+  :where(html:not([data-device="desktop"])) .hdr-new-post-btn { display: none !important; }
   /* home-brand ichidagi saved — headerda bor */
-  .home-brand-saved { display: none !important; }
-}
+  :where(html:not([data-device="desktop"])) .home-brand-saved { display: none !important; }
+
 /* PARITY: header tugmalari desktopda ham */
 
 /* PARITY: desktopda ham header — sidebar o'ngidan */
-@media (min-width: 1100px) {
-  .app-hdr {
+
+  :where(html[data-device="desktop"]) .app-hdr {
     display: flex !important;
     left: var(--sidebar, 260px);
     right: 0;
@@ -6045,15 +5956,12 @@ a.cfm-name--link:hover {
     border-bottom: 1px solid rgba(231, 233, 234, 0.1) !important;
     z-index: 80;
   }
-  #homeView.on, #followingView.on, #savedView.on, #appsView.on,
-  #chatsView.on, #profileView.on, #actionsView.on {
+  :where(html[data-device="desktop"]) #homeView.on, :where(html[data-device="desktop"]) #followingView.on, :where(html[data-device="desktop"]) #savedView.on, :where(html[data-device="desktop"]) #appsView.on, :where(html[data-device="desktop"]) #chatsView.on, :where(html[data-device="desktop"]) #profileView.on, :where(html[data-device="desktop"]) #actionsView.on {
     padding-top: var(--hdr, 52px) !important;
   }
-  .hdr-avi-btn,
-  #hdrSavedBtn2,
-  #hdrNotifBtn { display: flex !important; }
-  .hdr-new-post-btn { display: none !important; }
-}
+  :where(html[data-device="desktop"]) .hdr-avi-btn, :where(html[data-device="desktop"]) #hdrSavedBtn2, :where(html[data-device="desktop"]) #hdrNotifBtn { display: flex !important; }
+  :where(html[data-device="desktop"]) .hdr-new-post-btn { display: none !important; }
+
 
 
 #appHdr .hdr-right {
@@ -6286,18 +6194,15 @@ header.app-hdr.force-hide,
 
 
 /* Mobil: Saqlanganlar faqat headerda. Pastki nav dagi nusxa yashirin. */
-@media (max-width: 1099px) {
-  nav.bot-nav .nav-saved { display: none !important; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-saved { display: none !important; }
+
 
 
 /* Header faqat mobil va planshet. Desktopda sidebar yetarli. */
-@media (min-width: 1100px) {
-  :root,
-  [data-theme="dark"] { --hdr: 0px !important; }
-  header.app-hdr,
-  #appHdr.app-hdr,
-  .app-hdr {
+
+  :root:where([data-device="desktop"]), :where(html[data-device="desktop"]) [data-theme="dark"] { --hdr: 0px !important; }
+  :where(html[data-device="desktop"]) header.app-hdr, :where(html[data-device="desktop"]) #appHdr.app-hdr, :where(html[data-device="desktop"]) .app-hdr {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
@@ -6305,15 +6210,10 @@ header.app-hdr.force-hide,
     overflow: hidden !important;
     pointer-events: none !important;
   }
-  #homeView.on,
-  #followingView.on,
-  #savedView.on, #appsView.on,
-  #chatsView.on,
-  #profileView.on,
-  #actionsView.on {
+  :where(html[data-device="desktop"]) #homeView.on, :where(html[data-device="desktop"]) #followingView.on, :where(html[data-device="desktop"]) #savedView.on, :where(html[data-device="desktop"]) #appsView.on, :where(html[data-device="desktop"]) #chatsView.on, :where(html[data-device="desktop"]) #profileView.on, :where(html[data-device="desktop"]) #actionsView.on {
     padding-top: 0 !important;
   }
-}
+
 
 
 /* Sozlamalar: ortiqcha ajratuvchi chiziqlar yo'q */
@@ -6411,22 +6311,22 @@ nav.bot-nav,
 
 
 /* Desktop rightbar sozlamalar paneli chegarasi qoladi */
-@media (min-width: 1100px) {
-  #settingsOverlay.show {
+
+  :where(html[data-device="desktop"]) #settingsOverlay.show {
     border: 1px solid #2f3336 !important;
     border-radius: var(--radius)!important;
   }
-}
+
 
 
 /* Rightbar bitta fixed ramka. Ichidagi kontent almashadi, ramka qimirlamaydi. */
-@media (min-width: 1100px) {
-  body:has(#settingsOverlay.show) #rightRail {
+
+  :where(html[data-device="desktop"]) body:has(#settingsOverlay.show) #rightRail {
     visibility: visible !important;
     pointer-events: auto !important;
     display: flex !important;
   }
-  #rightRail > #settingsOverlay.show {
+  :where(html[data-device="desktop"]) #rightRail > #settingsOverlay.show {
     position: absolute !important;
     inset: 0 !important;
     top: 0 !important;
@@ -6443,10 +6343,10 @@ nav.bot-nav,
     z-index: 2 !important;
     background: #000000 !important;
   }
-  body:has(#settingsOverlay.show) #rightRail > :not(#settingsOverlay) {
+  :where(html[data-device="desktop"]) body:has(#settingsOverlay.show) #rightRail > :not(#settingsOverlay) {
     display: none !important;
   }
-}
+
 
 
 /* Skroller chizig'i umuman ko'rinmaydi. Scroll o'zi ishlayveradi. */
@@ -6467,18 +6367,14 @@ body::-webkit-scrollbar,
 /* Admin boshqaruv: headerda, faqat admin. Mobilda pastki nusxa yo'q. */
 #hdrAdminBtn.d-none { display: none !important; }
 #hdrAdminBtn { position: relative !important; }
-@media (max-width: 1099px) {
-  nav.bot-nav #adminActionsNavBtn { display: none !important; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav #adminActionsNavBtn { display: none !important; }
+
 
 
 /* Mobil/planshet: header hech qaysi tabda yopilmaydi */
-@media (max-width: 1099px) {
-  header.app-hdr,
-  #appHdr.app-hdr,
-  .app-hdr,
-  .app-hdr.force-hide,
-  .app-hdr.search-open {
+
+  :where(html:not([data-device="desktop"])) header.app-hdr, :where(html:not([data-device="desktop"])) #appHdr.app-hdr, :where(html:not([data-device="desktop"])) .app-hdr, :where(html:not([data-device="desktop"])) .app-hdr.force-hide, :where(html:not([data-device="desktop"])) .app-hdr.search-open {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -6486,25 +6382,15 @@ body::-webkit-scrollbar,
     min-height: 52px !important;
     pointer-events: auto !important;
   }
-  #homeView.on,
-  #followingView.on,
-  #savedView.on, #appsView.on,
-  #chatsView.on,
-  #profileView.on,
-  #actionsView.on {
+  :where(html:not([data-device="desktop"])) #homeView.on, :where(html:not([data-device="desktop"])) #followingView.on, :where(html:not([data-device="desktop"])) #savedView.on, :where(html:not([data-device="desktop"])) #appsView.on, :where(html:not([data-device="desktop"])) #chatsView.on, :where(html:not([data-device="desktop"])) #profileView.on, :where(html:not([data-device="desktop"])) #actionsView.on {
     padding-top: 52px !important;
   }
-}
+
 
 
 /* Explore va Actions: mobil header yopilmasin, kontent uning tagida */
-@media (max-width: 1099px) {
-  body:has(.search-overlay.open) header.app-hdr,
-  body:has(.search-overlay.open) #appHdr.app-hdr,
-  body:has(.search-overlay.open) .app-hdr,
-  body:has(#actionsView.on) header.app-hdr,
-  body:has(#actionsView.on) #appHdr.app-hdr,
-  body:has(#actionsView.on) .app-hdr {
+
+  :where(html:not([data-device="desktop"])) body:has(.search-overlay.open) header.app-hdr, :where(html:not([data-device="desktop"])) body:has(.search-overlay.open) #appHdr.app-hdr, :where(html:not([data-device="desktop"])) body:has(.search-overlay.open) .app-hdr, :where(html:not([data-device="desktop"])) body:has(#actionsView.on) header.app-hdr, :where(html:not([data-device="desktop"])) body:has(#actionsView.on) #appHdr.app-hdr, :where(html:not([data-device="desktop"])) body:has(#actionsView.on) .app-hdr {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -6512,15 +6398,14 @@ body::-webkit-scrollbar,
     z-index: 900 !important;
     pointer-events: auto !important;
   }
-  .search-overlay,
-  .search-overlay.open {
+  :where(html:not([data-device="desktop"])) .search-overlay, :where(html:not([data-device="desktop"])) .search-overlay.open {
     top: 52px !important;
     z-index: 70 !important;
   }
-  #actionsView.on {
+  :where(html:not([data-device="desktop"])) #actionsView.on {
     padding-top: 52px !important;
   }
-}
+
 
 
 /* Sozlamalar sarlavhasi qotmaydi — sahifa bilan birga tushadi */
@@ -6542,15 +6427,12 @@ body::-webkit-scrollbar,
 
 
 /* Desktop explore: o'ng chiziq yo'q */
-@media (min-width: 1100px) {
-  .search-overlay,
-  .search-overlay.open,
-  .search-overlay-inner,
-  [data-theme] .search-overlay-inner {
+
+  :where(html[data-device="desktop"]) .search-overlay, :where(html[data-device="desktop"]) .search-overlay.open, :where(html[data-device="desktop"]) .search-overlay-inner, :where(html[data-device="desktop"]) [data-theme] .search-overlay-inner {
     border-right: none !important;
     box-shadow: none !important;
   }
-}
+
 
 
 /* Bildirishnomalar ro'yxati */
@@ -6571,59 +6453,49 @@ body::-webkit-scrollbar,
 .nf-name { font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nf-text { font-size: 13px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nf-time { font-size: 12px; color: var(--text3); flex-shrink: 0; }
-@media (max-width: 1099px) {
-  #sbNotifBtn { display: none !important; }
-}
+
+  :where(html:not([data-device="desktop"])) #sbNotifBtn { display: none !important; }
+
 
 
 /* Mobil pastki menyu: Kashf yo'q (u headerda). Saqlanganlar pastda. */
-@media (max-width: 1099px) {
-  nav.bot-nav #sbSearchToggle { display: none !important; }
-  nav.bot-nav .nav-saved { display: flex !important; }
-  #hdrExploreBtn { display: inline-flex !important; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav #sbSearchToggle { display: none !important; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-saved { display: flex !important; }
+  :where(html:not([data-device="desktop"])) #hdrExploreBtn { display: inline-flex !important; }
+
 
 
 /* Mobil header: biroz balandroq, ikonkalar orasi ochiqroq */
-@media (max-width: 1099px) {
-  :root, [data-theme="dark"] { --hdr: 60px !important; }
-  header.app-hdr,
-  #appHdr.app-hdr,
-  .app-hdr {
+
+  :root:where(:not([data-device="desktop"])), :where(html:not([data-device="desktop"])) [data-theme="dark"] { --hdr: 60px !important; }
+  :where(html:not([data-device="desktop"])) header.app-hdr, :where(html:not([data-device="desktop"])) #appHdr.app-hdr, :where(html:not([data-device="desktop"])) .app-hdr {
     height: 60px !important;
     min-height: 60px !important;
   }
-  #appHdr .hdr-right { gap: 8px !important; }
-  #appHdr .hdr-icon-btn,
-  #appHdr .hdr-avi-btn { margin: 0 !important; }
-  #homeView.on,
-  #followingView.on,
-  #savedView.on, #appsView.on,
-  #chatsView.on,
-  #profileView.on,
-  #actionsView.on,
-  #notifsView.on {
+  :where(html:not([data-device="desktop"])) #appHdr .hdr-right { gap: 8px !important; }
+  :where(html:not([data-device="desktop"])) #appHdr .hdr-icon-btn, :where(html:not([data-device="desktop"])) #appHdr .hdr-avi-btn { margin: 0 !important; }
+  :where(html:not([data-device="desktop"])) #homeView.on, :where(html:not([data-device="desktop"])) #followingView.on, :where(html:not([data-device="desktop"])) #savedView.on, :where(html:not([data-device="desktop"])) #appsView.on, :where(html:not([data-device="desktop"])) #chatsView.on, :where(html:not([data-device="desktop"])) #profileView.on, :where(html:not([data-device="desktop"])) #actionsView.on, :where(html:not([data-device="desktop"])) #notifsView.on {
     padding-top: 60px !important;
   }
-  .search-overlay,
-  .search-overlay.open { top: 60px !important; }
-}
+  :where(html:not([data-device="desktop"])) .search-overlay, :where(html:not([data-device="desktop"])) .search-overlay.open { top: 60px !important; }
+
 
 
 /* Desktop: Bildirishnomalar — saved kabi markaz ustunda (leftbar ustiga chiqmaydi) + rightbar */
-@media (min-width: 1100px) {
-  #notifsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
-  #notifsView.on { padding-top: 0 !important; }
-}
-@media (min-width: 1100px) {
-  #notifsView.on {
+
+  :where(html[data-device="desktop"]) #notifsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
+  :where(html[data-device="desktop"]) #notifsView.on { padding-top: 0 !important; }
+
+
+  :where(html[data-device="desktop"]) #notifsView.on {
     margin-left: var(--content-left, var(--sidebar, 260px));
     margin-right: 0;
     width: var(--center-w);
     max-width: var(--center-w);
     box-sizing: border-box;
   }
-}
+
 
 /* Tepadan bir xil masofa: desktop — ekran tepasidan 12px (rightbar kabi), mobil — header ostidan 12px.
    Har bir sahifaning birinchi elementi (logo, composer, sarlavha, qidiruv, avatar) shu chiziqda boshlanadi. */
@@ -6631,25 +6503,25 @@ body::-webkit-scrollbar,
 .home-composer { padding-top: 8px; }
 #profileView .profile-hdr { padding-top: 12px; }
 #actionsView.on > .actions-divider:first-child { margin-top: 12px; }
-@media (max-width: 1099px) {
-  .saved-head { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
-  .saved-title { line-height: 36px; }
-  #chatsView .chats-hdr { padding-top: 12px; }
-}
-@media (min-width: 1100px) {
-  nav.bot-nav { padding-top: 8px; }
-  .saved-head { padding-top: 12px; }
-}
+
+  :where(html:not([data-device="desktop"])) .saved-head { padding-top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  :where(html:not([data-device="desktop"])) .saved-title { line-height: 36px; }
+  :where(html:not([data-device="desktop"])) #chatsView .chats-hdr { padding-top: 12px; }
+
+
+  :where(html[data-device="desktop"]) nav.bot-nav { padding-top: 8px; }
+  :where(html[data-device="desktop"]) .saved-head { padding-top: 12px; }
+
 
 /* Mobil pastki bar: yangi post tugmasi markazda (home, chats | + | saved, profile) */
-@media (max-width: 1099px) {
-  nav.bot-nav .nav-btn[data-v="home"] { order: 1; }
-  nav.bot-nav .nav-btn[data-v="chats"] { order: 2; }
-  nav.bot-nav #createBtn.nav-center-btn { order: 3; }
-  nav.bot-nav .nav-btn[data-v="saved"] { order: 4; }
-  nav.bot-nav .nav-btn[data-v="profile"] { order: 5; }
-  nav.bot-nav .nav-btn[data-v="actions"] { order: 6; }
-}
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn[data-v="home"] { order: 1; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn[data-v="chats"] { order: 2; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn { order: 3; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn[data-v="saved"] { order: 4; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn[data-v="profile"] { order: 5; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn[data-v="actions"] { order: 6; }
+
 
 /* Zaxira email (login karta ichida): ikkala tugma teng yarim, bir xil balandlik */
 #regRecoveryModal .rc-actions {
@@ -6862,7 +6734,7 @@ body::-webkit-scrollbar,
   width: 80px; height: 80px; margin: 0; border-radius: 50%; overflow: hidden; flex: none;
   cursor: pointer; background: var(--bg4, #16181c);
 }
-@media (min-width: 1100px) { #userProfileModal .up-hero .up-avi { width: 120px; height: 120px; } }
+ :where(html[data-device="desktop"]) #userProfileModal .up-hero .up-avi { width: 120px; height: 120px; } 
 #userProfileModal .up-chat-btn {
   display: inline-flex; align-items: center; gap: 6px;
   height: 36px; padding: 0 16px; border-radius: 999px;
@@ -6891,16 +6763,16 @@ body::-webkit-scrollbar,
 #userProfileModal .up-hero { padding-top: 60px; }               /* tepada orqaga tugmasi uchun joy (X sarlavha qatori) */
 #userProfileModal .up-posts-tab { display: flex; }
 #userProfileModal .up-posts-tab .profile-grid-tab { flex: 1; justify-content: center; height: 48px; background: none !important; font-size: 15px; }
-@media (min-width: 1100px) {
-  #userProfileModal {
+
+  :where(html[data-device="desktop"]) #userProfileModal {
     left: var(--content-left, var(--sidebar, 260px));
     right: auto;
     width: var(--center-w);
     max-width: var(--center-w);
     box-sizing: border-box;
   }
-  .up-back { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
-}
+  :where(html[data-device="desktop"]) .up-back { left: calc(var(--content-left, var(--sidebar, 260px)) + 14px); }
+
 
 /* Asosiy tugma — X: och fon, qora matn (oldingi qoidalar matnni fon rangiga bo'yab yuborardi) */
 .btn-primary,
@@ -7786,33 +7658,29 @@ nav.bot-nav .sb-grp-row img.icon.grp-chip-img{width:26.25px;height:26.25px;borde
 #appHdr .hdr-brand{display:none!important}
 #appHdr .hdr-logo{gap:0!important}
 nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
-@media (max-width:400px){.hdr-grp-text{font-size:19px}}
+:where(html[data-device="phone"]) .hdr-grp-text {font-size:19px}
 
 /* Desktop leftbar — BARCHA nav bir xil hover / active / layout */
-@media (max-width: 1099px) {
-  nav.bot-nav .sb-top,
-  nav.bot-nav .sb-grp-row,
-  nav.bot-nav .sb-report-btn,
-  nav.bot-nav .sb-account {
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-top, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-grp-row, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-report-btn, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-account {
     display: none !important;
   }
-}
-@media (min-width: 1100px) {
-  nav.bot-nav {
+
+
+  :where(html[data-device="desktop"]) nav.bot-nav {
     display: flex;
     flex-direction: column;
   }
-  nav.bot-nav .sb-top {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-top {
     flex-shrink: 0;
   }
-  nav.bot-nav .sb-top #sbLogoBtn {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-top #sbLogoBtn {
     display: flex !important;
     width: 100%;
   }
 
   /* Bir xil o'lcham / padding / gap */
-  nav.bot-nav .nav-btn,
-  nav.bot-nav .sb-search-toggle {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle {
     height: 50px !important;
     min-height: 50px !important;
     padding: 0 16px 0 12px !important;
@@ -7828,28 +7696,20 @@ nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
   }
 
   /* Hover — hammasi bir xil */
-  nav.bot-nav .nav-btn:hover,
-  nav.bot-nav .sb-search-toggle:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn:hover, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle:hover {
     background: rgba(231, 233, 234, 0.1) !important;
   }
 
   /* Active: faqat qalin matn */
-  nav.bot-nav .nav-btn.on,
-  nav.bot-nav #sbSearchToggle.search-active {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active {
     background: transparent !important;
   }
-  nav.bot-nav .nav-btn.on:hover,
-  nav.bot-nav #sbSearchToggle.search-active:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on:hover, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active:hover {
     background: rgba(231, 233, 234, 0.1) !important;
   }
 
   /* Ikonlar: inactive = active rang (gray override yo'q) */
-  nav.bot-nav .nav-btn svg,
-  nav.bot-nav .nav-btn img.icon,
-  nav.bot-nav .sb-search-toggle svg,
-  nav.bot-nav .sb-search-toggle img.icon,
-  nav.bot-nav .nav-btn:not(.on) svg,
-  nav.bot-nav .nav-btn:not(.on) img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn svg, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn img.icon, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle svg, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle img.icon, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn:not(.on) svg, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn:not(.on) img.icon {
     width: 26.25px !important;
     height: 26.25px !important;
     flex-shrink: 0;
@@ -7859,21 +7719,17 @@ nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
     stroke-width: 1.9;
     opacity: 1 !important;
   }
-  nav.bot-nav .nav-btn.on svg,
-  nav.bot-nav .nav-btn.on img.icon,
-  nav.bot-nav #sbSearchToggle.search-active svg,
-  nav.bot-nav #sbSearchToggle.search-active img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on svg, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on img.icon, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active svg, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active img.icon {
     stroke-width: 2.4 !important;
   }
 
-  nav.bot-nav .nav-btn.sb-grp-row img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.sb-grp-row img.icon {
     object-fit: cover;
     border-radius: 50%;
     stroke: none !important;
   }
 
-  nav.bot-nav .nav-btn .nav-label,
-  nav.bot-nav .sb-search-toggle .nav-label {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn .nav-label, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle .nav-label {
     display: block !important;
     font-size: 20px !important;
     line-height: 24px !important;
@@ -7881,32 +7737,29 @@ nav.bot-nav .sb-top #sbLogoBtn{display:flex!important}
     letter-spacing: 0 !important;
     color: var(--text) !important;
   }
-  nav.bot-nav .nav-btn.on .nav-label,
-  nav.bot-nav #sbSearchToggle.search-active .nav-label {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on .nav-label, :where(html[data-device="desktop"]) nav.bot-nav #sbSearchToggle.search-active .nav-label {
     font-weight: 700 !important;
   }
 
-  nav.bot-nav .nav-btn.on::before,
-  nav.bot-nav .nav-btn::after,
-  nav.bot-nav .nav-btn.on::after {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on::before, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn::after, :where(html[data-device="desktop"]) nav.bot-nav .nav-btn.on::after {
     display: none !important;
     content: none !important;
   }
 
-  nav.bot-nav .sb-bottom {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-bottom {
     display: flex;
     flex-direction: column;
     margin-top: auto;
     padding-top: 12px;
     flex-shrink: 0;
   }
-  nav.bot-nav .sb-bottom .sb-account {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-bottom .sb-account {
     margin: 0;
   }
-  nav.bot-nav .sb-account:hover {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-account:hover {
     background: rgba(231, 233, 234, 0.1) !important;
   }
-}
+
 
 
 
@@ -7934,8 +7787,8 @@ body.report-open { overflow: auto !important; }
   z-index: 30 !important; /* leftbar (odatda 40+) ostida — chap menyu ustida qoladi */
 }
 
-@media (min-width: 1100px) {
-  .report-sheet.is-open {
+
+  :where(html[data-device="desktop"]) .report-sheet.is-open {
     top: 0 !important;
     bottom: 0 !important;
     left: var(--content-left, var(--sidebar, 260px)) !important;
@@ -7946,11 +7799,11 @@ body.report-open { overflow: auto !important; }
     z-index: 20 !important;
   }
   /* Leftbar har doim report ustida va bosiladi */
-  nav.bot-nav {
+  :where(html[data-device="desktop"]) nav.bot-nav {
     z-index: 60 !important;
     position: fixed !important;
   }
-}
+
 
 .report-sheet-panel {
   position: relative !important;
@@ -7988,9 +7841,9 @@ body.report-open { overflow: auto !important; }
    ≥1200  : chap + markaz 600 + o'ng rail
    ≥1260  : gutter bilan markazlash
    ═══════════════════════════════════════════════════════════════════════ */
-@media (min-width: 1100px) {
+
   /* Chap sidebar: doim yozuvli, icon-only emas */
-  nav.bot-nav {
+  :where(html[data-device="desktop"]) nav.bot-nav {
     display: flex !important;
     flex-direction: column;
     position: fixed;
@@ -8000,26 +7853,20 @@ body.report-open { overflow: auto !important; }
     border-top: none;
     z-index: 100;
   }
-  nav.bot-nav .sb-top,
-  nav.bot-nav .sb-bottom { display: flex !important; }
-  nav.bot-nav .nav-btn .nav-label,
-  nav.bot-nav .sb-brand-text,
-  nav.bot-nav .sb-acc-meta,
-  nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-top, :where(html[data-device="desktop"]) nav.bot-nav .sb-bottom { display: flex !important; }
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn .nav-label, :where(html[data-device="desktop"]) nav.bot-nav .sb-brand-text, :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-meta, :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn .sb-create-label {
     display: block !important;
   }
-  nav.bot-nav .nav-btn,
-  nav.bot-nav .sb-search-toggle {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle {
     flex-direction: row !important;
     justify-content: flex-start !important;
     width: 100%;
     max-width: 100%;
   }
-  nav.bot-nav #createBtn.nav-center-btn svg,
-  nav.bot-nav #createBtn.nav-center-btn img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn svg, :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn img.icon {
     display: none !important;
   }
-  nav.bot-nav .sb-account {
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-account {
     width: 100%;
     height: auto;
     min-height: 48px;
@@ -8027,24 +7874,24 @@ body.report-open { overflow: auto !important; }
     justify-content: flex-start;
   }
   /* features.css dagi 44px icon tugmalarini bekor */
-  nav.bot-nav .nav-btn {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn {
     width: auto;
     min-width: 0;
     height: 50px;
   }
-  nav.bot-nav .nav-btn span:not(.nav-badge) {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn span:not(.nav-badge) {
     display: block !important;
   }
-}
+
 
 /* Tablet / mobil: pastki nav — chap rail yo'q */
-@media (max-width: 1099px) {
-  :root {
+
+  :root:where(:not([data-device="desktop"])) {
     --sidebar: 0px;
     --content-left: 0px;
     --rail: 0px;
   }
-  nav.bot-nav {
+  :where(html:not([data-device="desktop"])) nav.bot-nav {
     top: auto; bottom: 0; left: 0; right: 0;
     width: 100% !important;
     min-width: 0 !important;
@@ -8052,29 +7899,26 @@ body.report-open { overflow: auto !important; }
     height: var(--nav);
     flex-direction: row !important;
   }
-  nav.bot-nav .sb-top,
-  nav.bot-nav .sb-bottom { display: none !important; }
-  nav.bot-nav .nav-btn .nav-label,
-  nav.bot-nav .sb-brand-text,
-  nav.bot-nav .sb-acc-meta { display: none !important; }
-  .right-rail { display: none !important; }
-  #homeView.on, #followingView.on, #profileView.on, #savedView.on, #appsView.on, #actionsView.on {
+  :where(html:not([data-device="desktop"])) nav.bot-nav .sb-top, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-bottom { display: none !important; }
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn .nav-label, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-brand-text, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-acc-meta { display: none !important; }
+  :where(html:not([data-device="desktop"])) .right-rail { display: none !important; }
+  :where(html:not([data-device="desktop"])) #homeView.on, :where(html:not([data-device="desktop"])) #followingView.on, :where(html:not([data-device="desktop"])) #profileView.on, :where(html:not([data-device="desktop"])) #savedView.on, :where(html:not([data-device="desktop"])) #appsView.on, :where(html:not([data-device="desktop"])) #actionsView.on {
     margin-left: 0 !important;
     width: 100%;
     max-width: 100%;
   }
-}
+
 
 /* ═══════════════════════════════════════════════════════════════
    DESKTOP SIDEBAR FIX — leftbar markazga tegmasin, hover overflow yo'q
    (app.css dagi eski tooltip va kenglik ziddiyatlarini bekor qiladi)
    ═══════════════════════════════════════════════════════════════ */
-@media (min-width: 1100px) {
-  :root {
+
+  :root:where([data-device="desktop"]) {
     --sidebar: 280px;
     --content-left: 280px;
   }
-  nav.bot-nav {
+  :where(html[data-device="desktop"]) nav.bot-nav {
     width: 280px !important;
     min-width: 280px !important;
     max-width: 280px !important;
@@ -8084,62 +7928,50 @@ body.report-open { overflow: auto !important; }
     overflow: hidden;
     box-sizing: border-box;
   }
-  nav.bot-nav .nav-btn,
-  nav.bot-nav .sb-search-toggle,
-  nav.bot-nav .sb-logo-row,
-  nav.bot-nav .sb-account,
-  nav.bot-nav #createBtn.nav-center-btn {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle, :where(html[data-device="desktop"]) nav.bot-nav .sb-logo-row, :where(html[data-device="desktop"]) nav.bot-nav .sb-account, :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn {
     width: 100% !important;
     max-width: 100% !important;
     justify-content: flex-start !important;
     align-items: center;
     overflow: hidden;
   }
-  nav.bot-nav .nav-btn .nav-label,
-  nav.bot-nav .sb-brand-text,
-  nav.bot-nav .sb-create-label,
-  nav.bot-nav .sb-acc-name,
-  nav.bot-nav .sb-acc-user {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn .nav-label, :where(html[data-device="desktop"]) nav.bot-nav .sb-brand-text, :where(html[data-device="desktop"]) nav.bot-nav .sb-create-label, :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-name, :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-user {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 190px;
   }
   /* "Joylash" yozuvi markazda */
-  nav.bot-nav #createBtn.nav-center-btn { justify-content: center !important; }
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn { justify-content: center !important; }
   /* Profil bloki: ism "..." tugmasi ustiga chiqmasin */
-  nav.bot-nav .sb-acc-meta { display: flex !important; flex-direction: column; flex: 1 1 auto; min-width: 0; overflow: hidden; }
-  nav.bot-nav .sb-acc-name,
-  nav.bot-nav .sb-acc-user { display: block; max-width: 100%; }
-  nav.bot-nav .sb-acc-dots { flex: 0 0 auto; margin-left: auto; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-meta { display: flex !important; flex-direction: column; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-name, :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-user { display: block; max-width: 100%; }
+  :where(html[data-device="desktop"]) nav.bot-nav .sb-acc-dots { flex: 0 0 auto; margin-left: auto; }
   /* Hoverda chiqib ketadigan tooltiplarni butunlay o'chirish */
-  nav.bot-nav .nav-btn::after,
-  nav.bot-nav .nav-center-btn::after,
-  nav.bot-nav .sb-mute-btn::after,
-  #sbSearchToggle::after {
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn::after, :where(html[data-device="desktop"]) nav.bot-nav .nav-center-btn::after, :where(html[data-device="desktop"]) nav.bot-nav .sb-mute-btn::after, :where(html[data-device="desktop"]) #sbSearchToggle::after {
     display: none !important;
     content: none !important;
     opacity: 0 !important;
   }
-}
+
 
 /* ═══ Desktop ≥1200px: sidebar + markaz + o'ng rail BUTUN GURUH ekranda markazlashgan (chap/o'ng bo'sh joy teng) ═══
    guruh kengligi = 280 (sidebar) + 600 (markaz) + 16 (oraliq) + 350 (rail) = 1246px */
-@media (min-width: 1100px) {
-  :root {
+
+  :root:where([data-device="desktop"]) {
     --gutter: max(0px, calc((100vw - 1246px) / 2));
     --sidebar: calc(280px + var(--gutter));
     --content-left: calc(280px + var(--gutter));
     /* tor ekran/zoom (masalan 125%): markaz siqiladi, 3 ustun saqlanadi (rail ~268px) */
     --center-w: min(600px, calc(100vw - 580px));
   }
-  nav.bot-nav { left: var(--gutter) !important; }
-}
+  :where(html[data-device="desktop"]) nav.bot-nav { left: var(--gutter) !important; }
+
 
 /* ═══ Desktop ≥1100px: chat thread HAR DOIM markaz ustunda (chatsView.on bo'lmasa ham full-screen bo'lib ketmasin) ═══
    Sabab: yuqoridagi `#chatThreadModal { inset: 0 }` faqat body:has(#chatsView.on) bilan markazga o'tardi */
-@media (min-width: 1100px) {
-  #chatThreadModal {
+
+  :where(html[data-device="desktop"]) #chatThreadModal {
     left: var(--content-left, var(--sidebar, 280px));
     right: auto;
     width: var(--center-w, 600px);
@@ -8147,40 +7979,40 @@ body.report-open { overflow: auto !important; }
     box-sizing: border-box;
     border: 0;
   }
-}
+
 
 /* ═══ Desktop ≥1100px: chap sidebar sig'masa ichida scroll (scrollbar KO'RINMAYDI) ═══ */
-@media (min-width: 1100px) {
-  nav.bot-nav {
+
+  :where(html[data-device="desktop"]) nav.bot-nav {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     scrollbar-width: none;
     -ms-overflow-style: none;
     overscroll-behavior: contain;
   }
-  nav.bot-nav::-webkit-scrollbar { display: none; width: 0; height: 0; }
-  nav.bot-nav > * { flex-shrink: 0; }
-}
+  :where(html[data-device="desktop"]) nav.bot-nav::-webkit-scrollbar { display: none; width: 0; height: 0; }
+  :where(html[data-device="desktop"]) nav.bot-nav > * { flex-shrink: 0; }
+
 
 /* ═══ O'ng panel (rail) va Suhbatlar ro'yxati: har qanday kenglikda sig'adi, ichidagi kontent ham ═══ */
-@media (min-width: 1100px) {
-  .right-rail, #chatsView.on { overflow-x: hidden; }
-  .right-rail > *, #chatsView > * { max-width: 100%; min-width: 0; box-sizing: border-box; }
+
+  :where(html[data-device="desktop"]) .right-rail, :where(html[data-device="desktop"]) #chatsView.on { overflow-x: hidden; }
+  :where(html[data-device="desktop"]) .right-rail > *, :where(html[data-device="desktop"]) #chatsView > * { max-width: 100%; min-width: 0; box-sizing: border-box; }
   /* sarlavha: [Suhbatlar ........ Hammasi ▾ (+)] — tor panelda sarlavha/filtr qisqaradi, "+" doim ko'rinadi */
-  #chatsView .chats-hdr { flex-wrap: nowrap; min-width: 0; gap: 8px; }
-  #chatsView .chats-hdr > span:first-child {
+  :where(html[data-device="desktop"]) #chatsView .chats-hdr { flex-wrap: nowrap; min-width: 0; gap: 8px; }
+  :where(html[data-device="desktop"]) #chatsView .chats-hdr > span:first-child {
     flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  #chatsView .chats-filter-btn { flex: 0 1 auto; min-width: 0; max-width: 55%; padding-left: 12px; padding-right: 10px; gap: 6px; }
-  #chatsView .chats-filter-btn #chatsFilterLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #chatsView .chats-filter-btn img { flex: 0 0 auto; }
-  #chatsView .chats-add-btn { flex: 0 0 36px; }
+  :where(html[data-device="desktop"]) #chatsView .chats-filter-btn { flex: 0 1 auto; min-width: 0; max-width: 55%; padding-left: 12px; padding-right: 10px; gap: 6px; }
+  :where(html[data-device="desktop"]) #chatsView .chats-filter-btn #chatsFilterLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :where(html[data-device="desktop"]) #chatsView .chats-filter-btn img { flex: 0 0 auto; }
+  :where(html[data-device="desktop"]) #chatsView .chats-add-btn { flex: 0 0 36px; }
   /* qator: ism + @username bitta qatorda, sig'masa "…" bilan qirqiladi */
-  #chatsView .chat-row-name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #chatsView .chat-row-name > span { display: inline; max-width: none; margin-left: 4px; }
-  #chatsView .chat-row-body { min-width: 0; }
-  #chatsView .chat-row { min-width: 0; }
-}
+  :where(html[data-device="desktop"]) #chatsView .chat-row-name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :where(html[data-device="desktop"]) #chatsView .chat-row-name > span { display: inline; max-width: none; margin-left: 4px; }
+  :where(html[data-device="desktop"]) #chatsView .chat-row-body { min-width: 0; }
+  :where(html[data-device="desktop"]) #chatsView .chat-row { min-width: 0; }
+
 
 /* ═══ Spoiler: Telegram-style client-side blur ═══ */
 .md-spoiler {
@@ -8531,8 +8363,8 @@ body.report-open { overflow: auto !important; }
   -webkit-overflow-scrolling: touch;
 }
 
-@media (min-width: 1100px) {
-  #chatsView.on {
+
+  :where(html[data-device="desktop"]) #chatsView.on {
     position: fixed !important;
     top: 0 !important;
     bottom: 0 !important;
@@ -8544,4 +8376,7 @@ body.report-open { overflow: auto !important; }
     overflow-y: auto !important;
     overflow-x: hidden !important;
   }
-}
+
+
+/* Desktop: markaz kengligi oyna kengligidan mustaqil rejim, faqat siqilib ketmasligi uchun suyuq qiymat */
+:root:where([data-device="desktop"]) { --center-w: min(600px, calc(100vw - 300px - 272px)); }

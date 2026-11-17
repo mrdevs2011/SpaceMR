@@ -31,6 +31,20 @@ html{color-scheme:dark;}
 <meta name="twitter:image" content="/icons/icon-512.png">
 <title>SpaceMR</title>
 <script>
+  /* QURILMA SINFI: ekran o'lchamiga EMAS, qurilmaning o'ziga qarab (modules/core/device.js bilan bir xil mantiq). */
+  (function () {
+    var n = navigator, ua = n.userAgent || '', tp = n.maxTouchPoints || 0, c = 'desktop';
+    if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && tp > 1)) c = 'tablet';
+    else if (/iPhone|iPod/i.test(ua)) c = 'phone';
+    else if (/Android/i.test(ua)) c = /Mobile/i.test(ua) ? 'phone' : 'tablet';
+    else if (n.userAgentData && n.userAgentData.mobile === true) c = 'phone';
+    else if (/webOS|BlackBerry|IEMobile|Opera Mini|Windows Phone|Mobile/i.test(ua)) c = 'phone';
+    else if (/Tablet|Silk|Kindle/i.test(ua)) c = 'tablet';
+    else { try { if (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches && tp > 0) c = 'phone'; } catch (e) {} }
+    document.documentElement.setAttribute('data-device', c);
+  })();
+</script>
+<script>
   /* Faqat dark theme — light theme o'chirilgan */
   (function(){
     localStorage.setItem('spacemr_theme', 'dark');

@@ -218,22 +218,21 @@ nav.bot-nav .sb-search-toggle img.icon {
   display: block;
   flex-shrink: 0;
 }
-@media (min-width: 1100px) {
-  nav.bot-nav .nav-btn img.icon,
-  nav.bot-nav .sb-search-toggle img.icon {
+
+  :where(html[data-device="desktop"]) nav.bot-nav .nav-btn img.icon, :where(html[data-device="desktop"]) nav.bot-nav .sb-search-toggle img.icon {
     width: 26px;
     height: 26px;
   }
-  nav.bot-nav #createBtn.nav-center-btn img.icon {
+  :where(html[data-device="desktop"]) nav.bot-nav #createBtn.nav-center-btn img.icon {
     display: none; /* desktop: text "Post" only */
   }
-}
-@media (max-width: 1099px) {
-  nav.bot-nav #createBtn.nav-center-btn img.icon {
+
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav #createBtn.nav-center-btn img.icon {
     width: 22px;
     height: 22px;
   }
-}
+
 .act-btn img.icon {
   width: 18.75px;
   height: 18.75px;

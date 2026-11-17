@@ -86,9 +86,9 @@
 .hdr-new-post-btn:hover { background: var(--bg3); color: var(--text); }
 .hdr-new-post-btn:active { opacity: 0.7; }
 /* Desktop: hide header new post button (sidebar used instead) */
-@media (min-width: 1100px) {
-  .hdr-new-post-btn { display: none; }
-}
+
+  :where(html[data-device="desktop"]) .hdr-new-post-btn { display: none; }
+
 /* hdr-theme-btn → now uses .hdr-icon-btn.theme-btn */
 /* ═══════════════════════ VIEWS ═══════════════════════ */
 /* VIEW SYSTEM — 1 vaqtda faqat 1 ta view. Har bir view to'liq alohida sahifa */
@@ -605,11 +605,11 @@ img.msg-ticks,
 /* Profile view layout fix (desktop: sidebar ostida emas, markazda) */
 #profileView { position: relative; z-index: 1; box-sizing: border-box; overflow-x: hidden; min-height: 100%; }
 #profileView.on { display: block; }
-@media (min-width: 1100px) {
-  #profileView.on { margin-left: var(--content-left, var(--sidebar, 68px)); width: var(--center-w, 600px); max-width: var(--center-w, 600px); margin-right: 0; padding-top: 0; }
-  #profileView .profile-hdr { padding-top: 20px; padding-left: 16px; padding-right: 16px; }
-  #profileView .profile-avi-row { margin-top: 0; }
-}
+
+  :where(html[data-device="desktop"]) #profileView.on { margin-left: var(--content-left, var(--sidebar, 68px)); width: var(--center-w, 600px); max-width: var(--center-w, 600px); margin-right: 0; padding-top: 0; }
+  :where(html[data-device="desktop"]) #profileView .profile-hdr { padding-top: 20px; padding-left: 16px; padding-right: 16px; }
+  :where(html[data-device="desktop"]) #profileView .profile-avi-row { margin-top: 0; }
+
 /* profileView padding — .view.on orqali boshqariladi (feed.css) */
 .profile-hdr { padding: 68px 16px 16px; }
 .profile-grid-hdr { margin: 0; }
@@ -925,10 +925,10 @@ img.msg-ticks,
   box-shadow: inset 0 1px 0 var(--pal-legacy-525257), inset 0 -1px 0 var(--pal-black);
   flex-shrink: 0;
 }
-@media (max-width: 1099px) {
-  .nav-center-btn { display: none; }
-  .bot-nav { justify-content: space-around; padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
-}
+
+  :where(html:not([data-device="desktop"])) .nav-center-btn { display: none; }
+  :where(html:not([data-device="desktop"])) .bot-nav { justify-content: space-around; padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
+
 /* Specular highlight on create button */
 .nav-center-btn::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 55%; background: var(--pal-legacy-3f3f44); border-radius: 50% 50% 0 0; pointer-events: none; }
 .nav-center-btn:hover { box-shadow: inset 0 1px 0 var(--pal-legacy-525257); }
@@ -1271,14 +1271,14 @@ img.msg-ticks,
 .sb-panel-input-wrap svg { flex-shrink: 0; color: var(--text3); }
 .sb-panel-input { background: none; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 14px; width: 100%; }
 .sb-panel-input::placeholder { color: var(--text3); }
-@media (min-width: 1100px) {
+
   /* --sidebar / --content-left: mono-x.css SSOT (300px wide labels). Bu yerda 68px icon-rail BEKOR. */
-  .app-hdr { display: none; }
-  .sb-search-toggle { display: flex; }
-  #sbSearchToggle.search-active { background: var(--pal-gray-800); box-shadow: var(--specular-top); }
-  #sbSearchToggle.search-active svg { stroke: var(--blue); }
-  #sbSearchToggle { position: relative; }
-  #sbSearchToggle::after {
+  :where(html[data-device="desktop"]) .app-hdr { display: none; }
+  :where(html[data-device="desktop"]) .sb-search-toggle { display: flex; }
+  :where(html[data-device="desktop"]) #sbSearchToggle.search-active { background: var(--pal-gray-800); box-shadow: var(--specular-top); }
+  :where(html[data-device="desktop"]) #sbSearchToggle.search-active svg { stroke: var(--blue); }
+  :where(html[data-device="desktop"]) #sbSearchToggle { position: relative; }
+  :where(html[data-device="desktop"]) #sbSearchToggle::after {
     content: 'Search';
     position: absolute;
     left: calc(100% + 12px);
@@ -1299,9 +1299,9 @@ img.msg-ticks,
     z-index: 200;
     box-shadow: var(--specular-top), var(--liquid-shadow-sm);
   }
-  #sbSearchToggle:hover::after { opacity: 1; }
-  .sb-top { display: flex; flex-direction: column; align-items: center; padding-bottom: 12px; margin-bottom: 8px; width: 100%; border-bottom: 0.5px solid var(--glass-border); gap: 10px; }
-  .sb-logo-row {
+  :where(html[data-device="desktop"]) #sbSearchToggle:hover::after { opacity: 1; }
+  :where(html[data-device="desktop"]) .sb-top { display: flex; flex-direction: column; align-items: center; padding-bottom: 12px; margin-bottom: 8px; width: 100%; border-bottom: 0.5px solid var(--glass-border); gap: 10px; }
+  :where(html[data-device="desktop"]) .sb-logo-row {
     position: relative;
     display: flex;
     align-items: center;
@@ -1315,21 +1315,21 @@ img.msg-ticks,
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .sb-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: none; border: none; box-shadow: none; }
-  .sb-logo-img { width: 30px; height: 30px; position: relative; z-index: 1; }
-  .sb-brand-text { display: none; }
-  .nav-btn { flex-direction: column; justify-content: center; align-items: center; width: 44px; height: 44px; padding: 0; gap: 0; border-radius: var(--radius); flex-shrink: 0; }
-  .nav-btn::after { display: none; }
-  .nav-btn span:not(.nav-badge) { display: none; }
-  .nav-btn svg { width: 22px; height: 22px; }
-  .nav-btn:hover { transform: none; background: var(--glass); border: 0.5px solid var(--glass-border); box-shadow: var(--specular-top); }
-  .nav-btn.on { background: var(--pal-gray-800); border: 0.5px solid #2f3336; box-shadow: var(--specular-top), 0 0 0 2px var(--pal-gray-900); }
-  .nav-btn.on svg { stroke: var(--blue); }
-  .nav-center-btn { width: 48px; height: 48px; border-radius: 50%; margin: 8px 0; flex-shrink: 0; }
-  .sb-create-label { display: none; }
-  .sb-bottom { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-top: 12px; width: 100%; border-top: 0.5px solid var(--glass-border); gap: 4px; }
-  .nav-btn[data-v], .nav-center-btn, .sb-mute-btn { position: relative; }
-  .nav-btn[data-v]::after, .nav-center-btn::after, .sb-mute-btn::after {
+  :where(html[data-device="desktop"]) .sb-logo-glass { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; background: none; border: none; box-shadow: none; }
+  :where(html[data-device="desktop"]) .sb-logo-img { width: 30px; height: 30px; position: relative; z-index: 1; }
+  :where(html[data-device="desktop"]) .sb-brand-text { display: none; }
+  :where(html[data-device="desktop"]) .nav-btn { flex-direction: column; justify-content: center; align-items: center; width: 44px; height: 44px; padding: 0; gap: 0; border-radius: var(--radius); flex-shrink: 0; }
+  :where(html[data-device="desktop"]) .nav-btn::after { display: none; }
+  :where(html[data-device="desktop"]) .nav-btn span:not(.nav-badge) { display: none; }
+  :where(html[data-device="desktop"]) .nav-btn svg { width: 22px; height: 22px; }
+  :where(html[data-device="desktop"]) .nav-btn:hover { transform: none; background: var(--glass); border: 0.5px solid var(--glass-border); box-shadow: var(--specular-top); }
+  :where(html[data-device="desktop"]) .nav-btn.on { background: var(--pal-gray-800); border: 0.5px solid #2f3336; box-shadow: var(--specular-top), 0 0 0 2px var(--pal-gray-900); }
+  :where(html[data-device="desktop"]) .nav-btn.on svg { stroke: var(--blue); }
+  :where(html[data-device="desktop"]) .nav-center-btn { width: 48px; height: 48px; border-radius: 50%; margin: 8px 0; flex-shrink: 0; }
+  :where(html[data-device="desktop"]) .sb-create-label { display: none; }
+  :where(html[data-device="desktop"]) .sb-bottom { display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-top: 12px; width: 100%; border-top: 0.5px solid var(--glass-border); gap: 4px; }
+  :where(html[data-device="desktop"]) .nav-btn[data-v], :where(html[data-device="desktop"]) .nav-center-btn, :where(html[data-device="desktop"]) .sb-mute-btn { position: relative; }
+  :where(html[data-device="desktop"]) .nav-btn[data-v]::after, :where(html[data-device="desktop"]) .nav-center-btn::after, :where(html[data-device="desktop"]) .sb-mute-btn::after {
     content: attr(data-tip);
     position: absolute;
     left: calc(100% + 12px);
@@ -1350,20 +1350,20 @@ img.msg-ticks,
     z-index: 200;
     box-shadow: var(--specular-top), var(--liquid-shadow-sm);
   }
-  .nav-btn[data-v]:hover::after, .nav-center-btn:hover::after, .sb-mute-btn:hover::after { opacity: 1; }
-  .nav-center-btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: var(--pal-legacy-3a3a3f); border-radius: 50% 50% 0 0; pointer-events: none; }
-  #homeView, #followingView, #reelsView, #profileView, #chatsView, #actionsView, #savedView, #appsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
-  .view.on { padding-top: 16px; padding-bottom: 24px; }
-  .feed { margin: 0 auto; padding: 0 16px; }
-  .post { border: 0.5px solid var(--glass-border); background: var(--glass); margin-bottom: 16px; padding: 14px; box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
-  .post-media { margin: 10px -14px; border-radius: 0; }
-  #detailContent { margin-bottom: 20px; }
-  #detailModal { padding-left: var(--sidebar); }
-  #userProfileModal { left: var(--sidebar); }
-  #grpInfoOverlay { left: var(--sidebar); }
-  .up-back, .gi-back-btn { left: calc(var(--sidebar) + 14px); }
-  .bot-nav { display: flex; position: fixed; }
-}
+  :where(html[data-device="desktop"]) .nav-btn[data-v]:hover::after, :where(html[data-device="desktop"]) .nav-center-btn:hover::after, :where(html[data-device="desktop"]) .sb-mute-btn:hover::after { opacity: 1; }
+  :where(html[data-device="desktop"]) .nav-center-btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%; background: var(--pal-legacy-3a3a3f); border-radius: 50% 50% 0 0; pointer-events: none; }
+  :where(html[data-device="desktop"]) #homeView, :where(html[data-device="desktop"]) #followingView, :where(html[data-device="desktop"]) #reelsView, :where(html[data-device="desktop"]) #profileView, :where(html[data-device="desktop"]) #chatsView, :where(html[data-device="desktop"]) #actionsView, :where(html[data-device="desktop"]) #savedView, :where(html[data-device="desktop"]) #appsView { margin-left: var(--sidebar); position: relative; z-index: 1; }
+  :where(html[data-device="desktop"]) .view.on { padding-top: 16px; padding-bottom: 24px; }
+  :where(html[data-device="desktop"]) .feed { margin: 0 auto; padding: 0 16px; }
+  :where(html[data-device="desktop"]) .post { border: 0.5px solid var(--glass-border); background: var(--glass); margin-bottom: 16px; padding: 14px; box-shadow: var(--specular-top), var(--liquid-shadow-sm); }
+  :where(html[data-device="desktop"]) .post-media { margin: 10px -14px; border-radius: 0; }
+  :where(html[data-device="desktop"]) #detailContent { margin-bottom: 20px; }
+  :where(html[data-device="desktop"]) #detailModal { padding-left: var(--sidebar); }
+  :where(html[data-device="desktop"]) #userProfileModal { left: var(--sidebar); }
+  :where(html[data-device="desktop"]) #grpInfoOverlay { left: var(--sidebar); }
+  :where(html[data-device="desktop"]) .up-back, :where(html[data-device="desktop"]) .gi-back-btn { left: calc(var(--sidebar) + 14px); }
+  :where(html[data-device="desktop"]) .bot-nav { display: flex; position: fixed; }
+
 /* ═══════════════════════════════════════════ DESKTOP SEARCH PANEL — Solid ══════════════════════════════════... */
 #sbSearchPanel {
   position: fixed;
@@ -1612,11 +1612,11 @@ img.msg-ticks,
 .ep-e { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: var(--radius); font-size: 22px; line-height: 1; padding: 0; cursor: pointer; font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif; }
 .ep-e:hover { background: var(--bg4); }
 /* Desktop */
-@media (min-width: 1100px) {
-  .chats-hdr, .chats-list { max-width: 560px; margin-left: auto; margin-right: auto; }
-  .chats-hdr { padding-left: 0; padding-right: 0; }
-  #chatThreadModal { left: var(--sidebar); }
-}
+
+  :where(html[data-device="desktop"]) .chats-hdr, :where(html[data-device="desktop"]) .chats-list { max-width: 560px; margin-left: auto; margin-right: auto; }
+  :where(html[data-device="desktop"]) .chats-hdr { padding-left: 0; padding-right: 0; }
+  :where(html[data-device="desktop"]) #chatThreadModal { left: var(--sidebar); }
+
 /* New input row with blur & voice */
 .chat-thread-input-row { position: relative; }
 /* Attach button */
@@ -3398,28 +3398,28 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
 }
 
 /* ── Chats rightbar: add horizontal margin to chat rows so they don't touch edges ── */
-@media (min-width: 1100px) {
-  #chatsView .chat-row {
+
+  :where(html[data-device="desktop"]) #chatsView .chat-row {
     margin: 0 8px;
     border-radius: var(--radius);
     border-bottom: none;
     padding: 10px 10px;
   }
-  #chatsView .chat-row:hover {
+  :where(html[data-device="desktop"]) #chatsView .chat-row:hover {
     transform: none;
     background: var(--pal-white-06, rgba(231, 233, 234, 0.05));
   }
-  #chatsView .grp-rows-section > .chat-row {
+  :where(html[data-device="desktop"]) #chatsView .grp-rows-section > .chat-row {
     margin: 0 8px;
     border-radius: var(--radius);
     border-bottom: none;
   }
   /* Section divider (GURUHLAR label) — also add margin */
-  #chatsView .grp-rows-label {
+  :where(html[data-device="desktop"]) #chatsView .grp-rows-label {
     padding-left: 16px;
     padding-right: 16px;
   }
-}
+
 
 /* ── Yangi guruh formasi: sarlavhada chap chevron (orqaga), "Yaratish" 100% kenglikda ── */
 #grpCreateFormOverlay .grp-form-head {
@@ -3504,10 +3504,10 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   from { transform: translateY(24px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
-@media (min-width: 600px) {
-  .ig-overlay { align-items: center; padding: 24px; }
-  .ig-sheet { border-radius: var(--radius); }
-}
+
+  :where(html:not([data-device="phone"])) .ig-overlay { align-items: center; padding: 24px; }
+  :where(html:not([data-device="phone"])) .ig-sheet { border-radius: var(--radius); }
+
 
 .ig-bell {
   width: 48px; height: 48px; border-radius: 50%;
@@ -4025,9 +4025,9 @@ a.cfm-name--link:hover { opacity: 1; text-decoration-color: #e7e9ea; }
   align-items: center;
   flex-shrink: 0;
 }
-@media (max-width: 1099px) {
-  .app-hdr { padding: 0 8px 0 10px !important; }
-}
+
+  :where(html:not([data-device="desktop"])) .app-hdr { padding: 0 8px 0 10px !important; }
+
 
 /* === WHITE-ON-WHITE FIX: light icons on inverted (white) buttons === */
 .btn-primary img.icon,
@@ -5091,17 +5091,12 @@ mark.chat-search-mark.is-current {
 .skel-pulse { animation: skel-pulse 1.2s ease-in-out infinite; }
 
 /* ROADMAP 6 — minimal 44px touch on key controls */
-@media (max-width: 1099px) {
-  nav.bot-nav .nav-btn,
-  nav.bot-nav .sb-search-toggle,
-  .chat-thread-back,
-  .chat-call-btn,
-  .chat-attach-btn,
-  .chat-emoji-btn {
+
+  :where(html:not([data-device="desktop"])) nav.bot-nav .nav-btn, :where(html:not([data-device="desktop"])) nav.bot-nav .sb-search-toggle, :where(html:not([data-device="desktop"])) .chat-thread-back, :where(html:not([data-device="desktop"])) .chat-call-btn, :where(html:not([data-device="desktop"])) .chat-attach-btn, :where(html:not([data-device="desktop"])) .chat-emoji-btn {
     min-width: 44px;
     min-height: 44px;
   }
-}
+
 
 
 /* Shikoyat — base (joylashuv mono-x report-center-column da) */
@@ -5399,13 +5394,13 @@ mark.chat-search-mark.is-current {
   font-weight: 600;
   cursor: pointer;
 }
-@media (min-width: 1100px) {
-  .report-sheet { align-items: center; }
-  .report-sheet-panel {
+
+  :where(html[data-device="desktop"]) .report-sheet { align-items: center; }
+  :where(html[data-device="desktop"]) .report-sheet-panel {
     border-radius: 20px;
     border-bottom: 1px solid #2f3336;
   }
-}
+
 body.report-open { overflow: hidden; }
 
 
@@ -5445,8 +5440,8 @@ body.report-open {
   /* leftbar/rightbar ishlashi uchun body scrollni butunlay bloklamaymiz */
   overflow: auto;
 }
-@media (min-width: 1100px) {
-  .report-sheet {
+
+  :where(html[data-device="desktop"]) .report-sheet {
     top: 0;
     bottom: 0;
     left: var(--content-left, var(--sidebar, 260px));
@@ -5454,19 +5449,19 @@ body.report-open {
     width: var(--center-w, 600px);
     max-width: var(--center-w, 600px);
   }
-  .report-sheet-panel {
+  :where(html[data-device="desktop"]) .report-sheet-panel {
     border-left: 1px solid var(--line, #2f3336) !important;
     border-right: 1px solid var(--line, #2f3336) !important;
     padding: 16px 16px 32px;
   }
-}
-@media (min-width: 1200px) {
-  .report-sheet {
+
+
+  :where(html[data-device="desktop"]) .report-sheet {
     left: var(--content-left, var(--sidebar, 260px));
     width: var(--center-w, 600px);
     max-width: var(--center-w, 600px);
   }
-}
+
 
 
 
@@ -6157,20 +6152,20 @@ body.report-open {
 .sv-prev { left: 0; }
 .sv-next { right: 0; }
 
-@media (min-width: 700px) {
-  .story-viewer { background: #000000; }
-  .sv-media { inset: 4% auto; left: 50%; transform: translateX(-50%); width: min(420px, 92vw); height: 92%; border-radius: 28px; overflow: hidden; background: #000000; }
-  .sv-progress { left: 50%; transform: translateX(-50%); width: min(420px, 92vw); }
-  .sv-top { left: 50%; transform: translateX(-50%); width: min(420px, 92vw); border-radius: 28px 12px 0 0; }
-  .sv-nav { width: 28%; }
-  .sv-prev { left: calc(50% - min(210px, 46vw)); }
-  .sv-next { right: calc(50% - min(210px, 46vw)); left: auto; }
-}
+
+  :where(html:not([data-device="phone"])) .story-viewer { background: #000000; }
+  :where(html:not([data-device="phone"])) .sv-media { inset: 4% auto; left: 50%; transform: translateX(-50%); width: min(420px, 92vw); height: 92%; border-radius: 28px; overflow: hidden; background: #000000; }
+  :where(html:not([data-device="phone"])) .sv-progress { left: 50%; transform: translateX(-50%); width: min(420px, 92vw); }
+  :where(html:not([data-device="phone"])) .sv-top { left: 50%; transform: translateX(-50%); width: min(420px, 92vw); border-radius: 28px 12px 0 0; }
+  :where(html:not([data-device="phone"])) .sv-nav { width: 28%; }
+  :where(html:not([data-device="phone"])) .sv-prev { left: calc(50% - min(210px, 46vw)); }
+  :where(html:not([data-device="phone"])) .sv-next { right: calc(50% - min(210px, 46vw)); left: auto; }
+
 
 .sv-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 6; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(0deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.30) 65%, transparent 100%); pointer-events: auto; overflow: visible !important; }
-@media (min-width: 700px) {
-  .sv-bottom { left: 50%; transform: translateX(-50%); width: min(420px, 92vw); border-radius: 0 0 28px 28px; bottom: 4%; }
-}
+
+  :where(html:not([data-device="phone"])) .sv-bottom { left: 50%; transform: translateX(-50%); width: min(420px, 92vw); border-radius: 0 0 28px 28px; bottom: 4%; }
+
 .sv-flying-emoji {
   position: fixed;
   transform: translate(-50%, -50%);
@@ -6296,10 +6291,10 @@ svg.sv-reaction-emoji { overflow: visible !important; }
 .sv-viewers-modal[hidden] { display: none !important; }
 .sv-viewers-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, .65); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .sv-viewers-sheet { position: relative; width: calc(100% - 16px); max-width: 460px; max-height: 72vh; margin: 0 auto; background: #14161f; color: #fff; border-radius: 20px !important; box-shadow: 0 -4px 32px rgba(0, 0, 0, .6); display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1) !important; animation: svSheetUp .22s cubic-bezier(0.16, 1, 0.3, 1); }
-@media (min-width: 600px) {
-  .sv-viewers-modal { align-items: center; padding: 20px; }
-  .sv-viewers-sheet { border-radius: 20px !important; border: 1px solid rgba(255, 255, 255, .1) !important; max-height: 80vh; }
-}
+
+  :where(html:not([data-device="phone"])) .sv-viewers-modal { align-items: center; padding: 20px; }
+  :where(html:not([data-device="phone"])) .sv-viewers-sheet { border-radius: 20px !important; border: 1px solid rgba(255, 255, 255, .1) !important; max-height: 80vh; }
+
 @keyframes svSheetUp { from { transform: translateY(100%); opacity: .8; } to { transform: translateY(0); opacity: 1; } }
 .sv-viewers-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 14px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
 .sv-viewers-title-wrap { display: flex; align-items: center; gap: 10px; }

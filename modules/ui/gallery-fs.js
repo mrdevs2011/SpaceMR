@@ -248,7 +248,7 @@ export function showInvalidFolderModal({ onRetry, onCancel } = {}) {
  */
 export async function pickAndValidateGalleryDirectory({ onInvalidFolder = null } = {}) {
   if (!('showDirectoryPicker' in window)) {
-    throw new Error("Brauzeringiz File System Access API ni qo'llab-quvvatlamaydi");
+    throw new Error("Bu brauzer galereyaga kirishni qo'llab-quvvatlamaydi");
   }
 
   let dirHandle;

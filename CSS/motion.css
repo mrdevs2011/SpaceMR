@@ -177,9 +177,9 @@ button, a, [role="button"], label, .chat-row, .nav-btn { touch-action: manipulat
 
 /* Sozlamalar (mobil/planshet <1200px): to'liq ekran sahifa — ilova headeri (z-index 200) uning o'z sarlavhasini
    (orqaga chevron) yopib qo'yardi. Sozlamalar ochiq turganda ilova headeri yashiriladi. Desktop (>=1200) da panel o'ng rail ichida. */
-@media (max-width: 1199.98px) {
-  body:has(#settingsOverlay.show) #appHdr { display: none !important; }
-}
+
+  :where(html:not([data-device="desktop"])) body:has(#settingsOverlay.show) #appHdr { display: none !important; }
+
 
 
 
@@ -340,9 +340,9 @@ img, video { decoding: async; }
 }
 
 /* Desktop: Profilni tahrirlash tugmasi yo'q (sozlamalar alohida) */
-@media (min-width: 900px) {
-  #pfEditBtn, #profileView #pfEditBtn, #profileView .pf-btn-main { display: none !important; }
-}
+
+  :where(html:not([data-device="phone"])) #pfEditBtn, :where(html:not([data-device="phone"])) #profileView #pfEditBtn, :where(html:not([data-device="phone"])) #profileView .pf-btn-main { display: none !important; }
+
 
 /* Tanlash: qator flex qoladi, doira chiziq bo'lib yoyilmaydi */
 #chatThreadMessages.msg-selecting .chat-msg,

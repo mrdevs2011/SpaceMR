@@ -23,6 +23,7 @@ import { state, isUploading } from '../core/config.js';
 import { toast } from './toast.js';
 import { closeChatThread } from '../chat/chat.js';
 import { escLocals } from './esc-stack.js';
+import { isMobileDevice } from '../core/device.js';
 
 const isOpen = el => {
   if (!el || el.hidden) return false;
@@ -104,7 +105,7 @@ const hasMouse = () => window.matchMedia?.('(pointer: fine)').matches ?? true;
 /** Mobil/planshet: Ctrl+1…0, H/C/P/N va h.k. ishlamasin. Esc va Enter saqlanadi. */
 const navShortcutsOn = () => {
   try {
-    if (window.matchMedia('(max-width: 1099px)').matches) return false;
+    if (isMobileDevice()) return false;
     if (window.matchMedia('(pointer: coarse)').matches) return false;
     if (window.matchMedia('(hover: none)').matches && !window.matchMedia('(pointer: fine)').matches) return false;
     return true;

@@ -294,7 +294,7 @@ function _xhrUpload(url, file, token, onProgress) {
       } catch (_) { detail = String(xhr.responseText || '').slice(0, 180); }
       const tooBig = xhr.status === 413 || /exceed|too large|maximum allowed|payload|entity too large|juda katta/i.test(detail);
       const error = new Error(tooBig
-        ? `Bu fayl (${(file.size / 1048576).toFixed(1)} MB) serverga sig'maydi: Supabase Storage'dagi maksimal fayl hajmi (hozir odatda 50 MB) dan oshib ketdi. Kichikroq fayl yuboring yoki loyiha sozlamalarida Storage limitini oshiring.`
+        ? `Bu fayl juda katta (${(file.size / 1048576).toFixed(1)} MB). Kichikroq fayl tanlab, qayta urinib ko'ring.`
         : `Storage HTTP ${xhr.status}${detail ? ': ' + detail : ''}`);
       error.status = xhr.status;
       if (tooBig) error.code = 'FILE_TOO_LARGE';

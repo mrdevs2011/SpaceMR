@@ -9,6 +9,7 @@ async function _loadProfile(uid) {
   return mapProfile(data) || {};
 }
 import { cacheProfile, getCachedProfile } from '../core/local-cache.js';
+import { isDesktopDevice } from '../core/device.js';
 
 /** Foydalanuvchi postlari: state.allPosts (feed keshi, ba'zan faqat oxirgi 80 ta) ga tayanmasdan,
  *  bazadan to'g'ridan-to'g'ri olinadi. Xato bo'lsa — keshdagi ro'yxatga qaytadi. */
@@ -89,7 +90,7 @@ function _bindProfileTabs() {
 function _hideDesktopEdit() {
   const edit = document.getElementById('pfEditBtn');
   if (!edit) return;
-  const desk = window.matchMedia('(min-width: 900px)').matches;
+  const desk = isDesktopDevice();
   edit.style.setProperty('display', desk ? 'none' : '', 'important');
   edit.hidden = desk;
   edit.setAttribute('aria-hidden', desk ? 'true' : 'false');

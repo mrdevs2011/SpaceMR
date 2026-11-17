@@ -5,6 +5,7 @@ import { sb } from '../core/config.js';
 import { $, defAvi, uToEmail } from '../core/utils.js';
 import { toast } from '../ui/toast.js';
 import { validateStrictEmail } from './auth.js';
+import { friendly } from '../core/friendly-error.js';
 
 let _sbErrUz = (err) => err?.message || 'Xato';
 
@@ -74,7 +75,7 @@ async function completeSignUp(recoveryEmail = '') {
     });
     if (error) throw error;
     if (!data.session) {
-      throw new Error('Supabase: Authentication → Email → "Confirm email" ni o\'chiring');
+      throw new Error('Ro\'yxatdan o\'tish hozircha ishlamayapti. Birozdan keyin urinib ko\'ring');
     }
   } catch (err) {
     console.error('Sign up error:', err);
@@ -133,7 +134,7 @@ if (regRecoverySubmitBtn) {
 
     const res = validateStrictEmail(val);
     if (!res.ok) {
-      if (errEl) errEl.textContent = res.error;
+      if (errEl) errEl.textContent = friendly(res.error);
       if (emailInp) {
         emailInp.classList.add('input-error');
         emailInp.focus();
