@@ -265,7 +265,7 @@ export function endUpload() { _uploadCount = Math.max(0, _uploadCount - 1); }
  */
 function _uploadTimeoutMs(file) {
   const mb = (file?.size || 0) / (1024 * 1024);
-  return Math.min(180000, Math.max(25000, 15000 + mb * 8000));
+  return Math.max(60000, 30000 + mb * 20000); // hajmga mutanosib, yuqori chegarasiz
 }
 
 function _xhrUpload(url, file, token, onProgress) {
@@ -292,8 +292,12 @@ function _xhrUpload(url, file, token, onProgress) {
         const body = JSON.parse(xhr.responseText || '{}');
         detail = body.message || body.error_description || body.error || body.msg || '';
       } catch (_) { detail = String(xhr.responseText || '').slice(0, 180); }
-      const error = new Error(`Storage HTTP ${xhr.status}${detail ? ': ' + detail : ''}`);
+      const tooBig = xhr.status === 413 || /exceed|too large|maximum allowed|payload|entity too large|juda katta/i.test(detail);
+      const error = new Error(tooBig
+        ? `Bu fayl (${(file.size / 1048576).toFixed(1)} MB) serverga sig'maydi: Supabase Storage'dagi maksimal fayl hajmi (hozir odatda 50 MB) dan oshib ketdi. Kichikroq fayl yuboring yoki loyiha sozlamalarida Storage limitini oshiring.`
+        : `Storage HTTP ${xhr.status}${detail ? ': ' + detail : ''}`);
       error.status = xhr.status;
+      if (tooBig) error.code = 'FILE_TOO_LARGE';
       reject(error);
     };
     xhr.onerror = () => reject(new Error('Tarmoq bilan aloqa uzildi'));
@@ -337,7 +341,7 @@ export async function uploadViaController(file, folder = 'posts', opts = {}) {
             continue;
           }
         }
-        const retryable = !e?.status || e.status === 408 || e.status === 429 || e.status >= 500;
+        const retryable = e?.code !== 'FILE_TOO_LARGE' && (!e?.status || e.status === 408 || e.status === 429 || e.status >= 500);
         if (!retryable || attempt >= 2) break;
         await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
       }
@@ -384,8 +388,6 @@ export async function purgeUserMedia(uid) {
 }
 
 // Constants
-// Yuklash limiti: 49.9 MB (Supabase Free storage chegarasi 50 MB dan oshmasin)
-export const MAX_FILE = Math.floor(49.9 * 1024 * 1024);
 export const CAP_LIMIT = 280; // X kabi: 280 belgigacha to'liq ko'rinadi
 
 /** Joriy foydalanuvchi admin (profiles.is_admin) */

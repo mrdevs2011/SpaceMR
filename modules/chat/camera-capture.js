@@ -686,11 +686,6 @@ export async function openCameraCapture(options = {}) {
         const blob = new Blob(recChunks, { type });
         recChunks = [];
         mediaRec = null;
-        if (blob.size > MAX_VIDEO_BYTES) {
-          toast('Video 30 MB dan oshdi — qisqaroq yozing', 'error');
-          resolve(null);
-          return;
-        }
         if (blob.size < 1000) {
           toast('Video juda qisqa', 'error');
           resolve(null);

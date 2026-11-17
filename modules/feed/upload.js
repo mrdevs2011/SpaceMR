@@ -1,14 +1,13 @@
 import { protectSecrets } from '../core/secrets.js';
 import { busEmit } from '../core/rt-bus.js';
 import { getCachedProfile } from '../core/local-cache.js';
-import { sb, state, MAX_FILE, uploadViaController, mapPost, setMediaDimensions } from '../core/config.js';
-import { compressImage } from './compress.js';
+import { sb, state, uploadViaController, mapPost, setMediaDimensions } from '../core/config.js';
 import { $, esc, fmtSz, lockScroll, unlockScroll, defAvi, safeStorage, isMobileOrTabletDevice } from '../core/utils.js';
 import { toast }                                   from '../ui/toast.js';
 import { initAttachMenu }                          from '../ui/attach-menu.js';
 import { isAllowedUpload, isImageFile, isVideoFile, UPLOAD_DENIED_MSG, STORY_DENIED_MSG, ALLOWED_UPLOAD_ACCEPT } from '../core/upload-policy.js';
 import { getFileTypeInfo } from '../core/file-icons.js';
-import { prepareVideo, ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
+import { ensureVideoDuration, hardenVideoPlayback } from '../core/video-policy.js';
 import { show as floatBarShow, update as floatBarUpdate, done as floatBarDone, hide as floatBarHide } from '../ui/float-progress.js';
 import { getDraft, setDraft, clearDraft } from '../core/drafts.js';
 
@@ -128,25 +127,6 @@ function hideProgress() {
 /* ── File pick ───────────────────────────────────────────────────────── */
 export function pickFile(f) {
   const video = isVideoFile(f);
-  // Post va story: video ruxsat. Yuklashdan oldin prepareVideo kamera chekloviga keltiradi.
-  if (!video && !isAllowedUpload(f)) {
-    toast(UPLOAD_DENIED_MSG, 'error');
-    $('fileInput').value = '';
-    return;
-  }
-  if (_composerMode === 'story' && !video && !isImageFile(f)) {
-    toast(STORY_DENIED_MSG, 'error');
-    $('fileInput').value = '';
-    return;
-  }
-  // Video hajmi oldindan kesilmaydi: 100000000 Mbps / juda yuqori fps bo'lsa ham
-  // prepareVideo uni 1 daqiqa / 1080p / 30fps standartiga tushiradi.
-  if (!video && f.size > MAX_FILE) {
-    const limTxt = '49.9 MB';
-    $('sizeWarn').textContent = `Fayl ${fmtSz(f.size)} — limit ${limTxt}`;
-    toast(`Fayl hajmi ${limTxt} dan oshmasligi kerak`, 'error');
-    return;
-  }
   $('sizeWarn').textContent = '';
   revokeObjUrl();
   state.selFile = f;
@@ -162,7 +142,7 @@ export function pickFile(f) {
   } else if (video) {
     $('previewArea').innerHTML = `<div class="preview-wrap"><video src="${esc(state._objUrl)}" controls playsinline muted style="width:100%;height:auto;display:block;border-radius:var(--radius);background:transparent" onloadedmetadata="window.__fixVidDur&&window.__fixVidDur(this)"></video><button class="preview-clear" data-action="clear-file">
       <img src="./svg/action/close.svg" alt="" class="icon" width="12" height="12">
-    </button><div class="fs-11px c-text3-theme" style="padding:6px 8px">Kamera standarti: 1 daqiqa · 1080p · 30 fps</div></div>`;
+    </button></div>`;
   } else {
     const info = getFileTypeInfo(f.name, f.type);
     const ext = (String(f.name || '').split('.').pop() || info.label || 'FILE').toUpperCase().slice(0, 5);
@@ -219,40 +199,8 @@ function clearFile() {
 /* ── Float bar helpers ───────────────────────────────────────────────── */
 
 /* Rasm kerak bo'lganda siqadi (compress.js). Float bar'da foiz ko'rsatiladi. */
-async function _prepareUploadFile(file, label, mode = 'post') {
-  if (!file) return file;
-  const isStory = mode === 'story';
-  // Video — kamera yozgan fayl tayyor bo'lsa qayta kodlanmaydi; story: 720p tez preset
-  if (isVideoFile(file)) {
-    const nameEl = $('ufbName');
-    if (nameEl) nameEl.textContent = isStory ? 'Story video tayyorlanmoqda' : 'Video standartga keltirilmoqda';
-    let res;
-    try {
-      res = await prepareVideo(file, {
-        onProgress: p => floatBarUpdate(Math.round((p || 0) * 40)),
-        preset: isStory ? 'story' : 'post',
-      });
-    } catch (e) {
-      // Brauzer kodekni o'qiy olmasa (masalan HEVC) — postga original fayl sifatida, 50 MB gacha.
-      if (isStory || file.size > MAX_FILE) throw e;
-      console.warn('[video] qayta kodlab bo\'lmadi, original yuklanadi:', e?.message || e);
-      return file;
-    }
-    if (res.truncated) toast('Video 1 daqiqadan oshdi — faqat dastlabki 60 soniya olindi', 'info');
-    console.info('[video] standart:', fmtSz(file.size), '→', fmtSz(res.file.size), res.file.type, isStory ? '(story)' : '');
-    return res.file;
-  }
-  // Rasm — story uchun kuchliroq siqish
-  if (isImageFile(file)) {
-    try {
-      const compressed = await compressImage(file, { preset: isStory ? 'story' : 'post' });
-      if (compressed !== file) console.info('[compress] image:', fmtSz(file.size), '→', fmtSz(compressed.size), compressed.type);
-      return compressed;
-    } catch (e) {
-      console.warn('[compress] image failed, original:', e?.message || e);
-      return file;
-    }
-  }
+// Hech qanday siqish yoki o'zgartirish yo'q: fayl 1:1 original holida yuklanadi.
+async function _prepareUploadFile(file) {
   return file;
 }
 

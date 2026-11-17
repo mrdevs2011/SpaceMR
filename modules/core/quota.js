@@ -5,6 +5,7 @@ const LIMIT_BYTES = Math.floor(49 * 1024 * 1024); // 49 MB
 const WINDOW_MS = 60 * 1000; // 1 minut
 
 export function initQuota() {
+  return; // Trafik/hajm cheklovi olib tashlangan: yuklash va yuklab olishda hech qanday klient limiti yo'q.
   let browserId = localStorage.getItem('mr_browser_id');
   if (!browserId) {
     browserId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2);

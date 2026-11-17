@@ -6,7 +6,6 @@
  * Istisno 2: chat/guruhga FAYL sifatida (chat-files, group-files) video ham ruxsat (057).
  * (Baza tomoni: supabase/migrations/056_block_video_only.sql, 057_allow_video_as_chat_file.sql)
  */
-import { isVideoReady } from './video-policy.js';
 
 export const UPLOAD_DENIED_MSG = 'Video yuklash mumkin emas';
 export const STORY_DENIED_MSG = "Storyga faqat rasm qo'yish mumkin";
@@ -61,11 +60,6 @@ export function isAllowedVoice(file) {
   return !!file && _t(file).startsWith('audio/');
 }
 
-export function assertAllowedUpload(file, folder = '') {
-  if (!file) throw new Error(UPLOAD_DENIED_MSG);
-  if (folder === 'stories') {
-    if (!isImageFile(file) && !isVideoFile(file)) throw new Error(STORY_DENIED_MSG);
-  } else if (['avatars', 'group-avatars'].includes(folder) && !isImageFile(file)) {
-    throw new Error(IMAGE_ONLY_MSG);
-  }
+export function assertAllowedUpload(file) {
+  if (!file) throw new Error('Fayl tanlanmagan');
 }

@@ -975,7 +975,7 @@ function _paintUserRows(users, animate = false) {
  */
 import {
   sb, state, uploadViaController, isAdmin, fetchAllRows, mapProfile, mapChat, mapMessage,
-  mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET, MAX_FILE
+  mediaSecureUrl, mediaSecureUrls, mediaSecureUrlSync, mediaPublicUrl, ts, SUPABASE_URL, SUPABASE_ANON_KEY, MEDIA_BUCKET
 } from '../core/config.js';
 import { $, esc, renderMarkdown, defAvi, fmt, fmtTime, fmtSz, isOnline, formatLastSeen, isActiveUser, smoothScrollContainer, parsePureYouTube, parsePureMedia, lockScroll, unlockScroll, showConfirm } from '../core/utils.js';
 import { toast }            from '../ui/toast.js';
@@ -3294,10 +3294,6 @@ function setChatFile(file) {
   if (!isAllowedUpload(file)) {
     import('../ui/toast.js').then(m => m.toast(UPLOAD_DENIED_MSG, 'error'));
     $('chatFileInput') && ($('chatFileInput').value = '');
-    return;
-  }
-  if (file.size > MAX_FILE) {
-    import('../ui/toast.js').then(m => m.toast('Fayl hajmi 50 MB dan oshmasligi kerak', 'error'));
     return;
   }
 

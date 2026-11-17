@@ -707,10 +707,6 @@ async function startVideoRecording() {
       const ext = type.includes('mp4') ? 'mp4' : 'webm';
       const blob = new Blob(_vidChunks, { type });
       _vidChunks = [];
-      if (blob.size > VID_MAX_BYTES) {
-        toast('Video 30 MB dan oshdi — qisqaroq yozing', 'error');
-        return;
-      }
       if (blob.size < 1000) {
         toast('Video juda qisqa', 'error');
         return;
