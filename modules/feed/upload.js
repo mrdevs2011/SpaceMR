@@ -226,10 +226,18 @@ async function _prepareUploadFile(file, label, mode = 'post') {
   if (isVideoFile(file)) {
     const nameEl = $('ufbName');
     if (nameEl) nameEl.textContent = isStory ? 'Story video tayyorlanmoqda' : 'Video standartga keltirilmoqda';
-    const res = await prepareVideo(file, {
-      onProgress: p => floatBarUpdate(Math.round((p || 0) * 40)),
-      preset: isStory ? 'story' : 'post',
-    });
+    let res;
+    try {
+      res = await prepareVideo(file, {
+        onProgress: p => floatBarUpdate(Math.round((p || 0) * 40)),
+        preset: isStory ? 'story' : 'post',
+      });
+    } catch (e) {
+      // Brauzer kodekni o'qiy olmasa (masalan HEVC) — postga original fayl sifatida, 50 MB gacha.
+      if (isStory || file.size > MAX_FILE) throw e;
+      console.warn('[video] qayta kodlab bo\'lmadi, original yuklanadi:', e?.message || e);
+      return file;
+    }
     if (res.truncated) toast('Video 1 daqiqadan oshdi — faqat dastlabki 60 soniya olindi', 'info');
     console.info('[video] standart:', fmtSz(file.size), '→', fmtSz(res.file.size), res.file.type, isStory ? '(story)' : '');
     return res.file;
