@@ -1,0 +1,97 @@
+/* SpaceMR responsive refinements. The established device-aware navigation in layers.css
+   remains the source of truth: desktop sidebar, tablet/phone bottom navigation. */
+:root {
+  --layout-gutter: clamp(10px, 2.2vw, 28px);
+  --content-max: 760px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width: 100%; max-width: 100%; min-width: 0; }
+body { overflow-x: clip; }
+#app, #app.show, .view, .view.on { min-width: 0; max-width: 100%; }
+img, video, canvas, svg { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; min-width: 0; }
+.feed, .post, .post-content, .chat-thread-hdr, .chat-thread-messages,
+.chat-thread-input, .profile-content, #profileView, #chatsView,
+#homeView, #followingView, #reelsView, #savedView, #appsView,
+#actionsView, #notifsView { min-width: 0; }
+.feed { width: min(100%, var(--content-max)); }
+.post img, .post video, .chat-msg img, .chat-msg video,
+#chatThreadMessages img, #chatThreadMessages video { max-width: 100%; object-fit: contain; }
+pre, code, .post-text, .chat-bubble-text, .cmt-text,
+.file-name, .settings-row-text, .chat-row-preview { overflow-wrap: anywhere; }
+
+/* Tablet refinements. Navigation and sidebar geometry stay in layers.css. */
+@media (min-width: 600px) and (max-width: 1099px) {
+  :root[data-device="tablet"] { --layout-gutter: clamp(20px, 4vw, 40px); --content-max: 720px; }
+  html[data-device="tablet"] .feed { width: min(100%, 720px); padding-inline: var(--layout-gutter); }
+  html[data-device="tablet"] .app-hdr { padding-inline: 20px; }
+  html[data-device="tablet"] .sheet,
+  html[data-device="tablet"] .composer-sheet,
+  html[data-device="tablet"] .ua-modal,
+  html[data-device="tablet"] #cmtPanel {
+    width: min(640px, calc(100vw - 40px)); max-width: 640px; margin-inline: auto;
+  }
+  html[data-device="tablet"] #detailContent,
+  html[data-device="tablet"] #cmContent,
+  html[data-device="tablet"] .fv-panel { max-width: min(760px, calc(100vw - 40px)); }
+  html[data-device="tablet"] .chat-thread-hdr { padding-inline: 20px; }
+  html[data-device="tablet"] .chat-thread-messages { padding-inline: clamp(16px, 4vw, 36px); }
+  html[data-device="tablet"] .post { margin-bottom: 18px; }
+}
+
+/* Phone-sized layouts. Existing phone navigation remains untouched. */
+@media (max-width: 599px) {
+  :root { --layout-gutter: 10px; --content-max: 100%; }
+  html, body { min-width: 320px; }
+  html:not([data-device="desktop"]) .app-hdr {
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+  html:not([data-device="desktop"]) .hdr-brand { font-size: 14px; }
+  html:not([data-device="desktop"]) .feed { width: 100%; padding-inline: var(--layout-gutter); }
+  html:not([data-device="desktop"]) .post { border-radius: 12px; margin-bottom: 12px; }
+  html:not([data-device="desktop"]) .sheet,
+  html:not([data-device="desktop"]) .composer-sheet,
+  html:not([data-device="desktop"]) .ua-modal,
+  html:not([data-device="desktop"]) #cmtPanel {
+    width: 100%; max-width: 100%; max-height: calc(100dvh - 12px);
+    margin-inline: 0; padding-bottom: max(16px, var(--safe-bottom));
+  }
+  html:not([data-device="desktop"]) .overlay { padding-left: 0; padding-right: 0; }
+  html:not([data-device="desktop"]) #chatThreadModal,
+  html:not([data-device="desktop"]) #userProfileModal,
+  html:not([data-device="desktop"]) #grpInfoOverlay,
+  html:not([data-device="desktop"]) #cmViewer { inset: 0; width: 100%; max-width: 100%; }
+  html:not([data-device="desktop"]) .chat-thread-hdr { padding: 8px 10px; gap: 8px; }
+  html:not([data-device="desktop"]) .chat-thread-messages { padding: 10px 8px; }
+  html:not([data-device="desktop"]) .chat-msg.mine,
+  html:not([data-device="desktop"]) .chat-msg.theirs { max-width: min(88%, 420px); }
+  html:not([data-device="desktop"]) .chat-bubble,
+  html:not([data-device="desktop"]) .chat-bubble-text { min-width: 0; overflow-wrap: anywhere; }
+  html:not([data-device="desktop"]) .chat-file-msg,
+  html:not([data-device="desktop"]) .cfm-file-wrap { min-width: 0; max-width: min(78vw, 280px); }
+  html:not([data-device="desktop"]) .chat-attach-panel,
+  html:not([data-device="desktop"]) .chat-emoji-panel { max-width: 100vw; }
+  html:not([data-device="desktop"]) #userProfileModal .up-content,
+  html:not([data-device="desktop"]) #grpInfoOverlay .gi-content { width: 100%; max-width: 100%; }
+  html:not([data-device="desktop"]) input,
+  html:not([data-device="desktop"]) select,
+  html:not([data-device="desktop"]) textarea { font-size: max(16px, 1em); }
+  html:not([data-device="desktop"]) button { touch-action: manipulation; }
+  html:not([data-device="desktop"]) .profile-grid,
+  html:not([data-device="desktop"]) .up-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html:not([data-device="desktop"]) .stories-track { max-width: 100%; }
+}
+
+@media (max-width: 360px) {
+  :root { --layout-gutter: 8px; }
+  html:not([data-device="desktop"]) .hdr-brand { display: none; }
+  html:not([data-device="desktop"]) .chat-msg.mine,
+  html:not([data-device="desktop"]) .chat-msg.theirs { max-width: 92%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
