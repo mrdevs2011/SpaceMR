@@ -333,15 +333,12 @@ a { color: var(--link); }
   min-width: 0;
   max-width: 100%;
   height: auto;
-  /* Juda uzun (telefon skrinshoti) rasm cheksiz cho'zilmasin — X kabi yuqoridan kesiladi */
-  max-height: min(88vh, 1000px);
 }
 /* Rasm doim to'liq kenglikda: yon tomonda qora bo'sh joy (letterbox) bo'lmaydi */
 .post-media img {
   width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
-  max-height: min(88vh, 1000px);
   display: block;
   object-fit: cover;
   object-position: center top;

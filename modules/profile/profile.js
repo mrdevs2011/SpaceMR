@@ -319,7 +319,9 @@ export async function openDetail(id) {
 
   let mediaHtml = '';
   if (p.mediaUrl && p.mediaType?.startsWith('image')) {
-    mediaHtml = `<div class="dm-media"><img src="${esc(p.mediaUrl)}" loading="lazy"></div>`;
+    mediaHtml = `<div class="dm-media"><img src="${esc(p.mediaUrl)}" loading="lazy" alt="Post rasmi"></div>`;
+  } else if (p.mediaUrl && p.mediaType?.startsWith('video')) {
+    mediaHtml = `<div class="dm-media"><video src="${esc(p.mediaUrl)}" controls playsinline preload="metadata"></video></div>`;
   }
 
   const likeColor = isLiked ? '#f91880' : 'currentColor';

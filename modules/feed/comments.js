@@ -154,7 +154,15 @@ function findVisiblePost(postId) {
 
 export function closeSheetCmt() {
   const m = $('cmtModal');
-  if (m) m.classList.remove('show');
+  const wasOpen = !!m?.classList.contains('show');
+  if (!wasOpen) {
+    // DOM'da modal yopiq bo'lsa, uning eski scroll qulfini qayta bo'shatmaymiz.
+    if (_mode === 'modal') { state.cmtPostId = null; _mode = null; }
+    return;
+  }
+  m.classList.remove('show');
+  // Faqat shu modal scroll lock egasi bo'lgan bo'lsa bo'shatamiz.
+  // Aks holda unlockScroll stale _scrollY ni tiklab, sahifani yuqoriga sakratishi mumkin.
   unlockScroll('cmtModal');
   if (_mode === 'modal') {
     state.cmtPostId = null;
@@ -263,7 +271,7 @@ async function openInlineCmt(postId) {
   });
 
   // Focus input
-  setTimeout(() => $('inlineCmtInput')?.focus(), 50);
+  setTimeout(() => { const input = $('inlineCmtInput'); try { input?.focus({ preventScroll: true }); } catch (_) { input?.focus(); } }, 50);
   _routeKick();
 
   await loadComments(postId, 'inlineCmtList');
@@ -301,7 +309,7 @@ async function openRailCmt(postId) {
   syncSend(inp, $('rrCmtSend'));
 
   fillMyAvi('rrCmtMyAvi');
-  setTimeout(() => inp?.focus(), 50);
+  setTimeout(() => { try { inp?.focus({ preventScroll: true }); } catch (_) { inp?.focus(); } }, 50);
   _routeKick();
 
   await loadComments(postId, 'rrCmtList');
