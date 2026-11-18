@@ -31,17 +31,32 @@ html{color-scheme:dark;}
 <meta name="twitter:image" content="/icons/icon-512.png">
 <title>SpaceMR</title>
 <script>
-  /* QURILMA SINFI: ekran o'lchamiga EMAS, qurilmaning o'ziga qarab (modules/core/device.js bilan bir xil mantiq). */
+  /* Responsive layout: desktop window resize bo'lsa ham device layout yangilanadi. */
   (function () {
-    var n = navigator, ua = n.userAgent || '', tp = n.maxTouchPoints || 0, c = 'desktop';
-    if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && tp > 1)) c = 'tablet';
-    else if (/iPhone|iPod/i.test(ua)) c = 'phone';
-    else if (/Android/i.test(ua)) c = /Mobile/i.test(ua) ? 'phone' : 'tablet';
-    else if (n.userAgentData && n.userAgentData.mobile === true) c = 'phone';
-    else if (/webOS|BlackBerry|IEMobile|Opera Mini|Windows Phone|Mobile/i.test(ua)) c = 'phone';
-    else if (/Tablet|Silk|Kindle/i.test(ua)) c = 'tablet';
-    else { try { if (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches && tp > 0) c = 'phone'; } catch (e) {} }
-    document.documentElement.setAttribute('data-device', c);
+    var n = navigator, ua = n.userAgent || '', tp = n.maxTouchPoints || 0;
+    var physical = 'desktop';
+    if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && tp > 1)) physical = 'tablet';
+    else if (/iPhone|iPod/i.test(ua)) physical = 'phone';
+    else if (/Android/i.test(ua)) physical = /Mobile/i.test(ua) ? 'phone' : 'tablet';
+    else if (n.userAgentData && n.userAgentData.mobile === true) physical = 'phone';
+    else if (/webOS|BlackBerry|IEMobile|Opera Mini|Windows Phone|Mobile/i.test(ua)) physical = 'phone';
+    else if (/Tablet|Silk|Kindle/i.test(ua)) physical = 'tablet';
+    else { try { if (matchMedia('(pointer: coarse)').matches && matchMedia('(hover: none)').matches && tp > 0) physical = 'phone'; } catch (e) {} }
+    function apply() {
+      var w = window.innerWidth || 1280;
+      var layout = physical === 'phone' ? 'phone' : physical === 'tablet' ? (w < 600 ? 'phone' : 'tablet') : w < 600 ? 'phone' : w < 1100 ? 'tablet' : 'desktop';
+      var root = document.documentElement;
+      if (root.getAttribute('data-device') !== layout) root.setAttribute('data-device', layout);
+    }
+    var queued = false;
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; apply(); });
+    }
+    apply();
+    window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('orientationchange', schedule, { passive: true });
   })();
 </script>
 <script>

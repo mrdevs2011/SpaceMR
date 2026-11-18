@@ -243,6 +243,7 @@ export function startRightRail() {
   rail()?.addEventListener('click', onClick);
   $('rrSettingsBtn')?.addEventListener('click', () => $('settingsBtn')?.click());
   window.addEventListener('resize', fit);
+  window.addEventListener('spacemr:devicechange', fit);
   document.addEventListener('groupsUpdated', () => { if (!cmtOpen()) loadGroups(); });
   document.addEventListener('profilesPreloaded', () => scheduleRefresh(50));
   document.addEventListener('postsUpdated', () => { if (!cmtOpen()) loadRecent(); });

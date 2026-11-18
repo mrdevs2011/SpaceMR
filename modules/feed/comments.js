@@ -616,8 +616,8 @@ if ($('cmtModal')) {
   });
 }
 
-// Resize: if switching breakpoints while open, re-route
-window.addEventListener('resize', () => {
+// Breakpoint almashganda (resize eventidan keyin layout aniqlangach) comments joyini yangilash.
+function syncCommentsLayout() {
   if (!state.cmtPostId || !_mode) return;
   const wantRail = isDesktopCmt();
   if (wantRail && _mode === 'inline') {
@@ -629,4 +629,6 @@ window.addEventListener('resize', () => {
     closeRailCmt();
     openInlineCmt(id);
   }
-});
+}
+window.addEventListener('resize', syncCommentsLayout);
+window.addEventListener('spacemr:devicechange', syncCommentsLayout);

@@ -779,6 +779,7 @@ export function mountApps() {
     $('rrApps')?.addEventListener('click', e => handle(e, $('rrApps')));
     document.addEventListener('click', onRunnerClick);
     window.addEventListener('apps:path', () => { if (state.view === 'apps') render(); });
+    window.addEventListener('spacemr:devicechange', () => { if (state.view === 'apps') render(); });
   }
   render();
 }

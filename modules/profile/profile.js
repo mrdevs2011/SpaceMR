@@ -123,6 +123,7 @@ export async function renderProfile() {
   if (!window._pfEditResize) {
     window._pfEditResize = true;
     window.addEventListener('resize', _hideDesktopEdit);
+    window.addEventListener('spacemr:devicechange', _hideDesktopEdit);
   }
 
   // Tarmoqni kutmasdan — keshdagi so'nggi profil ma'lumotini darhol chizamiz

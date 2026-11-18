@@ -136,7 +136,7 @@ function bindDrag(bar) {
 
   // Resize: custom joy ekrandan chiqib ketmasin; bucket o'zgarsa qayta qo'llash
   let lastBucket = deviceBucket();
-  window.addEventListener('resize', () => {
+  const syncPosition = () => {
     const b = deviceBucket();
     if (b !== lastBucket) {
       lastBucket = b;
@@ -147,7 +147,9 @@ function bindDrag(bar) {
       bar.style.left = c.left + 'px';
       bar.style.top = c.top + 'px';
     }
-  });
+  };
+  window.addEventListener('resize', syncPosition);
+  window.addEventListener('spacemr:devicechange', syncPosition);
 }
 
 function ensure() {
