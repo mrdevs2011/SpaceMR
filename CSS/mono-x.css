@@ -8361,15 +8361,20 @@ body.report-open { overflow: auto !important; }
 }
 
 
+/* Desktop: Suhbatlar ro'yxati O'NG ustunda (markaz = suhbat, ro'yxat = rail). Yuqoridagi "CHAT (≥1200px)" qoidasi bilan bir xil
+   geometriya; faqat `.view.on { position: static !important; height: auto !important; overflow: visible !important }`
+   (features.css) ustidan g'alaba qilish uchun !important. Oldingi variant ro'yxatni chapga (left: var(--sidebar)) va z-index: 2 ga
+   qaytarib, markaz paneli (#chatThreadModal / .chats-x-pane) ostida yashirib qo'yardi. */
   :where(html[data-device="desktop"]) #chatsView.on {
     position: fixed !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    left: var(--sidebar) !important;
-    width: var(--chats-w) !important;
-    height: auto !important;
-    margin-left: 0 !important;
-    z-index: 2 !important;
+    top: 12px !important;
+    bottom: 12px !important;
+    left: calc(var(--content-left, var(--sidebar, 260px)) + var(--center-w) + 16px) !important;
+    right: auto !important;
+    width: min(350px, max(240px, calc(100vw - var(--content-left, 260px) - var(--center-w) - 32px))) !important;
+    height: calc(100dvh - 24px) !important;
+    margin: 0 !important;
+    z-index: 40 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
   }
