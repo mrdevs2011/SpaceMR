@@ -1,0 +1,21 @@
+/* Guruh yaratish: tarmoq xatosida qayta urinish va pkey takrori = muvaffaqiyat. Ishlatish: node tests/group-create-retry.test.mjs */
+import { readFileSync } from 'node:fs';
+const src = readFileSync(new URL('../modules/chat/groups.js', import.meta.url), 'utf8');
+const a = src.indexOf('const _isNetErr'), b = src.indexOf('async function _addMembers');
+if (a < 0 || b < 0) throw new Error('helperlar topilmadi');
+let plan = [];
+const sb = { from: () => ({ insert: async () => plan.shift() }) };
+const mk = new Function('sb', src.slice(a, b) + '\nreturn _insertGroupIdempotent;');
+const ins = mk(sb);
+let fails = 0, n = 0;
+const eq = (name, got, want) => { n++; if (JSON.stringify(got) !== JSON.stringify(want)) { fails++; console.error('FAIL', name, JSON.stringify(got), JSON.stringify(want)); } };
+plan = [{ error: { message: 'Failed to fetch' } }, { error: null }];
+eq('retry then ok', (await ins({})).error, null);
+plan = [{ error: { message: 'Failed to fetch' } }, { error: { code: '23505', message: 'duplicate key value violates unique constraint "groups_pkey"' } }];
+eq('pkey dup after retry = ok', (await ins({})).error, null);
+plan = [{ error: { code: '23505', message: 'duplicate key ... "groups_username_idx"' } }];
+eq('username dup is error', (await ins({})).error?.code, '23505');
+plan = [{ error: { message: 'Failed to fetch' } }, { error: { message: 'Failed to fetch' } }, { error: { message: 'Failed to fetch' } }];
+eq('gives up after 3', (await ins({})).error?.message, 'Failed to fetch');
+console.log(fails ? `${fails}/${n} FAIL` : `OK ${n}`);
+process.exit(fails ? 1 : 0);

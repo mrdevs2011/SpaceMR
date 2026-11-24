@@ -42,7 +42,46 @@ try {
   }
 } catch (_) {}
 
+/* Bardoshli fetch: vaqtinchalik tarmoq uzilishi ("can't be reached") foydalanuvchiga chiqmasin.
+   - Faqat GET/HEAD (idempotent) tarmoq xatosida yoki 502/503/504 da 2 marta qayta uriniladi.
+   - REST/Auth so'rovlariga 25s timeout (osilib qolmasin). Storage/Functions ga timeout yo'q.
+   - Yozuvchi (POST/PATCH/DELETE) so'rovlar bu yerda QAYTA YUBORILMAYDI: ularni chaqiruvchi
+     (masalan, guruh yaratish) o'zi idempotent id bilan qayta urinadi. */
+const _SB_TIMEOUT_MS = 25000;
+const _sleep = ms => new Promise(r => setTimeout(r, ms));
+async function resilientFetch(input, init = {}) {
+  const method = String(init.method || (input && input.method) || 'GET').toUpperCase();
+  const url = String(typeof input === 'string' ? input : (input && input.url) || '');
+  const idempotent = method === 'GET' || method === 'HEAD';
+  const useTimeout = !/\/(storage|functions)\/v1\//.test(url) && !init.signal;
+  const maxTry = idempotent ? 3 : 1;
+  let lastErr;
+  for (let i = 0; i < maxTry; i++) {
+    let timer, ctrl;
+    try {
+      if (useTimeout && typeof AbortController !== 'undefined') {
+        ctrl = new AbortController();
+        timer = setTimeout(() => ctrl.abort(), _SB_TIMEOUT_MS);
+      }
+      const res = await fetch(input, ctrl ? { ...init, signal: ctrl.signal } : init);
+      if (timer) clearTimeout(timer);
+      if (idempotent && i < maxTry - 1 && (res.status === 502 || res.status === 503 || res.status === 504)) {
+        await _sleep(350 * (i + 1) * (i + 1));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      if (timer) clearTimeout(timer);
+      lastErr = e;
+      if (init.signal && init.signal.aborted) throw e;
+      if (i < maxTry - 1) { await _sleep(350 * (i + 1) * (i + 1)); continue; }
+    }
+  }
+  throw lastErr;
+}
+
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { fetch: resilientFetch },
   auth: {
     persistSession: true,
     autoRefreshToken: true,

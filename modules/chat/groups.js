@@ -171,6 +171,36 @@ async function _loadGroupsInner() {
   handleGroupDeepLinks();
 }
 
+/* Tarmoq uzilishida (Failed to fetch / timeout) qayta urinish. Faqat idempotent amallar uchun. */
+const _isNetErr = e => /failed to fetch|network|load failed|networkerror|abort|timeout|timed out|fetch failed/i.test(String((e && (e.message || e.name)) || e || ''));
+const _wait = ms => new Promise(r => setTimeout(r, ms));
+async function _netRetry(fn, tries = 3) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fn(i);
+      if (r && r.error && _isNetErr(r.error) && i < tries - 1) { last = r; await _wait(500 * (i + 1)); continue; }
+      return r;
+    } catch (e) {
+      last = { error: e };
+      if (!_isNetErr(e) || i >= tries - 1) throw e;
+      await _wait(500 * (i + 1));
+    }
+  }
+  return last;
+}
+/* Guruh id'si klientda berilgan, shuning uchun qayta yuborish xavfsiz:
+   avvalgi urinish aslida o'tib ketgan bo'lsa (javob yo'qolgan) — pkey takrori = muvaffaqiyat. */
+async function _insertGroupIdempotent(row) {
+  return _netRetry(async (attempt) => {
+    const r = await sb.from('groups').insert(row);
+    if (r.error && attempt > 0 && (r.error.code === '23505') && /groups_pkey|\(id\)/i.test(String(r.error.message || r.error.details || ''))) {
+      return { error: null };
+    }
+    return r;
+  });
+}
+
 async function _addMembers(groupId, uids, writerSet = null) {
   const rows = uids.map(uid => ({
     group_id: groupId,
@@ -178,8 +208,8 @@ async function _addMembers(groupId, uids, writerSet = null) {
     role: 'member',
     can_write: writerSet ? writerSet.has(uid) : true,
   }));
-  const { error } = await sb.from('group_members')
-    .upsert(rows, { onConflict: 'group_id,user_id', ignoreDuplicates: true });
+  const { error } = await _netRetry(() => sb.from('group_members')
+    .upsert(rows, { onConflict: 'group_id,user_id', ignoreDuplicates: true }));
   if (error) throw error;
   // ignoreDuplicates may skip can_write — yangilash
   if (writerSet) {
@@ -2762,7 +2792,7 @@ export async function submitCreateGroup() {
   try {
     // id ni o'zimiz beramiz: yopiq guruhda insert...select RLS'dan o'tmasligi mumkin
     const newId = crypto.randomUUID();
-    const { error: gErr } = await sb.from('groups').insert({
+    const { error: gErr } = await _insertGroupIdempotent({
       id:          newId,
       type:        'group',
       name,
@@ -2783,16 +2813,26 @@ export async function submitCreateGroup() {
         const writers = perm === 'selected' ? new Set(_selectedWriters) : null;
         await _addMembers(newId, Array.from(_selectedMembers), writers);
       }
-      catch (e) { console.warn('[Groups] a\'zolarni qo\'shib bo\'lmadi:', e.message); }
+      catch (e) {
+        console.warn('[Groups] a\'zolarni qo\'shib bo\'lmadi:', e.message);
+        toast("Guruh yaratildi, lekin a'zolarni qo'shib bo'lmadi. Guruh sozlamasidan qayta qo'shing.", 'error');
+      }
     }
-    await _loadGroups();
+    try { await _loadGroups(); } catch (e) { console.warn('[Groups] ro\'yxatni yangilab bo\'lmadi:', e.message); }
     overlay.classList.remove('show');
     unlockScroll('grpCreateFormOverlay');
     toast('Guruh yaratildi!', 'success');
     setTimeout(() => openGroupThread(newId), 100);
   } catch(err) {
     console.error('[Groups] create failed:', err);
-    toast('Yaratib bo\'lmadi: ' + err.message, 'error');
+    const em = String((err && err.message) || '');
+    let msg;
+    if (err && err.code === '23505') msg = 'Bu username allaqachon band. Boshqa nom tanlang.';
+    else if (/juda ko'p guruh|1 soat kuting/i.test(em)) msg = "Juda ko'p guruh yaratdingiz. 1 soat kuting.";
+    else if (err && (err.code === '42501' || /row-level security|policy/i.test(em))) msg = "Guruh yaratishga ruxsat yo'q. Hisobingiz tasdiqlanganini tekshiring.";
+    else if (/failed to fetch|network|load failed|abort|timeout|fetch failed/i.test(em)) msg = "Internet bilan aloqa yo'q. Ulanishni tekshirib, qayta urinib ko'ring.";
+    else msg = "Yaratib bo'lmadi. Birozdan keyin qayta urinib ko'ring.";
+    toast(msg, 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Yaratish';
